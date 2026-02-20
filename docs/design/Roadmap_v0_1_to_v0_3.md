@@ -1,5 +1,23 @@
 # FLO Roadmap (v0.1 -- v0.3)
 
+## v0.0 --- Conceptual work
+
+Scope:
+
+-   Understand the stages and document the workflow for designing a DSL like FLO:
+    -   Document the ontology\
+    -   Execution Semantics?\
+    -   Intermediate Representation\
+    -   Type System\
+    -   Static Analysis Layer\
+    -   Parser and syntax\
+    -   Runtime\
+    -   Telemetry and Observation model\
+    -   Tooling\
+-   Design architecture for our reference implementation and document
+-   Validate our tool stack
+-   Validate the "minimal core" for v0.1
+
 ## v0.1 --- Minimal Modeling Core
 
 Scope:
