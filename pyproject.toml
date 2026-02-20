@@ -4,7 +4,11 @@ version = "0.1.0"
 description = "FLO reference implementation"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "structlog>=22.0",
+    "opentelemetry-api>=1.20.0",
+    "opentelemetry-sdk>=1.20.0",
+]
 
 [project.optional-dependencies]
 dev = ["pytest"]

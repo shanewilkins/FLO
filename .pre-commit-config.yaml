@@ -25,3 +25,8 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+      - id: remove-egg-info
+        name: remove egg-info directories
+        entry: bash -c "git rm -r --cached --ignore-unmatch '*.egg-info' || true; rm -rf ./*.egg-info || true"
+        language: system
+        pass_filenames: false
