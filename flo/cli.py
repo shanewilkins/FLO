@@ -1,10 +1,16 @@
-"""Command-line interface for the FLO reference implementation."""
+"""Command-line interface for the FLO reference implementation.
+
+This module exposes a tiny `main()` function used by the example CLI.
+"""
+
 import argparse
 import json
+
 from . import parser
 
 
 def main(argv=None):
+    """Parse the given FLO file and print a JSON representation of the AST."""
     p = argparse.ArgumentParser(prog="flo")
     p.add_argument("file", help="FLO file to parse")
     args = p.parse_args(argv)

@@ -6,18 +6,22 @@ repos:
         entry: uv run ruff check .
         language: system
         types: [python]
+        pass_filenames: false
       - id: pyright-check
         name: pyright (via uv)
         entry: uv run pyright
         language: system
         types: [python]
+        pass_filenames: false
       - id: pydocstyle-check
         name: pydocstyle (via uv)
         entry: uv run pydocstyle .
         language: system
         types: [python]
+        pass_filenames: false
       - id: vulture-check
         name: vulture (via uv)
-        entry: uv run vulture . --min-confidence 60
+        entry: uv run vulture flo tests --min-confidence 60
         language: system
         types: [python]
+        pass_filenames: false
