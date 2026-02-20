@@ -1,0 +1,14 @@
+[project]
+name = "flo"
+version = "0.1.0"
+description = "FLO reference implementation"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.uv]
+# prefer uv-managed Python 3.14 if available
+python = "3.14"
