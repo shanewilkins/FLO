@@ -1,0 +1,41 @@
+spec_version: "0.1"
+
+process:
+  id: onboarding_v1
+  name: Client Onboarding
+  version: 1
+  owner:
+    id: ops_mgr
+    name: Ops Manager
+
+lanes:
+  - id: sales
+    name: Sales
+  - id: ops
+    name: Operations
+
+steps:
+  - id: start
+    kind: start
+    name: Start
+
+  - id: collect_docs
+    kind: task
+    name: Collect Documents
+    lane: sales
+
+  - id: verify
+    kind: task
+    name: Verify Documents
+    lane: ops
+
+  - id: approved
+    kind: decision
+    name: Approved?
+    outcomes:
+      yes: finish
+      no: collect_docs
+
+  - id: finish
+    kind: end
+    name: Complete

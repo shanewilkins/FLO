@@ -1,0 +1,48 @@
+spec_version: "0.1"
+
+process:
+  id: invoice_review_v1
+  name: Invoice Review (with rework)
+  version: 1
+  owner:
+    id: fin_mgr
+    name: Finance Manager
+
+lanes:
+  - id: requester
+    name: Requester
+  - id: finance
+    name: Finance
+
+steps:
+  - id: start
+    kind: start
+    name: Start
+
+  - id: submit
+    kind: task
+    name: Submit Invoice
+    lane: requester
+
+  - id: review
+    kind: task
+    name: Review Invoice
+    lane: finance
+
+  - id: decision
+    kind: decision
+    name: Valid?
+    outcomes:
+      yes: approve
+      no: rework
+
+  - id: rework
+    kind: task
+    name: Request Rework
+    lane: requester
+
+  - id: approve
+    kind: end
+    name: Approved
+
+# This model contains an intentional cycle: review -> decision -> rework -> submit -> review

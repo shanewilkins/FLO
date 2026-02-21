@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FLO Typed Metadata",
+  "description": "Recommended typed metadata keys for FLO process/node/edge/lane metadata (v0.0).",
+  "definitions": {
+    "duration_seconds": { "type": "number", "minimum": 0 },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "activity_key": { "type": "string" },
+    "case_id": { "type": "string" },
+    "value_class": { "type": "string", "enum": ["A","B","C","unknown"] }
+  },
+  "properties": {
+    "node": {
+      "type": "object",
+      "description": "Typed metadata commonly attached to nodes/steps.",
+      "properties": {
+        "activity_key": { "$ref": "#/definitions/activity_key" },
+        "sla_target_seconds": { "$ref": "#/definitions/duration_seconds" },
+        "value_class": { "$ref": "#/definitions/value_class" },
+        "priority": { "type": "integer" }
+      },
+      "additionalProperties": true
+    },
+    "edge": {
+      "type": "object",
+      "description": "Typed metadata for edges/transitions.",
+      "properties": {
+        "handoff": { "type": "boolean" },
+        "handoff_type": { "type": "string" },
+        "expected_latency_seconds": { "$ref": "#/definitions/duration_seconds" }
+      },
+      "additionalProperties": true
+    },
+    "process": {
+      "type": "object",
+      "description": "Typed metadata for the process as a whole.",
+      "properties": {
+        "sla_target_seconds": { "$ref": "#/definitions/duration_seconds" },
+        "business_impact": { "type": "string" },
+        "value_class": { "$ref": "#/definitions/value_class" }
+      },
+      "additionalProperties": true
+    },
+    "lane": {
+      "type": "object",
+      "description": "Typed metadata for lanes (roles/teams/systems).",
+      "properties": {
+        "type": { "type": "string", "enum": ["role","team","system"] },
+        "owner_id": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "recommended_keys": {
+    "node": ["activity_key","sla_target_seconds","value_class"],
+    "edge": ["handoff","expected_latency_seconds"],
+    "process": ["sla_target_seconds","value_class"]
+  },
+  "examples": {
+    "node_metadata": {
+      "activity_key": "verify",
+      "sla_target_seconds": 3600,
+      "value_class": "A"
+    },
+    "edge_metadata": {
+      "handoff": true,
+      "expected_latency_seconds": 300
+    },
+    "process_metadata": {
+      "sla_target_seconds": 86400,
+      "business_impact": "high",
+      "value_class": "A"
+    }
+  }
+}

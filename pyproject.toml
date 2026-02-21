@@ -1,6 +1,6 @@
 [project]
 name = "flo"
-version = "0.1.0"
+version = "0.0.0"
 description = "FLO reference implementation"
 readme = "README.md"
 requires-python = ">=3.14"
