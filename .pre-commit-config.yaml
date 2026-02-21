@@ -19,6 +19,12 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+      - id: pytest-check
+        name: pytest (via uv)
+        entry: uv run pytest -q
+        language: system
+        types: [python]
+        pass_filenames: false
       - id: vulture-check
         name: vulture (via uv)
         entry: uv run vulture reference-implementation/python/src/flo reference-implementation/python/src/flo_reference tests --min-confidence 60
