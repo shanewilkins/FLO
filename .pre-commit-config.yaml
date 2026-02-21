@@ -21,7 +21,7 @@ repos:
         pass_filenames: false
       - id: vulture-check
         name: vulture (via uv)
-        entry: uv run vulture tests --min-confidence 60
+        entry: uv run vulture reference-implementation/python/src/flo reference-implementation/python/src/flo_reference tests --min-confidence 60
         language: system
         types: [python]
         pass_filenames: false
