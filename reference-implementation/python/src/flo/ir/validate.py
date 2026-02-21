@@ -1,3 +1,9 @@
+"""Simple IR validation and SCC utilities used by the reference code.
+
+These helpers perform lightweight structural checks and graph analyses
+suitable for unit tests and early validation.
+"""
+
 from typing import List, Dict, Tuple
 
 
@@ -6,7 +12,7 @@ def _build_node_index(nodes: List[Dict]) -> Dict[str, Dict]:
 
 
 def validate_ir(ir: Dict) -> Tuple[bool, List[str]]:
-    """Basic structural validation of the IR.
+    """Validate the basic structure of the IR and return diagnostics.
 
     Returns (is_valid, diagnostics).
     """

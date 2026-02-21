@@ -9,7 +9,7 @@ repos:
         pass_filenames: false
       - id: pyright-check
         name: pyright (via uv)
-        entry: uv run pyright
+        entry: uv run pyright reference-implementation/python/src
         language: system
         types: [python]
         pass_filenames: false
@@ -21,12 +21,7 @@ repos:
         pass_filenames: false
       - id: vulture-check
         name: vulture (via uv)
-        entry: uv run vulture flo tests --min-confidence 60
+        entry: uv run vulture tests --min-confidence 60
         language: system
         types: [python]
-        pass_filenames: false
-      - id: remove-egg-info
-        name: remove egg-info directories
-        entry: bash -c "git rm -r --cached --ignore-unmatch '*.egg-info' || true; rm -rf ./*.egg-info || true"
-        language: system
         pass_filenames: false

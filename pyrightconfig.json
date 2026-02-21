@@ -1,4 +1,10 @@
 {
   "typeCheckingMode": "basic",
-  "exclude": [".venv", "dist", "build", "*.egg-info"]
+  "exclude": [".venv", "dist", "build", "*.egg-info"],
+  "executionEnvironments": [
+    {
+      "root": ".",
+      "extraPaths": ["reference-implementation/python/src"]
+    }
+  ]
 }

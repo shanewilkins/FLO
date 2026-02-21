@@ -1,3 +1,8 @@
+"""IR validation and SCC utilities for the public reference package.
+
+This module mirrors the internal helpers used by tests and tooling.
+"""
+
 from typing import List, Dict, Tuple
 
 
@@ -6,7 +11,7 @@ def _build_node_index(nodes: List[Dict]) -> Dict[str, Dict]:
 
 
 def validate_ir(ir: Dict) -> Tuple[bool, List[str]]:
-    """Basic structural validation of the IR.
+    """Validate the basic structure of the IR and return diagnostics.
 
     Returns (is_valid, diagnostics).
     """
