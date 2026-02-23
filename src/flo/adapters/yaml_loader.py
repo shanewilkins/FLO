@@ -1,16 +1,28 @@
-"""YAML adapter loader (stub).
+"""YAML adapter loader.
 
-This module will provide functions to parse `.flo` authoring files and
-produce adapter model instances (pydantic/dataclass). For now this is a
-lightweight stub to be implemented.
+Parses YAML content and returns an `AdapterModel` instance when
+Pydantic is available, otherwise returns a simple fallback model.
 """
-from typing import Any, Dict
+from __future__ import annotations
+
+from typing import Any
+
+import yaml
+
+from .models import AdapterModel
 
 
-def load_adapter_from_yaml(content: str) -> Dict[str, Any]:
-    """Parse YAML content and return an adapter-model-like dict.
+def load_adapter_from_yaml(content: str) -> AdapterModel:
+    """Parse YAML content and return an `AdapterModel`.
 
-    Replace this stub with a Pydantic-based adapter model in future.
+    Expects the YAML to be a mapping containing at least `name` and
+    `content` keys. Returns an `AdapterModel` instance via the
+    model-compatible `model_validate` API (works with Pydantic and
+    our fallback model).
     """
-    # TODO: implement YAML parsing and adapter model coercion
-    raise NotImplementedError("YAML adapter loader is not implemented yet")
+    data = yaml.safe_load(content)
+    if not isinstance(data, dict):
+        raise ValueError("YAML content must be a mapping with keys 'name' and 'content'")
+
+    # Both the Pydantic model and our fallback implement `model_validate`.
+    return AdapterModel.model_validate(data)

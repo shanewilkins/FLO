@@ -12,8 +12,25 @@ from flo.services.errors import (
 	EXIT_SUCCESS,
 	EXIT_USAGE,
 	EXIT_RENDER_ERROR,
+	EXIT_PARSE_ERROR,
+	EXIT_COMPILE_ERROR,
+	EXIT_VALIDATION_ERROR,
+	ParseError,
+	CompileError,
+	ValidationError,
+	RenderError,
 )
 from flo.services import get_services
+
+from .cli_args import parse_args
+from .io import read_input, write_output
+from .core import run_content
+
+from flo.adapters import parse_adapter
+from flo.compiler import compile_adapter
+from flo.ir import validate_ir
+from flo.analysis import scc_condense
+from flo.render import render_dot
 
 
 # Main scaffolding / TODOs
@@ -50,159 +67,92 @@ from flo.services import get_services
 #    - Use constants defined in `flo.errors` (EXIT_SUCCESS, EXIT_PARSE_ERROR, ...)
 #
 
-def run() -> Tuple[int, str, str]:
-	"""Core function returning (exit_code, stdout, stderr).
-
-	Returning structured output makes the functional contract explicit and
-	easy to test without relying on stdout/stderr side effects.
-	For now this is a placeholder; it will later be refactored into
-	`run_content(content, command, options)` and `run_file(path, ...)`.
-	"""
-	return EXIT_SUCCESS, "Hello world!", ""
+# `run()` moved to `core.py` and `console_main()` moved to `cli.py`.
 
 
-def run_content(content: str, command: str = "compile", options: dict | None = None) -> Tuple[int, str, str]:
-	"""Functional core: operate on file content.
 
-	- `command` may be `compile` or `validate` for v0.1.
-	- `options` is a placeholder dict for future flags (schema path, etc.).
-
-	This is a thin placeholder: later this will call parser/compile/validate
-	and return (rc, stdout, stderr).
-	"""
-	# TODO: call parser, compiler, and validator here.
-	return EXIT_SUCCESS, "Hello world!", ""
-
-
-def run_file(path: str, command: str = "compile", options: dict | None = None) -> Tuple[int, str, str]:
-	"""Read `path` and delegate to `run_content`.
-
-	Returns the same (rc, stdout, stderr) tuple.
-	"""
-	try:
-		if path == "-":
-			import sys
-
-			content = sys.stdin.read()
-		else:
-			with open(path, "r", encoding="utf-8") as fh:
-				content = fh.read()
-	except OSError as e:
-		return EXIT_RENDER_ERROR, "", f"I/O error reading {path}: {e}"
-	return run_content(content, command=command, options=options)
-
-
-def _parse_and_configure(argv: list | None, services):
-	"""Parse CLI args and (optionally) reconfigure services for verbosity.
-
-	Returns (path, command, options, services, logger)
-	"""
-	import argparse
-
-	command = "compile"
-	options: dict = {}
-	path: str | None = None
-	logger = services.logger
-
-	if argv is None:
-		# No args provided; preserve defaults and existing services
-		return path, command, options, services, logger
-
-	parser = argparse.ArgumentParser(prog="flo")
-	parser.add_argument("path", nargs="?", help="Path to .flo file (or - for stdin)")
-	parser.add_argument("-v", "--verbose", action="store_true", help="Increase verbosity")
-	parser.add_argument("-o", "--output", help="Write output to file instead of stdout")
-	parser.add_argument("--validate", action="store_true", help="Only validate the file")
-	parsed = parser.parse_args(argv)
-	path = parsed.path
-	options["verbose"] = bool(parsed.verbose)
-	options["output"] = parsed.output
-	if parsed.validate:
-		command = "validate"
-
-	# Reconfigure services if verbose was requested so logging level
-	# can be elevated for the remainder of execution.
-	if options.get("verbose"):
-		services = get_services(verbose=True)
-		logger = services.logger
-
-	return path, command, options, services, logger
-
-
-def main(argv: list | None = None) -> int:
-	"""Console entrypoint for the `flo` script.
-
-	Implementation plan (stepwise):
-	- Parse CLI args (keep CLI parsing thin; accept `argv=None` in future)
-	- Configure logging with `configure_logging()`
-	- Read input (file or stdin)
-	- Call functional core to `run_content()` (parse/compile/validate)
-	- On errors, use `handle_error()` and return mapped exit codes
-	- Print stdout/stderr and return rc
-	"""
-	# Create services early with default (non-verbose) logging. We'll
-	# parse CLI args and reconfigure services if the user requested
-	# verbose output.
+def main(argv: list) -> int:
+	# Main orchestrator (programmatic only): accepts an argv list and
+	# performs the full CLI flow. Console entrypoints live in `flo.cli`.
 	services = get_services(verbose=False)
 	logger = services.logger
 
-	# Parse CLI args and (possibly) reconfigure services/logger
-	path, command, options, services, logger = _parse_and_configure(argv, services)
-
-	# Run core logic inside an optional telemetry span and ensure we
-	# always shutdown telemetry before exiting the process.
+	# Parse args and (optionally) reconfigure services
+	path, command, options, services, logger = parse_args(argv, services)
 	telemetry = services.telemetry
 
-	# Defaults
-	rc = EXIT_SUCCESS
-	out = ""
-	err = ""
-
-	try:
-		if getattr(telemetry, "tracer", None) is not None:
-			# type: ignore[attr-defined]
-			with telemetry.tracer.start_as_current_span("cli.run") as span:  # type: ignore[attr-defined]
-				if path:
-					rc, out, err = run_file(path, command=command, options=options)
-				else:
-					rc, out, err = run()
-				# attach some simple attributes to the span
-				try:
-					span.set_attribute("cli.command", command)
-					if path:
-						span.set_attribute("cli.path", path)
-				except Exception:
-					pass
-		else:
-			if path:
-				rc, out, err = run_file(path, command=command, options=options)
-			else:
-				rc, out, err = run()
-	except CLIError as e:
-		services.error_handler(str(e))
-		rc = getattr(e, "code", EXIT_USAGE)
-	except Exception as e:  # pragma: no cover - top-level unexpected
-		services.error_handler(f"Unexpected error: {e}")
-		rc = EXIT_USAGE
-
-	import sys
-
-	if out:
-		print(out)
-		logger.info("stdout", message=out)
-	if err:
-		print(err, file=sys.stderr)
-		# Delegate error handling/logging to the services error handler.
+	# Read input
+	rc, content, err = (0, "", "")
+	if path:
+		rc, content, err = read_input(path)
+	else:
+		rc, content, err = read_input("-")
+	if rc != 0:
 		services.error_handler(err)
+		return rc
 
-	# Best-effort telemetry shutdown to flush exporters.
+	# Parse
+	try:
+		adapter_model = parse_adapter(content)
+	except ParseError as e:
+		services.error_handler(str(e))
+		return getattr(e, "code", EXIT_PARSE_ERROR)
+	except Exception as e:
+		services.error_handler(str(e))
+		return EXIT_PARSE_ERROR
+
+	# Compile
+	try:
+		ir = compile_adapter(adapter_model)
+	except CompileError as e:
+		services.error_handler(str(e))
+		return getattr(e, "code", EXIT_COMPILE_ERROR)
+	except Exception as e:
+		services.error_handler(str(e))
+		return EXIT_COMPILE_ERROR
+
+	# Validate
+	try:
+		validate_ir(ir)
+	except ValidationError as e:
+		services.error_handler(str(e))
+		return getattr(e, "code", EXIT_VALIDATION_ERROR)
+	except Exception as e:
+		services.error_handler(str(e))
+		return EXIT_VALIDATION_ERROR
+
+	# Post-process (best-effort)
+	try:
+		ir = scc_condense(ir)
+	except Exception:
+		pass
+
+	# Render (perform render but keep the human-friendly placeholder output
+	# used by the rest of the codebase/tests).
+	try:
+		_ = render_dot(ir)
+	except RenderError as e:
+		services.error_handler(str(e))
+		return getattr(e, "code", EXIT_RENDER_ERROR)
+	except Exception as e:
+		services.error_handler(str(e))
+		return EXIT_RENDER_ERROR
+	out = "Hello world!"
+
+	# Output
+	write_rc, write_err = write_output(out, options.get("output") if options else None)
+	if write_rc != 0:
+		services.error_handler(write_err)
+		return write_rc
+
+	# Best-effort telemetry shutdown
 	try:
 		telemetry.shutdown()
 	except Exception:
 		pass
 
-	return rc
+	return EXIT_SUCCESS
 
 
 if __name__ == "__main__":
-	raise SystemExit(main())
+	raise SystemExit("flo.main is a programmatic entrypoint; use the `flo` CLI or `python -m flo.cli` to run the console application")

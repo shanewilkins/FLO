@@ -8,8 +8,7 @@ from typing import Optional
 import click
 from rich.console import Console
 
-from flo.services import get_services
-from flo.main import run_file, run
+from flo import main as main_module
 
 
 console = Console()
@@ -33,28 +32,85 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
 @click.option("-o", "--output", help="Write output to file")
 def run_cmd(path: Optional[str], validate: bool, verbose: bool, output: Optional[str]) -> None:  # pragma: no cover - integration
     """Run or validate a .flo file. Use '-' for stdin."""
-    services = get_services(verbose=verbose)
+    # Delegate to the programmatic `main` orchestrator to keep CLI thin.
+    args: list[str] = []
+    if path:
+        args.append(path)
+    if validate:
+        args.append("--validate")
+    if verbose:
+        args.append("-v")
+    if output:
+        args.extend(["-o", output])
+
+    # Call the console-oriented entrypoint which implements full CLI semantics.
+    rc = console_main(args)
+    raise SystemExit(rc)
+
+
+def console_main(argv: list | None = None) -> int:  # pragma: no cover - thin wrapper
+    """Console entrypoint that mirrors the previous `main.console_main`.
+
+    Kept here so Click-based invocation and the CLI runner can share the
+    same codepath without compatibility shims living in `main.py`.
+    """
+    from flo.services import get_services
+    from flo.cli_args import parse_args
+    from flo.io import read_input, write_output
+    from flo.core import run_content
+    from flo.adapters import parse_adapter
+    from flo.compiler import compile_adapter
+    from flo.ir import validate_ir
+    from flo.analysis import scc_condense
+    from flo.render import render_dot
+    from flo.services.errors import (
+        CLIError,
+        EXIT_USAGE,
+        EXIT_RENDER_ERROR,
+    )
+
+    services = get_services(verbose=False)
+    logger = services.logger
+
+    if argv is None:
+        argv = sys.argv[1:]
+
+    path, command, options, services, logger = parse_args(argv, services)
+    telemetry = services.telemetry
+
+    # Read input
+    rc, content, err = (0, "", "")
+    if path:
+        rc, content, err = read_input(path)
+    else:
+        rc, content, err = read_input("-")
+    if rc != 0:
+        services.error_handler(err)
+        return rc
+
+    # Process content (parse/compile/validate)
     try:
-        if validate:
-            command = "validate"
-        else:
-            command = "compile"
+        rc, out, err = run_content(content, command=command, options=options)
+    except CLIError as e:
+        services.error_handler(str(e))
+        return getattr(e, "code", EXIT_USAGE)
+    except Exception as e:  # pragma: no cover - unexpected
+        services.error_handler(f"Unexpected error: {e}")
+        return EXIT_USAGE
 
-        if path:
-            rc, out, err = run_file(path, command=command, options={"output": output, "verbose": verbose})
-        else:
-            rc, out, err = run()
+    # Output
+    write_rc, write_err = write_output(out, options.get("output") if options else None)
+    if write_rc != 0:
+        services.error_handler(write_err)
+        return write_rc
 
-        if out:
-            console.print(out)
-        if err:
-            print(err, file=sys.stderr)
-        raise SystemExit(rc)
-    finally:
-        try:
-            services.telemetry.shutdown()
-        except Exception:
-            pass
+    # Best-effort telemetry shutdown
+    try:
+        telemetry.shutdown()
+    except Exception:
+        pass
+
+    return rc
 
 
 def main(argv: list | None = None) -> int:  # pragma: no cover - CLI entry
