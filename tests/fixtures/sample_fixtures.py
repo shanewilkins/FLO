@@ -1,3 +1,5 @@
+"""Test fixtures providing temporary files used in integration tests."""
+
 import tempfile
 import pathlib
 

@@ -1,3 +1,9 @@
+"""Telemetry helpers and a minimal `Telemetry` wrapper.
+
+OpenTelemetry is optional; when not available a no-op `Telemetry` is
+returned so callers can always call `shutdown()` safely.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -16,6 +22,11 @@ except Exception:  # pragma: no cover - optional dependency
 
 @dataclass
 class Telemetry:
+    """Container for a tracer and a shutdown callable.
+
+    `tracer` may be `None` when OpenTelemetry SDK isn't available.
+    """
+
     tracer: Optional[object]
     shutdown: Callable[[], None]
 

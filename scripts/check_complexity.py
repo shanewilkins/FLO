@@ -21,6 +21,10 @@ THRESHOLD = 15
 
 
 def check_files(files: Sequence[pathlib.Path]) -> int:
+    """Check `files` for cyclomatic complexity above threshold.
+
+    Returns zero on success or non-zero error code on failure.
+    """
     problems = []
     for p in files:
         try:
@@ -42,6 +46,11 @@ def check_files(files: Sequence[pathlib.Path]) -> int:
 
 
 def gather_files(args: Sequence[str]) -> list[pathlib.Path]:
+    """Return a list of python files to analyze.
+
+    If `args` is non-empty, filter provided paths, otherwise search the
+    project's `src` directory for Python files.
+    """
     if args:
         return [pathlib.Path(a) for a in args if a.endswith(".py")]
     # default: check all project python files under src
@@ -50,6 +59,10 @@ def gather_files(args: Sequence[str]) -> list[pathlib.Path]:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    """Command-line entrypoint for complexity checks.
+
+    Accepts an optional argv list for programmatic invocation.
+    """
     argv = list(argv or sys.argv[1:])
     files = gather_files(argv)
     return check_files(files)

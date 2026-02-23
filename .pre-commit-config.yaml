@@ -20,7 +20,7 @@ repos:
         pass_filenames: false
       - id: pyright-check
         name: pyright (via uv)
-        entry: uv run pyright reference-implementation/python/src
+        entry: uv run pyright src
         language: system
         types: [python]
         pass_filenames: false

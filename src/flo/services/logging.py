@@ -1,3 +1,5 @@
+"""Logging configuration helpers for the FLO CLI."""
+
 import logging
 
 import structlog

@@ -1,3 +1,5 @@
+"""Command-line interface (Click) thin wrapper for programmatic core."""
+
 from __future__ import annotations
 
 import sys
@@ -46,7 +48,7 @@ def run_cmd(path: Optional[str], validate: bool, verbose: bool, output: Optional
         if out:
             console.print(out)
         if err:
-            console.print(err, style="red", file=sys.stderr)
+            print(err, file=sys.stderr)
         raise SystemExit(rc)
     finally:
         try:

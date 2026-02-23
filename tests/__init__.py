@@ -1,3 +1,1 @@
-"""Make the tests directory a package so fixtures can be imported via
-`from tests.fixtures` in `conftest.py`.
-"""
+"""Tests package to allow fixture imports in conftest."""

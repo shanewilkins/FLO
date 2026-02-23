@@ -7,7 +7,6 @@ imports are found according to rules defined below.
 """
 import ast
 import pathlib
-import sys
 from typing import Dict, Iterable, List
 
 
@@ -15,12 +14,16 @@ BASE = pathlib.Path(__file__).resolve().parents[1] / "src"
 
 
 def iter_py_files(package_dir: pathlib.Path) -> Iterable[pathlib.Path]:
+    """Yield all Python files under `package_dir` recursively."""
     for p in package_dir.rglob("*.py"):
         yield p
 
 
 def module_name_from_path(p: pathlib.Path, src_root: pathlib.Path) -> str:
-    # src/flo/ir/models.py -> flo.ir.models
+    """Convert a filesystem path into a dotted module name.
+
+    Example: src/flo/ir/models.py -> flo.ir.models
+    """
     rel = p.relative_to(src_root)
     parts = rel.with_suffix("").parts
     return ".".join(parts)
@@ -38,6 +41,7 @@ RULES: Dict[str, List[str]] = {
 
 
 def check_file(p: pathlib.Path, src_root: pathlib.Path) -> List[str]:
+    """Return a list of import rule violation strings for `p`."""
     mod = module_name_from_path(p, src_root)
     src = p.read_text()
     tree = ast.parse(src)
@@ -56,6 +60,7 @@ def check_file(p: pathlib.Path, src_root: pathlib.Path) -> List[str]:
 
 
 def check_forbidden(module: str, imported: str, path: pathlib.Path) -> List[str]:
+    """Return violations for `module` importing `imported` per RULES."""
     errs: List[str] = []
     for prefix, forbidden_list in RULES.items():
         if module == prefix or module.startswith(prefix + ".") or (prefix == "flo" and module.startswith("flo.") and module != "flo.main"):
@@ -66,6 +71,7 @@ def check_forbidden(module: str, imported: str, path: pathlib.Path) -> List[str]
 
 
 def main() -> int:
+    """Run the import checks and return exit code 0 on success."""
     src_root = BASE
     pkg_dir = src_root / "flo"
     all_errors: List[str] = []

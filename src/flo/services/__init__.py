@@ -1,3 +1,5 @@
+"""Service construction helpers (logging, telemetry, error handling)."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -12,6 +14,14 @@ from .telemetry import init_telemetry, Telemetry
 
 @dataclass
 class Services:
+    """Container for runtime services used by the CLI.
+
+    Attributes:
+        logger: configured `structlog` logger instance.
+        error_handler: callable that handles error strings.
+        telemetry: telemetry helper object with `shutdown()`.
+    """
+
     logger: structlog.stdlib.BoundLogger
     error_handler: Callable[[str], None]
     telemetry: Telemetry

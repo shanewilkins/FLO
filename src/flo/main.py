@@ -1,12 +1,16 @@
+"""Programmatic core and console entrypoints for the FLO CLI.
+
+This module exposes `run`, `run_file`, and `run_content` which the
+thin Click wrapper (`flo.cli`) uses. Keeping the core functional and
+easy-to-test avoids reliance on stdout/stderr side effects in tests.
+"""
+
 from typing import Tuple
 
 from flo.services.errors import (
 	CLIError,
 	EXIT_SUCCESS,
 	EXIT_USAGE,
-	EXIT_PARSE_ERROR,
-	EXIT_COMPILE_ERROR,
-	EXIT_VALIDATION_ERROR,
 	EXIT_RENDER_ERROR,
 )
 from flo.services import get_services
@@ -88,6 +92,43 @@ def run_file(path: str, command: str = "compile", options: dict | None = None) -
 	return run_content(content, command=command, options=options)
 
 
+def _parse_and_configure(argv: list | None, services):
+	"""Parse CLI args and (optionally) reconfigure services for verbosity.
+
+	Returns (path, command, options, services, logger)
+	"""
+	import argparse
+
+	command = "compile"
+	options: dict = {}
+	path: str | None = None
+	logger = services.logger
+
+	if argv is None:
+		# No args provided; preserve defaults and existing services
+		return path, command, options, services, logger
+
+	parser = argparse.ArgumentParser(prog="flo")
+	parser.add_argument("path", nargs="?", help="Path to .flo file (or - for stdin)")
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase verbosity")
+	parser.add_argument("-o", "--output", help="Write output to file instead of stdout")
+	parser.add_argument("--validate", action="store_true", help="Only validate the file")
+	parsed = parser.parse_args(argv)
+	path = parsed.path
+	options["verbose"] = bool(parsed.verbose)
+	options["output"] = parsed.output
+	if parsed.validate:
+		command = "validate"
+
+	# Reconfigure services if verbose was requested so logging level
+	# can be elevated for the remainder of execution.
+	if options.get("verbose"):
+		services = get_services(verbose=True)
+		logger = services.logger
+
+	return path, command, options, services, logger
+
+
 def main(argv: list | None = None) -> int:
 	"""Console entrypoint for the `flo` script.
 
@@ -99,38 +140,14 @@ def main(argv: list | None = None) -> int:
 	- On errors, use `handle_error()` and return mapped exit codes
 	- Print stdout/stderr and return rc
 	"""
-	# Create services early with default (non-verbose) logging. If the
-	# user requests verbosity we re-create services below with debug
-	# level; `get_services` is idempotent about configuring logging.
+	# Create services early with default (non-verbose) logging. We'll
+	# parse CLI args and reconfigure services if the user requested
+	# verbose output.
 	services = get_services(verbose=False)
 	logger = services.logger
 
-	# Minimal arg parsing: if `argv` is provided, parse it; otherwise use
-	# default behavior (no args) for backwards compatibility in tests.
-	command = "compile"
-	options: dict = {}
-	path: str | None = None
-
-	if argv is not None:
-		import argparse
-
-		parser = argparse.ArgumentParser(prog="flo")
-		parser.add_argument("path", nargs="?", help="Path to .flo file (or - for stdin)")
-		parser.add_argument("-v", "--verbose", action="store_true", help="Increase verbosity")
-		parser.add_argument("-o", "--output", help="Write output to file instead of stdout")
-		parser.add_argument("--validate", action="store_true", help="Only validate the file")
-		parsed = parser.parse_args(argv)
-		path = parsed.path
-		options["verbose"] = bool(parsed.verbose)
-		options["output"] = parsed.output
-		if parsed.validate:
-			command = "validate"
-
-		# Reconfigure services if verbose was requested so logging level
-		# can be elevated for the remainder of execution.
-		if options.get("verbose"):
-			services = get_services(verbose=True)
-			logger = services.logger
+	# Parse CLI args and (possibly) reconfigure services/logger
+	path, command, options, services, logger = _parse_and_configure(argv, services)
 
 	# Run core logic inside an optional telemetry span and ensure we
 	# always shutdown telemetry before exiting the process.
