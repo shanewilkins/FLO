@@ -4,7 +4,7 @@
   "executionEnvironments": [
     {
       "root": ".",
-      "extraPaths": ["reference-implementation/python/src"]
+      "extraPaths": ["reference-implementation/python/src", "src"]
     }
   ]
 }

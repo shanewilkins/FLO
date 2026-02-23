@@ -8,15 +8,18 @@ dependencies = [
     "structlog>=22.0",
     "opentelemetry-api>=1.20.0",
     "opentelemetry-sdk>=1.20.0",
+    "click>=8.1",
+    "rich>=13.0",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest"]
 
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.10.4,<0.11.0"]
+build-backend = "uv_build"
 
+[project.scripts]
+flo = "flo.cli:main"
 
 [dependency-groups]
 dev = [
@@ -26,4 +29,47 @@ dev = [
     "pytest>=9.0.2",
     "ruff>=0.15.2",
     "vulture>=2.14",
+    "radon>=5.1.0",
+    "pytest",
+    "pytest-cov>=4.0",
 ]
+
+[tool.importlinter]
+# Import-linter rules for enforcing layer boundaries in the FLO project.
+# Note: import-linter expects a specific schema; this section encodes the
+# intended rules in pyproject.toml so CI and tooling can be wired to the
+# enforcement tool. Adjust keys below to match the import-linter version used.
+
+[tool.importlinter.layers]
+# Logical layer -> package prefix
+cli = "flo"
+orchestration = "flo"
+adapters = "flo.adapters"
+compiler = "flo.compiler"
+ir = "flo.ir"
+analysis = "flo.analysis"
+render = "flo.render"
+
+[[tool.importlinter.rules]]
+name = "no_cli_deps"
+description = "CLI layer must not be imported by lower-level layers."
+modules = ["flo.main"]
+forbidden = ["flo.compiler", "flo.adapters", "flo.ir", "flo.analysis", "flo.render"]
+
+[[tool.importlinter.rules]]
+name = "no_compiler_to_cli_logging"
+description = "Compiler and adapters must not import CLI or logging setup."
+modules = ["flo.compiler", "flo.adapters"]
+forbidden = ["flo.main", "flo.services.logging"]
+
+[[tool.importlinter.rules]]
+name = "ir_no_high_level"
+description = "IR models/validate must be independent (no compiler/cli imports)."
+modules = ["flo.ir"]
+forbidden = ["flo.compiler", "flo.main", "flo.adapters", "flo.analysis", "flo.render"]
+
+[[tool.importlinter.rules]]
+name = "render_optional"
+description = "Renderers should only depend on IR and analysis layers, not on CLI internals."
+modules = ["flo.render"]
+forbidden = ["flo.main", "flo.services.logging"]

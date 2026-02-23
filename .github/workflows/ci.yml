@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .
+      - name: Install dev tools
+        run: |
+          python -m pip install pytest radon ruff pre-commit click rich vulture
+      - name: Run tests
+        run: uv run --active pytest -q
+      - name: Run import checker
+        run: python scripts/check_imports.py
+      - name: Run complexity checker
+        run: python scripts/check_complexity.py
+      - name: Run vulture (unused code detector)
+        run: |
+          # Run vulture on the main package and tests; skip missing paths.
+          if [ -d src/flo ]; then
+            uv run vulture src/flo tests --min-confidence 60 || true
+          else
+            echo "src/flo not present, skipping vulture run"
+          fi
