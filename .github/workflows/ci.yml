@@ -15,15 +15,8 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - name: Install package
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install .
-      - name: Install dev tools
-        run: |
-          python -m pip install pytest radon ruff pre-commit click rich vulture
       - name: Run tests
-        run: uv run --active pytest -q
+        run: uv run pytest
       - name: Run import checker
         run: python scripts/check_imports.py
       - name: Run complexity checker
