@@ -5,8 +5,6 @@ Pydantic is available, otherwise returns a simple fallback model.
 """
 from __future__ import annotations
 
-from typing import Any
-
 import yaml
 
 from .models import AdapterModel

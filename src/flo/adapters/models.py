@@ -30,12 +30,29 @@ if PydanticAvailable:
     AdapterModel = _PydAdapterModel  # type: ignore
 else:
     class AdapterModel:
+        """Lightweight fallback model used when Pydantic isn't installed.
+
+        This provides a minimal `model_validate` / `model_dump` API compatible
+        with callers that expect a Pydantic-like interface.
+        """
+
         def __init__(self, name: str, content: str):
+            """Create a fallback AdapterModel with `name` and `content`.
+
+            Parameters
+            - name: a short identifier for the adapter
+            - content: the raw adapter source
+            """
             self.name = name
             self.content = content
 
         @classmethod
         def model_validate(cls, data: Any) -> "AdapterModel":
+            """Validate or coerce `data` into an `AdapterModel` instance.
+
+            Accepts an existing `AdapterModel`, a mapping with `name`/`content`,
+            or an object with `name`/`content` attributes.
+            """
             if isinstance(data, cls):
                 return data
             # permissive fallback: coerce mapping to AdapterModel
@@ -44,4 +61,5 @@ else:
             return cls(name=name or "", content=content or "")
 
         def model_dump(self) -> dict:
+            """Return a plain dict representation of the model."""
             return {"name": self.name, "content": self.content}

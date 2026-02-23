@@ -8,7 +8,7 @@ from typing import Optional
 import click
 from rich.console import Console
 
-from flo import main as main_module
+# keep CLI thin; avoid importing programmatic main at module level
 
 
 console = Console()
@@ -58,15 +58,9 @@ def console_main(argv: list | None = None) -> int:  # pragma: no cover - thin wr
     from flo.cli_args import parse_args
     from flo.io import read_input, write_output
     from flo.core import run_content
-    from flo.adapters import parse_adapter
-    from flo.compiler import compile_adapter
-    from flo.ir import validate_ir
-    from flo.analysis import scc_condense
-    from flo.render import render_dot
     from flo.services.errors import (
         CLIError,
         EXIT_USAGE,
-        EXIT_RENDER_ERROR,
     )
 
     services = get_services(verbose=False)

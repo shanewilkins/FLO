@@ -67,6 +67,8 @@ def init_telemetry(service_name: str = "flo", *, console_export: bool = True) ->
         return Telemetry(tracer=None, shutdown=lambda: None)
 
     if _provider is None:
+        # Narrow runtime types for static type checkers
+        assert Resource is not None and SDKTracerProvider is not None
         resource = Resource.create({"service.name": service_name})
         provider = SDKTracerProvider(resource=resource)
 
@@ -77,7 +79,9 @@ def init_telemetry(service_name: str = "flo", *, console_export: bool = True) ->
             except Exception:
                 pass
 
-        trace.set_tracer_provider(provider)
+        # register provider (guarded for static checkers)
+        if trace is not None:
+            trace.set_tracer_provider(provider)
         _provider = provider
 
     tracer = trace.get_tracer(service_name) if trace is not None else None
@@ -89,8 +93,10 @@ def init_telemetry(service_name: str = "flo", *, console_export: bool = True) ->
         try:
             # Prefer provider.shutdown() when available
             try:
-                _provider.shutdown()
-                return
+                shutdown_fn = getattr(_provider, "shutdown", None)
+                if callable(shutdown_fn):
+                    shutdown_fn()
+                    return
             except Exception:
                 pass
 
@@ -99,7 +105,9 @@ def init_telemetry(service_name: str = "flo", *, console_export: bool = True) ->
             if span_processors:
                 for sp in list(span_processors):
                     try:
-                        sp.shutdown()
+                        sp_shutdown = getattr(sp, "shutdown", None)
+                        if callable(sp_shutdown):
+                            sp_shutdown()
                     except Exception:
                         pass
         finally:
@@ -116,18 +124,23 @@ def get_tracer(name: str):
 
 
 def shutdown() -> None:
-    """Convenience helper to shut down the configured provider (if any)."""
+    """Shut down the configured provider (if any)."""
     global _provider
     if _provider is None:
         return
     try:
-        _provider.shutdown()
+        shutdown_fn = getattr(_provider, "shutdown", None)
+        if callable(shutdown_fn):
+            shutdown_fn()
+            return
     except Exception:
         span_processors = getattr(_provider, "span_processors", None) or getattr(_provider, "_active_span_processors", None)
         if span_processors:
             for sp in list(span_processors):
                 try:
-                    sp.shutdown()
+                    sp_shutdown = getattr(sp, "shutdown", None)
+                    if callable(sp_shutdown):
+                        sp_shutdown()
                 except Exception:
                     pass
     finally:

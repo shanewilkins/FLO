@@ -5,12 +5,8 @@ thin Click wrapper (`flo.cli`) uses. Keeping the core functional and
 easy-to-test avoids reliance on stdout/stderr side effects in tests.
 """
 
-from typing import Tuple
-
 from flo.services.errors import (
-	CLIError,
 	EXIT_SUCCESS,
-	EXIT_USAGE,
 	EXIT_RENDER_ERROR,
 	EXIT_PARSE_ERROR,
 	EXIT_COMPILE_ERROR,
@@ -24,8 +20,6 @@ from flo.services import get_services
 
 from .cli_args import parse_args
 from .io import read_input, write_output
-from .core import run_content
-
 from flo.adapters import parse_adapter
 from flo.compiler import compile_adapter
 from flo.ir import validate_ir
@@ -72,8 +66,12 @@ from flo.render import render_dot
 
 
 def main(argv: list) -> int:
-	# Main orchestrator (programmatic only): accepts an argv list and
-	# performs the full CLI flow. Console entrypoints live in `flo.cli`.
+	"""Run the main orchestrator for the FLO CLI.
+
+	Accepts an argv list (programmatic invocation) and performs the full
+	parse -> compile -> validate -> render -> output flow. Returns an
+	integer exit code suitable for `sys.exit`.
+	"""
 	services = get_services(verbose=False)
 	logger = services.logger
 

@@ -12,6 +12,11 @@ from flo.services import get_services, Services
 from structlog.stdlib import BoundLogger
 
 def parse_args(argv: list | None, services: Services) -> Tuple[str | None, str, dict, Services, BoundLogger]:
+    """Parse CLI arguments and optionally reconfigure `services`.
+
+    Returns a tuple: `(path, command, options, services, logger)` suitable
+    for use by the programmatic entrypoints.
+    """
     import argparse
 
     command = "compile"

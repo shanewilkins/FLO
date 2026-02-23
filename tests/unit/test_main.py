@@ -1,5 +1,3 @@
-import pytest
-
 from flo import main as main_module
 from flo.services import get_services
 from flo.services.errors import (

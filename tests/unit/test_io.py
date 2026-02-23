@@ -1,8 +1,5 @@
 import io
 import sys
-from pathlib import Path
-
-import pytest
 
 from flo.io import read_input, write_output
 from flo.services.errors import EXIT_RENDER_ERROR
@@ -55,7 +52,5 @@ def test_write_output_oserror(monkeypatch):
 
     monkeypatch.setattr(builtins, "open", fake_open)
     rc, err = write_output("payload", "somepath")
-    from flo.services.errors import EXIT_RENDER_ERROR
-
     assert rc == EXIT_RENDER_ERROR
     assert "I/O error writing" in err
