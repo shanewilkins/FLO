@@ -84,6 +84,9 @@ def _translate_minimal_ir(instance: dict) -> dict:
     This is a temporary translator used by CI while compiler mapping is
     completed. Keeps translations small and conservative.
     """
+    # TODO(v0.1): remove this translator once the compiler emits the
+    # schema-shaped IR (process/nodes/edges). See roadmap acceptance
+    # criteria for un-whitelisting vulture items.
     proc_id = instance.get("name") or "generated"
     process = {"id": proc_id, "name": instance.get("name") or proc_id}
 
