@@ -6,12 +6,8 @@ import sys
 from typing import Optional
 
 import click
-from rich.console import Console
 
 # keep CLI thin; avoid importing programmatic main at module level
-
-
-console = Console()
 
 
 @click.group()

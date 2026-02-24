@@ -29,8 +29,9 @@ class _NoOpSpan:
     def __enter__(self) -> "_NoOpSpan":
         return self
 
-    def __exit__(self, exc_type, exc, tb) -> None:  # pragma: no cover - trivial
+    def __exit__(self, _exc_type, _exc, _tb) -> None:  # pragma: no cover - trivial
         return None
+    
 
 
 class _NoOpTracer:

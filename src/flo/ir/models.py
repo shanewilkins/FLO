@@ -51,7 +51,5 @@ class IR:
         if path:
             Path(path).write_text(s, encoding="utf-8")
         return s
-        if path:
-            Path(path).write_text(s, encoding="utf-8")
-        return s
+        
 
