@@ -77,3 +77,9 @@ name = "render_optional"
 description = "Renderers should only depend on IR and analysis layers, not on CLI internals."
 modules = ["flo.render"]
 forbidden = ["flo.main", "flo.services.logging"]
+
+[[tool.importlinter.rules]]
+name = "no_domain_import_core"
+description = "Domain layers must not import core entrypoint modules (core/main/cli)."
+modules = ["flo.adapters", "flo.compiler", "flo.ir", "flo.analysis", "flo.render", "flo.services"]
+forbidden = ["flo.core", "flo.main", "flo.cli"]

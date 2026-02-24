@@ -145,33 +145,33 @@ def main(argv: list) -> int:
 	integer exit code suitable for `sys.exit`.
 	"""
 	path, command, options, services, logger = _parse_args_and_services(argv)
-	runner = MainRunner(path=path, command=command, options=options, services=services)
+	telemetry = services.telemetry
 
 	# Read input
-	rc, content, err = runner.read_input()
+	rc, content, err = _read_input_or_stdin(path, services)
 	if rc != 0:
 		services.error_handler(err)
 		return rc
 
-	adapter_model, rc = runner.parse_adapter(content)
+	adapter_model, rc = _parse_adapter(content, services)
 	if rc != 0:
 		return rc
 
-	ir, rc = runner.compile_adapter(adapter_model)
+	ir, rc = _compile_adapter(adapter_model, services)
 	if rc != 0:
 		return rc
 
-	rc = runner.validate_ir(ir)
+	rc = _validate_ir_instance(ir, services)
 	if rc != 0:
 		return rc
 
-	ir = runner.postprocess_ir(ir)
+	ir = _postprocess_ir(ir)
 
-	rc = runner.render_and_output(ir)
+	rc = _render_ir_and_output(ir, options, services)
 
 	# Best-effort telemetry shutdown
 	try:
-		runner.telemetry.shutdown()
+		telemetry.shutdown()
 	except Exception:
 		pass
 

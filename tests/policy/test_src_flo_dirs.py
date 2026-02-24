@@ -16,6 +16,9 @@ APPROVED_SUBDIRS = {
     "ir",
     "render",
     "services",
+    "io",
+    "cli",
+    "core",  # Pseudo-layer for CLI scaffolding and orchestration; not a real package
 }
 
 

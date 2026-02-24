@@ -1,5 +1,7 @@
-"""I/O helpers: read input from file or stdin and write output."""
+"""I/O helpers: read input from file or stdin and write output.
 
+Package form so `from flo.io import read_input` continues to work.
+"""
 from __future__ import annotations
 
 import sys
