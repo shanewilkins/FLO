@@ -21,6 +21,10 @@ jobs:
           python -m pip install pytest pytest-cov
       - name: Run tests with coverage threshold
         run: uv run pytest --cov=src/flo --cov-report=term-missing --cov-fail-under=90
+      - name: Install jsonschema
+        run: python -m pip install jsonschema
+      - name: Validate example IRs against schema
+        run: python scripts/validate_ir_schema.py
       - name: Run import checker
         run: python scripts/check_imports.py
       - name: Run complexity checker
