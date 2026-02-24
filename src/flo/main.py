@@ -65,53 +65,45 @@ from flo.render import render_dot
 
 
 
-def main(argv: list) -> int:
-	"""Run the main orchestrator for the FLO CLI.
-
-	Accepts an argv list (programmatic invocation) and performs the full
-	parse -> compile -> validate -> render -> output flow. Returns an
-	integer exit code suitable for `sys.exit`.
-	"""
+def _parse_args_and_services(argv: list):
 	services = get_services(verbose=False)
 	logger = services.logger
-
-	# Parse args and (optionally) reconfigure services
 	path, command, options, services, logger = parse_args(argv, services)
-	telemetry = services.telemetry
+	return path, command, options, services, logger
 
-	# Read input
-	rc, content, err = (0, "", "")
+
+def _read_input_or_stdin(path: str | None, services):
 	if path:
-		rc, content, err = read_input(path)
-	else:
-		rc, content, err = read_input("-")
-	if rc != 0:
-		services.error_handler(err)
-		return rc
+		return read_input(path)
+	return read_input("-")
 
-	# Parse
+
+def _parse_adapter(content: str, services):
 	try:
-		adapter_model = parse_adapter(content)
+		return parse_adapter(content), 0
 	except ParseError as e:
 		services.error_handler(str(e))
-		return getattr(e, "code", EXIT_PARSE_ERROR)
+		return None, getattr(e, "code", EXIT_PARSE_ERROR)
 	except Exception as e:
 		services.error_handler(str(e))
-		return EXIT_PARSE_ERROR
+		return None, EXIT_PARSE_ERROR
 
-	# Compile
+
+def _compile_adapter(adapter_model, services):
 	try:
-		ir = compile_adapter(adapter_model)
+		return compile_adapter(adapter_model), 0
 	except CompileError as e:
 		services.error_handler(str(e))
-		return getattr(e, "code", EXIT_COMPILE_ERROR)
+		return None, getattr(e, "code", EXIT_COMPILE_ERROR)
 	except Exception as e:
 		services.error_handler(str(e))
-		return EXIT_COMPILE_ERROR
+		return None, EXIT_COMPILE_ERROR
 
-	# Validate
+
+def _validate_ir_instance(ir, services):
 	try:
 		validate_ir(ir)
+		return 0
 	except ValidationError as e:
 		services.error_handler(str(e))
 		return getattr(e, "code", EXIT_VALIDATION_ERROR)
@@ -119,14 +111,15 @@ def main(argv: list) -> int:
 		services.error_handler(str(e))
 		return EXIT_VALIDATION_ERROR
 
-	# Post-process (best-effort)
-	try:
-		ir = scc_condense(ir)
-	except Exception:
-		pass
 
-	# Render (produce DOT); return DOT when an output path was requested,
-	# otherwise keep the human-friendly placeholder used by tests.
+def _postprocess_ir(ir):
+	try:
+		return scc_condense(ir)
+	except Exception:
+		return ir
+
+
+def _render_ir_and_output(ir, options, services):
 	try:
 		dot = render_dot(ir)
 	except RenderError as e:
@@ -137,12 +130,44 @@ def main(argv: list) -> int:
 		return EXIT_RENDER_ERROR
 
 	out = dot if options and options.get("output") else "Hello world!"
-
-	# Output
 	write_rc, write_err = write_output(out, options.get("output") if options else None)
 	if write_rc != 0:
 		services.error_handler(write_err)
 		return write_rc
+	return EXIT_SUCCESS
+
+
+def main(argv: list) -> int:
+	"""Run the main orchestrator for the FLO CLI.
+
+	Accepts an argv list (programmatic invocation) and performs the full
+	parse -> compile -> validate -> render -> output flow. Returns an
+	integer exit code suitable for `sys.exit`.
+	"""
+	path, command, options, services, logger = _parse_args_and_services(argv)
+	telemetry = services.telemetry
+
+	# Read input
+	rc, content, err = _read_input_or_stdin(path, services)
+	if rc != 0:
+		services.error_handler(err)
+		return rc
+
+	adapter_model, rc = _parse_adapter(content, services)
+	if rc != 0:
+		return rc
+
+	ir, rc = _compile_adapter(adapter_model, services)
+	if rc != 0:
+		return rc
+
+	rc = _validate_ir_instance(ir, services)
+	if rc != 0:
+		return rc
+
+	ir = _postprocess_ir(ir)
+
+	rc = _render_ir_and_output(ir, options, services)
 
 	# Best-effort telemetry shutdown
 	try:
@@ -150,7 +175,7 @@ def main(argv: list) -> int:
 	except Exception:
 		pass
 
-	return EXIT_SUCCESS
+	return int(rc or EXIT_SUCCESS)
 
 
 if __name__ == "__main__":
