@@ -15,10 +15,12 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - name: Install test dependencies
+      - name: Install test dependencies and uv runner
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest pytest-cov
+          # Install the `uv` runner used by local development (try common package names)
+          python -m pip install uv || python -m pip install uv-build || python -m pip install uv_build
       - name: Run tests with coverage threshold
         run: uv run pytest --cov=src/flo --cov-report=term-missing --cov-fail-under=90
       - name: Install jsonschema
