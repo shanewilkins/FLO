@@ -11,13 +11,9 @@ from pathlib import Path
 
 APPROVED_SUBDIRS = {
     "adapters",
-    "analysis",
     "compiler",
-    "ir",
     "render",
     "services",
-    "io",
-    "cli",
     "core",  # Pseudo-layer for CLI scaffolding and orchestration; not a real package
 }
 
