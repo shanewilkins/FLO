@@ -25,4 +25,6 @@ def test_cli_writes_dot_file(tmp_path: Path):
     assert result.exit_code == 0
     assert out.exists()
     content = out.read_text(encoding="utf-8")
-    assert "digraph" in content
+    # assert DOT header and a minimal content snippet
+    assert content.strip().startswith("digraph")
+    assert "{" in content and "}" in content

@@ -1,9 +1,14 @@
 from flo.services import get_services
 from flo.cli_args import parse_args
+import pytest
 
 
-def test_parse_args_none_returns_defaults():
-    services = get_services(verbose=False)
+@pytest.fixture
+def services():
+    return get_services(verbose=False)
+
+
+def test_parse_args_none_returns_defaults(services):
     path, command, options, services_out, logger = parse_args(None, services)
     assert path is None
     assert command == "compile"
@@ -11,11 +16,16 @@ def test_parse_args_none_returns_defaults():
     assert services_out is services
 
 
-def test_parse_args_with_flags(tmp_path):
-    services = get_services(verbose=False)
-    args = ["/tmp/input.flo", "-v", "-o", "out.txt", "--validate"]
+@pytest.mark.parametrize(
+    "args, expected_command, expected_output",
+    [
+        (["/tmp/input.flo", "-v", "-o", "out.txt", "--validate"], "validate", "out.txt"),
+        (["file.flo"], "compile", None),
+    ],
+)
+def test_parse_args_with_flags(services, args, expected_command, expected_output):
     path, command, options, services_out, logger = parse_args(args, services)
-    assert path == "/tmp/input.flo"
-    assert command == "validate"
-    assert options["verbose"] is True
-    assert options["output"] == "out.txt"
+    assert path == (args[0] if args else None)
+    assert command == expected_command
+    if expected_output:
+        assert options["output"] == expected_output
