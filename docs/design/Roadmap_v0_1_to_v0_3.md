@@ -59,30 +59,28 @@ Planned work (step-by-step)
     - [x] Repository and `pyproject.toml` scaffolded; package imports and tests run.
 
 2. IR code (Phase 1)
-     - [ ] Implement `flo/ir/enums.py` (NodeKind, LaneType, ValueClass).
-     - [x] `flo/ir/models.py` implemented (minimal `Node` / `IR` dataclasses).
-     - [ ] `to_dict()` / `from_dict()` helpers and full JSON serialization.
+    - [x] Implement `flo/ir/enums.py` (NodeKind, LaneType, ValueClass).
+    - [x] `flo/ir/models.py` implemented (minimal `Node` / `IR` dataclasses).
+    - [x] `to_dict()` / `from_dict()` helpers and JSON serialization helpers added (basic dataclass <-> JSON mapping).
 
 3. IR utilities & validation
-         - [ ] Implement SCC condensation utility (Tarjan/Kosaraju) and mapping tables.
+         - [x] SCC condensation utility (Tarjan) implemented (`flo/analysis/scc.py`) and tested.
          - [x] `flo/ir/validate.py` present and performs basic structural checks
-             (id uniqueness, node presence).
+             (id uniqueness, node presence); JSON Schema validation helper added (requires `jsonschema`).
 
 4. YAML adapter + parser (Phase 2)
-         - [x] Pydantic-aware adapter model abstraction (`flo/adapters/models.py`) with
-             a fallback for environments without Pydantic.
+         - [x] Pydantic v2-backed adapter model abstraction (`flo/adapters/models.py`) (fallback removed — Pydantic required).
          - [x] `flo/adapters/yaml_loader.py` implemented and returns adapter model instances.
 
 5. Compiler: YAML → IR
          - [x] `flo/compiler/compile.py` implemented as a minimal compiler that emits
              the canonical `IR` dataclass used by downstream tools.
          - [ ] Implement advanced compilation rules: sequential-edge inference,
-             decision outcome wiring, and `rework` heuristics.
+             decision outcome wiring, and `rework` heuristics (work in progress).
 
 6. Tests
          - [x] Extensive unit and integration tests added across `tests/` including
-             parametrized example-based tests and CLI integration tests. Coverage
-             enforced in CI (>=90%).
+             parametrized example-based tests and CLI integration tests. Tests refactored to use fixtures and factories where practical. Coverage enforced in CI (>=90%) and currently ~95% locally.
 
 7. Renderers
      - [x] Basic DOT renderers implemented (`flo/render/graphviz_dot.py`).
@@ -95,28 +93,43 @@ Planned work (step-by-step)
 
 9. CI and release
          - [x] CI workflow added and extended; tests run in CI. Coverage enforcement
-             configured (`--cov-fail-under=90`).
-         - [ ] Add JSON Schema validation step and finalize release tagging process.
+             configured (`--cov-fail-under=90`). Import-check merged into main CI and CI steps updated to use the project's `uv` runner for script invocations.
+         - [x] JSON Schema validation script added to CI, but it currently fails because the compiler output does not yet match the schema (see notes below).
 
 Acceptance criteria for v0.1
 
 - `flo validate <file>` parses, compiles, and validates `.flo` files with
-    helpful diagnostics.
+    helpful diagnostics. (Implemented and tested.)
 - `flo compile <file>` emits canonical IR JSON that validates against
-    `schema/flo_ir.json`.
+    `schema/flo_ir.json`. (Partially implemented — compiler emits the minimal `IR` dataclass; mapping to schema fields `process`/`edges` is pending.)
 - `flo render --style swimlane <file>` emits a DOT graph with node IDs,
-    lane clusters, and decision labels.
+    lane clusters, and decision labels. (Basic renderer present; swimlane style pending.)
 - All components use the canonical IR as the single source of truth.
 
 Current acceptance status:
 
 - `flo validate` — basic parsing and validation implemented and tested.
-- `flo compile` — emits the canonical `IR` dataclass (JSON serialization helpers pending).
+- `flo compile` — emits the canonical `IR` dataclass and JSON helpers; does not yet produce schema-shaped IR expected by `schema/flo_ir.json`.
 - `flo render --style swimlane` — not implemented yet (basic DOT renderer exists).
 
-Remaining high-priority v0.1 tasks: implement full JSON (de)serializers for IR,
-complete SCC condensation, enhance the renderer (lane clusters & labels), and
-add JSON Schema validation in CI.
+Remaining high-priority v0.1 tasks:
+
+- Implement mapping from compiled `IR` to the JSON Schema shape (`process`, `nodes`, `edges`) so schema validation passes in CI. This is the main outstanding reference-implementation item.
+- Add advanced compilation rules: sequential-edge inference, decision outcome wiring, and `rework` heuristics.
+- Expand serializer/deserializer coverage and ensure `IR.to_dict()` is schema-aligned.
+- Cover remaining telemetry shutdown/span-processor branches in tests.
+- Triage complexity hotspots (`scc_condense`, `main`) and address or justify thresholds.
+- Address vulture findings (unused/reachable code) or add explicit markers.
+    - A vulture whitelist will be used to suppress known false positives for the
+        current reference implementation (for example: Click-registered CLI
+        handlers and enum members that are implemented as part of later v0.1
+        work).
+    - Acceptance criterion: any symbol that was whitelisted because it maps to
+        planned v0.1 functionality MUST be removed from the whitelist and
+        validated by CI once the corresponding feature is implemented (e.g.
+        `run_cmd`/Click handlers, `NodeKind`/`LaneType` members, and compiler
+        edge-wiring). CI must show vulture no longer reports those items after
+        un-whitelisting.
 
 Operational guardrails (v0.1)
 
