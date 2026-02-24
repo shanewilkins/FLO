@@ -15,7 +15,9 @@ from flo.services.errors import (
 	CompileError,
 	ValidationError,
 	RenderError,
+	map_exception_to_rc,
 )
+from flo.services.telemetry import get_tracer
 from flo.services import get_services
 
 from .core.cli_args import parse_args
@@ -147,35 +149,78 @@ def main(argv: list) -> int:
 	path, command, options, services, logger = _parse_args_and_services(argv)
 	telemetry = services.telemetry
 
-	# Read input
-	rc, content, err = _read_input_or_stdin(path, services)
-	if rc != 0:
-		services.error_handler(err)
-		return rc
+	tracer = get_tracer("flo.pipeline")
 
-	adapter_model, rc = _parse_adapter(content, services)
-	if rc != 0:
-		return rc
+	def _run_pipeline() -> int:
+		"""Run pipeline steps inside a tracer span and return final rc."""
+		with tracer.start_as_current_span("pipeline.run") as span:
+			# Read input
+			rc, content, err = _read_input_or_stdin(path, services)
+			if rc != 0:
+				services.error_handler(err)
+				return rc
 
-	ir, rc = _compile_adapter(adapter_model, services)
-	if rc != 0:
-		return rc
+			adapter_model, rc = _parse_adapter(content, services)
+			if rc != 0:
+				return rc
 
-	rc = _validate_ir_instance(ir, services)
-	if rc != 0:
-		return rc
+			ir, rc = _compile_adapter(adapter_model, services)
+			if rc != 0:
+				return rc
 
-	ir = _postprocess_ir(ir)
+			rc = _validate_ir_instance(ir, services)
+			if rc != 0:
+				return rc
 
-	rc = _render_ir_and_output(ir, options, services)
+			ir = _postprocess_ir(ir)
 
-	# Best-effort telemetry shutdown
+			rc = _render_ir_and_output(ir, options, services)
+
+			# attach final rc to span if supported
+			try:
+				setter = getattr(span, "set_attribute", None)
+				if callable(setter):
+					setter("pipeline.rc", int(rc or EXIT_SUCCESS))
+			except Exception:
+				pass
+
+			return int(rc or EXIT_SUCCESS)
+
+	# Orchestrate pipeline with centralized exception mapping
 	try:
-		telemetry.shutdown()
-	except Exception:
-		pass
+		return _run_pipeline()
+	except Exception as e:
+		rc, msg, internal = map_exception_to_rc(e)
+		if internal:
+			# unexpected/internal: log exception with traceback
+			try:
+				services.logger.exception(msg)
+			except Exception:
+				pass
+		# Surface user-facing message for domain errors or fallback
+		try:
+			services.error_handler(msg)
+		except Exception:
+			pass
 
-	return int(rc or EXIT_SUCCESS)
+		# best-effort: attach error info to telemetry root span
+		try:
+			with tracer.start_as_current_span("pipeline.error") as err_span:
+				setter = getattr(err_span, "set_attribute", None)
+				if callable(setter):
+					setter("pipeline.error", True)
+					setter("pipeline.internal", bool(internal))
+					setter("pipeline.error_message", msg)
+		except Exception:
+			pass
+
+		# Best-effort telemetry shutdown
+		try:
+			telemetry.shutdown()
+		except Exception:
+			pass
+
+		return int(rc)
 
 
 if __name__ == "__main__":
