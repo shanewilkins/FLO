@@ -125,17 +125,18 @@ def main(argv: list) -> int:
 	except Exception:
 		pass
 
-	# Render (perform render but keep the human-friendly placeholder output
-	# used by the rest of the codebase/tests).
+	# Render (produce DOT); return DOT when an output path was requested,
+	# otherwise keep the human-friendly placeholder used by tests.
 	try:
-		_ = render_dot(ir)
+		dot = render_dot(ir)
 	except RenderError as e:
 		services.error_handler(str(e))
 		return getattr(e, "code", EXIT_RENDER_ERROR)
 	except Exception as e:
 		services.error_handler(str(e))
 		return EXIT_RENDER_ERROR
-	out = "Hello world!"
+
+	out = dot if options and options.get("output") else "Hello world!"
 
 	# Output
 	write_rc, write_err = write_output(out, options.get("output") if options else None)

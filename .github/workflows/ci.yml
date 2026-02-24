@@ -15,8 +15,12 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - name: Run tests
-        run: uv run pytest
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest pytest-cov
+      - name: Run tests with coverage threshold
+        run: uv run pytest --cov=src/flo --cov-report=term-missing --cov-fail-under=90
       - name: Run import checker
         run: python scripts/check_imports.py
       - name: Run complexity checker
