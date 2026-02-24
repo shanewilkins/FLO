@@ -12,4 +12,4 @@ def test_cli_run_cmd_using_click(tmp_flo_file):
     print("DEBUG OUTPUT:\n", result.output)
     print("DEBUG EXC:\n", repr(result.exception))
     assert result.exit_code == 0
-    assert "Hello world!" in result.output
+    assert "digraph" in result.output

@@ -31,12 +31,12 @@ def test_run_content_with_example_files():
         rc, out, err = run_content(content)
 
         assert rc == EXIT_SUCCESS
-        assert out == "Hello world!"
+        assert "digraph" in out
         assert err == ""
 
 
 def test_run_content_empty_returns_placeholder():
     rc, out, err = run_content("")
     assert rc == EXIT_SUCCESS
-    assert out == "Hello world!"
+    assert out == ""
     assert err == ""

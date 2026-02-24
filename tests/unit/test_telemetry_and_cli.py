@@ -58,10 +58,11 @@ def test_init_telemetry_with_console_processor_and_provider_shutdown(monkeypatch
 
     t = telemetry_mod.init_telemetry("testsvc", console_export=True)
     assert t.tracer == "fake-tracer"
-
     # calling shutdown should call provider.shutdown()
+    prov = telemetry_mod._provider
     t.shutdown()
-    # provider should be cleared
+    # provider should have been asked to shutdown and then cleared
+    assert getattr(prov, "shutdown_called", False) is True
     assert getattr(telemetry_mod, "_provider") is None
 
 

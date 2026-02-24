@@ -21,6 +21,6 @@ def test_cli_run_all_examples():
 
     for ex in examples:
         result = runner.invoke(cli, ["run", str(ex)])
-        # basic sanity: CLI returns success and prints the placeholder
+        # basic sanity: CLI returns success and prints the rendered DOT
         assert result.exit_code == 0
-        assert "Hello world!" in result.output
+        assert "digraph" in result.output

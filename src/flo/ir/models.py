@@ -27,10 +27,57 @@ class IR:
 
     name: str
     nodes: List[Node]
+    # When True, `to_dict()` will emit the schema-shaped IR
+    schema_aligned: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
-        """Return a plain dict representation of the IR suitable for JSON."""
-        return {"name": self.name, "nodes": [self._node_to_dict(n) for n in self.nodes]}
+        """Return a plain dict representation of the IR suitable for JSON.
+
+        When `schema_aligned` is True this returns the schema-shaped
+        mapping with `process`, `nodes`, and `edges` suitable for
+        JSON Schema validation.
+        """
+        if not self.schema_aligned:
+            return {"name": self.name, "nodes": [self._node_to_dict(n) for n in self.nodes]}
+
+        return self._to_schema_dict()
+
+    def _to_schema_dict(self) -> Dict[str, Any]:
+        """Return the schema-shaped representation (process/nodes/edges).
+
+        Implementation notes:
+        - Collect edge pairs first, then enumerate to assign stable ids.
+        - Normalize `attrs` once per node and avoid repeated isinstance checks
+          in the hot path.
+        """
+        proc_id = self.name or "generated"
+        process = {"id": proc_id, "name": proc_id}
+
+        nodes_out: List[Dict[str, Any]] = []
+        edge_pairs: List[tuple[str, str]] = []
+
+        for n in self.nodes:
+            nd: Dict[str, Any] = {"id": n.id, "kind": n.type}
+            attrs = n.attrs or {}
+            if isinstance(attrs, dict):
+                name = attrs.get("name")
+                if name is not None:
+                    nd["name"] = name
+                lane = attrs.get("lane")
+                if lane is not None:
+                    nd["lane"] = lane
+                targets = attrs.get("edges") or []
+                if isinstance(targets, list):
+                    for tgt in targets:
+                        edge_pairs.append((n.id, str(tgt)))
+
+            nodes_out.append(nd)
+
+        edges_out: List[Dict[str, Any]] = [
+            {"id": f"e_{i}", "source": s, "target": t} for i, (s, t) in enumerate(edge_pairs)
+        ]
+
+        return {"process": process, "nodes": nodes_out, "edges": edges_out}
 
     @staticmethod
     def _node_to_dict(n: Node) -> Dict[str, Any]:

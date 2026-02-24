@@ -51,9 +51,6 @@ def validate_against_schema(ir: IR) -> None:
         schema = json.load(fh)
 
     instance = ir.to_dict()
-    if isinstance(instance, dict) and "process" not in instance:
-        instance = _translate_minimal_ir(instance)
-
     validate_fn = getattr(jsonschema, "validate", None)
     if not callable(validate_fn):
         raise RuntimeError("jsonschema.validate is not available for schema validation")
@@ -62,6 +59,23 @@ def validate_against_schema(ir: IR) -> None:
         validate_fn(instance=instance, schema=schema)
     except Exception as e:
         raise ValidationError(f"schema validation failed: {e}")
+
+
+def ensure_schema_aligned(ir: object) -> None:
+    """Ensure `ir` is an `IR` with schema-shaped output and validate it.
+
+    Raises `ValidationError` if the instance is not an `IR` or if the
+    `IR` is not schema-aligned or fails JSON Schema validation.
+    """
+    if not isinstance(ir, IR):
+        raise ValidationError("compiled output is not an IR instance")
+
+    if not getattr(ir, "schema_aligned", False):
+        raise ValidationError("compiled IR is not schema_aligned; compiler must emit schema-shaped IR")
+
+    # Delegate to the JSON Schema validator; any errors are wrapped
+    # as `ValidationError` by the caller when appropriate.
+    validate_against_schema(ir)
 
 
 def _locate_schema(name: str) -> Path:
@@ -77,30 +91,3 @@ def _locate_schema(name: str) -> Path:
         return alt
     raise ValidationError(f"schema file not found: {candidate}")
 
-
-def _translate_minimal_ir(instance: dict) -> dict:
-    """Translate minimal dataclass-shaped IR into schema-shaped instance.
-
-    This is a temporary translator used by CI while compiler mapping is
-    completed. Keeps translations small and conservative.
-    """
-    # TODO(v0.1): remove this translator once the compiler emits the
-    # schema-shaped IR (process/nodes/edges). See roadmap acceptance
-    # criteria for un-whitelisting vulture items.
-    proc_id = instance.get("name") or "generated"
-    process = {"id": proc_id, "name": instance.get("name") or proc_id}
-
-    nodes_out = []
-    for n in instance.get("nodes", []):
-        nid = n.get("id")
-        kind = n.get("type") or n.get("kind") or "task"
-        attrs = n.get("attrs") or {}
-        node_obj = {"id": nid, "kind": kind}
-        if isinstance(attrs, dict):
-            if "name" in attrs:
-                node_obj["name"] = attrs["name"]
-            if "lane" in attrs:
-                node_obj["lane"] = attrs["lane"]
-        nodes_out.append(node_obj)
-
-    return {"process": process, "nodes": nodes_out, "edges": []}

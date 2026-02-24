@@ -14,7 +14,8 @@ from flo.services.errors import EXIT_SUCCESS, ParseError, CompileError, Validati
 
 from flo.adapters import parse_adapter
 from flo.compiler import compile_adapter
-from flo.ir import validate_ir
+from flo.ir import validate_ir, IR
+from flo.ir.validate import ensure_schema_aligned
 from flo.analysis import scc_condense
 from flo.render import render_dot
 
@@ -26,7 +27,8 @@ def run_content(content: str, command: str = "compile", options: dict | None = N
     For empty content we preserve the original simple behaviour used by tests.
     """
     if not content:
-        return EXIT_SUCCESS, "Hello world!", ""
+        # No content -> no output
+        return EXIT_SUCCESS, "", ""
 
     try:
         adapter_model = parse_adapter(content)
@@ -43,6 +45,19 @@ def run_content(content: str, command: str = "compile", options: dict | None = N
     except Exception as e:
         raise ValidationError(str(e))
 
+    # Schema validation: ensure the compiled IR conforms to the
+    # authoritative JSON Schema. This enforces the contract at the
+    # boundary so CLI/CI will fail fast on non-conforming output.
+    # Enforce the schema-shaped contract for compiled IR.
+    # Only enforce the schema contract for real `IR` instances; tests
+    # and some callers may monkeypatch the compiler to return arbitrary
+    # objects and expect run_content to continue to the render step.
+    if isinstance(ir, IR):
+        try:
+            ensure_schema_aligned(ir)
+        except Exception as e:
+            raise ValidationError(str(e))
+
     # Post-processing (SCC condensation)
     try:
         ir = scc_condense(ir)
@@ -57,13 +72,9 @@ def run_content(content: str, command: str = "compile", options: dict | None = N
     except Exception as e:
         raise RenderError(str(e))
 
-    # If the caller requested an explicit output file, return the DOT so
-    # the CLI can write the rendered graph. Otherwise preserve the
-    # human-friendly placeholder used across the test-suite.
-    if options and options.get("output"):
-        return EXIT_SUCCESS, _dot, ""
-
-    return EXIT_SUCCESS, "Hello world!", ""
+    # Return the rendered DOT text to callers; the CLI will handle writing
+    # to files when `options["output"]` is provided.
+    return EXIT_SUCCESS, _dot, ""
 
 
 def run() -> Tuple[int, str, str]:

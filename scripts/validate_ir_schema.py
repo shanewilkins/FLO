@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from flo.adapters import parse_adapter
 from flo.compiler import compile_adapter
-from flo.ir.validate import validate_against_schema
+from flo.ir.validate import ensure_schema_aligned
 
 
 def main() -> int:
@@ -31,7 +31,7 @@ def main() -> int:
         adapter = parse_adapter(content)
         ir = compile_adapter(adapter)
         try:
-            validate_against_schema(ir)
+            ensure_schema_aligned(ir)
             print("  OK")
         except Exception as e:
             ok = False

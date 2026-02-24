@@ -129,7 +129,7 @@ def _render_ir_and_output(ir, options, services):
 		services.error_handler(str(e))
 		return EXIT_RENDER_ERROR
 
-	out = dot if options and options.get("output") else "Hello world!"
+	out = dot
 	write_rc, write_err = write_output(out, options.get("output") if options else None)
 	if write_rc != 0:
 		services.error_handler(write_err)
@@ -145,33 +145,33 @@ def main(argv: list) -> int:
 	integer exit code suitable for `sys.exit`.
 	"""
 	path, command, options, services, logger = _parse_args_and_services(argv)
-	telemetry = services.telemetry
+	runner = MainRunner(path=path, command=command, options=options, services=services)
 
 	# Read input
-	rc, content, err = _read_input_or_stdin(path, services)
+	rc, content, err = runner.read_input()
 	if rc != 0:
 		services.error_handler(err)
 		return rc
 
-	adapter_model, rc = _parse_adapter(content, services)
+	adapter_model, rc = runner.parse_adapter(content)
 	if rc != 0:
 		return rc
 
-	ir, rc = _compile_adapter(adapter_model, services)
+	ir, rc = runner.compile_adapter(adapter_model)
 	if rc != 0:
 		return rc
 
-	rc = _validate_ir_instance(ir, services)
+	rc = runner.validate_ir(ir)
 	if rc != 0:
 		return rc
 
-	ir = _postprocess_ir(ir)
+	ir = runner.postprocess_ir(ir)
 
-	rc = _render_ir_and_output(ir, options, services)
+	rc = runner.render_and_output(ir)
 
 	# Best-effort telemetry shutdown
 	try:
-		telemetry.shutdown()
+		runner.telemetry.shutdown()
 	except Exception:
 		pass
 

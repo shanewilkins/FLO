@@ -12,7 +12,7 @@ def make_dummy_trace():
             def __enter__(self):
                 return self
 
-            def __exit__(self, exc_type, exc, tb):
+            def __exit__(self, *args):
                 return None
 
         def start_as_current_span(self, name: str, **_):
@@ -71,7 +71,9 @@ def test_init_telemetry_with_otel(monkeypatch):
         pass
 
     # shutdown should be callable and not raise
+    prov = tel._provider
     t.shutdown()
+    assert getattr(prov, "_shutdown_called", False) is True
 
 
 def test_shutdown_fallback_to_span_processors(monkeypatch):

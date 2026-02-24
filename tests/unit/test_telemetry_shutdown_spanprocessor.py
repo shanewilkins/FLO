@@ -34,8 +34,10 @@ def test_init_telemetry_prefers_provider_shutdown(monkeypatch):
     monkeypatch.setattr(telemetry_mod, "_provider", None)
 
     t = telemetry_mod.init_telemetry("svc", console_export=False)
-    # call the returned shutdown which should prefer provider.shutdown()
+    # capture provider, call shutdown and assert provider.shutdown was used
+    prov = telemetry_mod._provider
     t.shutdown()
+    assert getattr(prov, "shutdown_called", False) is True
     assert telemetry_mod._provider is None
 
 

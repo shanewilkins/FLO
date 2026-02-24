@@ -103,3 +103,19 @@ FLO treats processes as first-class artifacts:
 -   Validatable
 
 It is a small language by design.
+
+------------------------------------------------------------------------
+
+## Schema Contract & Migration
+
+As of v0.1 the compiler emits a schema-shaped canonical IR and the
+runtime enforces that contract. The compiler must set `IR.schema_aligned`
+to `True` and `IR.to_dict()` will produce the top-level mapping with
+`process`, `nodes`, and `edges` fields required by the authoritative
+JSON Schema in `schema/flo_ir.json`.
+
+If you are upgrading from an earlier development version that relied on
+an internal IR translator, update any custom compiler integrations to
+emit the schema-shaped IR directly. The translator was intentionally
+removed; CI now validates example outputs using the same schema and
+will fail when the contract is violated.
