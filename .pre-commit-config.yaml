@@ -40,8 +40,9 @@ repos:
         name: vulture (via uv)
         # run vulture but do not fail the commit for now; results are
         # reported for manual triage. This keeps pre-commit green while
-        # we iterate toward fewer false positives.
-        entry: bash -c "uv run vulture src/flo tests --min-confidence 60 || true"
+        # we iterate toward fewer false positives. If a whitelist exists,
+        # pass it to vulture so reports focus on new findings.
+        entry: bash -c "if [ -f vulture_whitelist.py ]; then uv run vulture src/flo tests --min-confidence 60 vulture_whitelist.py || true; else uv run vulture src/flo tests --min-confidence 60 || true; fi"
         language: system
         types: [python]
         pass_filenames: false

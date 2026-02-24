@@ -35,7 +35,11 @@ jobs:
         run: |
           # Run vulture on the main package and tests; skip missing paths.
           if [ -d src/flo ]; then
-            uv run vulture src/flo tests --min-confidence 60 || true
+            if [ -f vulture_whitelist.py ]; then
+              uv run vulture src/flo tests --min-confidence 60 vulture_whitelist.py || true
+            else
+              uv run vulture src/flo tests --min-confidence 60 || true
+            fi
           else
             echo "src/flo not present, skipping vulture run"
           fi
