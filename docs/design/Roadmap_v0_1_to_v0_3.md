@@ -19,6 +19,14 @@ Scope & deliverables
 - Add canonical example processes in `examples/` to exercise linear and cyclic
     behaviors.
 
+**Status (summary)**
+
+- [x] Example files present in `examples/` and used by tests.
+- [x] `schema/flo_ir.json` and `schema/flo_types.json` exist in `schema/`.
+- [x] Basic ontology/docs added under `docs/`.
+
+Remaining v0.0 work: review and finalize the IR/typed-metadata docs for v0.1.
+
 Acceptance criteria
 
 - IR and typed-metadata schemas committed and reviewed.
@@ -48,45 +56,47 @@ Planned work (step-by-step)
      - Create `reference-implementation/python/flo/` and add `pyproject.toml`.
      - Minimal packaging so `python -m pytest` runs under the reference folder.
 
+    - [x] Repository and `pyproject.toml` scaffolded; package imports and tests run.
+
 2. IR code (Phase 1)
-     - Implement `flo/ir/enums.py` (NodeKind, LaneType, ValueClass) and
-         `flo/ir/models.py` (OwnerRef, Lane, Node, Edge, FlowProcess) mirroring
-         `schema/flo_ir.json`.
-     - Provide `to_dict()` / `from_dict()` helpers and JSON serialization.
+     - [ ] Implement `flo/ir/enums.py` (NodeKind, LaneType, ValueClass).
+     - [x] `flo/ir/models.py` implemented (minimal `Node` / `IR` dataclasses).
+     - [ ] `to_dict()` / `from_dict()` helpers and full JSON serialization.
 
 3. IR utilities & validation
-     - Implement SCC condensation utility (Tarjan/Kosaraju) and mapping tables.
-     - Implement `flo/ir/validate.py` for structural checks: id uniqueness,
-         reference resolution, node-kind rules (decision outcomes), and basic
-         typed-metadata checks against `schema/flo_types.json`.
+         - [ ] Implement SCC condensation utility (Tarjan/Kosaraju) and mapping tables.
+         - [x] `flo/ir/validate.py` present and performs basic structural checks
+             (id uniqueness, node presence).
 
 4. YAML adapter + parser (Phase 2)
-     - Add Pydantic-based adapter models: `flo/adapters/yaml_schema.py`.
-     - Implement `flo/adapters/yaml_loader.py` to load `.flo` files, coerce types,
-         and return adapter model instances.
+         - [x] Pydantic-aware adapter model abstraction (`flo/adapters/models.py`) with
+             a fallback for environments without Pydantic.
+         - [x] `flo/adapters/yaml_loader.py` implemented and returns adapter model instances.
 
 5. Compiler: YAML → IR
-     - `flo/compiler/compile.py` compiles adapter models to `FlowProcess` IR.
-     - Implement sequential-edge rule (implicit sequential edges), decision
-         outcome wiring, and a `rework` heuristic (tagging edges that create
-         back-references into ancestor SCCs).
+         - [x] `flo/compiler/compile.py` implemented as a minimal compiler that emits
+             the canonical `IR` dataclass used by downstream tools.
+         - [ ] Implement advanced compilation rules: sequential-edge inference,
+             decision outcome wiring, and `rework` heuristics.
 
 6. Tests
-     - Unit tests for compile/validate (e.g., `tests/test_compile_valid.py`,
-         `tests/test_compile_invalid.py`) using examples.
+         - [x] Extensive unit and integration tests added across `tests/` including
+             parametrized example-based tests and CLI integration tests. Coverage
+             enforced in CI (>=90%).
 
 7. Renderers
-     - `flo/render/graphviz_dot.py` with `render_flowchart_dot(process)` and
-         `render_swimlane_dot(process)` that only use the IR.
+     - [x] Basic DOT renderers implemented (`flo/render/graphviz_dot.py`).
+     - [ ] Enhance renderers to include node IDs, labels, lanes, and decision labels.
 
 8. CLI & UX
-     - `flo/cli.py` (Typer) with commands: `validate`, `compile` (emit IR JSON),
-         and `render` (DOT). Provide clear diagnostics with file/step IDs and
-         actionable hints.
+     - [x] CLI implemented (`flo/cli.py`) using Click thin wrapper and programmatic core.
+     - [x] `-o/--output` support to write rendered DOT files.
+     - [ ] Add `render --style swimlane` and richer user diagnostics.
 
 9. CI and release
-     - Add CI workflow: linting, JSON Schema checks, unit tests. Tag v0.1 once
-         CI is green and docs are finalized.
+         - [x] CI workflow added and extended; tests run in CI. Coverage enforcement
+             configured (`--cov-fail-under=90`).
+         - [ ] Add JSON Schema validation step and finalize release tagging process.
 
 Acceptance criteria for v0.1
 
@@ -97,6 +107,16 @@ Acceptance criteria for v0.1
 - `flo render --style swimlane <file>` emits a DOT graph with node IDs,
     lane clusters, and decision labels.
 - All components use the canonical IR as the single source of truth.
+
+Current acceptance status:
+
+- `flo validate` — basic parsing and validation implemented and tested.
+- `flo compile` — emits the canonical `IR` dataclass (JSON serialization helpers pending).
+- `flo render --style swimlane` — not implemented yet (basic DOT renderer exists).
+
+Remaining high-priority v0.1 tasks: implement full JSON (de)serializers for IR,
+complete SCC condensation, enhance the renderer (lane clusters & labels), and
+add JSON Schema validation in CI.
 
 Operational guardrails (v0.1)
 
