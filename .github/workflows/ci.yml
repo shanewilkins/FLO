@@ -23,14 +23,14 @@ jobs:
           python -m pip install uv || python -m pip install uv-build || python -m pip install uv_build
       - name: Run tests with coverage threshold
         run: uv run pytest --cov=src/flo --cov-report=term-missing --cov-fail-under=90
-      - name: Install jsonschema
-        run: python -m pip install jsonschema
-      - name: Validate example IRs against schema
-        run: python scripts/validate_ir_schema.py
-      - name: Run import checker
-        run: python scripts/check_imports.py
-      - name: Run complexity checker
-        run: python scripts/check_complexity.py
+      - name: Install jsonschema (in uv env)
+        run: uv run pip install jsonschema
+      - name: Validate example IRs against schema (uv)
+        run: uv run python scripts/validate_ir_schema.py
+      - name: Run import checker (uv)
+        run: uv run python scripts/check_imports.py
+      - name: Run complexity checker (uv)
+        run: uv run python scripts/check_complexity.py
       - name: Run vulture (unused code detector)
         run: |
           # Run vulture on the main package and tests; skip missing paths.
