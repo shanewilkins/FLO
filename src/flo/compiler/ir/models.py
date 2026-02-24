@@ -1,4 +1,4 @@
-"""Minimal canonical IR models used across the FLO toolchain."""
+"""Canonical IR models moved under compiler.ir."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import json
 
 @dataclass
 class Node:
-    """A single node in the canonical IR."""
+    """A node in the FLO IR."""
 
     id: str
     type: str
@@ -19,37 +19,23 @@ class Node:
 
 @dataclass
 class IR:
-    """A minimal canonical IR data structure used by render/analysis.
-
-    This is intentionally tiny and will be expanded as the project
-    progresses. Kept as dataclasses to avoid extra runtime deps.
-    """
+    """Represents a FLO intermediate representation (IR)."""
 
     name: str
     nodes: List[Node]
-    # When True, `to_dict()` will emit the schema-shaped IR
     schema_aligned: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
-        """Return a plain dict representation of the IR suitable for JSON.
+        """Return a dict representation of the IR.
 
-        When `schema_aligned` is True this returns the schema-shaped
-        mapping with `process`, `nodes`, and `edges` suitable for
-        JSON Schema validation.
+        If `schema_aligned` is False this returns a lightweight dict;
+        otherwise it returns the schema-shaped representation.
         """
         if not self.schema_aligned:
             return {"name": self.name, "nodes": [self._node_to_dict(n) for n in self.nodes]}
-
         return self._to_schema_dict()
 
     def _to_schema_dict(self) -> Dict[str, Any]:
-        """Return the schema-shaped representation (process/nodes/edges).
-
-        Implementation notes:
-        - Collect edge pairs first, then enumerate to assign stable ids.
-        - Normalize `attrs` once per node and avoid repeated isinstance checks
-          in the hot path.
-        """
         proc_id = self.name or "generated"
         process = {"id": proc_id, "name": proc_id}
 
@@ -81,22 +67,21 @@ class IR:
 
     @staticmethod
     def _node_to_dict(n: Node) -> Dict[str, Any]:
+        """Convert a `Node` instance to a plain dict."""
         return {"id": n.id, "type": n.type, "attrs": (n.attrs or {})}
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "IR":
-        """Construct an `IR` instance from a plain mapping (e.g. loaded JSON)."""
+        """Construct an `IR` from a dict representation."""
         nodes = []
         for nd in data.get("nodes", []):
             nodes.append(Node(id=nd.get("id", ""), type=nd.get("type", ""), attrs=nd.get("attrs", {})))
         return cls(name=data.get("name", ""), nodes=nodes)
 
     def to_json(self, path: Path | str | None = None) -> str:
-        """Return a pretty-printed JSON string for the IR; optionally write to `path`."""
+        """Serialize the IR to JSON and optionally write to `path`."""
         d = self.to_dict()
         s = json.dumps(d, indent=2)
         if path:
             Path(path).write_text(s, encoding="utf-8")
         return s
-        
-

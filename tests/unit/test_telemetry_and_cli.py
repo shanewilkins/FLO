@@ -114,7 +114,7 @@ def test_get_tracer_returns_noop_when_otel_missing(monkeypatch):
 
 def test_console_main_handles_clierror_and_telemetry_shutdown_is_suppressed(monkeypatch):
     # Import here to get the console_main function
-    from flo.cli import console_main
+    from flo.core.cli import console_main
     from flo.services.errors import CLIError
 
     # Fake services object
@@ -130,13 +130,13 @@ def test_console_main_handles_clierror_and_telemetry_shutdown_is_suppressed(monk
     monkeypatch.setattr(services_mod, "get_services", lambda verbose=False: services)
 
     # Monkeypatch parse_args (imported inside console_main)
-    cli_args_mod = _il.import_module("flo.cli_args")
+    cli_args_mod = _il.import_module("flo.core.cli_args")
     def fake_parse_args(argv, s):
         return ("-", "run", {}, services, None)
     monkeypatch.setattr(cli_args_mod, "parse_args", fake_parse_args)
 
     # read_input / run_content / write_output come from flo.io and flo.core
-    io_mod = _il.import_module("flo.io")
+    io_mod = _il.import_module("flo.services.io")
     core_mod = _il.import_module("flo.core")
     monkeypatch.setattr(io_mod, "read_input", lambda p: (0, "content", ""))
 

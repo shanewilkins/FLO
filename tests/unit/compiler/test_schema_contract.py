@@ -1,6 +1,6 @@
 from flo.compiler.compile import compile_adapter
-from flo.ir.validate import validate_against_schema
-from flo.ir.models import IR, Node
+from flo.compiler.ir.validate import validate_against_schema
+from flo.compiler.ir.models import IR, Node
 from flo.services.errors import ValidationError
 
 

@@ -1,7 +1,7 @@
 from pathlib import Path
 from click.testing import CliRunner
 
-from flo.cli import cli
+from flo.core.cli import cli
 
 
 def _repo_root(start: Path | None = None) -> Path:

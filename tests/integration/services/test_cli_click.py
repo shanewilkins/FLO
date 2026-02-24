@@ -1,6 +1,6 @@
 from click.testing import CliRunner
 
-from flo.cli import cli
+from flo.core.cli import cli
 
 
 def test_cli_run_cmd_using_click(tmp_flo_file):

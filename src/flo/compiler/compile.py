@@ -6,7 +6,7 @@ is a placeholder that will be implemented as part of v0.1.
 """
 from typing import Any, Dict
 
-from ..ir.models import IR, Node
+from .ir.models import IR, Node
 
 
 def compile_adapter(adapter_model: Dict[str, Any]) -> IR:

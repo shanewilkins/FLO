@@ -1,6 +1,6 @@
 import pytest
 
-from flo.analysis.scc import condense_scc
+from flo.compiler.analysis.scc import condense_scc
 
 
 def test_condense_scc_not_implemented():

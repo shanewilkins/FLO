@@ -14,7 +14,7 @@ APPROVED_SUBDIRS = {
     "compiler",
     "render",
     "services",
-    "core",  # Pseudo-layer for CLI scaffolding and orchestration; not a real package
+    "core"  # Pseudo-layer for CLI scaffolding and orchestration; not a real package
 }
 
 

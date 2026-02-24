@@ -1,5 +1,5 @@
 import pytest
-from flo.ir.validate import validate_ir
+from flo.compiler.ir.validate import validate_ir
 from flo.services.errors import ValidationError
 
 

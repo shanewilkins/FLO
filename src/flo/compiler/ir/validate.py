@@ -1,5 +1,4 @@
-"""Validation helpers for the FLO IR types."""
-
+"""Validation helpers for the FLO IR types (now under compiler.ir)."""
 from __future__ import annotations
 
 from typing import Any
@@ -18,10 +17,9 @@ except Exception:  # pragma: no cover - optional
 
 
 def validate_ir(obj: Any) -> None:
-    """Validate that `obj` is a sensible `IR` instance.
+    """Validate a basic IR instance for structural correctness.
 
-    Raises `ValidationError` on failure so callers can map to CLI exit
-    codes consistently.
+    Raises `ValidationError` on failure.
     """
     if not isinstance(obj, IR):
         raise ValidationError("object is not an IR instance")
@@ -35,12 +33,9 @@ def validate_ir(obj: Any) -> None:
 
 
 def validate_against_schema(ir: IR) -> None:
-    """Validate an `IR` instance against the `schema/flo_ir.json` schema.
+    """Validate an `IR` instance against the JSON schema file.
 
-    This is optional and requires `jsonschema` to be installed. When the
-    package is not available a `RuntimeError` is raised to indicate the
-    missing dependency; callers in CI should ensure `jsonschema` is
-    installed.
+    Raises `ValidationError` on schema validation failure.
     """
     schema_path = _locate_schema("flo_ir.json")
 
@@ -62,32 +57,21 @@ def validate_against_schema(ir: IR) -> None:
 
 
 def ensure_schema_aligned(ir: object) -> None:
-    """Ensure `ir` is an `IR` with schema-shaped output and validate it.
-
-    Raises `ValidationError` if the instance is not an `IR` or if the
-    `IR` is not schema-aligned or fails JSON Schema validation.
-    """
+    """Ensure the given IR is schema_aligned and valid against the schema."""
     if not isinstance(ir, IR):
         raise ValidationError("compiled output is not an IR instance")
 
     if not getattr(ir, "schema_aligned", False):
         raise ValidationError("compiled IR is not schema_aligned; compiler must emit schema-shaped IR")
 
-    # Delegate to the JSON Schema validator; any errors are wrapped
-    # as `ValidationError` by the caller when appropriate.
     validate_against_schema(ir)
 
 
 def _locate_schema(name: str) -> Path:
-    """Return a Path to `name` in project schema dirs or raise ValidationError.
-
-    Prefers `src/schema/` then falls back to repository root `schema/`.
-    """
-    candidate = Path(__file__).resolve().parents[2] / "schema" / name
+    candidate = Path(__file__).resolve().parents[3] / "schema" / name
     if candidate.exists():
         return candidate
-    alt = Path(__file__).resolve().parents[3] / "schema" / name
+    alt = Path(__file__).resolve().parents[4] / "schema" / name
     if alt.exists():
         return alt
     raise ValidationError(f"schema file not found: {candidate}")
-

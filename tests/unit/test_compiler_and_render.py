@@ -2,7 +2,7 @@ from pathlib import Path
 
 from flo.adapters import parse_adapter
 from flo.compiler import compile_adapter
-from flo.ir import validate_ir
+from flo.compiler.ir import validate_ir
 from flo.render import render_dot
 
 

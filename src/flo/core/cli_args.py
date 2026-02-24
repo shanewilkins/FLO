@@ -1,9 +1,4 @@
-"""CLI argument parsing and service reconfiguration helper.
-
-Provides `parse_args(argv, services)` which returns
-(path, command, options, services, logger).
-"""
-
+"""CLI argument parsing and helpers placed under core package."""
 from __future__ import annotations
 
 from typing import Tuple
@@ -11,11 +6,12 @@ from typing import Tuple
 from flo.services import get_services, Services
 from structlog.stdlib import BoundLogger
 
-def parse_args(argv: list | None, services: Services) -> Tuple[str | None, str, dict, Services, BoundLogger]:
-    """Parse CLI arguments and optionally reconfigure `services`.
 
-    Returns a tuple: `(path, command, options, services, logger)` suitable
-    for use by the programmatic entrypoints.
+def parse_args(argv: list | None, services: Services) -> Tuple[str | None, str, dict, Services, BoundLogger]:
+    """Parse CLI arguments and return (path, command, options, services, logger).
+
+    This is a thin wrapper around argparse that returns normalized
+    command, options and a services/logger pair for downstream use.
     """
     import argparse
 

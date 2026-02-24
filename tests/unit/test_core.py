@@ -2,7 +2,6 @@ import pytest
 
 from flo.core import run_content, run
 from flo.services.errors import ParseError, CompileError, ValidationError, RenderError
-from flo.ir.models import IR, Node
 
 
 def test_run_content_empty_returns_placeholder():

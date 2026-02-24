@@ -1,5 +1,4 @@
-"""Command-line interface (Click) thin wrapper for programmatic core."""
-
+"""CLI helpers moved under `core` package."""
 from __future__ import annotations
 
 import sys
@@ -7,17 +6,10 @@ from typing import Optional
 
 import click
 
-# keep CLI thin; avoid importing programmatic main at module level
-
 
 @click.group()
 def cli() -> None:  # pragma: no cover - thin CLI layer
-    """FLO command-line interface (thin wrapper).
-
-    This module intentionally keeps CLI logic minimal and delegates to
-    the programmatic `flo.main` functions so tests exercise the core
-    functionality without invoking Click.
-    """
+    """Click command group for the FLO CLI."""
     pass
 
 
@@ -27,8 +19,7 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.option("-o", "--output", help="Write output to file")
 def run_cmd(path: Optional[str], validate: bool, verbose: bool, output: Optional[str]) -> None:  # pragma: no cover - integration
-    """Run or validate a .flo file. Use '-' for stdin."""
-    # Delegate to the programmatic `main` orchestrator to keep CLI thin.
+    """Invoke the CLI command handler with normalized arguments."""
     args: list[str] = []
     if path:
         args.append(path)
@@ -39,25 +30,19 @@ def run_cmd(path: Optional[str], validate: bool, verbose: bool, output: Optional
     if output:
         args.extend(["-o", output])
 
-    # Call the console-oriented entrypoint which implements full CLI semantics.
     rc = console_main(args)
     raise SystemExit(rc)
 
 
 def console_main(argv: list | None = None) -> int:  # pragma: no cover - thin wrapper
-    """Console entrypoint that mirrors the previous `main.console_main`.
+    """Thin console entry that wires services, IO, and core runners.
 
-    Kept here so Click-based invocation and the CLI runner can share the
-    same codepath without compatibility shims living in `main.py`.
+    Returns an integer exit code.
     """
     from flo.services import get_services
-    from flo.cli_args import parse_args
-    from flo.io import read_input, write_output
     from flo.core import run_content
-    from flo.services.errors import (
-        CLIError,
-        EXIT_USAGE,
-    )
+    from flo.services.io import read_input, write_output
+    from flo.services.errors import CLIError, EXIT_USAGE
 
     services = get_services(verbose=False)
     logger = services.logger
@@ -65,36 +50,30 @@ def console_main(argv: list | None = None) -> int:  # pragma: no cover - thin wr
     if argv is None:
         argv = sys.argv[1:]
 
+    from flo.core.cli_args import parse_args  # local import to avoid cycle
+
     path, command, options, services, logger = parse_args(argv, services)
     telemetry = services.telemetry
 
-    # Read input
-    rc, content, err = (0, "", "")
-    if path:
-        rc, content, err = read_input(path)
-    else:
-        rc, content, err = read_input("-")
+    rc, content, err = read_input(path) if path else read_input("-")
     if rc != 0:
         services.error_handler(err)
         return rc
 
-    # Process content (parse/compile/validate)
     try:
         rc, out, err = run_content(content, command=command, options=options)
     except CLIError as e:
         services.error_handler(str(e))
         return getattr(e, "code", EXIT_USAGE)
-    except Exception as e:  # pragma: no cover - unexpected
+    except Exception as e:
         services.error_handler(f"Unexpected error: {e}")
         return EXIT_USAGE
 
-    # Output
     write_rc, write_err = write_output(out, options.get("output") if options else None)
     if write_rc != 0:
         services.error_handler(write_err)
         return write_rc
 
-    # Best-effort telemetry shutdown
     try:
         telemetry.shutdown()
     except Exception:
@@ -104,22 +83,15 @@ def console_main(argv: list | None = None) -> int:  # pragma: no cover - thin wr
 
 
 def main(argv: list | None = None) -> int:  # pragma: no cover - CLI entry
-    """Entrypoint shim for setup.py/console script.
+    """Programmatic CLI entrypoint; if `argv` is None runs the Click CLI.
 
-    Accepts an optional argv list (useful for programmatic invocation).
-    Returns an exit code.
+    Returns an integer exit code suitable for `sys.exit`.
     """
     if argv is None:
-        # let click handle sys.argv
         cli()
         return 0
-    # When argv is provided, invoke Click programmatically.
     try:
         cli.main(args=argv, prog_name="flo")
         return 0
     except SystemExit as e:
         return int(getattr(e, "code", 0) or 0)
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

@@ -10,36 +10,25 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out
+        uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
-      - name: Install test dependencies and uv runner
+          python-version: '3.14'
+
+      - name: Prepare uv runner and project dev deps
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest pytest-cov
-          # Install the `uv` runner used by local development (try common package names)
-          python -m pip install uv || python -m pip install uv-build || python -m pip install uv_build
-      - name: Run tests with coverage threshold
+          # Install the uv runner used by local development
+          python -m pip install uv
+          # Sync project dependencies into the project virtualenv using uv
+          uv sync
+
+      - name: Run pre-commit hooks (match local pre-commit)
+        run: uv run pre-commit run --all-files
+
+      - name: Run test suite with coverage
         run: uv run pytest --cov=src/flo --cov-report=term-missing --cov-fail-under=90
-      - name: Install jsonschema (in uv env)
-        run: uv run pip install jsonschema
-      - name: Validate example IRs against schema (uv)
-        run: uv run python scripts/validate_ir_schema.py
-      - name: Run import checker (uv)
-        run: uv run python scripts/check_imports.py
-      - name: Run complexity checker (uv)
-        run: uv run python scripts/check_complexity.py
-      - name: Run vulture (unused code detector)
-        run: |
-          # Run vulture on the main package and tests; skip missing paths.
-          if [ -d src/flo ]; then
-            if [ -f vulture_whitelist.py ]; then
-              uv run vulture src/flo tests --min-confidence 60 vulture_whitelist.py || true
-            else
-              uv run vulture src/flo tests --min-confidence 60 || true
-            fi
-          else
-            echo "src/flo not present, skipping vulture run"
-          fi
+

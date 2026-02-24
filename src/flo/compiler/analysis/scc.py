@@ -1,22 +1,11 @@
-"""SCC condensation utilities.
-
-Implements a small Tarjan-based SCC detection and a conservative
-condensation routine that collapses strongly connected components into
-single nodes. The function is intentionally permissive: if the input IR
-doesn't expose an adjacency structure (via `attrs['edges']`) it returns the
-IR unchanged.
-"""
+"""SCC condensation utilities moved under compiler.analysis."""
 from __future__ import annotations
 
 from typing import List, Dict, Any, Tuple
-from flo.ir.models import IR, Node
+from flo.compiler.ir.models import IR, Node
 
 
 def _build_adjacency(ir: IR) -> Tuple[Dict[str, Node], Dict[str, List[str]], bool]:
-    """Return (id_to_node, adj, has_edges) for `ir`.
-
-    Conservatively handles missing or malformed `edges` attributes.
-    """
     id_to_node: Dict[str, Node] = {n.id: n for n in ir.nodes}
     adj: Dict[str, List[str]] = {}
     has_edges = False
@@ -34,10 +23,6 @@ def _build_adjacency(ir: IR) -> Tuple[Dict[str, Node], Dict[str, List[str]], boo
 
 
 def _tarjan_scc(adj: Dict[str, List[str]]) -> List[List[str]]:
-    """Tarjan's algorithm to find SCCs in `adj`.
-
-    Returns a list of components, each a list of node ids.
-    """
     index = 0
     index_map: Dict[str, int] = {}
     lowlink: Dict[str, int] = {}
@@ -77,10 +62,6 @@ def _tarjan_scc(adj: Dict[str, List[str]]) -> List[List[str]]:
 
 
 def _build_condensed_nodes(sccs: List[List[str]], id_to_node: Dict[str, Node]) -> Tuple[List[Node], Dict[str, str]]:
-    """Create representative nodes for SCCs and return (new_nodes, scc_map).
-
-    `scc_map` maps original node id -> representative id.
-    """
     new_nodes: List[Node] = []
     scc_map: Dict[str, str] = {}
     for i, comp in enumerate(sccs):
@@ -99,7 +80,6 @@ def _build_condensed_nodes(sccs: List[List[str]], id_to_node: Dict[str, Node]) -
 
 
 def _rebuild_edges(new_nodes: List[Node], adj: Dict[str, List[str]], scc_map: Dict[str, str]) -> None:
-    """Populate `edges` attrs on condensed `new_nodes` in-place."""
     for node in new_nodes:
         if node.attrs and node.attrs.get("members"):
             outs: List[str] = []
@@ -112,11 +92,9 @@ def _rebuild_edges(new_nodes: List[Node], adj: Dict[str, List[str]], scc_map: Di
 
 
 def scc_condense(ir: IR) -> IR:
-    """Condense strongly connected components in `ir`.
+    """Condense strongly-connected components in an IR into SCC nodes.
 
-    Expects nodes to have an `attrs` mapping that MAY contain an
-    `edges` list of target node ids. If no edges are present, the IR is
-    returned unchanged.
+    Returns the original IR if there are no edges or no condensation is needed.
     """
     id_to_node, adj, has_edges = _build_adjacency(ir)
     if not has_edges:
@@ -134,13 +112,10 @@ def scc_condense(ir: IR) -> IR:
 
 
 def condense_scc(process: Any) -> IR:
-    """Backward-compatible wrapper for older callers.
+    """Compatibility wrapper that accepts a generic process and condenses SCCs.
 
-    The historical API accepted a generic mapping and raised
-    `NotImplementedError` for non-IR inputs. Preserve that behavior for
-    compatibility while delegating to `scc_condense` for `IR` inputs.
+    Raises NotImplementedError for unsupported input types.
     """
     if not isinstance(process, IR):
         raise NotImplementedError("SCC condensation not implemented for this input type")
     return scc_condense(process)
-

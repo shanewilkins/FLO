@@ -1,7 +1,7 @@
 import io
 import sys
 
-from flo.io import read_input, write_output
+from flo.services.io import read_input, write_output
 from flo.services.errors import EXIT_RENDER_ERROR
 
 

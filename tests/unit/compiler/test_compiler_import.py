@@ -1,5 +1,5 @@
 from flo.compiler import compile_adapter
-from flo.ir import IR
+from flo.compiler.ir import IR
 
 
 def test_compile_adapter_stub():

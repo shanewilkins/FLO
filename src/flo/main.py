@@ -18,12 +18,12 @@ from flo.services.errors import (
 )
 from flo.services import get_services
 
-from .cli_args import parse_args
-from .io import read_input, write_output
+from .core.cli_args import parse_args
+from flo.services.io import read_input, write_output
 from flo.adapters import parse_adapter
 from flo.compiler import compile_adapter
-from flo.ir import validate_ir
-from flo.analysis import scc_condense
+from flo.compiler.ir import validate_ir
+from flo.compiler.analysis import scc_condense
 from flo.render import render_dot
 
 

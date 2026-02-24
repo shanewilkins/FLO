@@ -1,7 +1,7 @@
 import pytest
 
-from flo.ir.validate import ensure_schema_aligned
-from flo.ir.models import IR, Node
+from flo.compiler.ir.validate import ensure_schema_aligned
+from flo.compiler.ir.models import IR, Node
 from flo.services.errors import ValidationError
 from flo.core import run_content
 

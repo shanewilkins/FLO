@@ -1,5 +1,5 @@
 from pathlib import Path
-from flo.ir.models import IR
+from flo.compiler.ir.models import IR
 
 
 def test_ir_to_from_dict_and_json(tmp_path: Path, ir_factory, node_factory):

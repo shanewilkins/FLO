@@ -1,5 +1,5 @@
 from flo.services import get_services
-from flo.cli_args import parse_args
+from flo.core.cli_args import parse_args
 import pytest
 
 

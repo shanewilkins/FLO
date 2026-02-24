@@ -12,6 +12,10 @@ from flo.services.errors import EXIT_RENDER_ERROR
 
 
 def read_input(path: str) -> Tuple[int, str, str]:
+    """Read input from `path` or stdin when `path == '-'`.
+
+    Returns a tuple `(rc, content, err)` where `rc` is 0 on success.
+    """
     try:
         if path == "-":
             content = sys.stdin.read()
@@ -24,6 +28,10 @@ def read_input(path: str) -> Tuple[int, str, str]:
 
 
 def write_output(out: str, path: str | None) -> Tuple[int, str]:
+    """Write `out` to `path` or stdout when `path` is None.
+
+    Returns `(rc, err)` where `rc` is 0 on success.
+    """
     try:
         if path:
             with open(path, "w", encoding="utf-8") as fh:

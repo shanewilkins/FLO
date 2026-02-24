@@ -3,8 +3,8 @@ import io
 import pytest
 from pathlib import Path
 
-import flo.ir.validate as validate_mod
-from flo.ir.models import IR
+import flo.compiler.ir.validate as validate_mod
+from flo.compiler.ir.models import IR
 from flo.services.errors import ValidationError
 
 
