@@ -14,3 +14,6 @@ flo.egg-info/
 .roadmap/*.lock
 
 .roadmap/config.yaml  # Local user configuration (not to be shared)
+
+# Coverage output
+.coverage
