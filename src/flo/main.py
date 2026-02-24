@@ -18,6 +18,7 @@ from flo.services.errors import (
 	map_exception_to_rc,
 )
 from flo.services.telemetry import get_tracer
+import time
 from flo.services import get_services
 
 from .core.cli_args import parse_args
@@ -151,9 +152,13 @@ def main(argv: list) -> int:
 
 	tracer = get_tracer("flo.pipeline")
 
+	start: float | None = None
+
 	def _run_pipeline() -> int:
 		"""Run pipeline steps inside a tracer span and return final rc."""
+		nonlocal start
 		with tracer.start_as_current_span("pipeline.run") as span:
+			start = time.perf_counter()
 			# Read input
 			rc, content, err = _read_input_or_stdin(path, services)
 			if rc != 0:
@@ -176,11 +181,14 @@ def main(argv: list) -> int:
 
 			rc = _render_ir_and_output(ir, options, services)
 
-			# attach final rc to span if supported
+			# attach final rc and duration to span if supported
 			try:
+				duration_ms = int((time.perf_counter() - start) * 1000)
 				setter = getattr(span, "set_attribute", None)
 				if callable(setter):
 					setter("pipeline.rc", int(rc or EXIT_SUCCESS))
+					setter("pipeline.duration_ms", duration_ms)
+					setter("pipeline.status", "ok" if int(rc or EXIT_SUCCESS) == 0 else "error")
 			except Exception:
 				pass
 
@@ -203,14 +211,18 @@ def main(argv: list) -> int:
 		except Exception:
 			pass
 
-		# best-effort: attach error info to telemetry root span
+		# best-effort: attach error info and duration to telemetry root span
 		try:
-			with tracer.start_as_current_span("pipeline.error") as err_span:
+				with tracer.start_as_current_span("pipeline.error") as err_span:
+					# Ensure `start` is not None before subtracting (type-safe)
+					duration_ms = int((time.perf_counter() - start) * 1000) if start is not None else None
 				setter = getattr(err_span, "set_attribute", None)
 				if callable(setter):
 					setter("pipeline.error", True)
 					setter("pipeline.internal", bool(internal))
 					setter("pipeline.error_message", msg)
+					if duration_ms is not None:
+						setter("pipeline.duration_ms", duration_ms)
 		except Exception:
 			pass
 
