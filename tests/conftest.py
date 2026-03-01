@@ -7,6 +7,7 @@ __all__ = ["tmp_flo_file", "adapter_model_from_example"]
 import pytest
 from typing import Callable
 from flo.compiler.ir.models import Node, IR
+from flo.services import get_services
 
 
 @pytest.fixture
@@ -28,3 +29,20 @@ def ir_factory(node_factory) -> Callable:
 @pytest.fixture
 def adapter_data() -> dict:
     return {"name": "example", "content": "payload"}
+
+
+@pytest.fixture
+def services():
+    """Provide a `Services` instance for tests and ensure telemetry is shut down.
+
+    Use this fixture in integration tests to guarantee exporters are closed
+    during teardown so tests do not see exporter-related I/O warnings.
+    """
+    svc = get_services(verbose=False)
+    try:
+        yield svc
+    finally:
+        try:
+            svc.telemetry.shutdown()
+        except Exception:
+            pass

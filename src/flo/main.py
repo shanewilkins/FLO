@@ -157,30 +157,42 @@ def main(argv: list) -> int:
 	def _run_pipeline() -> int:
 		"""Run pipeline steps inside a tracer span and return final rc."""
 		nonlocal start
+		from flo.pipeline import (
+			PipelineRunner,
+			ReadStep,
+			ParseStep,
+			CompileStep,
+			ValidateStep,
+			PostprocessStep,
+			RenderStep,
+			OutputStep,
+		)
+
+		# Ensure pipeline module uses the same function references that tests may
+		# patch in `flo.main` (avoids import-time binding issues in tests).
+		import flo.pipeline as _pipeline_mod
+		_pipeline_mod.read_input = read_input
+		_pipeline_mod.parse_adapter = parse_adapter
+		_pipeline_mod.compile_adapter = compile_adapter
+		_pipeline_mod.validate_ir = validate_ir
+		_pipeline_mod.scc_condense = scc_condense
+		_pipeline_mod.render_dot = render_dot
+		_pipeline_mod.write_output = write_output
+
+		steps = [
+			ReadStep(path=path),
+			ParseStep(),
+			CompileStep(),
+			ValidateStep(),
+			PostprocessStep(),
+			RenderStep(),
+			OutputStep(options=options),
+		]
+
+		runner = PipelineRunner(steps)
 		with tracer.start_as_current_span("pipeline.run") as span:
 			start = time.perf_counter()
-			# Read input
-			rc, content, err = _read_input_or_stdin(path, services)
-			if rc != 0:
-				services.error_handler(err)
-				return rc
-
-			adapter_model, rc = _parse_adapter(content, services)
-			if rc != 0:
-				return rc
-
-			ir, rc = _compile_adapter(adapter_model, services)
-			if rc != 0:
-				return rc
-
-			rc = _validate_ir_instance(ir, services)
-			if rc != 0:
-				return rc
-
-			ir = _postprocess_ir(ir)
-
-			rc = _render_ir_and_output(ir, options, services)
-
+			rc = runner.run(services)
 			# attach final rc and duration to span if supported
 			try:
 				duration_ms = int((time.perf_counter() - start) * 1000)
