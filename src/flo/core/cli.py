@@ -18,9 +18,11 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
 @click.option("--validate", is_flag=True, help="Only validate file")
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.option("-o", "--output", help="Write output to file")
-def run_cmd(path: Optional[str], validate: bool, verbose: bool, output: Optional[str]) -> None:  # pragma: no cover - integration
+@click.option("--export", "export_fmt", type=click.Choice(["dot", "json"]), help="Export format")
+def run_cmd(path: Optional[str], validate: bool, verbose: bool, output: Optional[str], export_fmt: Optional[str]) -> None:  # pragma: no cover - integration
     """Invoke the CLI command handler with normalized arguments."""
     args: list[str] = []
+    args.append("run")
     if path:
         args.append(path)
     if validate:
@@ -29,7 +31,59 @@ def run_cmd(path: Optional[str], validate: bool, verbose: bool, output: Optional
         args.append("-v")
     if output:
         args.extend(["-o", output])
+    if export_fmt:
+        args.extend(["--export", export_fmt])
 
+    rc = console_main(args)
+    raise SystemExit(rc)
+
+
+@cli.command("compile")
+@click.argument("path", required=False)
+@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
+@click.option("-o", "--output", help="Write output to file")
+def compile_cmd(path: Optional[str], verbose: bool, output: Optional[str]) -> None:  # pragma: no cover - integration
+    """Compile FLO input and emit a schema-shaped JSON export of the model."""
+    args: list[str] = ["compile"]
+    if path:
+        args.append(path)
+    if verbose:
+        args.append("-v")
+    if output:
+        args.extend(["-o", output])
+    rc = console_main(args)
+    raise SystemExit(rc)
+
+
+@cli.command("validate")
+@click.argument("path", required=False)
+@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
+def validate_cmd(path: Optional[str], verbose: bool) -> None:  # pragma: no cover - integration
+    """Validate FLO input and return non-zero on parse/compile/validation errors."""
+    args: list[str] = ["validate"]
+    if path:
+        args.append(path)
+    if verbose:
+        args.append("-v")
+    rc = console_main(args)
+    raise SystemExit(rc)
+
+
+@cli.command("export")
+@click.argument("path", required=False)
+@click.option("--export", "export_fmt", type=click.Choice(["dot", "json"]), default="dot", show_default=True)
+@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
+@click.option("-o", "--output", help="Write output to file")
+def export_cmd(path: Optional[str], export_fmt: str, verbose: bool, output: Optional[str]) -> None:  # pragma: no cover - integration
+    """Export FLO input as DOT or JSON."""
+    args: list[str] = ["export"]
+    if path:
+        args.append(path)
+    args.extend(["--export", export_fmt])
+    if verbose:
+        args.append("-v")
+    if output:
+        args.extend(["-o", output])
     rc = console_main(args)
     raise SystemExit(rc)
 
@@ -69,10 +123,11 @@ def console_main(argv: list | None = None) -> int:  # pragma: no cover - thin wr
         services.error_handler(f"Unexpected error: {e}")
         return EXIT_USAGE
 
-    write_rc, write_err = write_output(out, options.get("output") if options else None)
-    if write_rc != 0:
-        services.error_handler(write_err)
-        return write_rc
+    if out:
+        write_rc, write_err = write_output(out, options.get("output") if options else None)
+        if write_rc != 0:
+            services.error_handler(write_err)
+            return write_rc
 
     try:
         telemetry.shutdown()
@@ -83,15 +138,11 @@ def console_main(argv: list | None = None) -> int:  # pragma: no cover - thin wr
 
 
 def main(argv: list | None = None) -> int:  # pragma: no cover - CLI entry
-    """Programmatic CLI entrypoint; if `argv` is None runs the Click CLI.
+    """Programmatic CLI entrypoint.
+
+    Default behavior routes directly to `console_main` so users can run
+    `flo <path>` without an explicit subcommand.
 
     Returns an integer exit code suitable for `sys.exit`.
     """
-    if argv is None:
-        cli()
-        return 0
-    try:
-        cli.main(args=argv, prog_name="flo")
-        return 0
-    except SystemExit as e:
-        return int(getattr(e, "code", 0) or 0)
+    return console_main(argv)

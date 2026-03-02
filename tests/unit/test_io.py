@@ -44,6 +44,14 @@ def test_write_output_stdout(capsys):
     assert "hello-stdout" in captured.out
 
 
+def test_write_output_dash_path_writes_stdout(capsys):
+    rc, err = write_output("dash-stdout", "-")
+    captured = capsys.readouterr()
+    assert rc == 0
+    assert err == ""
+    assert "dash-stdout" in captured.out
+
+
 def test_write_output_oserror(monkeypatch):
     import builtins
 

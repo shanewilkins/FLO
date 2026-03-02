@@ -15,9 +15,10 @@ from flo.compiler.ir import validate_ir, IR
 from flo.compiler.ir import ensure_schema_aligned
 from flo.compiler.analysis import scc_condense
 from flo.render import render_dot
+from flo.export import ir_to_schema_json
 
 
-def run_content(content: str, command: str = "compile", options: dict | None = None) -> Tuple[int, str, str]:
+def run_content(content: str, command: str = "run", options: dict | None = None) -> Tuple[int, str, str]:
     """Run the content through parse -> compile -> validate -> render.
 
     Returns a tuple of (exit_code, output, error_message).
@@ -25,6 +26,19 @@ def run_content(content: str, command: str = "compile", options: dict | None = N
     if not content:
         return EXIT_SUCCESS, "", ""
 
+    ir = _parse_compile_validate(content)
+
+    if command == "validate":
+        return EXIT_SUCCESS, "", ""
+
+    output_format = _resolve_output_format(command=command, options=options)
+    if output_format == "json":
+        return EXIT_SUCCESS, ir_to_schema_json(ir), ""
+
+    return EXIT_SUCCESS, _render_dot_with_postprocess(ir), ""
+
+
+def _parse_compile_validate(content: str) -> IR:
     try:
         adapter_model = parse_adapter(content)
     except Exception as e:
@@ -46,17 +60,32 @@ def run_content(content: str, command: str = "compile", options: dict | None = N
         except Exception as e:
             raise ValidationError(str(e))
 
+    return ir
+
+
+def _resolve_output_format(command: str, options: dict | None) -> str:
+    output_format = (options or {}).get("export") or (options or {}).get("format")
+    if command == "compile":
+        return "json"
+    if command in {"run", "export"} and output_format == "json":
+        return "json"
+    return "dot"
+
+
+def _render_dot_with_postprocess(ir: IR) -> str:
+    processed = ir
+
     try:
-        ir = scc_condense(ir)
+        processed = scc_condense(processed)
     except Exception:
         pass
 
     try:
-        _dot = render_dot(ir)
+        _dot = render_dot(processed)
     except Exception as e:
         raise RenderError(str(e))
 
-    return EXIT_SUCCESS, _dot, ""
+    return _dot
 
 
 def run() -> Tuple[int, str, str]:

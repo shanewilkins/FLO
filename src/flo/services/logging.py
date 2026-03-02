@@ -65,17 +65,19 @@ def configure_logging(level: int = logging.INFO, service_name: Optional[str] = N
     root.addHandler(handler)
     root.setLevel(level)
 
-    structlog.configure(
-        processors=[
-            structlog.processors.TimeStamper(fmt="iso"),
-            structlog.processors.add_log_level,
-            structlog.contextvars.merge_contextvars,
-            _add_service_name(service_name),
-            _add_otel_trace_info,
-            structlog.processors.StackInfoRenderer(),
-            structlog.processors.format_exc_info,
-            structlog.processors.KeyValueRenderer(key_order=["event", "message"]),
-        ],
+    processors = [
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.add_log_level,
+        structlog.contextvars.merge_contextvars,
+        _add_service_name(service_name),
+        _add_otel_trace_info,
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.KeyValueRenderer(key_order=["event", "message"]),
+    ]
+
+    structlog.configure(  # pyright: ignore[reportArgumentType]
+        processors=processors,
         logger_factory=structlog.stdlib.LoggerFactory(),
         wrapper_class=structlog.stdlib.BoundLogger,
         cache_logger_on_first_use=True,

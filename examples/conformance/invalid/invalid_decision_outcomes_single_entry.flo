@@ -1,0 +1,17 @@
+spec_version: "0.1"
+
+process:
+  id: invalid_decision_outcomes_single_entry
+  name: Invalid Decision Outcomes Single Entry
+
+steps:
+  - id: start
+    kind: start
+
+  - id: gate
+    kind: decision
+    outcomes:
+      yes: done
+
+  - id: done
+    kind: end

@@ -1,4 +1,4 @@
-"""Validate compiled IR for each example against the JSON schema.
+"""Validate JSON exports of compiled IR for each example against the JSON schema.
 
 Run this script from the repository root. It requires `jsonschema` to be
 installed in the environment (CI will install it).
@@ -14,12 +14,12 @@ from flo.compiler.ir import ensure_schema_aligned
 
 
 def main() -> int:
-    """Compile example files and validate the resulting IRs against schema.
+    """Compile example files and validate resulting JSON exports against schema.
 
     Returns a non-zero exit code when validation fails.
     """
     repo_root = Path(__file__).resolve().parents[1]
-    examples = sorted((repo_root / "examples").glob("*.flo"))
+    examples = sorted((repo_root / "examples" / "reference").glob("*.flo"))
     if not examples:
         print("No example files found, skipping schema validation")
         return 0

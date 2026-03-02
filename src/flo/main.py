@@ -57,7 +57,7 @@ from flo.render import render_dot
 # 7. Post-processing / analyses (SCC condensation, heuristics)
 #
 # 8. Output
-#    - emit IR JSON (default) or render DOT if requested
+#    - emit JSON export of the model (default) or render DOT if requested
 #    - write to stdout or --output file; handle IO errors -> EXIT_RENDER_ERROR
 #
 # 9. Exit codes

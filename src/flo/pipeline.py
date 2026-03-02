@@ -1,3 +1,5 @@
+"""Pipeline runner and step implementations for FLO orchestration."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -18,14 +20,18 @@ class Step(Protocol):
     """Protocol for pipeline steps."""
 
     def run(self, previous: Any, services: Any) -> Any:  # pragma: no cover - exercised by unit tests
+        """Execute the step and return a pipeline state tuple or compatible rc object."""
         ...
 
 
 @dataclass
 class ReadStep:
+    """Read input from a path or stdin."""
+
     path: str | None = None
 
     def run(self, previous: Any, services: Any) -> Tuple[int, Any, Any]:
+        """Execute read step and return `(rc, payload, err)` tuple."""
         if self.path:
             return read_input(self.path)
         return read_input("-")
@@ -33,7 +39,10 @@ class ReadStep:
 
 @dataclass
 class ParseStep:
+    """Parse raw content into adapter model payload."""
+
     def run(self, previous: Tuple[int, str, Any], services: Any):
+        """Execute parse step and propagate parse-specific exit codes."""
         rc, content, err = previous
         if rc != 0:
             return rc, None, err
@@ -53,7 +62,10 @@ class ParseStep:
 
 @dataclass
 class CompileStep:
+    """Compile adapter model into canonical IR."""
+
     def run(self, previous: Tuple[int, Any, Any], services: Any):
+        """Execute compile step and propagate compile-specific exit codes."""
         rc, adapter_model, err = previous
         if rc != 0:
             return rc, None, err
@@ -73,7 +85,10 @@ class CompileStep:
 
 @dataclass
 class ValidateStep:
+    """Validate canonical IR semantics."""
+
     def run(self, previous: Tuple[int, Any, Any], services: Any):
+        """Execute validation step and return mapped validation result."""
         rc, ir, err = previous
         if rc != 0:
             return rc, ir, err
@@ -94,7 +109,10 @@ class ValidateStep:
 
 @dataclass
 class PostprocessStep:
+    """Run optional postprocessing (e.g., SCC condensation)."""
+
     def run(self, previous: Tuple[int, Any, Any], services: Any):
+        """Execute postprocessing step with non-fatal fallback behavior."""
         rc, ir, err = previous
         if rc != 0:
             return rc, ir, err
@@ -107,7 +125,10 @@ class PostprocessStep:
 
 @dataclass
 class RenderStep:
+    """Render IR into DOT text."""
+
     def run(self, previous: Tuple[int, Any, Any], services: Any):
+        """Execute render step and propagate render-specific exit codes."""
         rc, ir, err = previous
         if rc != 0:
             return rc, None, err
@@ -128,9 +149,12 @@ class RenderStep:
 
 @dataclass
 class OutputStep:
+    """Write rendered output to stdout or file destination."""
+
     options: dict | None = None
 
     def run(self, previous: Tuple[int, Any, Any], services: Any):
+        """Execute output step and return write result tuple."""
         rc, out, err = previous
         if rc != 0:
             return rc, out, err
@@ -149,9 +173,11 @@ class PipelineRunner:
     """
 
     def __init__(self, steps: List[Step]):
+        """Initialize runner with ordered step list."""
         self.steps = steps
 
     def run(self, services: Any) -> int:
+        """Run all steps sequentially, stopping on first non-zero rc."""
         state: Tuple[int, Any, Any] = (0, None, None)
         tracer = get_tracer("flo.pipeline")
         for step in self.steps:

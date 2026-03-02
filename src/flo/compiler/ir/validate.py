@@ -23,24 +23,37 @@ def validate_ir(obj: Any) -> None:
     Raises `ValidationError` on failure.
     """
     if not isinstance(obj, IR):
-        raise ValidationError("object is not an IR instance")
+        raise ValidationError("E1000: object is not an IR instance")
 
     if not obj.nodes:
-        raise ValidationError("IR must contain at least one node")
+        raise ValidationError("E1001: IR must contain at least one node")
 
     ids = [n.id for n in obj.nodes]
     if len(ids) != len(set(ids)):
-        raise ValidationError("node ids must be unique")
+        raise ValidationError("E1002: node ids must be unique")
 
+    _validate_start_nodes(obj)
+    _validate_edge_resolution(obj, ids)
+    incoming_counts, outgoing_counts = _build_edge_degree_maps(obj, ids)
+    _validate_decision_nodes(obj, outgoing_counts)
+    _validate_queue_nodes(obj, incoming_counts, outgoing_counts)
+
+
+def _validate_start_nodes(obj: IR) -> None:
     start_nodes = [n for n in obj.nodes if (n.type or "").lower() == "start"]
     if len(start_nodes) != 1:
-        raise ValidationError("IR must contain exactly one start node")
+        raise ValidationError("E1003: IR must contain exactly one start node")
 
+
+def _validate_edge_resolution(obj: IR, ids: list[str]) -> None:
     known_ids = set(ids)
     for edge in obj.edges:
         if edge.source not in known_ids or edge.target not in known_ids:
-            raise ValidationError(f"edge endpoint unresolved: {edge.source} -> {edge.target}")
+            raise ValidationError(f"E1004: edge endpoint unresolved: {edge.source} -> {edge.target}")
 
+
+def _build_edge_degree_maps(obj: IR, ids: list[str]) -> tuple[dict[str, int], dict[str, int]]:
+    known_ids = set(ids)
     incoming_counts: dict[str, int] = {node_id: 0 for node_id in known_ids}
     outgoing_counts: dict[str, int] = {node_id: 0 for node_id in known_ids}
     for edge in obj.edges:
@@ -48,30 +61,48 @@ def validate_ir(obj: Any) -> None:
             incoming_counts[edge.target] += 1
         if edge.source in outgoing_counts:
             outgoing_counts[edge.source] += 1
+    return incoming_counts, outgoing_counts
 
+
+def _validate_decision_nodes(obj: IR, outgoing_counts: dict[str, int]) -> None:
     for node in obj.nodes:
-        if (node.type or "").lower() == "decision":
-            if outgoing_counts.get(node.id, 0) < 2:
-                raise ValidationError(f"decision node '{node.id}' must have at least two outgoing edges")
+        if (node.type or "").lower() != "decision":
+            continue
+        if outgoing_counts.get(node.id, 0) < 2:
+            raise ValidationError(
+                f"E1005: decision node '{node.id}' must have at least two outgoing edges"
+            )
 
+
+def _validate_queue_nodes(obj: IR, incoming_counts: dict[str, int], outgoing_counts: dict[str, int]) -> None:
     for node in obj.nodes:
         if (node.type or "").lower() != "queue":
             continue
 
         metadata = _extract_node_metadata(node)
-        if "queue_policy" not in metadata:
-            raise ValidationError(f"queue node '{node.id}' missing required metadata.queue_policy")
-
-        capacity = metadata.get("buffer_capacity")
-        if capacity is not None and (not isinstance(capacity, int) or capacity < 1):
-            raise ValidationError(
-                f"queue node '{node.id}' has invalid metadata.buffer_capacity; expected integer >= 1"
-            )
+        _validate_queue_metadata(node_id=node.id, metadata=metadata)
 
         if incoming_counts.get(node.id, 0) < 1:
-            raise ValidationError(f"queue node '{node.id}' must have at least one incoming edge")
+            raise ValidationError(
+                f"E1103: queue node '{node.id}' must have at least one incoming edge"
+            )
         if outgoing_counts.get(node.id, 0) < 1:
-            raise ValidationError(f"queue node '{node.id}' must have at least one outgoing edge")
+            raise ValidationError(
+                f"E1104: queue node '{node.id}' must have at least one outgoing edge"
+            )
+
+
+def _validate_queue_metadata(node_id: str, metadata: dict[str, Any]) -> None:
+    if "queue_policy" not in metadata:
+        raise ValidationError(
+            f"E1101: queue node '{node_id}' missing required metadata.queue_policy"
+        )
+
+    capacity = metadata.get("buffer_capacity")
+    if capacity is not None and (not isinstance(capacity, int) or capacity < 1):
+        raise ValidationError(
+            f"E1102: queue node '{node_id}' has invalid metadata.buffer_capacity; expected integer >= 1"
+        )
 
 
 def _extract_node_metadata(node: Any) -> dict[str, Any]:

@@ -13,6 +13,7 @@ LAYER_PATHS: Dict[str, List[str]] = {
     "services": ["src/flo/services/", "src/flo/io/"],
     "adapters": ["src/flo/adapters/"],
     "compiler": ["src/flo/compiler/", "src/flo/ir/", "src/flo/analysis/"],
+    "export": ["src/flo/export/"],
     "render": ["src/flo/render/"],
     "core": ["src/flo/core.py", "src/flo/main.py", "src/flo/cli.py"],
 }
@@ -22,8 +23,9 @@ ALLOWED_IMPORTS: Dict[str, Set[str]] = {
     "services": set(),
     "adapters": {"services"},
     "compiler": {"adapters", "services"},
+    "export": {"compiler", "services"},
     "render": {"compiler", "services"},
-    "core": {"services", "adapters", "compiler", "render"},
+    "core": {"services", "adapters", "compiler", "export", "render"},
 }
 
 __all__ = ["LAYER_PATHS", "ALLOWED_IMPORTS"]

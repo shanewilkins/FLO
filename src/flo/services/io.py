@@ -33,11 +33,15 @@ def write_output(out: str, path: str | None) -> Tuple[int, str]:
     Returns `(rc, err)` where `rc` is 0 on success.
     """
     try:
-        if path:
+        if path and path != "-":
             with open(path, "w", encoding="utf-8") as fh:
                 fh.write(out)
         else:
-            print(out)
+            sys.stdout.write(out)
+            # Preserve human-friendly terminal behavior for non-empty payloads.
+            if out and not out.endswith("\n"):
+                sys.stdout.write("\n")
+            sys.stdout.flush()
     except OSError as e:
         return EXIT_RENDER_ERROR, f"I/O error writing {path}: {e}"
     return 0, ""

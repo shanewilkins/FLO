@@ -100,7 +100,7 @@ Acceptance criteria for v0.1
 
 - `flo validate <file>` parses, compiles, and validates `.flo` files with
     helpful diagnostics. (Implemented and tested.)
-- `flo compile <file>` emits canonical IR JSON that validates against
+- `flo compile <file>` emits a JSON export of the canonical in-memory IR that validates against
     `schema/flo_ir.json`. (Partially implemented — compiler emits the minimal `IR` dataclass; mapping to schema fields `process`/`edges` is pending.)
 - `flo render --style swimlane <file>` emits a DOT graph with node IDs,
     lane clusters, and decision labels. (Basic renderer present; swimlane style pending.)
@@ -109,7 +109,7 @@ Acceptance criteria for v0.1
 Current acceptance status:
 
 - `flo validate` — basic parsing and validation implemented and tested.
-- `flo compile` — emits the canonical `IR` dataclass and JSON helpers; does not yet produce schema-shaped IR expected by `schema/flo_ir.json`.
+- `flo compile` — emits the canonical `IR` dataclass and JSON export helpers; does not yet produce schema-shaped export expected by `schema/flo_ir.json`.
 - `flo render --style swimlane` — not implemented yet (basic DOT renderer exists).
 
 Remaining high-priority v0.1 tasks:

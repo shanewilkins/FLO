@@ -1,0 +1,34 @@
+spec_version: "0.1"
+
+process:
+  id: valid_decision_unlabeled_default
+  name: Valid Decision With Unlabeled Default
+
+steps:
+  - id: start
+    kind: start
+
+  - id: assess
+    kind: decision
+
+  - id: approve
+    kind: task
+
+  - id: reject
+    kind: task
+
+  - id: end
+    kind: end
+
+edges:
+  - source: start
+    target: assess
+  - source: assess
+    target: approve
+    outcome: approved
+  - source: assess
+    target: reject
+  - source: approve
+    target: end
+  - source: reject
+    target: end
