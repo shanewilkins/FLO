@@ -22,7 +22,7 @@ def test_run_content_with_example_files():
     This ensures tests operate on real data and avoid unnecessary mocking
     of the pipeline steps.
     """
-    examples = sorted((_repo_root() / "examples").glob("*.flo"))
+    examples = sorted((_repo_root() / "examples" / "reference").glob("*.flo"))
     if not examples:
         pytest.skip("no example files available")
 

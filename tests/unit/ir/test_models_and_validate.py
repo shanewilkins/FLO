@@ -5,7 +5,7 @@ from flo.services.errors import ValidationError
 
 
 def test_validate_valid_ir(ir_factory, node_factory):
-    ir = ir_factory(name="test", nodes=[node_factory("n1")])
+    ir = ir_factory(name="test", nodes=[node_factory("start", type="start")])
     # should not raise
     validate_ir(ir)
 

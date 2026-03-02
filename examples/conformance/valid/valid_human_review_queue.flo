@@ -1,0 +1,58 @@
+spec_version: "0.1"
+
+process:
+  id: reimbursement_review_v1
+  name: Reimbursement Review
+
+lanes:
+  - id: employee
+    name: Employee
+    kind: default
+  - id: finance
+    name: Finance
+    kind: default
+
+steps:
+  - id: start
+    kind: start
+
+  - id: submit_claim
+    kind: task
+    lane: employee
+
+  - id: review_queue
+    kind: queue
+    lane: finance
+    metadata:
+      staff_role: finance_manager
+      queue_policy: FIFO
+      buffer_capacity: 20
+      wait_reason: pending_human_decision
+
+  - id: decision
+    kind: decision
+    lane: finance
+    outcomes:
+      approved: pay_claim
+      rejected: notify_employee
+
+  - id: notify_employee
+    kind: task
+    lane: finance
+
+  - id: pay_claim
+    kind: end
+
+edges:
+  - source: start
+    target: submit_claim
+  - source: submit_claim
+    target: review_queue
+  - source: review_queue
+    target: decision
+  - source: decision
+    target: pay_claim
+    outcome: approved
+  - source: decision
+    target: notify_employee
+    outcome: rejected

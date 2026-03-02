@@ -22,7 +22,7 @@
         "required": ["id","kind"],
         "properties": {
           "id": { "type": "string" },
-          "kind": { "type": "string", "enum": ["start","task","decision","end","subprocess"] },
+          "kind": { "type": "string", "enum": ["start","task","system_task","queue","decision","end","subprocess"] },
           "name": { "type": "string" },
           "lane": { "type": "string" },
           "metadata": { "type": "object", "additionalProperties": true }

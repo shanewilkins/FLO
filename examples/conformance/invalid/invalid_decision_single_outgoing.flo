@@ -1,0 +1,21 @@
+spec_version: "0.1"
+
+process:
+  id: invalid_decision_single_outgoing
+  name: Invalid Decision Single Outgoing
+
+steps:
+  - id: start
+    kind: start
+
+  - id: gate
+    kind: decision
+
+  - id: finish
+    kind: end
+
+edges:
+  - source: start
+    target: gate
+  - source: gate
+    target: finish

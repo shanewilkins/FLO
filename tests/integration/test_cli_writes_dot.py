@@ -16,7 +16,7 @@ def _repo_root(start: Path | None = None) -> Path:
 
 def test_cli_writes_dot_file(tmp_path: Path):
     runner = CliRunner()
-    examples = sorted((_repo_root() / "examples").glob("*.flo"))
+    examples = sorted((_repo_root() / "examples" / "reference").glob("*.flo"))
     assert examples, "no example files found"
     example = examples[0]
 

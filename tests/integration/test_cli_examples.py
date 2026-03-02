@@ -16,7 +16,7 @@ def _repo_root(start: Path | None = None) -> Path:
 
 def test_cli_run_all_examples():
     runner = CliRunner()
-    examples = sorted((_repo_root() / "examples").glob("*.flo"))
+    examples = sorted((_repo_root() / "examples" / "reference").glob("*.flo"))
     assert examples, "No example files found for integration test"
 
     for ex in examples:

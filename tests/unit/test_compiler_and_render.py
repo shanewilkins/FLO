@@ -17,7 +17,7 @@ def _repo_root(start: Path | None = None) -> Path:
 
 
 def test_compile_and_render_examples():
-    examples = sorted((_repo_root() / "examples").glob("*.flo"))
+    examples = sorted((_repo_root() / "examples" / "reference").glob("*.flo"))
     assert examples
 
     for ex in examples:

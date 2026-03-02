@@ -15,13 +15,13 @@ def test_compile_emits_schema_and_validates() -> None:
 
     ir = compile_adapter(adapter)
 
-    # Compiler should emit schema-aligned IR and validation should pass
+    # Compiler output should validate via schema projection.
     validate_against_schema(ir)
 
 
 def test_malformed_ir_raises_validation_error() -> None:
-    # Create an IR that is not schema-aligned (old minimal shape)
-    ir = IR(name="bad", nodes=[Node(id="n1", type="task", attrs={"name": "x"})], schema_aligned=False)
+    # Use a node type not allowed by the JSON schema enum.
+    ir = IR(name="bad", nodes=[Node(id="n1", type="process", attrs={"name": "x"})])
 
     try:
         validate_against_schema(ir)

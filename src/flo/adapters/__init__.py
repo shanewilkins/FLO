@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict
+import yaml
 
 
 from .yaml_loader import load_adapter_from_yaml
@@ -19,8 +20,11 @@ def parse_adapter(content: str) -> Dict[str, Any]:
 	try:
 		model = load_adapter_from_yaml(content)
 	except ValueError:
-		# Fall back to the previous permissive behaviour for plain strings
-		# while YAML-based adapters are the preferred path.
+		# If the content is YAML mapping-shaped FLO, return it directly.
+		# Otherwise preserve the previous permissive text fallback.
+		parsed = yaml.safe_load(content)
+		if isinstance(parsed, dict):
+			return parsed
 		return {"name": "parsed", "content": content}
 
 	# `model` supports `model_dump()` for Pydantic compatibility

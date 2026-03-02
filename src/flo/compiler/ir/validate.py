@@ -5,6 +5,7 @@ from typing import Any
 
 from .models import IR
 from flo.services.errors import ValidationError
+from flo.export import ir_to_schema_dict
 from pathlib import Path
 import json
 
@@ -31,6 +32,57 @@ def validate_ir(obj: Any) -> None:
     if len(ids) != len(set(ids)):
         raise ValidationError("node ids must be unique")
 
+    start_nodes = [n for n in obj.nodes if (n.type or "").lower() == "start"]
+    if len(start_nodes) != 1:
+        raise ValidationError("IR must contain exactly one start node")
+
+    known_ids = set(ids)
+    for edge in obj.edges:
+        if edge.source not in known_ids or edge.target not in known_ids:
+            raise ValidationError(f"edge endpoint unresolved: {edge.source} -> {edge.target}")
+
+    incoming_counts: dict[str, int] = {node_id: 0 for node_id in known_ids}
+    outgoing_counts: dict[str, int] = {node_id: 0 for node_id in known_ids}
+    for edge in obj.edges:
+        if edge.target in incoming_counts:
+            incoming_counts[edge.target] += 1
+        if edge.source in outgoing_counts:
+            outgoing_counts[edge.source] += 1
+
+    for node in obj.nodes:
+        if (node.type or "").lower() == "decision":
+            if outgoing_counts.get(node.id, 0) < 2:
+                raise ValidationError(f"decision node '{node.id}' must have at least two outgoing edges")
+
+    for node in obj.nodes:
+        if (node.type or "").lower() != "queue":
+            continue
+
+        metadata = _extract_node_metadata(node)
+        if "queue_policy" not in metadata:
+            raise ValidationError(f"queue node '{node.id}' missing required metadata.queue_policy")
+
+        capacity = metadata.get("buffer_capacity")
+        if capacity is not None and (not isinstance(capacity, int) or capacity < 1):
+            raise ValidationError(
+                f"queue node '{node.id}' has invalid metadata.buffer_capacity; expected integer >= 1"
+            )
+
+        if incoming_counts.get(node.id, 0) < 1:
+            raise ValidationError(f"queue node '{node.id}' must have at least one incoming edge")
+        if outgoing_counts.get(node.id, 0) < 1:
+            raise ValidationError(f"queue node '{node.id}' must have at least one outgoing edge")
+
+
+def _extract_node_metadata(node: Any) -> dict[str, Any]:
+    attrs = getattr(node, "attrs", None)
+    if not isinstance(attrs, dict):
+        return {}
+    metadata = attrs.get("metadata")
+    if isinstance(metadata, dict):
+        return metadata
+    return {}
+
 
 def validate_against_schema(ir: IR) -> None:
     """Validate an `IR` instance against the JSON schema file.
@@ -45,7 +97,7 @@ def validate_against_schema(ir: IR) -> None:
     with schema_path.open("r", encoding="utf-8") as fh:
         schema = json.load(fh)
 
-    instance = ir.to_dict()
+    instance = ir_to_schema_dict(ir)
     validate_fn = getattr(jsonschema, "validate", None)
     if not callable(validate_fn):
         raise RuntimeError("jsonschema.validate is not available for schema validation")
@@ -57,12 +109,9 @@ def validate_against_schema(ir: IR) -> None:
 
 
 def ensure_schema_aligned(ir: object) -> None:
-    """Ensure the given IR is schema_aligned and valid against the schema."""
+    """Ensure the given IR is valid against the schema export contract."""
     if not isinstance(ir, IR):
         raise ValidationError("compiled output is not an IR instance")
-
-    if not getattr(ir, "schema_aligned", False):
-        raise ValidationError("compiled IR is not schema_aligned; compiler must emit schema-shaped IR")
 
     validate_against_schema(ir)
 
