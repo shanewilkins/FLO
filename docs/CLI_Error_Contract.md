@@ -38,6 +38,14 @@ Current mappings:
 - Input `-` means read from `stdin`.
 - Output `-` means write to `stdout`.
 
+## Render vs export contract
+
+- Renderers and exporters are separate concerns and use separate registries.
+  - Renderers (human-readable visualization) live under [src/flo/render](../src/flo/render).
+  - Exporters (machine-readable projection) live under [src/flo/export](../src/flo/export).
+- `--diagram`, `--profile`, and `--detail` are **DOT render** options.
+- If `--export json` is selected, render-only options are rejected with usage exit code `1`.
+
 ## Validation diagnostics
 
 Semantic validation uses stable diagnostic-style prefixes in messages (e.g., `E1003`, `E1101`) to make failures easier to script against and triage.

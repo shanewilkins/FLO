@@ -17,3 +17,7 @@ flo.egg-info/
 
 # Coverage output
 .coverage
+
+# Local render outputs (DOT/SVG/PNG, etc.)
+renders/*
+!renders/.gitkeep

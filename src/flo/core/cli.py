@@ -19,7 +19,19 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.option("-o", "--output", help="Write output to file")
 @click.option("--export", "export_fmt", type=click.Choice(["dot", "json"]), help="Export format")
-def run_cmd(path: Optional[str], validate: bool, verbose: bool, output: Optional[str], export_fmt: Optional[str]) -> None:  # pragma: no cover - integration
+@click.option("--diagram", type=click.Choice(["flowchart", "swimlane"]), help="Diagram type for DOT output")
+@click.option("--profile", type=click.Choice(["default", "analysis"]), help="Projection rule profile")
+@click.option("--detail", type=click.Choice(["summary", "standard", "verbose"]), help="Detail level")
+def run_cmd(
+    path: Optional[str],
+    validate: bool,
+    verbose: bool,
+    output: Optional[str],
+    export_fmt: Optional[str],
+    diagram: Optional[str],
+    profile: Optional[str],
+    detail: Optional[str],
+) -> None:  # pragma: no cover - integration
     """Invoke the CLI command handler with normalized arguments."""
     args: list[str] = []
     args.append("run")
@@ -33,6 +45,12 @@ def run_cmd(path: Optional[str], validate: bool, verbose: bool, output: Optional
         args.extend(["-o", output])
     if export_fmt:
         args.extend(["--export", export_fmt])
+    if diagram:
+        args.extend(["--diagram", diagram])
+    if profile:
+        args.extend(["--profile", profile])
+    if detail:
+        args.extend(["--detail", detail])
 
     rc = console_main(args)
     raise SystemExit(rc)
@@ -74,12 +92,29 @@ def validate_cmd(path: Optional[str], verbose: bool) -> None:  # pragma: no cove
 @click.option("--export", "export_fmt", type=click.Choice(["dot", "json"]), default="dot", show_default=True)
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.option("-o", "--output", help="Write output to file")
-def export_cmd(path: Optional[str], export_fmt: str, verbose: bool, output: Optional[str]) -> None:  # pragma: no cover - integration
+@click.option("--diagram", type=click.Choice(["flowchart", "swimlane"]), help="Diagram type for DOT output")
+@click.option("--profile", type=click.Choice(["default", "analysis"]), help="Projection rule profile")
+@click.option("--detail", type=click.Choice(["summary", "standard", "verbose"]), help="Detail level")
+def export_cmd(
+    path: Optional[str],
+    export_fmt: str,
+    verbose: bool,
+    output: Optional[str],
+    diagram: Optional[str],
+    profile: Optional[str],
+    detail: Optional[str],
+) -> None:  # pragma: no cover - integration
     """Export FLO input as DOT or JSON."""
     args: list[str] = ["export"]
     if path:
         args.append(path)
     args.extend(["--export", export_fmt])
+    if diagram:
+        args.extend(["--diagram", diagram])
+    if profile:
+        args.extend(["--profile", profile])
+    if detail:
+        args.extend(["--detail", detail])
     if verbose:
         args.append("-v")
     if output:

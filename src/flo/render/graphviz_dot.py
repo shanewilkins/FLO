@@ -4,33 +4,61 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+from .options import RenderOptions
 
-def render_flowchart_dot(process: Dict[str, Any] | Any) -> str:
+
+def render_flowchart_dot(process: Dict[str, Any] | Any, options: RenderOptions | None = None) -> str:
     """Render a simple flowchart DOT representation.
 
     Supports canonical IR objects and dict-based shapes.
     """
+    return _render_dot_graph(process, options=options or RenderOptions(), use_swimlanes=False)
+
+
+def render_swimlane_dot(process: Dict[str, Any] | Any, options: RenderOptions | None = None) -> str:
+    """Render a swimlane-style DOT graph.
+
+    Swimlane mode groups nodes by lane in cluster subgraphs.
+    """
+    render_options = options or RenderOptions(diagram="swimlane")
+    return _render_dot_graph(process, options=render_options, use_swimlanes=True)
+
+
+def _render_dot_graph(process: Dict[str, Any] | Any, options: RenderOptions, use_swimlanes: bool) -> str:
     nodes, edges = _extract_nodes_and_edges(process)
 
     lines: list[str] = ["digraph {"]
     lines.append("  rankdir=LR;")
 
-    for node in nodes:
-        node_id = str(node.get("id", ""))
-        if not node_id:
-            continue
-        kind = str(node.get("kind") or node.get("type") or "task")
-        label_name = str(node.get("name") or node_id)
-        lane = node.get("lane")
-        label = _node_label(node_id=node_id, name=label_name, lane=lane)
-        shape = _shape_for_kind(kind)
-        lines.append(f'  "{_escape(node_id)}" [label="{_escape(label)}", shape={shape}];')
+    if use_swimlanes:
+        lane_groups, unlaned_nodes = _partition_nodes_by_lane(nodes)
+
+        for lane_name, lane_nodes in sorted(lane_groups.items(), key=lambda item: item[0]):
+            lane_id = _safe_cluster_id(lane_name)
+            lines.append(f"  subgraph cluster_{lane_id} {{")
+            lines.append(f'    label="{_escape(str(lane_name))}";')
+            lines.append("    style=rounded;")
+            lines.append("    color=gray70;")
+            for node in lane_nodes:
+                lines.extend(_render_node_line(node, indent="    ", options=options))
+            lines.append("  }")
+
+        for node in unlaned_nodes:
+            lines.extend(_render_node_line(node, indent="  ", options=options))
+    else:
+        for node in nodes:
+            lines.extend(_render_node_line(node, indent="  ", options=options))
 
     for edge in edges:
         source = edge.get("source")
         target = edge.get("target")
         if not source or not target:
             continue
+
+        if options.detail == "summary":
+            lines.append(f'  "{_escape(str(source))}" -> "{_escape(str(target))}";')
+            continue
+
         label = edge.get("outcome") or edge.get("label")
         if label is not None:
             lines.append(
@@ -42,14 +70,6 @@ def render_flowchart_dot(process: Dict[str, Any] | Any) -> str:
 
     lines.append("}")
     return "\n".join(lines)
-
-
-def render_swimlane_dot(process: Dict[str, Any] | Any) -> str:
-    """Render a swimlane-style DOT graph.
-
-    v0.1 fallback currently delegates to flowchart rendering.
-    """
-    return render_flowchart_dot(process)
 
 
 def _extract_nodes_and_edges(process: Any) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -114,17 +134,61 @@ def _shape_for_kind(kind: str) -> str:
     return "box"
 
 
-def _node_label(node_id: str, name: str, lane: Any | None) -> str:
-    # Prefer human-friendly names while keeping stable ids visible.
-    if name and name != node_id:
-        base = f"{name}\\n({node_id})"
-    else:
-        base = node_id
+def _node_label(node_id: str, name: str, kind: str, lane: str, options: RenderOptions) -> str:
+    if options.detail == "summary":
+        return name or node_id
 
-    if lane:
-        return f"{base}\\n[lane: {lane}]"
-    return base
+    if options.detail == "verbose":
+        base = name or node_id
+        if options.profile == "analysis":
+            if lane:
+                return f"{base}\\n({node_id})\\n[{kind}|lane:{lane}]"
+            return f"{base}\\n({node_id})\\n[{kind}]"
+        return f"{base}\\n({node_id})"
+
+    # standard
+    if name and name != node_id:
+        return f"{name}\\n({node_id})"
+    return node_id
+
+
+def _render_node_line(node: dict[str, Any], indent: str, options: RenderOptions) -> list[str]:
+    node_id = str(node.get("id", ""))
+    if not node_id:
+        return []
+    kind = str(node.get("kind") or node.get("type") or "task")
+    lane = str(node.get("lane") or "")
+    label_name = str(node.get("name") or node_id)
+    label = _node_label(node_id=node_id, name=label_name, kind=kind, lane=lane, options=options)
+    shape = _shape_for_kind(kind)
+    return [f'{indent}"{_escape(node_id)}" [label="{_escape(label)}", shape={shape}];']
+
+
+def _partition_nodes_by_lane(nodes: list[dict[str, Any]]) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]]]:
+    lane_groups: dict[str, list[dict[str, Any]]] = {}
+    unlaned_nodes: list[dict[str, Any]] = []
+
+    for node in nodes:
+        lane = node.get("lane")
+        if lane is None or str(lane).strip() == "":
+            unlaned_nodes.append(node)
+            continue
+        lane_key = str(lane)
+        lane_groups.setdefault(lane_key, []).append(node)
+
+    return lane_groups, unlaned_nodes
+
+
+def _safe_cluster_id(value: str) -> str:
+    cleaned = []
+    for ch in value:
+        if ch.isalnum() or ch in {"_", "-"}:
+            cleaned.append(ch)
+        else:
+            cleaned.append("_")
+    out = "".join(cleaned).strip("_")
+    return out or "lane"
 
 
 def _escape(text: str) -> str:
-    return text.replace('\\', '\\\\').replace('"', '\\"')
+    return text.replace('"', '\\"')

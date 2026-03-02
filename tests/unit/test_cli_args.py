@@ -43,3 +43,15 @@ def test_parse_args_run_default_export_dot(services):
     assert path == "file.flo"
     assert command == "run"
     assert options["export"] == "dot"
+
+
+def test_parse_args_render_options(services):
+    path, command, options, _, _ = parse_args(
+        ["file.flo", "--diagram", "swimlane", "--profile", "analysis", "--detail", "verbose"],
+        services,
+    )
+    assert path == "file.flo"
+    assert command == "run"
+    assert options["diagram"] == "swimlane"
+    assert options["profile"] == "analysis"
+    assert options["detail"] == "verbose"

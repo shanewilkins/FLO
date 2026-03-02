@@ -5,14 +5,19 @@ from __future__ import annotations
 from typing import Any
 
 from .graphviz_dot import render_flowchart_dot, render_swimlane_dot
+from .options import RenderOptions
+
+_DOT_RENDERERS = {
+	"flowchart": render_flowchart_dot,
+	"swimlane": render_swimlane_dot,
+}
 
 
-def render_dot(ir: Any) -> str:
-	"""Backward-compatible tiny DOT renderer used in tests.
+def render_dot(ir: Any, options: dict | None = None) -> str:
+	"""Render DOT from canonical IR using pluggable diagram strategies."""
+	render_options = RenderOptions.from_mapping(options)
+	renderer = _DOT_RENDERERS.get(render_options.diagram, render_flowchart_dot)
+	return renderer(ir, options=render_options)
 
-	Delegates to `render_flowchart_dot` (preserving a simple signature).
-	"""
-	return render_flowchart_dot(ir)
 
-
-__all__ = ["render_flowchart_dot", "render_swimlane_dot", "render_dot"]
+__all__ = ["render_flowchart_dot", "render_swimlane_dot", "render_dot", "RenderOptions"]

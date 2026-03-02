@@ -31,6 +31,9 @@ def parse_args(argv: list | None, services: Services) -> Tuple[str | None, str, 
     parser.add_argument("--validate", action="store_true", help="Only validate the file")
     parser.add_argument("--export", choices=["dot", "json"], help="Export format (dot|json)")
     parser.add_argument("--format", choices=["dot", "json"], help=argparse.SUPPRESS)
+    parser.add_argument("--diagram", choices=["flowchart", "swimlane"], help="Diagram type for DOT output")
+    parser.add_argument("--profile", choices=["default", "analysis"], help="Projection rule profile")
+    parser.add_argument("--detail", choices=["summary", "standard", "verbose"], help="Detail level")
     parsed = parser.parse_args(argv)
 
     supported_commands = {"run", "compile", "validate", "export"}
@@ -49,6 +52,12 @@ def parse_args(argv: list | None, services: Services) -> Tuple[str | None, str, 
         options["export"] = parsed.export
     elif parsed.format:
         options["export"] = parsed.format
+    if parsed.diagram:
+        options["diagram"] = parsed.diagram
+    if parsed.profile:
+        options["profile"] = parsed.profile
+    if parsed.detail:
+        options["detail"] = parsed.detail
 
     if parsed.validate:
         command = "validate"

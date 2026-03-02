@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Tuple
 
 from flo.services.errors import EXIT_SUCCESS, ParseError, CompileError, ValidationError, RenderError
+from flo.services.errors import CLIError, EXIT_USAGE
 
 from flo.adapters import parse_adapter
 from flo.compiler import compile_adapter
@@ -15,7 +16,7 @@ from flo.compiler.ir import validate_ir, IR
 from flo.compiler.ir import ensure_schema_aligned
 from flo.compiler.analysis import scc_condense
 from flo.render import render_dot
-from flo.export import ir_to_schema_json
+from flo.export import export_ir
 
 
 def run_content(content: str, command: str = "run", options: dict | None = None) -> Tuple[int, str, str]:
@@ -33,9 +34,10 @@ def run_content(content: str, command: str = "run", options: dict | None = None)
 
     output_format = _resolve_output_format(command=command, options=options)
     if output_format == "json":
-        return EXIT_SUCCESS, ir_to_schema_json(ir), ""
+        _ensure_render_options_compatible_with_output(options=options, output_format=output_format)
+        return EXIT_SUCCESS, export_ir(ir, options={**(options or {}), "export": "json"}), ""
 
-    return EXIT_SUCCESS, _render_dot_with_postprocess(ir), ""
+    return EXIT_SUCCESS, _render_dot_with_postprocess(ir, options=options), ""
 
 
 def _parse_compile_validate(content: str) -> IR:
@@ -72,7 +74,21 @@ def _resolve_output_format(command: str, options: dict | None) -> str:
     return "dot"
 
 
-def _render_dot_with_postprocess(ir: IR) -> str:
+def _ensure_render_options_compatible_with_output(options: dict | None, output_format: str) -> None:
+    if output_format != "json":
+        return
+
+    opts = options or {}
+    invalid = [flag for flag in ("diagram", "profile", "detail") if flag in opts]
+    if invalid:
+        names = ", ".join(f"--{name}" for name in invalid)
+        raise CLIError(
+            f"Render options {names} require DOT output. Use --export dot or remove those flags.",
+            code=EXIT_USAGE,
+        )
+
+
+def _render_dot_with_postprocess(ir: IR, options: dict | None = None) -> str:
     processed = ir
 
     try:
@@ -81,7 +97,10 @@ def _render_dot_with_postprocess(ir: IR) -> str:
         pass
 
     try:
-        _dot = render_dot(processed)
+        try:
+            _dot = render_dot(processed, options=options)
+        except TypeError:
+            _dot = render_dot(processed)
     except Exception as e:
         raise RenderError(str(e))
 
