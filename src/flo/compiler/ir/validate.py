@@ -37,6 +37,8 @@ def validate_ir(obj: Any) -> None:
     incoming_counts, outgoing_counts = _build_edge_degree_maps(obj, ids)
     _validate_decision_nodes(obj, outgoing_counts)
     _validate_queue_nodes(obj, incoming_counts, outgoing_counts)
+    _validate_node_connectivity(obj, incoming_counts, outgoing_counts)
+    _validate_global_reachability(obj)
 
 
 def _validate_start_nodes(obj: IR) -> None:
@@ -90,6 +92,97 @@ def _validate_queue_nodes(obj: IR, incoming_counts: dict[str, int], outgoing_cou
             raise ValidationError(
                 f"E1104: queue node '{node.id}' must have at least one outgoing edge"
             )
+
+
+def _validate_node_connectivity(
+    obj: IR,
+    incoming_counts: dict[str, int],
+    outgoing_counts: dict[str, int],
+) -> None:
+    for node in obj.nodes:
+        node_type = (node.type or "").lower()
+
+        if node_type != "start" and incoming_counts.get(node.id, 0) < 1:
+            raise ValidationError(
+                f"E1006: node '{node.id}' must have at least one predecessor"
+            )
+
+        if node_type != "end" and outgoing_counts.get(node.id, 0) < 1:
+            raise ValidationError(
+                f"E1007: node '{node.id}' must have at least one successor"
+            )
+
+
+def _validate_global_reachability(obj: IR) -> None:
+    node_ids = [node.id for node in obj.nodes]
+    adjacency, reverse_adjacency = _build_adjacency_maps(node_ids=node_ids, edges=obj.edges)
+    start_nodes = _collect_node_ids_by_type(obj=obj, node_type="start")
+    end_nodes = _collect_node_ids_by_type(obj=obj, node_type="end")
+
+    _ensure_end_nodes_present(end_nodes=end_nodes)
+    _ensure_all_nodes_reachable_from_start(obj=obj, start_nodes=start_nodes, adjacency=adjacency)
+    _ensure_all_nodes_can_reach_end(obj=obj, end_nodes=end_nodes, reverse_adjacency=reverse_adjacency)
+
+
+def _build_adjacency_maps(
+    node_ids: list[str],
+    edges: list[Any],
+) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
+    id_set = set(node_ids)
+    adjacency: dict[str, set[str]] = {node_id: set() for node_id in id_set}
+    reverse_adjacency: dict[str, set[str]] = {node_id: set() for node_id in id_set}
+
+    for edge in edges:
+        if edge.source in adjacency and edge.target in adjacency:
+            adjacency[edge.source].add(edge.target)
+            reverse_adjacency[edge.target].add(edge.source)
+
+    return adjacency, reverse_adjacency
+
+
+def _collect_node_ids_by_type(obj: IR, node_type: str) -> list[str]:
+    return [node.id for node in obj.nodes if (node.type or "").lower() == node_type]
+
+
+def _ensure_end_nodes_present(end_nodes: list[str]) -> None:
+    if not end_nodes:
+        raise ValidationError("E1010: IR must contain at least one end node")
+
+
+def _ensure_all_nodes_reachable_from_start(
+    obj: IR,
+    start_nodes: list[str],
+    adjacency: dict[str, set[str]],
+) -> None:
+    reachable_from_start = _traverse(start_nodes, adjacency)
+    for node in obj.nodes:
+        if node.id not in reachable_from_start:
+            raise ValidationError(f"E1008: node '{node.id}' is unreachable from start")
+
+
+def _ensure_all_nodes_can_reach_end(
+    obj: IR,
+    end_nodes: list[str],
+    reverse_adjacency: dict[str, set[str]],
+) -> None:
+    can_reach_end = _traverse(end_nodes, reverse_adjacency)
+    for node in obj.nodes:
+        if node.id not in can_reach_end:
+            raise ValidationError(f"E1009: node '{node.id}' cannot reach any end node")
+
+
+def _traverse(seed_ids: list[str], graph: dict[str, set[str]]) -> set[str]:
+    visited: set[str] = set()
+    stack: list[str] = list(seed_ids)
+    while stack:
+        current = stack.pop()
+        if current in visited:
+            continue
+        visited.add(current)
+        for nxt in graph.get(current, set()):
+            if nxt not in visited:
+                stack.append(nxt)
+    return visited
 
 
 def _validate_queue_metadata(node_id: str, metadata: dict[str, Any]) -> None:

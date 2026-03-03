@@ -56,11 +56,17 @@ Validation rules (initial)
 --------------------------
 
 - All `source` and `target` references in `edges` must resolve to a `node.id`.
-- Exactly one `start` node is recommended; multiple start nodes allowed but
-  must be intentional and validated by policy.
-- `decision` nodes should have outgoing edges with `outcome` labels; missing
-  outcome labels produce a diagnostic.
+- Exactly one `start` node is required.
+- At least one `end` node is required.
+- `decision` nodes must have at least two outgoing edges.
+- Every node except `start` must have at least one predecessor.
+- Every node except `end` must have at least one successor.
+- Every node must be reachable from `start`.
+- Every node must be able to reach at least one `end` node.
 - No implicit node creation; all nodes and lanes must be declared.
+
+Authoritative semantics live in `docs/design/IR.md` and hierarchy policy is
+defined in `docs/design/SSOT_Hierarchy.md`.
 
 JSON Schema (sketch)
 --------------------

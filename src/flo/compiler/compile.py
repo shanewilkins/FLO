@@ -72,7 +72,10 @@ def _build_edges(adapter: dict[str, Any], nodes: list[Node]) -> list[Edge]:
     explicit_edges = adapter.get("edges")
     if isinstance(explicit_edges, list):
         return _build_explicit_edges(explicit_edges)
-    return _build_outcome_edges(nodes)
+
+    outcome_edges = _build_outcome_edges(nodes)
+    sequential_edges = _build_sequential_edges(nodes)
+    return _merge_edges(outcome_edges, sequential_edges)
 
 
 def _build_explicit_edges(explicit_edges: list[Any]) -> list[Edge]:
@@ -107,3 +110,39 @@ def _build_outcome_edges(nodes: list[Node]) -> list[Edge]:
         for outcome, target in outcomes.items():
             edges.append(Edge(source=node.id, target=str(target), outcome=str(outcome)))
     return edges
+
+
+def _build_sequential_edges(nodes: list[Node]) -> list[Edge]:
+    edges: list[Edge] = []
+    if len(nodes) < 2:
+        return edges
+
+    for current, nxt in zip(nodes, nodes[1:]):
+        current_type = (current.type or "").lower()
+        if current_type == "end":
+            continue
+
+        attrs = current.attrs or {}
+        outcomes = attrs.get("outcomes") if isinstance(attrs, dict) else None
+        if isinstance(outcomes, dict) and outcomes:
+            # Decision-like nodes with explicit outcomes should not also get
+            # an implicit sequential edge.
+            continue
+
+        edges.append(Edge(source=current.id, target=nxt.id))
+
+    return edges
+
+
+def _merge_edges(primary: list[Edge], secondary: list[Edge]) -> list[Edge]:
+    merged: list[Edge] = []
+    seen: set[tuple[str, str, str | None]] = set()
+
+    for edge in [*primary, *secondary]:
+        key = (edge.source, edge.target, edge.outcome)
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(edge)
+
+    return merged

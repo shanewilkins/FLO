@@ -36,3 +36,5 @@ edges:
   - source: valid_decision
     target: rework
     outcome: else
+  - source: rework
+    target: approve

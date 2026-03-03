@@ -84,6 +84,30 @@ Downstream projects depend on FLO IR.
 
 ------------------------------------------------------------------------
 
+## Source of Truth Hierarchy
+
+- Structural contract SSOT: `schema/flo_ir.json`
+- Semantic SSOT: `docs/design/IR.md`
+- User-facing summary: `README.md`
+
+Hierarchy policy and update workflow are defined in
+`docs/design/SSOT_Hierarchy.md`.
+
+------------------------------------------------------------------------
+
+## Current Semantic Constraints (v0.1)
+
+- Exactly one `start` node.
+- At least one `end` node.
+- All edge endpoints must resolve to declared node IDs.
+- Every non-`start` node must have at least one predecessor.
+- Every non-`end` node must have at least one successor.
+- Every node must be reachable from `start`.
+- Every node must be able to reach at least one `end` node.
+- `decision` nodes must have at least two outgoing edges.
+
+------------------------------------------------------------------------
+
 ## Versioning
 
 FLO follows semantic versioning at the spec level.

@@ -70,7 +70,7 @@ wait_time_s: int | None
 CANONICALIZATION RULES
 
 Identity - Every node must have a unique id. - Exactly one start node. -
-One or more end nodes allowed.
+At least one end node is required.
 
 Edge validity - All referenced nodes must exist.
 
@@ -79,8 +79,21 @@ edges. - edges may contain conditions. - one edge may be default
 (condition null or “else”).
 
 Graph validation - reachability from start recommended - orphan nodes
-warning - dead-end nodes warning unless type=end - cycles allowed but
-reported
+errors - every non-start node must have at least one predecessor - every
+non-end node must have at least one successor - every node must be reachable
+from start - every node must be able to reach at least one end node - cycles
+allowed but reported
+
+Validation diagnostics (current)
+
+- E1003: exactly one start node required
+- E1004: unresolved edge endpoint
+- E1005: decision must have at least two outgoing edges
+- E1006: non-start node missing predecessor
+- E1007: non-end node missing successor
+- E1008: node unreachable from start
+- E1009: node cannot reach any end node
+- E1010: at least one end node required
 
 ------------------------------------------------------------------------
 

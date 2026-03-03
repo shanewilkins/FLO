@@ -37,7 +37,7 @@ steps:
       rejected: notify_employee
 
   - id: notify_employee
-    kind: task
+    kind: end
     lane: finance
 
   - id: pay_claim
