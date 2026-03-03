@@ -189,6 +189,7 @@ class PipelineRunner:
                 if not (isinstance(state, tuple) and len(state) == 3):
                     if isinstance(state, int):
                         rc = int(state)
+                        state = (rc, None, None)
                     else:
                         rc = int(getattr(state, "rc", 1))
                         # fallback if shape unexpected

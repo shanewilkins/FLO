@@ -31,12 +31,10 @@ def module_name_from_path(p: pathlib.Path, src_root: pathlib.Path) -> str:
 
 RULES: Dict[str, List[str]] = {
     # module prefix -> list of forbidden import prefixes
-    "flo.compiler": ["flo.main", "flo.services.logging"],
-    "flo.adapters": ["flo.main", "flo.services.logging"],
-    "flo.ir": ["flo.compiler", "flo.main", "flo.adapters", "flo.analysis", "flo.render"],
-    "flo.render": ["flo.main", "flo.services.logging"],
-    # Note: generic 'flo' catch-all rule removed to allow CLI module
-    # (`flo.cli`) to import the programmatic entrypoints in `flo.main`.
+    "flo.compiler": ["flo.services.logging"],
+    "flo.adapters": ["flo.services.logging"],
+    "flo.ir": ["flo.compiler", "flo.adapters", "flo.analysis", "flo.render"],
+    "flo.render": ["flo.services.logging"],
 }
 
 
@@ -63,7 +61,7 @@ def check_forbidden(module: str, imported: str, path: pathlib.Path) -> List[str]
     """Return violations for `module` importing `imported` per RULES."""
     errs: List[str] = []
     for prefix, forbidden_list in RULES.items():
-        if module == prefix or module.startswith(prefix + ".") or (prefix == "flo" and module.startswith("flo.") and module != "flo.main"):
+        if module == prefix or module.startswith(prefix + "."):
             for forbidden in forbidden_list:
                 if imported == forbidden or imported.startswith(forbidden + "."):
                     errs.append(f"{path}: module '{module}' imports forbidden '{imported}' (rule for '{prefix}')")

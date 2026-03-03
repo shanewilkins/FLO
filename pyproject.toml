@@ -23,7 +23,7 @@ requires = ["uv_build>=0.10.4,<0.11.0"]
 build-backend = "uv_build"
 
 [project.scripts]
-flo = "flo.cli:main"
+flo = "flo.core.cli:main"
 
 [dependency-groups]
 dev = [
@@ -62,7 +62,7 @@ services = "flo.services"
 [[tool.importlinter.rules]]
 name = "no_core_deps"
 description = "Core/CLI must not be imported by domain layers."
-modules = ["flo.core", "flo.main"]
+modules = ["flo.core"]
 forbidden = ["flo.compiler", "flo.adapters", "flo.render", "flo.services"]
 
 [[tool.importlinter.rules]]
@@ -75,7 +75,7 @@ forbidden = ["flo.core", "flo.services.logging"]
 name = "compiler_ir_independent"
 description = "Compiler IR package must be independent of higher-level concerns."
 modules = ["flo.compiler.ir"]
-forbidden = ["flo.core", "flo.main", "flo.adapters", "flo.render", "flo.services"]
+forbidden = ["flo.core", "flo.adapters", "flo.render", "flo.services"]
 
 [[tool.importlinter.rules]]
 name = "render_optional"
@@ -87,4 +87,9 @@ forbidden = ["flo.core", "flo.services.logging"]
 name = "no_domain_import_core"
 description = "Domain layers must not import core entrypoint modules."
 modules = ["flo.adapters", "flo.compiler", "flo.render", "flo.services"]
-forbidden = ["flo.core", "flo.main"]
+forbidden = ["flo.core"]
+
+[tool.coverage.report]
+omit = [
+    "src/flo/main.py",
+]
