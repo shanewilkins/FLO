@@ -50,7 +50,8 @@ def _build_one(example_file: Path, examples_dir: Path, renders_dir: Path) -> tup
         ir = compile_adapter(adapter)
         validate_ir(ir)
         ensure_schema_aligned(ir)
-        dot = render_dot(ir)
+        render_options = _render_options_for_example(example_file)
+        dot = render_dot(ir, options=render_options)
         dot_out.write_text(dot, encoding="utf-8")
 
         has_dot = shutil.which("dot") is not None
@@ -100,6 +101,13 @@ def main() -> int:
 
     print(f"Completed successfully for {len(files)} file(s).")
     return 0
+
+
+def _render_options_for_example(example_file: Path) -> dict[str, str]:
+    name = example_file.stem.lower()
+    if name == "swimlane":
+        return {"diagram": "swimlane"}
+    return {}
 
 
 if __name__ == "__main__":

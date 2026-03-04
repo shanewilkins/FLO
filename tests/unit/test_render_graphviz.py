@@ -37,6 +37,21 @@ def test_swimlane_emits_lane_clusters_for_laned_nodes():
     assert "subgraph cluster_ops" in out
 
 
+def test_swimlane_emits_lane_boundary_anchors():
+    ir_like = {
+        "nodes": [
+            {"id": "a", "kind": "task", "name": "A", "lane": "sales"},
+            {"id": "b", "kind": "task", "name": "B", "lane": "ops"},
+        ],
+        "edges": [{"source": "a", "target": "b"}],
+    }
+    out = render_dot(ir_like, options={"diagram": "swimlane"})
+    assert "subgraph lane_left_boundary" in out
+    assert "subgraph lane_right_boundary" in out
+    assert "__lane_sales_left" in out
+    assert "__lane_ops_right" in out
+
+
 def test_summary_detail_omits_edge_labels():
     ir_like = {
         "nodes": [

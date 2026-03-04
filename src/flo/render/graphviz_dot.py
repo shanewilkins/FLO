@@ -29,22 +29,53 @@ def _render_dot_graph(process: Dict[str, Any] | Any, options: RenderOptions, use
 
     lines: list[str] = ["digraph {"]
     lines.append("  rankdir=LR;")
+    lines.append("  graph [compound=true, newrank=true, nodesep=0.7, ranksep=0.9];")
+    lines.append("  node [fontname=Helvetica];")
+    lines.append("  edge [fontname=Helvetica];")
 
     if use_swimlanes:
         lane_groups, unlaned_nodes = _partition_nodes_by_lane(nodes)
+        lane_specs = [(lane_name, lane_nodes, _safe_cluster_id(lane_name)) for lane_name, lane_nodes in lane_groups.items()]
+        if unlaned_nodes:
+            lane_specs.append(("unassigned", unlaned_nodes, "unassigned"))
 
-        for lane_name, lane_nodes in sorted(lane_groups.items(), key=lambda item: item[0]):
-            lane_id = _safe_cluster_id(lane_name)
+        left_boundary_nodes: list[str] = []
+        right_boundary_nodes: list[str] = []
+
+        for lane_index, (lane_name, lane_nodes, lane_id) in enumerate(lane_specs):
+            left_anchor = f"__lane_{lane_id}_left"
+            right_anchor = f"__lane_{lane_id}_right"
+            left_boundary_nodes.append(left_anchor)
+            right_boundary_nodes.append(right_anchor)
+
             lines.append(f"  subgraph cluster_{lane_id} {{")
             lines.append(f'    label="{_escape(str(lane_name))}";')
-            lines.append("    style=rounded;")
-            lines.append("    color=gray70;")
+            lines.append("    style=\"rounded,filled\";")
+            lines.append("    penwidth=2;")
+            lines.append("    color=gray55;")
+            lines.append(f'    fillcolor="{_lane_fillcolor(lane_index)}";')
+            lines.append("    labelloc=t;")
+            lines.append("    labeljust=l;")
+            lines.append(f'    "{left_anchor}" [label="", shape=point, width=0.01, height=0.01, style=invis];')
+            lines.append(f'    "{right_anchor}" [label="", shape=point, width=0.01, height=0.01, style=invis];')
+
+            lane_node_ids: list[str] = []
             for node in lane_nodes:
+                node_id = str(node.get("id", ""))
                 lines.extend(_render_node_line(node, indent="    ", options=options))
+                if node_id:
+                    lane_node_ids.append(node_id)
+
+            _append_lane_spine(
+                lines=lines,
+                left_anchor=left_anchor,
+                right_anchor=right_anchor,
+                lane_node_ids=lane_node_ids,
+            )
+
             lines.append("  }")
 
-        for node in unlaned_nodes:
-            lines.extend(_render_node_line(node, indent="  ", options=options))
+        _append_lane_boundary_subgraphs(lines, left_boundary_nodes, right_boundary_nodes)
     else:
         for node in nodes:
             lines.extend(_render_node_line(node, indent="  ", options=options))
@@ -177,6 +208,43 @@ def _partition_nodes_by_lane(nodes: list[dict[str, Any]]) -> tuple[dict[str, lis
         lane_groups.setdefault(lane_key, []).append(node)
 
     return lane_groups, unlaned_nodes
+
+
+def _lane_fillcolor(index: int) -> str:
+    palette = ["gray96", "gray93"]
+    return palette[index % len(palette)]
+
+
+def _append_lane_boundary_subgraphs(lines: list[str], left_nodes: list[str], right_nodes: list[str]) -> None:
+    if left_nodes:
+        lines.append("  subgraph lane_left_boundary {")
+        lines.append("    rank=same;")
+        for node in left_nodes:
+            lines.append(f'    "{node}";')
+        lines.append("  }")
+
+    if right_nodes:
+        lines.append("  subgraph lane_right_boundary {")
+        lines.append("    rank=same;")
+        for node in right_nodes:
+            lines.append(f'    "{node}";')
+        lines.append("  }")
+
+
+def _append_lane_spine(
+    lines: list[str],
+    left_anchor: str,
+    right_anchor: str,
+    lane_node_ids: list[str],
+) -> None:
+    chain: list[str] = [left_anchor, *[_escape(node_id) for node_id in lane_node_ids], right_anchor]
+    if len(chain) < 2:
+        return
+
+    for source, target in zip(chain, chain[1:]):
+        lines.append(
+            f'    "{source}" -> "{target}" [style=invis, weight=200, minlen=2];'
+        )
 
 
 def _safe_cluster_id(value: str) -> str:

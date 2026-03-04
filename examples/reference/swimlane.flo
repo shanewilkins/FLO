@@ -1,0 +1,109 @@
+spec_version: "0.1"
+
+process:
+  id: cross_function_request_v1
+  name: Cross-Functional Request Process
+
+lanes:
+  - id: requester
+    name: Requester
+  - id: manager
+    name: Manager
+  - id: finance
+    name: Finance
+  - id: procurement
+    name: Procurement
+  - id: vendor
+    name: Vendor
+
+steps:
+  - id: start
+    kind: start
+    name: Start
+    lane: requester
+
+  - id: draft_request
+    kind: task
+    name: Draft Request
+    lane: requester
+
+  - id: manager_review
+    kind: decision
+    name: Manager Approval?
+    lane: manager
+    outcomes:
+      approved: budget_check
+      rejected: notify_reject
+
+  - id: budget_check
+    kind: decision
+    name: Budget Available?
+    lane: finance
+    outcomes:
+      approved: create_po
+      rejected: request_revision
+
+  - id: request_revision
+    kind: task
+    name: Revise Request
+    lane: requester
+
+  - id: create_po
+    kind: task
+    name: Create Purchase Order
+    lane: procurement
+
+  - id: vendor_fulfillment
+    kind: task
+    name: Fulfill Order
+    lane: vendor
+
+  - id: receive_goods
+    kind: task
+    name: Receive Goods
+    lane: requester
+
+  - id: close_request
+    kind: end
+    name: Complete
+    lane: procurement
+
+  - id: notify_reject
+    kind: end
+    name: Notify Rejection
+    lane: manager
+
+edges:
+  - source: start
+    target: draft_request
+
+  - source: draft_request
+    target: manager_review
+
+  - source: manager_review
+    target: budget_check
+    outcome: approved
+
+  - source: manager_review
+    target: notify_reject
+    outcome: rejected
+
+  - source: budget_check
+    target: create_po
+    outcome: approved
+
+  - source: budget_check
+    target: request_revision
+    outcome: rejected
+
+  - source: request_revision
+    target: draft_request
+
+  - source: create_po
+    target: vendor_fulfillment
+
+  - source: vendor_fulfillment
+    target: receive_goods
+
+  - source: receive_goods
+    target: close_request
