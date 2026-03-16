@@ -9,7 +9,7 @@ from flo.export import ir_to_schema_dict
 from pathlib import Path
 import json
 
-_MEASURE_UNITS = {"mg", "g", "kg", "ml", "l", "m"}
+_MEASURE_UNITS = {"mg", "g", "kg", "ml", "l", "mm", "cm", "m"}
 _TIME_UNITS = {"s", "m", "min", "hr", "d"}
 
 try:

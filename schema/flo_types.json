@@ -18,7 +18,7 @@
       },
       "additionalProperties": false
     },
-    "measure_unit": { "type": "string", "enum": ["mg", "g", "kg", "ml", "l", "m"] },
+    "measure_unit": { "type": "string", "enum": ["mg", "g", "kg", "ml", "l", "mm", "cm", "m"] },
     "quantity_count": {
       "type": "object",
       "required": ["kind", "value"],

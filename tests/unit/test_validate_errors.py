@@ -261,6 +261,38 @@ def test_validate_ir_accepts_material_count_and_measure_shapes():
     validate_ir(ir)
 
 
+def test_validate_ir_accepts_mm_and_cm_measure_units():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="end"),
+        ],
+        process_metadata={
+            "materials": [
+                {
+                    "id": "wire_segment",
+                    "name": "Wire Segment",
+                    "quantity": {"kind": "measure", "value": 25, "unit": "cm"},
+                }
+            ],
+            "equipment": [
+                {
+                    "id": "spacer",
+                    "name": "Spacer",
+                    "quantity": {"kind": "measure", "value": 3, "unit": "mm"},
+                }
+            ],
+        },
+    )
+
+    # should not raise
+    validate_ir(ir)
+
+
 def test_validate_ir_locations_must_be_list_when_present():
     ir = IR(
         name="x",

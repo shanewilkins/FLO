@@ -206,7 +206,7 @@ Process-level KPI and resource data should be stored in metadata.
 For material quantities, use one of two quantity shapes:
 
 - Discrete count: `kind: count`, integer `value`, `unit: each` (optional `qualifier`, for example `large`)
-- Continuous SI-style measure: `kind: measure`, numeric `value`, and metric `unit` from `mg|g|kg|ml|l|m`
+- Continuous SI-style measure: `kind: measure`, numeric `value`, and metric `unit` from `mg|g|kg|ml|l|mm|cm|m`
 
 The same quantity contract can be used for `equipment` and `workers` when counts or measured quantities are useful. `locations` can include quantity, but most models use IDs, names, and location metadata.
 
