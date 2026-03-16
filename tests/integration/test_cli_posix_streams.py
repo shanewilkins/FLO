@@ -16,7 +16,7 @@ steps:
   - id: end
     kind: end
 
-edges:
+transitions:
   - source: start
     target: end
 """

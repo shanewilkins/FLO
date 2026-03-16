@@ -1,4 +1,5 @@
 from click.testing import CliRunner
+import yaml
 
 from flo.core.cli import cli
 
@@ -37,6 +38,69 @@ def test_run_json_export_rejects_render_only_flags():
     result = runner.invoke(
         cli,
         ["run", "examples/reference/linear.flo", "--export", "json", "--diagram", "swimlane"],
+    )
+    assert result.exit_code == 1
+    assert "require DOT output" in result.output
+
+
+def test_run_show_notes_and_orientation(tmp_path):
+    model = tmp_path / "note_model.flo"
+    payload = {
+        "spec_version": "0.1",
+        "process": {"id": "notes_demo", "name": "Notes Demo"},
+        "steps": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {
+                "id": "review",
+                "kind": "task",
+                "name": "Review",
+                "note": "Requires manager signoff",
+            },
+            {"id": "finish", "kind": "end", "name": "Done"},
+        ],
+        "edges": [
+            {"source": "start", "target": "review"},
+            {"source": "review", "target": "finish"},
+        ],
+    }
+    model.write_text(
+        yaml.safe_dump(payload, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            str(model),
+            "--export",
+            "dot",
+            "--orientation",
+            "tb",
+            "--show-notes",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "rankdir=TB;" in result.output
+    assert "Note: Requires manager signoff" in result.output
+
+
+def test_run_json_export_rejects_show_notes_flag():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["run", "examples/reference/linear.flo", "--export", "json", "--show-notes"],
+    )
+    assert result.exit_code == 1
+    assert "require DOT output" in result.output
+
+
+def test_run_ingredients_export_rejects_diagram_flag():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["run", "examples/reference/chocolate_chip_cookies.flo", "--export", "ingredients", "--diagram", "swimlane"],
     )
     assert result.exit_code == 1
     assert "require DOT output" in result.output

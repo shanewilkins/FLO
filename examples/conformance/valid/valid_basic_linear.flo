@@ -19,7 +19,7 @@ steps:
   - id: ship
     kind: end
 
-edges:
+transitions:
   - source: start
     target: pick
   - source: pick

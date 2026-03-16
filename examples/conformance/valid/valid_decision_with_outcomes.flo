@@ -25,7 +25,7 @@ steps:
   - id: approve
     kind: end
 
-edges:
+transitions:
   - source: start
     target: intake
   - source: intake

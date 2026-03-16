@@ -18,10 +18,12 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
 @click.option("--validate", is_flag=True, help="Only validate file")
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.option("-o", "--output", help="Write output to file")
-@click.option("--export", "export_fmt", type=click.Choice(["dot", "json"]), help="Export format")
+@click.option("--export", "export_fmt", type=click.Choice(["dot", "json", "ingredients"]), help="Export format")
 @click.option("--diagram", type=click.Choice(["flowchart", "swimlane"]), help="Diagram type for DOT output")
 @click.option("--profile", type=click.Choice(["default", "analysis"]), help="Projection rule profile")
 @click.option("--detail", type=click.Choice(["summary", "standard", "verbose"]), help="Detail level")
+@click.option("--orientation", type=click.Choice(["lr", "tb"]), help="Layout orientation for DOT output")
+@click.option("--show-notes", is_flag=True, help="Include node notes in DOT labels")
 def run_cmd(
     path: Optional[str],
     validate: bool,
@@ -31,6 +33,8 @@ def run_cmd(
     diagram: Optional[str],
     profile: Optional[str],
     detail: Optional[str],
+    orientation: Optional[str],
+    show_notes: bool,
 ) -> None:  # pragma: no cover - integration
     """Invoke the CLI command handler with normalized arguments."""
     args: list[str] = []
@@ -51,6 +55,10 @@ def run_cmd(
         args.extend(["--profile", profile])
     if detail:
         args.extend(["--detail", detail])
+    if orientation:
+        args.extend(["--orientation", orientation])
+    if show_notes:
+        args.append("--show-notes")
 
     rc = console_main(args)
     raise SystemExit(rc)
@@ -89,12 +97,14 @@ def validate_cmd(path: Optional[str], verbose: bool) -> None:  # pragma: no cove
 
 @cli.command("export")
 @click.argument("path", required=False)
-@click.option("--export", "export_fmt", type=click.Choice(["dot", "json"]), default="dot", show_default=True)
+@click.option("--export", "export_fmt", type=click.Choice(["dot", "json", "ingredients"]), default="dot", show_default=True)
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.option("-o", "--output", help="Write output to file")
 @click.option("--diagram", type=click.Choice(["flowchart", "swimlane"]), help="Diagram type for DOT output")
 @click.option("--profile", type=click.Choice(["default", "analysis"]), help="Projection rule profile")
 @click.option("--detail", type=click.Choice(["summary", "standard", "verbose"]), help="Detail level")
+@click.option("--orientation", type=click.Choice(["lr", "tb"]), help="Layout orientation for DOT output")
+@click.option("--show-notes", is_flag=True, help="Include node notes in DOT labels")
 def export_cmd(
     path: Optional[str],
     export_fmt: str,
@@ -103,6 +113,8 @@ def export_cmd(
     diagram: Optional[str],
     profile: Optional[str],
     detail: Optional[str],
+    orientation: Optional[str],
+    show_notes: bool,
 ) -> None:  # pragma: no cover - integration
     """Export FLO input as DOT or JSON."""
     args: list[str] = ["export"]
@@ -115,6 +127,10 @@ def export_cmd(
         args.extend(["--profile", profile])
     if detail:
         args.extend(["--detail", detail])
+    if orientation:
+        args.extend(["--orientation", orientation])
+    if show_notes:
+        args.append("--show-notes")
     if verbose:
         args.append("-v")
     if output:

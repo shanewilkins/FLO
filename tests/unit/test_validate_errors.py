@@ -155,3 +155,329 @@ def test_validate_ir_requires_at_least_one_end_node():
     )
     with pytest.raises(ValidationError, match="E1010"):
         validate_ir(ir)
+
+
+def test_validate_ir_material_count_requires_integer_value():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="end"),
+        ],
+        process_metadata={
+            "materials": [
+                {
+                    "id": "egg",
+                    "name": "Egg",
+                    "quantity": {"kind": "count", "value": 2.5, "unit": "each"},
+                }
+            ]
+        },
+    )
+    with pytest.raises(ValidationError, match="E1206"):
+        validate_ir(ir)
+
+
+def test_validate_ir_material_measure_requires_supported_unit():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="end"),
+        ],
+        process_metadata={
+            "materials": [
+                {
+                    "id": "flour",
+                    "name": "Flour",
+                    "quantity": {"kind": "measure", "value": 250, "unit": "cups"},
+                }
+            ]
+        },
+    )
+    with pytest.raises(ValidationError, match="E1210"):
+        validate_ir(ir)
+
+
+def test_validate_ir_accepts_material_count_and_measure_shapes():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="end"),
+        ],
+        process_metadata={
+            "materials": [
+                {
+                    "id": "egg",
+                    "name": "Egg",
+                    "quantity": {"kind": "count", "value": 2, "unit": "each", "qualifier": "large"},
+                },
+                {
+                    "id": "flour",
+                    "name": "Flour",
+                    "quantity": {
+                        "kind": "measure",
+                        "value": 250,
+                        "unit": "g",
+                        "canonical_value": 0.25,
+                        "canonical_unit": "kg",
+                    },
+                },
+            ],
+            "equipment": [
+                {
+                    "id": "oven",
+                    "name": "Oven",
+                    "quantity": {"kind": "count", "value": 1, "unit": "each"},
+                }
+            ],
+            "locations": [
+                {
+                    "id": "kitchen",
+                    "name": "Kitchen",
+                }
+            ],
+            "workers": [
+                {
+                    "id": "baker",
+                    "name": "Baker",
+                    "quantity": {"kind": "count", "value": 1, "unit": "each"},
+                }
+            ],
+        },
+    )
+
+    # should not raise
+    validate_ir(ir)
+
+
+def test_validate_ir_locations_must_be_list_when_present():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="end"),
+        ],
+        process_metadata={
+            "locations": {"id": "kitchen", "name": "Kitchen"},
+        },
+    )
+
+    with pytest.raises(ValidationError, match="E1201"):
+        validate_ir(ir)
+
+
+def test_validate_ir_accepts_grouped_and_nested_materials():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="end"),
+        ],
+        process_metadata={
+            "materials": {
+                "dry": {
+                    "name": "Dry Ingredients",
+                    "items": [
+                        {
+                            "id": "flour",
+                            "name": "Flour",
+                            "quantity": {"kind": "measure", "value": 250, "unit": "g"},
+                        },
+                    ],
+                },
+                "wet": {
+                    "name": "Wet Ingredients",
+                    "dairy": {
+                        "name": "Dairy",
+                        "items": [
+                            {
+                                "id": "butter",
+                                "name": "Butter",
+                                "quantity": {"kind": "measure", "value": 100, "unit": "g"},
+                            }
+                        ],
+                    },
+                },
+            },
+        },
+    )
+
+    # should not raise
+    validate_ir(ir)
+
+
+def test_validate_ir_rejects_group_with_non_collection_value():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="end"),
+        ],
+        process_metadata={
+            "materials": {
+                "dry": "not-a-list",
+            },
+        },
+    )
+
+    with pytest.raises(ValidationError, match="E1201"):
+        validate_ir(ir)
+
+
+def test_validate_ir_rejects_group_with_non_string_name():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="end"),
+        ],
+        process_metadata={
+            "materials": {
+                "dry": {
+                    "name": 123,
+                    "items": [{"id": "flour", "name": "Flour"}],
+                },
+            },
+        },
+    )
+
+    with pytest.raises(ValidationError, match="E1201"):
+        validate_ir(ir)
+
+
+def test_validate_ir_accepts_node_time_metadata_units():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="mix", type="task", attrs={"metadata": {"cycle_time": {"value": 15, "unit": "m"}}}),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="mix"),
+            Edge(source="mix", target="end"),
+        ],
+    )
+
+    # should not raise
+    validate_ir(ir)
+
+
+def test_validate_ir_rejects_invalid_node_time_unit():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="mix", type="task", attrs={"metadata": {"cycle_time": {"value": 15, "unit": "weeks"}}}),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="mix"),
+            Edge(source="mix", target="end"),
+        ],
+    )
+
+    with pytest.raises(ValidationError, match="E1303"):
+        validate_ir(ir)
+
+
+def test_validate_ir_rejects_non_object_node_time_metadata_value():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="mix", type="task", attrs={"metadata": {"cycle_time": 15}}),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="mix"),
+            Edge(source="mix", target="end"),
+        ],
+    )
+
+    with pytest.raises(ValidationError, match="E1301"):
+        validate_ir(ir)
+
+
+def test_validate_ir_accepts_node_inputs_outputs_lists():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(
+                id="mix",
+                type="task",
+                attrs={
+                    "inputs": ["flour", "water"],
+                    "outputs": ["dough"],
+                },
+            ),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="mix"),
+            Edge(source="mix", target="end"),
+        ],
+    )
+
+    # should not raise
+    validate_ir(ir)
+
+
+def test_validate_ir_rejects_non_list_node_inputs():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="mix", type="task", attrs={"inputs": "flour"}),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="mix"),
+            Edge(source="mix", target="end"),
+        ],
+    )
+
+    with pytest.raises(ValidationError, match="E1310"):
+        validate_ir(ir)
+
+
+def test_validate_ir_rejects_empty_string_node_output_item():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="mix", type="task", attrs={"outputs": [""]}),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="mix"),
+            Edge(source="mix", target="end"),
+        ],
+    )
+
+    with pytest.raises(ValidationError, match="E1311"):
+        validate_ir(ir)

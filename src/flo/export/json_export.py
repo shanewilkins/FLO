@@ -11,7 +11,9 @@ from flo.compiler.ir.models import IR
 def ir_to_schema_dict(ir: IR) -> Dict[str, Any]:
     """Project canonical IR into the JSON-schema contract shape."""
     process_id = ir.name or "generated"
-    process = {"id": process_id, "name": process_id}
+    process: Dict[str, Any] = {"id": process_id, "name": process_id}
+    if isinstance(ir.process_metadata, dict) and ir.process_metadata:
+        process["metadata"] = ir.process_metadata
 
     nodes_out = [_node_to_schema(node) for node in ir.nodes]
     edges_out = _edges_to_schema(ir)
@@ -35,6 +37,15 @@ def _node_to_schema(node: Any) -> dict[str, Any]:
     lane = attrs.get("lane")
     if lane is not None:
         node_entry["lane"] = lane
+    note = attrs.get("note")
+    if note is not None:
+        node_entry["note"] = note
+    inputs = attrs.get("inputs")
+    if isinstance(inputs, list):
+        node_entry["inputs"] = inputs
+    outputs = attrs.get("outputs")
+    if isinstance(outputs, list):
+        node_entry["outputs"] = outputs
     metadata = attrs.get("metadata")
     if isinstance(metadata, dict):
         node_entry["metadata"] = metadata

@@ -43,7 +43,7 @@ steps:
   - id: pay_claim
     kind: end
 
-edges:
+transitions:
   - source: start
     target: submit_claim
   - source: submit_claim

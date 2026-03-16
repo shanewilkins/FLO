@@ -25,6 +25,15 @@
           "kind": { "type": "string", "enum": ["start","task","system_task","queue","decision","end","subprocess"] },
           "name": { "type": "string" },
           "lane": { "type": "string" },
+          "note": { "type": "string" },
+          "inputs": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "outputs": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
           "metadata": { "type": "object", "additionalProperties": true }
         },
         "additionalProperties": false

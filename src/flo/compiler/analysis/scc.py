@@ -108,7 +108,7 @@ def scc_condense(ir: IR) -> IR:
     new_nodes, scc_map = _build_condensed_nodes(sccs, id_to_node)
     _rebuild_edges(new_nodes, adj, scc_map)
 
-    return IR(name=ir.name, nodes=new_nodes)
+    return IR(name=ir.name, nodes=new_nodes, process_metadata=ir.process_metadata)
 
 
 def condense_scc(process: Any) -> IR:

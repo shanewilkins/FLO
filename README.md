@@ -6,6 +6,8 @@ It allows you to define processes in a minimal, versioned format and
 compile them into a canonical graph representation (FLO IR) for
 visualization and analysis.
 
+User documentation: `docs/User_Manual.md`
+
 ------------------------------------------------------------------------
 
 ## Example
@@ -104,7 +106,7 @@ Hierarchy policy and update workflow are defined in
 - Every non-`end` node must have at least one successor.
 - Every node must be reachable from `start`.
 - Every node must be able to reach at least one `end` node.
-- `decision` nodes must have at least two outgoing edges.
+- `decision` nodes must have at least two outgoing transitions.
 
 ------------------------------------------------------------------------
 

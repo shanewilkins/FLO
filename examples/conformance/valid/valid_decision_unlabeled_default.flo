@@ -20,7 +20,7 @@ steps:
   - id: end
     kind: end
 
-edges:
+transitions:
   - source: start
     target: assess
   - source: assess

@@ -36,6 +36,7 @@ class IR:
     name: str
     nodes: List[Node]
     edges: List[Edge] = field(default_factory=list)
+    process_metadata: Dict[str, Any] | None = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a Python-native dict representation of the canonical IR."""
@@ -43,6 +44,7 @@ class IR:
             "name": self.name,
             "nodes": [self._node_to_dict(n) for n in self.nodes],
             "edges": [self._edge_to_dict(e) for e in self.edges],
+            "process_metadata": self.process_metadata or {},
         }
 
     @staticmethod
@@ -82,7 +84,11 @@ class IR:
                     metadata=ed.get("metadata"),
                 )
             )
-        return cls(name=data.get("name", ""), nodes=nodes, edges=edges)
+        process_metadata = data.get("process_metadata")
+        if not isinstance(process_metadata, dict):
+            process_metadata = None
+
+        return cls(name=data.get("name", ""), nodes=nodes, edges=edges, process_metadata=process_metadata)
 
     def to_json(self, path: Path | str | None = None) -> str:
         """Serialize the IR to JSON and optionally write to `path`."""

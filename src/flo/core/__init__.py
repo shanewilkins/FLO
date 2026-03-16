@@ -33,9 +33,9 @@ def run_content(content: str, command: str = "run", options: dict | None = None)
         return EXIT_SUCCESS, "", ""
 
     output_format = _resolve_output_format(command=command, options=options)
-    if output_format == "json":
+    if output_format in {"json", "ingredients"}:
         _ensure_render_options_compatible_with_output(options=options, output_format=output_format)
-        return EXIT_SUCCESS, export_ir(ir, options={**(options or {}), "export": "json"}), ""
+        return EXIT_SUCCESS, export_ir(ir, options={**(options or {}), "export": output_format}), ""
 
     return EXIT_SUCCESS, _render_dot_with_postprocess(ir, options=options), ""
 
@@ -69,17 +69,21 @@ def _resolve_output_format(command: str, options: dict | None) -> str:
     output_format = (options or {}).get("export") or (options or {}).get("format")
     if command == "compile":
         return "json"
-    if command in {"run", "export"} and output_format == "json":
-        return "json"
+    if command in {"run", "export"} and output_format in {"json", "ingredients"}:
+        return str(output_format)
     return "dot"
 
 
 def _ensure_render_options_compatible_with_output(options: dict | None, output_format: str) -> None:
-    if output_format != "json":
+    if output_format == "dot":
         return
 
     opts = options or {}
-    invalid = [flag for flag in ("diagram", "profile", "detail") if flag in opts]
+    invalid = [
+        flag
+        for flag in ("diagram", "profile", "detail", "orientation", "show_notes")
+        if flag in opts
+    ]
     if invalid:
         names = ", ".join(f"--{name}" for name in invalid)
         raise CLIError(

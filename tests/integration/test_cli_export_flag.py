@@ -23,3 +23,10 @@ def test_default_path_exports_json_to_file(tmp_path):
     content = out.read_text(encoding="utf-8")
     assert '"process"' in content
     assert '"nodes"' in content
+
+
+def test_default_path_accepts_export_ingredients_flag():
+    runner = CliRunner()
+    result = runner.invoke(cli, ["run", "examples/reference/chocolate_chip_cookies.flo", "--export", "ingredients"])
+    assert result.exit_code == 0
+    assert "Materials and Ingredients" in result.output

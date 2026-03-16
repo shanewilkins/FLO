@@ -63,3 +63,90 @@ def test_schema_json_indent_none_and_positive():
     assert "\n" not in compact
     assert "\n" in pretty
     assert json.loads(compact)["process"]["id"] == "p"
+
+
+def test_node_note_is_exported_when_present():
+    ir = IR(
+        name="p",
+        nodes=[Node(id="n", type="task", attrs={"name": "Task", "note": "Internal follow-up required"})],
+        edges=[],
+    )
+    payload = ir_to_schema_dict(ir)
+    assert payload["nodes"][0]["note"] == "Internal follow-up required"
+
+
+def test_node_inputs_and_outputs_are_exported_when_present():
+    ir = IR(
+        name="p",
+        nodes=[
+            Node(
+                id="mix",
+                type="task",
+                attrs={
+                    "name": "Mix",
+                    "inputs": ["flour", "water"],
+                    "outputs": ["dough"],
+                },
+            )
+        ],
+        edges=[],
+    )
+    payload = ir_to_schema_dict(ir)
+    assert payload["nodes"][0]["inputs"] == ["flour", "water"]
+    assert payload["nodes"][0]["outputs"] == ["dough"]
+
+
+def test_process_metadata_is_exported_when_present():
+    ir = IR(
+        name="cookie_process",
+        nodes=[Node(id="n", type="task", attrs={"name": "Task"})],
+        edges=[],
+        process_metadata={
+            "cycle_time_seconds": {"target": 3600},
+            "yield_fraction": {"target": 0.95},
+            "materials": [{"id": "flour"}],
+            "equipment": [{"id": "oven"}],
+            "locations": [{"id": "kitchen"}],
+            "workers": [{"id": "baker"}],
+        },
+    )
+    payload = ir_to_schema_dict(ir)
+    assert payload["process"]["metadata"]["cycle_time_seconds"]["target"] == 3600
+    assert payload["process"]["metadata"]["yield_fraction"]["target"] == 0.95
+    assert payload["process"]["metadata"]["materials"][0]["id"] == "flour"
+    assert payload["process"]["metadata"]["equipment"][0]["id"] == "oven"
+    assert payload["process"]["metadata"]["locations"][0]["id"] == "kitchen"
+    assert payload["process"]["metadata"]["workers"][0]["id"] == "baker"
+
+
+def test_grouped_materials_are_exported_when_present():
+    ir = IR(
+        name="cookie_process",
+        nodes=[Node(id="n", type="task", attrs={"name": "Task"})],
+        edges=[],
+        process_metadata={
+            "materials": {
+                "dry": {
+                    "name": "Dry Ingredients",
+                    "items": [
+                        {"id": "flour", "name": "Flour"},
+                    ],
+                },
+                "wet": {
+                    "name": "Wet Ingredients",
+                    "dairy": {
+                        "name": "Dairy",
+                        "items": [
+                            {"id": "butter", "name": "Butter"},
+                        ],
+                    },
+                },
+            }
+        },
+    )
+    payload = ir_to_schema_dict(ir)
+    assert payload["process"]["metadata"]["materials"]["dry"]["name"] == "Dry Ingredients"
+    assert payload["process"]["metadata"]["materials"]["dry"]["items"][0]["id"] == "flour"
+    assert payload["process"]["metadata"]["materials"]["wet"]["name"] == "Wet Ingredients"
+    assert payload["process"]["metadata"]["materials"]["wet"]["dairy"]["name"] == "Dairy"
+    assert payload["process"]["metadata"]["materials"]["wet"]["dairy"]["items"][0]["id"] == "butter"

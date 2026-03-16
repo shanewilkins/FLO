@@ -73,7 +73,7 @@ steps:
     name: Notify Rejection
     lane: manager
 
-edges:
+transitions:
   - source: start
     target: draft_request
 

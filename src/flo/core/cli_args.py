@@ -29,35 +29,21 @@ def parse_args(argv: list | None, services: Services) -> Tuple[str | None, str, 
     parser.add_argument("-v", "--verbose", action="store_true", help="Increase verbosity")
     parser.add_argument("-o", "--output", help="Write output to file instead of stdout")
     parser.add_argument("--validate", action="store_true", help="Only validate the file")
-    parser.add_argument("--export", choices=["dot", "json"], help="Export format (dot|json)")
-    parser.add_argument("--format", choices=["dot", "json"], help=argparse.SUPPRESS)
+    parser.add_argument("--export", choices=["dot", "json", "ingredients"], help="Export format (dot|json|ingredients)")
+    parser.add_argument("--format", choices=["dot", "json", "ingredients"], help=argparse.SUPPRESS)
     parser.add_argument("--diagram", choices=["flowchart", "swimlane"], help="Diagram type for DOT output")
     parser.add_argument("--profile", choices=["default", "analysis"], help="Projection rule profile")
     parser.add_argument("--detail", choices=["summary", "standard", "verbose"], help="Detail level")
+    parser.add_argument("--orientation", choices=["lr", "tb"], help="Layout orientation for DOT output")
+    parser.add_argument("--show-notes", action="store_true", help="Include node notes in DOT labels")
     parsed = parser.parse_args(argv)
 
     supported_commands = {"run", "compile", "validate", "export"}
     first = parsed.command_or_path
     second = parsed.path
 
-    if first in supported_commands:
-        command = str(first)
-        path = second
-    else:
-        path = first
-
-    options["verbose"] = bool(parsed.verbose)
-    options["output"] = parsed.output
-    if parsed.export:
-        options["export"] = parsed.export
-    elif parsed.format:
-        options["export"] = parsed.format
-    if parsed.diagram:
-        options["diagram"] = parsed.diagram
-    if parsed.profile:
-        options["profile"] = parsed.profile
-    if parsed.detail:
-        options["detail"] = parsed.detail
+    command, path = _resolve_command_and_path(first=first, second=second, supported_commands=supported_commands)
+    options.update(_build_options_from_parsed(parsed))
 
     if parsed.validate:
         command = "validate"
@@ -72,3 +58,29 @@ def parse_args(argv: list | None, services: Services) -> Tuple[str | None, str, 
         logger = services.logger
 
     return path, command, options, services, logger
+
+
+def _resolve_command_and_path(first: str | None, second: str | None, supported_commands: set[str]) -> tuple[str, str | None]:
+    if first in supported_commands:
+        return str(first), second
+    return "run", first
+
+
+def _build_options_from_parsed(parsed: object) -> dict:
+    export_value = getattr(parsed, "export", None) or getattr(parsed, "format", None)
+    options: dict = {
+        "verbose": bool(getattr(parsed, "verbose", False)),
+        "output": getattr(parsed, "output", None),
+    }
+
+    for key in ("diagram", "profile", "detail", "orientation"):
+        value = getattr(parsed, key, None)
+        if value:
+            options[key] = value
+
+    if export_value:
+        options["export"] = export_value
+    if bool(getattr(parsed, "show_notes", False)):
+        options["show_notes"] = True
+
+    return options
