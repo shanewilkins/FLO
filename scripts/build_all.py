@@ -12,6 +12,7 @@ from pathlib import Path
 import sys
 import shutil
 import subprocess
+import yaml
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -22,6 +23,9 @@ if str(SRC_ROOT) not in sys.path:
 
 def _iter_example_files(examples_dir: Path, include_invalid: bool) -> list[Path]:
     files = sorted(path for path in examples_dir.rglob("*.flo") if path.is_file())
+    included_files = _collect_included_files(files)
+    files = [path for path in files if path.resolve() not in included_files]
+
     if include_invalid:
         return files
     return [
@@ -29,6 +33,53 @@ def _iter_example_files(examples_dir: Path, include_invalid: bool) -> list[Path]
         for path in files
         if "conformance/invalid" not in path.relative_to(examples_dir).as_posix()
     ]
+
+
+def _collect_included_files(files: list[Path]) -> set[Path]:
+    file_set = {path.resolve() for path in files}
+    included: set[Path] = set()
+
+    for path in files:
+        include_refs = _include_refs_from_file(path)
+        for include_ref in include_refs:
+            include_path = _resolve_include_ref(current_path=path, include_ref=include_ref)
+            if include_path in file_set:
+                included.add(include_path)
+
+    return included
+
+
+def _include_refs_from_file(path: Path) -> list[str]:
+    try:
+        parsed = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+
+    if not isinstance(parsed, dict):
+        return []
+    return _extract_include_refs(parsed)
+
+
+def _extract_include_refs(document: dict[str, object]) -> list[str]:
+    include_value = document.get("includes")
+    if include_value is None:
+        include_value = document.get("include")
+
+    if include_value is None:
+        return []
+    if isinstance(include_value, str):
+        text = include_value.strip()
+        return [text] if text else []
+    if isinstance(include_value, list):
+        return [entry.strip() for entry in include_value if isinstance(entry, str) and entry.strip()]
+    return []
+
+
+def _resolve_include_ref(current_path: Path, include_ref: str) -> Path:
+    include_path = Path(include_ref)
+    if include_path.is_absolute():
+        return include_path.resolve()
+    return (current_path.parent / include_path).resolve()
 
 
 def _build_one(example_file: Path, examples_dir: Path, renders_dir: Path) -> tuple[bool, str]:
@@ -134,6 +185,7 @@ def _extra_render_variants_for_example(example_file: Path) -> list[tuple[str, di
     if example_file.stem.lower() == "chocolate_chip_cookies":
         return [
             ("_topdown", {"diagram": "flowchart", "orientation": "tb"}),
+            ("_spaghetti", {"diagram": "spaghetti"}),
         ]
     return []
 
