@@ -22,9 +22,18 @@
         "required": ["id","kind"],
         "properties": {
           "id": { "type": "string" },
-          "kind": { "type": "string", "enum": ["start","task","system_task","queue","decision","end","subprocess"] },
+          "kind": { "type": "string", "enum": ["start","task","system_task","queue","wait","decision","end","subprocess"] },
           "name": { "type": "string" },
           "lane": { "type": "string" },
+          "location": { "type": "string" },
+          "workers": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "equipment": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
           "note": { "type": "string" },
           "inputs": {
             "type": "array",

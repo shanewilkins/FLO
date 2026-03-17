@@ -10,7 +10,7 @@ FLO provides:
 - Deterministic compilation to canonical IR
 - Structural and semantic validation
 - DOT and JSON exports
-- Flowchart and swimlane diagram projections
+- Flowchart, swimlane, and spaghetti-map DOT projections
 
 FLO does not provide:
 - Workflow execution
@@ -84,13 +84,33 @@ Notes:
 FLO enables us to represent a business process as a [directed graph](https://en.wikipedia.org/wiki/Directed_graph#:~:text=In%20mathematics%2C%20and%20more%20specifically%20in%20graph,edges%2C%20often%20called%20arcs.%20A%20directed%20graph.).
 Each node in the graph represents a *step* in the process and we join the steps together with *transitions*.
 
-Use `transitions` as the canonical authoring term.
+## 4.1.1) File Composition (Includes)
 
-- Canonical authoring field: `transitions`
-- Canonical IR field: `edges`
-- Canonical YAML keys for explicit transitions: `source` and `target` (or `from` and `to`)
+Large models can be split into multiple files with top-level include directives.
 
-`edges` remains supported as a backwards-compatible alias in source files.
+Extension convention:
+- Use `.flo` for both entry files and included fragments.
+- Parsing is extension-agnostic: any included file that contains a valid YAML mapping is accepted.
+
+Supported include keys:
+- `includes`: list of file paths
+- `include`: single file path (alias)
+
+Paths are resolved relative to the current file.
+
+```yaml
+spec_version: "0.1"
+
+includes:
+  - chocolate_chip_cookies/materials.flo
+  - chocolate_chip_cookies/locations.flo
+  - chocolate_chip_cookies/process.flo
+```
+
+Composition behavior:
+- Includes are loaded first, then the current file is merged last.
+- Duplicate step IDs across included files are rejected.
+- Include cycles are rejected.
 
 ## 4.2) Node Kinds
 
@@ -100,6 +120,7 @@ The current schema-aligned node kinds are:
 - `task`: a general human or system work step
 - `system_task`: an explicitly system-owned task
 - `queue`: a queue/buffer step (requires queue metadata in current validation)
+- `wait`: an explicit wait/hold step (rendered with a dedicated wait symbol)
 - `decision`: a branch point with at least two outgoing transitions
 - `subprocess`: a collapsed child-process step
 - `end`: a terminal step
@@ -107,10 +128,44 @@ The current schema-aligned node kinds are:
 Optional common node fields:
 - `name`: display label for the node
 - `lane`: swimlane grouping key
+- `location`: location ID for spatial/movement analysis
+- `workers`: optional list of worker IDs used by the step
+- `equipment`: optional list of equipment IDs used by the step
 - `note`: short human note for review/context (rendered only when notes are enabled)
 - `inputs`: list of input item IDs/names consumed by the step
 - `outputs`: list of output item IDs/names produced by the step
+- `subnodes`: optional nested step list for `subprocess` nodes (flattened during compilation)
 - `metadata`: machine-facing metadata map
+
+Subprocess child-node example:
+
+```yaml
+steps:
+  - id: start
+    kind: start
+  - id: prep
+    kind: subprocess
+    name: Prep Phase
+    subnodes:
+      - id: gather
+        kind: task
+        name: Gather Inputs
+      - id: mix
+        kind: task
+        name: Mix Inputs
+  - id: end
+    kind: end
+
+transitions:
+  - source: start
+    target: prep
+  - source: prep
+    target: gather
+  - source: gather
+    target: mix
+  - source: mix
+    target: end
+```
 
 Time-related node metadata fields (for example `cycle_time`, `wait_time`, `lead_time`) should use:
 
@@ -209,6 +264,25 @@ For material quantities, use one of two quantity shapes:
 - Continuous SI-style measure: `kind: measure`, numeric `value`, and metric `unit` from `mg|g|kg|ml|l|mm|cm|m`
 
 The same quantity contract can be used for `equipment` and `workers` when counts or measured quantities are useful. `locations` can include quantity, but most models use IDs, names, and location metadata.
+
+For spatial analysis and spaghetti-map rendering, locations can include optional spatial coordinates:
+
+- `metadata.spatial.x`: numeric x coordinate
+- `metadata.spatial.y`: numeric y coordinate
+- `metadata.spatial.unit`: optional unit (`mm|cm|m|in|ft`)
+
+Example:
+
+```yaml
+locations:
+  - id: prep_bench
+    name: Prep Bench
+    metadata:
+      spatial:
+        x: 3.0
+        y: 2.0
+        unit: m
+```
 
 Grouping example for materials:
 
@@ -318,6 +392,8 @@ transitions:
 
 ## 5) Core CLI Commands
 
+For composed models, keep entry and included files as `.flo` files; see Section 4.1.1 for include conventions.
+
 ## 5.1 Run
 
 Parse, compile, validate, and render/export output.
@@ -350,12 +426,13 @@ flo compile path/to/model.flo
 
 ## 5.4 Export
 
-Export as DOT, JSON, or formatted ingredients text.
+Export as DOT, JSON, ingredients text, or inferred movement report.
 
 ```bash
 flo export path/to/model.flo --export dot
 flo export path/to/model.flo --export json
 flo export path/to/model.flo --export ingredients
+flo export path/to/model.flo --export movement
 ```
 
 ## 6) Options
@@ -363,14 +440,15 @@ flo export path/to/model.flo --export ingredients
 Common options:
 - `-o, --output <file>`: write output to file
 - `-v, --verbose`: verbose logging
-- `--export {dot,json,ingredients}`: choose output format
+- `--export {dot,json,ingredients,movement}`: choose output format
 
 Render options (DOT only):
-- `--diagram {flowchart,swimlane}`
+- `--diagram {flowchart,swimlane,spaghetti}`
 - `--profile {default,analysis}`
 - `--detail {summary,standard,verbose}`
 - `--orientation {lr,tb}`
 - `--show-notes`
+- `--subprocess-view {expanded,parent-only}`
 
 Examples:
 
@@ -378,13 +456,16 @@ Examples:
 flo run examples/reference/swimlane.flo --export dot --diagram swimlane
 flo run examples/reference/linear.flo --export dot --detail summary
 flo run examples/reference/linear.flo --export dot --orientation tb
+flo run examples/reference/chocolate_chip_cookies.flo --export dot --subprocess-view parent-only
+flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram spaghetti
 flo run examples/reference/linear.flo --export json
 flo run examples/reference/chocolate_chip_cookies.flo --export ingredients
+flo run examples/reference/chocolate_chip_cookies.flo --export movement
 ```
 
 Important:
 - Render-only flags are invalid with non-DOT export modes.
-- If you pass `--diagram`, `--profile`, `--detail`, `--orientation`, or `--show-notes` together with JSON or ingredients export, FLO returns usage error code `1`.
+- If you pass `--diagram`, `--profile`, `--detail`, `--orientation`, `--show-notes`, or `--subprocess-view` together with JSON, ingredients, or movement export, FLO returns usage error code `1`.
 
 ## 7) Input and Output Streams
 

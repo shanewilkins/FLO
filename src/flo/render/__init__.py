@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from .graphviz_dot import render_flowchart_dot, render_swimlane_dot
+from .graphviz_dot import render_flowchart_dot, render_swimlane_dot, render_spaghetti_dot
 from .options import RenderOptions
 
 _DOT_RENDERERS = {
 	"flowchart": render_flowchart_dot,
 	"swimlane": render_swimlane_dot,
+	"spaghetti": render_spaghetti_dot,
 }
 
 
@@ -20,4 +21,4 @@ def render_dot(ir: Any, options: dict | None = None) -> str:
 	return renderer(ir, options=render_options)
 
 
-__all__ = ["render_flowchart_dot", "render_swimlane_dot", "render_dot", "RenderOptions"]
+__all__ = ["render_flowchart_dot", "render_swimlane_dot", "render_spaghetti_dot", "render_dot", "RenderOptions"]

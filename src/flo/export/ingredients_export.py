@@ -1,4 +1,4 @@
-"""Human-readable ingredients/materials list exporter."""
+"""Human-readable materials/equipment list exporter."""
 
 from __future__ import annotations
 
@@ -6,20 +6,31 @@ from typing import Any
 
 
 def ir_to_ingredients_text(ir: Any) -> str:
-    """Render a formatted materials/ingredients list from process metadata."""
+    """Render a formatted materials and equipment list from process metadata."""
     process_metadata = getattr(ir, "process_metadata", None)
     materials = process_metadata.get("materials") if isinstance(process_metadata, dict) else None
+    equipment = process_metadata.get("equipment") if isinstance(process_metadata, dict) else None
 
-    lines: list[str] = ["Materials and Ingredients"]
-    if materials is None:
+    lines: list[str] = ["Materials and Equipment"]
+    if materials is None and equipment is None:
         lines.append("- none")
         return "\n".join(lines)
 
-    _append_collection(lines=lines, label=None, collection=materials, level=0)
-    if len(lines) == 1:
-        lines.append("- none")
+    _append_section(lines=lines, title="Materials", collection=materials)
+    _append_section(lines=lines, title="Equipment", collection=equipment)
 
     return "\n".join(lines)
+
+
+def _append_section(lines: list[str], title: str, collection: Any) -> None:
+    if collection is None:
+        return
+
+    lines.append(f"- {title}")
+    before_count = len(lines)
+    _append_collection(lines=lines, label=None, collection=collection, level=1)
+    if len(lines) == before_count:
+        lines.append("  - none")
 
 
 def _append_collection(lines: list[str], label: str | None, collection: Any, level: int) -> None:

@@ -28,7 +28,7 @@ def main() -> int:
     for ex in examples:
         print(f"Validating {ex}")
         content = ex.read_text()
-        adapter = parse_adapter(content)
+        adapter = parse_adapter(content, source_path=str(ex))
         ir = compile_adapter(adapter)
         try:
             ensure_schema_aligned(ir)

@@ -45,6 +45,13 @@ def test_parse_args_export_ingredients_flag(services):
     assert options["export"] == "ingredients"
 
 
+def test_parse_args_export_movement_flag(services):
+    path, command, options, _, _ = parse_args(["file.flo", "--export", "movement"], services)
+    assert path == "file.flo"
+    assert command == "run"
+    assert options["export"] == "movement"
+
+
 def test_parse_args_run_default_export_dot(services):
     path, command, options, _, _ = parse_args(["file.flo"], services)
     assert path == "file.flo"
@@ -65,6 +72,8 @@ def test_parse_args_render_options(services):
             "--orientation",
             "tb",
             "--show-notes",
+            "--subprocess-view",
+            "parent-only",
         ],
         services,
     )
@@ -75,3 +84,11 @@ def test_parse_args_render_options(services):
     assert options["detail"] == "verbose"
     assert options["orientation"] == "tb"
     assert options["show_notes"] is True
+    assert options["subprocess_view"] == "parent-only"
+
+
+def test_parse_args_spaghetti_diagram_option(services):
+    path, command, options, _, _ = parse_args(["file.flo", "--diagram", "spaghetti"], services)
+    assert path == "file.flo"
+    assert command == "run"
+    assert options["diagram"] == "spaghetti"

@@ -96,6 +96,29 @@ def test_node_inputs_and_outputs_are_exported_when_present():
     assert payload["nodes"][0]["outputs"] == ["dough"]
 
 
+def test_node_location_workers_and_equipment_are_exported_when_present():
+    ir = IR(
+        name="p",
+        nodes=[
+            Node(
+                id="mix",
+                type="task",
+                attrs={
+                    "name": "Mix",
+                    "location": "prep_bench",
+                    "workers": ["lead_baker"],
+                    "equipment": ["mixer"],
+                },
+            )
+        ],
+        edges=[],
+    )
+    payload = ir_to_schema_dict(ir)
+    assert payload["nodes"][0]["location"] == "prep_bench"
+    assert payload["nodes"][0]["workers"] == ["lead_baker"]
+    assert payload["nodes"][0]["equipment"] == ["mixer"]
+
+
 def test_process_metadata_is_exported_when_present():
     ir = IR(
         name="cookie_process",

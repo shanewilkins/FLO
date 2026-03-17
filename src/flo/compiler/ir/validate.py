@@ -11,6 +11,7 @@ import json
 
 _MEASURE_UNITS = {"mg", "g", "kg", "ml", "l", "mm", "cm", "m"}
 _TIME_UNITS = {"s", "m", "min", "hr", "d"}
+_SPATIAL_UNITS = {"mm", "cm", "m", "in", "ft"}
 
 try:
     import jsonschema  # type: ignore
@@ -329,6 +330,9 @@ def _validate_resource_item(resource_key: str, path: str, resource: Any) -> None
             f"E1203: {path}.id must be a string"
         )
 
+    if resource_key == "locations":
+        _validate_location_spatial(path=path, resource=resource)
+
     quantity = resource.get("quantity")
     if quantity is None:
         return
@@ -338,6 +342,49 @@ def _validate_resource_item(resource_key: str, path: str, resource: Any) -> None
         )
 
     _validate_resource_quantity(path=path, quantity=quantity)
+
+
+def _validate_location_spatial(path: str, resource: dict[str, Any]) -> None:
+    spatial = _extract_location_spatial(resource)
+    if spatial is None:
+        return
+
+    if not isinstance(spatial, dict):
+        raise ValidationError(
+            f"E1214: {path}.metadata.spatial must be an object"
+        )
+
+    x = spatial.get("x")
+    y = spatial.get("y")
+    if not _is_number(x) or not _is_number(y):
+        raise ValidationError(
+            f"E1215: {path}.metadata.spatial must include numeric x and y"
+        )
+
+    unit = spatial.get("unit")
+    if unit is not None and (not isinstance(unit, str) or unit.strip().lower() not in _SPATIAL_UNITS):
+        raise ValidationError(
+            f"E1216: {path}.metadata.spatial.unit must be one of {sorted(_SPATIAL_UNITS)}"
+        )
+
+
+def _extract_location_spatial(resource: dict[str, Any]) -> dict[str, Any] | None:
+    metadata = resource.get("metadata")
+    if isinstance(metadata, dict) and "spatial" in metadata:
+        return metadata.get("spatial")
+
+    if "x" in resource or "y" in resource:
+        return {
+            "x": resource.get("x"),
+            "y": resource.get("y"),
+            "unit": resource.get("unit"),
+        }
+
+    return None
+
+
+def _is_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
 def _validate_resource_quantity(path: str, quantity: dict[str, Any]) -> None:

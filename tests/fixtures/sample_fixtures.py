@@ -27,7 +27,9 @@ def tmp_flo_file():
     tests exercise the real parsing/compilation pipeline instead of a stub.
     """
     examples_dir = _repo_root() / "examples" / "reference"
-    example = sorted(examples_dir.glob("*.flo"))[0]
+    example = examples_dir / "linear.flo"
+    if not example.exists():
+        example = sorted(examples_dir.glob("*.flo"))[0]
     content = example.read_text()
 
     with tempfile.NamedTemporaryFile("w+", suffix=".flo", delete=False) as fh:

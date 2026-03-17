@@ -16,6 +16,11 @@ def test_ensure_schema_aligned_schema_valid_passes():
     ensure_schema_aligned(ir)
 
 
+def test_ensure_schema_aligned_wait_kind_passes():
+    ir = IR(name="x", nodes=[Node(id="n", type="wait")])
+    ensure_schema_aligned(ir)
+
+
 def test_ensure_schema_aligned_schema_invalid_raises():
     # Use a node kind that is not allowed by the JSON Schema to trigger
     # schema validation failure.

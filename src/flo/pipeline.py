@@ -41,13 +41,18 @@ class ReadStep:
 class ParseStep:
     """Parse raw content into adapter model payload."""
 
+    source_path: str | None = None
+
     def run(self, previous: Tuple[int, str, Any], services: Any):
         """Execute parse step and propagate parse-specific exit codes."""
         rc, content, err = previous
         if rc != 0:
             return rc, None, err
         try:
-            return 0, parse_adapter(content), None
+            try:
+                return 0, parse_adapter(content, source_path=self.source_path), None
+            except TypeError:
+                return 0, parse_adapter(content), None
         except Exception as e:
             try:
                 services.error_handler(str(e))

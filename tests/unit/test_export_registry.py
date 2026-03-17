@@ -1,6 +1,6 @@
 import json
 
-from flo.compiler.ir.models import IR, Node
+from flo.compiler.ir.models import Edge, IR, Node
 from flo.export import export_ir
 
 
@@ -26,12 +26,16 @@ def test_export_ir_ingredients_mode_outputs_header_and_items():
         process_metadata={
             "materials": [
                 {"id": "flour", "name": "Flour", "quantity": {"kind": "measure", "value": 250, "unit": "g"}},
-            ]
+            ],
+            "equipment": [
+                {"id": "oven", "name": "Oven", "quantity": {"kind": "count", "value": 1, "unit": "each"}},
+            ],
         },
     )
     out = export_ir(ir, options={"export": "ingredients"})
-    assert "Materials and Ingredients" in out
+    assert "Materials and Equipment" in out
     assert "Flour: 250 g" in out
+    assert "Oven: 1 each" in out
 
 
 def test_export_ir_ingredients_mode_outputs_group_labels():
@@ -53,3 +57,42 @@ def test_export_ir_ingredients_mode_outputs_group_labels():
     out = export_ir(ir, options={"export": "ingredients"})
     assert "Dry Ingredients" in out
     assert "Flour" in out
+
+
+def test_export_ir_movement_mode_outputs_inferred_route_summary():
+    ir = IR(
+        name="cookie",
+        nodes=[
+            Node(id="start", type="start", attrs={}),
+            Node(
+                id="gather",
+                type="task",
+                attrs={
+                    "location": "pantry",
+                    "outputs": ["flour"],
+                },
+            ),
+            Node(
+                id="mix",
+                type="task",
+                attrs={
+                    "location": "prep_bench",
+                    "inputs": ["flour"],
+                },
+            ),
+            Node(id="end", type="end", attrs={}),
+        ],
+        edges=[
+            Edge(source="gather", target="mix"),
+        ],
+        process_metadata={
+            "locations": [
+                {"id": "pantry", "name": "Pantry", "metadata": {"spatial": {"x": 0.0, "y": 0.0, "unit": "m"}}},
+                {"id": "prep_bench", "name": "Prep Bench", "metadata": {"spatial": {"x": 3.0, "y": 4.0, "unit": "m"}}},
+            ]
+        },
+    )
+    out = export_ir(ir, options={"export": "movement"})
+    assert "Inferred Material Movement" in out
+    assert "pantry -> prep_bench" in out
+    assert "items=flour" in out

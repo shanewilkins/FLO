@@ -40,6 +40,15 @@ def _node_to_schema(node: Any) -> dict[str, Any]:
     note = attrs.get("note")
     if note is not None:
         node_entry["note"] = note
+    location = attrs.get("location")
+    if location is not None:
+        node_entry["location"] = location
+    workers = attrs.get("workers")
+    if isinstance(workers, list):
+        node_entry["workers"] = workers
+    equipment = attrs.get("equipment")
+    if isinstance(equipment, list):
+        node_entry["equipment"] = equipment
     inputs = attrs.get("inputs")
     if isinstance(inputs, list):
         node_entry["inputs"] = inputs

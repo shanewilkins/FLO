@@ -7,9 +7,10 @@ import yaml
 
 
 from .yaml_loader import load_adapter_from_yaml
+from .composition import resolve_includes
 
 
-def parse_adapter(content: str) -> Dict[str, Any]:
+def parse_adapter(content: str, source_path: str | None = None) -> Dict[str, Any]:
 	"""Parse adapter content and return a validated mapping.
 
 	This dispatcher currently supports YAML input via
@@ -24,7 +25,7 @@ def parse_adapter(content: str) -> Dict[str, Any]:
 		# Otherwise preserve the previous permissive text fallback.
 		parsed = yaml.safe_load(content)
 		if isinstance(parsed, dict):
-			return parsed
+			return resolve_includes(parsed, source_path=source_path)
 		return {"name": "parsed", "content": content}
 
 	# `model` supports `model_dump()` for Pydantic compatibility

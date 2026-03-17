@@ -1,0 +1,165 @@
+materials:
+  wet:
+    name: Wet Ingredients
+    items:
+      - id: unsalted_butter
+        name: Unsalted Butter
+        quantity:
+          kind: measure
+          value: 140
+          unit: g
+      - id: lard
+        name: Lard
+        quantity:
+          kind: measure
+          value: 60
+          unit: g
+      - id: brown_sugar
+        name: Brown Sugar
+        quantity:
+          kind: measure
+          value: 140
+          unit: g
+      - id: white_sugar
+        name: Granulated (White) Sugar
+        quantity:
+          kind: measure
+          value: 60
+          unit: g
+      - id: cane_sugar
+        name: Turbinado (Cane) Sugar
+        quantity:
+          kind: measure
+          value: 30
+          unit: g
+      - id: whole_egg
+        name: Large Egg
+        quantity:
+          kind: count
+          value: 1
+          unit: each
+          qualifier: large
+      - id: egg_yolk
+        name: Egg Yolk
+        quantity:
+          kind: count
+          value: 1
+          unit: each
+          qualifier: large
+      - id: vanilla
+        name: Vanilla Extract
+        quantity:
+          kind: measure
+          value: 10
+          unit: ml
+  dry:
+    name: Dry Ingredients
+    items:
+      - id: salt
+        name: Fine Salt
+        quantity:
+          kind: measure
+          value: 5
+          unit: g
+      - id: ap_flour
+        name: All Purpose Flour
+        quantity:
+          kind: measure
+          value: 160
+          unit: g
+      - id: bread_flour
+        name: Bread Flour
+        quantity:
+          kind: measure
+          value: 60
+          unit: g
+      - id: baking_soda
+        name: Baking Soda
+        quantity:
+          kind: measure
+          value: 5
+          unit: g
+      - id: baking_powder
+        name: Baking Powder
+        quantity:
+          kind: measure
+          value: 2.5
+          unit: g
+  chocolate:
+    name: Chocolates
+    items:
+      - id: dark_chocolate
+        name: Dark Chocolate Bar (60-70% cocoa)
+        quantity:
+          kind: measure
+          value: 200
+          unit: g
+      - id: chocolate_chips
+        name: Milk Chocolate Chips
+        quantity:
+          kind: measure
+          value: 40
+          unit: g
+
+equipment:
+  prep:
+    name: Prep Tools
+    items:
+      - id: sauce_pan
+        name: Sauce Pan
+      - id: mixer
+        name: Stand Mixer
+      - id: scale
+        name: Kitchen Scale
+      - id: small_bowls
+        name: Small Bowls
+        quantity:
+          kind: count
+          value: 6
+          unit: each
+      - id: cutting_board
+        name: Cutting Board
+      - id: knife
+        name: Chef's Knife
+      - id: plastic_wrap
+        name: Plastic Wrap
+        quantity:
+          kind: measure
+          value: 0.5
+          unit: m
+  bake:
+    name: Bake Tools
+    items:
+      - id: sheet_pan
+        name: Sheet Pan
+      - id: parchment
+        name: Parchment Paper
+        quantity:
+          kind: measure
+          value: 1
+          unit: m
+      - id: cooling_rack
+        name: Cooling Rack
+        quantity:
+          kind: count
+          value: 2
+          unit: each
+
+workers:
+  shifts:
+    name: Shift Staffing
+    morning:
+      name: Morning Shift
+      items:
+        - id: lead_baker
+          name: Lead Baker
+          quantity:
+            kind: count
+            value: 1
+            unit: each
+        - id: assistant_baker
+          name: Assistant Baker
+          quantity:
+            kind: count
+            value: 1
+            unit: each

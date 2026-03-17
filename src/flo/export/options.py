@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal, Mapping
 
-ExportFormat = Literal["json", "ingredients"]
+ExportFormat = Literal["json", "ingredients", "movement"]
 ExportProfile = Literal["default"]
 
 
@@ -31,7 +31,12 @@ class ExportOptions:
         profile_raw = str(options.get("export_profile") or "default").strip().lower()
         indent_raw = options.get("json_indent", 2)
 
-        export_format: ExportFormat = "ingredients" if export_format_raw == "ingredients" else "json"
+        if export_format_raw == "ingredients":
+            export_format: ExportFormat = "ingredients"
+        elif export_format_raw == "movement":
+            export_format = "movement"
+        else:
+            export_format = "json"
         profile: ExportProfile = "default" if profile_raw == "default" else "default"
 
         try:

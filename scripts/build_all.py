@@ -46,7 +46,7 @@ def _build_one(example_file: Path, examples_dir: Path, renders_dir: Path) -> tup
 
     try:
         content = example_file.read_text(encoding="utf-8")
-        adapter = parse_adapter(content)
+        adapter = parse_adapter(content, source_path=str(example_file))
         ir = compile_adapter(adapter)
         validate_ir(ir)
         ensure_schema_aligned(ir)
@@ -65,7 +65,7 @@ def _build_one(example_file: Path, examples_dir: Path, renders_dir: Path) -> tup
                 subprocess.run(["dot", "-Tsvg", str(dot_out), "-o", str(svg_out)], check=True)
                 created.append(str(svg_out.relative_to(REPO_ROOT)))
 
-        if _has_materials_collection(ir):
+        if _has_materials_or_equipment_collection(ir):
             ingredients_out = base_out.with_name(f"{base_out.name}_ingredients").with_suffix(".md")
             legacy_ingredients_out = base_out.with_name(f"{base_out.name}_ingredients").with_suffix(".txt")
             ingredients = export_ir(ir, options={"export": "ingredients"})
@@ -138,11 +138,11 @@ def _extra_render_variants_for_example(example_file: Path) -> list[tuple[str, di
     return []
 
 
-def _has_materials_collection(ir: object) -> bool:
+def _has_materials_or_equipment_collection(ir: object) -> bool:
     process_metadata = getattr(ir, "process_metadata", None)
     if not isinstance(process_metadata, dict):
         return False
-    return process_metadata.get("materials") is not None
+    return process_metadata.get("materials") is not None or process_metadata.get("equipment") is not None
 
 
 if __name__ == "__main__":

@@ -312,6 +312,97 @@ def test_validate_ir_locations_must_be_list_when_present():
         validate_ir(ir)
 
 
+def test_validate_ir_accepts_location_spatial_metadata():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="end"),
+        ],
+        process_metadata={
+            "locations": [
+                {
+                    "id": "prep_bench",
+                    "name": "Prep Bench",
+                    "metadata": {
+                        "spatial": {
+                            "x": 3.0,
+                            "y": 2.0,
+                            "unit": "m",
+                        }
+                    },
+                }
+            ],
+        },
+    )
+
+    validate_ir(ir)
+
+
+def test_validate_ir_rejects_location_spatial_missing_coordinates():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="end"),
+        ],
+        process_metadata={
+            "locations": [
+                {
+                    "id": "prep_bench",
+                    "name": "Prep Bench",
+                    "metadata": {
+                        "spatial": {
+                            "x": 3.0,
+                            "unit": "m",
+                        }
+                    },
+                }
+            ],
+        },
+    )
+
+    with pytest.raises(ValidationError, match="E1215"):
+        validate_ir(ir)
+
+
+def test_validate_ir_rejects_location_spatial_with_invalid_unit():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="end"),
+        ],
+        process_metadata={
+            "locations": [
+                {
+                    "id": "prep_bench",
+                    "name": "Prep Bench",
+                    "metadata": {
+                        "spatial": {
+                            "x": 3.0,
+                            "y": 2.0,
+                            "unit": "yards",
+                        }
+                    },
+                }
+            ],
+        },
+    )
+
+    with pytest.raises(ValidationError, match="E1216"):
+        validate_ir(ir)
+
+
 def test_validate_ir_accepts_grouped_and_nested_materials():
     ir = IR(
         name="x",

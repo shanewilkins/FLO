@@ -22,7 +22,7 @@ def test_compile_and_render_examples():
 
     for ex in examples:
         content = ex.read_text()
-        adapter = parse_adapter(content)
+        adapter = parse_adapter(content, source_path=str(ex))
         ir = compile_adapter(adapter)
         # validate_ir raises on failure
         validate_ir(ir)

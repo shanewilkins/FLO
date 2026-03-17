@@ -123,6 +123,27 @@ def test_compile_preserves_step_inputs_and_outputs():
     assert ir.nodes[0].attrs.get("outputs") == ["dough"]
 
 
+def test_compile_preserves_step_location_workers_and_equipment():
+    parsed = {
+        "process": {"id": "p", "name": "Process"},
+        "steps": [
+            {
+                "id": "mix",
+                "kind": "task",
+                "name": "Mix",
+                "location": "prep_bench",
+                "workers": ["lead_baker"],
+                "equipment": ["mixer"],
+            }
+        ],
+    }
+    ir = compile_adapter(parsed)
+    assert ir.nodes[0].attrs is not None
+    assert ir.nodes[0].attrs.get("location") == "prep_bench"
+    assert ir.nodes[0].attrs.get("workers") == ["lead_baker"]
+    assert ir.nodes[0].attrs.get("equipment") == ["mixer"]
+
+
 def test_compile_promotes_top_level_resources_to_process_metadata():
     parsed = {
         "process": {
@@ -201,3 +222,75 @@ def test_compile_promotes_grouped_materials_to_process_metadata():
     assert ir.process_metadata["materials"]["wet"]["name"] == "Wet Ingredients"
     assert ir.process_metadata["materials"]["wet"]["dairy"]["name"] == "Dairy"
     assert ir.process_metadata["materials"]["wet"]["dairy"]["items"][0]["id"] == "butter"
+
+
+def test_compile_flattens_subprocess_subnodes():
+    parsed = {
+        "process": {"id": "p", "name": "Process"},
+        "steps": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {
+                "id": "prep",
+                "kind": "subprocess",
+                "name": "Prep",
+                "subnodes": [
+                    {"id": "gather", "kind": "task", "name": "Gather"},
+                    {"id": "mix", "kind": "task", "name": "Mix"},
+                ],
+            },
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "transitions": [
+            {"source": "start", "target": "prep"},
+            {"source": "prep", "target": "gather"},
+            {"source": "gather", "target": "mix"},
+            {"source": "mix", "target": "end"},
+        ],
+    }
+
+    ir = compile_adapter(parsed)
+    node_ids = [node.id for node in ir.nodes]
+    assert node_ids == ["start", "prep", "gather", "mix", "end"]
+    by_id = {node.id: node for node in ir.nodes}
+    assert by_id["prep"].attrs.get("subprocess_parent") is None
+    assert by_id["gather"].attrs.get("subprocess_parent") == "prep"
+    assert by_id["mix"].attrs.get("subprocess_parent") == "prep"
+
+
+def test_compile_flattens_nested_subprocess_subnodes():
+    parsed = {
+        "process": {"id": "p", "name": "Process"},
+        "steps": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {
+                "id": "outer",
+                "kind": "subprocess",
+                "name": "Outer",
+                "subnodes": [
+                    {
+                        "id": "inner",
+                        "kind": "subprocess",
+                        "name": "Inner",
+                        "steps": [
+                            {"id": "inner_task", "kind": "task", "name": "Inner Task"},
+                        ],
+                    }
+                ],
+            },
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "transitions": [
+            {"source": "start", "target": "outer"},
+            {"source": "outer", "target": "inner"},
+            {"source": "inner", "target": "inner_task"},
+            {"source": "inner_task", "target": "end"},
+        ],
+    }
+
+    ir = compile_adapter(parsed)
+    node_ids = [node.id for node in ir.nodes]
+    assert node_ids == ["start", "outer", "inner", "inner_task", "end"]
+    by_id = {node.id: node for node in ir.nodes}
+    assert by_id["outer"].attrs.get("subprocess_parent") is None
+    assert by_id["inner"].attrs.get("subprocess_parent") == "outer"
+    assert by_id["inner_task"].attrs.get("subprocess_parent") == "inner"

@@ -29,4 +29,11 @@ def test_default_path_accepts_export_ingredients_flag():
     runner = CliRunner()
     result = runner.invoke(cli, ["run", "examples/reference/chocolate_chip_cookies.flo", "--export", "ingredients"])
     assert result.exit_code == 0
-    assert "Materials and Ingredients" in result.output
+    assert "Materials and Equipment" in result.output
+
+
+def test_default_path_accepts_export_movement_flag():
+    runner = CliRunner()
+    result = runner.invoke(cli, ["run", "examples/reference/chocolate_chip_cookies.flo", "--export", "movement"])
+    assert result.exit_code == 0
+    assert "Inferred Material Movement" in result.output

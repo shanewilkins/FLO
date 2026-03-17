@@ -96,6 +96,37 @@ def test_run_json_export_rejects_show_notes_flag():
     assert "require DOT output" in result.output
 
 
+def test_run_subprocess_view_parent_only_hides_subnodes():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "examples/reference/chocolate_chip_cookies.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "swimlane",
+            "--subprocess-view",
+            "parent-only",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "cluster_subprocess_prep_subprocess" not in result.output
+    assert '"gather_equipment" [label="Gather Equipment"' not in result.output
+    assert '"prep_subprocess" [label="Prep Subprocess"' in result.output
+
+
+def test_run_json_export_rejects_subprocess_view_flag():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["run", "examples/reference/linear.flo", "--export", "json", "--subprocess-view", "parent-only"],
+    )
+    assert result.exit_code == 1
+    assert "require DOT output" in result.output
+
+
 def test_run_ingredients_export_rejects_diagram_flag():
     runner = CliRunner()
     result = runner.invoke(
@@ -104,3 +135,24 @@ def test_run_ingredients_export_rejects_diagram_flag():
     )
     assert result.exit_code == 1
     assert "require DOT output" in result.output
+
+
+def test_run_movement_export_rejects_diagram_flag():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["run", "examples/reference/chocolate_chip_cookies.flo", "--export", "movement", "--diagram", "swimlane"],
+    )
+    assert result.exit_code == 1
+    assert "require DOT output" in result.output
+
+
+def test_run_spaghetti_diagram_emits_neato_layout():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["run", "examples/reference/chocolate_chip_cookies.flo", "--export", "dot", "--diagram", "spaghetti"],
+    )
+    assert result.exit_code == 0
+    assert "layout=neato" in result.output
+    assert '"pantry"' in result.output

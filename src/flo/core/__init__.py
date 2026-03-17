@@ -27,22 +27,26 @@ def run_content(content: str, command: str = "run", options: dict | None = None)
     if not content:
         return EXIT_SUCCESS, "", ""
 
-    ir = _parse_compile_validate(content)
+    source_path = (options or {}).get("source_path") if isinstance(options, dict) else None
+    ir = _parse_compile_validate(content, source_path=source_path)
 
     if command == "validate":
         return EXIT_SUCCESS, "", ""
 
     output_format = _resolve_output_format(command=command, options=options)
-    if output_format in {"json", "ingredients"}:
+    if output_format in {"json", "ingredients", "movement"}:
         _ensure_render_options_compatible_with_output(options=options, output_format=output_format)
         return EXIT_SUCCESS, export_ir(ir, options={**(options or {}), "export": output_format}), ""
 
     return EXIT_SUCCESS, _render_dot_with_postprocess(ir, options=options), ""
 
 
-def _parse_compile_validate(content: str) -> IR:
+def _parse_compile_validate(content: str, source_path: str | None = None) -> IR:
     try:
-        adapter_model = parse_adapter(content)
+        try:
+            adapter_model = parse_adapter(content, source_path=source_path)
+        except TypeError:
+            adapter_model = parse_adapter(content)
     except Exception as e:
         raise ParseError(str(e))
 
@@ -69,7 +73,7 @@ def _resolve_output_format(command: str, options: dict | None) -> str:
     output_format = (options or {}).get("export") or (options or {}).get("format")
     if command == "compile":
         return "json"
-    if command in {"run", "export"} and output_format in {"json", "ingredients"}:
+    if command in {"run", "export"} and output_format in {"json", "ingredients", "movement"}:
         return str(output_format)
     return "dot"
 
@@ -81,7 +85,7 @@ def _ensure_render_options_compatible_with_output(options: dict | None, output_f
     opts = options or {}
     invalid = [
         flag
-        for flag in ("diagram", "profile", "detail", "orientation", "show_notes")
+        for flag in ("diagram", "profile", "detail", "orientation", "show_notes", "subprocess_view")
         if flag in opts
     ]
     if invalid:

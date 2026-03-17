@@ -1,0 +1,39 @@
+locations:
+  stations:
+    name: Work Zones
+    items:
+      - id: pantry
+        name: Pantry
+        metadata:
+          spatial:
+            x: 0.0
+            y: 2.0
+            unit: m
+      - id: prep_bench
+        name: Prep Bench
+        metadata:
+          spatial:
+            x: 3.0
+            y: 2.0
+            unit: m
+      - id: oven_station
+        name: Oven Station
+        metadata:
+          spatial:
+            x: 6.0
+            y: 2.0
+            unit: m
+      - id: cooling_rack
+        name: Cooling Rack
+        metadata:
+          spatial:
+            x: 7.5
+            y: 1.0
+            unit: m
+      - id: dishwasher
+        name: Dishwasher
+        metadata:
+          spatial:
+            x: 1.0
+            y: 0.5
+            unit: m

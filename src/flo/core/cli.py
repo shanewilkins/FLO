@@ -18,12 +18,13 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
 @click.option("--validate", is_flag=True, help="Only validate file")
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.option("-o", "--output", help="Write output to file")
-@click.option("--export", "export_fmt", type=click.Choice(["dot", "json", "ingredients"]), help="Export format")
-@click.option("--diagram", type=click.Choice(["flowchart", "swimlane"]), help="Diagram type for DOT output")
+@click.option("--export", "export_fmt", type=click.Choice(["dot", "json", "ingredients", "movement"]), help="Export format")
+@click.option("--diagram", type=click.Choice(["flowchart", "swimlane", "spaghetti"]), help="Diagram type for DOT output")
 @click.option("--profile", type=click.Choice(["default", "analysis"]), help="Projection rule profile")
 @click.option("--detail", type=click.Choice(["summary", "standard", "verbose"]), help="Detail level")
 @click.option("--orientation", type=click.Choice(["lr", "tb"]), help="Layout orientation for DOT output")
 @click.option("--show-notes", is_flag=True, help="Include node notes in DOT labels")
+@click.option("--subprocess-view", type=click.Choice(["expanded", "parent-only"]), help="Subprocess rendering mode")
 def run_cmd(
     path: Optional[str],
     validate: bool,
@@ -35,6 +36,7 @@ def run_cmd(
     detail: Optional[str],
     orientation: Optional[str],
     show_notes: bool,
+    subprocess_view: Optional[str],
 ) -> None:  # pragma: no cover - integration
     """Invoke the CLI command handler with normalized arguments."""
     args: list[str] = []
@@ -59,6 +61,8 @@ def run_cmd(
         args.extend(["--orientation", orientation])
     if show_notes:
         args.append("--show-notes")
+    if subprocess_view:
+        args.extend(["--subprocess-view", subprocess_view])
 
     rc = console_main(args)
     raise SystemExit(rc)
@@ -97,14 +101,15 @@ def validate_cmd(path: Optional[str], verbose: bool) -> None:  # pragma: no cove
 
 @cli.command("export")
 @click.argument("path", required=False)
-@click.option("--export", "export_fmt", type=click.Choice(["dot", "json", "ingredients"]), default="dot", show_default=True)
+@click.option("--export", "export_fmt", type=click.Choice(["dot", "json", "ingredients", "movement"]), default="dot", show_default=True)
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.option("-o", "--output", help="Write output to file")
-@click.option("--diagram", type=click.Choice(["flowchart", "swimlane"]), help="Diagram type for DOT output")
+@click.option("--diagram", type=click.Choice(["flowchart", "swimlane", "spaghetti"]), help="Diagram type for DOT output")
 @click.option("--profile", type=click.Choice(["default", "analysis"]), help="Projection rule profile")
 @click.option("--detail", type=click.Choice(["summary", "standard", "verbose"]), help="Detail level")
 @click.option("--orientation", type=click.Choice(["lr", "tb"]), help="Layout orientation for DOT output")
 @click.option("--show-notes", is_flag=True, help="Include node notes in DOT labels")
+@click.option("--subprocess-view", type=click.Choice(["expanded", "parent-only"]), help="Subprocess rendering mode")
 def export_cmd(
     path: Optional[str],
     export_fmt: str,
@@ -115,6 +120,7 @@ def export_cmd(
     detail: Optional[str],
     orientation: Optional[str],
     show_notes: bool,
+    subprocess_view: Optional[str],
 ) -> None:  # pragma: no cover - integration
     """Export FLO input as DOT or JSON."""
     args: list[str] = ["export"]
@@ -131,6 +137,8 @@ def export_cmd(
         args.extend(["--orientation", orientation])
     if show_notes:
         args.append("--show-notes")
+    if subprocess_view:
+        args.extend(["--subprocess-view", subprocess_view])
     if verbose:
         args.append("-v")
     if output:
@@ -165,8 +173,12 @@ def console_main(argv: list | None = None) -> int:  # pragma: no cover - thin wr
         services.error_handler(err)
         return rc
 
+    run_options = dict(options or {})
+    if path and path != "-":
+        run_options.setdefault("source_path", path)
+
     try:
-        rc, out, err = run_content(content, command=command, options=options)
+        rc, out, err = run_content(content, command=command, options=run_options)
     except CLIError as e:
         services.error_handler(str(e))
         return getattr(e, "code", EXIT_USAGE)

@@ -29,13 +29,14 @@ def parse_args(argv: list | None, services: Services) -> Tuple[str | None, str, 
     parser.add_argument("-v", "--verbose", action="store_true", help="Increase verbosity")
     parser.add_argument("-o", "--output", help="Write output to file instead of stdout")
     parser.add_argument("--validate", action="store_true", help="Only validate the file")
-    parser.add_argument("--export", choices=["dot", "json", "ingredients"], help="Export format (dot|json|ingredients)")
-    parser.add_argument("--format", choices=["dot", "json", "ingredients"], help=argparse.SUPPRESS)
-    parser.add_argument("--diagram", choices=["flowchart", "swimlane"], help="Diagram type for DOT output")
+    parser.add_argument("--export", choices=["dot", "json", "ingredients", "movement"], help="Export format (dot|json|ingredients|movement)")
+    parser.add_argument("--format", choices=["dot", "json", "ingredients", "movement"], help=argparse.SUPPRESS)
+    parser.add_argument("--diagram", choices=["flowchart", "swimlane", "spaghetti"], help="Diagram type for DOT output")
     parser.add_argument("--profile", choices=["default", "analysis"], help="Projection rule profile")
     parser.add_argument("--detail", choices=["summary", "standard", "verbose"], help="Detail level")
     parser.add_argument("--orientation", choices=["lr", "tb"], help="Layout orientation for DOT output")
     parser.add_argument("--show-notes", action="store_true", help="Include node notes in DOT labels")
+    parser.add_argument("--subprocess-view", choices=["expanded", "parent-only"], help="Subprocess rendering mode")
     parsed = parser.parse_args(argv)
 
     supported_commands = {"run", "compile", "validate", "export"}
@@ -73,7 +74,7 @@ def _build_options_from_parsed(parsed: object) -> dict:
         "output": getattr(parsed, "output", None),
     }
 
-    for key in ("diagram", "profile", "detail", "orientation"):
+    for key in ("diagram", "profile", "detail", "orientation", "subprocess_view"):
         value = getattr(parsed, key, None)
         if value:
             options[key] = value

@@ -28,7 +28,7 @@ def test_run_content_with_example_files():
 
     for example_file in examples:
         content = example_file.read_text()
-        rc, out, err = run_content(content)
+        rc, out, err = run_content(content, options={"source_path": str(example_file)})
 
         assert rc == EXIT_SUCCESS
         assert "digraph" in out

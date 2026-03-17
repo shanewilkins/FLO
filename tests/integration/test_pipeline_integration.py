@@ -18,7 +18,7 @@ def test_pipeline_integration_end_to_end(tmp_flo_file, tmp_path):
 
     steps = [
         ReadStep(path=str(tmp_flo_file)),
-        ParseStep(),
+        ParseStep(source_path=str(tmp_flo_file)),
         CompileStep(),
         ValidateStep(),
         PostprocessStep(),

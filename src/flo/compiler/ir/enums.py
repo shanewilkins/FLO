@@ -7,6 +7,7 @@ class NodeKind(Enum):
 	"""Kinds of nodes present in the IR."""
 
 	TASK = "task"
+	WAIT = "wait"
 	PROCESS = "process"
 	DECISION = "decision"
 

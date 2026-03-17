@@ -83,8 +83,9 @@ def _resolve_source_nodes(adapter: dict[str, Any]) -> Any:
 
 
 def _build_nodes(source_nodes: list[Any]) -> list[Node]:
+    flat_source_nodes = _flatten_source_nodes(source_nodes)
     nodes: list[Node] = []
-    for idx, a_node in enumerate(source_nodes):
+    for idx, a_node in enumerate(flat_source_nodes):
         if not isinstance(a_node, dict):
             continue
         nid = a_node.get("id") or f"n{idx}"
@@ -94,17 +95,66 @@ def _build_nodes(source_nodes: list[Any]) -> list[Node]:
     return nodes
 
 
+def _flatten_source_nodes(
+    source_nodes: list[Any],
+    parent_subprocess: str | None = None,
+) -> list[dict[str, Any]]:
+    flattened: list[dict[str, Any]] = []
+    for a_node in source_nodes:
+        if not isinstance(a_node, dict):
+            continue
+
+        node_entry: dict[str, Any] = dict(a_node)
+        if parent_subprocess and not node_entry.get("subprocess_parent"):
+            node_entry["subprocess_parent"] = parent_subprocess
+
+        node_id = node_entry.get("id")
+        nested_nodes = _resolve_subnodes(node_entry)
+        flattened.append(node_entry)
+
+        if isinstance(nested_nodes, list):
+            next_parent = str(node_id) if node_id is not None else None
+            flattened.extend(_flatten_source_nodes(nested_nodes, parent_subprocess=next_parent))
+
+    return flattened
+
+
+def _resolve_subnodes(node_entry: dict[str, Any]) -> Any:
+    subnodes = node_entry.pop("subnodes", None)
+    if isinstance(subnodes, list):
+        return subnodes
+
+    kind = str(node_entry.get("kind") or node_entry.get("type") or "").strip().lower()
+    if kind != "subprocess":
+        return None
+
+    nested_steps = node_entry.pop("steps", None)
+    if isinstance(nested_steps, list):
+        return nested_steps
+
+    return None
+
+
 def _normalize_node_attrs(a_node: dict[str, Any]) -> dict[str, Any]:
     attrs = a_node.get("attrs")
-    if isinstance(attrs, dict):
-        return attrs
+    normalized: dict[str, Any] = dict(attrs) if isinstance(attrs, dict) else {}
 
-    normalized: dict[str, Any] = {}
-    for key in ("name", "lane", "note", "metadata", "inputs", "outputs"):
+    for key in (
+        "name",
+        "lane",
+        "location",
+        "workers",
+        "equipment",
+        "note",
+        "metadata",
+        "inputs",
+        "outputs",
+        "subprocess_parent",
+    ):
         if key in a_node:
-            normalized[key] = a_node[key]
+            normalized.setdefault(key, a_node[key])
     outcomes = a_node.get("outcomes")
-    if isinstance(outcomes, dict):
+    if isinstance(outcomes, dict) and "outcomes" not in normalized:
         normalized["outcomes"] = outcomes
     return normalized
 
