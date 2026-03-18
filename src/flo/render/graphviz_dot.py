@@ -54,6 +54,7 @@ def _render_spaghetti_graph(process: Dict[str, Any] | Any, options: RenderOption
         routes_for_locations.extend(people_routes)
 
     lines: list[str] = _spaghetti_graph_prelude()
+    _append_spaghetti_boundary(lines=lines, process=process)
     _append_spaghetti_location_nodes(
         lines=lines,
         locations=locations,
@@ -86,6 +87,218 @@ def _append_spaghetti_location_nodes(
         info = locations.get(location_id, {})
         node_attrs = _spaghetti_location_node_attrs(location_id=location_id, info=info)
         lines.append(f'  "{_escape(location_id)}" [{", ".join(node_attrs)}];')
+
+
+def _append_spaghetti_boundary(lines: list[str], process: Dict[str, Any] | Any) -> None:
+    boundary = _extract_spaghetti_boundary(process)
+    if boundary is None:
+        return
+
+    raw_points = boundary.get("points")
+    if not isinstance(raw_points, list):
+        return
+
+    points: list[tuple[float, float]] = []
+    for raw_point in raw_points:
+        if not isinstance(raw_point, tuple) or len(raw_point) != 2:
+            continue
+        x_value = raw_point[0]
+        y_value = raw_point[1]
+        if not isinstance(x_value, (int, float)) or isinstance(x_value, bool):
+            continue
+        if not isinstance(y_value, (int, float)) or isinstance(y_value, bool):
+            continue
+        points.append((float(x_value), float(y_value)))
+
+    if len(points) < 3:
+        return
+
+    point_ids: list[str] = []
+    for index, point in enumerate(points):
+        x, y = point
+        point_id = f"__facility_boundary_{index}"
+        point_ids.append(point_id)
+        lines.append(
+            '  "{point_id}" [label="", shape=point, width=0.01, height=0.01, style=invis, pos="{x:.3f},{y:.3f}!", pin=true];'.format(
+                point_id=point_id,
+                x=float(x),
+                y=float(y),
+            )
+        )
+
+    if len(point_ids) < 3:
+        return
+
+    ring = [*point_ids, point_ids[0]]
+    for source, target in zip(ring, ring[1:]):
+        lines.append(
+            f'  "{source}" -> "{target}" [dir=none, color=gray60, style=dashed, penwidth=1.2, constraint=false, weight=0];'
+        )
+
+    label = _boundary_label(boundary)
+    if label:
+        centroid_x, centroid_y = _boundary_centroid(points)
+        lines.append(
+            '  "__facility_boundary_label" [label="{label}", shape=plaintext, fontcolor=gray40, fontsize=11, pos="{x:.3f},{y:.3f}!", pin=true];'.format(
+                label=_escape(label),
+                x=centroid_x,
+                y=centroid_y,
+            )
+        )
+
+
+def _extract_spaghetti_boundary(process: Dict[str, Any] | Any) -> dict[str, Any] | None:
+    process_metadata = _extract_process_metadata(process)
+    boundary_candidate = _extract_boundary_candidate(process_metadata)
+    points = _boundary_points(boundary_candidate)
+    if len(points) < 3:
+        return None
+
+    boundary: dict[str, Any] = {"points": points}
+    if isinstance(boundary_candidate, dict):
+        boundary["name"] = boundary_candidate.get("name")
+        boundary["label"] = boundary_candidate.get("label")
+    return boundary
+
+
+def _extract_process_metadata(process: Dict[str, Any] | Any) -> dict[str, Any]:
+    if hasattr(process, "process_metadata"):
+        metadata = getattr(process, "process_metadata", None)
+        return metadata if isinstance(metadata, dict) else {}
+
+    if isinstance(process, dict):
+        proc = process.get("process")
+        if isinstance(proc, dict):
+            metadata = proc.get("metadata")
+            return metadata if isinstance(metadata, dict) else {}
+    return {}
+
+
+def _extract_boundary_candidate(process_metadata: dict[str, Any]) -> Any:
+    for key in ("layout_boundary", "boundary", "area_boundary"):
+        if key in process_metadata:
+            return process_metadata.get(key)
+
+    layout = process_metadata.get("layout")
+    if isinstance(layout, dict) and "boundary" in layout:
+        return layout.get("boundary")
+    return None
+
+
+def _boundary_points(boundary: Any) -> list[tuple[float, float]]:
+    if boundary is None:
+        return []
+    if isinstance(boundary, list):
+        return _parse_boundary_points(boundary)
+    if not isinstance(boundary, dict):
+        return []
+
+    points = _parse_boundary_points(boundary.get("points"))
+    if points:
+        return points
+
+    vertices = _parse_boundary_points(boundary.get("vertices"))
+    if vertices:
+        return vertices
+
+    return _rectangle_boundary_points(boundary)
+
+
+def _parse_boundary_points(raw_points: Any) -> list[tuple[float, float]]:
+    if not isinstance(raw_points, list):
+        return []
+    points: list[tuple[float, float]] = []
+    for raw_point in raw_points:
+        if not isinstance(raw_point, dict):
+            continue
+        x = _as_number(raw_point.get("x"))
+        y = _as_number(raw_point.get("y"))
+        if x is None or y is None:
+            continue
+        points.append((x, y))
+    return points
+
+
+def _rectangle_boundary_points(boundary: dict[str, Any]) -> list[tuple[float, float]]:
+    bounds = _rectangle_bounds(boundary)
+    if bounds is None:
+        return []
+    min_x, min_y, max_x, max_y = bounds
+    return [(min_x, min_y), (max_x, min_y), (max_x, max_y), (min_x, max_y)]
+
+
+def _rectangle_bounds(boundary: dict[str, Any]) -> tuple[float, float, float, float] | None:
+    min_max = _coerced_bounds(
+        min_x=boundary.get("min_x"),
+        min_y=boundary.get("min_y"),
+        max_x=boundary.get("max_x"),
+        max_y=boundary.get("max_y"),
+    )
+    if min_max is not None:
+        return min_max
+
+    left_right = _coerced_bounds(
+        min_x=boundary.get("left"),
+        min_y=boundary.get("bottom"),
+        max_x=boundary.get("right"),
+        max_y=boundary.get("top"),
+    )
+    if left_right is not None:
+        return left_right
+
+    origin_x = _as_number(boundary.get("x"))
+    origin_y = _as_number(boundary.get("y"))
+    width = _as_number(boundary.get("width"))
+    height = _as_number(boundary.get("height"))
+    if origin_x is None or origin_y is None or width is None or height is None:
+        return None
+    if width <= 0 or height <= 0:
+        return None
+    return origin_x, origin_y, origin_x + width, origin_y + height
+
+
+def _coerced_bounds(min_x: Any, min_y: Any, max_x: Any, max_y: Any) -> tuple[float, float, float, float] | None:
+    x0 = _as_number(min_x)
+    y0 = _as_number(min_y)
+    x1 = _as_number(max_x)
+    y1 = _as_number(max_y)
+    if x0 is None or y0 is None or x1 is None or y1 is None:
+        return None
+    if x0 == x1 or y0 == y1:
+        return None
+    min_x_val = min(x0, x1)
+    max_x_val = max(x0, x1)
+    min_y_val = min(y0, y1)
+    max_y_val = max(y0, y1)
+    return min_x_val, min_y_val, max_x_val, max_y_val
+
+
+def _as_number(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    return None
+
+
+def _boundary_label(boundary: dict[str, Any]) -> str | None:
+    for key in ("label", "name"):
+        value = boundary.get(key)
+        if value is None:
+            continue
+        text = str(value).strip()
+        if text:
+            return text
+    return None
+
+
+def _boundary_centroid(points: list[tuple[float, float]]) -> tuple[float, float]:
+    if not points:
+        return 0.0, 0.0
+    x_sum = sum(point[0] for point in points)
+    y_sum = sum(point[1] for point in points)
+    count = float(len(points))
+    return x_sum / count, y_sum / count
 
 
 def _spaghetti_location_node_attrs(location_id: str, info: dict[str, Any]) -> list[str]:
@@ -232,13 +445,6 @@ def _stable_palette_index(text: str, size: int) -> int:
     digest = hashlib.sha1(text.encode("utf-8")).digest()
     seed = int.from_bytes(digest[:4], "big", signed=False)
     return seed % max(1, size)
-
-
-def _spaghetti_channel_label_prefix(channel: str) -> str:
-    if channel == "people":
-        return "P"
-    return "M"
-    return ["color=tomato4", "fontcolor=tomato4"]
 
 
 def _ordered_location_ids(locations: dict[str, dict[str, Any]], routes: list[dict[str, Any]]) -> list[str]:

@@ -271,6 +271,46 @@ For spatial analysis and spaghetti-map rendering, locations can include optional
 - `metadata.spatial.y`: numeric y coordinate
 - `metadata.spatial.unit`: optional unit (`mm|cm|m|in|ft`)
 
+Spaghetti maps can also render an optional area boundary overlay from process metadata:
+
+- `process.metadata.layout_boundary`: boundary object
+- Rectangle form: `x`, `y`, `width`, `height` (where `x,y` is the lower-left origin)
+- Polygon form: `points` list with `x,y` vertices
+- Optional `label` (or `name`) for boundary caption
+
+Rectangle example:
+
+```yaml
+process:
+  id: kitchen_flow
+  name: Kitchen Flow
+  metadata:
+    layout_boundary:
+      type: rectangle
+      x: -1.0
+      y: -1.0
+      width: 8.0
+      height: 6.0
+      label: Kitchen Boundary
+```
+
+Polygon example:
+
+```yaml
+process:
+  id: kitchen_flow
+  name: Kitchen Flow
+  metadata:
+    layout:
+      boundary:
+        type: polygon
+        name: Production Area
+        points:
+          - {x: 0.0, y: 0.0}
+          - {x: 8.0, y: 0.0}
+          - {x: 8.0, y: 4.0}
+          - {x: 0.0, y: 4.0}
+
 Example:
 
 ```yaml

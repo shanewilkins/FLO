@@ -220,3 +220,66 @@ def test_run_json_export_rejects_spaghetti_people_mode_flag():
     )
     assert result.exit_code == 1
     assert "require DOT output" in result.output
+
+
+def test_run_spaghetti_renders_boundary_overlay_from_process_metadata(tmp_path):
+    model = tmp_path / "boundary_model.flo"
+    payload = {
+        "spec_version": "0.1",
+        "process": {
+            "id": "boundary_demo",
+            "name": "Boundary Demo",
+            "metadata": {
+                "layout_boundary": {
+                    "type": "rectangle",
+                    "x": -1.0,
+                    "y": -1.0,
+                    "width": 8.0,
+                    "height": 6.0,
+                    "label": "Kitchen Boundary",
+                }
+            },
+        },
+        "steps": [
+            {
+                "id": "start",
+                "kind": "start",
+                "name": "Start",
+            },
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "location": "pantry",
+                "outputs": ["flour"],
+            },
+            {
+                "id": "mix",
+                "kind": "task",
+                "name": "Mix",
+                "location": "prep_bench",
+                "inputs": ["flour"],
+            },
+            {
+                "id": "end",
+                "kind": "end",
+                "name": "End",
+            },
+        ],
+        "edges": [
+            {"source": "start", "target": "gather"},
+            {"source": "gather", "target": "mix"},
+            {"source": "mix", "target": "end"},
+        ],
+    }
+    model.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["run", str(model), "--export", "dot", "--diagram", "spaghetti"],
+    )
+    assert result.exit_code == 0
+    assert "__facility_boundary_0" in result.output
+    assert "__facility_boundary_label" in result.output
+    assert "Kitchen Boundary" in result.output

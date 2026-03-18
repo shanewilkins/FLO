@@ -571,3 +571,87 @@ def test_spaghetti_people_analysis_profile_defaults_to_worker_mode():
 
     out = render_dot(ir_like, options={"diagram": "spaghetti", "spaghetti_channel": "people", "profile": "analysis"})
     assert 'xlabel="P lead_baker 1x"' in out
+
+
+def test_spaghetti_renders_rectangle_boundary_overlay():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "a",
+                "kind": "task",
+                "name": "A",
+                "location": "pantry",
+                "outputs": ["flour"],
+            },
+            {
+                "id": "b",
+                "kind": "task",
+                "name": "B",
+                "location": "prep_bench",
+                "inputs": ["flour"],
+            },
+        ],
+        "edges": [{"source": "a", "target": "b"}],
+        "process": {
+            "metadata": {
+                "layout_boundary": {
+                    "type": "rectangle",
+                    "x": -1.0,
+                    "y": -1.0,
+                    "width": 8.0,
+                    "height": 6.0,
+                    "label": "Kitchen Boundary",
+                }
+            }
+        },
+    }
+
+    out = render_dot(ir_like, options={"diagram": "spaghetti"})
+    assert "__facility_boundary_0" in out
+    assert "__facility_boundary_1" in out
+    assert "dir=none" in out
+    assert "style=dashed" in out
+    assert 'label="Kitchen Boundary"' in out
+
+
+def test_spaghetti_renders_polygon_boundary_overlay_from_points():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "a",
+                "kind": "task",
+                "name": "A",
+                "location": "pantry",
+                "outputs": ["flour"],
+            },
+            {
+                "id": "b",
+                "kind": "task",
+                "name": "B",
+                "location": "prep_bench",
+                "inputs": ["flour"],
+            },
+        ],
+        "edges": [{"source": "a", "target": "b"}],
+        "process": {
+            "metadata": {
+                "layout": {
+                    "boundary": {
+                        "type": "polygon",
+                        "name": "Production Area",
+                        "points": [
+                            {"x": 0.0, "y": 0.0},
+                            {"x": 8.0, "y": 0.0},
+                            {"x": 8.0, "y": 4.0},
+                            {"x": 0.0, "y": 4.0},
+                        ],
+                    }
+                }
+            }
+        },
+    }
+
+    out = render_dot(ir_like, options={"diagram": "spaghetti"})
+    assert "__facility_boundary_0" in out
+    assert "__facility_boundary_3" in out
+    assert 'label="Production Area"' in out
