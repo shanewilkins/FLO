@@ -444,6 +444,8 @@ Common options:
 
 Render options (DOT only):
 - `--diagram {flowchart,swimlane,spaghetti}`
+- `--spaghetti-channel {both,material,people}`
+- `--spaghetti-people-mode {worker,aggregate}`
 - `--profile {default,analysis}`
 - `--detail {summary,standard,verbose}`
 - `--orientation {lr,tb}`
@@ -458,6 +460,8 @@ flo run examples/reference/linear.flo --export dot --detail summary
 flo run examples/reference/linear.flo --export dot --orientation tb
 flo run examples/reference/chocolate_chip_cookies.flo --export dot --subprocess-view parent-only
 flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram spaghetti
+flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram spaghetti --spaghetti-channel people
+flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram spaghetti --spaghetti-channel people --spaghetti-people-mode worker --profile analysis
 flo run examples/reference/linear.flo --export json
 flo run examples/reference/chocolate_chip_cookies.flo --export ingredients
 flo run examples/reference/chocolate_chip_cookies.flo --export movement
@@ -465,7 +469,7 @@ flo run examples/reference/chocolate_chip_cookies.flo --export movement
 
 Important:
 - Render-only flags are invalid with non-DOT export modes.
-- If you pass `--diagram`, `--profile`, `--detail`, `--orientation`, `--show-notes`, or `--subprocess-view` together with JSON, ingredients, or movement export, FLO returns usage error code `1`.
+- If you pass `--diagram`, `--spaghetti-channel`, `--spaghetti-people-mode`, `--profile`, `--detail`, `--orientation`, `--show-notes`, or `--subprocess-view` together with JSON, ingredients, or movement export, FLO returns usage error code `1`.
 
 ## 7) Input and Output Streams
 

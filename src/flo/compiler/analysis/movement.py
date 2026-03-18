@@ -1,4 +1,4 @@
-"""Movement inference helpers for material flow and spatial projections."""
+"""Movement inference helpers for material and people flow projections."""
 
 from __future__ import annotations
 
@@ -16,6 +16,74 @@ def infer_material_movements(process: Any) -> list[dict[str, Any]]:
     Material items are inferred as the intersection of source `outputs` and
     target `inputs`.
     """
+    return _infer_movements(
+        process=process,
+        source_field="outputs",
+        target_field="inputs",
+        entities_field="items",
+        require_shared_entities=False,
+    )
+
+
+def infer_people_movements(process: Any) -> list[dict[str, Any]]:
+    """Infer people movement hops from worker continuity across edges.
+
+    A movement is inferred when:
+    - source and target nodes both declare `location`
+    - locations differ
+    - source and target share at least one worker id
+    """
+    return _infer_movements(
+        process=process,
+        source_field="workers",
+        target_field="workers",
+        entities_field="workers",
+        require_shared_entities=True,
+    )
+
+
+def aggregate_material_movements(movements: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Aggregate inferred movements by route + item set."""
+    return _aggregate_movements(
+        movements=movements,
+        entities_field="items",
+        key_by_entities=True,
+    )
+
+
+def aggregate_people_movements(movements: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Aggregate inferred people movements by route and merge worker sets."""
+    return _aggregate_movements(
+        movements=movements,
+        entities_field="workers",
+        key_by_entities=False,
+    )
+
+
+def aggregate_people_movements_by_worker(movements: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Aggregate inferred people movements by route and individual worker."""
+    worker_movements: list[dict[str, Any]] = []
+    for movement in movements:
+        workers = _as_text_list(movement.get("workers"))
+        for worker in workers:
+            worker_movement = dict(movement)
+            worker_movement["workers"] = [worker]
+            worker_movements.append(worker_movement)
+
+    return _aggregate_movements(
+        movements=worker_movements,
+        entities_field="workers",
+        key_by_entities=True,
+    )
+
+
+def _infer_movements(
+    process: Any,
+    source_field: str,
+    target_field: str,
+    entities_field: str,
+    require_shared_entities: bool,
+) -> list[dict[str, Any]]:
     nodes_by_id = _extract_node_attrs_by_id(process)
     edges = _extract_edges(process)
     locations = extract_location_spatial_index(process)
@@ -34,74 +102,116 @@ def infer_material_movements(process: Any) -> list[dict[str, Any]]:
         if not source_location or not target_location or source_location == target_location:
             continue
 
-        source_outputs = _as_text_list(source_attrs.get("outputs"))
-        target_inputs = _as_text_list(target_attrs.get("inputs"))
-        target_inputs_set = set(target_inputs)
-        inferred_items = [item for item in source_outputs if item in target_inputs_set]
+        source_entities = _as_text_list(source_attrs.get(source_field))
+        target_entities = _as_text_list(target_attrs.get(target_field))
+        entities = _shared_text_values(source_entities, target_entities)
+        if require_shared_entities and not entities:
+            continue
 
-        distance_value, distance_unit = _distance_between_locations(
+        movement = _new_movement_record(
+            source=source,
+            target=target,
             source_location=source_location,
             target_location=target_location,
+            entities_field=entities_field,
+            entities=entities,
             location_index=locations,
         )
-
-        movement: dict[str, Any] = {
-            "source_node": source,
-            "target_node": target,
-            "from_location": source_location,
-            "to_location": target_location,
-            "items": inferred_items,
-        }
-        if distance_value is not None and distance_unit is not None:
-            movement["distance"] = {
-                "value": distance_value,
-                "unit": distance_unit,
-            }
-
         movements.append(movement)
 
     return movements
 
 
-def aggregate_material_movements(movements: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Aggregate inferred movements by route + item set."""
+def _new_movement_record(
+    source: str,
+    target: str,
+    source_location: str,
+    target_location: str,
+    entities_field: str,
+    entities: list[str],
+    location_index: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    distance_value, distance_unit = _distance_between_locations(
+        source_location=source_location,
+        target_location=target_location,
+        location_index=location_index,
+    )
+
+    movement: dict[str, Any] = {
+        "source_node": source,
+        "target_node": target,
+        "from_location": source_location,
+        "to_location": target_location,
+        entities_field: entities,
+    }
+
+    if distance_value is not None and distance_unit is not None:
+        movement["distance"] = {
+            "value": distance_value,
+            "unit": distance_unit,
+        }
+    return movement
+
+
+def _aggregate_movements(
+    movements: list[dict[str, Any]],
+    entities_field: str,
+    key_by_entities: bool,
+) -> list[dict[str, Any]]:
     buckets: dict[tuple[str, str, tuple[str, ...]], dict[str, Any]] = {}
 
     for movement in movements:
-        key = _movement_bucket_key(movement)
+        key = _movement_bucket_key(
+            movement,
+            entities_field=entities_field,
+            key_by_entities=key_by_entities,
+        )
         if key is None:
             continue
-        source, target, items = key
+        source, target, entities = key
 
         bucket = buckets.get(key)
         if bucket is None:
-            bucket = _new_movement_bucket(source=source, target=target, items=items, movement=movement)
+            bucket = _new_movement_bucket(
+                source=source,
+                target=target,
+                entities=entities,
+                entities_field=entities_field,
+                movement=movement,
+            )
             buckets[key] = bucket
 
         bucket["count"] += 1
+        if not key_by_entities:
+            _merge_bucket_entities(bucket, movement=movement, entities_field=entities_field)
 
     return sorted(buckets.values(), key=_movement_bucket_sort_key)
 
 
-def _movement_bucket_key(movement: dict[str, Any]) -> tuple[str, str, tuple[str, ...]] | None:
+def _movement_bucket_key(
+    movement: dict[str, Any],
+    entities_field: str,
+    key_by_entities: bool,
+) -> tuple[str, str, tuple[str, ...]] | None:
     source = str(movement.get("from_location") or "")
     target = str(movement.get("to_location") or "")
     if not source or not target:
         return None
-    items = tuple(sorted({str(item) for item in movement.get("items") or [] if str(item)}))
-    return source, target, items
+    entities = _sorted_text_values(movement.get(entities_field) if key_by_entities else [])
+    return source, target, entities
 
 
 def _new_movement_bucket(
     source: str,
     target: str,
-    items: tuple[str, ...],
+    entities: tuple[str, ...],
+    entities_field: str,
     movement: dict[str, Any],
 ) -> dict[str, Any]:
     bucket: dict[str, Any] = {
         "from_location": source,
         "to_location": target,
-        "items": list(items),
+        entities_field: list(entities),
         "count": 0,
     }
     distance = movement.get("distance")
@@ -116,6 +226,26 @@ def _movement_bucket_sort_key(item: dict[str, Any]) -> tuple[int, str, str]:
         str(item.get("from_location") or ""),
         str(item.get("to_location") or ""),
     )
+
+
+def _merge_bucket_entities(bucket: dict[str, Any], movement: dict[str, Any], entities_field: str) -> None:
+    merged_values = _sorted_text_values(
+        list(bucket.get(entities_field) or []) + list(movement.get(entities_field) or [])
+    )
+    bucket[entities_field] = list(merged_values)
+
+
+def _shared_text_values(source_values: list[str], target_values: list[str]) -> list[str]:
+    target_set = set(target_values)
+    shared: list[str] = []
+    for value in source_values:
+        if value in target_set and value not in shared:
+            shared.append(value)
+    return shared
+
+
+def _sorted_text_values(values: Any) -> tuple[str, ...]:
+    return tuple(sorted({str(item) for item in values or [] if str(item)}))
 
 
 def extract_location_spatial_index(process: Any) -> dict[str, dict[str, Any]]:

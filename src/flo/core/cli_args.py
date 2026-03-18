@@ -37,6 +37,16 @@ def parse_args(argv: list | None, services: Services) -> Tuple[str | None, str, 
     parser.add_argument("--orientation", choices=["lr", "tb"], help="Layout orientation for DOT output")
     parser.add_argument("--show-notes", action="store_true", help="Include node notes in DOT labels")
     parser.add_argument("--subprocess-view", choices=["expanded", "parent-only"], help="Subprocess rendering mode")
+    parser.add_argument(
+        "--spaghetti-channel",
+        choices=["both", "material", "people"],
+        help="Movement channel for spaghetti diagrams",
+    )
+    parser.add_argument(
+        "--spaghetti-people-mode",
+        choices=["worker", "aggregate"],
+        help="People trace mode for spaghetti diagrams",
+    )
     parsed = parser.parse_args(argv)
 
     supported_commands = {"run", "compile", "validate", "export"}
@@ -74,7 +84,15 @@ def _build_options_from_parsed(parsed: object) -> dict:
         "output": getattr(parsed, "output", None),
     }
 
-    for key in ("diagram", "profile", "detail", "orientation", "subprocess_view"):
+    for key in (
+        "diagram",
+        "profile",
+        "detail",
+        "orientation",
+        "subprocess_view",
+        "spaghetti_channel",
+        "spaghetti_people_mode",
+    ):
         value = getattr(parsed, key, None)
         if value:
             options[key] = value

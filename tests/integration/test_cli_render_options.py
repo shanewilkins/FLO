@@ -156,3 +156,67 @@ def test_run_spaghetti_diagram_emits_neato_layout():
     assert result.exit_code == 0
     assert "layout=neato" in result.output
     assert '"pantry"' in result.output
+
+
+def test_run_spaghetti_people_channel_filters_material_edges():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "examples/reference/chocolate_chip_cookies.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "spaghetti",
+            "--spaghetti-channel",
+            "people",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "color=royalblue4" in result.output
+    assert "style=dashed" in result.output
+    assert "color=tomato4" not in result.output
+
+
+def test_run_spaghetti_people_worker_mode_labels_worker_traces():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "examples/reference/chocolate_chip_cookies.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "spaghetti",
+            "--spaghetti-channel",
+            "people",
+            "--spaghetti-people-mode",
+            "worker",
+            "--profile",
+            "analysis",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "xlabel=\"P assistant_baker" in result.output or "xlabel=\"P lead_baker" in result.output
+
+
+def test_run_json_export_rejects_spaghetti_channel_flag():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["run", "examples/reference/linear.flo", "--export", "json", "--spaghetti-channel", "people"],
+    )
+    assert result.exit_code == 1
+    assert "require DOT output" in result.output
+
+
+def test_run_json_export_rejects_spaghetti_people_mode_flag():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["run", "examples/reference/linear.flo", "--export", "json", "--spaghetti-people-mode", "worker"],
+    )
+    assert result.exit_code == 1
+    assert "require DOT output" in result.output

@@ -10,6 +10,8 @@ RenderProfile = Literal["default", "analysis"]
 DetailLevel = Literal["summary", "standard", "verbose"]
 Orientation = Literal["lr", "tb"]
 SubprocessView = Literal["expanded", "parent_only"]
+SpaghettiChannel = Literal["both", "material", "people"]
+SpaghettiPeopleMode = Literal["aggregate", "worker"]
 
 
 @dataclass(frozen=True)
@@ -26,6 +28,8 @@ class RenderOptions:
     orientation: Orientation = "lr"
     show_notes: bool = False
     subprocess_view: SubprocessView = "expanded"
+    spaghetti_channel: SpaghettiChannel = "both"
+    spaghetti_people_mode: SpaghettiPeopleMode = "aggregate"
 
     @classmethod
     def from_mapping(cls, options: Mapping[str, Any] | None) -> "RenderOptions":
@@ -33,13 +37,17 @@ class RenderOptions:
         if not options:
             return cls()
 
+        profile = _parse_profile(options)
+
         return cls(
             diagram=_parse_diagram(options),
-            profile=_parse_profile(options),
+            profile=profile,
             detail=_parse_detail(options),
             orientation=_parse_orientation(options),
             show_notes=_parse_bool(options.get("show_notes", False)),
             subprocess_view=_parse_subprocess_view(options),
+            spaghetti_channel=_parse_spaghetti_channel(options),
+            spaghetti_people_mode=_parse_spaghetti_people_mode(options, profile=profile),
         )
 
 
@@ -84,6 +92,27 @@ def _parse_subprocess_view(options: Mapping[str, Any]) -> SubprocessView:
     if subprocess_view_raw in {"parent-only", "parent_only", "parents-only", "parents_only"}:
         return "parent_only"
     return "expanded"
+
+
+def _parse_spaghetti_channel(options: Mapping[str, Any]) -> SpaghettiChannel:
+    raw = _normalized_option(options, "spaghetti_channel", "both")
+    if raw in {"material", "materials", "item", "items"}:
+        return "material"
+    if raw in {"people", "person", "worker", "workers"}:
+        return "people"
+    return "both"
+
+
+def _parse_spaghetti_people_mode(options: Mapping[str, Any], profile: RenderProfile) -> SpaghettiPeopleMode:
+    raw_value = options.get("spaghetti_people_mode")
+    if raw_value is None:
+        # Diagnostics/analysis favors per-worker traces by default.
+        return "worker" if profile == "analysis" else "aggregate"
+
+    raw = str(raw_value).strip().lower()
+    if raw in {"worker", "workers", "per-worker", "per_worker", "trace", "traces"}:
+        return "worker"
+    return "aggregate"
 
 
 def _parse_bool(value: Any) -> bool:

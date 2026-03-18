@@ -74,6 +74,10 @@ def test_parse_args_render_options(services):
             "--show-notes",
             "--subprocess-view",
             "parent-only",
+            "--spaghetti-channel",
+            "people",
+            "--spaghetti-people-mode",
+            "worker",
         ],
         services,
     )
@@ -85,6 +89,8 @@ def test_parse_args_render_options(services):
     assert options["orientation"] == "tb"
     assert options["show_notes"] is True
     assert options["subprocess_view"] == "parent-only"
+    assert options["spaghetti_channel"] == "people"
+    assert options["spaghetti_people_mode"] == "worker"
 
 
 def test_parse_args_spaghetti_diagram_option(services):
@@ -92,3 +98,17 @@ def test_parse_args_spaghetti_diagram_option(services):
     assert path == "file.flo"
     assert command == "run"
     assert options["diagram"] == "spaghetti"
+
+
+def test_parse_args_spaghetti_channel_option(services):
+    path, command, options, _, _ = parse_args(["file.flo", "--spaghetti-channel", "material"], services)
+    assert path == "file.flo"
+    assert command == "run"
+    assert options["spaghetti_channel"] == "material"
+
+
+def test_parse_args_spaghetti_people_mode_option(services):
+    path, command, options, _, _ = parse_args(["file.flo", "--spaghetti-people-mode", "aggregate"], services)
+    assert path == "file.flo"
+    assert command == "run"
+    assert options["spaghetti_people_mode"] == "aggregate"

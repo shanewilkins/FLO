@@ -85,7 +85,16 @@ def _ensure_render_options_compatible_with_output(options: dict | None, output_f
     opts = options or {}
     invalid = [
         flag
-        for flag in ("diagram", "profile", "detail", "orientation", "show_notes", "subprocess_view")
+        for flag in (
+            "diagram",
+            "profile",
+            "detail",
+            "orientation",
+            "show_notes",
+            "subprocess_view",
+            "spaghetti_channel",
+            "spaghetti_people_mode",
+        )
         if flag in opts
     ]
     if invalid:

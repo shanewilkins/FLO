@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import hashlib
 from typing import Any, Dict
 
 from flo.compiler.analysis import (
     infer_material_movements,
     aggregate_material_movements,
+    infer_people_movements,
+    aggregate_people_movements,
+    aggregate_people_movements_by_worker,
     extract_location_spatial_index,
 )
 
@@ -36,17 +40,29 @@ def render_spaghetti_dot(process: Dict[str, Any] | Any, options: RenderOptions |
 
 
 def _render_spaghetti_graph(process: Dict[str, Any] | Any, options: RenderOptions) -> str:
-    movements = infer_material_movements(process)
-    routes = aggregate_material_movements(movements)
+    material_movements = infer_material_movements(process)
+    people_movements = infer_people_movements(process)
+    material_routes = aggregate_material_movements(material_movements)
+    people_routes = _spaghetti_people_routes(people_movements=people_movements, options=options)
     locations = extract_location_spatial_index(process)
+    include_material, include_people = _spaghetti_channels(options)
+
+    routes_for_locations: list[dict[str, Any]] = []
+    if include_material:
+        routes_for_locations.extend(material_routes)
+    if include_people:
+        routes_for_locations.extend(people_routes)
 
     lines: list[str] = _spaghetti_graph_prelude()
     _append_spaghetti_location_nodes(
         lines=lines,
         locations=locations,
-        location_ids=_ordered_location_ids(locations=locations, routes=routes),
+        location_ids=_ordered_location_ids(locations=locations, routes=routes_for_locations),
     )
-    _append_spaghetti_route_edges(lines=lines, routes=routes, options=options)
+    if include_material:
+        _append_spaghetti_route_edges(lines=lines, routes=material_routes, options=options, channel="material")
+    if include_people:
+        _append_spaghetti_route_edges(lines=lines, routes=people_routes, options=options, channel="people")
 
     lines.append("}")
     return "\n".join(lines)
@@ -57,7 +73,7 @@ def _spaghetti_graph_prelude() -> list[str]:
         "digraph {",
         "  graph [layout=neato, overlap=false, splines=true, outputorder=edgesfirst];",
         "  node [shape=circle, fontname=Helvetica, style=filled, fillcolor=aliceblue, color=steelblue4];",
-        "  edge [fontname=Helvetica, color=tomato4, arrowsize=0.8];",
+        "  edge [fontname=Helvetica, arrowsize=0.8];",
     ]
 
 
@@ -87,15 +103,16 @@ def _append_spaghetti_route_edges(
     lines: list[str],
     routes: list[dict[str, Any]],
     options: RenderOptions,
+    channel: str,
 ) -> None:
     for route in routes:
-        edge_line = _spaghetti_route_edge_line(route=route, options=options)
+        edge_line = _spaghetti_route_edge_line(route=route, options=options, channel=channel)
         if edge_line is None:
             continue
         lines.append(edge_line)
 
 
-def _spaghetti_route_edge_line(route: dict[str, Any], options: RenderOptions) -> str | None:
+def _spaghetti_route_edge_line(route: dict[str, Any], options: RenderOptions, channel: str) -> str | None:
     source = str(route.get("from_location") or "")
     target = str(route.get("to_location") or "")
     if not source or not target:
@@ -103,14 +120,18 @@ def _spaghetti_route_edge_line(route: dict[str, Any], options: RenderOptions) ->
 
     count = int(route.get("count") or 0)
     penwidth = min(6.0, 1.0 + (0.7 * max(1, count)))
-    edge_attrs = [f"penwidth={penwidth:.2f}", f'xlabel="{count}x"']
+    edge_attrs = [
+        f"penwidth={penwidth:.2f}",
+        f'xlabel="{_spaghetti_channel_xlabel(channel=channel, route=route, count=count, options=options)}"',
+        *_spaghetti_channel_edge_attrs(channel=channel, route=route, options=options),
+    ]
 
     distance_label = _spaghetti_distance_label(route)
     if distance_label is not None:
         edge_attrs.append(distance_label)
 
     if options.detail == "verbose":
-        taillabel = _spaghetti_route_items_taillabel(route)
+        taillabel = _spaghetti_route_entities_taillabel(route=route, channel=channel)
         if taillabel is not None:
             edge_attrs.append(taillabel)
 
@@ -128,11 +149,96 @@ def _spaghetti_distance_label(route: dict[str, Any]) -> str | None:
     return f'label="{float(value):.2f} {str(unit)}"'
 
 
-def _spaghetti_route_items_taillabel(route: dict[str, Any]) -> str | None:
-    items = route.get("items") if isinstance(route.get("items"), list) else []
-    if not items:
+def _spaghetti_route_entities_taillabel(route: dict[str, Any], channel: str) -> str | None:
+    entities_key = "items" if channel == "material" else "workers"
+    entities = route.get(entities_key) if isinstance(route.get(entities_key), list) else []
+    if not entities:
         return None
-    return f'taillabel="{_escape(", ".join(str(item) for item in items))}"'
+    label_prefix = "items" if channel == "material" else "workers"
+    return f'taillabel="{_escape(label_prefix + ": " + ", ".join(str(item) for item in entities))}"'
+
+
+def _spaghetti_channels(options: RenderOptions) -> tuple[bool, bool]:
+    channel = str(options.spaghetti_channel or "both")
+    if channel == "material":
+        return True, False
+    if channel == "people":
+        return False, True
+    return True, True
+
+
+def _spaghetti_people_mode(options: RenderOptions) -> str:
+    mode = str(options.spaghetti_people_mode or "aggregate")
+    if mode == "worker":
+        return "worker"
+    return "aggregate"
+
+
+def _spaghetti_people_routes(people_movements: list[dict[str, Any]], options: RenderOptions) -> list[dict[str, Any]]:
+    if _spaghetti_people_mode(options) == "worker":
+        return aggregate_people_movements_by_worker(people_movements)
+    return aggregate_people_movements(people_movements)
+
+
+def _spaghetti_channel_xlabel(channel: str, route: dict[str, Any], count: int, options: RenderOptions) -> str:
+    if channel != "people":
+        return f"M {count}x"
+
+    worker = _spaghetti_primary_worker(route)
+    if _spaghetti_people_mode(options) == "worker" and worker:
+        return f"P {worker} {count}x"
+    return f"P {count}x"
+
+
+def _spaghetti_channel_edge_attrs(channel: str, route: dict[str, Any], options: RenderOptions) -> list[str]:
+    if channel != "people":
+        return ["color=tomato4", "fontcolor=tomato4"]
+
+    if _spaghetti_people_mode(options) == "aggregate":
+        return ["color=royalblue4", "style=dashed", "fontcolor=royalblue4"]
+
+    worker = _spaghetti_primary_worker(route)
+    if not worker:
+        return ["color=royalblue4", "style=dashed", "fontcolor=royalblue4"]
+
+    color, style = _spaghetti_worker_style(worker)
+    return [f"color={color}", f"style={style}", f"fontcolor={color}"]
+
+
+def _spaghetti_primary_worker(route: dict[str, Any]) -> str | None:
+    workers = route.get("workers") if isinstance(route.get("workers"), list) else []
+    if not workers:
+        return None
+    worker = str(workers[0]).strip()
+    return worker or None
+
+
+def _spaghetti_worker_style(worker: str) -> tuple[str, str]:
+    palette: list[tuple[str, str]] = [
+        ("royalblue4", "dashed"),
+        ("forestgreen", "dotted"),
+        ("darkorange3", "solid"),
+        ("firebrick3", "bold"),
+        ("purple4", "dashed"),
+        ("deepskyblue4", "dotted"),
+        ("sienna4", "solid"),
+        ("darkgoldenrod4", "bold"),
+    ]
+    index = _stable_palette_index(worker, len(palette))
+    return palette[index]
+
+
+def _stable_palette_index(text: str, size: int) -> int:
+    digest = hashlib.sha1(text.encode("utf-8")).digest()
+    seed = int.from_bytes(digest[:4], "big", signed=False)
+    return seed % max(1, size)
+
+
+def _spaghetti_channel_label_prefix(channel: str) -> str:
+    if channel == "people":
+        return "P"
+    return "M"
+    return ["color=tomato4", "fontcolor=tomato4"]
 
 
 def _ordered_location_ids(locations: dict[str, dict[str, Any]], routes: list[dict[str, Any]]) -> list[str]:

@@ -96,3 +96,33 @@ def test_export_ir_movement_mode_outputs_inferred_route_summary():
     assert "Inferred Material Movement" in out
     assert "pantry -> prep_bench" in out
     assert "items=flour" in out
+
+
+def test_export_ir_movement_mode_includes_people_movement_section():
+    ir = IR(
+        name="cookie_people",
+        nodes=[
+            Node(
+                id="gather",
+                type="task",
+                attrs={
+                    "location": "pantry",
+                    "workers": ["assistant_baker"],
+                },
+            ),
+            Node(
+                id="mix",
+                type="task",
+                attrs={
+                    "location": "prep_bench",
+                    "workers": ["assistant_baker"],
+                },
+            ),
+        ],
+        edges=[Edge(source="gather", target="mix")],
+    )
+
+    out = export_ir(ir, options={"export": "movement"})
+    assert "Inferred People Movement" in out
+    assert "pantry -> prep_bench" in out
+    assert "workers=assistant_baker" in out

@@ -25,6 +25,8 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
 @click.option("--orientation", type=click.Choice(["lr", "tb"]), help="Layout orientation for DOT output")
 @click.option("--show-notes", is_flag=True, help="Include node notes in DOT labels")
 @click.option("--subprocess-view", type=click.Choice(["expanded", "parent-only"]), help="Subprocess rendering mode")
+@click.option("--spaghetti-channel", type=click.Choice(["both", "material", "people"]), help="Movement channel for spaghetti diagrams")
+@click.option("--spaghetti-people-mode", type=click.Choice(["worker", "aggregate"]), help="People trace mode for spaghetti diagrams")
 def run_cmd(
     path: Optional[str],
     validate: bool,
@@ -37,6 +39,8 @@ def run_cmd(
     orientation: Optional[str],
     show_notes: bool,
     subprocess_view: Optional[str],
+    spaghetti_channel: Optional[str],
+    spaghetti_people_mode: Optional[str],
 ) -> None:  # pragma: no cover - integration
     """Invoke the CLI command handler with normalized arguments."""
     args: list[str] = []
@@ -63,6 +67,10 @@ def run_cmd(
         args.append("--show-notes")
     if subprocess_view:
         args.extend(["--subprocess-view", subprocess_view])
+    if spaghetti_channel:
+        args.extend(["--spaghetti-channel", spaghetti_channel])
+    if spaghetti_people_mode:
+        args.extend(["--spaghetti-people-mode", spaghetti_people_mode])
 
     rc = console_main(args)
     raise SystemExit(rc)
@@ -110,6 +118,8 @@ def validate_cmd(path: Optional[str], verbose: bool) -> None:  # pragma: no cove
 @click.option("--orientation", type=click.Choice(["lr", "tb"]), help="Layout orientation for DOT output")
 @click.option("--show-notes", is_flag=True, help="Include node notes in DOT labels")
 @click.option("--subprocess-view", type=click.Choice(["expanded", "parent-only"]), help="Subprocess rendering mode")
+@click.option("--spaghetti-channel", type=click.Choice(["both", "material", "people"]), help="Movement channel for spaghetti diagrams")
+@click.option("--spaghetti-people-mode", type=click.Choice(["worker", "aggregate"]), help="People trace mode for spaghetti diagrams")
 def export_cmd(
     path: Optional[str],
     export_fmt: str,
@@ -121,6 +131,8 @@ def export_cmd(
     orientation: Optional[str],
     show_notes: bool,
     subprocess_view: Optional[str],
+    spaghetti_channel: Optional[str],
+    spaghetti_people_mode: Optional[str],
 ) -> None:  # pragma: no cover - integration
     """Export FLO input as DOT or JSON."""
     args: list[str] = ["export"]
@@ -139,6 +151,10 @@ def export_cmd(
         args.append("--show-notes")
     if subprocess_view:
         args.extend(["--subprocess-view", subprocess_view])
+    if spaghetti_channel:
+        args.extend(["--spaghetti-channel", spaghetti_channel])
+    if spaghetti_people_mode:
+        args.extend(["--spaghetti-people-mode", spaghetti_people_mode])
     if verbose:
         args.append("-v")
     if output:

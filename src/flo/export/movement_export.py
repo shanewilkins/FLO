@@ -4,31 +4,64 @@ from __future__ import annotations
 
 from typing import Any
 
-from flo.compiler.analysis import infer_material_movements, aggregate_material_movements
+from flo.compiler.analysis import (
+    infer_material_movements,
+    aggregate_material_movements,
+    infer_people_movements,
+    aggregate_people_movements,
+)
 
 
 def ir_to_movement_text(ir: Any) -> str:
-    """Render inferred material movement as a readable summary."""
-    movements = infer_material_movements(ir)
-    aggregates = aggregate_material_movements(movements)
+    """Render inferred material and people movement as a readable summary."""
+    material_movements = infer_material_movements(ir)
+    material_aggregates = aggregate_material_movements(material_movements)
+    people_movements = infer_people_movements(ir)
+    people_aggregates = aggregate_people_movements(people_movements)
 
-    lines: list[str] = ["Inferred Material Movement"]
+    lines: list[str] = []
+    _append_movement_section(
+        lines=lines,
+        title="Inferred Material Movement",
+        movements=material_movements,
+        routes=material_aggregates,
+        entities_field="items",
+    )
+    lines.append("")
+    _append_movement_section(
+        lines=lines,
+        title="Inferred People Movement",
+        movements=people_movements,
+        routes=people_aggregates,
+        entities_field="workers",
+    )
+    return "\n".join(lines)
+
+
+def _append_movement_section(
+    lines: list[str],
+    title: str,
+    movements: list[dict[str, Any]],
+    routes: list[dict[str, Any]],
+    entities_field: str,
+) -> None:
+    lines.append(title)
     lines.append(f"- hops: {len(movements)}")
-    lines.append(f"- routes: {len(aggregates)}")
+    lines.append(f"- routes: {len(routes)}")
 
-    if not aggregates:
+    if not routes:
         lines.append("- none")
-        return "\n".join(lines)
+        return
 
-    for route in aggregates:
+    for route in routes:
         source = str(route.get("from_location") or "unknown")
         target = str(route.get("to_location") or "unknown")
         count = int(route.get("count") or 0)
-        items = route.get("items") if isinstance(route.get("items"), list) else []
+        entities = route.get(entities_field) if isinstance(route.get(entities_field), list) else []
 
         detail_parts = [f"count={count}"]
-        if items:
-            detail_parts.append("items=" + ", ".join(str(item) for item in items))
+        if entities:
+            detail_parts.append(f"{entities_field}=" + ", ".join(str(item) for item in entities))
 
         distance = route.get("distance")
         if isinstance(distance, dict):
@@ -38,5 +71,3 @@ def ir_to_movement_text(ir: Any) -> str:
                 detail_parts.append(f"distance={value:.2f} {unit}")
 
         lines.append(f"- {source} -> {target} ({'; '.join(detail_parts)})")
-
-    return "\n".join(lines)

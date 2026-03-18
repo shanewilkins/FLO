@@ -149,6 +149,86 @@ Scope:
 
 Deliverable: FLO suitable for static Lean analysis and heuristic insights.
 
+## Spaghetti Map Enhancement Plan (4 phases)
+
+This section captures the agreed incremental expansion of spaghetti-map
+capabilities beyond the current material-only route rendering.
+
+### Phase 1 — Dual movement channels (materials + people)
+
+Goals:
+
+- Distinguish movement of people from movement of materials.
+- Preserve existing material movement behavior while adding person movement in
+    parallel.
+
+Scope:
+
+- Add person-movement inference based on worker identity and location changes.
+- Keep material and person movements as separate typed records.
+- Support rendering one channel (`material` / `people`) or both.
+
+Acceptance:
+
+- A model with worker assignments can render people routes independently from
+    material routes.
+- Co-incident routes can be displayed without conflating channels.
+
+### Phase 2 — Worker-specific traces and styling
+
+Goals:
+
+- Distinguish movements of different people.
+
+Scope:
+
+- Render worker-specific traces (not just aggregate "people" movement).
+- Add deterministic per-worker visual styling (color/line style) and labels.
+- Add optional aggregate mode for dense views while keeping per-worker as the
+    default for diagnostics.
+
+Acceptance:
+
+- At least two workers moving along different paths are visually separable in
+    a single diagram.
+- Legend or labels clearly map traces to worker identities.
+
+### Phase 3 — Facility boundary and area context
+
+Goals:
+
+- Add a rough boundary/shape for the physical area.
+
+Scope:
+
+- Introduce process metadata for layout boundary (start with rectangular extent;
+    optional polygon support later).
+- Render boundary as a non-intrusive background/outline layer in spaghetti maps.
+
+Acceptance:
+
+- Spaghetti diagrams can show the modeled area boundary when metadata is
+    provided.
+- Omission of boundary metadata preserves current behavior.
+
+### Phase 4 — Semantic location shapes
+
+Goals:
+
+- Use different location shapes for different location kinds.
+
+Scope:
+
+- Introduce location kind metadata (for example: storage, prep, heat, cooling,
+    wash, transit).
+- Map kinds to shape/style defaults in spaghetti rendering.
+- Provide fallback shape for unknown or unspecified kinds.
+
+Acceptance:
+
+- Location nodes with different kinds render with distinct shapes.
+- Existing models without location kinds continue rendering unchanged.
+
 ## v0.3 — Telemetry Alignment & Trace Model (outline)
 
 Scope:
