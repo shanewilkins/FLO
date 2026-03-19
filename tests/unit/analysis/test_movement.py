@@ -2,6 +2,7 @@ from flo.compiler.analysis import (
     infer_people_movements,
     aggregate_people_movements,
     aggregate_people_movements_by_worker,
+    extract_location_spatial_index,
 )
 from flo.compiler.ir.models import Edge, IR
 
@@ -67,3 +68,32 @@ def test_aggregate_people_movements_by_worker_splits_routes_per_worker():
     by_worker = {tuple(route.get("workers") or []): route for route in routes}
     assert by_worker[("assistant_baker",)]["count"] == 2
     assert by_worker[("lead_baker",)]["count"] == 1
+
+
+def test_extract_location_spatial_index_includes_location_kind():
+    process = {
+        "process": {
+            "metadata": {
+                "locations": [
+                    {
+                        "id": "pantry",
+                        "name": "Pantry",
+                        "kind": "storage",
+                        "metadata": {"spatial": {"x": 1.0, "y": 2.0, "unit": "m"}},
+                    },
+                    {
+                        "id": "oven_station",
+                        "name": "Oven Station",
+                        "metadata": {
+                            "kind": "heat",
+                            "spatial": {"x": 4.0, "y": 3.0, "unit": "m"},
+                        },
+                    },
+                ]
+            }
+        }
+    }
+
+    locations = extract_location_spatial_index(process)
+    assert locations["pantry"]["kind"] == "storage"
+    assert locations["oven_station"]["kind"] == "heat"

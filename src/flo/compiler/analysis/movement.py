@@ -249,7 +249,7 @@ def _sorted_text_values(values: Any) -> tuple[str, ...]:
 
 
 def extract_location_spatial_index(process: Any) -> dict[str, dict[str, Any]]:
-    """Return location_id -> {name, x, y, unit} from process metadata locations."""
+    """Return location_id -> {name, kind, x, y, unit} from process metadata locations."""
     process_metadata = _extract_process_metadata(process)
     collection = process_metadata.get("locations") if isinstance(process_metadata, dict) else None
 
@@ -263,6 +263,9 @@ def extract_location_spatial_index(process: Any) -> dict[str, dict[str, Any]]:
 
         spatial = _extract_spatial(item)
         entry: dict[str, Any] = {"name": _as_text(item.get("name")) or location_id}
+        kind = _extract_location_kind(item)
+        if kind is not None:
+            entry["kind"] = kind
         if isinstance(spatial, dict):
             x = spatial.get("x")
             y = spatial.get("y")
@@ -382,6 +385,22 @@ def _extract_spatial(resource: dict[str, Any]) -> dict[str, Any] | None:
             "unit": resource.get("unit"),
         }
 
+    return None
+
+
+def _extract_location_kind(resource: dict[str, Any]) -> str | None:
+    direct_kind = _as_text(resource.get("kind"))
+    if direct_kind is not None:
+        return direct_kind
+
+    metadata = resource.get("metadata")
+    if not isinstance(metadata, dict):
+        return None
+
+    for key in ("kind", "location_kind", "type"):
+        kind = _as_text(metadata.get(key))
+        if kind is not None:
+            return kind
     return None
 
 

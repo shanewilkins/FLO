@@ -4,6 +4,7 @@ locations:
     items:
       - id: pantry
         name: Pantry
+        kind: storage
         metadata:
           spatial:
             x: 0.0
@@ -11,6 +12,7 @@ locations:
             unit: m
       - id: prep_bench
         name: Prep Bench
+        kind: operation
         metadata:
           spatial:
             x: 3.0
@@ -18,6 +20,7 @@ locations:
             unit: m
       - id: oven_station
         name: Oven Station
+        kind: processing
         metadata:
           spatial:
             x: 6.0
@@ -25,6 +28,7 @@ locations:
             unit: m
       - id: cooling_rack
         name: Cooling Rack
+        kind: staging
         metadata:
           spatial:
             x: 7.5
@@ -32,8 +36,17 @@ locations:
             unit: m
       - id: dishwasher
         name: Dishwasher
+        kind: support
         metadata:
           spatial:
             x: 1.0
             y: 0.5
+            unit: m
+      - id: service_corridor
+        name: Service Corridor
+        kind: transit
+        metadata:
+          spatial:
+            x: 4.5
+            y: 0.8
             unit: m

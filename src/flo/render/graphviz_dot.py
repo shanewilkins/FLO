@@ -304,12 +304,108 @@ def _boundary_centroid(points: list[tuple[float, float]]) -> tuple[float, float]
 def _spaghetti_location_node_attrs(location_id: str, info: dict[str, Any]) -> list[str]:
     label = str(info.get("name") or location_id)
     node_attrs = [f'label="{_escape(label)}"']
+    node_attrs.extend(_spaghetti_location_visual_attrs(info))
     x = info.get("x")
     y = info.get("y")
     if isinstance(x, (int, float)) and isinstance(y, (int, float)):
         node_attrs.append(f'pos="{float(x):.3f},{float(y):.3f}!"')
         node_attrs.append("pin=true")
     return node_attrs
+
+
+_SPAGHETTI_LOCATION_STYLE_BY_KIND: dict[str, dict[str, str]] = {
+    "storage": {"shape": "box", "fillcolor": "lemonchiffon", "color": "goldenrod4"},
+    "operation": {"shape": "ellipse", "fillcolor": "aliceblue", "color": "steelblue4"},
+    "processing": {"shape": "hexagon", "fillcolor": "mistyrose", "color": "firebrick3"},
+    "staging": {"shape": "trapezium", "fillcolor": "honeydew", "color": "seagreen4"},
+    "support": {"shape": "octagon", "fillcolor": "azure", "color": "deepskyblue4"},
+    "transit": {"shape": "diamond", "fillcolor": "mintcream", "color": "slategray4"},
+}
+
+
+_SPAGHETTI_LOCATION_KIND_ALIASES: dict[str, str] = {
+    "storage": "storage",
+    "inventory": "storage",
+    "warehouse": "storage",
+    "stock": "storage",
+    "stockroom": "storage",
+    "storeroom": "storage",
+    "operation": "operation",
+    "ops": "operation",
+    "work": "operation",
+    "workcell": "operation",
+    "work_cell": "operation",
+    "workstation": "operation",
+    "station": "operation",
+    "procedure": "operation",
+    "prep": "operation",
+    "processing": "processing",
+    "process": "processing",
+    "transform": "processing",
+    "transformation": "processing",
+    "machine": "processing",
+    "machining": "processing",
+    "heat": "processing",
+    "staging": "staging",
+    "buffer": "staging",
+    "queue": "staging",
+    "holding": "staging",
+    "holding_area": "staging",
+    "wait": "staging",
+    "waiting": "staging",
+    "cooling": "staging",
+    "support": "support",
+    "service": "support",
+    "inspection": "support",
+    "quality": "support",
+    "qa": "support",
+    "clean": "support",
+    "cleaning": "support",
+    "sanitize": "support",
+    "sanitization": "support",
+    "sterile": "support",
+    "sterilization": "support",
+    "wash": "support",
+    "transit": "transit",
+    "corridor": "transit",
+    "path": "transit",
+    "conveyor": "transit",
+    "transfer": "transit",
+}
+
+
+def _spaghetti_location_visual_attrs(info: dict[str, Any]) -> list[str]:
+    kind = _canonical_spaghetti_location_kind(info.get("kind"))
+    if kind is None:
+        return []
+
+    style = _SPAGHETTI_LOCATION_STYLE_BY_KIND.get(kind)
+    if style is None:
+        return []
+
+    return [
+        f"shape={style['shape']}",
+        f"fillcolor={style['fillcolor']}",
+        f"color={style['color']}",
+    ]
+
+
+def _canonical_spaghetti_location_kind(kind_raw: Any) -> str | None:
+    if kind_raw is None:
+        return None
+
+    kind = _normalize_location_kind_token(str(kind_raw))
+    if not kind:
+        return None
+
+    return _SPAGHETTI_LOCATION_KIND_ALIASES.get(kind, kind)
+
+
+def _normalize_location_kind_token(value: str) -> str:
+    token = value.strip().lower().replace("-", "_").replace(" ", "_")
+    while "__" in token:
+        token = token.replace("__", "_")
+    return token.strip("_")
 
 
 def _append_spaghetti_route_edges(

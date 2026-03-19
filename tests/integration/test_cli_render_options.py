@@ -283,3 +283,67 @@ def test_run_spaghetti_renders_boundary_overlay_from_process_metadata(tmp_path):
     assert "__facility_boundary_0" in result.output
     assert "__facility_boundary_label" in result.output
     assert "Kitchen Boundary" in result.output
+
+
+def test_run_spaghetti_location_kind_shapes_are_rendered(tmp_path):
+    model = tmp_path / "location_kind_model.flo"
+    payload = {
+        "spec_version": "0.1",
+        "process": {
+            "id": "location_kinds_demo",
+            "name": "Location Kinds Demo",
+        },
+        "locations": [
+            {
+                "id": "pantry",
+                "name": "Pantry",
+                "kind": "storage",
+            },
+            {
+                "id": "oven_station",
+                "name": "Oven Station",
+                "kind": "processing",
+            },
+        ],
+        "steps": [
+            {
+                "id": "start",
+                "kind": "start",
+                "name": "Start",
+            },
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "location": "pantry",
+                "outputs": ["flour"],
+            },
+            {
+                "id": "bake",
+                "kind": "task",
+                "name": "Bake",
+                "location": "oven_station",
+                "inputs": ["flour"],
+            },
+            {
+                "id": "end",
+                "kind": "end",
+                "name": "End",
+            },
+        ],
+        "edges": [
+            {"source": "start", "target": "gather"},
+            {"source": "gather", "target": "bake"},
+            {"source": "bake", "target": "end"},
+        ],
+    }
+    model.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["run", str(model), "--export", "dot", "--diagram", "spaghetti"],
+    )
+    assert result.exit_code == 0
+    assert '"pantry" [label="Pantry", shape=box, fillcolor=lemonchiffon, color=goldenrod4' in result.output
+    assert '"oven_station" [label="Oven Station", shape=hexagon, fillcolor=mistyrose, color=firebrick3' in result.output

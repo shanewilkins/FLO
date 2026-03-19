@@ -270,6 +270,18 @@ For spatial analysis and spaghetti-map rendering, locations can include optional
 - `metadata.spatial.x`: numeric x coordinate
 - `metadata.spatial.y`: numeric y coordinate
 - `metadata.spatial.unit`: optional unit (`mm|cm|m|in|ft`)
+- `kind`: optional semantic location kind used for spaghetti-map shape styling
+
+Recommended domain-neutral kinds:
+
+- `storage`: inventory/holding areas
+- `operation`: general work/procedure areas
+- `processing`: machine or transformation areas
+- `staging`: buffer/queue/wait areas
+- `support`: cleaning/inspection/service areas
+- `transit`: hallways/transfer/conveyor paths
+
+Compatibility aliases are still recognized (for example: `prep` -> `operation`, `heat` -> `processing`, `cooling` -> `staging`, `wash` -> `support`). Unknown kinds keep the default spaghetti node style.
 
 Spaghetti maps can also render an optional area boundary overlay from process metadata:
 
@@ -317,6 +329,7 @@ Example:
 locations:
   - id: prep_bench
     name: Prep Bench
+    kind: operation
     metadata:
       spatial:
         x: 3.0
