@@ -19,6 +19,13 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+      - id: file-length-check
+        name: file length
+        entry: uv run python scripts/check_file_length.py --warn-lines 500 --fail-lines 750
+        language: system
+        types: [python]
+        pass_filenames: true
+        files: "\\.py$"
       - id: radon-complexity
         name: radon complexity
         entry: python scripts/check_complexity.py
