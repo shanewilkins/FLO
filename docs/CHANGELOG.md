@@ -4,6 +4,15 @@
 
 - No changes yet.
 
+## 0.1.1 - 2026-04-21
+
+- Fix distribution packaging to include runtime JSON schema assets in wheel and sdist:
+  `flo/schema/flo_ir.json` and `flo/schema/flo_types.json`.
+
+- Update runtime schema resolution to prefer packaged schema files under the
+  installed `flo` package while retaining fallback lookup for legacy/source-tree
+  layouts.
+
 ## 0.1.0 - 2026-04-21
 
 - Add `--render-to <file>` convenience flag: renders DOT output directly to an
