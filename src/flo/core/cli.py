@@ -19,7 +19,7 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.option("-o", "--output", help="Write output to file")
 @click.option("--export", "export_fmt", type=click.Choice(["dot", "json", "ingredients", "movement"]), help="Export format")
-@click.option("--diagram", type=click.Choice(["flowchart", "swimlane", "spaghetti"]), help="Diagram type for DOT output")
+@click.option("--diagram", type=click.Choice(["flowchart", "swimlane", "spaghetti", "sppm"]), help="Diagram type for DOT output")
 @click.option("--profile", type=click.Choice(["default", "analysis"]), help="Projection rule profile")
 @click.option("--detail", type=click.Choice(["summary", "standard", "verbose"]), help="Detail level")
 @click.option("--orientation", type=click.Choice(["lr", "tb"]), help="Layout orientation for DOT output")
@@ -27,6 +27,8 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
 @click.option("--subprocess-view", type=click.Choice(["expanded", "parent-only"]), help="Subprocess rendering mode")
 @click.option("--spaghetti-channel", type=click.Choice(["both", "material", "people"]), help="Movement channel for spaghetti diagrams")
 @click.option("--spaghetti-people-mode", type=click.Choice(["worker", "aggregate"]), help="People trace mode for spaghetti diagrams")
+@click.option("--sppm-theme", type=click.Choice(["default", "print", "monochrome"]), help="Color theme for SPPM diagrams")
+@click.option("--render-to", metavar="FILE", help="Render DOT output to an image file via Graphviz")
 def run_cmd(
     path: Optional[str],
     validate: bool,
@@ -41,10 +43,51 @@ def run_cmd(
     subprocess_view: Optional[str],
     spaghetti_channel: Optional[str],
     spaghetti_people_mode: Optional[str],
+    sppm_theme: Optional[str],
+    render_to: Optional[str],
 ) -> None:  # pragma: no cover - integration
     """Invoke the CLI command handler with normalized arguments."""
-    args: list[str] = []
-    args.append("run")
+    args = _build_run_args(
+        path=path,
+        validate=validate,
+        verbose=verbose,
+        output=output,
+        export_fmt=export_fmt,
+        diagram=diagram,
+        profile=profile,
+        detail=detail,
+        orientation=orientation,
+        show_notes=show_notes,
+        subprocess_view=subprocess_view,
+        spaghetti_channel=spaghetti_channel,
+        spaghetti_people_mode=spaghetti_people_mode,
+        sppm_theme=sppm_theme,
+        render_to=render_to,
+    )
+    rc = console_main(args)
+    raise SystemExit(rc)
+
+
+def _build_run_args(  # pragma: no cover - thin click shim helper
+    *,
+    path: Optional[str],
+    validate: bool,
+    verbose: bool,
+    output: Optional[str],
+    export_fmt: Optional[str],
+    diagram: Optional[str],
+    profile: Optional[str],
+    detail: Optional[str],
+    orientation: Optional[str],
+    show_notes: bool,
+    subprocess_view: Optional[str],
+    spaghetti_channel: Optional[str],
+    spaghetti_people_mode: Optional[str],
+    sppm_theme: Optional[str],
+    render_to: Optional[str],
+) -> list[str]:
+    """Build argparse-style argv list from Click-parsed keyword arguments."""
+    args: list[str] = ["run"]
     if path:
         args.append(path)
     if validate:
@@ -53,27 +96,25 @@ def run_cmd(
         args.append("-v")
     if output:
         args.extend(["-o", output])
-    if export_fmt:
-        args.extend(["--export", export_fmt])
-    if diagram:
-        args.extend(["--diagram", diagram])
-    if profile:
-        args.extend(["--profile", profile])
-    if detail:
-        args.extend(["--detail", detail])
-    if orientation:
-        args.extend(["--orientation", orientation])
+    # flag → argparse-name pairs (all optional string args)
+    pairs: list[tuple[Optional[str], str]] = [
+        (export_fmt, "--export"),
+        (diagram, "--diagram"),
+        (profile, "--profile"),
+        (detail, "--detail"),
+        (orientation, "--orientation"),
+        (subprocess_view, "--subprocess-view"),
+        (spaghetti_channel, "--spaghetti-channel"),
+        (spaghetti_people_mode, "--spaghetti-people-mode"),
+        (sppm_theme, "--sppm-theme"),
+        (render_to, "--render-to"),
+    ]
+    for value, flag in pairs:
+        if value:
+            args.extend([flag, value])
     if show_notes:
         args.append("--show-notes")
-    if subprocess_view:
-        args.extend(["--subprocess-view", subprocess_view])
-    if spaghetti_channel:
-        args.extend(["--spaghetti-channel", spaghetti_channel])
-    if spaghetti_people_mode:
-        args.extend(["--spaghetti-people-mode", spaghetti_people_mode])
-
-    rc = console_main(args)
-    raise SystemExit(rc)
+    return args
 
 
 @cli.command("compile")

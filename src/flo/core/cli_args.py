@@ -52,6 +52,11 @@ def parse_args(argv: list | None, services: Services) -> Tuple[str | None, str, 
         choices=["default", "print", "monochrome"],
         help="Color theme for SPPM diagrams",
     )
+    parser.add_argument(
+        "--render-to",
+        metavar="FILE",
+        help="Render DOT output to an image file (e.g. output.png, output.svg) via Graphviz",
+    )
     parsed = parser.parse_args(argv)
 
     supported_commands = {"run", "compile", "validate", "export"}
@@ -98,6 +103,7 @@ def _build_options_from_parsed(parsed: object) -> dict:
         "spaghetti_channel",
         "spaghetti_people_mode",
         "sppm_theme",
+        "render_to",
     ):
         value = getattr(parsed, key, None)
         if value:

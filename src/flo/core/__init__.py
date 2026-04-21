@@ -38,7 +38,13 @@ def run_content(content: str, command: str = "run", options: dict | None = None)
         _ensure_render_options_compatible_with_output(options=options, output_format=output_format)
         return EXIT_SUCCESS, export_ir(ir, options={**(options or {}), "export": output_format}), ""
 
-    return EXIT_SUCCESS, _render_dot_with_postprocess(ir, options=options), ""
+    dot = _render_dot_with_postprocess(ir, options=options)
+    render_to = (options or {}).get("render_to")
+    if render_to:
+        from flo.services.graphviz import render_dot_to_file
+        render_dot_to_file(dot, render_to)
+        return EXIT_SUCCESS, "", ""
+    return EXIT_SUCCESS, dot, ""
 
 
 def _parse_compile_validate(content: str, source_path: str | None = None) -> IR:
@@ -94,6 +100,8 @@ def _ensure_render_options_compatible_with_output(options: dict | None, output_f
             "subprocess_view",
             "spaghetti_channel",
             "spaghetti_people_mode",
+            "sppm_theme",
+            "render_to",
         )
         if flag in opts
     ]

@@ -78,3 +78,24 @@ def test_run_wrapper():
     rc, out, err = run()
     assert rc == 0
     assert out == ""
+
+
+def test_run_content_render_to_calls_graphviz_service(monkeypatch, ir_factory, node_factory):
+    monkeypatch.setattr("flo.core.parse_adapter", lambda c: ir_factory(name="t", nodes=[node_factory("n")]))
+    monkeypatch.setattr("flo.core.compile_adapter", lambda a: ir_factory(name="t", nodes=[node_factory("n")]))
+    monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
+    monkeypatch.setattr("flo.core.render_dot", lambda i, **kw: "dot output")
+    monkeypatch.setattr("flo.core.scc_condense", lambda i: i)
+
+    calls: list[tuple] = []
+
+    def fake_render_to_file(dot: str, path: str) -> None:
+        calls.append((dot, path))
+
+    import flo.services.graphviz as gv_mod
+    monkeypatch.setattr(gv_mod, "render_dot_to_file", fake_render_to_file)
+
+    rc, out, err = run_content("some content", options={"render_to": "/tmp/out.png"})
+    assert rc == 0
+    assert out == ""
+    assert calls == [("dot output", "/tmp/out.png")]

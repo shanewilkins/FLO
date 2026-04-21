@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add `--render-to <file>` convenience flag: renders DOT output directly to an
+  image file (PNG, SVG, PDF, EPS, PS) via the system Graphviz `dot` binary,
+  avoiding the need for a manual pipe. Reports a clear error if Graphviz is not
+  installed. When `--render-to` is used, nothing is written to stdout.
+
 - Add SPPM (Standard Process Performance Map) diagram renderer (`--diagram sppm`):
   color-coded nodes by `value_class` (VA/RNVA/NVA), cycle time and worker labels,
   wait time as edge labels, rounded-rectangle start/end nodes, left-to-right layout.

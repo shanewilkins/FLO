@@ -592,6 +592,7 @@ Render options (DOT only):
 - `--orientation {lr,tb}`
 - `--show-notes`
 - `--subprocess-view {expanded,parent-only}`
+- `--render-to <file>`: render directly to an image file via Graphviz `dot` (e.g. `output.png`, `output.svg`, `output.pdf`). Requires Graphviz to be installed. Supported extensions: `.png`, `.svg`, `.pdf`, `.eps`, `.ps`. When used, nothing is written to stdout.
 
 Examples:
 
@@ -605,6 +606,8 @@ flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram spa
 flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram spaghetti --spaghetti-channel people --spaghetti-people-mode worker --profile analysis
 flo run examples/reference/washnfold.flo --export dot --diagram sppm
 flo run examples/reference/washnfold.flo --export dot --diagram sppm --sppm-theme print
+flo run examples/reference/washnfold.flo --diagram sppm --render-to washnfold_sppm.png
+flo run examples/reference/washnfold.flo --diagram sppm --render-to washnfold_sppm.svg
 flo run examples/reference/linear.flo --export json
 flo run examples/reference/chocolate_chip_cookies.flo --export ingredients
 flo run examples/reference/chocolate_chip_cookies.flo --export movement
@@ -612,7 +615,7 @@ flo run examples/reference/chocolate_chip_cookies.flo --export movement
 
 Important:
 - Render-only flags are invalid with non-DOT export modes.
-- If you pass `--diagram`, `--spaghetti-channel`, `--spaghetti-people-mode`, `--sppm-theme`, `--profile`, `--detail`, `--orientation`, `--show-notes`, or `--subprocess-view` together with JSON, ingredients, or movement export, FLO returns usage error code `1`.
+- If you pass `--diagram`, `--spaghetti-channel`, `--spaghetti-people-mode`, `--sppm-theme`, `--render-to`, `--profile`, `--detail`, `--orientation`, `--show-notes`, or `--subprocess-view` together with JSON, ingredients, or movement export, FLO returns usage error code `1`.
 
 ## 7) Input and Output Streams
 
