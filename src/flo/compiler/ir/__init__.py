@@ -5,7 +5,7 @@ This package mirrors the previous `flo.ir` package but lives under
 """
 from .models import IR, Node
 from .validate import validate_ir, ensure_schema_aligned
-from .enums import NodeKind, LaneType, ValueClass
+from .enums import NodeKind, LaneType, ValueClass, ProcessValueClass
 
 __all__ = [
 	"IR",
@@ -15,4 +15,5 @@ __all__ = [
 	"NodeKind",
 	"LaneType",
 	"ValueClass",
+	"ProcessValueClass",
 ]

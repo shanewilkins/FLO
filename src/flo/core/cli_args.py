@@ -31,7 +31,7 @@ def parse_args(argv: list | None, services: Services) -> Tuple[str | None, str, 
     parser.add_argument("--validate", action="store_true", help="Only validate the file")
     parser.add_argument("--export", choices=["dot", "json", "ingredients", "movement"], help="Export format (dot|json|ingredients|movement)")
     parser.add_argument("--format", choices=["dot", "json", "ingredients", "movement"], help=argparse.SUPPRESS)
-    parser.add_argument("--diagram", choices=["flowchart", "swimlane", "spaghetti"], help="Diagram type for DOT output")
+    parser.add_argument("--diagram", choices=["flowchart", "swimlane", "spaghetti", "sppm"], help="Diagram type for DOT output")
     parser.add_argument("--profile", choices=["default", "analysis"], help="Projection rule profile")
     parser.add_argument("--detail", choices=["summary", "standard", "verbose"], help="Detail level")
     parser.add_argument("--orientation", choices=["lr", "tb"], help="Layout orientation for DOT output")
@@ -46,6 +46,11 @@ def parse_args(argv: list | None, services: Services) -> Tuple[str | None, str, 
         "--spaghetti-people-mode",
         choices=["worker", "aggregate"],
         help="People trace mode for spaghetti diagrams",
+    )
+    parser.add_argument(
+        "--sppm-theme",
+        choices=["default", "print", "monochrome"],
+        help="Color theme for SPPM diagrams",
     )
     parsed = parser.parse_args(argv)
 
@@ -92,6 +97,7 @@ def _build_options_from_parsed(parsed: object) -> dict:
         "subprocess_view",
         "spaghetti_channel",
         "spaghetti_people_mode",
+        "sppm_theme",
     ):
         value = getattr(parsed, key, None)
         if value:

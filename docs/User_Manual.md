@@ -10,7 +10,7 @@ FLO provides:
 - Deterministic compilation to canonical IR
 - Structural and semantic validation
 - DOT and JSON exports
-- Flowchart, swimlane, and spaghetti-map DOT projections
+- Flowchart, swimlane, spaghetti-map, and SPPM DOT projections
 
 FLO does not provide:
 - Workflow execution
@@ -172,16 +172,29 @@ Time-related node metadata fields (for example `cycle_time`, `wait_time`, `lead_
 - `value`: number >= 0
 - `unit`: one of `s`, `min`, `hr`, `d` (`m` is still accepted for backwards compatibility)
 
-Example:
+The `value_class` field classifies a step by its Lean value contribution:
+
+- `VA` — value-adding
+- `RNVA` — required non-value-adding
+- `NVA` — non-value-adding
+- `unknown` — unclassified (default when omitted)
+
+Example with both fields:
 
 ```yaml
 steps:
-  - id: review
+  - id: wash
     kind: task
-    name: Review
+    name: Wash
+    workers:
+      - Staff
     metadata:
+      value_class: VA
       cycle_time:
-        value: 20
+        value: 30
+        unit: min
+      wait_time:
+        value: 18
         unit: min
 ```
 
@@ -496,9 +509,10 @@ Common options:
 - `--export {dot,json,ingredients,movement}`: choose output format
 
 Render options (DOT only):
-- `--diagram {flowchart,swimlane,spaghetti}`
+- `--diagram {flowchart,swimlane,spaghetti,sppm}`
 - `--spaghetti-channel {both,material,people}`
 - `--spaghetti-people-mode {worker,aggregate}`
+- `--sppm-theme {default,print,monochrome}`
 - `--profile {default,analysis}`
 - `--detail {summary,standard,verbose}`
 - `--orientation {lr,tb}`
@@ -515,6 +529,8 @@ flo run examples/reference/chocolate_chip_cookies.flo --export dot --subprocess-
 flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram spaghetti
 flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram spaghetti --spaghetti-channel people
 flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram spaghetti --spaghetti-channel people --spaghetti-people-mode worker --profile analysis
+flo run examples/reference/washnfold.flo --export dot --diagram sppm
+flo run examples/reference/washnfold.flo --export dot --diagram sppm --sppm-theme print
 flo run examples/reference/linear.flo --export json
 flo run examples/reference/chocolate_chip_cookies.flo --export ingredients
 flo run examples/reference/chocolate_chip_cookies.flo --export movement
@@ -522,7 +538,7 @@ flo run examples/reference/chocolate_chip_cookies.flo --export movement
 
 Important:
 - Render-only flags are invalid with non-DOT export modes.
-- If you pass `--diagram`, `--spaghetti-channel`, `--spaghetti-people-mode`, `--profile`, `--detail`, `--orientation`, `--show-notes`, or `--subprocess-view` together with JSON, ingredients, or movement export, FLO returns usage error code `1`.
+- If you pass `--diagram`, `--spaghetti-channel`, `--spaghetti-people-mode`, `--sppm-theme`, `--profile`, `--detail`, `--orientation`, `--show-notes`, or `--subprocess-view` together with JSON, ingredients, or movement export, FLO returns usage error code `1`.
 
 ## 7) Input and Output Streams
 

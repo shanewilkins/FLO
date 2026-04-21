@@ -7,7 +7,7 @@
     "timestamp": { "type": "string", "format": "date-time" },
     "activity_key": { "type": "string" },
     "case_id": { "type": "string" },
-    "value_class": { "type": "string", "enum": ["A","B","C","unknown"] },
+    "value_class": { "type": "string", "enum": ["VA","RNVA","NVA","unknown"] },
     "time_unit": { "type": "string", "enum": ["s", "m", "min", "hr", "d"] },
     "time_duration": {
       "type": "object",
@@ -171,7 +171,7 @@
       "activity_key": "verify",
       "sla_target_seconds": 3600,
       "cycle_time": { "value": 15, "unit": "min" },
-      "value_class": "A"
+      "value_class": "VA"
     },
     "edge_metadata": {
       "handoff": true,
@@ -180,7 +180,7 @@
     "process_metadata": {
       "sla_target_seconds": 86400,
       "business_impact": "high",
-      "value_class": "A",
+      "value_class": "VA",
       "materials": [
         {
           "id": "egg",

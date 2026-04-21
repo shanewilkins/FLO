@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from .models import IR
+from .enums import ProcessValueClass
 from flo.services.errors import ValidationError
 from flo.export import ir_to_schema_dict
 from pathlib import Path
@@ -43,6 +44,7 @@ def validate_ir(obj: Any) -> None:
     _validate_queue_nodes(obj, incoming_counts, outgoing_counts)
     _validate_node_io_lists(obj)
     _validate_node_time_metadata(obj)
+    _validate_node_value_class(obj)
     _validate_process_resources(obj)
     _validate_node_connectivity(obj, incoming_counts, outgoing_counts)
     _validate_global_reachability(obj)
@@ -455,6 +457,20 @@ def _validate_canonical_quantity(path: str, canonical_value: Any, canonical_unit
         raise ValidationError(
             f"E1213: {path}.quantity.canonical_unit must be one of {sorted(_MEASURE_UNITS)}"
         )
+
+
+def _validate_node_value_class(obj: IR) -> None:
+    valid_values = {vc.value for vc in ProcessValueClass}
+    for node in obj.nodes:
+        metadata = _extract_node_metadata(node)
+        raw = metadata.get("value_class")
+        if raw is None:
+            continue
+        if not isinstance(raw, str) or raw not in valid_values:
+            raise ValidationError(
+                f"E1320: node '{node.id}' metadata.value_class '{raw}' "
+                f"must be one of {sorted(valid_values)}"
+            )
 
 
 def _extract_node_metadata(node: Any) -> dict[str, Any]:

@@ -26,4 +26,13 @@ class ValueClass(Enum):
 	NUMBER = "number"
 
 
-__all__ = ["NodeKind", "LaneType", "ValueClass"]
+class ProcessValueClass(Enum):
+	"""Lean value classification for process steps."""
+
+	VA = "VA"
+	RNVA = "RNVA"
+	NVA = "NVA"
+	UNKNOWN = "unknown"
+
+
+__all__ = ["NodeKind", "LaneType", "ValueClass", "ProcessValueClass"]

@@ -737,3 +737,4 @@ def test_spaghetti_unknown_location_kind_falls_back_to_default_style():
 
     out = render_dot(ir_like, options={"diagram": "spaghetti"})
     assert '"mystery" [label="Mystery Area"];' in out
+

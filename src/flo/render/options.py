@@ -5,13 +5,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal, Mapping
 
-DiagramType = Literal["flowchart", "swimlane", "spaghetti"]
+DiagramType = Literal["flowchart", "swimlane", "spaghetti", "sppm"]
 RenderProfile = Literal["default", "analysis"]
 DetailLevel = Literal["summary", "standard", "verbose"]
 Orientation = Literal["lr", "tb"]
 SubprocessView = Literal["expanded", "parent_only"]
 SpaghettiChannel = Literal["both", "material", "people"]
 SpaghettiPeopleMode = Literal["aggregate", "worker"]
+SppmThemeName = Literal["default", "print", "monochrome"]
 
 
 @dataclass(frozen=True)
@@ -30,6 +31,7 @@ class RenderOptions:
     subprocess_view: SubprocessView = "expanded"
     spaghetti_channel: SpaghettiChannel = "both"
     spaghetti_people_mode: SpaghettiPeopleMode = "aggregate"
+    sppm_theme: SppmThemeName = "default"
 
     @classmethod
     def from_mapping(cls, options: Mapping[str, Any] | None) -> "RenderOptions":
@@ -48,6 +50,7 @@ class RenderOptions:
             subprocess_view=_parse_subprocess_view(options),
             spaghetti_channel=_parse_spaghetti_channel(options),
             spaghetti_people_mode=_parse_spaghetti_people_mode(options, profile=profile),
+            sppm_theme=_parse_sppm_theme(options),
         )
 
 
@@ -61,6 +64,8 @@ def _parse_diagram(options: Mapping[str, Any]) -> DiagramType:
         return "swimlane"
     if diagram_raw == "spaghetti":
         return "spaghetti"
+    if diagram_raw == "sppm":
+        return "sppm"
     return "flowchart"
 
 
@@ -113,6 +118,15 @@ def _parse_spaghetti_people_mode(options: Mapping[str, Any], profile: RenderProf
     if raw in {"worker", "workers", "per-worker", "per_worker", "trace", "traces"}:
         return "worker"
     return "aggregate"
+
+
+def _parse_sppm_theme(options: Mapping[str, Any]) -> SppmThemeName:
+    raw = _normalized_option(options, "sppm_theme", "default")
+    if raw in {"print", "print-friendly", "print_friendly"}:
+        return "print"
+    if raw in {"monochrome", "mono", "greyscale", "grayscale"}:
+        return "monochrome"
+    return "default"
 
 
 def _parse_bool(value: Any) -> bool:

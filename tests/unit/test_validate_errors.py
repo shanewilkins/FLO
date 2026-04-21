@@ -604,3 +604,54 @@ def test_validate_ir_rejects_empty_string_node_output_item():
 
     with pytest.raises(ValidationError, match="E1311"):
         validate_ir(ir)
+
+
+def test_validate_ir_accepts_valid_value_class_values():
+    for vc in ("VA", "RNVA", "NVA", "unknown"):
+        ir = IR(
+            name="x",
+            nodes=[
+                Node(id="start", type="start"),
+                Node(id="step", type="task", attrs={"metadata": {"value_class": vc}}),
+                Node(id="end", type="end"),
+            ],
+            edges=[
+                Edge(source="start", target="step"),
+                Edge(source="step", target="end"),
+            ],
+        )
+        validate_ir(ir)  # must not raise
+
+
+def test_validate_ir_rejects_invalid_value_class():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="step", type="task", attrs={"metadata": {"value_class": "A"}}),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="step"),
+            Edge(source="step", target="end"),
+        ],
+    )
+
+    with pytest.raises(ValidationError, match="E1320"):
+        validate_ir(ir)
+
+
+def test_validate_ir_node_without_value_class_passes():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="step", type="task", attrs={"metadata": {"cycle_time": {"value": 5, "unit": "min"}}}),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="step"),
+            Edge(source="step", target="end"),
+        ],
+    )
+    validate_ir(ir)  # must not raise

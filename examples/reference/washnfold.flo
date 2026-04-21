@@ -1,0 +1,110 @@
+process:
+  id: wash_n_fold
+  name: Wash n' Fold
+
+steps:
+  - id: start
+    name: Start
+    kind: start
+    metadata:
+      description: Customer drops off laundry
+
+  - id: dropoff
+    name: Drop-off and ticket
+    kind: task
+    workers:
+      - Customer
+      - Staff
+    metadata:
+      value_class: RNVA
+      cycle_time:
+        value: 3
+        unit: min
+
+  - id: sort_tag
+    name: Sort and tag
+    kind: task
+    workers:
+      - Staff
+    metadata:
+      value_class: RNVA
+      cycle_time:
+        value: 5
+        unit: min
+      wait_time:
+        value: 8
+        unit: min
+
+  - id: wash
+    name: Wash
+    kind: task
+    workers:
+      - Staff
+    metadata:
+      value_class: VA
+      cycle_time:
+        value: 30
+        unit: min
+      wait_time:
+        value: 18
+        unit: min
+
+  - id: dry
+    name: Dry
+    kind: task
+    workers:
+      - Staff
+    metadata:
+      value_class: VA
+      cycle_time:
+        value: 45
+        unit: min
+      wait_time:
+        value: 22
+        unit: min
+
+  - id: fold_package
+    name: Fold and package
+    kind: task
+    workers:
+      - Staff
+    metadata:
+      value_class: VA
+      cycle_time:
+        value: 15
+        unit: min
+      wait_time:
+        value: 35
+        unit: min
+
+  - id: stage_notify
+    name: Stage and notify
+    kind: task
+    workers:
+      - Staff
+    metadata:
+      value_class: RNVA
+      cycle_time:
+        value: 4
+        unit: min
+      wait_time:
+        value: 12
+        unit: min
+
+  - id: payment_delivery
+    name: Payment and delivery
+    kind: task
+    workers:
+      - Customer
+      - Staff
+    metadata:
+      value_class: RNVA
+      cycle_time:
+        value: 3
+        unit: min
+
+  - id: end
+    name: Stop
+    kind: end
+    metadata:
+      description: Customer picks up clean order
