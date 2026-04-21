@@ -1,5 +1,5 @@
 [project]
-name = "flo"
+name = "flo-lang"
 version = "0.1.0"
 description = "FLO reference implementation"
 readme = "README.md"
@@ -21,6 +21,10 @@ dependencies = [
 [build-system]
 requires = ["uv_build>=0.10.4,<0.11.0"]
 build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "flo"
+module-root = "src"
 
 [project.scripts]
 flo = "flo.core.cli:main"

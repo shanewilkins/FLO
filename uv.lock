@@ -145,7 +145,7 @@ wheels = [
 ]
 
 [[package]]
-name = "flo"
+name = "flo-lang"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
