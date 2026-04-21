@@ -15,7 +15,8 @@ APPROVED_SUBDIRS = {
     "export",
     "render",
     "services",
-    "core"  # Pseudo-layer for CLI scaffolding and orchestration; not a real package
+    "core",  # Pseudo-layer for CLI scaffolding and orchestration; not a real package
+    "schema",  # Packaged JSON schemas required by runtime IR validation
 }
 
 

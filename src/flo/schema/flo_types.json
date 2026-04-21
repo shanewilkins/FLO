@@ -1,0 +1,245 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FLO Typed Metadata",
+  "description": "Recommended typed metadata keys for FLO process/node/edge/lane metadata (v0.0).",
+  "definitions": {
+    "duration_seconds": { "type": "number", "minimum": 0 },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "activity_key": { "type": "string" },
+    "case_id": { "type": "string" },
+    "value_class": { "type": "string", "enum": ["VA","RNVA","NVA","unknown"] },
+    "time_unit": { "type": "string", "enum": ["s", "m", "min", "hr", "d"] },
+    "time_duration": {
+      "type": "object",
+      "required": ["value", "unit"],
+      "properties": {
+        "value": { "type": "number", "minimum": 0 },
+        "unit": { "$ref": "#/definitions/time_unit" }
+      },
+      "additionalProperties": false
+    },
+    "measure_unit": { "type": "string", "enum": ["mg", "g", "kg", "ml", "l", "mm", "cm", "m"] },
+    "quantity_count": {
+      "type": "object",
+      "required": ["kind", "value"],
+      "properties": {
+        "kind": { "type": "string", "const": "count" },
+        "value": { "type": "integer", "minimum": 1 },
+        "unit": { "type": "string", "enum": ["each"] },
+        "qualifier": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "quantity_measure": {
+      "type": "object",
+      "required": ["kind", "value", "unit"],
+      "properties": {
+        "kind": { "type": "string", "const": "measure" },
+        "value": { "type": "number", "exclusiveMinimum": 0 },
+        "unit": { "$ref": "#/definitions/measure_unit" },
+        "canonical_value": { "type": "number", "exclusiveMinimum": 0 },
+        "canonical_unit": { "$ref": "#/definitions/measure_unit" }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": { "required": ["canonical_value"] },
+          "then": { "required": ["canonical_unit"] }
+        },
+        {
+          "if": { "required": ["canonical_unit"] },
+          "then": { "required": ["canonical_value"] }
+        }
+      ]
+    },
+    "resource_item": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "quantity": {
+          "oneOf": [
+            { "$ref": "#/definitions/quantity_count" },
+            { "$ref": "#/definitions/quantity_measure" }
+          ]
+        },
+        "metadata": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": true
+    },
+    "resource_group": {
+      "oneOf": [
+        {
+          "type": "object",
+          "minProperties": 1,
+          "patternProperties": {
+            "^(?!name$).+": { "$ref": "#/definitions/resource_collection" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": { "type": "string" }
+          },
+          "patternProperties": {
+            "^(?!name$).+": { "$ref": "#/definitions/resource_collection" }
+          },
+          "additionalProperties": false,
+          "minProperties": 2
+        }
+      ]
+    },
+    "resource_collection": {
+      "oneOf": [
+        {
+          "type": "array",
+          "items": { "$ref": "#/definitions/resource_item" }
+        },
+        {
+          "$ref": "#/definitions/resource_group"
+        }
+      ]
+    }
+  },
+  "properties": {
+    "node": {
+      "type": "object",
+      "description": "Typed metadata commonly attached to nodes/steps.",
+      "properties": {
+        "activity_key": { "$ref": "#/definitions/activity_key" },
+        "sla_target_seconds": { "$ref": "#/definitions/duration_seconds" },
+        "cycle_time": { "$ref": "#/definitions/time_duration" },
+        "wait_time": { "$ref": "#/definitions/time_duration" },
+        "lead_time": { "$ref": "#/definitions/time_duration" },
+        "value_class": { "$ref": "#/definitions/value_class" },
+        "priority": { "type": "integer" }
+      },
+      "additionalProperties": true
+    },
+    "edge": {
+      "type": "object",
+      "description": "Typed metadata for edges/transitions.",
+      "properties": {
+        "handoff": { "type": "boolean" },
+        "handoff_type": { "type": "string" },
+        "expected_latency_seconds": { "$ref": "#/definitions/duration_seconds" }
+      },
+      "additionalProperties": true
+    },
+    "process": {
+      "type": "object",
+      "description": "Typed metadata for the process as a whole.",
+      "properties": {
+        "sla_target_seconds": { "$ref": "#/definitions/duration_seconds" },
+        "business_impact": { "type": "string" },
+        "value_class": { "$ref": "#/definitions/value_class" },
+        "materials": {
+          "$ref": "#/definitions/resource_collection"
+        },
+        "equipment": {
+          "$ref": "#/definitions/resource_collection"
+        },
+        "locations": {
+          "$ref": "#/definitions/resource_collection"
+        },
+        "workers": {
+          "$ref": "#/definitions/resource_collection"
+        }
+      },
+      "additionalProperties": true
+    },
+    "lane": {
+      "type": "object",
+      "description": "Typed metadata for lanes (roles/teams/systems).",
+      "properties": {
+        "type": { "type": "string", "enum": ["role","team","system"] },
+        "owner_id": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "recommended_keys": {
+    "node": ["activity_key","sla_target_seconds","cycle_time","value_class"],
+    "edge": ["handoff","expected_latency_seconds"],
+    "process": ["sla_target_seconds","value_class","materials","equipment","locations","workers"]
+  },
+  "examples": {
+    "node_metadata": {
+      "activity_key": "verify",
+      "sla_target_seconds": 3600,
+      "cycle_time": { "value": 15, "unit": "min" },
+      "value_class": "VA"
+    },
+    "edge_metadata": {
+      "handoff": true,
+      "expected_latency_seconds": 300
+    },
+    "process_metadata": {
+      "sla_target_seconds": 86400,
+      "business_impact": "high",
+      "value_class": "VA",
+      "materials": [
+        {
+          "id": "egg",
+          "name": "Egg",
+          "quantity": { "kind": "count", "value": 2, "unit": "each", "qualifier": "large" }
+        },
+        {
+          "id": "flour",
+          "name": "Flour",
+          "quantity": { "kind": "measure", "value": 250, "unit": "g", "canonical_value": 0.25, "canonical_unit": "kg" }
+        }
+      ],
+      "equipment": [
+        {
+          "id": "oven",
+          "name": "Convection Oven",
+          "quantity": { "kind": "count", "value": 1, "unit": "each" }
+        }
+      ],
+      "locations": [
+        {
+          "id": "kitchen",
+          "name": "Main Kitchen"
+        }
+      ],
+      "workers": [
+        {
+          "id": "baker",
+          "name": "Baker",
+          "quantity": { "kind": "count", "value": 1, "unit": "each" }
+        }
+      ]
+    },
+    "process_metadata_grouped_materials": {
+      "materials": {
+        "dry": {
+          "name": "Dry Ingredients",
+          "items": [
+            {
+              "id": "flour",
+              "name": "Flour",
+              "quantity": { "kind": "measure", "value": 250, "unit": "g" }
+            }
+          ]
+        },
+        "wet": {
+          "name": "Wet Ingredients",
+          "dairy": {
+            "name": "Dairy",
+            "items": [
+              {
+                "id": "butter",
+                "name": "Butter",
+                "quantity": { "kind": "measure", "value": 100, "unit": "g" }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

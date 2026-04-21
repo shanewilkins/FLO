@@ -516,10 +516,18 @@ def ensure_schema_aligned(ir: object) -> None:
 
 
 def _locate_schema(name: str) -> Path:
-    candidate = Path(__file__).resolve().parents[3] / "schema" / name
-    if candidate.exists():
-        return candidate
-    alt = Path(__file__).resolve().parents[4] / "schema" / name
-    if alt.exists():
-        return alt
-    raise ValidationError(f"schema file not found: {candidate}")
+    here = Path(__file__).resolve()
+    candidates = [
+        # Preferred: packaged schema payload at flo/schema/*.json
+        here.parents[2] / "schema" / name,
+        # Legacy wheel layout used by earlier lookup logic.
+        here.parents[3] / "schema" / name,
+        # Local repo layout when running from source tree.
+        here.parents[4] / "schema" / name,
+    ]
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    raise ValidationError(f"schema file not found: {candidates[0]}")
