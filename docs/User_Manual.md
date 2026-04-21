@@ -46,6 +46,8 @@ flo run examples/reference/linear.flo
 
 ## 4) Your First FLO File
 
+Every FLO file should begin with `spec_version`. The only current valid value is `"0.1"`. It is used by the parser to select the correct language version and will gate breaking changes in future releases.
+
 Minimal example:
 
 ```yaml
@@ -135,7 +137,7 @@ Optional common node fields:
 - `inputs`: list of input item IDs/names consumed by the step
 - `outputs`: list of output item IDs/names produced by the step
 - `subnodes`: optional nested step list for `subprocess` nodes (flattened during compilation)
-- `metadata`: machine-facing metadata map
+- `metadata`: machine-facing metadata map (see below for recognized keys)
 
 Subprocess child-node example:
 
@@ -178,6 +180,20 @@ The `value_class` field classifies a step by its Lean value contribution:
 - `RNVA` — required non-value-adding
 - `NVA` — non-value-adding
 - `unknown` — unclassified (default when omitted)
+
+The `description` field is a free-text string providing a human-readable explanation of what the step does. It is displayed in the SPPM info box and is available as a pass-through field in other renderers.
+
+The following metadata keys are recognized and validated by FLO. Any other keys are passed through to the IR without validation and can be used for custom tooling.
+
+| Key | Type | Description |
+|---|---|---|
+| `cycle_time` | time object | Active processing time for the step |
+| `wait_time` | time object | Idle time before the step begins |
+| `lead_time` | time object | Total elapsed time including wait |
+| `value_class` | `VA`\|`RNVA`\|`NVA`\|`unknown` | Lean value classification |
+| `description` | string | Human-readable explanation of the step |
+| `queue_policy` | string | Queue discipline (e.g. `fifo`, `lifo`) — `queue` nodes |
+| `buffer_capacity` | integer | Maximum queue depth — `queue` nodes |
 
 Example with both fields:
 
@@ -455,6 +471,64 @@ transitions:
   - source: start
     target: end
 ```
+
+## 4.5) Diagram Types and When to Use Them
+
+FLO can render a process model as several different diagram types, each suited to a different analysis goal:
+
+| Diagram | Flag | Best for |
+|---|---|---|
+| Flowchart | `--diagram flowchart` (default) | General process documentation, decision flows |
+| Swimlane | `--diagram swimlane` | Handoff analysis — requires `lane` on steps |
+| Spaghetti map | `--diagram spaghetti` | Movement/travel path analysis — requires `location` on steps |
+| SPPM | `--diagram sppm` | Lean process performance — uses `value_class`, `cycle_time`, `wait_time`, `workers` |
+
+### SPPM (Standard Process Performance Map)
+
+SPPM renders a left-to-right (or top-to-bottom with `--orientation tb`) process map where each step is color-coded by its Lean value classification:
+
+- **Green** — Value-adding (`VA`)
+- **Yellow** — Required non-value-adding (`RNVA`)
+- **Red** — Non-value-adding (`NVA`)
+
+Each step node has a colored header (the step name) and a white info sub-box showing: description, cycle time, workers, and wait time — whichever are populated.
+
+SPPM-relevant fields per step:
+- `metadata.value_class`: controls node color
+- `metadata.cycle_time`: shown in info box as `CT:`
+- `metadata.wait_time`: shown in info box as `WT:`
+- `metadata.description`: shown as the first line of the info box
+- `workers`: shown as `Workers:` in info box
+
+The default theme uses stoplight colors. Alternative themes:
+- `--sppm-theme print` — high-contrast fills suitable for black-and-white printing
+- `--sppm-theme monochrome` — grayscale only
+
+SPPM DOT output must be piped through Graphviz `dot` to produce an image:
+
+```bash
+flo run washnfold.flo --diagram sppm | dot -Tpng -o washnfold.png
+flo run washnfold.flo --diagram sppm --orientation tb | dot -Tsvg -o washnfold.svg
+```
+
+## 4.6) Understanding the Output Pipeline
+
+All `--export dot` (and default) output is Graphviz DOT source — plain text describing a graph. To produce an image you must pipe it through the `dot` program from the Graphviz package:
+
+```bash
+# PNG
+flo run model.flo | dot -Tpng -o output.png
+
+# SVG (scales cleanly for web/PDF)
+flo run model.flo | dot -Tsvg -o output.svg
+
+# Write DOT to file directly
+flo run model.flo -o output.dot
+```
+
+`flo compile` emits canonical schema-shaped JSON (FLO IR) — useful for downstream tools that consume the structured graph rather than an image.
+
+`flo export --export json` is equivalent to `flo compile`.
 
 ## 5) Core CLI Commands
 

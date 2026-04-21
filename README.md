@@ -60,8 +60,10 @@ steps:
 ## What FLO Provides
 
 -   Deterministic compilation to FLO IR\
--   Structural validation\
--   Graph projections (flowchart, swimlane)\
+-   Structural and semantic validation\
+-   Graph projections: flowchart, swimlane, spaghetti map, SPPM\
+-   DOT and JSON exports\
+-   Ingredients list and movement report exports\
 -   Stable foundation for analytics
 
 ------------------------------------------------------------------------
@@ -77,10 +79,11 @@ steps:
 
 ## Architecture
 
--   `spec/` --- language and IR specifications\
--   `reference-implementation/` --- compiler + validators\
--   `examples/` --- canonical examples\
--   `tests/` --- conformance tests
+-   `src/flo/` --- compiler, validators, renderers, and CLI\
+-   `schema/` --- JSON schemas for FLO IR and types\
+-   `examples/` --- canonical reference examples\
+-   `tests/` --- unit, integration, and conformance tests\
+-   `docs/` --- user manual and design documents
 
 Downstream projects depend on FLO IR.
 
