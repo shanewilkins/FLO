@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- No changes yet.
+
+## 0.1.0 - 2026-04-21
+
 - Add `--render-to <file>` convenience flag: renders DOT output directly to an
   image file (PNG, SVG, PDF, EPS, PS) via the system Graphviz `dot` binary,
   avoiding the need for a manual pipe. Reports a clear error if Graphviz is not
