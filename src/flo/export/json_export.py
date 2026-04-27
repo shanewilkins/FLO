@@ -78,6 +78,10 @@ def _edge_to_schema(edge: Any) -> dict[str, Any]:
         edge_entry["outcome"] = edge.outcome
     if edge.label is not None:
         edge_entry["label"] = edge.label
+    if edge.edge_type is not None:
+        edge_entry["edge_type"] = edge.edge_type
+    if edge.rework is not None:
+        edge_entry["rework"] = edge.rework
     if isinstance(edge.metadata, dict):
         edge_entry["metadata"] = edge.metadata
     return edge_entry

@@ -59,6 +59,8 @@
           "target": { "type": "string" },
           "outcome": { "type": "string" },
           "label": { "type": "string" },
+          "edge_type": { "type": "string" },
+          "rework": { "type": "boolean" },
           "metadata": { "type": "object", "additionalProperties": true }
         },
         "additionalProperties": false

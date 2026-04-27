@@ -34,7 +34,10 @@ steps:
     name: Valid?
     outcomes:
       yes: approve
-      no: rework
+      no:
+        target: rework
+        edge_type: rework
+        rework: true
 
   - id: rework
     kind: task
@@ -45,4 +48,4 @@ steps:
     kind: end
     name: Approved
 
-# This model contains an intentional cycle: review -> decision -> rework -> submit -> review
+# This model contains an intentional cycle: review -> decision -(rework)-> rework -> submit -> review

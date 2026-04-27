@@ -26,6 +26,8 @@ class Edge:
     id: str | None = None
     outcome: str | None = None
     label: str | None = None
+    edge_type: str | None = None
+    rework: bool | None = None
     metadata: Dict[str, Any] | None = None
 
 
@@ -62,6 +64,10 @@ class IR:
             out["outcome"] = e.outcome
         if e.label is not None:
             out["label"] = e.label
+        if e.edge_type is not None:
+            out["edge_type"] = e.edge_type
+        if e.rework is not None:
+            out["rework"] = e.rework
         if e.metadata is not None:
             out["metadata"] = e.metadata
         return out
@@ -81,6 +87,8 @@ class IR:
                     id=ed.get("id"),
                     outcome=ed.get("outcome"),
                     label=ed.get("label"),
+                    edge_type=ed.get("edge_type"),
+                    rework=ed.get("rework"),
                     metadata=ed.get("metadata"),
                 )
             )

@@ -32,6 +32,8 @@ def test_ir_edge_optional_fields_roundtrip(tmp_path: Path):
                 id="e1",
                 outcome="yes",
                 label="approve",
+                edge_type="rework",
+                rework=True,
                 metadata={"k": "v"},
             ),
             Edge(source="b", target="c"),
@@ -42,6 +44,8 @@ def test_ir_edge_optional_fields_roundtrip(tmp_path: Path):
     assert data["edges"][0]["id"] == "e1"
     assert data["edges"][0]["outcome"] == "yes"
     assert data["edges"][0]["label"] == "approve"
+    assert data["edges"][0]["edge_type"] == "rework"
+    assert data["edges"][0]["rework"] is True
     assert data["edges"][0]["metadata"] == {"k": "v"}
     assert "id" not in data["edges"][1]
 
@@ -62,3 +66,14 @@ def test_ir_from_dict_defaults_for_missing_fields():
     assert ir.nodes[0].attrs == {}
     assert ir.edges[0].id is None
     assert ir.edges[0].outcome is None
+
+
+def test_ir_from_dict_preserves_edge_type_and_rework():
+    data = {
+        "name": "demo",
+        "nodes": [{"id": "n1", "type": "task"}],
+        "edges": [{"source": "n1", "target": "n2", "edge_type": "rework", "rework": True}],
+    }
+    ir = IR.from_dict(data)
+    assert ir.edges[0].edge_type == "rework"
+    assert ir.edges[0].rework is True

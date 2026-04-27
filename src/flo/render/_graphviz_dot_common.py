@@ -481,6 +481,8 @@ def _extract_from_ir_object(process: Any) -> tuple[list[dict[str, Any]], list[di
                 "target": getattr(edge, "target", None),
                 "outcome": getattr(edge, "outcome", None),
                 "label": getattr(edge, "label", None),
+                "edge_type": getattr(edge, "edge_type", None),
+                "rework": getattr(edge, "rework", None),
             }
         )
     return nodes, edges

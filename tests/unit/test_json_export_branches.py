@@ -25,7 +25,16 @@ def test_edge_to_schema_omits_none_and_non_dict_metadata():
         nodes=[],
         edges=[
             Edge(source="a", target="b", metadata="not-dict"),
-            Edge(source="b", target="c", id="e2", outcome="no", label="reject", metadata={"m": 1}),
+            Edge(
+                source="b",
+                target="c",
+                id="e2",
+                outcome="no",
+                label="reject",
+                edge_type="rework",
+                rework=True,
+                metadata={"m": 1},
+            ),
         ],
     )
     payload = ir_to_schema_dict(ir)
@@ -35,6 +44,8 @@ def test_edge_to_schema_omits_none_and_non_dict_metadata():
     assert second["id"] == "e2"
     assert second["outcome"] == "no"
     assert second["label"] == "reject"
+    assert second["edge_type"] == "rework"
+    assert second["rework"] is True
     assert second["metadata"] == {"m": 1}
 
 

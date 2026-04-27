@@ -390,6 +390,8 @@ def _extract_sppm_from_ir(process: Any) -> tuple[list[dict[str, Any]], list[dict
                 "target": getattr(edge, "target", None),
                 "outcome": getattr(edge, "outcome", None),
                 "label": getattr(edge, "label", None),
+                "edge_type": getattr(edge, "edge_type", None),
+                "rework": getattr(edge, "rework", None),
             }
         )
     return nodes, edges
