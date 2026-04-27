@@ -43,9 +43,15 @@ Current mappings:
 - Renderers and exporters are separate concerns and use separate registries.
   - Renderers (human-readable visualization) live under [src/flo/render](../src/flo/render).
   - Exporters (machine-readable projection) live under [src/flo/export](../src/flo/export).
-- `--diagram` supports `flowchart`, `swimlane`, and `spaghetti` for **DOT render** output.
-- `--profile`, `--detail`, `--orientation`, `--show-notes`, and `--subprocess-view` are **DOT render** options.
+- `--diagram` supports `flowchart`, `swimlane`, `spaghetti`, and `sppm` for **DOT render** output.
+- `--profile`, `--detail`, `--orientation`, `--show-notes`, `--subprocess-view`, shared autoformat controls (`--layout-wrap`, `--layout-max-width-px`, `--layout-target-columns`), and all SPPM render controls (`--sppm-*`) are **DOT render** options.
 - If `--export json`, `--export ingredients`, or `--export movement` is selected, render-only options are rejected with usage exit code `1`.
+
+## Renderer policy contract (pre-1.0)
+
+- Rework edges render as dashed lines.
+- Rework classification precedence is explicit metadata first, inferred back-edge fallback second.
+- Explicit rework semantics override inferred classification when they differ.
 
 ## Validation diagnostics
 

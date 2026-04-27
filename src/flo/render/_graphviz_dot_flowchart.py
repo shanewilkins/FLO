@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ._autoformat_wrap import append_wrap_layout_hints, build_autoformat_wrap_plan
 from ._graphviz_dot_common import (
     _append_clustered_node_passes,
     _append_edges,
@@ -30,19 +31,42 @@ def _render_flowchart_graph(process: dict[str, Any] | Any, options: RenderOption
     if options.subprocess_view == "parent_only":
         nodes, edges = _project_parent_only_subprocess_view(nodes, edges)
     node_lanes = _node_lane_map(nodes)
-    rankdir = "TB" if options.orientation == "tb" else "LR"
+    wrap_plan = build_autoformat_wrap_plan(nodes, options)
+    rankdir = _resolve_rankdir(options=options, wrap_active=wrap_plan.active)
+    node_sequence_index = {
+        str(node.get("id") or ""): idx
+        for idx, node in enumerate(nodes)
+        if str(node.get("id") or "")
+    }
 
     lines: list[str] = ["digraph {"]
     lines.append(f"  rankdir={rankdir};")
-    lines.append("  graph [compound=true, newrank=true, nodesep=0.7, ranksep=0.9, splines=true];")
+    splines = "ortho" if wrap_plan.active else "true"
+    lines.append(f"  graph [compound=true, newrank=true, nodesep=0.7, ranksep=0.9, splines={splines}];")
     lines.append("  node [fontname=Helvetica];")
     lines.append("  edge [fontname=Helvetica];")
 
+    append_wrap_layout_hints(lines=lines, options=options, plan=wrap_plan)
+
     _append_flowchart_nodes(lines=lines, nodes=nodes, options=options)
-    _append_edges(lines=lines, edges=edges, options=options, use_swimlanes=False, node_lanes=node_lanes)
+    _append_edges(
+        lines=lines,
+        edges=edges,
+        options=options,
+        use_swimlanes=False,
+        node_lanes=node_lanes,
+        boundary_edges=wrap_plan.boundary_edges,
+        node_sequence_index=node_sequence_index,
+    )
 
     lines.append("}")
     return "\n".join(lines)
+
+
+def _resolve_rankdir(*, options: RenderOptions, wrap_active: bool) -> str:
+    if not wrap_active:
+        return "TB" if options.orientation == "tb" else "LR"
+    return "TB" if options.orientation == "lr" else "LR"
 
 
 def _append_flowchart_nodes(lines: list[str], nodes: list[dict[str, Any]], options: RenderOptions) -> None:

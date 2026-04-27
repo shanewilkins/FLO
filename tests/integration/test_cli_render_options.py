@@ -1,5 +1,6 @@
 from click.testing import CliRunner
 import yaml
+import pytest
 
 from flo.core.cli import cli
 
@@ -222,6 +223,45 @@ def test_run_json_export_rejects_spaghetti_people_mode_flag():
     assert "require DOT output" in result.output
 
 
+def test_run_json_export_rejects_sppm_density_flag():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["run", "examples/reference/linear.flo", "--export", "json", "--sppm-label-density", "compact"],
+    )
+    assert result.exit_code == 1
+    assert "require DOT output" in result.output
+
+
+@pytest.mark.parametrize(
+    "flag",
+    [
+        "--layout-max-width-px",
+        "--layout-target-columns",
+        "--sppm-max-label-step-name",
+        "--sppm-max-label-workers",
+        "--sppm-max-label-ctwt",
+    ],
+)
+def test_run_sppm_rejects_non_positive_numeric_render_options(flag: str):
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "examples/reference/washnfold.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+            flag,
+            "0",
+        ],
+    )
+    assert result.exit_code == 1
+    assert "expected a positive integer" in result.output
+
+
 def test_run_spaghetti_renders_boundary_overlay_from_process_metadata(tmp_path):
     model = tmp_path / "boundary_model.flo"
     payload = {
@@ -347,3 +387,215 @@ def test_run_spaghetti_location_kind_shapes_are_rendered(tmp_path):
     assert result.exit_code == 0
     assert '"pantry" [label="Pantry", shape=box, fillcolor=lemonchiffon, color=goldenrod4' in result.output
     assert '"oven_station" [label="Oven Station", shape=hexagon, fillcolor=mistyrose, color=firebrick3' in result.output
+
+
+def test_run_layout_wrap_lr_on_reference_fixture():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "examples/reference/washnfold.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+            "--orientation",
+            "lr",
+            "--layout-wrap",
+            "auto",
+            "--layout-target-columns",
+            "3",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "// Autoformat wrapped layout: orientation=lr" in result.output
+    assert "rankdir=TB;" in result.output
+    assert "cluster_wrap_lr_0" in result.output
+    assert "splines=ortho" in result.output
+    assert "minlen=2, penwidth=1.2" in result.output
+
+
+def test_run_layout_wrap_tb_on_reference_fixture():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "examples/reference/washnfold.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+            "--orientation",
+            "tb",
+            "--layout-wrap",
+            "auto",
+            "--layout-target-columns",
+            "3",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "// Autoformat wrapped layout: orientation=tb" in result.output
+    assert "rankdir=LR;" in result.output
+    assert "cluster_wrap_tb_0" in result.output
+    assert "splines=ortho" in result.output
+    assert "minlen=2, penwidth=1.2" in result.output
+
+
+def test_run_layout_wrap_off_is_unchanged_on_reference_fixture():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "examples/reference/washnfold.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+            "--layout-wrap",
+            "off",
+            "--layout-target-columns",
+            "3",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "splines=true" in result.output
+    assert "cluster_wrap_" not in result.output
+    assert "minlen=2, penwidth=1.2" not in result.output
+
+
+def test_run_sppm_uses_diagrams_toml_defaults(tmp_path, monkeypatch):
+    model = tmp_path / "washnfold_local.flo"
+    model.write_text((
+        "process:\n"
+        "  id: local\n"
+        "  name: Local\n"
+        "steps:\n"
+        "  - id: start\n"
+        "    kind: start\n"
+        "    name: Start\n"
+        "  - id: a\n"
+        "    kind: task\n"
+        "    name: A\n"
+        "  - id: b\n"
+        "    kind: task\n"
+        "    name: B\n"
+        "  - id: c\n"
+        "    kind: task\n"
+        "    name: C\n"
+        "  - id: d\n"
+        "    kind: task\n"
+        "    name: D\n"
+        "  - id: end\n"
+        "    kind: end\n"
+        "    name: End\n"
+        "edges:\n"
+        "  - source: start\n"
+        "    target: a\n"
+        "  - source: a\n"
+        "    target: b\n"
+        "  - source: b\n"
+        "    target: c\n"
+        "  - source: c\n"
+        "    target: d\n"
+        "  - source: d\n"
+        "    target: end\n"
+    ), encoding="utf-8")
+
+    diagrams = tmp_path / "diagrams.toml"
+    diagrams.write_text(
+        "[sppm]\n"
+        "output_profile = \"print\"\n"
+        "target_columns = 2\n"
+        "wrap_layout = \"auto\"\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.chdir(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            str(model),
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "// Autoformat wrapped layout: orientation=tb" in result.output
+    assert "rankdir=LR;" in result.output
+    assert "cluster_wrap_tb_0" in result.output
+
+
+def test_run_sppm_cli_overrides_diagrams_toml_defaults(tmp_path, monkeypatch):
+    model = tmp_path / "washnfold_local.flo"
+    model.write_text((
+        "process:\n"
+        "  id: local\n"
+        "  name: Local\n"
+        "steps:\n"
+        "  - id: start\n"
+        "    kind: start\n"
+        "    name: Start\n"
+        "  - id: a\n"
+        "    kind: task\n"
+        "    name: A\n"
+        "  - id: b\n"
+        "    kind: task\n"
+        "    name: B\n"
+        "  - id: c\n"
+        "    kind: task\n"
+        "    name: C\n"
+        "  - id: d\n"
+        "    kind: task\n"
+        "    name: D\n"
+        "  - id: end\n"
+        "    kind: end\n"
+        "    name: End\n"
+        "edges:\n"
+        "  - source: start\n"
+        "    target: a\n"
+        "  - source: a\n"
+        "    target: b\n"
+        "  - source: b\n"
+        "    target: c\n"
+        "  - source: c\n"
+        "    target: d\n"
+        "  - source: d\n"
+        "    target: end\n"
+    ), encoding="utf-8")
+
+    diagrams = tmp_path / "diagrams.toml"
+    diagrams.write_text(
+        "[sppm]\n"
+        "output_profile = \"print\"\n"
+        "target_columns = 2\n"
+        "wrap_layout = \"auto\"\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.chdir(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            str(model),
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+            "--orientation",
+            "lr",
+            "--layout-wrap",
+            "off",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "rankdir=LR;" in result.output
+    assert "cluster_sppm_wrap_" not in result.output

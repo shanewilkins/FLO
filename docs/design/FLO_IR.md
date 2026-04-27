@@ -45,7 +45,30 @@ Edge object
 - `target` (string, required): `node.id` of destination.
 - `outcome` (string, optional): outcome label (e.g., `yes`, `no`).
 - `label` (string, optional): human label.
+- `rework` (boolean, optional): explicit rework-loop semantic marker.
+- `edge_type` (string, optional): semantic edge class; `rework` is reserved.
 - `metadata` (object, optional): typed annotations (e.g., `handoff`: boolean).
+
+Rendering Policy Decisions (Pre-1.0)
+------------------------------------
+
+The following renderer behavior is normative for v0.1 pre-1.0 development.
+
+- Shared autoformat controls are renderer-agnostic and not SPPM-specific.
+- Rework classification precedence is:
+  1. explicit `edge.rework` boolean
+  2. explicit `edge.edge_type == "rework"`
+  3. inferred fallback (back-edge against primary sequence)
+- If explicit and inferred disagree, explicit semantics always win.
+- All edges classified as rework render as dashed lines.
+- Cross-lane rework is composite semantics: cross-lane routing behavior and rework
+  dashed styling apply together.
+- Layout fit policy supports two modes:
+  - fit-preferred: preserve readability first; may exceed target width slightly
+  - fit-strict: enforce width target aggressively
+- Readability has priority over geometric symmetry.
+- Edge port policy uses global orientation defaults with narrow renderer-specific
+  overrides only where required by diagram semantics.
 
 Lane object (concept)
 ---------------------

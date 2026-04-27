@@ -53,6 +53,46 @@ def parse_args(argv: list | None, services: Services) -> Tuple[str | None, str, 
         help="Color theme for SPPM diagrams",
     )
     parser.add_argument(
+        "--layout-wrap",
+        choices=["auto", "off"],
+        help="Shared autoformat wrapping mode (orientation-aware)",
+    )
+    parser.add_argument(
+        "--layout-fit",
+        choices=["fit-preferred", "fit-strict"],
+        help="Shared autoformat fit mode",
+    )
+    parser.add_argument(
+        "--sppm-step-numbering",
+        choices=["off", "node", "edge"],
+        help="SPPM step numbering mode",
+    )
+    parser.add_argument(
+        "--sppm-label-density",
+        choices=["full", "compact", "teaching"],
+        help="SPPM label density mode",
+    )
+    parser.add_argument(
+        "--sppm-wrap-strategy",
+        choices=["word", "balanced", "hard"],
+        help="Text wrapping strategy for SPPM labels",
+    )
+    parser.add_argument(
+        "--sppm-truncation-policy",
+        choices=["ellipsis", "clip", "none"],
+        help="Label truncation policy for SPPM text",
+    )
+    parser.add_argument("--layout-max-width-px", type=int, help="Max layout width hint for autoformat wrapping")
+    parser.add_argument("--layout-target-columns", type=int, help="Target columns/steps per wrapped chunk")
+    parser.add_argument("--sppm-max-label-step-name", type=int, help="Max step-name label length for SPPM")
+    parser.add_argument("--sppm-max-label-workers", type=int, help="Max workers label length for SPPM")
+    parser.add_argument("--sppm-max-label-ctwt", type=int, help="Max CT/WT label length for SPPM")
+    parser.add_argument(
+        "--sppm-output-profile",
+        choices=["default", "book", "web", "print", "slide"],
+        help="SPPM output profile preset",
+    )
+    parser.add_argument(
         "--render-to",
         metavar="FILE",
         help="Render DOT output to an image file (e.g. output.png, output.svg) via Graphviz",
@@ -103,10 +143,28 @@ def _build_options_from_parsed(parsed: object) -> dict:
         "spaghetti_channel",
         "spaghetti_people_mode",
         "sppm_theme",
+        "layout_wrap",
+        "layout_fit",
+        "sppm_step_numbering",
+        "sppm_label_density",
+        "sppm_wrap_strategy",
+        "sppm_truncation_policy",
+        "sppm_output_profile",
         "render_to",
     ):
         value = getattr(parsed, key, None)
         if value:
+            options[key] = value
+
+    for key in (
+        "layout_max_width_px",
+        "layout_target_columns",
+        "sppm_max_label_step_name",
+        "sppm_max_label_workers",
+        "sppm_max_label_ctwt",
+    ):
+        value = getattr(parsed, key, None)
+        if value is not None:
             options[key] = value
 
     if export_value:

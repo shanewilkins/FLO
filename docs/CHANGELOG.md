@@ -2,7 +2,46 @@
 
 ## Unreleased
 
-- No changes yet.
+- Document renderer policy decisions and contracts for pre-1.0:
+  - shared autoformat controls across diagram styles,
+  - rework classification precedence,
+  - dashed styling for all rework edges,
+  - readability-first alignment/packing policy,
+  - composite behavior for cross-lane rework edges.
+- Breaking (pre-1.0): migrate autoformat CLI controls from SPPM-specific names
+  to shared layout names:
+  - `--sppm-wrap-layout` -> `--layout-wrap`
+  - `--sppm-max-width-px` -> `--layout-max-width-px`
+  - `--sppm-target-columns` -> `--layout-target-columns`
+
+- Add design spec for SPPM layout-width, row wrapping, label density/text controls,
+  and output profile presets in `docs/design/SPPM_Layout_Enhancement_Spec.md`.
+- Implement Phase 1 foundations:
+  - New shared CLI/render option plumbing for autoformat width controls and
+    orientation-aware wrap mode (`--layout-wrap`, `--layout-max-width-px`,
+    `--layout-target-columns`) alongside SPPM-specific label density, text
+    policies, and output profile controls.
+  - DOT-only validation for shared layout flags and SPPM render flags.
+  - SPPM label density modes (`full`, `compact`, `teaching`) and text handling controls
+    (wrap strategy, truncation policy, per-field max lengths) in the DOT renderer.
+  - Optional SPPM step numbering in node headers or edge xlabels.
+  - Enforce positive-integer validation for SPPM numeric render controls with
+    explicit usage errors before rendering.
+- Implement shared orientation-aware wrapping:
+  - Add deterministic wrap planner that chunks linear sequence renderers when
+    `--layout-wrap auto` exceeds target thresholds.
+  - Apply wrapped connector hints for LR (snake down rows) and TB (snake right columns)
+    with boundary edge routing hints in DOT output.
+  - Extend shared wrap coverage to SPPM, flowchart, and swimlane renderers.
+  - Add hardening tests before Phase D: real-fixture LR/TB wrap checks, wrap-off
+    regression, width-threshold-only activation, tiny-width chunk floor behavior,
+    and deterministic node numbering under minor branching.
+- Implement SPPM Phase D preset/config defaults:
+  - Add built-in output profile defaults (`book`, `web`, `print`, `slide`) with
+    explicit-flag override precedence.
+  - Add optional `diagrams.toml` loading for `[sppm]` and `[sppm.presets.<profile>]`
+    defaults (source-directory or cwd lookup) merged with CLI options.
+  - Add tests for profile defaults and config precedence (CLI overrides config).
 
 ## 0.1.1 - 2026-04-21
 

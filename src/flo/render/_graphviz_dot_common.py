@@ -347,6 +347,8 @@ def _append_edges(
     options: RenderOptions,
     use_swimlanes: bool,
     node_lanes: dict[str, str],
+    boundary_edges: set[tuple[str, str]] | None = None,
+    node_sequence_index: dict[str, int] | None = None,
 ) -> None:
     for edge in edges:
         source = edge.get("source")
@@ -361,6 +363,8 @@ def _append_edges(
             options=options,
             use_swimlanes=use_swimlanes,
             node_lanes=node_lanes,
+            boundary_edges=boundary_edges or set(),
+            node_sequence_index=node_sequence_index or {},
         )
         lines.append(
             f'  "{_escape(str(source))}" -> "{_escape(str(target))}" '
@@ -375,11 +379,20 @@ def _edge_attrs(
     options: RenderOptions,
     use_swimlanes: bool,
     node_lanes: dict[str, str],
+    boundary_edges: set[tuple[str, str]],
+    node_sequence_index: dict[str, int],
 ) -> list[str]:
     edge_attrs: list[str] = []
     if use_swimlanes and _is_cross_lane_edge(source, target, node_lanes):
         # Keep lane centerlines stable: cross-lane flow should not re-rank lanes.
         edge_attrs.append("constraint=false")
+
+    if (source, target) in boundary_edges:
+        edge_attrs.append("minlen=2")
+        edge_attrs.append("penwidth=1.2")
+
+    if _is_rework_edge(edge=edge, source=source, target=target, node_sequence_index=node_sequence_index):
+        edge_attrs.append("style=dashed")
 
     if options.detail != "summary":
         branch_label = edge.get("outcome") or edge.get("label")
@@ -418,6 +431,27 @@ def _is_cross_lane_edge(source: str, target: str, node_lanes: dict[str, str]) ->
     if not source_lane or not target_lane:
         return False
     return source_lane != target_lane
+
+
+def _is_rework_edge(
+    *,
+    edge: dict[str, Any],
+    source: str,
+    target: str,
+    node_sequence_index: dict[str, int],
+) -> bool:
+    explicit = edge.get("rework")
+    if explicit is not None:
+        return bool(explicit)
+
+    if str(edge.get("edge_type") or "").strip().lower() == "rework":
+        return True
+
+    src_idx = node_sequence_index.get(source)
+    dst_idx = node_sequence_index.get(target)
+    if src_idx is None or dst_idx is None:
+        return False
+    return src_idx > dst_idx
 
 
 def _extract_from_ir_object(process: Any) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:

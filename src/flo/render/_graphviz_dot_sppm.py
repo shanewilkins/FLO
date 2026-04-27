@@ -13,6 +13,8 @@ from __future__ import annotations
 from typing import Any
 
 from ._graphviz_dot_common import _escape
+from ._autoformat_wrap import append_wrap_layout_hints, build_autoformat_wrap_plan, AutoformatWrapPlan
+from ._sppm_text import apply_density_filter, abbreviate_workers, format_text_field, normalize_space
 from ._sppm_themes import resolve_sppm_theme, SppmTheme, SppmNodeStyle
 from .options import RenderOptions
 from flo.compiler.ir.enums import ProcessValueClass
@@ -29,25 +31,55 @@ def _render_sppm_graph(process: dict[str, Any] | Any, options: RenderOptions) ->
     nodes_by_id: dict[str, dict[str, Any]] = {
         str(n.get("id", "")): n for n in nodes if n.get("id")
     }
+    step_numbering = _build_step_numbering(nodes)
+    wrap_plan = build_autoformat_wrap_plan(nodes, options)
     theme = resolve_sppm_theme(options.sppm_theme)
 
     lines: list[str] = ["digraph {"]
-    rankdir = "TB" if options.orientation == "tb" else "LR"
+    rankdir = _resolve_rankdir(options=options, wrap_active=wrap_plan.active)
     lines.append(f"  rankdir={rankdir};")
+    splines = "ortho" if wrap_plan.active else "true"
     lines.append(
-        "  graph [compound=true, newrank=true, nodesep=0.8, ranksep=1.1, splines=true];"
+        f"  graph [compound=true, newrank=true, nodesep=0.8, ranksep=1.1, splines={splines}];"
     )
     lines.append("  node [fontname=Helvetica, style=filled];")
     lines.append("  edge [fontname=Helvetica];")
 
+    append_wrap_layout_hints(lines=lines, options=options, plan=wrap_plan)
+
     for node in nodes:
-        lines.extend(_render_sppm_node(node, options=options, theme=theme))
+        lines.extend(
+            _render_sppm_node(
+                node,
+                options=options,
+                theme=theme,
+                step_numbering=step_numbering,
+                wrap_plan=wrap_plan,
+            )
+        )
 
     for edge in edges:
-        lines.extend(_render_sppm_edge(edge, nodes_by_id=nodes_by_id))
+        lines.extend(
+            _render_sppm_edge(
+                edge,
+                nodes_by_id=nodes_by_id,
+                options=options,
+                step_numbering=step_numbering,
+                wrap_plan=wrap_plan,
+            )
+        )
 
     lines.append("}")
     return "\n".join(lines)
+
+
+def _resolve_rankdir(*, options: RenderOptions, wrap_active: bool) -> str:
+    if not wrap_active:
+        return "TB" if options.orientation == "tb" else "LR"
+    # Wrapped layouts flip rankdir so chunk-local ordering can read naturally:
+    # - orientation=lr => rows that read left-to-right, stacked downward
+    # - orientation=tb => columns that read top-to-bottom, stepping rightward
+    return "TB" if options.orientation == "lr" else "LR"
 
 
 # ---------------------------------------------------------------------------
@@ -55,36 +87,62 @@ def _render_sppm_graph(process: dict[str, Any] | Any, options: RenderOptions) ->
 # ---------------------------------------------------------------------------
 
 
-def _render_sppm_node(node: dict[str, Any], options: RenderOptions, theme: SppmTheme) -> list[str]:
+def _render_sppm_node(
+    node: dict[str, Any],
+    options: RenderOptions,
+    theme: SppmTheme,
+    step_numbering: dict[str, int],
+    wrap_plan: AutoformatWrapPlan,
+) -> list[str]:
     node_id = str(node.get("id") or "")
     if not node_id:
         return []
     kind = str(node.get("kind") or node.get("type") or "task").lower()
     name = str(node.get("name") or node_id)
+    if options.sppm_step_numbering == "node" and node_id in step_numbering:
+        name = f"{step_numbering[node_id]}. {name}"
+    if kind in ("start", "end"):
+        return [_render_sppm_start_end_node(node_id=node_id, name=name, theme=theme, wrap_plan=wrap_plan)]
+
+    return [
+        _render_sppm_task_node(
+            node=node,
+            node_id=node_id,
+            name=name,
+            options=options,
+            theme=theme,
+            wrap_plan=wrap_plan,
+        )
+    ]
+
+
+def _render_sppm_start_end_node(*, node_id: str, name: str, theme: SppmTheme, wrap_plan: AutoformatWrapPlan) -> str:
+    style = theme.start_end
+    attrs = [
+        f'label="{_escape(name)}"',
+        "shape=rect",
+        'style="rounded,filled"',
+        f'fillcolor="{style.fill}"',
+        f'color="{style.border}"',
+        "penwidth=1.5",
+    ]
+    _append_chunk_group(attrs=attrs, node_id=node_id, wrap_plan=wrap_plan)
+    return f'  "{_escape(node_id)}" [{", ".join(attrs)}];'
+
+
+def _render_sppm_task_node(
+    *,
+    node: dict[str, Any],
+    node_id: str,
+    name: str,
+    options: RenderOptions,
+    theme: SppmTheme,
+    wrap_plan: AutoformatWrapPlan,
+) -> str:
     metadata: dict[str, Any] = node.get("metadata") or {}
     workers: list[Any] = node.get("workers") or []
     note = str(node.get("note") or "")
-
-    if kind in ("start", "end"):
-        style = theme.start_end
-        attrs = [
-            f'label="{_escape(name)}"',
-            "shape=rect",
-            'style="rounded,filled"',
-            f'fillcolor="{style.fill}"',
-            f'color="{style.border}"',
-            "penwidth=1.5",
-        ]
-        return [f'  "{_escape(node_id)}" [{", ".join(attrs)}];']
-
-    # Task node — HTML table: colored header row + white info sub-row
-    value_class_raw = str(metadata.get("value_class") or "")
-    try:
-        vc = ProcessValueClass(value_class_raw) if value_class_raw else None
-    except ValueError:
-        vc = None
-    style = theme.style_for(vc.value if vc else None)
-
+    style = _resolve_sppm_value_style(metadata=metadata, theme=theme)
     html_label = _sppm_html_label(
         name=name,
         metadata=metadata,
@@ -93,7 +151,24 @@ def _render_sppm_node(node: dict[str, Any], options: RenderOptions, theme: SppmT
         note=note,
         options=options,
     )
-    return [f'  "{_escape(node_id)}" [shape=none, margin=0, label={html_label}];']
+    attrs = ["shape=none", "margin=0", f"label={html_label}"]
+    _append_chunk_group(attrs=attrs, node_id=node_id, wrap_plan=wrap_plan)
+    return f'  "{_escape(node_id)}" [{", ".join(attrs)}];'
+
+
+def _resolve_sppm_value_style(*, metadata: dict[str, Any], theme: SppmTheme) -> SppmNodeStyle:
+    value_class_raw = str(metadata.get("value_class") or "")
+    try:
+        vc = ProcessValueClass(value_class_raw) if value_class_raw else None
+    except ValueError:
+        vc = None
+    return theme.style_for(vc.value if vc else None)
+
+
+def _append_chunk_group(*, attrs: list[str], node_id: str, wrap_plan: AutoformatWrapPlan) -> None:
+    chunk_idx = wrap_plan.node_chunk_index.get(node_id)
+    if wrap_plan.active and chunk_idx is not None:
+        attrs.append(f'group="sppm_chunk_{chunk_idx}"')
 
 
 def _sppm_html_label(
@@ -105,36 +180,75 @@ def _sppm_html_label(
     options: RenderOptions,
 ) -> str:
     """Build a Graphviz HTML-like table label: colored header + white info sub-row."""
-    name_html = _html_escape(name)
+    name_text = format_text_field(
+        name,
+        max_len=options.sppm_max_label_step_name,
+        wrap_strategy=options.sppm_wrap_strategy,
+        truncation_policy=options.sppm_truncation_policy,
+        html_break="\n",
+    )
+    name_html = _html_escape_multiline(name_text, break_tag="<BR/>")
     header = (
         f'<TR><TD BGCOLOR="{style.fill}" ALIGN="CENTER">'
         f'<FONT FACE="Helvetica" POINT-SIZE="11"><B>{name_html}</B></FONT>'
         f'</TD></TR>'
     )
 
-    info_lines: list[str] = []
-
-    description = str(metadata.get("description") or "")
-    if description:
-        info_lines.append(_html_escape(description))
+    description = normalize_space(str(metadata.get("description") or ""))
 
     ct = metadata.get("cycle_time")
+    ct_line = ""
     if isinstance(ct, dict) and ct.get("value") is not None:
-        info_lines.append(f"CT: {ct['value']} {ct.get('unit', 'min')}")
+        ct_line = format_text_field(
+            f"CT: {ct['value']} {ct.get('unit', 'min')}",
+            max_len=options.sppm_max_label_ctwt,
+            wrap_strategy=options.sppm_wrap_strategy,
+            truncation_policy=options.sppm_truncation_policy,
+            html_break="\n",
+        )
 
+    workers_line = ""
     if workers:
-        info_lines.append(f"Workers: {', '.join(_html_escape(str(w)) for w in workers)}")
+        workers_text = ", ".join(str(w) for w in workers)
+        if options.sppm_label_density == "compact":
+            workers_text = abbreviate_workers([str(w) for w in workers])
+        workers_line = format_text_field(
+            f"Workers: {workers_text}",
+            max_len=options.sppm_max_label_workers,
+            wrap_strategy=options.sppm_wrap_strategy,
+            truncation_policy=options.sppm_truncation_policy,
+            html_break="\n",
+        )
 
     wt = metadata.get("wait_time")
+    wt_line = ""
     if isinstance(wt, dict) and wt.get("value") is not None and float(wt["value"]) > 0:
-        info_lines.append(f"WT: {wt['value']} {wt.get('unit', 'min')} wait")
+        wt_line = format_text_field(
+            f"WT: {wt['value']} {wt.get('unit', 'min')} wait",
+            max_len=options.sppm_max_label_ctwt,
+            wrap_strategy=options.sppm_wrap_strategy,
+            truncation_policy=options.sppm_truncation_policy,
+            html_break="\n",
+        )
 
+    notes_line = ""
     if note and getattr(options, "show_notes", False):
-        info_lines.append(f"Note: {_html_escape(note)}")
+        notes_line = f"Note: {normalize_space(note)}"
+
+    info_lines = apply_density_filter(
+        density=options.sppm_label_density,
+        description=description,
+        ct_line=ct_line,
+        wt_line=wt_line,
+        workers_line=workers_line,
+        notes_line=notes_line,
+    )
 
     rows = header
     if info_lines:
-        joined = "<BR ALIGN=\"LEFT\"/>".join(info_lines) + "<BR ALIGN=\"LEFT\"/>"
+        joined = "<BR ALIGN=\"LEFT\"/>".join(
+            _html_escape_multiline(line, break_tag="<BR ALIGN=\"LEFT\"/>") for line in info_lines
+        ) + "<BR ALIGN=\"LEFT\"/>"
         rows += (
             f"<HR/>"
             f'<TR><TD BGCOLOR="white" ALIGN="LEFT">'
@@ -153,6 +267,10 @@ def _html_escape(text: str) -> str:
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+def _html_escape_multiline(text: str, break_tag: str) -> str:
+    return break_tag.join(_html_escape(part) for part in text.split("\n"))
+
+
 # ---------------------------------------------------------------------------
 # Edge rendering
 # ---------------------------------------------------------------------------
@@ -161,12 +279,73 @@ def _html_escape(text: str) -> str:
 def _render_sppm_edge(
     edge: dict[str, Any],
     nodes_by_id: dict[str, dict[str, Any]],
+    options: RenderOptions,
+    step_numbering: dict[str, int],
+    wrap_plan: AutoformatWrapPlan,
 ) -> list[str]:
     source = str(edge.get("source") or "")
     target = str(edge.get("target") or "")
     if not source or not target:
         return []
-    return [f'  "{_escape(source)}" -> "{_escape(target)}";']
+    label_attr = ""
+    if options.sppm_step_numbering == "edge":
+        src_num = step_numbering.get(source)
+        dst_num = step_numbering.get(target)
+        if src_num is not None and dst_num is not None:
+            label_attr = f' [xlabel="{src_num}->{dst_num}"]'
+
+    if wrap_plan.active and (source, target) in wrap_plan.boundary_edges:
+        base = "minlen=2, penwidth=1.2"
+        if label_attr:
+            label_inner = label_attr.strip()[1:-1]
+            label_attr = f" [{base}, {label_inner}]"
+        else:
+            label_attr = f" [{base}]"
+
+    is_rework = _is_rework_edge(edge=edge, step_numbering=step_numbering, source=source, target=target)
+    if is_rework:
+        if label_attr:
+            label_inner = label_attr.strip()[1:-1]
+            label_attr = f" [style=dashed, {label_inner}]"
+        else:
+            label_attr = " [style=dashed]"
+
+    return [f'  "{_escape(source)}" -> "{_escape(target)}"{label_attr};']
+
+
+def _is_rework_edge(
+    *,
+    edge: dict[str, Any],
+    step_numbering: dict[str, int],
+    source: str,
+    target: str,
+) -> bool:
+    explicit = edge.get("rework")
+    if explicit is not None:
+        return bool(explicit)
+    if str(edge.get("edge_type") or "").strip().lower() == "rework":
+        return True
+
+    src_num = step_numbering.get(source)
+    dst_num = step_numbering.get(target)
+    if src_num is None or dst_num is None:
+        return False
+    return src_num > dst_num
+
+
+def _build_step_numbering(nodes: list[dict[str, Any]]) -> dict[str, int]:
+    numbering: dict[str, int] = {}
+    sequence = 1
+    for node in nodes:
+        node_id = str(node.get("id") or "")
+        if not node_id:
+            continue
+        kind = str(node.get("kind") or node.get("type") or "task").lower()
+        if kind in {"start", "end"}:
+            continue
+        numbering[node_id] = sequence
+        sequence += 1
+    return numbering
 
 
 # ---------------------------------------------------------------------------

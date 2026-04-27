@@ -112,3 +112,75 @@ def test_parse_args_spaghetti_people_mode_option(services):
     assert path == "file.flo"
     assert command == "run"
     assert options["spaghetti_people_mode"] == "aggregate"
+
+
+def test_parse_args_sppm_extended_options(services):
+    path, command, options, _, _ = parse_args(_extended_sppm_args(), services)
+    assert path == "file.flo"
+    assert command == "run"
+    _assert_expected_options(
+        options,
+        {
+            "diagram": "sppm",
+            "sppm_theme": "print",
+            "layout_wrap": "auto",
+            "layout_fit": "fit-strict",
+            "sppm_step_numbering": "node",
+            "sppm_label_density": "compact",
+            "sppm_wrap_strategy": "balanced",
+            "sppm_truncation_policy": "clip",
+            "layout_max_width_px": 1200,
+            "layout_target_columns": 7,
+            "sppm_max_label_step_name": 48,
+            "sppm_max_label_workers": 24,
+            "sppm_max_label_ctwt": 18,
+            "sppm_output_profile": "book",
+        },
+    )
+
+
+def _assert_expected_options(options: dict[str, object], expected: dict[str, object]) -> None:
+    for key, value in expected.items():
+        assert options[key] == value
+
+
+def _extended_sppm_args() -> list[str]:
+    return [
+        "file.flo",
+        "--diagram",
+        "sppm",
+        "--sppm-theme",
+        "print",
+        "--layout-wrap",
+        "auto",
+        "--layout-fit",
+        "fit-strict",
+        "--sppm-step-numbering",
+        "node",
+        "--sppm-label-density",
+        "compact",
+        "--sppm-wrap-strategy",
+        "balanced",
+        "--sppm-truncation-policy",
+        "clip",
+        "--layout-max-width-px",
+        "1200",
+        "--layout-target-columns",
+        "7",
+        "--sppm-max-label-step-name",
+        "48",
+        "--sppm-max-label-workers",
+        "24",
+        "--sppm-max-label-ctwt",
+        "18",
+        "--sppm-output-profile",
+        "book",
+    ]
+
+
+def test_parse_args_rejects_removed_sppm_wrap_rows_alias(services):
+    with pytest.raises(SystemExit):
+        parse_args(
+            ["file.flo", "--diagram", "sppm", "--sppm-wrap-rows", "auto"],
+            services,
+        )

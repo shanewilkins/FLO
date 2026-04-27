@@ -201,3 +201,393 @@ def test_sppm_unknown_theme_name_falls_back_to_default():
     from flo.render._sppm_themes import resolve_sppm_theme, SPPM_THEMES
     theme = resolve_sppm_theme("nonexistent")
     assert theme == SPPM_THEMES["default"]
+
+
+def test_sppm_compact_density_omits_description():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "mix",
+                "kind": "task",
+                "name": "Mix",
+                "workers": ["Lead Baker", "Assistant Baker"],
+                "metadata": {
+                    "description": "Combine all dry ingredients in bowl",
+                    "cycle_time": {"value": 12, "unit": "min"},
+                    "wait_time": {"value": 3, "unit": "min"},
+                },
+            }
+        ],
+        "edges": [],
+    }
+    out = render_dot(ir_like, options={"diagram": "sppm", "sppm_label_density": "compact"})
+    assert "Combine all dry ingredients" not in out
+    assert "CT: 12 min | WT: 3 min wait" in out
+
+
+def test_sppm_teaching_density_keeps_key_metric_only():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "dry",
+                "kind": "task",
+                "name": "Dry",
+                "workers": ["Staff"],
+                "metadata": {
+                    "description": "Detailed explanation",
+                    "cycle_time": {"value": 45, "unit": "min"},
+                    "wait_time": {"value": 9, "unit": "min"},
+                },
+            }
+        ],
+        "edges": [],
+    }
+    out = render_dot(ir_like, options={"diagram": "sppm", "sppm_label_density": "teaching"})
+    assert "CT: 45 min" in out
+    assert "WT: 9 min wait" not in out
+    assert "Workers:" not in out
+    assert "Detailed explanation" not in out
+
+
+def test_sppm_max_step_name_truncates_with_ellipsis_policy():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "long_name",
+                "kind": "task",
+                "name": "This is a very long step name that should be truncated",
+                "metadata": {"value_class": "VA"},
+            }
+        ],
+        "edges": [],
+    }
+    out = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "sppm_max_label_step_name": 18,
+            "sppm_truncation_policy": "ellipsis",
+        },
+    )
+    assert "This is a very" in out
+    assert "..." in out
+
+
+def test_sppm_edge_step_numbering_adds_xlabels():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "a", "kind": "task", "name": "A", "metadata": {}},
+            {"id": "b", "kind": "task", "name": "B", "metadata": {}},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "a"},
+            {"source": "a", "target": "b"},
+            {"source": "b", "target": "end"},
+        ],
+    }
+    out = render_dot(ir_like, options={"diagram": "sppm", "sppm_step_numbering": "edge"})
+    assert 'xlabel="1->2"' in out
+
+
+def test_layout_wrap_lr_emits_wrap_hints_and_boundary_connector():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "a", "kind": "task", "name": "A", "metadata": {}},
+            {"id": "b", "kind": "task", "name": "B", "metadata": {}},
+            {"id": "c", "kind": "task", "name": "C", "metadata": {}},
+            {"id": "d", "kind": "task", "name": "D", "metadata": {}},
+            {"id": "e", "kind": "task", "name": "E", "metadata": {}},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "a"},
+            {"source": "a", "target": "b"},
+            {"source": "b", "target": "c"},
+            {"source": "c", "target": "d"},
+            {"source": "d", "target": "e"},
+            {"source": "e", "target": "end"},
+        ],
+    }
+
+    out = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "orientation": "lr",
+            "layout_wrap": "auto",
+            "layout_target_columns": 3,
+        },
+    )
+
+    assert "splines=ortho" in out
+    assert "cluster_wrap_lr_0" in out
+    assert '"b" -> "c" [minlen=2, penwidth=1.2]' in out
+    assert '"e" -> "end" [minlen=2, penwidth=1.2]' in out
+
+
+def test_layout_wrap_tb_emits_wrap_hints_and_boundary_connector():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "a", "kind": "task", "name": "A", "metadata": {}},
+            {"id": "b", "kind": "task", "name": "B", "metadata": {}},
+            {"id": "c", "kind": "task", "name": "C", "metadata": {}},
+            {"id": "d", "kind": "task", "name": "D", "metadata": {}},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "a"},
+            {"source": "a", "target": "b"},
+            {"source": "b", "target": "c"},
+            {"source": "c", "target": "d"},
+            {"source": "d", "target": "end"},
+        ],
+    }
+
+    out = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "orientation": "tb",
+            "layout_wrap": "auto",
+            "layout_target_columns": 2,
+        },
+    )
+
+    assert "// Autoformat wrapped layout: orientation=tb" in out
+    assert "rankdir=LR;" in out
+    assert "cluster_wrap_tb_0" in out
+    assert '"a" -> "b" [minlen=2, penwidth=1.2]' in out
+    assert '"c" -> "d" [minlen=2, penwidth=1.2]' in out
+
+
+def test_layout_wrap_off_preserves_non_wrapped_graph_attrs():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "a", "kind": "task", "name": "A", "metadata": {}},
+            {"id": "b", "kind": "task", "name": "B", "metadata": {}},
+            {"id": "c", "kind": "task", "name": "C", "metadata": {}},
+            {"id": "d", "kind": "task", "name": "D", "metadata": {}},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "a"},
+            {"source": "a", "target": "b"},
+            {"source": "b", "target": "c"},
+            {"source": "c", "target": "d"},
+            {"source": "d", "target": "end"},
+        ],
+    }
+
+    out = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "layout_wrap": "off",
+            "layout_target_columns": 2,
+        },
+    )
+
+    assert "splines=true" in out
+    assert "cluster_wrap_" not in out
+    assert "minlen=2" not in out
+
+
+def test_layout_wrap_activates_from_width_threshold_only():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "a", "kind": "task", "name": "A", "metadata": {}},
+            {"id": "b", "kind": "task", "name": "B", "metadata": {}},
+            {"id": "c", "kind": "task", "name": "C", "metadata": {}},
+            {"id": "d", "kind": "task", "name": "D", "metadata": {}},
+            {"id": "e", "kind": "task", "name": "E", "metadata": {}},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "a"},
+            {"source": "a", "target": "b"},
+            {"source": "b", "target": "c"},
+            {"source": "c", "target": "d"},
+            {"source": "d", "target": "e"},
+            {"source": "e", "target": "end"},
+        ],
+    }
+
+    out = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "layout_wrap": "auto",
+            "layout_max_width_px": 650,
+        },
+    )
+
+    assert "cluster_wrap_lr_0" in out
+    assert "splines=ortho" in out
+    assert '"b" -> "c" [minlen=2, penwidth=1.2]' in out
+    assert '"e" -> "end" [minlen=2, penwidth=1.2]' in out
+
+
+def test_layout_wrap_tiny_width_uses_min_chunk_floor_of_three():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "a", "kind": "task", "name": "A", "metadata": {}},
+            {"id": "b", "kind": "task", "name": "B", "metadata": {}},
+            {"id": "c", "kind": "task", "name": "C", "metadata": {}},
+            {"id": "d", "kind": "task", "name": "D", "metadata": {}},
+            {"id": "e", "kind": "task", "name": "E", "metadata": {}},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "a"},
+            {"source": "a", "target": "b"},
+            {"source": "b", "target": "c"},
+            {"source": "c", "target": "d"},
+            {"source": "d", "target": "e"},
+            {"source": "e", "target": "end"},
+        ],
+    }
+
+    out = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "layout_wrap": "auto",
+            "layout_max_width_px": 1,
+        },
+    )
+
+    # width floor => chunk size 3 including start/end, boundaries are b->c and e->end.
+    assert '"b" -> "c" [minlen=2, penwidth=1.2]' in out
+    assert '"e" -> "end" [minlen=2, penwidth=1.2]' in out
+
+
+def test_layout_wrap_fit_strict_wraps_sooner_than_fit_preferred_for_same_content():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {
+                "id": "a",
+                "kind": "task",
+                "name": "Collect and validate supporting invoice documentation",
+                "workers": ["Finance Analyst", "Operations Reviewer"],
+                "metadata": {
+                    "description": "Gather and inspect all invoice attachments before approval routing.",
+                    "cycle_time": {"value": 12, "unit": "min"},
+                },
+            },
+            {
+                "id": "b",
+                "kind": "task",
+                "name": "Review exceptions and annotate discrepancies for requester follow-up",
+                "workers": ["Finance Manager"],
+                "metadata": {
+                    "description": "Flag missing totals, wrong coding, or absent approvals.",
+                    "cycle_time": {"value": 9, "unit": "min"},
+                },
+            },
+            {"id": "c", "kind": "task", "name": "Approve", "metadata": {}},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "a"},
+            {"source": "a", "target": "b"},
+            {"source": "b", "target": "c"},
+            {"source": "c", "target": "end"},
+        ],
+    }
+
+    out_preferred = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "layout_wrap": "auto",
+            "layout_fit": "fit-preferred",
+            "layout_max_width_px": 900,
+        },
+    )
+    out_strict = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "layout_wrap": "auto",
+            "layout_fit": "fit-strict",
+            "layout_max_width_px": 900,
+        },
+    )
+
+    assert "chunk_size=3" in out_preferred
+    assert "chunk_size=2" in out_strict
+
+
+def test_layout_wrap_width_estimator_responds_to_dense_label_content():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {
+                "id": "a",
+                "kind": "task",
+                "name": "A very long validation and exception handling step name",
+                "workers": ["Senior Finance Analyst", "Accounts Payable Specialist"],
+                "metadata": {
+                    "description": "Detailed step narrative that should materially increase estimated node width.",
+                    "cycle_time": {"value": 14, "unit": "min"},
+                    "wait_time": {"value": 8, "unit": "min"},
+                },
+            },
+            {"id": "b", "kind": "task", "name": "B", "metadata": {}},
+            {"id": "c", "kind": "task", "name": "C", "metadata": {}},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "a"},
+            {"source": "a", "target": "b"},
+            {"source": "b", "target": "c"},
+            {"source": "c", "target": "end"},
+        ],
+    }
+
+    out = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "layout_wrap": "auto",
+            "layout_fit": "fit-strict",
+            "layout_max_width_px": 1000,
+        },
+    )
+
+    assert "chunk_size=2" in out
+
+
+def test_sppm_node_numbering_is_deterministic_with_branching():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "a", "kind": "task", "name": "A", "metadata": {}},
+            {"id": "b", "kind": "task", "name": "B", "metadata": {}},
+            {"id": "c", "kind": "task", "name": "C", "metadata": {}},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "a"},
+            {"source": "a", "target": "b"},
+            {"source": "a", "target": "c"},
+            {"source": "b", "target": "end"},
+            {"source": "c", "target": "end"},
+        ],
+    }
+
+    out_one = render_dot(ir_like, options={"diagram": "sppm", "sppm_step_numbering": "node"})
+    out_two = render_dot(ir_like, options={"diagram": "sppm", "sppm_step_numbering": "node"})
+
+    assert out_one == out_two
+    assert "1. A" in out_one
+    assert "2. B" in out_one
+    assert "3. C" in out_one

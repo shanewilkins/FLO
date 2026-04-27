@@ -587,6 +587,17 @@ Render options (DOT only):
 - `--spaghetti-channel {both,material,people}`
 - `--spaghetti-people-mode {worker,aggregate}`
 - `--sppm-theme {default,print,monochrome}`
+- `--layout-wrap {auto,off}`
+- `--sppm-step-numbering {off,node,edge}`
+- `--sppm-label-density {full,compact,teaching}`
+- `--sppm-wrap-strategy {word,balanced,hard}`
+- `--sppm-truncation-policy {ellipsis,clip,none}`
+- `--layout-max-width-px <int>` (positive integer)
+- `--layout-target-columns <int>` (positive integer)
+- `--sppm-max-label-step-name <int>` (positive integer)
+- `--sppm-max-label-workers <int>` (positive integer)
+- `--sppm-max-label-ctwt <int>` (positive integer)
+- `--sppm-output-profile {default,book,web,print,slide}`
 - `--profile {default,analysis}`
 - `--detail {summary,standard,verbose}`
 - `--orientation {lr,tb}`
@@ -606,6 +617,8 @@ flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram spa
 flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram spaghetti --spaghetti-channel people --spaghetti-people-mode worker --profile analysis
 flo run examples/reference/washnfold.flo --export dot --diagram sppm
 flo run examples/reference/washnfold.flo --export dot --diagram sppm --sppm-theme print
+flo run examples/reference/washnfold.flo --export dot --diagram sppm --orientation lr --layout-wrap auto --layout-target-columns 6
+flo run examples/reference/washnfold.flo --export dot --diagram sppm --orientation tb --layout-wrap auto --layout-target-columns 5
 flo run examples/reference/washnfold.flo --diagram sppm --render-to washnfold_sppm.png
 flo run examples/reference/washnfold.flo --diagram sppm --render-to washnfold_sppm.svg
 flo run examples/reference/linear.flo --export json
@@ -615,7 +628,24 @@ flo run examples/reference/chocolate_chip_cookies.flo --export movement
 
 Important:
 - Render-only flags are invalid with non-DOT export modes.
-- If you pass `--diagram`, `--spaghetti-channel`, `--spaghetti-people-mode`, `--sppm-theme`, `--render-to`, `--profile`, `--detail`, `--orientation`, `--show-notes`, or `--subprocess-view` together with JSON, ingredients, or movement export, FLO returns usage error code `1`.
+- If you pass render-only flags (`--diagram`, `--spaghetti-channel`, `--spaghetti-people-mode`, `--layout-wrap`, `--layout-max-width-px`, `--layout-target-columns`, any `--sppm-*` render option, `--render-to`, `--profile`, `--detail`, `--orientation`, `--show-notes`, or `--subprocess-view`) together with JSON, ingredients, or movement export, FLO returns usage error code `1`.
+- Wrapped SPPM layout is orientation-aware: with `--orientation lr` it wraps into rows (snake down), and with `--orientation tb` it wraps into columns (snake right).
+
+Renderer policy decisions:
+- Rework edges are always dashed.
+- Rework classification precedence is explicit metadata first (`rework` boolean,
+  then `edge_type: rework`), inferred back-edge fallback second.
+- Cross-lane rework uses composite behavior (cross-lane routing + dashed styling).
+- Layout fit modes are policy-defined as fit-preferred and fit-strict; readability
+  is prioritized over geometric symmetry.
+
+SPPM preset/config defaults:
+- Built-in `--sppm-output-profile` presets set baseline SPPM defaults for orientation,
+  wrapping, and density (`book`, `web`, `print`, `slide`).
+- If a `diagrams.toml` file exists beside the source `.flo` file (or in the current
+  working directory), FLO loads `[sppm]` defaults automatically.
+- Precedence is: CLI flags > `diagrams.toml` explicit `[sppm]` keys >
+  `diagrams.toml` preset overrides (`[sppm.presets.<profile>]`) > built-in profile defaults.
 
 ## 7) Input and Output Streams
 
