@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import Any
 
 from ._graphviz_dot_common import _escape
-from ._autoformat_wrap import append_wrap_layout_hints, build_sppm_wrap_plan, AutoformatWrapPlan
+from ._autoformat_wrap import append_wrap_layout_hints, build_wrap_plan, WrapPlan
 from ._sppm_routing import SppmEdgeRoute, build_sppm_routing_plan
 from ._sppm_text import apply_density_filter, abbreviate_workers, format_text_field, normalize_space
 from ._sppm_themes import resolve_sppm_theme, SppmTheme, SppmNodeStyle
@@ -33,7 +33,7 @@ def _render_sppm_graph(process: dict[str, Any] | Any, options: RenderOptions) ->
         str(n.get("id", "")): n for n in nodes if n.get("id")
     }
     step_numbering = _build_step_numbering(nodes)
-    wrap_plan = build_sppm_wrap_plan(nodes, options)
+    wrap_plan = build_wrap_plan(nodes, options, planner="placement")
     routing_plan = build_sppm_routing_plan(
         edges=edges,
         options=options,
@@ -112,7 +112,7 @@ def _render_sppm_node(
     options: RenderOptions,
     theme: SppmTheme,
     step_numbering: dict[str, int],
-    wrap_plan: AutoformatWrapPlan,
+    wrap_plan: WrapPlan,
 ) -> list[str]:
     node_id = str(node.get("id") or "")
     if not node_id:
@@ -136,7 +136,7 @@ def _render_sppm_node(
     ]
 
 
-def _render_sppm_start_end_node(*, node_id: str, name: str, theme: SppmTheme, wrap_plan: AutoformatWrapPlan) -> str:
+def _render_sppm_start_end_node(*, node_id: str, name: str, theme: SppmTheme, wrap_plan: WrapPlan) -> str:
     style = theme.start_end
     attrs = [
         f'label="{_escape(name)}"',
@@ -157,7 +157,7 @@ def _render_sppm_task_node(
     name: str,
     options: RenderOptions,
     theme: SppmTheme,
-    wrap_plan: AutoformatWrapPlan,
+    wrap_plan: WrapPlan,
 ) -> str:
     metadata: dict[str, Any] = node.get("metadata") or {}
     workers: list[Any] = node.get("workers") or []
@@ -185,7 +185,7 @@ def _resolve_sppm_value_style(*, metadata: dict[str, Any], theme: SppmTheme) -> 
     return theme.style_for(vc.value if vc else None)
 
 
-def _append_chunk_group(*, attrs: list[str], node_id: str, wrap_plan: AutoformatWrapPlan) -> None:
+def _append_chunk_group(*, attrs: list[str], node_id: str, wrap_plan: WrapPlan) -> None:
     chunk_idx = wrap_plan.node_chunk_index.get(node_id)
     if wrap_plan.active and chunk_idx is not None:
         attrs.append(f'group="sppm_chunk_{chunk_idx}"')
@@ -301,7 +301,7 @@ def _render_sppm_edge(
     nodes_by_id: dict[str, dict[str, Any]],
     options: RenderOptions,
     step_numbering: dict[str, int],
-    wrap_plan: AutoformatWrapPlan,
+    wrap_plan: WrapPlan,
     route: SppmEdgeRoute | None,
 ) -> list[str]:
     source = str(edge.get("source") or "")

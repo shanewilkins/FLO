@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from ._autoformat_wrap import AutoformatWrapPlan
+from ._autoformat_wrap import WrapPlan
 from .options import RenderOptions
 
 
@@ -94,7 +94,7 @@ def build_sppm_routing_plan(
     edges: list[dict[str, Any]],
     options: RenderOptions,
     step_numbering: dict[str, int],
-    wrap_plan: AutoformatWrapPlan,
+    wrap_plan: WrapPlan,
 ) -> SppmRoutingPlan:
     """Build deterministic route metadata for SPPM edges."""
     routes: dict[tuple[str, str], SppmEdgeRoute] = {}
@@ -129,7 +129,7 @@ def _build_sppm_edge_route(
     target: str,
     options: RenderOptions,
     step_numbering: dict[str, int],
-    wrap_plan: AutoformatWrapPlan,
+    wrap_plan: WrapPlan,
     wrap_ports: tuple[str, str] | None,
     lane_id: str | None,
 ) -> SppmEdgeRoute:
@@ -263,7 +263,7 @@ def _build_rework_route(
     )
 
 
-def _build_boundary_lane_map(*, wrap_plan: AutoformatWrapPlan) -> dict[tuple[str, str], str]:
+def _build_boundary_lane_map(*, wrap_plan: WrapPlan) -> dict[tuple[str, str], str]:
     if not wrap_plan.active:
         return {}
     lane_map: dict[tuple[str, str], str] = {}

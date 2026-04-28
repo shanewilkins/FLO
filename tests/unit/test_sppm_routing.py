@@ -1,7 +1,7 @@
 """Unit tests for the SPPM routing-plan helper module."""
 
 from flo.render import render_dot
-from flo.render._autoformat_wrap import build_autoformat_wrap_plan
+from flo.render._autoformat_wrap import build_wrap_plan
 from flo.render._sppm_routing import build_sppm_routing_plan, serialize_sppm_routing_plan
 from flo.render.options import RenderOptions
 
@@ -66,7 +66,7 @@ def test_sppm_routing_plan_marks_wrap_boundary_edges_with_ports_and_boundary_att
         {"source": "c", "target": "end"},
     ]
     options = RenderOptions(diagram="sppm", orientation="lr", layout_wrap="auto", layout_target_columns=2)
-    wrap_plan = build_autoformat_wrap_plan(nodes, options)
+    wrap_plan = build_wrap_plan(nodes, options, planner="chunked")
 
     routing_plan = build_sppm_routing_plan(
         edges=edges,
@@ -94,7 +94,7 @@ def test_sppm_routing_plan_splits_rework_edges_into_anchor_segments():
         edges=edges,
         options=options,
         step_numbering={"review": 1, "decision": 2, "rework": 1},
-        wrap_plan=build_autoformat_wrap_plan([], options),
+        wrap_plan=build_wrap_plan([], options, planner="chunked"),
     )
 
     route = routing_plan.route_for("decision", "rework")
@@ -127,7 +127,7 @@ def test_sppm_routing_plan_uses_tb_ports_for_wrapped_tb_layout():
     ]
     edges = [{"source": "a", "target": "b"}, {"source": "b", "target": "c"}]
     options = RenderOptions(diagram="sppm", orientation="tb", layout_wrap="auto", layout_target_columns=2)
-    wrap_plan = build_autoformat_wrap_plan(nodes, options)
+    wrap_plan = build_wrap_plan(nodes, options, planner="chunked")
 
     routing_plan = build_sppm_routing_plan(
         edges=edges,
@@ -157,7 +157,7 @@ def test_sppm_routing_plan_snapshot_wrap_boundary_and_direct_segments():
         {"source": "c", "target": "end"},
     ]
     options = RenderOptions(diagram="sppm", orientation="lr", layout_wrap="auto", layout_target_columns=2)
-    wrap_plan = build_autoformat_wrap_plan(nodes, options)
+    wrap_plan = build_wrap_plan(nodes, options, planner="chunked")
 
     routing_plan = build_sppm_routing_plan(
         edges=edges,
@@ -195,7 +195,7 @@ def test_sppm_routing_plan_snapshot_rework_includes_anchor_segments():
         edges=edges,
         options=options,
         step_numbering={"decision": 3, "rework": 2, "done": 4},
-        wrap_plan=build_autoformat_wrap_plan([], options),
+        wrap_plan=build_wrap_plan([], options, planner="chunked"),
     )
 
     snapshot = serialize_sppm_routing_plan(routing_plan)

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Breaking (pre-1.0): standardize renderer wrap-planning API to a single
+  canonical entrypoint and contract:
+  - `build_wrap_plan(nodes, options, planner=...)`
+  - `WrapPlan`
+  - Legacy public builders removed in favor of explicit planner strategy
+    selection (`chunked` or `placement`).
+
 - Document renderer policy decisions and contracts for pre-1.0:
   - shared autoformat controls across diagram styles,
   - rework classification precedence,

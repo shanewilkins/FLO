@@ -367,6 +367,40 @@ def test_layout_wrap_tb_emits_wrap_hints_and_boundary_connector():
     assert "__sppm_wrap_corridor_" not in out
 
 
+def test_layout_wrap_tb_honors_width_budget_in_fit_strict_mode():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "a", "kind": "task", "name": "A", "metadata": {}},
+            {"id": "b", "kind": "task", "name": "B", "metadata": {}},
+            {"id": "c", "kind": "task", "name": "C", "metadata": {}},
+            {"id": "d", "kind": "task", "name": "D", "metadata": {}},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "a"},
+            {"source": "a", "target": "b"},
+            {"source": "b", "target": "c"},
+            {"source": "c", "target": "d"},
+            {"source": "d", "target": "end"},
+        ],
+    }
+
+    out = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "orientation": "tb",
+            "layout_wrap": "auto",
+            "layout_fit": "fit-strict",
+            "layout_max_width_px": 800,
+        },
+    )
+
+    assert "// Autoformat wrapped layout: orientation=tb" in out
+    assert "minlen=2, penwidth=1.2" in out
+
+
 def test_layout_wrap_off_preserves_non_wrapped_graph_attrs():
     ir_like = {
         "nodes": [

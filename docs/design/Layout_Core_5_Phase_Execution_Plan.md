@@ -14,6 +14,28 @@ Build a clean, reusable rendering architecture where placement is solved first, 
 - DOT emission is translation-only: no hidden layout decisions.
 - Reuse across renderers is a required design constraint.
 
+## API Conventions (v0.1)
+To keep render architecture extensible while FLO is still pre-1.0, wrap planning
+follows one canonical API pattern:
+
+- Public entrypoint: `build_wrap_plan(nodes, options, planner=...)`
+- Public plan contract: `WrapPlan`
+- Public strategy selector: `WrapPlannerKind = "chunked" | "placement"`
+- Strategy implementations remain private (`_build_*`)
+
+Rationale:
+- Renderer call sites stay uniform and easy to audit.
+- New render styles can opt into existing or new planner strategies without
+	expanding public helper surface area.
+- Routing and DOT emission consume one stable `WrapPlan` contract regardless of
+	planner strategy.
+
+Extension rules:
+- Add new planning behavior by adding a new `planner` strategy and private
+	implementation, not by creating another public `build_*_wrap_plan` function.
+- Keep option-to-geometry translation in planner code, not renderer emitters.
+- Keep renderer modules translation-focused (consume plans, emit DOT).
+
 ## Non-Goals (for this plan)
 - No broad visual redesign work outside the placement and routing architecture.
 - No new CLI feature expansion beyond what is needed to support alignment and placement constraints.

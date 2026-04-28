@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ._autoformat_wrap import append_wrap_layout_hints, build_autoformat_wrap_plan
+from ._autoformat_wrap import append_wrap_layout_hints, build_wrap_plan
 from ._graphviz_dot_edge_routing import _append_edges
 from ._graphviz_dot_common import (
     _append_clustered_node_passes,
@@ -33,7 +33,7 @@ def _render_swimlane_graph(process: dict[str, Any] | Any, options: RenderOptions
     if options.subprocess_view == "parent_only":
         nodes, edges = _project_parent_only_subprocess_view(nodes, edges)
     node_lanes = _node_lane_map(nodes)
-    wrap_plan = build_autoformat_wrap_plan(nodes, options)
+    wrap_plan = build_wrap_plan(nodes, options, planner="chunked")
     rankdir = _resolve_rankdir(options=options, wrap_active=wrap_plan.active)
     node_sequence_index = {
         str(node.get("id") or ""): idx
