@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import Any
 
 from ._graphviz_dot_common import _escape
-from ._autoformat_wrap import append_wrap_layout_hints, build_autoformat_wrap_plan, AutoformatWrapPlan
+from ._autoformat_wrap import append_wrap_layout_hints, build_sppm_wrap_plan, AutoformatWrapPlan
 from ._sppm_routing import SppmEdgeRoute, build_sppm_routing_plan
 from ._sppm_text import apply_density_filter, abbreviate_workers, format_text_field, normalize_space
 from ._sppm_themes import resolve_sppm_theme, SppmTheme, SppmNodeStyle
@@ -33,7 +33,7 @@ def _render_sppm_graph(process: dict[str, Any] | Any, options: RenderOptions) ->
         str(n.get("id", "")): n for n in nodes if n.get("id")
     }
     step_numbering = _build_step_numbering(nodes)
-    wrap_plan = build_autoformat_wrap_plan(nodes, options)
+    wrap_plan = build_sppm_wrap_plan(nodes, options)
     routing_plan = build_sppm_routing_plan(
         edges=edges,
         options=options,

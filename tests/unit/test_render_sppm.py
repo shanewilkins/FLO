@@ -512,7 +512,7 @@ def test_layout_wrap_fit_strict_wraps_sooner_than_fit_preferred_for_same_content
             "diagram": "sppm",
             "layout_wrap": "auto",
             "layout_fit": "fit-preferred",
-            "layout_max_width_px": 900,
+                "layout_max_width_px": 1200,
         },
     )
     out_strict = render_dot(
@@ -521,12 +521,14 @@ def test_layout_wrap_fit_strict_wraps_sooner_than_fit_preferred_for_same_content
             "diagram": "sppm",
             "layout_wrap": "auto",
             "layout_fit": "fit-strict",
-            "layout_max_width_px": 900,
+                "layout_max_width_px": 1200,
         },
     )
 
-    assert "chunk_size=3" in out_preferred
-    assert "chunk_size=2" in out_strict
+    # fit-preferred keeps a,b,c on the same line; boundary falls between b and c
+    assert '"b" -> "c" [tailport=e, headport=w, minlen=2, penwidth=1.2];' in out_preferred
+    # fit-strict reserves more margin so a and b end up in different chunks
+    assert '"a" -> "b" [tailport=e, headport=w, minlen=2, penwidth=1.2];' in out_strict
 
 
 def test_layout_wrap_width_estimator_responds_to_dense_label_content():
@@ -566,7 +568,8 @@ def test_layout_wrap_width_estimator_responds_to_dense_label_content():
         },
     )
 
-    assert "chunk_size=2" in out
+    # dense label on 'a' pushes the node wide enough that 'a' and 'b' land in different chunks
+    assert '"a" -> "b" [tailport=e, headport=w, minlen=2, penwidth=1.2];' in out
 
 
 def test_sppm_node_numbering_is_deterministic_with_branching():

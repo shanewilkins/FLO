@@ -6,13 +6,16 @@ from dataclasses import dataclass
 from statistics import fmean
 from typing import Any
 
+from .layout_core import NodeMeasure, PlacementConstraints, PlacementPlan, build_placement_plan
 from .options import RenderOptions
 from ._sppm_text import apply_density_filter, abbreviate_workers, format_text_field, normalize_space
 
 _DEFAULT_NODE_WIDTH_PX = 220
+_DEFAULT_NODE_HEIGHT_PX = 80
 _PREFERRED_MIN_CHUNK_SIZE = 3
 _STRICT_MIN_CHUNK_SIZE = 2
 _HORIZONTAL_GAP_PX = 48
+_VERTICAL_GAP_PX = 60
 _PREFERRED_MARGIN_PX = 48
 _STRICT_MARGIN_PX = 180
 
@@ -27,6 +30,138 @@ class AutoformatWrapPlan:
     display_chunks: list[list[str]]
     boundary_edges: set[tuple[str, str]]
     node_chunk_index: dict[str, int]
+
+
+def build_sppm_wrap_plan(nodes: list[dict[str, Any]], options: RenderOptions) -> AutoformatWrapPlan:
+    """Build an SPPM wrap plan using the shared placement core.
+
+    Replaces chunk-based wrapping math with PlacementPlan-derived line breaks
+    so that SPPM line groupings are driven by measured pixel widths rather than
+    a fixed chunk size formula.  The returned AutoformatWrapPlan is structurally
+    identical to the one produced by build_autoformat_wrap_plan so all downstream
+    routing and rendering code is unchanged.
+    """
+    if options.layout_wrap != "auto":
+        return _inactive_wrap_plan()
+
+    sequence_ids = _collect_sequence_ids(nodes)
+    if len(sequence_ids) < 2:
+        return _inactive_wrap_plan()
+
+    measures = _sppm_node_measures(nodes=nodes, options=options)
+    max_major_px = _sppm_max_major_px(measures=measures, options=options)
+    if max_major_px is None:
+        return _inactive_wrap_plan()
+
+    constraints = _sppm_placement_constraints(
+        orientation=options.orientation, max_major_px=max_major_px
+    )
+    plan = build_placement_plan(measures, [], constraints)
+    if len(plan.lines) <= 1:
+        return _inactive_wrap_plan()
+
+    return _wrap_plan_from_placement(plan)
+
+
+def _inactive_wrap_plan() -> AutoformatWrapPlan:
+    return AutoformatWrapPlan(
+        active=False,
+        chunk_size=0,
+        chunks=[],
+        display_chunks=[],
+        boundary_edges=set(),
+        node_chunk_index={},
+    )
+
+
+def _sppm_node_measures(
+    *,
+    nodes: list[dict[str, Any]],
+    options: RenderOptions,
+) -> list[NodeMeasure]:
+    measures: list[NodeMeasure] = []
+    for node in nodes:
+        node_id = str(node.get("id") or "")
+        if not node_id:
+            continue
+        kind = str(node.get("kind") or node.get("type") or "task").strip().lower()
+        width_px = _estimate_sppm_node_width_px(node=node, kind=kind, options=options)
+        measures.append(
+            NodeMeasure(id=node_id, width_px=width_px, height_px=_DEFAULT_NODE_HEIGHT_PX, kind=kind)
+        )
+    return measures
+
+
+def _sppm_max_major_px(
+    *,
+    measures: list[NodeMeasure],
+    options: RenderOptions,
+) -> int | None:
+    if options.orientation == "lr":
+        if options.layout_max_width_px and options.layout_max_width_px > 0:
+            if options.layout_fit == "fit-strict":
+                return max(200, options.layout_max_width_px - _STRICT_MARGIN_PX)
+            return options.layout_max_width_px
+    if options.layout_target_columns and options.layout_target_columns > 0:
+        cols = options.layout_target_columns
+        if options.orientation == "tb":
+            major_dims = [m.height_px for m in measures]
+            gap = _VERTICAL_GAP_PX
+            default_dim = _DEFAULT_NODE_HEIGHT_PX
+        else:
+            major_dims = [m.width_px for m in measures]
+            gap = _HORIZONTAL_GAP_PX
+            default_dim = _DEFAULT_NODE_WIDTH_PX
+        if not major_dims:
+            return cols * default_dim + max(0, cols - 1) * gap
+        dims_sorted = sorted(major_dims)
+        p75 = dims_sorted[min(len(dims_sorted) - 1, int(len(dims_sorted) * 0.75))]
+        return cols * p75 + max(0, cols - 1) * gap
+    return None
+
+
+def _sppm_placement_constraints(
+    *,
+    orientation: str,
+    max_major_px: int,
+) -> PlacementConstraints:
+    if orientation == "lr":
+        return PlacementConstraints(
+            orientation="lr",
+            max_width_px=max_major_px,
+            gap_major=_HORIZONTAL_GAP_PX,
+            gap_minor=_VERTICAL_GAP_PX,
+            margin=_PREFERRED_MARGIN_PX,
+        )
+    return PlacementConstraints(
+        orientation="tb",
+        max_height_px=max_major_px,
+        gap_major=_VERTICAL_GAP_PX,
+        gap_minor=_HORIZONTAL_GAP_PX,
+        margin=_PREFERRED_MARGIN_PX,
+    )
+
+
+def _wrap_plan_from_placement(plan: PlacementPlan) -> AutoformatWrapPlan:
+    chunks = [list(line.node_ids) for line in plan.lines]
+    boundary_edges: set[tuple[str, str]] = set()
+    for idx in range(len(chunks) - 1):
+        boundary_edges.add((chunks[idx][-1], chunks[idx + 1][0]))
+    node_chunk_index = {
+        node_id: line.line_index
+        for line in plan.lines
+        for node_id in line.node_ids
+    }
+    chunk_size = max(len(c) for c in chunks)
+    display_chunks = [list(c) for c in chunks]
+    return AutoformatWrapPlan(
+        active=True,
+        chunk_size=chunk_size,
+        chunks=chunks,
+        display_chunks=display_chunks,
+        boundary_edges=boundary_edges,
+        node_chunk_index=node_chunk_index,
+    )
 
 
 def build_autoformat_wrap_plan(nodes: list[dict[str, Any]], options: RenderOptions) -> AutoformatWrapPlan:
