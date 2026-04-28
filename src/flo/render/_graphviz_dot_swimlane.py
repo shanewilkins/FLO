@@ -5,9 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 from ._autoformat_wrap import append_wrap_layout_hints, build_autoformat_wrap_plan
+from ._graphviz_dot_edge_routing import _append_edges
 from ._graphviz_dot_common import (
     _append_clustered_node_passes,
-    _append_edges,
     _build_nodes_by_id,
     _escape,
     _extract_nodes_and_edges,

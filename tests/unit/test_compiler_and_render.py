@@ -77,5 +77,5 @@ steps:
 
     dot = render_dot(ir)
     assert '"__rework_corridor_decision_rework_1" [shape=point, width=0.01, height=0.01, label="", style=invis];' in dot
-    assert '"decision" -> "__rework_corridor_decision_rework_1" [constraint=false, minlen=3, weight=0, style=dashed, arrowhead=none];' in dot
-    assert '"__rework_corridor_decision_rework_1" -> "rework" [constraint=false, minlen=3, weight=0, style=dashed, label="no"];' in dot
+    assert '"decision" -> "__rework_corridor_decision_rework_1" [tailport=e, constraint=false, weight=0, style=dashed, arrowhead=none];' in dot
+    assert '"__rework_corridor_decision_rework_1" -> "rework" [headport=w, constraint=false, minlen=3, weight=0, style=dashed, label="no"];' in dot

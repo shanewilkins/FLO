@@ -15,12 +15,16 @@ from .options import RenderOptions
 
 @dataclass(frozen=True)
 class SppmRouteAnchor:
+    """Invisible anchor node used to split a routed edge into segments."""
+
     anchor_id: str
     attrs: tuple[str, ...]
 
 
 @dataclass(frozen=True)
 class SppmCorridorNode:
+    """Reserved corridor node metadata for future lane-aware routing."""
+
     node_id: str
     lane_id: str
     role: str
@@ -29,6 +33,8 @@ class SppmCorridorNode:
 
 @dataclass(frozen=True)
 class SppmRouteSegment:
+    """A single directed segment within a routed edge."""
+
     source_id: str
     target_id: str
     attrs: tuple[str, ...]
@@ -36,6 +42,8 @@ class SppmRouteSegment:
 
 @dataclass(frozen=True)
 class SppmEdgeRoute:
+    """Resolved route description for one logical edge."""
+
     source: str
     target: str
     kind: str
@@ -49,9 +57,12 @@ class SppmEdgeRoute:
 
 @dataclass(frozen=True)
 class SppmRoutingPlan:
+    """Collection of routed SPPM edges keyed by source and target ids."""
+
     routes: dict[tuple[str, str], SppmEdgeRoute]
 
     def route_for(self, source: str, target: str) -> SppmEdgeRoute | None:
+        """Return the resolved route for a source-target edge pair, if any."""
         return self.routes.get((source, target))
 
 
@@ -85,6 +96,7 @@ def build_sppm_routing_plan(
     step_numbering: dict[str, int],
     wrap_plan: AutoformatWrapPlan,
 ) -> SppmRoutingPlan:
+    """Build deterministic route metadata for SPPM edges."""
     routes: dict[tuple[str, str], SppmEdgeRoute] = {}
     wrap_ports = _sppm_wrap_ports(options=options) if wrap_plan.active else None
     boundary_lanes = _build_boundary_lane_map(wrap_plan=wrap_plan)
@@ -269,6 +281,7 @@ def _sppm_wrap_ports(*, options: RenderOptions) -> tuple[str, str]:
 
 
 def sppm_rework_anchor_id(*, source: str, target: str) -> str:
+    """Return a stable anchor id for a rework edge between two nodes."""
     source_part = _safe_sppm_edge_id_part(source)
     target_part = _safe_sppm_edge_id_part(target)
     return f"__sppm_rework_corridor_{source_part}_{target_part}"
@@ -291,6 +304,7 @@ def is_sppm_rework_edge(
     source: str,
     target: str,
 ) -> bool:
+    """Return whether an SPPM edge should be rendered as rework."""
     explicit = edge.get("rework")
     if explicit is not None:
         return bool(explicit)
