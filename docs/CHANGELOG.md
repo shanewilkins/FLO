@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.2 - 2026-04-28
 
 - Wrapped SPPM SVG boundary routing hardening:
   - Keep DOT route metadata deterministic, then postprocess only wrapped LR
