@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from ._autoformat_wrap import WrapPlan
-from .layout_core import CorridorPlan, build_corridor_plan
+from .layout_core import CorridorPlan, RoutePlan, build_corridor_plan, build_route_plan
 from .options import RenderOptions
 
 
@@ -62,6 +62,7 @@ class SppmRoutingPlan:
 
     routes: dict[tuple[str, str], SppmEdgeRoute]
     corridor_plan: CorridorPlan
+    route_plan: RoutePlan
 
     def route_for(self, source: str, target: str) -> SppmEdgeRoute | None:
         """Return the resolved route for a source-target edge pair, if any."""
@@ -104,6 +105,11 @@ def build_sppm_routing_plan(
     boundary_lanes = _build_boundary_lane_map(wrap_plan=wrap_plan)
     edge_pairs = _edge_pairs(edges)
     corridor_plan = _build_corridor_metadata(wrap_plan=wrap_plan, edge_pairs=edge_pairs)
+    route_plan = _build_core_route_plan(
+        wrap_plan=wrap_plan,
+        edge_pairs=edge_pairs,
+        corridor_plan=corridor_plan,
+    )
 
     for edge in edges:
         source = str(edge.get("source") or "")
@@ -119,11 +125,16 @@ def build_sppm_routing_plan(
             step_numbering=step_numbering,
             wrap_plan=wrap_plan,
             wrap_ports=wrap_ports,
-            lane_id=boundary_lanes.get((source, target)),
+            lane_id=_resolve_lane_id(
+                edge=(source, target),
+                route_plan=route_plan,
+                boundary_lanes=boundary_lanes,
+            ),
+            core_route=route_plan.route_for(source, target),
         )
         routes[(source, target)] = route
 
-    return SppmRoutingPlan(routes=routes, corridor_plan=corridor_plan)
+    return SppmRoutingPlan(routes=routes, corridor_plan=corridor_plan, route_plan=route_plan)
 
 
 def _edge_pairs(edges: list[dict[str, Any]]) -> list[tuple[str, str]]:
@@ -149,6 +160,30 @@ def _build_corridor_metadata(*, wrap_plan: WrapPlan, edge_pairs: list[tuple[str,
     return build_corridor_plan(placement=placement, edges=edge_pairs)
 
 
+def _build_core_route_plan(
+    *,
+    wrap_plan: WrapPlan,
+    edge_pairs: list[tuple[str, str]],
+    corridor_plan: CorridorPlan,
+) -> RoutePlan:
+    placement = wrap_plan.placement_plan
+    if placement is None:
+        return RoutePlan(routes={}, conflicts=())
+    return build_route_plan(placement=placement, corridor=corridor_plan, edges=edge_pairs)
+
+
+def _resolve_lane_id(
+    *,
+    edge: tuple[str, str],
+    route_plan: RoutePlan,
+    boundary_lanes: dict[tuple[str, str], str],
+) -> str | None:
+    core_route = route_plan.route_for(edge[0], edge[1])
+    if core_route is not None and core_route.lane_hops:
+        return core_route.lane_hops[0]
+    return boundary_lanes.get(edge)
+
+
 def _build_sppm_edge_route(
     *,
     edge: dict[str, Any],
@@ -159,6 +194,7 @@ def _build_sppm_edge_route(
     wrap_plan: WrapPlan,
     wrap_ports: tuple[str, str] | None,
     lane_id: str | None,
+    core_route: Any | None,
 ) -> SppmEdgeRoute:
     edge_attrs: list[str] = []
     if options.sppm_step_numbering == "edge":
@@ -177,25 +213,27 @@ def _build_sppm_edge_route(
         source=source,
         target=target,
     )
+    resolved_ports = _resolved_ports(core_route=core_route, options=options, wrap_ports=wrap_ports)
+
     if is_rework:
         return _build_rework_route(
             edge=edge,
             source=source,
             target=target,
             edge_attrs=edge_attrs,
-            wrap_ports=wrap_ports or _sppm_wrap_ports(options=options),
+            wrap_ports=resolved_ports,
         )
 
-    if is_boundary and wrap_ports is not None:
+    if is_boundary and resolved_ports is not None:
         return _build_boundary_corridor_route(
             source=source,
             target=target,
             edge_attrs=edge_attrs,
-            wrap_ports=wrap_ports,
+            wrap_ports=resolved_ports,
             lane_id=lane_id or "wrap_lane_unknown",
         )
 
-    segment_attrs = tuple((list(wrap_ports) if wrap_ports is not None else []) + edge_attrs)
+    segment_attrs = tuple((list(resolved_ports) if resolved_ports is not None else []) + edge_attrs)
     return SppmEdgeRoute(
         source=source,
         target=target,
@@ -299,6 +337,17 @@ def _build_boundary_lane_map(*, wrap_plan: WrapPlan) -> dict[tuple[str, str], st
         target = wrap_plan.chunks[idx + 1][0]
         lane_map[(source, target)] = f"wrap_lane_{idx}"
     return lane_map
+
+
+def _resolved_ports(*, core_route: Any | None, options: RenderOptions, wrap_ports: tuple[str, str] | None) -> tuple[str, str]:
+    if core_route is not None:
+        return (
+            f"tailport={core_route.source_port.side}",
+            f"headport={core_route.target_port.side}",
+        )
+    if wrap_ports is not None:
+        return wrap_ports
+    return _sppm_wrap_ports(options=options)
 
 
 def _sppm_wrap_ports(*, options: RenderOptions) -> tuple[str, str]:

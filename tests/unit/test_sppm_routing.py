@@ -82,6 +82,7 @@ def test_sppm_routing_plan_marks_wrap_boundary_edges_with_ports_and_boundary_att
     assert route.lane_id == "wrap_lane_0"
     assert route.corridor_nodes == ()
     assert route.segments[0].attrs == ("tailport=e", "headport=w", "minlen=2", "penwidth=1.2")
+    assert routing_plan.route_plan.routes == {}
 
 
 def test_sppm_routing_plan_splits_rework_edges_into_anchor_segments():
@@ -116,6 +117,7 @@ def test_sppm_routing_plan_splits_rework_edges_into_anchor_segments():
         "style=dashed",
         'label="no"',
     )
+    assert routing_plan.route_plan.routes == {}
 
 
 def test_sppm_routing_plan_uses_tb_ports_for_wrapped_tb_layout():
@@ -206,7 +208,7 @@ def test_sppm_routing_plan_snapshot_rework_includes_anchor_segments():
             "  segment decision->__sppm_rework_corridor_decision_rework [tailport=e, constraint=false, style=dashed, weight=0, arrowhead=none]",
             "  segment __sppm_rework_corridor_decision_rework->rework [headport=w, constraint=false, minlen=3, weight=0, style=dashed, label=\"no\"]",
             "edge rework->done kind=direct boundary=False rework=False",
-            "  segment rework->done []",
+            "  segment rework->done [tailport=e, headport=w]",
         ]
     )
     assert snapshot == expected
@@ -240,6 +242,7 @@ def test_sppm_routing_plan_includes_corridor_plan_for_placement_wrap():
 
     assert wrap_plan.placement_plan is not None
     assert len(routing_plan.corridor_plan.lanes) == 2
+    assert routing_plan.route_plan.route_for("start", "a") is not None
     line_index = wrap_plan.placement_plan.node_line_index
     expected_cross_line = {
         (str(edge["source"]), str(edge["target"]))
@@ -247,10 +250,16 @@ def test_sppm_routing_plan_includes_corridor_plan_for_placement_wrap():
         if line_index.get(str(edge["source"])) != line_index.get(str(edge["target"]))
     }
     assert set(routing_plan.corridor_plan.edge_lane_hops.keys()) == expected_cross_line
+    assert set(routing_plan.route_plan.routes.keys()) == {(
+        str(edge["source"]),
+        str(edge["target"]),
+    ) for edge in edges}
     for lane_hops in routing_plan.corridor_plan.edge_lane_hops.values():
         assert lane_hops
         for lane_id in lane_hops:
             assert lane_id.startswith("corridor_lane_")
+    assert routing_plan.route_plan.route_for("start", "a").source_port.side == "e"
+    assert routing_plan.route_plan.route_for("start", "a").target_port.side == "w"
 
 
 def test_sppm_routing_plan_corridor_plan_empty_without_placement_wrap():
@@ -266,3 +275,4 @@ def test_sppm_routing_plan_corridor_plan_empty_without_placement_wrap():
 
     assert routing_plan.corridor_plan.lanes == ()
     assert routing_plan.corridor_plan.edge_lane_hops == {}
+    assert routing_plan.route_plan.routes == {}
