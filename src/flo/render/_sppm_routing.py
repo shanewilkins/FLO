@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from ._autoformat_wrap import WrapPlan
+from .layout_core import CorridorPlan, build_corridor_plan
 from .options import RenderOptions
 
 
@@ -60,6 +61,7 @@ class SppmRoutingPlan:
     """Collection of routed SPPM edges keyed by source and target ids."""
 
     routes: dict[tuple[str, str], SppmEdgeRoute]
+    corridor_plan: CorridorPlan
 
     def route_for(self, source: str, target: str) -> SppmEdgeRoute | None:
         """Return the resolved route for a source-target edge pair, if any."""
@@ -100,6 +102,8 @@ def build_sppm_routing_plan(
     routes: dict[tuple[str, str], SppmEdgeRoute] = {}
     wrap_ports = _sppm_wrap_ports(options=options) if wrap_plan.active else None
     boundary_lanes = _build_boundary_lane_map(wrap_plan=wrap_plan)
+    edge_pairs = _edge_pairs(edges)
+    corridor_plan = _build_corridor_metadata(wrap_plan=wrap_plan, edge_pairs=edge_pairs)
 
     for edge in edges:
         source = str(edge.get("source") or "")
@@ -119,7 +123,30 @@ def build_sppm_routing_plan(
         )
         routes[(source, target)] = route
 
-    return SppmRoutingPlan(routes=routes)
+    return SppmRoutingPlan(routes=routes, corridor_plan=corridor_plan)
+
+
+def _edge_pairs(edges: list[dict[str, Any]]) -> list[tuple[str, str]]:
+    pairs: list[tuple[str, str]] = []
+    for edge in edges:
+        source = str(edge.get("source") or "")
+        target = str(edge.get("target") or "")
+        if source and target:
+            pairs.append((source, target))
+    return pairs
+
+
+def _build_corridor_metadata(*, wrap_plan: WrapPlan, edge_pairs: list[tuple[str, str]]) -> CorridorPlan:
+    placement = wrap_plan.placement_plan
+    if placement is None:
+        return CorridorPlan(
+            lanes=(),
+            entry_anchors={},
+            exit_anchors={},
+            lane_occupancy={},
+            edge_lane_hops={},
+        )
+    return build_corridor_plan(placement=placement, edges=edge_pairs)
 
 
 def _build_sppm_edge_route(

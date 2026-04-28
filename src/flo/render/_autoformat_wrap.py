@@ -39,6 +39,7 @@ class WrapPlan:
     display_chunks: list[list[str]]
     boundary_edges: set[tuple[str, str]]
     node_chunk_index: dict[str, int]
+    placement_plan: PlacementPlan | None
 
 
 def build_wrap_plan(
@@ -98,6 +99,7 @@ def _inactive_wrap_plan() -> WrapPlan:
         display_chunks=[],
         boundary_edges=set(),
         node_chunk_index={},
+        placement_plan=None,
     )
 
 
@@ -190,6 +192,7 @@ def _wrap_plan_from_placement(plan: PlacementPlan) -> WrapPlan:
         display_chunks=display_chunks,
         boundary_edges=boundary_edges,
         node_chunk_index=node_chunk_index,
+        placement_plan=plan,
     )
 
 
@@ -211,6 +214,7 @@ def _build_chunked_wrap_plan(nodes: list[dict[str, Any]], options: RenderOptions
             display_chunks=[],
             boundary_edges=set(),
             node_chunk_index={},
+            placement_plan=None,
         )
 
     chunks = [sequence_ids[i : i + chunk_size] for i in range(0, len(sequence_ids), chunk_size)]
@@ -223,6 +227,7 @@ def _build_chunked_wrap_plan(nodes: list[dict[str, Any]], options: RenderOptions
             display_chunks=[],
             boundary_edges=set(),
             node_chunk_index={},
+            placement_plan=None,
         )
 
     boundary_edges: set[tuple[str, str]] = set()
@@ -242,6 +247,7 @@ def _build_chunked_wrap_plan(nodes: list[dict[str, Any]], options: RenderOptions
         display_chunks=display_chunks,
         boundary_edges=boundary_edges,
         node_chunk_index=node_chunk_index,
+        placement_plan=None,
     )
 
 

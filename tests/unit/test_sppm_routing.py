@@ -210,3 +210,59 @@ def test_sppm_routing_plan_snapshot_rework_includes_anchor_segments():
         ]
     )
     assert snapshot == expected
+
+
+def test_sppm_routing_plan_includes_corridor_plan_for_placement_wrap():
+    nodes = [
+        {"id": "start", "kind": "start", "name": "Start"},
+        {"id": "a", "kind": "task", "name": "A", "metadata": {}},
+        {"id": "b", "kind": "task", "name": "B", "metadata": {}},
+        {"id": "c", "kind": "task", "name": "C", "metadata": {}},
+        {"id": "d", "kind": "task", "name": "D", "metadata": {}},
+        {"id": "end", "kind": "end", "name": "End"},
+    ]
+    edges = [
+        {"source": "start", "target": "a"},
+        {"source": "a", "target": "b"},
+        {"source": "b", "target": "c"},
+        {"source": "c", "target": "d"},
+        {"source": "d", "target": "end"},
+    ]
+    options = RenderOptions(diagram="sppm", orientation="lr", layout_wrap="auto", layout_target_columns=2)
+    wrap_plan = build_wrap_plan(nodes, options, planner="placement")
+
+    routing_plan = build_sppm_routing_plan(
+        edges=edges,
+        options=options,
+        step_numbering={"a": 1, "b": 2, "c": 3, "d": 4},
+        wrap_plan=wrap_plan,
+    )
+
+    assert wrap_plan.placement_plan is not None
+    assert len(routing_plan.corridor_plan.lanes) == 2
+    line_index = wrap_plan.placement_plan.node_line_index
+    expected_cross_line = {
+        (str(edge["source"]), str(edge["target"]))
+        for edge in edges
+        if line_index.get(str(edge["source"])) != line_index.get(str(edge["target"]))
+    }
+    assert set(routing_plan.corridor_plan.edge_lane_hops.keys()) == expected_cross_line
+    for lane_hops in routing_plan.corridor_plan.edge_lane_hops.values():
+        assert lane_hops
+        for lane_id in lane_hops:
+            assert lane_id.startswith("corridor_lane_")
+
+
+def test_sppm_routing_plan_corridor_plan_empty_without_placement_wrap():
+    edges = [{"source": "a", "target": "b"}]
+    options = RenderOptions(diagram="sppm")
+
+    routing_plan = build_sppm_routing_plan(
+        edges=edges,
+        options=options,
+        step_numbering={"a": 1, "b": 2},
+        wrap_plan=build_wrap_plan([], options, planner="chunked"),
+    )
+
+    assert routing_plan.corridor_plan.lanes == ()
+    assert routing_plan.corridor_plan.edge_lane_hops == {}
