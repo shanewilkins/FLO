@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from ._autoformat_wrap import WrapPlan
+from ._autoformat_wrap import WrapPlan, wrap_chunk_exit_anchor_id
 from .layout_core import (
     CorridorPlan,
     LinePlacement,
@@ -300,12 +300,20 @@ def _build_sppm_edge_route(
         )
 
     if is_boundary and resolved_ports is not None:
+        boundary_ports = _resolved_boundary_ports(
+            core_route=core_route,
+            options=options,
+            source_kind=source_kind,
+            target_kind=target_kind,
+        )
         return _build_boundary_corridor_route(
             source=source,
             target=target,
             edge_attrs=edge_attrs,
-            wrap_ports=resolved_ports,
+            wrap_ports=boundary_ports,
             lane_id=lane_id or "wrap_lane_unknown",
+            wrap_plan=wrap_plan,
+            options=options,
         )
 
     segment_attrs = tuple((list(resolved_ports) if resolved_ports is not None else []) + edge_attrs)
@@ -329,9 +337,43 @@ def _build_boundary_corridor_route(
     edge_attrs: list[str],
     wrap_ports: tuple[str, str],
     lane_id: str,
+    wrap_plan: WrapPlan,
+    options: RenderOptions,
 ) -> SppmEdgeRoute:
     source_port, target_port = wrap_ports
+    chunk_idx = wrap_plan.node_chunk_index.get(source)
+
+    if options.orientation == "lr" and chunk_idx is not None:
+        exit_anchor_id = wrap_chunk_exit_anchor_id(orientation="lr", chunk_idx=chunk_idx)
+        return SppmEdgeRoute(
+            source=source,
+            target=target,
+            kind="corridor",
+            is_boundary=True,
+            is_rework=False,
+            lane_id=lane_id,
+            corridor_nodes=(),
+            anchors=(),
+            segments=(
+                SppmRouteSegment(
+                    source_id=source,
+                    target_id=exit_anchor_id,
+                    attrs=tuple([source_port, "arrowhead=none", "constraint=false", "weight=0"]),
+                ),
+                SppmRouteSegment(
+                    source_id=exit_anchor_id,
+                    target_id=target,
+                    attrs=tuple([target_port, *edge_attrs]),
+                ),
+            ),
+        )
+
     _ = lane_id
+    anchor_id = sppm_boundary_anchor_id(source=source, target=target)
+    anchor = SppmRouteAnchor(
+        anchor_id=anchor_id,
+        attrs=("shape=point", "width=0.01", "height=0.01", 'label=""', "style=invis"),
+    )
 
     return SppmEdgeRoute(
         source=source,
@@ -341,12 +383,17 @@ def _build_boundary_corridor_route(
         is_rework=False,
         lane_id=lane_id,
         corridor_nodes=(),
-        anchors=(),
+        anchors=(anchor,),
         segments=(
             SppmRouteSegment(
                 source_id=source,
+                target_id=anchor_id,
+                attrs=tuple([source_port, "arrowhead=none", "constraint=false", "weight=0"]),
+            ),
+            SppmRouteSegment(
+                source_id=anchor_id,
                 target_id=target,
-                attrs=tuple([source_port, target_port, *edge_attrs]),
+                attrs=tuple([target_port, *edge_attrs]),
             ),
         ),
     )
@@ -448,6 +495,31 @@ def _supports_named_ports(kind: str) -> bool:
     return kind not in {"start", "end"}
 
 
+def _resolved_boundary_ports(
+    *,
+    core_route: Any | None,
+    options: RenderOptions,
+    source_kind: str,
+    target_kind: str,
+) -> tuple[str, str]:
+    if options.orientation == "lr":
+        source_port = (
+            _graphviz_tailport_for_spec(core_route.source_port, kind=source_kind)
+            if core_route is not None
+            else "tailport=e"
+        )
+        if _supports_named_ports(target_kind):
+            return (source_port, 'headport="boundary_in:s"')
+        return (source_port, "headport=n")
+
+    if core_route is not None:
+        return (
+            f"tailport={core_route.source_port.side}",
+            f"headport={core_route.target_port.side}",
+        )
+    return _sppm_wrap_ports(options=options)
+
+
 def _sppm_wrap_ports(*, options: RenderOptions) -> tuple[str, str]:
     if options.orientation == "tb":
         return ("tailport=s", "headport=n")
@@ -459,6 +531,13 @@ def sppm_rework_anchor_id(*, source: str, target: str) -> str:
     source_part = _safe_sppm_edge_id_part(source)
     target_part = _safe_sppm_edge_id_part(target)
     return f"__sppm_rework_corridor_{source_part}_{target_part}"
+
+
+def sppm_boundary_anchor_id(*, source: str, target: str) -> str:
+    """Return a stable anchor id for a wrapped boundary edge bend point."""
+    source_part = _safe_sppm_edge_id_part(source)
+    target_part = _safe_sppm_edge_id_part(target)
+    return f"__sppm_boundary_corridor_{source_part}_{target_part}"
 
 
 def _safe_sppm_edge_id_part(value: str) -> str:

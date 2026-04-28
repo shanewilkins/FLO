@@ -630,6 +630,7 @@ Important:
 - Render-only flags are invalid with non-DOT export modes.
 - If you pass render-only flags (`--diagram`, `--spaghetti-channel`, `--spaghetti-people-mode`, `--layout-wrap`, `--layout-max-width-px`, `--layout-target-columns`, any `--sppm-*` render option, `--render-to`, `--profile`, `--detail`, `--orientation`, `--show-notes`, or `--subprocess-view`) together with JSON, ingredients, or movement export, FLO returns usage error code `1`.
 - Wrapped SPPM layout is orientation-aware: with `--orientation lr` it wraps into rows (snake down), and with `--orientation tb` it wraps into columns (snake right).
+- Wrapped LR SPPM SVG output applies a narrow deterministic boundary-edge normalization pass after Graphviz layout so boundary doglegs keep stable top-entry landing behavior.
 
 Renderer policy decisions:
 - Rework edges are always dashed.

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Wrapped SPPM SVG boundary routing hardening:
+  - Keep DOT route metadata deterministic, then postprocess only wrapped LR
+    boundary doglegs in SVG output to enforce the intended path shape
+    (right, down, left, centered top-entry drop).
+  - This interception is intentionally narrow to address Graphviz orthogonal
+    routing behavior that can otherwise produce mid-box or side-biased
+    boundary landings despite deterministic DOT hints.
+
 - Breaking (pre-1.0): standardize renderer wrap-planning API to a single
   canonical entrypoint and contract:
   - `build_wrap_plan(nodes, options, planner=...)`

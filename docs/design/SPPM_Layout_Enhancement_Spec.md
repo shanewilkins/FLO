@@ -257,6 +257,28 @@ digraph {
 }
 ```
 
+## 6.1 Wrapped SPPM SVG boundary interception
+
+Implementation note for wrapped LR SPPM boundary transitions:
+
+- DOT remains the canonical logical route contract (ports, boundary edges,
+  and deterministic metadata).
+- Final visual geometry for wrapped boundary doglegs is normalized in SVG
+  postprocessing for `--render-to *.svg` / build artifacts.
+
+Rationale:
+
+- Graphviz orthogonal routing can still emit visually incorrect boundary
+  approaches (for example, side-biased or mid-box-feeling landings) even when
+  DOT routing metadata is deterministic.
+- The product requirement for wrapped SPPM boundary edges is a strict,
+  repeatable dogleg shape and centered top-entry drop on the target node.
+
+Guardrails:
+
+- Rewrite scope is intentionally narrow: wrapped LR SPPM boundary edges only.
+- Non-SPPM, non-wrapped, and non-boundary edges are not modified.
+
 ## 7. Validation and errors
 
 Validation rules:

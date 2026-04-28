@@ -200,9 +200,9 @@ def _resolve_sppm_value_style(*, metadata: dict[str, Any], theme: SppmTheme) -> 
 
 
 def _append_chunk_group(*, attrs: list[str], node_id: str, wrap_plan: WrapPlan) -> None:
-    chunk_idx = wrap_plan.node_chunk_index.get(node_id)
-    if wrap_plan.active and chunk_idx is not None:
-        attrs.append(f'group="sppm_chunk_{chunk_idx}"')
+    display_idx = wrap_plan.node_display_index.get(node_id)
+    if wrap_plan.active and display_idx is not None:
+        attrs.append(f'group="sppm_col_{display_idx}"')
 
 
 def _sppm_html_label(
@@ -292,38 +292,59 @@ def _sppm_html_label(
         )
 
     content_table = (
-        f'<TABLE BORDER="2" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" '
-        f'COLOR="{style.border}">{rows}</TABLE>'
+        f'<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6">'
+        f'{rows}</TABLE>'
     )
-    return _wrap_sppm_label_with_ports(content_table=content_table, port_counts=port_counts)
+    return _wrap_sppm_label_with_ports(
+        content_table=content_table,
+        port_counts=port_counts,
+        border_color=style.border,
+    )
 
 
-def _wrap_sppm_label_with_ports(*, content_table: str, port_counts: dict[str, int]) -> str:
+def _wrap_sppm_label_with_ports(
+    *,
+    content_table: str,
+    port_counts: dict[str, int],
+    border_color: str,
+) -> str:
     in_count = max(0, int(port_counts.get("in", 0)))
     out_count = max(0, int(port_counts.get("out", 0)))
     if in_count == 0 and out_count == 0:
-        return f"<{content_table}>"
+        return (
+            f'<<TABLE BORDER="2" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0" '
+            f'COLOR="{border_color}"><TR><TD></TD><TD PORT="boundary_in" HEIGHT="1"></TD><TD></TD></TR>'
+            f'<TR><TD></TD><TD>{content_table}</TD><TD></TD></TR>'
+            f'<TR><TD></TD><TD PORT="boundary_out" HEIGHT="1"></TD><TD></TD></TR></TABLE>>'
+        )
 
-    left_ports = _port_column_html(role="in", count=max(1, in_count))
-    right_ports = _port_column_html(role="out", count=max(1, out_count))
+    row_count = max(1, in_count, out_count)
+    rows: list[str] = []
+    rows.append('<TR><TD></TD><TD PORT="boundary_in" HEIGHT="1"></TD><TD></TD></TR>')
+    for row_index in range(row_count):
+        left_cell = _port_cell(role="in", slot=row_index) if row_index < in_count else _empty_port_cell()
+        right_cell = _port_cell(role="out", slot=row_index) if row_index < out_count else _empty_port_cell()
+        if row_index == 0:
+            rows.append(
+                f"<TR>{left_cell}<TD ROWSPAN=\"{row_count}\">{content_table}</TD>{right_cell}</TR>"
+            )
+        else:
+            rows.append(f"<TR>{left_cell}{right_cell}</TR>")
+    rows.append('<TR><TD></TD><TD PORT="boundary_out" HEIGHT="1"></TD><TD></TD></TR>')
+
     return (
-        "<<TABLE BORDER=\"0\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"0\">"
-        f"<TR><TD>{left_ports}</TD><TD>{content_table}</TD><TD>{right_ports}</TD></TR>"
+        f'<<TABLE BORDER="2" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0" COLOR="{border_color}">'
+        f'{"".join(rows)}'
         "</TABLE>>"
     )
 
 
-def _port_column_html(*, role: str, count: int) -> str:
-    rows = []
-    for slot_index in range(count):
-        rows.append(
-            f'<TR><TD PORT="{role}_{slot_index}" WIDTH="6" HEIGHT="16" FIXEDSIZE="TRUE"></TD></TR>'
-        )
-    return (
-        '<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0">'
-        f'{"".join(rows)}'
-        '</TABLE>'
-    )
+def _port_cell(*, role: str, slot: int) -> str:
+    return f'<TD PORT="{role}_{slot}" WIDTH="0" HEIGHT="1"></TD>'
+
+
+def _empty_port_cell() -> str:
+    return '<TD WIDTH="0" HEIGHT="1"></TD>'
 
 
 def _port_counts_by_node(routing_plan: Any) -> dict[str, dict[str, int]]:

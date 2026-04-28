@@ -325,8 +325,11 @@ def test_layout_wrap_lr_emits_wrap_hints_and_boundary_connector():
     assert "splines=ortho" in out
     assert "cluster_wrap_lr_0" in out
     assert '"a" -> "b" [tailport="out_0:e", headport="in_0:w"];' in out
-    assert '"b" -> "c" [tailport="out_0:e", headport="in_0:w", minlen=2, penwidth=1.2];' in out
-    assert '"e" -> "end" [tailport="out_0:e", headport=w, minlen=2, penwidth=1.2];' in out
+    assert '"__wrap_exit_lr_0" [shape=point, width=0.01, label="", style=invis, height=0.01, group="__wrap_exit_column"];' in out
+    assert '"b" -> "__wrap_exit_lr_0" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out
+    assert '"__wrap_exit_lr_0" -> "c" [headport="boundary_in:s", minlen=2, penwidth=1.2];' in out
+    assert '"e" -> "__wrap_exit_lr_1" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out
+    assert '"__wrap_exit_lr_1" -> "end" [headport=n, minlen=2, penwidth=1.2];' in out
     assert "__sppm_wrap_corridor_" not in out
 
 
@@ -362,8 +365,10 @@ def test_layout_wrap_tb_emits_wrap_hints_and_boundary_connector():
     assert "// Autoformat wrapped layout: orientation=tb" in out
     assert "rankdir=LR;" in out
     assert "cluster_wrap_tb_0" in out
-    assert '"a" -> "b" [tailport="out_0:s", headport="in_0:n", minlen=2, penwidth=1.2];' in out
-    assert '"c" -> "d" [tailport="out_0:s", headport="in_0:n", minlen=2, penwidth=1.2];' in out
+    assert '"a" -> "__sppm_boundary_corridor_a_b" [tailport=s, arrowhead=none, constraint=false, weight=0];' in out
+    assert '"__sppm_boundary_corridor_a_b" -> "b" [headport=n, minlen=2, penwidth=1.2];' in out
+    assert '"c" -> "__sppm_boundary_corridor_c_d" [tailport=s, arrowhead=none, constraint=false, weight=0];' in out
+    assert '"__sppm_boundary_corridor_c_d" -> "d" [headport=n, minlen=2, penwidth=1.2];' in out
     assert "__sppm_wrap_corridor_" not in out
 
 
@@ -466,8 +471,10 @@ def test_layout_wrap_activates_from_width_threshold_only():
 
     assert "cluster_wrap_lr_0" in out
     assert "splines=ortho" in out
-    assert '"b" -> "c" [tailport="out_0:e", headport="in_0:w", minlen=2, penwidth=1.2];' in out
-    assert '"e" -> "end" [tailport="out_0:e", headport=w, minlen=2, penwidth=1.2];' in out
+    assert '"b" -> "__wrap_exit_lr_0" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out
+    assert '"__wrap_exit_lr_0" -> "c" [headport="boundary_in:s", minlen=2, penwidth=1.2];' in out
+    assert '"e" -> "__wrap_exit_lr_1" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out
+    assert '"__wrap_exit_lr_1" -> "end" [headport=n, minlen=2, penwidth=1.2];' in out
 
 
 def test_layout_wrap_tiny_width_uses_min_chunk_floor_of_three():
@@ -500,9 +507,11 @@ def test_layout_wrap_tiny_width_uses_min_chunk_floor_of_three():
         },
     )
 
-    # width floor => chunk size 3 including start/end, boundaries are b->c and e->end.
-    assert '"b" -> "c" [tailport="out_0:e", headport="in_0:w", minlen=2, penwidth=1.2];' in out
-    assert '"e" -> "end" [tailport="out_0:e", headport=w, minlen=2, penwidth=1.2];' in out
+    # Placement-based wrapping can collapse to one node per line under an extreme width budget.
+    assert '"b" -> "__wrap_exit_lr_2" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out
+    assert '"__wrap_exit_lr_2" -> "c" [headport="boundary_in:s", minlen=2, penwidth=1.2];' in out
+    assert '"e" -> "__wrap_exit_lr_5" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out
+    assert '"__wrap_exit_lr_5" -> "end" [headport=n, minlen=2, penwidth=1.2];' in out
 
 
 def test_layout_wrap_fit_strict_wraps_sooner_than_fit_preferred_for_same_content():
@@ -560,9 +569,9 @@ def test_layout_wrap_fit_strict_wraps_sooner_than_fit_preferred_for_same_content
     )
 
     # fit-preferred keeps a,b,c on the same line; boundary falls between b and c
-    assert '"b" -> "c" [tailport="out_0:e", headport="in_0:w", minlen=2, penwidth=1.2];' in out_preferred
+    assert '"b" -> "__wrap_exit_lr_0" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out_preferred
     # fit-strict reserves more margin so a and b end up in different chunks
-    assert '"a" -> "b" [tailport="out_0:e", headport="in_0:w", minlen=2, penwidth=1.2];' in out_strict
+    assert '"a" -> "__wrap_exit_lr_0" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out_strict
 
 
 def test_layout_wrap_width_estimator_responds_to_dense_label_content():
@@ -603,7 +612,7 @@ def test_layout_wrap_width_estimator_responds_to_dense_label_content():
     )
 
     # dense label on 'a' pushes the node wide enough that 'a' and 'b' land in different chunks
-    assert '"a" -> "b" [tailport="out_0:e", headport="in_0:w", minlen=2, penwidth=1.2];' in out
+    assert '"a" -> "__wrap_exit_lr_0" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out
 
 
 def test_layout_spacing_compact_reduces_wrapped_graph_spacing():

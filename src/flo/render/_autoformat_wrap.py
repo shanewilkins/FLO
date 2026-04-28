@@ -39,6 +39,7 @@ class WrapPlan:
     display_chunks: list[list[str]]
     boundary_edges: set[tuple[str, str]]
     node_chunk_index: dict[str, int]
+    node_display_index: dict[str, int]
     placement_plan: PlacementPlan | None
 
 
@@ -99,6 +100,7 @@ def _inactive_wrap_plan() -> WrapPlan:
         display_chunks=[],
         boundary_edges=set(),
         node_chunk_index={},
+        node_display_index={},
         placement_plan=None,
     )
 
@@ -183,6 +185,11 @@ def _wrap_plan_from_placement(plan: PlacementPlan) -> WrapPlan:
         for line in plan.lines
         for node_id in line.node_ids
     }
+    node_display_index = {
+        node_id: display_index
+        for line in plan.lines
+        for display_index, node_id in enumerate(line.node_ids)
+    }
     chunk_size = max(len(c) for c in chunks)
     display_chunks = [list(c) for c in chunks]
     return WrapPlan(
@@ -192,6 +199,7 @@ def _wrap_plan_from_placement(plan: PlacementPlan) -> WrapPlan:
         display_chunks=display_chunks,
         boundary_edges=boundary_edges,
         node_chunk_index=node_chunk_index,
+        node_display_index=node_display_index,
         placement_plan=plan,
     )
 
@@ -214,6 +222,7 @@ def _build_chunked_wrap_plan(nodes: list[dict[str, Any]], options: RenderOptions
             display_chunks=[],
             boundary_edges=set(),
             node_chunk_index={},
+            node_display_index={},
             placement_plan=None,
         )
 
@@ -227,6 +236,7 @@ def _build_chunked_wrap_plan(nodes: list[dict[str, Any]], options: RenderOptions
             display_chunks=[],
             boundary_edges=set(),
             node_chunk_index={},
+            node_display_index={},
             placement_plan=None,
         )
 
@@ -239,6 +249,11 @@ def _build_chunked_wrap_plan(nodes: list[dict[str, Any]], options: RenderOptions
         for chunk_idx, chunk in enumerate(chunks)
         for node_id in chunk
     }
+    node_display_index = {
+        node_id: display_index
+        for chunk in chunks
+        for display_index, node_id in enumerate(chunk)
+    }
 
     return WrapPlan(
         active=True,
@@ -247,6 +262,7 @@ def _build_chunked_wrap_plan(nodes: list[dict[str, Any]], options: RenderOptions
         display_chunks=display_chunks,
         boundary_edges=boundary_edges,
         node_chunk_index=node_chunk_index,
+        node_display_index=node_display_index,
         placement_plan=None,
     )
 
@@ -259,10 +275,18 @@ def append_wrap_layout_hints(lines: list[str], options: RenderOptions, plan: Wra
     orientation = "lr" if options.orientation == "lr" else "tb"
     lines.append(f"  // Autoformat wrapped layout: orientation={orientation}, chunk_size={plan.chunk_size}")
 
-    anchor_ids = [f"__wrap_anchor_{orientation}_{idx}" for idx in range(len(plan.display_chunks))]
+    anchor_ids = [wrap_chunk_anchor_id(orientation=orientation, chunk_idx=idx) for idx in range(len(plan.display_chunks))]
+    exit_anchor_ids = [
+        wrap_chunk_exit_anchor_id(orientation=orientation, chunk_idx=idx)
+        for idx in range(len(plan.display_chunks))
+    ]
     for anchor_id in anchor_ids:
         lines.append(
-            f'  "{anchor_id}" [shape=point, width=0.01, label="", style=invis, height=0.01];'
+            f'  "{anchor_id}" [shape=point, width=0.01, label="", style=invis, height=0.01, group="__wrap_margin_column"];'
+        )
+    for anchor_id in exit_anchor_ids:
+        lines.append(
+            f'  "{anchor_id}" [shape=point, width=0.01, label="", style=invis, height=0.01, group="__wrap_exit_column"];'
         )
 
     for chunk_idx, chunk in enumerate(plan.display_chunks):
@@ -276,6 +300,7 @@ def append_wrap_layout_hints(lines: list[str], options: RenderOptions, plan: Wra
         lines.append(f'    "{anchor_ids[chunk_idx]}";')
         for node_id in chunk:
             lines.append(f'    "{_escape_id(node_id)}";')
+        lines.append(f'    "{exit_anchor_ids[chunk_idx]}";')
         lines.append("  }")
 
         # Keep a shared left margin for each wrapped chunk.
@@ -293,6 +318,12 @@ def append_wrap_layout_hints(lines: list[str], options: RenderOptions, plan: Wra
                 f'  "{_escape_id(source)}" -> "{_escape_id(target)}" '
                 '[style=invis, weight=100, constraint=false];'
             )
+
+        last_node = chunk[-1]
+        lines.append(
+            f'  "{_escape_id(last_node)}" -> "{exit_anchor_ids[chunk_idx]}" '
+            '[style=invis, weight=200, constraint=false];'
+        )
 
     # Vertically/horizontally align chunk anchors to force left-margin reset.
     for idx in range(len(anchor_ids) - 1):
@@ -478,6 +509,16 @@ def _collect_sequence_ids(nodes: list[dict[str, Any]]) -> list[str]:
 def _display_chunk_for_layout(*, chunk: list[str], chunk_idx: int) -> list[str]:
     # Keep chunk order stable to preserve intuitive left-to-right/top-to-bottom flow.
     return list(chunk)
+
+
+def wrap_chunk_anchor_id(*, orientation: str, chunk_idx: int) -> str:
+    """Return the invisible leading anchor id for one wrapped chunk."""
+    return f"__wrap_anchor_{orientation}_{chunk_idx}"
+
+
+def wrap_chunk_exit_anchor_id(*, orientation: str, chunk_idx: int) -> str:
+    """Return the invisible trailing anchor id for one wrapped chunk."""
+    return f"__wrap_exit_{orientation}_{chunk_idx}"
 
 
 def _escape_id(value: str) -> str:

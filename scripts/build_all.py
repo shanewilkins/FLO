@@ -11,7 +11,6 @@ import argparse
 from pathlib import Path
 import sys
 import shutil
-import subprocess
 import yaml
 
 
@@ -88,6 +87,7 @@ def _build_one(example_file: Path, examples_dir: Path, renders_dir: Path) -> tup
     from flo.compiler.ir import ensure_schema_aligned, validate_ir
     from flo.export import export_ir
     from flo.render import render_dot
+    from flo.services.graphviz import render_dot_to_file
 
     rel = example_file.relative_to(examples_dir)
     base_out = (renders_dir / rel).with_suffix("")
@@ -113,7 +113,7 @@ def _build_one(example_file: Path, examples_dir: Path, renders_dir: Path) -> tup
             created.append(str(dot_out.relative_to(REPO_ROOT)))
 
             if has_dot:
-                subprocess.run(["dot", "-Tsvg", str(dot_out), "-o", str(svg_out)], check=True)
+                render_dot_to_file(dot, str(svg_out))
                 created.append(str(svg_out.relative_to(REPO_ROOT)))
 
         if _has_materials_or_equipment_collection(ir):
