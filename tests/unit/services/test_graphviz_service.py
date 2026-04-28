@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from flo.services.errors import RenderError
-from flo.services.graphviz import _postprocess_wrapped_sppm_svg, render_dot_to_file
+from flo.services.graphviz import _normalize_svg_outer_padding, _postprocess_wrapped_sppm_svg, render_dot_to_file
 
 
 SIMPLE_DOT = "digraph G { A -> B }"
@@ -109,7 +109,7 @@ def test_postprocess_wrapped_sppm_svg_rewrites_boundary_dogleg_geometry(tmp_path
     _postprocess_wrapped_sppm_svg(dot=dot, output_path=svg_path)
 
     svg = svg_path.read_text(encoding="utf-8")
-    assert 'd="M 380.00,295.00 L 404.00,295.00 L 404.00,128.00 L 120.00,128.00"' in svg
+    assert 'd="M 380.00,295.00 L 392.00,295.00 L 392.00,128.00 L 120.00,128.00"' in svg
     assert 'd="M 120.00,128.00 L 120.00,140.00"' in svg
     assert 'points="120.00,140.00 116.00,132.00 124.00,132.00 120.00,140.00"' in svg
 
@@ -144,10 +144,78 @@ def test_postprocess_wrapped_sppm_svg_rewrites_two_boundary_doglegs_exactly(tmp_
     _postprocess_wrapped_sppm_svg(dot=dot, output_path=svg_path)
     svg = svg_path.read_text(encoding="utf-8")
 
-    assert 'd="M 386.25,298.12 L 410.25,298.12 L 410.25,129.25 L 119.00,129.25"' in svg
+    assert 'd="M 386.25,298.12 L 398.25,298.12 L 398.25,129.25 L 119.00,129.25"' in svg
     assert 'd="M 119.00,129.25 L 119.00,141.25"' in svg
     assert 'points="119.00,141.25 115.00,133.25 123.00,133.25 119.00,141.25"' in svg
 
-    assert 'd="M 405.12,175.88 L 429.12,175.88 L 429.12,7.00 L 129.00,7.00"' in svg
+    assert 'd="M 405.12,175.88 L 417.12,175.88 L 417.12,7.00 L 129.00,7.00"' in svg
     assert 'd="M 129.00,7.00 L 129.00,19.00"' in svg
     assert 'points="129.00,19.00 125.00,11.00 133.00,11.00 129.00,19.00"' in svg
+
+
+def test_normalize_svg_outer_padding_sets_even_border_and_updates_canvas(tmp_path: Path):
+        svg_path = tmp_path / "pad.svg"
+        svg_path.write_text(
+                """<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200pt" height="150pt" viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg">
+    <g class="node"><title>a</title><polygon points="20,30 120,30 120,80 20,80" /></g>
+</svg>
+""",
+                encoding="utf-8",
+        )
+
+        _normalize_svg_outer_padding(output_path=svg_path, padding=10.0)
+        svg = svg_path.read_text(encoding="utf-8")
+
+        assert 'viewBox="10.00 20.00 120.00 70.00"' in svg
+        assert 'width="120.00pt"' in svg
+        assert 'height="70.00pt"' in svg
+        assert 'id="__flo_canvas_bg"' in svg
+        assert 'fill="white"' in svg
+        assert 'style="background:#fff;"' in svg
+
+
+def test_normalize_svg_outer_padding_accounts_for_graph_transform_translation(tmp_path: Path):
+        svg_path = tmp_path / "pad_transform.svg"
+        svg_path.write_text(
+                """<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200pt" height="150pt" viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg">
+    <g class="graph" transform="scale(1 1) rotate(0) translate(7.2 165.2)">
+        <g class="node"><title>a</title><polygon points="20,30 120,30 120,80 20,80" /></g>
+    </g>
+</svg>
+""",
+                encoding="utf-8",
+        )
+
+        _normalize_svg_outer_padding(output_path=svg_path, padding=10.0)
+        svg = svg_path.read_text(encoding="utf-8")
+
+        assert 'viewBox="17.20 185.20 120.00 70.00"' in svg
+        assert 'width="120.00pt"' in svg
+        assert 'height="70.00pt"' in svg
+        assert 'id="__flo_canvas_bg"' in svg
+        assert 'style="background:#fff;"' in svg
+
+
+def test_normalize_svg_outer_padding_ignores_graph_background_bounds(tmp_path: Path):
+        svg_path = tmp_path / "pad_graph_bounds.svg"
+        svg_path.write_text(
+                """<?xml version="1.0" encoding="UTF-8"?>
+<svg width="421pt" height="335.75pt" viewBox="0 0 421 335.75" xmlns="http://www.w3.org/2000/svg">
+    <g class="graph" transform="scale(1 1) rotate(0) translate(7.2 365.2)">
+        <polygon fill="white" stroke="none" points="-3.6,3.6 -3.6,-361.6 431.6,-361.6 431.6,3.6 -3.6,3.6" />
+        <g class="node"><title>a</title><polygon points="20,-30 120,-30 120,-80 20,-80" /></g>
+    </g>
+</svg>
+""",
+                encoding="utf-8",
+        )
+
+        _normalize_svg_outer_padding(output_path=svg_path, padding=10.0)
+        svg = svg_path.read_text(encoding="utf-8")
+
+        assert 'viewBox="17.20 275.20 120.00 70.00"' in svg
+        assert 'width="120.00pt"' in svg
+        assert 'height="70.00pt"' in svg
+        assert 'style="background:#fff;"' in svg

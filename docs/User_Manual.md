@@ -648,6 +648,47 @@ SPPM preset/config defaults:
 - Precedence is: CLI flags > `diagrams.toml` explicit `[sppm]` keys >
   `diagrams.toml` preset overrides (`[sppm.presets.<profile>]`) > built-in profile defaults.
 
+### AI Quick Reference: Max Width and Compact Density
+
+Use this section for direct command recipes.
+
+Search keys:
+- `layout-max-width-px`
+- `sppm-label-density compact`
+- `layout-wrap auto`
+
+Most common commands:
+
+```bash
+# Wrap SPPM based on width budget (pixels)
+flo run examples/reference/washnfold.flo \
+  --export dot \
+  --diagram sppm \
+  --orientation lr \
+  --layout-wrap auto \
+  --layout-max-width-px 800
+
+# Compact SPPM labels (less text in each box)
+flo run examples/reference/washnfold.flo \
+  --export dot \
+  --diagram sppm \
+  --sppm-label-density compact
+
+# Typical combined usage for readable wrapped output
+flo run examples/reference/washnfold.flo \
+  --export dot \
+  --diagram sppm \
+  --orientation lr \
+  --layout-wrap auto \
+  --layout-max-width-px 800 \
+  --sppm-label-density compact
+```
+
+Notes:
+- `--layout-max-width-px` only affects DOT rendering modes.
+- `--layout-wrap auto` must be enabled for width-triggered wrapping behavior.
+- `--sppm-label-density compact` reduces visible label payload but keeps process sequence unchanged.
+
 ## 7) Input and Output Streams
 
 FLO supports POSIX-style streams:

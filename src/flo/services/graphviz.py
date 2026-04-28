@@ -7,6 +7,7 @@ that FLO's core rendering logic never depends on Graphviz being installed.
 
 from __future__ import annotations
 
+import math
 import re
 import shutil
 import subprocess
@@ -16,6 +17,8 @@ from pathlib import Path
 from flo.services.errors import RenderError
 
 _SUPPORTED_FORMATS = {"png", "svg", "pdf", "eps", "ps"}
+_SVG_OUTER_PADDING_PX = 6.0
+_SVG_NS = "http://www.w3.org/2000/svg"
 
 
 def render_dot_to_file(dot: str, output_path: str) -> None:
@@ -58,12 +61,16 @@ def render_dot_to_file(dot: str, output_path: str) -> None:
             + (f": {stderr}" if stderr else "")
         )
 
-    # Graphviz ortho routing does not reliably honor the intended wrapped SPPM
-    # dogleg landing geometry (especially top-center entry on boundary edges).
-    # We keep DOT as the logical routing contract, then finalize those boundary
-    # polylines in SVG where node bounds are known and stable.
+    # SVG gets a small FLO-owned postprocess layer:
+    # 1) normalize wrapped SPPM boundary doglegs where Graphviz can drift;
+    # 2) normalize outer SVG padding so borders are small and even.
+    # Future work: extend similar canvas normalization to non-SVG formats.
     if fmt == "svg":
-        _postprocess_wrapped_sppm_svg(dot=dot, output_path=Path(output_path))
+        svg_path = Path(output_path)
+        if not svg_path.exists():
+            return
+        _postprocess_wrapped_sppm_svg(dot=dot, output_path=svg_path)
+        _normalize_svg_outer_padding(output_path=svg_path, padding=_SVG_OUTER_PADDING_PX)
 
 
 def _postprocess_wrapped_sppm_svg(*, dot: str, output_path: Path) -> None:
@@ -108,7 +115,9 @@ def _postprocess_wrapped_sppm_svg(*, dot: str, output_path: Path) -> None:
         target_center_x = (target_bounds[0] + target_bounds[2]) / 2.0
         target_top_y = target_bounds[1]
         approach_y = target_top_y - 12.0
-        corridor_x = max(source_right + 24.0, target_center_x + 24.0)
+        # Keep the dogleg corridor outside the source box without pinning it
+        # against the far-right graph edge, which creates uneven margins.
+        corridor_x = source_right + 12.0
 
         _set_edge_path(
             first_group,
@@ -130,7 +139,51 @@ def _postprocess_wrapped_sppm_svg(*, dot: str, output_path: Path) -> None:
         updated = True
 
     if updated:
-        tree.write(output_path, encoding="utf-8", xml_declaration=True)
+        _write_svg_tree(tree, output_path)
+
+
+def _normalize_svg_outer_padding(*, output_path: Path, padding: float) -> None:
+    """Normalize SVG canvas to a small even outer border around content."""
+    tree = ET.parse(output_path)
+    root = tree.getroot()
+
+    points = _svg_content_points(root)
+    if not points:
+        return
+
+    # Graphviz wraps content in a transformed graph group. Account for that
+    # transform so normalized viewBox bounds target actual rendered geometry.
+    graph_tx, graph_ty = _svg_graph_translation(root)
+    points = [(x + graph_tx, y + graph_ty) for x, y in points]
+
+    xs = [point[0] for point in points]
+    ys = [point[1] for point in points]
+    min_x = min(xs)
+    min_y = min(ys)
+    max_x = max(xs)
+    max_y = max(ys)
+
+    width = max(1.0, (max_x - min_x) + 2.0 * padding)
+    height = max(1.0, (max_y - min_y) + 2.0 * padding)
+    view_min_x = min_x - padding
+    view_min_y = min_y - padding
+
+    root.attrib["viewBox"] = f"{view_min_x:.2f} {view_min_y:.2f} {width:.2f} {height:.2f}"
+    if "width" in root.attrib:
+        root.attrib["width"] = _format_svg_length(root.attrib["width"], width)
+    if "height" in root.attrib:
+        root.attrib["height"] = _format_svg_length(root.attrib["height"], height)
+
+    _ensure_svg_white_background(root)
+    _set_svg_background_rect(
+        root,
+        x=view_min_x,
+        y=view_min_y,
+        width=width,
+        height=height,
+    )
+
+    _write_svg_tree(tree, output_path)
 
 
 def _wrapped_sppm_boundary_pairs(dot: str) -> dict[str, tuple[str, str]]:
@@ -197,6 +250,89 @@ def _svg_edge_groups(root: ET.Element) -> dict[str, ET.Element]:
     return groups
 
 
+def _svg_content_points(root: ET.Element) -> list[tuple[float, float]]:
+    points: list[tuple[float, float]] = []
+    for group in root.iter():
+        if group.attrib.get("class") not in {"node", "edge"}:
+            continue
+        for polygon in group.findall("{*}polygon"):
+            points.extend(_parse_svg_points(polygon.attrib.get("points", "")))
+        for path in group.findall("{*}path"):
+            points.extend(_parse_svg_path_points(path.attrib.get("d", "")))
+    return points
+
+
+def _set_svg_background_rect(root: ET.Element, *, x: float, y: float, width: float, height: float) -> None:
+    bg_tag = f"{{{_SVG_NS}}}rect"
+    parent = root
+
+    # Remove any stale background we may have injected earlier.
+    for child in list(parent):
+        if child.tag == bg_tag and child.attrib.get("id") == "__flo_canvas_bg":
+            parent.remove(child)
+
+    bg = ET.Element(
+        bg_tag,
+        {
+            "id": "__flo_canvas_bg",
+            "x": f"{x:.2f}",
+            "y": f"{y:.2f}",
+            "width": f"{width:.2f}",
+            "height": f"{height:.2f}",
+            "fill": "white",
+            "stroke": "none",
+        },
+    )
+    parent.insert(0, bg)
+
+
+def _ensure_svg_white_background(root: ET.Element) -> None:
+    style = root.attrib.get("style", "")
+    declarations = [part.strip() for part in style.split(";") if part.strip()]
+
+    filtered = [
+        decl
+        for decl in declarations
+        if not decl.lower().startswith("background:")
+        and not decl.lower().startswith("background-color:")
+    ]
+    filtered.append("background:#fff")
+    root.attrib["style"] = "; ".join(filtered) + ";"
+
+
+def _svg_graph_translation(root: ET.Element) -> tuple[float, float]:
+    for group in root.iter():
+        if group.attrib.get("class") != "graph":
+            continue
+        transform = group.attrib.get("transform")
+        if not transform:
+            return (0.0, 0.0)
+        return _parse_svg_translate(transform)
+    return (0.0, 0.0)
+
+
+def _parse_svg_translate(transform: str) -> tuple[float, float]:
+    rotate_match = re.search(r"rotate\(\s*(-?\d+(?:\.\d+)?)", transform)
+    if rotate_match and not math.isclose(float(rotate_match.group(1)), 0.0, abs_tol=1e-9):
+        return (0.0, 0.0)
+
+    match = re.search(
+        r"translate\(\s*(-?\d+(?:\.\d+)?)\s*(?:[,\s]\s*(-?\d+(?:\.\d+)?))?\s*\)",
+        transform,
+    )
+    if match is None:
+        return (0.0, 0.0)
+    tx = float(match.group(1))
+    ty = float(match.group(2)) if match.group(2) is not None else 0.0
+    return (tx, ty)
+
+
+def _format_svg_length(existing: str, value: float) -> str:
+    match = re.match(r"^\s*-?\d+(?:\.\d+)?\s*(?P<unit>[a-zA-Z%]*)\s*$", existing)
+    unit = match.group("unit") if match else ""
+    return f"{value:.2f}{unit}"
+
+
 def _set_edge_path(group: ET.Element, points: list[tuple[float, float]]) -> None:
     path = group.find("{*}path")
     if path is None:
@@ -227,6 +363,12 @@ def _parse_svg_points(points_text: str) -> list[tuple[float, float]]:
 def _parse_svg_path_points(path_text: str) -> list[tuple[float, float]]:
     values = [float(value) for value in re.findall(r'-?\d+(?:\.\d+)?', path_text)]
     return [(values[idx], values[idx + 1]) for idx in range(0, len(values) - 1, 2)]
+
+
+def _write_svg_tree(tree: ET.ElementTree[ET.Element], output_path: Path) -> None:
+    """Write SVG while preserving an unprefixed default SVG namespace."""
+    ET.register_namespace("", _SVG_NS)
+    tree.write(output_path, encoding="utf-8", xml_declaration=True)
 
 
 __all__ = ["render_dot_to_file"]
