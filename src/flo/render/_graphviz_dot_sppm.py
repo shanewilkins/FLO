@@ -10,6 +10,7 @@ Renders a left-to-right process map with:
 
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import Any
 
 from ._graphviz_dot_common import _escape
@@ -35,11 +36,13 @@ def _render_sppm_graph(process: dict[str, Any] | Any, options: RenderOptions) ->
     step_numbering = _build_step_numbering(nodes)
     wrap_plan = build_wrap_plan(nodes, options, planner="placement")
     routing_plan = build_sppm_routing_plan(
+        nodes=nodes,
         edges=edges,
         options=options,
         step_numbering=step_numbering,
         wrap_plan=wrap_plan,
     )
+    port_counts = _port_counts_by_node(routing_plan)
     theme = resolve_sppm_theme(options.sppm_theme)
 
     lines: list[str] = ["digraph {"]
@@ -63,6 +66,7 @@ def _render_sppm_graph(process: dict[str, Any] | Any, options: RenderOptions) ->
                 theme=theme,
                 step_numbering=step_numbering,
                 wrap_plan=wrap_plan,
+                port_counts=port_counts.get(str(node.get("id") or ""), {}),
             )
         )
 
@@ -119,6 +123,7 @@ def _render_sppm_node(
     theme: SppmTheme,
     step_numbering: dict[str, int],
     wrap_plan: WrapPlan,
+    port_counts: dict[str, int],
 ) -> list[str]:
     node_id = str(node.get("id") or "")
     if not node_id:
@@ -138,6 +143,7 @@ def _render_sppm_node(
             options=options,
             theme=theme,
             wrap_plan=wrap_plan,
+            port_counts=port_counts,
         )
     ]
 
@@ -164,6 +170,7 @@ def _render_sppm_task_node(
     options: RenderOptions,
     theme: SppmTheme,
     wrap_plan: WrapPlan,
+    port_counts: dict[str, int],
 ) -> str:
     metadata: dict[str, Any] = node.get("metadata") or {}
     workers: list[Any] = node.get("workers") or []
@@ -176,6 +183,7 @@ def _render_sppm_task_node(
         style=style,
         note=note,
         options=options,
+        port_counts=port_counts,
     )
     attrs = ["shape=none", "margin=0", f"label={html_label}"]
     _append_chunk_group(attrs=attrs, node_id=node_id, wrap_plan=wrap_plan)
@@ -204,6 +212,7 @@ def _sppm_html_label(
     style: SppmNodeStyle,
     note: str,
     options: RenderOptions,
+    port_counts: dict[str, int],
 ) -> str:
     """Build a Graphviz HTML-like table label: colored header + white info sub-row."""
     name_text = format_text_field(
@@ -282,10 +291,51 @@ def _sppm_html_label(
             f'</TD></TR>'
         )
 
-    return (
-        f'<<TABLE BORDER="2" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" '
-        f'COLOR="{style.border}">{rows}</TABLE>>'
+    content_table = (
+        f'<TABLE BORDER="2" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" '
+        f'COLOR="{style.border}">{rows}</TABLE>'
     )
+    return _wrap_sppm_label_with_ports(content_table=content_table, port_counts=port_counts)
+
+
+def _wrap_sppm_label_with_ports(*, content_table: str, port_counts: dict[str, int]) -> str:
+    in_count = max(0, int(port_counts.get("in", 0)))
+    out_count = max(0, int(port_counts.get("out", 0)))
+    if in_count == 0 and out_count == 0:
+        return f"<{content_table}>"
+
+    left_ports = _port_column_html(role="in", count=max(1, in_count))
+    right_ports = _port_column_html(role="out", count=max(1, out_count))
+    return (
+        "<<TABLE BORDER=\"0\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"0\">"
+        f"<TR><TD>{left_ports}</TD><TD>{content_table}</TD><TD>{right_ports}</TD></TR>"
+        "</TABLE>>"
+    )
+
+
+def _port_column_html(*, role: str, count: int) -> str:
+    rows = []
+    for slot_index in range(count):
+        rows.append(
+            f'<TR><TD PORT="{role}_{slot_index}" WIDTH="6" HEIGHT="16" FIXEDSIZE="TRUE"></TD></TR>'
+        )
+    return (
+        '<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0">'
+        f'{"".join(rows)}'
+        '</TABLE>'
+    )
+
+
+def _port_counts_by_node(routing_plan: Any) -> dict[str, dict[str, int]]:
+    counts: dict[str, dict[str, int]] = defaultdict(lambda: {"in": 0, "out": 0})
+    for route in routing_plan.route_plan.routes.values():
+        counts[route.source_port.node_id]["out"] = max(
+            counts[route.source_port.node_id]["out"], route.source_port.slot_index + 1
+        )
+        counts[route.target_port.node_id]["in"] = max(
+            counts[route.target_port.node_id]["in"], route.target_port.slot_index + 1
+        )
+    return dict(counts)
 
 
 def _html_escape(text: str) -> str:

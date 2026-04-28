@@ -156,10 +156,16 @@ Deliverables:
 - Routing engine with deterministic policies
 - Unit tests for port selection and lane assignment
 - Snapshot tests for route plan outputs
+- Renderer hookup that maps core port slots to named Graphviz ports in SPPM
 
 Exit criteria:
 - Stable routing snapshots for acceptance fixture
 - No mid-box edge landings on acceptance render
+
+Implementation note:
+- Phase 4 is not complete when only core `PortSpec` / `RoutePlan` data exists.
+	The SPPM renderer must expose explicit named ports in emitted DOT so
+	Graphviz can honor deterministic slot assignments visually.
 
 ---
 
