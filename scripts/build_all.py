@@ -187,6 +187,19 @@ def _extra_render_variants_for_example(example_file: Path) -> list[tuple[str, di
             ("_topdown", {"diagram": "flowchart", "orientation": "tb"}),
             ("_spaghetti", {"diagram": "spaghetti"}),
         ]
+    if example_file.stem.lower() == "washnfold":
+        return [
+            ("_sppm", {"diagram": "sppm", "orientation": "lr"}),
+            (
+                "_sppm_wrap800",
+                {
+                    "diagram": "sppm",
+                    "orientation": "lr",
+                    "layout_wrap": "auto",
+                    "layout_max_width_px": "800",
+                },
+            ),
+        ]
     return []
 
 
