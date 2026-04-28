@@ -25,8 +25,8 @@ def test_sppm_rework_edge_uses_corridor_anchor_and_lr_ports():
 
     out = render_dot(ir_like, options={"diagram": "sppm"})
     assert '"__sppm_rework_corridor_decision_rework" [shape=point, width=0.01, height=0.01, label="", style=invis];' in out
-    assert '"decision" -> "__sppm_rework_corridor_decision_rework" [tailport="out_0:e", constraint=false, style=dashed, weight=0, arrowhead=none];' in out
-    assert '"__sppm_rework_corridor_decision_rework" -> "rework" [headport="in_0:w", constraint=false, minlen=3, weight=0, style=dashed, label="no"];' in out
+    assert '"decision" -> "__sppm_rework_corridor_decision_rework" [tailport=e, constraint=false, style=dashed, weight=0, arrowhead=none];' in out
+    assert '"__sppm_rework_corridor_decision_rework" -> "rework" [headport=w, constraint=false, minlen=3, weight=0, style=dashed, label="no"];' in out
 
 
 def test_sppm_rework_edge_uses_tb_ports_when_rankdir_tb():
@@ -47,8 +47,8 @@ def test_sppm_rework_edge_uses_tb_ports_when_rankdir_tb():
     }
 
     out = render_dot(ir_like, options={"diagram": "sppm", "orientation": "tb"})
-    assert '"decision" -> "__sppm_rework_corridor_decision_rework" [tailport="out_0:s", constraint=false, style=dashed, weight=0, arrowhead=none];' in out
-    assert '"__sppm_rework_corridor_decision_rework" -> "rework" [headport="in_0:n", constraint=false, minlen=3, weight=0, style=dashed, label="no"];' in out
+    assert '"decision" -> "__sppm_rework_corridor_decision_rework" [tailport=s, constraint=false, style=dashed, weight=0, arrowhead=none];' in out
+    assert '"__sppm_rework_corridor_decision_rework" -> "rework" [headport=n, constraint=false, minlen=3, weight=0, style=dashed, label="no"];' in out
 
 
 def test_sppm_routing_plan_marks_wrap_boundary_edges_with_ports_and_boundary_attrs():
@@ -186,13 +186,13 @@ def test_sppm_routing_plan_snapshot_wrap_boundary_and_direct_segments():
             "  segment a->__wrap_exit_lr_0 [tailport=\"out_0:e\", arrowhead=none, constraint=false, weight=0]",
             "  segment __wrap_exit_lr_0->b [headport=\"boundary_in:s\", minlen=2, penwidth=1.2]",
             "edge b->c kind=direct boundary=False rework=False",
-            "  segment b->c [tailport=\"out_0:e\", headport=\"in_0:w\"]",
+            "  segment b->c [tailport=e, headport=w]",
             "edge c->end kind=corridor boundary=True rework=False",
             "  lane wrap_lane_1",
             "  segment c->__wrap_exit_lr_1 [tailport=\"out_0:e\", arrowhead=none, constraint=false, weight=0]",
             "  segment __wrap_exit_lr_1->end [headport=n, minlen=2, penwidth=1.2]",
             "edge start->a kind=direct boundary=False rework=False",
-            "  segment start->a [tailport=e, headport=\"in_0:w\"]",
+            "  segment start->a [tailport=e, headport=w]",
         ]
     )
     assert snapshot == expected
@@ -310,4 +310,4 @@ def test_sppm_task_nodes_emit_named_slot_ports_when_route_plan_has_slots():
     assert 'PORT="in_0"' in out
     assert 'PORT="in_1"' in out
     assert 'PORT="out_0"' in out
-    assert 'headport="in_0:w"' in out or 'headport="in_1:w"' in out
+    assert "headport=w" in out

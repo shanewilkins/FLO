@@ -8,7 +8,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from flo.services.errors import RenderError
-from flo.services.graphviz import _normalize_svg_outer_padding, _postprocess_wrapped_sppm_svg, render_dot_to_file
+from flo.services.graphviz import (
+    _normalize_node_backing_fills_svg,
+    _normalize_svg_outer_padding,
+    _postprocess_direct_midpoint_edges_svg,
+    _postprocess_wrapped_sppm_svg,
+    render_dot_to_file,
+)
 
 
 SIMPLE_DOT = "digraph G { A -> B }"
@@ -153,6 +159,45 @@ def test_postprocess_wrapped_sppm_svg_rewrites_two_boundary_doglegs_exactly(tmp_
     assert 'points="129.00,19.00 125.00,11.00 133.00,11.00 129.00,19.00"' in svg
 
 
+def test_postprocess_direct_midpoint_edges_svg_rewrites_horizontal_edge_endpoints(tmp_path: Path):
+        svg_path = tmp_path / "direct.svg"
+        svg_path.write_text(
+                """<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg">
+    <g class="node"><title>start</title><path d="M 0,0 L 40,0 L 40,20 L 0,20" /></g>
+    <g class="node"><title>next</title><polygon points="100,40 180,40 180,100 100,100" /></g>
+    <g class="edge"><title>start:e-&gt;next:w</title><path d="M 1,1 L 2,2" /><polygon points="0,0 1,1 2,2 0,0" /></g>
+</svg>
+""",
+                encoding="utf-8",
+        )
+
+        _postprocess_direct_midpoint_edges_svg(output_path=svg_path)
+        svg = svg_path.read_text(encoding="utf-8")
+
+        assert 'd="M 40.00,10.00 L 100.00,70.00"' in svg
+        assert 'points="100.00,70.00 90.00,73.50 90.00,66.50 100.00,70.00"' in svg
+
+
+def test_normalize_node_backing_fills_svg_replaces_lightgrey_backings(tmp_path: Path):
+        svg_path = tmp_path / "fills.svg"
+        svg_path.write_text(
+                """<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg">
+    <g class="node"><title>a</title><polygon fill="lightgrey" stroke="none" points="0,0 10,0 10,10 0,10" /></g>
+    <g class="node"><title>b</title><polygon fill="#81c784" stroke="none" points="0,0 10,0 10,10 0,10" /></g>
+</svg>
+""",
+                encoding="utf-8",
+        )
+
+        _normalize_node_backing_fills_svg(output_path=svg_path)
+        svg = svg_path.read_text(encoding="utf-8")
+
+        assert 'fill="#ffffff" stroke="none" points="0,0 10,0 10,10 0,10" fill-opacity="1"' in svg
+        assert 'fill="#81c784" stroke="none" points="0,0 10,0 10,10 0,10"' in svg
+
+
 def test_normalize_svg_outer_padding_sets_even_border_and_updates_canvas(tmp_path: Path):
         svg_path = tmp_path / "pad.svg"
         svg_path.write_text(
@@ -171,8 +216,8 @@ def test_normalize_svg_outer_padding_sets_even_border_and_updates_canvas(tmp_pat
         assert 'width="120.00pt"' in svg
         assert 'height="70.00pt"' in svg
         assert 'id="__flo_canvas_bg"' in svg
-        assert 'fill="white"' in svg
-        assert 'style="background:#fff;"' in svg
+        assert 'fill="#ffffff"' in svg
+        assert 'style="background:#ffffff;"' in svg
 
 
 def test_normalize_svg_outer_padding_accounts_for_graph_transform_translation(tmp_path: Path):
@@ -195,7 +240,7 @@ def test_normalize_svg_outer_padding_accounts_for_graph_transform_translation(tm
         assert 'width="120.00pt"' in svg
         assert 'height="70.00pt"' in svg
         assert 'id="__flo_canvas_bg"' in svg
-        assert 'style="background:#fff;"' in svg
+        assert 'style="background:#ffffff;"' in svg
 
 
 def test_normalize_svg_outer_padding_ignores_graph_background_bounds(tmp_path: Path):
@@ -218,4 +263,4 @@ def test_normalize_svg_outer_padding_ignores_graph_background_bounds(tmp_path: P
         assert 'viewBox="17.20 275.20 120.00 70.00"' in svg
         assert 'width="120.00pt"' in svg
         assert 'height="70.00pt"' in svg
-        assert 'style="background:#fff;"' in svg
+        assert 'style="background:#ffffff;"' in svg

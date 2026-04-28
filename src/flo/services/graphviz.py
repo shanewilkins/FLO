@@ -70,6 +70,8 @@ def render_dot_to_file(dot: str, output_path: str) -> None:
         if not svg_path.exists():
             return
         _postprocess_wrapped_sppm_svg(dot=dot, output_path=svg_path)
+        _postprocess_direct_midpoint_edges_svg(output_path=svg_path)
+        _normalize_node_backing_fills_svg(output_path=svg_path)
         _normalize_svg_outer_padding(output_path=svg_path, padding=_SVG_OUTER_PADDING_PX)
 
 
@@ -186,6 +188,125 @@ def _normalize_svg_outer_padding(*, output_path: Path, padding: float) -> None:
     _write_svg_tree(tree, output_path)
 
 
+def _postprocess_direct_midpoint_edges_svg(*, output_path: Path) -> None:
+    """Rewrite direct e/w edges to exact side-midpoint connectors."""
+    tree = ET.parse(output_path)
+    root = tree.getroot()
+    node_bounds = _svg_node_outer_bounds(root)
+    edge_groups = _svg_edge_groups(root)
+
+    updated = False
+    for title, group in edge_groups.items():
+        match = re.match(
+            r"^(?P<source>[^:]+):(?P<source_side>[nsew])->(?P<target>[^:]+):(?P<target_side>[nsew])$",
+            title,
+        )
+        if match is None:
+            continue
+
+        source_id = match.group("source")
+        target_id = match.group("target")
+        source_side = match.group("source_side")
+        target_side = match.group("target_side")
+        if source_side not in {"e", "w"} or target_side not in {"e", "w"}:
+            continue
+        if source_id.startswith("__") or target_id.startswith("__"):
+            continue
+
+        source_bounds = node_bounds.get(source_id)
+        target_bounds = node_bounds.get(target_id)
+        if source_bounds is None or target_bounds is None:
+            continue
+
+        source_x = source_bounds[2] if source_side == "e" else source_bounds[0]
+        source_y = (source_bounds[1] + source_bounds[3]) / 2.0
+        target_x = target_bounds[0] if target_side == "w" else target_bounds[2]
+        target_y = (target_bounds[1] + target_bounds[3]) / 2.0
+
+        _set_edge_path(group, [(source_x, source_y), (target_x, target_y)])
+        _set_arrow_polygon_horizontal(
+            group,
+            tip=(target_x, target_y),
+            direction=(1 if target_x >= source_x else -1),
+        )
+        updated = True
+
+    if updated:
+        _write_svg_tree(tree, output_path)
+
+
+def _svg_node_outer_bounds(root: ET.Element) -> dict[str, tuple[float, float, float, float]]:
+    """Return bounds from visible outer node borders when available."""
+    bounds: dict[str, tuple[float, float, float, float]] = {}
+    for group in root.iter():
+        if group.attrib.get("class") != "node":
+            continue
+        title = group.find("{*}title")
+        if title is None or title.text is None:
+            continue
+
+        points = _svg_group_points(group, border_only=True)
+        if not points:
+            # Fallback to full node geometry when explicit border points are absent.
+            points = _svg_group_points(group, border_only=False)
+        if not points:
+            continue
+        xs = [point[0] for point in points]
+        ys = [point[1] for point in points]
+        bounds[title.text] = (min(xs), min(ys), max(xs), max(ys))
+    return bounds
+
+
+def _svg_group_points(group: ET.Element, *, border_only: bool) -> list[tuple[float, float]]:
+    points: list[tuple[float, float]] = []
+    points.extend(_svg_polygon_points(group, border_only=border_only))
+    points.extend(_svg_path_points(group, border_only=border_only))
+    return points
+
+
+def _svg_polygon_points(group: ET.Element, *, border_only: bool) -> list[tuple[float, float]]:
+    points: list[tuple[float, float]] = []
+    for polygon in group.findall("{*}polygon"):
+        if border_only:
+            stroke = polygon.attrib.get("stroke", "")
+            if not stroke or stroke == "none":
+                continue
+        points.extend(_parse_svg_points(polygon.attrib.get("points", "")))
+    return points
+
+
+def _svg_path_points(group: ET.Element, *, border_only: bool) -> list[tuple[float, float]]:
+    points: list[tuple[float, float]] = []
+    for path in group.findall("{*}path"):
+        if border_only:
+            stroke = path.attrib.get("stroke", "")
+            if not stroke or stroke == "none":
+                continue
+        points.extend(_parse_svg_path_points(path.attrib.get("d", "")))
+    return points
+
+
+def _normalize_node_backing_fills_svg(*, output_path: Path) -> None:
+    """Remove Graphviz lightgrey backing polygons that read as drop shadows."""
+    tree = ET.parse(output_path)
+    root = tree.getroot()
+    updated = False
+    for group in root.iter():
+        if group.attrib.get("class") != "node":
+            continue
+        for polygon in group.findall("{*}polygon"):
+            fill = polygon.attrib.get("fill", "")
+            stroke = polygon.attrib.get("stroke", "")
+            if stroke != "none":
+                continue
+            if fill in {"lightgrey", "white", "#ffffff"}:
+                polygon.attrib["fill"] = "#ffffff"
+                polygon.attrib["fill-opacity"] = "1"
+                updated = True
+    if updated:
+        _write_svg_tree(tree, output_path)
+
+
 def _wrapped_sppm_boundary_pairs(dot: str) -> dict[str, tuple[str, str]]:
     """Extract wrapped LR SPPM boundary edges from DOT text.
 
@@ -279,7 +400,8 @@ def _set_svg_background_rect(root: ET.Element, *, x: float, y: float, width: flo
             "y": f"{y:.2f}",
             "width": f"{width:.2f}",
             "height": f"{height:.2f}",
-            "fill": "white",
+            "fill": "#ffffff",
+            "fill-opacity": "1",
             "stroke": "none",
         },
     )
@@ -296,7 +418,7 @@ def _ensure_svg_white_background(root: ET.Element) -> None:
         if not decl.lower().startswith("background:")
         and not decl.lower().startswith("background-color:")
     ]
-    filtered.append("background:#fff")
+    filtered.append("background:#ffffff")
     root.attrib["style"] = "; ".join(filtered) + ";"
 
 
@@ -347,6 +469,17 @@ def _set_arrow_polygon(group: ET.Element, *, tip: tuple[float, float]) -> None:
     tip_x, tip_y = tip
     polygon.attrib["points"] = (
         f"{tip_x:.2f},{tip_y:.2f} {tip_x - 4.0:.2f},{tip_y - 8.0:.2f} {tip_x + 4.0:.2f},{tip_y - 8.0:.2f} {tip_x:.2f},{tip_y:.2f}"
+    )
+
+
+def _set_arrow_polygon_horizontal(group: ET.Element, *, tip: tuple[float, float], direction: int) -> None:
+    polygon = group.find("{*}polygon")
+    if polygon is None:
+        return
+    tip_x, tip_y = tip
+    offset = 10.0 * (-1 if direction >= 0 else 1)
+    polygon.attrib["points"] = (
+        f"{tip_x:.2f},{tip_y:.2f} {tip_x + offset:.2f},{tip_y + 3.5:.2f} {tip_x + offset:.2f},{tip_y - 3.5:.2f} {tip_x:.2f},{tip_y:.2f}"
     )
 
 

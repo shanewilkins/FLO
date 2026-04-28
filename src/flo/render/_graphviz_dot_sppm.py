@@ -51,9 +51,9 @@ def _render_sppm_graph(process: dict[str, Any] | Any, options: RenderOptions) ->
     splines = "ortho" if wrap_plan.active else "true"
     nodesep, ranksep = _sppm_graph_spacing(options=options, wrap_active=wrap_plan.active)
     lines.append(
-        f"  graph [compound=true, newrank=true, nodesep={nodesep}, ranksep={ranksep}, margin=0.05, pad=0.05, splines={splines}];"
+        f"  graph [compound=true, newrank=true, nodesep={nodesep}, ranksep={ranksep}, margin=0.05, pad=0.05, splines={splines}, bgcolor=white];"
     )
-    lines.append("  node [fontname=Helvetica, style=filled];")
+    lines.append("  node [fontname=Helvetica];")
     lines.append("  edge [fontname=Helvetica];")
 
     append_wrap_layout_hints(lines=lines, options=options, plan=wrap_plan)
@@ -292,13 +292,14 @@ def _sppm_html_label(
         )
 
     content_table = (
-        f'<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6">'
+        f'<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" BGCOLOR="white">'
         f'{rows}</TABLE>'
     )
     return _wrap_sppm_label_with_ports(
         content_table=content_table,
         port_counts=port_counts,
         border_color=style.border,
+        header_fill=style.fill,
     )
 
 
@@ -307,20 +308,27 @@ def _wrap_sppm_label_with_ports(
     content_table: str,
     port_counts: dict[str, int],
     border_color: str,
+    header_fill: str,
 ) -> str:
     in_count = max(0, int(port_counts.get("in", 0)))
     out_count = max(0, int(port_counts.get("out", 0)))
+    table_prefix = (
+        f'<<TABLE BORDER="2" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0" '
+        f'COLOR="{border_color}" BGCOLOR="white">'
+    )
+
     if in_count == 0 and out_count == 0:
         return (
-            f'<<TABLE BORDER="2" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0" '
-            f'COLOR="{border_color}"><TR><TD></TD><TD PORT="boundary_in" HEIGHT="1"></TD><TD></TD></TR>'
+            f'{table_prefix}<TR><TD BGCOLOR="{header_fill}"></TD><TD PORT="boundary_in" HEIGHT="1" BGCOLOR="{header_fill}"></TD><TD BGCOLOR="{header_fill}"></TD></TR>'
             f'<TR><TD></TD><TD>{content_table}</TD><TD></TD></TR>'
             f'<TR><TD></TD><TD PORT="boundary_out" HEIGHT="1"></TD><TD></TD></TR></TABLE>>'
         )
 
     row_count = max(1, in_count, out_count)
     rows: list[str] = []
-    rows.append('<TR><TD></TD><TD PORT="boundary_in" HEIGHT="1"></TD><TD></TD></TR>')
+    rows.append(
+        f'<TR><TD BGCOLOR="{header_fill}"></TD><TD PORT="boundary_in" HEIGHT="1" BGCOLOR="{header_fill}"></TD><TD BGCOLOR="{header_fill}"></TD></TR>'
+    )
     for row_index in range(row_count):
         left_cell = _port_cell(role="in", slot=row_index) if row_index < in_count else _empty_port_cell()
         right_cell = _port_cell(role="out", slot=row_index) if row_index < out_count else _empty_port_cell()
@@ -332,11 +340,7 @@ def _wrap_sppm_label_with_ports(
             rows.append(f"<TR>{left_cell}{right_cell}</TR>")
     rows.append('<TR><TD></TD><TD PORT="boundary_out" HEIGHT="1"></TD><TD></TD></TR>')
 
-    return (
-        f'<<TABLE BORDER="2" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0" COLOR="{border_color}">'
-        f'{"".join(rows)}'
-        "</TABLE>>"
-    )
+    return f'{table_prefix}{"".join(rows)}</TABLE>>'
 
 
 def _port_cell(*, role: str, slot: int) -> str:

@@ -471,8 +471,8 @@ def _resolved_ports(
 ) -> tuple[str, str]:
     if core_route is not None:
         return (
-            _graphviz_tailport_for_spec(core_route.source_port, kind=source_kind),
-            _graphviz_headport_for_spec(core_route.target_port, kind=target_kind),
+            f"tailport={core_route.source_port.side}",
+            f"headport={core_route.target_port.side}",
         )
     if wrap_ports is not None:
         return wrap_ports

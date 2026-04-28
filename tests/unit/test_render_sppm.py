@@ -324,7 +324,7 @@ def test_layout_wrap_lr_emits_wrap_hints_and_boundary_connector():
 
     assert "splines=ortho" in out
     assert "cluster_wrap_lr_0" in out
-    assert '"a" -> "b" [tailport="out_0:e", headport="in_0:w"];' in out
+    assert '"a" -> "b" [tailport=e, headport=w];' in out
     assert '"__wrap_exit_lr_0" [shape=point, width=0.01, label="", style=invis, height=0.01, group="__wrap_exit_column"];' in out
     assert '"b" -> "__wrap_exit_lr_0" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out
     assert '"__wrap_exit_lr_0" -> "c" [headport="boundary_in:s", minlen=2, penwidth=1.2];' in out
