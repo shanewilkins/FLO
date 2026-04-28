@@ -10,6 +10,45 @@ User documentation: `docs/User_Manual.md`
 
 ------------------------------------------------------------------------
 
+## Development Workflow (uv)
+
+FLO uses `uv` as the canonical developer tool for environment management,
+dependency sync, running commands, builds, and publish.
+
+From the repository root:
+
+```bash
+uv sync --dev
+```
+
+Run FLO locally:
+
+```bash
+uv run flo run examples/reference/linear.flo
+```
+
+Run quality gates:
+
+```bash
+uv run pre-commit run --all-files
+```
+
+Build distributions:
+
+```bash
+uv build
+```
+
+Publish (token auth):
+
+```bash
+uv publish dist/flo_lang-<version>*
+# username prompt: __token__
+# password prompt: pypi-<token>
+```
+
+------------------------------------------------------------------------
+
 ## Example
 
 ``` yaml

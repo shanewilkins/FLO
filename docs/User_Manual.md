@@ -27,21 +27,27 @@ FLO does not provide:
 From the repository root:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
+uv sync --dev
 ```
 
 Run FLO on a file (default output is DOT to stdout):
 
 ```bash
-flo examples/reference/linear.flo
+uv run flo examples/reference/linear.flo
 ```
 
 You can also use explicit subcommands:
 
 ```bash
-flo run examples/reference/linear.flo
+uv run flo run examples/reference/linear.flo
+```
+
+Common developer commands:
+
+```bash
+uv run pre-commit run --all-files
+uv run pytest -q
+uv build
 ```
 
 ## 4) Your First FLO File
