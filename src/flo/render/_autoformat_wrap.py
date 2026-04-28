@@ -115,6 +115,7 @@ def append_wrap_layout_hints(lines: list[str], options: RenderOptions, plan: Aut
         cluster_name = f"cluster_wrap_{orientation}_{chunk_idx}"
         lines.append(f"  subgraph {cluster_name} {{")
         lines.append("    color=none;")
+        lines.append("    margin=0;")
         lines.append("    rank=same;")
         lines.append(f'    "{anchor_ids[chunk_idx]}";')
         for node_id in chunk:
@@ -319,9 +320,7 @@ def _collect_sequence_ids(nodes: list[dict[str, Any]]) -> list[str]:
 
 
 def _display_chunk_for_layout(*, chunk: list[str], chunk_idx: int) -> list[str]:
-    # Serpentine rows/columns: odd chunks are reversed to reduce travel distance.
-    if chunk_idx % 2 == 1:
-        return list(reversed(chunk))
+    # Keep chunk order stable to preserve intuitive left-to-right/top-to-bottom flow.
     return list(chunk)
 
 

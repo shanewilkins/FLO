@@ -326,7 +326,9 @@ def test_backward_edge_uses_graphviz_defaults():
         ],
     }
     out = render_dot(ir_like)
-    assert '"approve" -> "collect" [style=dashed, label="no"];' in out
+    assert '"__rework_corridor_approve_collect_1" [shape=point, width=0.01, height=0.01, label="", style=invis];' in out
+    assert '"approve" -> "__rework_corridor_approve_collect_1" [tailport=e, constraint=false, weight=0, style=dashed, arrowhead=none];' in out
+    assert '"__rework_corridor_approve_collect_1" -> "collect" [headport=w, constraint=false, minlen=3, weight=0, style=dashed, label="no"];' in out
 
 
 def test_backward_non_decision_edge_uses_graphviz_defaults():
@@ -341,7 +343,33 @@ def test_backward_non_decision_edge_uses_graphviz_defaults():
         ],
     }
     out = render_dot(ir_like)
-    assert '"b" -> "a" [style=dashed, label="retry"];' in out
+    assert '"__rework_corridor_b_a_1" [shape=point, width=0.01, height=0.01, label="", style=invis];' in out
+    assert '"b" -> "__rework_corridor_b_a_1" [tailport=e, constraint=false, weight=0, style=dashed, arrowhead=none];' in out
+    assert '"__rework_corridor_b_a_1" -> "a" [headport=w, constraint=false, minlen=3, weight=0, style=dashed, label="retry"];' in out
+
+
+def test_explicit_rework_edge_uses_shared_routing_hints():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "review", "kind": "task", "name": "Review"},
+            {"id": "decision", "kind": "decision", "name": "Valid?"},
+            {"id": "rework", "kind": "task", "name": "Rework"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "review"},
+            {"source": "review", "target": "decision"},
+            {"source": "decision", "target": "end", "outcome": "yes"},
+            {"source": "decision", "target": "rework", "outcome": "no", "edge_type": "rework", "rework": True},
+            {"source": "rework", "target": "review"},
+        ],
+    }
+
+    out = render_dot(ir_like)
+    assert '"__rework_corridor_decision_rework_3" [shape=point, width=0.01, height=0.01, label="", style=invis];' in out
+    assert '"decision" -> "__rework_corridor_decision_rework_3" [tailport=e, constraint=false, weight=0, style=dashed, arrowhead=none];' in out
+    assert '"__rework_corridor_decision_rework_3" -> "rework" [headport=w, constraint=false, minlen=3, weight=0, style=dashed, label="no"];' in out
 
 
 def test_flowchart_layout_wrap_uses_shared_autoformat_hints():
@@ -372,7 +400,9 @@ def test_flowchart_layout_wrap_uses_shared_autoformat_hints():
     assert "rankdir=TB;" in out
     assert "cluster_wrap_lr_0" in out
     assert "splines=ortho" in out
-    assert '"a" -> "b" [minlen=2, penwidth=1.2];' in out
+    assert '"__boundary_corridor_a_b_1" [shape=point, width=0.01, height=0.01, label="", style=invis];' in out
+    assert '"a" -> "__boundary_corridor_a_b_1" [tailport=s, constraint=false, weight=0, arrowhead=none];' in out
+    assert '"__boundary_corridor_a_b_1" -> "b" [headport=n, minlen=2, penwidth=1.2];' in out
 
 
 def test_swimlane_layout_wrap_uses_shared_autoformat_hints():
@@ -402,7 +432,9 @@ def test_swimlane_layout_wrap_uses_shared_autoformat_hints():
     assert "cluster_wrap_tb_0" in out
     assert "subgraph cluster_sales" in out
     assert "subgraph cluster_ops" in out
-    assert '"a" -> "b" [constraint=false, minlen=2, penwidth=1.2];' in out
+    assert '"__boundary_corridor_a_b_1" [shape=point, width=0.01, height=0.01, label="", style=invis];' in out
+    assert '"a" -> "__boundary_corridor_a_b_1" [tailport=e, constraint=false, weight=0, arrowhead=none];' in out
+    assert '"__boundary_corridor_a_b_1" -> "b" [headport=w, constraint=false, minlen=2, penwidth=1.2];' in out
 
 
 def test_node_note_hidden_by_default():

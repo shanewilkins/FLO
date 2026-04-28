@@ -76,4 +76,6 @@ steps:
     assert rework_edge.rework is True
 
     dot = render_dot(ir)
-    assert '"decision" -> "rework" [style=dashed, label="no"];' in dot
+    assert '"__rework_corridor_decision_rework_1" [shape=point, width=0.01, height=0.01, label="", style=invis];' in dot
+    assert '"decision" -> "__rework_corridor_decision_rework_1" [constraint=false, minlen=3, weight=0, style=dashed, arrowhead=none];' in dot
+    assert '"__rework_corridor_decision_rework_1" -> "rework" [constraint=false, minlen=3, weight=0, style=dashed, label="no"];' in dot

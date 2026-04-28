@@ -14,6 +14,7 @@ from typing import Any
 
 from ._graphviz_dot_common import _escape
 from ._autoformat_wrap import append_wrap_layout_hints, build_autoformat_wrap_plan, AutoformatWrapPlan
+from ._sppm_routing import SppmEdgeRoute, build_sppm_routing_plan
 from ._sppm_text import apply_density_filter, abbreviate_workers, format_text_field, normalize_space
 from ._sppm_themes import resolve_sppm_theme, SppmTheme, SppmNodeStyle
 from .options import RenderOptions
@@ -33,14 +34,21 @@ def _render_sppm_graph(process: dict[str, Any] | Any, options: RenderOptions) ->
     }
     step_numbering = _build_step_numbering(nodes)
     wrap_plan = build_autoformat_wrap_plan(nodes, options)
+    routing_plan = build_sppm_routing_plan(
+        edges=edges,
+        options=options,
+        step_numbering=step_numbering,
+        wrap_plan=wrap_plan,
+    )
     theme = resolve_sppm_theme(options.sppm_theme)
 
     lines: list[str] = ["digraph {"]
     rankdir = _resolve_rankdir(options=options, wrap_active=wrap_plan.active)
     lines.append(f"  rankdir={rankdir};")
     splines = "ortho" if wrap_plan.active else "true"
+    nodesep, ranksep = _sppm_graph_spacing(options=options, wrap_active=wrap_plan.active)
     lines.append(
-        f"  graph [compound=true, newrank=true, nodesep=0.8, ranksep=1.1, splines={splines}];"
+        f"  graph [compound=true, newrank=true, nodesep={nodesep}, ranksep={ranksep}, margin=0.05, pad=0.05, splines={splines}];"
     )
     lines.append("  node [fontname=Helvetica, style=filled];")
     lines.append("  edge [fontname=Helvetica];")
@@ -66,6 +74,10 @@ def _render_sppm_graph(process: dict[str, Any] | Any, options: RenderOptions) ->
                 options=options,
                 step_numbering=step_numbering,
                 wrap_plan=wrap_plan,
+                route=routing_plan.route_for(
+                    str(edge.get("source") or ""),
+                    str(edge.get("target") or ""),
+                ),
             )
         )
 
@@ -80,6 +92,14 @@ def _resolve_rankdir(*, options: RenderOptions, wrap_active: bool) -> str:
     # - orientation=lr => rows that read left-to-right, stacked downward
     # - orientation=tb => columns that read top-to-bottom, stepping rightward
     return "TB" if options.orientation == "lr" else "LR"
+
+
+def _sppm_graph_spacing(*, options: RenderOptions, wrap_active: bool) -> tuple[float, float]:
+    if not wrap_active:
+        return 0.8, 1.1
+    if options.layout_fit == "fit-strict":
+        return 0.45, 0.7
+    return 0.6, 0.85
 
 
 # ---------------------------------------------------------------------------
@@ -282,55 +302,37 @@ def _render_sppm_edge(
     options: RenderOptions,
     step_numbering: dict[str, int],
     wrap_plan: AutoformatWrapPlan,
+    route: SppmEdgeRoute | None,
 ) -> list[str]:
     source = str(edge.get("source") or "")
     target = str(edge.get("target") or "")
     if not source or not target:
         return []
-    label_attr = ""
-    if options.sppm_step_numbering == "edge":
-        src_num = step_numbering.get(source)
-        dst_num = step_numbering.get(target)
-        if src_num is not None and dst_num is not None:
-            label_attr = f' [xlabel="{src_num}->{dst_num}"]'
+    if route is None:
+        return []
 
-    if wrap_plan.active and (source, target) in wrap_plan.boundary_edges:
-        base = "minlen=2, penwidth=1.2"
-        if label_attr:
-            label_inner = label_attr.strip()[1:-1]
-            label_attr = f" [{base}, {label_inner}]"
-        else:
-            label_attr = f" [{base}]"
-
-    is_rework = _is_rework_edge(edge=edge, step_numbering=step_numbering, source=source, target=target)
-    if is_rework:
-        if label_attr:
-            label_inner = label_attr.strip()[1:-1]
-            label_attr = f" [style=dashed, {label_inner}]"
-        else:
-            label_attr = " [style=dashed]"
-
-    return [f'  "{_escape(source)}" -> "{_escape(target)}"{label_attr};']
+    lines: list[str] = []
+    for corridor_node in route.corridor_nodes:
+        lines.append(f'  "{corridor_node.node_id}" [{", ".join(corridor_node.attrs)}];')
+    for anchor in route.anchors:
+        lines.append(f'  "{anchor.anchor_id}" [{", ".join(anchor.attrs)}];')
+    for segment in route.segments:
+        lines.append(
+            f'  "{_escape(segment.source_id)}" -> "{_escape(segment.target_id)}" '
+            f'[{", ".join(_escape_sppm_route_attrs(segment.attrs))}];'
+        )
+    return lines
 
 
-def _is_rework_edge(
-    *,
-    edge: dict[str, Any],
-    step_numbering: dict[str, int],
-    source: str,
-    target: str,
-) -> bool:
-    explicit = edge.get("rework")
-    if explicit is not None:
-        return bool(explicit)
-    if str(edge.get("edge_type") or "").strip().lower() == "rework":
-        return True
-
-    src_num = step_numbering.get(source)
-    dst_num = step_numbering.get(target)
-    if src_num is None or dst_num is None:
-        return False
-    return src_num > dst_num
+def _escape_sppm_route_attrs(attrs: tuple[str, ...]) -> list[str]:
+    escaped: list[str] = []
+    for attr in attrs:
+        if attr.startswith('label="') or attr.startswith('xlabel="'):
+            prefix, value = attr.split('="', 1)
+            escaped.append(f'{prefix}="{_escape(value[:-1])}"')
+            continue
+        escaped.append(attr)
+    return escaped
 
 
 def _build_step_numbering(nodes: list[dict[str, Any]]) -> dict[str, int]:
