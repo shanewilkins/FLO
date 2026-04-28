@@ -55,3 +55,28 @@ def test_explicit_layout_fit_overrides_profile_defaults():
         }
     )
     assert options.layout_fit == "fit-preferred"
+
+
+def test_layout_spacing_defaults_to_standard():
+    options = RenderOptions.from_mapping({"diagram": "sppm"})
+    assert options.layout_spacing == "standard"
+
+
+def test_layout_spacing_compact_is_respected():
+    options = RenderOptions.from_mapping(
+        {
+            "diagram": "sppm",
+            "layout_spacing": "compact",
+        }
+    )
+    assert options.layout_spacing == "compact"
+
+
+def test_layout_spacing_tight_alias_maps_to_compact():
+    options = RenderOptions.from_mapping(
+        {
+            "diagram": "sppm",
+            "layout_spacing": "tight",
+        }
+    )
+    assert options.layout_spacing == "compact"

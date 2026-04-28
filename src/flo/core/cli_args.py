@@ -63,6 +63,11 @@ def parse_args(argv: list | None, services: Services) -> Tuple[str | None, str, 
         help="Shared autoformat fit mode",
     )
     parser.add_argument(
+        "--layout-spacing",
+        choices=["standard", "compact"],
+        help="Shared graph spacing profile",
+    )
+    parser.add_argument(
         "--sppm-step-numbering",
         choices=["off", "node", "edge"],
         help="SPPM step numbering mode",
@@ -145,6 +150,7 @@ def _build_options_from_parsed(parsed: object) -> dict:
         "sppm_theme",
         "layout_wrap",
         "layout_fit",
+        "layout_spacing",
         "sppm_step_numbering",
         "sppm_label_density",
         "sppm_wrap_strategy",

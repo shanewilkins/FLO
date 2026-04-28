@@ -606,6 +606,50 @@ def test_layout_wrap_width_estimator_responds_to_dense_label_content():
     assert '"a" -> "b" [tailport=e, headport=w, minlen=2, penwidth=1.2];' in out
 
 
+def test_layout_spacing_compact_reduces_wrapped_graph_spacing():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "a", "kind": "task", "name": "A", "metadata": {}},
+            {"id": "b", "kind": "task", "name": "B", "metadata": {}},
+            {"id": "c", "kind": "task", "name": "C", "metadata": {}},
+            {"id": "d", "kind": "task", "name": "D", "metadata": {}},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "a"},
+            {"source": "a", "target": "b"},
+            {"source": "b", "target": "c"},
+            {"source": "c", "target": "d"},
+            {"source": "d", "target": "end"},
+        ],
+    }
+
+    out_standard = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "orientation": "lr",
+            "layout_wrap": "auto",
+            "layout_target_columns": 3,
+            "layout_spacing": "standard",
+        },
+    )
+    out_compact = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "orientation": "lr",
+            "layout_wrap": "auto",
+            "layout_target_columns": 3,
+            "layout_spacing": "compact",
+        },
+    )
+
+    assert "nodesep=0.4, ranksep=0.35" in out_standard
+    assert "nodesep=0.35, ranksep=0.3" in out_compact
+
+
 def test_sppm_node_numbering_is_deterministic_with_branching():
     ir_like = {
         "nodes": [

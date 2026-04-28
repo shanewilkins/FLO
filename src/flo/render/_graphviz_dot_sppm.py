@@ -96,10 +96,16 @@ def _resolve_rankdir(*, options: RenderOptions, wrap_active: bool) -> str:
 
 def _sppm_graph_spacing(*, options: RenderOptions, wrap_active: bool) -> tuple[float, float]:
     if not wrap_active:
+        if options.layout_spacing == "compact":
+            return 0.7, 0.9
         return 0.8, 1.1
     if options.layout_fit == "fit-strict":
-        return 0.45, 0.7
-    return 0.6, 0.85
+        if options.layout_spacing == "compact":
+            return 0.25, 0.3
+        return 0.3, 0.35
+    if options.layout_spacing == "compact":
+        return 0.35, 0.3
+    return 0.4, 0.35
 
 
 # ---------------------------------------------------------------------------

@@ -30,6 +30,7 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
 @click.option("--sppm-theme", type=click.Choice(["default", "print", "monochrome"]), help="Color theme for SPPM diagrams")
 @click.option("--layout-wrap", type=click.Choice(["auto", "off"]), help="Shared autoformat wrapping mode (orientation-aware)")
 @click.option("--layout-fit", type=click.Choice(["fit-preferred", "fit-strict"]), help="Shared autoformat fit mode")
+@click.option("--layout-spacing", type=click.Choice(["standard", "compact"]), help="Shared graph spacing profile")
 @click.option("--sppm-step-numbering", type=click.Choice(["off", "node", "edge"]), help="SPPM step numbering mode")
 @click.option("--sppm-label-density", type=click.Choice(["full", "compact", "teaching"]), help="SPPM label density mode")
 @click.option("--sppm-wrap-strategy", type=click.Choice(["word", "balanced", "hard"]), help="Text wrapping strategy for SPPM labels")
@@ -58,6 +59,7 @@ def run_cmd(
     sppm_theme: Optional[str],
     layout_wrap: Optional[str],
     layout_fit: Optional[str],
+    layout_spacing: Optional[str],
     sppm_step_numbering: Optional[str],
     sppm_label_density: Optional[str],
     sppm_wrap_strategy: Optional[str],
@@ -88,6 +90,7 @@ def run_cmd(
         sppm_theme=sppm_theme,
         layout_wrap=layout_wrap,
         layout_fit=layout_fit,
+        layout_spacing=layout_spacing,
         sppm_step_numbering=sppm_step_numbering,
         sppm_label_density=sppm_label_density,
         sppm_wrap_strategy=sppm_wrap_strategy,
@@ -122,6 +125,7 @@ def _build_run_args(  # pragma: no cover - thin click shim helper
     sppm_theme: Optional[str],
     layout_wrap: Optional[str],
     layout_fit: Optional[str],
+    layout_spacing: Optional[str],
     sppm_step_numbering: Optional[str],
     sppm_label_density: Optional[str],
     sppm_wrap_strategy: Optional[str],
@@ -157,6 +161,7 @@ def _build_run_args(  # pragma: no cover - thin click shim helper
         (sppm_theme, "--sppm-theme"),
         (layout_wrap, "--layout-wrap"),
         (layout_fit, "--layout-fit"),
+        (layout_spacing, "--layout-spacing"),
         (sppm_step_numbering, "--sppm-step-numbering"),
         (sppm_label_density, "--sppm-label-density"),
         (sppm_wrap_strategy, "--sppm-wrap-strategy"),
@@ -228,6 +233,7 @@ def validate_cmd(path: Optional[str], verbose: bool) -> None:  # pragma: no cove
 @click.option("--sppm-theme", type=click.Choice(["default", "print", "monochrome"]), help="Color theme for SPPM diagrams")
 @click.option("--layout-wrap", type=click.Choice(["auto", "off"]), help="Shared autoformat wrapping mode (orientation-aware)")
 @click.option("--layout-fit", type=click.Choice(["fit-preferred", "fit-strict"]), help="Shared autoformat fit mode")
+@click.option("--layout-spacing", type=click.Choice(["standard", "compact"]), help="Shared graph spacing profile")
 @click.option("--sppm-step-numbering", type=click.Choice(["off", "node", "edge"]), help="SPPM step numbering mode")
 @click.option("--sppm-label-density", type=click.Choice(["full", "compact", "teaching"]), help="SPPM label density mode")
 @click.option("--sppm-wrap-strategy", type=click.Choice(["word", "balanced", "hard"]), help="Text wrapping strategy for SPPM labels")
@@ -254,6 +260,7 @@ def export_cmd(
     sppm_theme: Optional[str],
     layout_wrap: Optional[str],
     layout_fit: Optional[str],
+    layout_spacing: Optional[str],
     sppm_step_numbering: Optional[str],
     sppm_label_density: Optional[str],
     sppm_wrap_strategy: Optional[str],
@@ -282,6 +289,7 @@ def export_cmd(
         sppm_theme=sppm_theme,
         layout_wrap=layout_wrap,
         layout_fit=layout_fit,
+        layout_spacing=layout_spacing,
         sppm_step_numbering=sppm_step_numbering,
         sppm_label_density=sppm_label_density,
         sppm_wrap_strategy=sppm_wrap_strategy,
@@ -314,6 +322,7 @@ def _build_export_args(  # pragma: no cover - thin click shim helper
     sppm_theme: Optional[str],
     layout_wrap: Optional[str],
     layout_fit: Optional[str],
+    layout_spacing: Optional[str],
     sppm_step_numbering: Optional[str],
     sppm_label_density: Optional[str],
     sppm_wrap_strategy: Optional[str],
@@ -342,6 +351,7 @@ def _build_export_args(  # pragma: no cover - thin click shim helper
             (sppm_theme, "--sppm-theme"),
             (layout_wrap, "--layout-wrap"),
             (layout_fit, "--layout-fit"),
+            (layout_spacing, "--layout-spacing"),
             (sppm_step_numbering, "--sppm-step-numbering"),
             (sppm_label_density, "--sppm-label-density"),
             (sppm_wrap_strategy, "--sppm-wrap-strategy"),

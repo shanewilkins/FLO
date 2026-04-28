@@ -15,6 +15,7 @@ SpaghettiPeopleMode = Literal["aggregate", "worker"]
 SppmThemeName = Literal["default", "print", "monochrome"]
 LayoutWrap = Literal["auto", "off"]
 LayoutFit = Literal["fit-preferred", "fit-strict"]
+LayoutSpacing = Literal["standard", "compact"]
 SppmStepNumbering = Literal["off", "node", "edge"]
 SppmLabelDensity = Literal["full", "compact", "teaching"]
 SppmWrapStrategy = Literal["word", "balanced", "hard"]
@@ -76,6 +77,7 @@ class RenderOptions:
     sppm_theme: SppmThemeName = "default"
     layout_wrap: LayoutWrap = "off"
     layout_fit: LayoutFit = "fit-preferred"
+    layout_spacing: LayoutSpacing = "standard"
     sppm_step_numbering: SppmStepNumbering = "off"
     sppm_label_density: SppmLabelDensity = "full"
     sppm_wrap_strategy: SppmWrapStrategy = "word"
@@ -108,6 +110,7 @@ class RenderOptions:
             sppm_theme=_parse_sppm_theme(effective_options),
             layout_wrap=_parse_layout_wrap(effective_options),
             layout_fit=_parse_layout_fit(effective_options),
+            layout_spacing=_parse_layout_spacing(effective_options),
             sppm_step_numbering=_parse_sppm_step_numbering(effective_options),
             sppm_label_density=_parse_sppm_label_density(effective_options),
             sppm_wrap_strategy=_parse_sppm_wrap_strategy(effective_options),
@@ -224,6 +227,13 @@ def _parse_layout_fit(options: Mapping[str, Any]) -> LayoutFit:
     if raw in {"fit-strict", "strict"}:
         return "fit-strict"
     return "fit-preferred"
+
+
+def _parse_layout_spacing(options: Mapping[str, Any]) -> LayoutSpacing:
+    raw = _normalized_option(options, "layout_spacing", "standard")
+    if raw in {"compact", "tight"}:
+        return "compact"
+    return "standard"
 
 
 def _parse_sppm_step_numbering(options: Mapping[str, Any]) -> SppmStepNumbering:
