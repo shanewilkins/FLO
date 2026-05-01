@@ -517,24 +517,7 @@ def _sppm_rework_ports(
                 return ("tailport=s", "headport=n")
             return ("tailport=e", "headport=w")
 
-        source_return_port = "tailport=w"
-        if core_route is not None and _supports_named_ports(source_kind):
-            source_return_port = _graphviz_tailport_for_side(
-                slot_index=core_route.source_port.slot_index,
-                side="w",
-                kind=source_kind,
-            )
-
-        if core_route is not None and _supports_named_ports(target_kind):
-            return (
-                source_return_port,
-                _graphviz_headport_for_side(
-                    slot_index=core_route.target_port.slot_index,
-                    side="w",
-                    kind=target_kind,
-                ),
-            )
-        return (source_return_port, "headport=w")
+        return ("tailport=w", "headport=s")
     if source_port == "tailport=s" and target_port == "headport=n":
         if is_branch_out:
             return ("tailport=e", "headport=w")
