@@ -1,0 +1,144 @@
+spec_version: "0.1"
+
+process:
+  id: sppm_feature_showcase_v1
+  name: SPPM Feature Showcase
+
+steps:
+  - id: start
+    kind: start
+    name: Start
+
+  - id: intake
+    kind: task
+    name: Intake Request
+    workers:
+      - Coordinator
+      - Requester
+    metadata:
+      value_class: RNVA
+      description: Capture request details and context.
+      cycle_time:
+        value: 4
+        unit: min
+      wait_time:
+        value: 2
+        unit: min
+
+  - id: triage
+    kind: decision
+    name: Information Complete?
+    outcomes:
+      yes: process
+      no: rework_intake
+
+  - id: rework_intake
+    kind: task
+    name: Rework Intake Data
+    workers:
+      - Requester
+    metadata:
+      value_class: RNVA
+      description: Fill missing or ambiguous request data.
+      cycle_time:
+        value: 6
+        unit: min
+      wait_time:
+        value: 3
+        unit: min
+
+  - id: process
+    kind: task
+    name: Execute Core Work
+    workers:
+      - Specialist
+    metadata:
+      value_class: VA
+      description: Perform the value-adding service step.
+      cycle_time:
+        value: 18
+        unit: min
+      wait_time:
+        value: 5
+        unit: min
+
+  - id: qa
+    kind: decision
+    name: Quality Check Pass?
+    outcomes:
+      pass: complete
+      fail: rework_quality
+
+  - id: rework_quality
+    kind: task
+    name: Rework Quality Issues
+    workers:
+      - Specialist
+    metadata:
+      value_class: NVA
+      description: Correct defects found during QA.
+      cycle_time:
+        value: 7
+        unit: min
+      wait_time:
+        value: 2
+        unit: min
+
+  - id: complete
+    kind: task
+    name: Close Request
+    workers:
+      - Coordinator
+    metadata:
+      value_class: RNVA
+      description: Finalize records and communicate completion.
+      cycle_time:
+        value: 3
+        unit: min
+
+  - id: stop
+    kind: end
+    name: Stop
+
+transitions:
+  - source: start
+    target: intake
+
+  - source: intake
+    target: triage
+
+  - source: triage
+    target: process
+    outcome: yes
+
+  - source: triage
+    target: rework_intake
+    outcome: no
+    edge_type: rework
+    rework: true
+
+  - source: rework_intake
+    target: intake
+    edge_type: rework
+    rework: true
+
+  - source: process
+    target: qa
+
+  - source: qa
+    target: complete
+    outcome: pass
+
+  - source: qa
+    target: rework_quality
+    outcome: fail
+    edge_type: rework
+    rework: true
+
+  - source: rework_quality
+    target: process
+    edge_type: rework
+    rework: true
+
+  - source: complete
+    target: stop

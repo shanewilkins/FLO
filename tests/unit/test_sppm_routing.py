@@ -25,8 +25,8 @@ def test_sppm_rework_edge_uses_corridor_anchor_and_lr_ports():
 
     out = render_dot(ir_like, options={"diagram": "sppm"})
     assert '"__sppm_rework_corridor_decision_rework" [shape=point, width=0.01, height=0.01, label="", style=invis];' in out
-    assert '"decision" -> "__sppm_rework_corridor_decision_rework" [tailport=e, constraint=false, style=dashed, weight=0, arrowhead=none];' in out
-    assert '"__sppm_rework_corridor_decision_rework" -> "rework" [headport=w, constraint=false, minlen=3, weight=0, style=dashed, label="no"];' in out
+    assert '"decision":s -> "__sppm_rework_corridor_decision_rework" [constraint=false, style=dashed, weight=0, arrowhead=none];' in out
+    assert '"__sppm_rework_corridor_decision_rework" -> "rework":n [constraint=false, minlen=3, weight=0, style=dashed, xlabel="no"];' in out
 
 
 def test_sppm_rework_edge_uses_tb_ports_when_rankdir_tb():
@@ -47,8 +47,37 @@ def test_sppm_rework_edge_uses_tb_ports_when_rankdir_tb():
     }
 
     out = render_dot(ir_like, options={"diagram": "sppm", "orientation": "tb"})
-    assert '"decision" -> "__sppm_rework_corridor_decision_rework" [tailport=s, constraint=false, style=dashed, weight=0, arrowhead=none];' in out
-    assert '"__sppm_rework_corridor_decision_rework" -> "rework" [headport=n, constraint=false, minlen=3, weight=0, style=dashed, label="no"];' in out
+    assert '"decision":e -> "__sppm_rework_corridor_decision_rework" [constraint=false, style=dashed, weight=0, arrowhead=none];' in out
+    assert '"__sppm_rework_corridor_decision_rework" -> "rework":w [constraint=false, minlen=3, weight=0, style=dashed, xlabel="no"];' in out
+
+
+def test_sppm_rework_return_edge_uses_lr_west_to_west_ports():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "review", "kind": "task", "name": "Review", "metadata": {}},
+            {"id": "decision", "kind": "decision", "name": "Valid?", "metadata": {}},
+            {"id": "rework", "kind": "task", "name": "Rework", "metadata": {}},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "review"},
+            {"source": "review", "target": "decision"},
+            {
+                "source": "decision",
+                "target": "rework",
+                "outcome": "no",
+                "edge_type": "rework",
+                "rework": True,
+            },
+            {"source": "rework", "target": "review", "edge_type": "rework", "rework": True},
+            {"source": "decision", "target": "end", "outcome": "yes"},
+        ],
+    }
+
+    out = render_dot(ir_like, options={"diagram": "sppm"})
+    assert '"rework":"in_0":w -> "__sppm_rework_corridor_rework_review" [constraint=false, style=dashed, weight=0, arrowhead=none];' in out
+    assert '"__sppm_rework_corridor_rework_review" -> "review":"in_1":w [constraint=false, minlen=3, weight=0, style=dashed];' in out
 
 
 def test_sppm_routing_plan_marks_wrap_boundary_edges_with_ports_and_boundary_attrs():
@@ -91,13 +120,17 @@ def test_sppm_routing_plan_marks_wrap_boundary_edges_with_ports_and_boundary_att
 
 
 def test_sppm_routing_plan_splits_rework_edges_into_anchor_segments():
+    nodes = [
+        {"id": "decision", "kind": "decision", "name": "Valid?", "metadata": {}},
+        {"id": "rework", "kind": "task", "name": "Rework", "metadata": {}},
+    ]
     edges = [
         {"source": "decision", "target": "rework", "outcome": "no", "edge_type": "rework", "rework": True},
     ]
     options = RenderOptions(diagram="sppm")
 
     routing_plan = build_sppm_routing_plan(
-        nodes=[],
+        nodes=nodes,
         edges=edges,
         options=options,
         step_numbering={"review": 1, "decision": 2, "rework": 1},
@@ -109,21 +142,21 @@ def test_sppm_routing_plan_splits_rework_edges_into_anchor_segments():
     assert route.kind == "rework"
     assert route.anchors[0].anchor_id == "__sppm_rework_corridor_decision_rework"
     assert route.segments[0].attrs == (
-        "tailport=e",
+        "tailport=s",
         "constraint=false",
         "style=dashed",
         "weight=0",
         "arrowhead=none",
     )
     assert route.segments[1].attrs == (
-        "headport=w",
+        "headport=n",
         "constraint=false",
         "minlen=3",
         "weight=0",
         "style=dashed",
-        'label="no"',
+        'xlabel="no"',
     )
-    assert routing_plan.route_plan.routes == {}
+    assert ("decision", "rework") in routing_plan.route_plan.routes
 
 
 def test_sppm_routing_plan_uses_tb_ports_for_wrapped_tb_layout():
@@ -199,6 +232,11 @@ def test_sppm_routing_plan_snapshot_wrap_boundary_and_direct_segments():
 
 
 def test_sppm_routing_plan_snapshot_rework_includes_anchor_segments():
+    nodes = [
+        {"id": "decision", "kind": "decision", "name": "Valid?", "metadata": {}},
+        {"id": "rework", "kind": "task", "name": "Rework", "metadata": {}},
+        {"id": "done", "kind": "task", "name": "Done", "metadata": {}},
+    ]
     edges = [
         {"source": "decision", "target": "rework", "outcome": "no", "edge_type": "rework", "rework": True},
         {"source": "rework", "target": "done"},
@@ -206,7 +244,7 @@ def test_sppm_routing_plan_snapshot_rework_includes_anchor_segments():
     options = RenderOptions(diagram="sppm")
 
     routing_plan = build_sppm_routing_plan(
-        nodes=[],
+        nodes=nodes,
         edges=edges,
         options=options,
         step_numbering={"decision": 3, "rework": 2, "done": 4},
@@ -218,8 +256,8 @@ def test_sppm_routing_plan_snapshot_rework_includes_anchor_segments():
         [
             "edge decision->rework kind=rework boundary=False rework=True",
             "  anchor __sppm_rework_corridor_decision_rework [shape=point, width=0.01, height=0.01, label=\"\", style=invis]",
-            "  segment decision->__sppm_rework_corridor_decision_rework [tailport=e, constraint=false, style=dashed, weight=0, arrowhead=none]",
-            "  segment __sppm_rework_corridor_decision_rework->rework [headport=w, constraint=false, minlen=3, weight=0, style=dashed, label=\"no\"]",
+            "  segment decision->__sppm_rework_corridor_decision_rework [tailport=s, constraint=false, style=dashed, weight=0, arrowhead=none]",
+                "  segment __sppm_rework_corridor_decision_rework->rework [headport=n, constraint=false, minlen=3, weight=0, style=dashed, xlabel=\"no\"]",
             "edge rework->done kind=direct boundary=False rework=False",
             "  segment rework->done [tailport=e, headport=w]",
         ]
@@ -310,4 +348,5 @@ def test_sppm_task_nodes_emit_named_slot_ports_when_route_plan_has_slots():
     assert 'PORT="in_0"' in out
     assert 'PORT="in_1"' in out
     assert 'PORT="out_0"' in out
-    assert "headport=w" in out
+    assert '"a":e -> "c":w [];' in out
+    assert '"b":e -> "c":w [];' in out

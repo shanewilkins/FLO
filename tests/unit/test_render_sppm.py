@@ -115,6 +115,33 @@ def test_sppm_start_end_use_rounded_rect():
     assert out.count('style="rounded,filled"') == 2
 
 
+def test_sppm_decision_nodes_use_diamond_shape():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "decision", "kind": "decision", "name": "Approved?"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "decision"},
+            {"source": "decision", "target": "end", "outcome": "yes"},
+        ],
+    }
+    out = render_dot(ir_like, options={"diagram": "sppm"})
+    assert '"decision" [label="Approved?", shape=diamond, regular=true, width=2.4, height=1.4' in out
+
+
+def test_sppm_task_cards_have_minimum_content_width():
+    ir_like = {
+        "nodes": [
+            {"id": "task", "kind": "task", "name": "A", "metadata": {"value_class": "VA"}},
+        ],
+        "edges": [],
+    }
+    out = render_dot(ir_like, options={"diagram": "sppm"})
+    assert 'WIDTH="220"' in out
+
+
 def test_sppm_wait_time_shown_in_node_info_box():
     ir_like = {
         "nodes": [
@@ -324,12 +351,12 @@ def test_layout_wrap_lr_emits_wrap_hints_and_boundary_connector():
 
     assert "splines=ortho" in out
     assert "cluster_wrap_lr_0" in out
-    assert '"a" -> "b" [tailport=e, headport=w];' in out
+    assert '"a":e -> "b":w [];' in out
     assert '"__wrap_exit_lr_0" [shape=point, width=0.01, label="", style=invis, height=0.01, group="__wrap_exit_column"];' in out
-    assert '"b" -> "__wrap_exit_lr_0" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out
-    assert '"__wrap_exit_lr_0" -> "c" [headport="boundary_in:s", minlen=2, penwidth=1.2];' in out
-    assert '"e" -> "__wrap_exit_lr_1" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out
-    assert '"__wrap_exit_lr_1" -> "end" [headport=n, minlen=2, penwidth=1.2];' in out
+    assert '"b":"out_0":e -> "__wrap_exit_lr_0" [arrowhead=none, constraint=false, weight=0];' in out
+    assert '"__wrap_exit_lr_0" -> "c":"boundary_in":s [minlen=2, penwidth=1.2];' in out
+    assert '"e":"out_0":e -> "__wrap_exit_lr_1" [arrowhead=none, constraint=false, weight=0];' in out
+    assert '"__wrap_exit_lr_1" -> "end":n [minlen=2, penwidth=1.2];' in out
     assert "__sppm_wrap_corridor_" not in out
 
 
@@ -365,10 +392,10 @@ def test_layout_wrap_tb_emits_wrap_hints_and_boundary_connector():
     assert "// Autoformat wrapped layout: orientation=tb" in out
     assert "rankdir=LR;" in out
     assert "cluster_wrap_tb_0" in out
-    assert '"a" -> "__sppm_boundary_corridor_a_b" [tailport=s, arrowhead=none, constraint=false, weight=0];' in out
-    assert '"__sppm_boundary_corridor_a_b" -> "b" [headport=n, minlen=2, penwidth=1.2];' in out
-    assert '"c" -> "__sppm_boundary_corridor_c_d" [tailport=s, arrowhead=none, constraint=false, weight=0];' in out
-    assert '"__sppm_boundary_corridor_c_d" -> "d" [headport=n, minlen=2, penwidth=1.2];' in out
+    assert '"a":s -> "__sppm_boundary_corridor_a_b" [arrowhead=none, constraint=false, weight=0];' in out
+    assert '"__sppm_boundary_corridor_a_b" -> "b":n [minlen=2, penwidth=1.2];' in out
+    assert '"c":s -> "__sppm_boundary_corridor_c_d" [arrowhead=none, constraint=false, weight=0];' in out
+    assert '"__sppm_boundary_corridor_c_d" -> "d":n [minlen=2, penwidth=1.2];' in out
     assert "__sppm_wrap_corridor_" not in out
 
 
@@ -434,7 +461,7 @@ def test_layout_wrap_off_preserves_non_wrapped_graph_attrs():
         },
     )
 
-    assert "splines=true" in out
+    assert "splines=ortho" in out
     assert "cluster_wrap_" not in out
     assert "minlen=2" not in out
 
@@ -471,10 +498,10 @@ def test_layout_wrap_activates_from_width_threshold_only():
 
     assert "cluster_wrap_lr_0" in out
     assert "splines=ortho" in out
-    assert '"b" -> "__wrap_exit_lr_0" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out
-    assert '"__wrap_exit_lr_0" -> "c" [headport="boundary_in:s", minlen=2, penwidth=1.2];' in out
-    assert '"e" -> "__wrap_exit_lr_1" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out
-    assert '"__wrap_exit_lr_1" -> "end" [headport=n, minlen=2, penwidth=1.2];' in out
+    assert '"b":"out_0":e -> "__wrap_exit_lr_0" [arrowhead=none, constraint=false, weight=0];' in out
+    assert '"__wrap_exit_lr_0" -> "c":"boundary_in":s [minlen=2, penwidth=1.2];' in out
+    assert '"e":"out_0":e -> "__wrap_exit_lr_1" [arrowhead=none, constraint=false, weight=0];' in out
+    assert '"__wrap_exit_lr_1" -> "end":n [minlen=2, penwidth=1.2];' in out
 
 
 def test_layout_wrap_tiny_width_uses_min_chunk_floor_of_three():
@@ -508,10 +535,10 @@ def test_layout_wrap_tiny_width_uses_min_chunk_floor_of_three():
     )
 
     # Placement-based wrapping can collapse to one node per line under an extreme width budget.
-    assert '"b" -> "__wrap_exit_lr_2" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out
-    assert '"__wrap_exit_lr_2" -> "c" [headport="boundary_in:s", minlen=2, penwidth=1.2];' in out
-    assert '"e" -> "__wrap_exit_lr_5" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out
-    assert '"__wrap_exit_lr_5" -> "end" [headport=n, minlen=2, penwidth=1.2];' in out
+    assert '"b":"out_0":e -> "__wrap_exit_lr_2" [arrowhead=none, constraint=false, weight=0];' in out
+    assert '"__wrap_exit_lr_2" -> "c":"boundary_in":s [minlen=2, penwidth=1.2];' in out
+    assert '"e":"out_0":e -> "__wrap_exit_lr_5" [arrowhead=none, constraint=false, weight=0];' in out
+    assert '"__wrap_exit_lr_5" -> "end":n [minlen=2, penwidth=1.2];' in out
 
 
 def test_layout_wrap_fit_strict_wraps_sooner_than_fit_preferred_for_same_content():
@@ -569,9 +596,9 @@ def test_layout_wrap_fit_strict_wraps_sooner_than_fit_preferred_for_same_content
     )
 
     # fit-preferred keeps a,b,c on the same line; boundary falls between b and c
-    assert '"b" -> "__wrap_exit_lr_0" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out_preferred
+    assert '"b":"out_0":e -> "__wrap_exit_lr_0" [arrowhead=none, constraint=false, weight=0];' in out_preferred
     # fit-strict reserves more margin so a and b end up in different chunks
-    assert '"a" -> "__wrap_exit_lr_0" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out_strict
+    assert '"a":"out_0":e -> "__wrap_exit_lr_0" [arrowhead=none, constraint=false, weight=0];' in out_strict
 
 
 def test_layout_wrap_width_estimator_responds_to_dense_label_content():
@@ -612,7 +639,7 @@ def test_layout_wrap_width_estimator_responds_to_dense_label_content():
     )
 
     # dense label on 'a' pushes the node wide enough that 'a' and 'b' land in different chunks
-    assert '"a" -> "__wrap_exit_lr_0" [tailport="out_0:e", arrowhead=none, constraint=false, weight=0];' in out
+    assert '"a":"out_0":e -> "__wrap_exit_lr_0" [arrowhead=none, constraint=false, weight=0];' in out
 
 
 def test_layout_spacing_compact_reduces_wrapped_graph_spacing():
@@ -659,6 +686,42 @@ def test_layout_spacing_compact_reduces_wrapped_graph_spacing():
     assert "nodesep=0.35, ranksep=0.3" in out_compact
 
 
+def test_layout_spacing_compact_reduces_non_wrapped_graph_spacing():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "a", "kind": "task", "name": "A", "metadata": {}},
+            {"id": "b", "kind": "task", "name": "B", "metadata": {}},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "a"},
+            {"source": "a", "target": "b"},
+            {"source": "b", "target": "end"},
+        ],
+    }
+
+    out_standard = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "layout_wrap": "off",
+            "layout_spacing": "standard",
+        },
+    )
+    out_compact = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "layout_wrap": "off",
+            "layout_spacing": "compact",
+        },
+    )
+
+    assert "nodesep=0.9, ranksep=1.2" in out_standard
+    assert "nodesep=0.75, ranksep=1.0" in out_compact
+
+
 def test_sppm_node_numbering_is_deterministic_with_branching():
     ir_like = {
         "nodes": [
@@ -684,3 +747,30 @@ def test_sppm_node_numbering_is_deterministic_with_branching():
     assert "1. A" in out_one
     assert "2. B" in out_one
     assert "3. C" in out_one
+
+
+def test_sppm_emits_secondary_line_constraints_for_rework_targets():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "intake", "kind": "task", "name": "Intake", "metadata": {}},
+            {"id": "decision", "kind": "decision", "name": "Complete?"},
+            {"id": "rework", "kind": "task", "name": "Rework", "metadata": {}},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "intake"},
+            {"source": "intake", "target": "decision"},
+            {"source": "decision", "target": "end", "outcome": "yes"},
+            {"source": "decision", "target": "rework", "outcome": "no", "edge_type": "rework", "rework": True},
+            {"source": "rework", "target": "intake", "edge_type": "rework", "rework": True},
+        ],
+    }
+
+    out = render_dot(ir_like, options={"diagram": "sppm"})
+    assert "subgraph sppm_secondary_rank_0" in out
+    # Rework node is aligned with its mainline return target ("intake"), not the branch source.
+    assert '"intake";' in out
+    assert '"rework";' in out
+    assert "subgraph sppm_secondary_branch_track_0" in out
+    assert "subgraph sppm_secondary_return_track_0" in out

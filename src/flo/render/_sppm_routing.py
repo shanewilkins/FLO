@@ -76,6 +76,13 @@ class SppmRoutingPlan:
         return self.routes.get((source, target))
 
 
+@dataclass(frozen=True)
+class SppmPortPolicy:
+    """Node-level ingress/egress policy for SPPM routing."""
+
+    secondary_line_targets: frozenset[str]
+
+
 def serialize_sppm_routing_plan(plan: SppmRoutingPlan) -> str:
     """Return a stable, human-readable snapshot of route decisions."""
     lines: list[str] = []
@@ -120,6 +127,7 @@ def build_sppm_routing_plan(
         corridor_plan=corridor_plan,
     )
     node_kinds = _node_kinds(nodes)
+    port_policy = _build_sppm_port_policy(edges=edges, node_kinds=node_kinds)
 
     for edge in edges:
         source = str(edge.get("source") or "")
@@ -143,6 +151,7 @@ def build_sppm_routing_plan(
             core_route=route_plan.route_for(source, target),
             source_kind=node_kinds.get(source, "task"),
             target_kind=node_kinds.get(target, "task"),
+            port_policy=port_policy,
         )
         routes[(source, target)] = route
 
@@ -264,6 +273,7 @@ def _build_sppm_edge_route(
     core_route: Any | None,
     source_kind: str,
     target_kind: str,
+    port_policy: SppmPortPolicy,
 ) -> SppmEdgeRoute:
     edge_attrs: list[str] = []
     if options.sppm_step_numbering == "edge":
@@ -272,16 +282,15 @@ def _build_sppm_edge_route(
         if src_num is not None and dst_num is not None:
             edge_attrs.append(f'xlabel="{src_num}->{dst_num}"')
 
-    is_boundary = wrap_plan.active and (source, target) in wrap_plan.boundary_edges
-    if is_boundary:
-        edge_attrs.extend(["minlen=2", "penwidth=1.2"])
-
     is_rework = is_sppm_rework_edge(
         edge=edge,
         step_numbering=step_numbering,
         source=source,
         target=target,
     )
+    is_boundary = wrap_plan.active and (source, target) in wrap_plan.boundary_edges
+    if is_boundary and not is_rework:
+        edge_attrs.extend(["minlen=2", "penwidth=1.2"])
     resolved_ports = _resolved_ports(
         core_route=core_route,
         options=options,
@@ -291,12 +300,18 @@ def _build_sppm_edge_route(
     )
 
     if is_rework:
+        is_branch_out = source_kind == "decision" or edge.get("outcome") is not None or edge.get("label") is not None
         return _build_rework_route(
             edge=edge,
             source=source,
             target=target,
             edge_attrs=edge_attrs,
             wrap_ports=resolved_ports,
+            is_branch_out=is_branch_out,
+            source_kind=source_kind,
+            target_kind=target_kind,
+            core_route=core_route,
+            port_policy=port_policy,
         )
 
     if is_boundary and resolved_ports is not None:
@@ -406,8 +421,25 @@ def _build_rework_route(
     target: str,
     edge_attrs: list[str],
     wrap_ports: tuple[str, str],
+    is_branch_out: bool,
+    source_kind: str,
+    target_kind: str,
+    core_route: Any | None,
+    port_policy: SppmPortPolicy,
 ) -> SppmEdgeRoute:
-    source_port, target_port = wrap_ports
+    # Route rework loops off the primary spine with directional ports:
+    # - branch-out (typically decision -> rework): move away from mainline
+    # - return-loop (rework -> mainline): re-enter from the opposite side
+    source_port, target_port = _sppm_rework_ports(
+        wrap_ports=wrap_ports,
+        is_branch_out=is_branch_out,
+        source=source,
+        target=target,
+        source_kind=source_kind,
+        target_kind=target_kind,
+        core_route=core_route,
+        port_policy=port_policy,
+    )
     route_attrs = ["constraint=false", "minlen=3", "weight=0", "style=dashed", *edge_attrs]
     anchor_id = sppm_rework_anchor_id(source=source, target=target)
     anchor = SppmRouteAnchor(
@@ -421,6 +453,7 @@ def _build_rework_route(
                 attr
                 for attr in route_attrs
                 if not attr.startswith("label=")
+                and not attr.startswith("xlabel=")
                 and not attr.startswith("minlen=")
                 and not attr.startswith("penwidth=")
                 and not attr.startswith("weight=")
@@ -432,7 +465,7 @@ def _build_rework_route(
     second_segment_attrs = list([target_port, *route_attrs])
     branch_label = edge.get("outcome") or edge.get("label")
     if branch_label is not None:
-        second_segment_attrs.append(f'label="{str(branch_label)}"')
+        second_segment_attrs.append(f'xlabel="{str(branch_label)}"')
 
     return SppmEdgeRoute(
         source=source,
@@ -448,6 +481,155 @@ def _build_rework_route(
             SppmRouteSegment(source_id=anchor_id, target_id=target, attrs=tuple(second_segment_attrs)),
         ),
     )
+
+
+def _sppm_rework_ports(
+    *,
+    wrap_ports: tuple[str, str],
+    is_branch_out: bool,
+    source: str,
+    target: str,
+    source_kind: str,
+    target_kind: str,
+    core_route: Any | None,
+    port_policy: SppmPortPolicy,
+) -> tuple[str, str]:
+    """Return rework ports that reduce crossings around the mainline.
+
+        For LR layouts:
+                - decision branch-out edges leave the diamond south tip and enter
+                    rework at the top edge (south -> north)
+                - return edges leave rework from the west side and re-enter mainline
+                    from the west side
+
+    For TB layouts:
+    - branch-out edges leave rightward and enter from left (e -> w)
+    - return edges leave leftward and re-enter from right (w -> e)
+    """
+    source_port, target_port = wrap_ports
+    if source_port == "tailport=e" and target_port == "headport=w":
+        # LR layout visual contract:
+        # - decision branch-to-rework exits south and enters rework north
+        # - other branch-to-rework edges enter rework from west
+        # - rework-return leaves rework west and re-enters mainline west
+        if is_branch_out:
+            if source_kind == "decision":
+                return ("tailport=s", "headport=n")
+            return ("tailport=e", "headport=w")
+
+        source_return_port = "tailport=w"
+        if core_route is not None and _supports_named_ports(source_kind):
+            source_return_port = _graphviz_tailport_for_side(
+                slot_index=core_route.source_port.slot_index,
+                side="w",
+                kind=source_kind,
+            )
+
+        if core_route is not None and _supports_named_ports(target_kind):
+            return (
+                source_return_port,
+                _graphviz_headport_for_side(
+                    slot_index=core_route.target_port.slot_index,
+                    side="w",
+                    kind=target_kind,
+                ),
+            )
+        return (source_return_port, "headport=w")
+    if source_port == "tailport=s" and target_port == "headport=n":
+        if is_branch_out:
+            return ("tailport=e", "headport=w")
+        return ("tailport=w", "headport=e")
+    return (source_port, target_port)
+
+
+def _build_sppm_port_policy(*, edges: list[dict[str, Any]], node_kinds: dict[str, str]) -> SppmPortPolicy:
+    secondary_line_targets: set[str] = set()
+    for edge in edges:
+        source = str(edge.get("source") or "")
+        target = str(edge.get("target") or "")
+        if not source or not target:
+            continue
+        if not _edge_is_explicit_branch_out(edge=edge, source_kind=node_kinds.get(source, "task")):
+            continue
+        secondary_line_targets.add(target)
+    return SppmPortPolicy(secondary_line_targets=frozenset(secondary_line_targets))
+
+
+def _edge_is_explicit_branch_out(*, edge: dict[str, Any], source_kind: str) -> bool:
+    if str(edge.get("edge_type") or "").strip().lower() != "rework" and edge.get("rework") is not True:
+        return False
+    return source_kind == "decision" or edge.get("outcome") is not None or edge.get("label") is not None
+
+
+def _preferred_tailport(
+    *,
+    node_id: str,
+    kind: str,
+    core_route: Any | None,
+    slot_role: str,
+    fallback_side: str,
+    port_policy: SppmPortPolicy,
+) -> str:
+    _ = slot_role
+    if node_id in port_policy.secondary_line_targets and core_route is not None:
+        return _graphviz_tailport_for_side(
+            slot_index=core_route.source_port.slot_index,
+            side=fallback_side,
+            kind=kind,
+        )
+    return f"tailport={fallback_side}"
+
+
+def _preferred_headport(
+    *,
+    node_id: str,
+    kind: str,
+    core_route: Any | None,
+    slot_role: str,
+    fallback_side: str,
+    port_policy: SppmPortPolicy,
+) -> str:
+    _ = slot_role
+    if node_id in port_policy.secondary_line_targets and core_route is not None:
+        return _graphviz_headport_for_side(
+            slot_index=core_route.target_port.slot_index,
+            side=fallback_side,
+            kind=kind,
+        )
+    if core_route is not None and _supports_named_ports(kind) and fallback_side in {"w", "e"}:
+        return _graphviz_headport_for_side(
+            slot_index=core_route.target_port.slot_index,
+            side=fallback_side,
+            kind=kind,
+        )
+    return f"headport={fallback_side}"
+
+
+def _preferred_return_headport(
+    *,
+    node_id: str,
+    kind: str,
+    core_route: Any | None,
+    fallback_side: str,
+) -> str:
+    _ = node_id
+    if core_route is not None and _supports_named_ports(kind):
+        return f'headport="rin_{core_route.target_port.slot_index}:e"'
+    return f"headport={fallback_side}"
+
+
+def _graphviz_tailport_for_side(*, slot_index: int, side: str, kind: str) -> str:
+    if _supports_named_ports(kind):
+        if side == "w":
+            return f'tailport="in_{slot_index}:w"'
+        return f'tailport="out_{slot_index}:{side}"'
+    return f"tailport={side}"
+
+
+def _graphviz_headport_for_side(*, slot_index: int, side: str, kind: str) -> str:
+    if _supports_named_ports(kind):
+        return f'headport="in_{slot_index}:{side}"'
+    return f"headport={side}"
 
 
 def _build_boundary_lane_map(*, wrap_plan: WrapPlan) -> dict[tuple[str, str], str]:
@@ -492,7 +674,7 @@ def _graphviz_headport_for_spec(port_spec: Any, *, kind: str) -> str:
 
 
 def _supports_named_ports(kind: str) -> bool:
-    return kind not in {"start", "end"}
+    return kind not in {"start", "end", "decision"}
 
 
 def _resolved_boundary_ports(

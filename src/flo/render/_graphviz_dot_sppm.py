@@ -5,21 +5,31 @@ Renders a left-to-right process map with:
   - Cycle time shown in node label
   - Workers shown in node label (non-start/end nodes)
   - Wait time shown as edge label on the incoming edge to a step
-  - Start/end nodes as rounded rectangles
+    - Start/end nodes as rounded rectangles
+    - Decision nodes as diamonds
 """
 
 from __future__ import annotations
 
 from collections import defaultdict
+import textwrap
 from typing import Any
 
 from ._graphviz_dot_common import _escape
 from ._autoformat_wrap import append_wrap_layout_hints, build_wrap_plan, WrapPlan
-from ._sppm_routing import SppmEdgeRoute, build_sppm_routing_plan
+from ._sppm_routing import SppmEdgeRoute, SppmRoutingPlan, build_sppm_routing_plan
 from ._sppm_text import apply_density_filter, abbreviate_workers, format_text_field, normalize_space
 from ._sppm_themes import resolve_sppm_theme, SppmTheme, SppmNodeStyle
 from .options import RenderOptions
 from flo.compiler.ir.enums import ProcessValueClass
+
+
+_SPPM_DECISION_MIN_WIDTH = 2.4
+_SPPM_DECISION_MIN_HEIGHT = 1.4
+_SPPM_NAME_SOFT_WRAP = 24
+_SPPM_DESCRIPTION_SOFT_WRAP = 42
+_SPPM_WORKERS_SOFT_WRAP = 36
+_SPPM_TASK_MIN_WIDTH = 220
 
 
 def render_sppm_dot(process: dict[str, Any] | Any, options: RenderOptions | None = None) -> str:
@@ -48,7 +58,7 @@ def _render_sppm_graph(process: dict[str, Any] | Any, options: RenderOptions) ->
     lines: list[str] = ["digraph {"]
     rankdir = _resolve_rankdir(options=options, wrap_active=wrap_plan.active)
     lines.append(f"  rankdir={rankdir};")
-    splines = "ortho" if wrap_plan.active else "true"
+    splines = "ortho"
     nodesep, ranksep = _sppm_graph_spacing(options=options, wrap_active=wrap_plan.active)
     lines.append(
         f"  graph [compound=true, newrank=true, nodesep={nodesep}, ranksep={ranksep}, margin=0.05, pad=0.05, splines={splines}, bgcolor=white];"
@@ -85,6 +95,11 @@ def _render_sppm_graph(process: dict[str, Any] | Any, options: RenderOptions) ->
             )
         )
 
+    # Phase 3: reinforce the primary (non-rework) flow with invisible, high-weight
+    # constraints so spacing follows the process spine rather than branch geometry.
+    lines.extend(_render_sppm_spine_constraints(edges=edges, routing_plan=routing_plan))
+    lines.extend(_render_sppm_secondary_line_constraints(edges=edges, routing_plan=routing_plan))
+
     lines.append("}")
     return "\n".join(lines)
 
@@ -101,8 +116,8 @@ def _resolve_rankdir(*, options: RenderOptions, wrap_active: bool) -> str:
 def _sppm_graph_spacing(*, options: RenderOptions, wrap_active: bool) -> tuple[float, float]:
     if not wrap_active:
         if options.layout_spacing == "compact":
-            return 0.7, 0.9
-        return 0.8, 1.1
+            return 0.75, 1.0
+        return 0.9, 1.2
     if options.layout_fit == "fit-strict":
         if options.layout_spacing == "compact":
             return 0.25, 0.3
@@ -134,6 +149,8 @@ def _render_sppm_node(
         name = f"{step_numbering[node_id]}. {name}"
     if kind in ("start", "end"):
         return [_render_sppm_start_end_node(node_id=node_id, name=name, theme=theme, wrap_plan=wrap_plan)]
+    if kind == "decision":
+        return [_render_sppm_decision_node(node_id=node_id, name=name, theme=theme, wrap_plan=wrap_plan)]
 
     return [
         _render_sppm_task_node(
@@ -156,6 +173,22 @@ def _render_sppm_start_end_node(*, node_id: str, name: str, theme: SppmTheme, wr
         'style="rounded,filled"',
         f'fillcolor="{style.fill}"',
         f'color="{style.border}"',
+        "penwidth=1.5",
+    ]
+    _append_chunk_group(attrs=attrs, node_id=node_id, wrap_plan=wrap_plan)
+    return f'  "{_escape(node_id)}" [{", ".join(attrs)}];'
+
+
+def _render_sppm_decision_node(*, node_id: str, name: str, theme: SppmTheme, wrap_plan: WrapPlan) -> str:
+    attrs = [
+        f'label="{_escape(name)}"',
+        "shape=diamond",
+        "regular=true",
+        f"width={_SPPM_DECISION_MIN_WIDTH}",
+        f"height={_SPPM_DECISION_MIN_HEIGHT}",
+        'style="filled"',
+        f'fillcolor="{theme.start_end.fill}"',
+        f'color="{theme.start_end.border}"',
         "penwidth=1.5",
     ]
     _append_chunk_group(attrs=attrs, node_id=node_id, wrap_plan=wrap_plan)
@@ -215,13 +248,16 @@ def _sppm_html_label(
     port_counts: dict[str, int],
 ) -> str:
     """Build a Graphviz HTML-like table label: colored header + white info sub-row."""
-    name_text = format_text_field(
-        name,
-        max_len=options.sppm_max_label_step_name,
-        wrap_strategy=options.sppm_wrap_strategy,
-        truncation_policy=options.sppm_truncation_policy,
-        html_break="\n",
-    )
+    if options.sppm_max_label_step_name is None:
+        name_text = _soft_wrap_text(normalize_space(name), width=_SPPM_NAME_SOFT_WRAP)
+    else:
+        name_text = format_text_field(
+            name,
+            max_len=options.sppm_max_label_step_name,
+            wrap_strategy=options.sppm_wrap_strategy,
+            truncation_policy=options.sppm_truncation_policy,
+            html_break="\n",
+        )
     name_html = _html_escape_multiline(name_text, break_tag="<BR/>")
     header = (
         f'<TR><TD BGCOLOR="{style.fill}" ALIGN="CENTER">'
@@ -229,7 +265,10 @@ def _sppm_html_label(
         f'</TD></TR>'
     )
 
-    description = normalize_space(str(metadata.get("description") or ""))
+    description = _soft_wrap_text(
+        normalize_space(str(metadata.get("description") or "")),
+        width=_SPPM_DESCRIPTION_SOFT_WRAP,
+    )
 
     ct = metadata.get("cycle_time")
     ct_line = ""
@@ -247,13 +286,16 @@ def _sppm_html_label(
         workers_text = ", ".join(str(w) for w in workers)
         if options.sppm_label_density == "compact":
             workers_text = abbreviate_workers([str(w) for w in workers])
-        workers_line = format_text_field(
-            f"Workers: {workers_text}",
-            max_len=options.sppm_max_label_workers,
-            wrap_strategy=options.sppm_wrap_strategy,
-            truncation_policy=options.sppm_truncation_policy,
-            html_break="\n",
-        )
+        if options.sppm_max_label_workers is None:
+            workers_line = _soft_wrap_text(f"Workers: {workers_text}", width=_SPPM_WORKERS_SOFT_WRAP)
+        else:
+            workers_line = format_text_field(
+                f"Workers: {workers_text}",
+                max_len=options.sppm_max_label_workers,
+                wrap_strategy=options.sppm_wrap_strategy,
+                truncation_policy=options.sppm_truncation_policy,
+                html_break="\n",
+            )
 
     wt = metadata.get("wait_time")
     wt_line = ""
@@ -312,6 +354,9 @@ def _wrap_sppm_label_with_ports(
 ) -> str:
     in_count = max(0, int(port_counts.get("in", 0)))
     out_count = max(0, int(port_counts.get("out", 0)))
+    left_stack = _sppm_port_stack_html(role="in", count=in_count)
+    return_in_stack = _sppm_port_stack_html(role="rin", count=in_count)
+    right_stack = _sppm_port_stack_html(role="out", count=out_count)
     table_prefix = (
         f'<<TABLE BORDER="2" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0" '
         f'COLOR="{border_color}" BGCOLOR="white">'
@@ -319,36 +364,29 @@ def _wrap_sppm_label_with_ports(
 
     if in_count == 0 and out_count == 0:
         return (
-            f'{table_prefix}<TR><TD BGCOLOR="{header_fill}"></TD><TD PORT="boundary_in" HEIGHT="1" BGCOLOR="{header_fill}"></TD><TD BGCOLOR="{header_fill}"></TD></TR>'
-            f'<TR><TD></TD><TD>{content_table}</TD><TD></TD></TR>'
-            f'<TR><TD></TD><TD PORT="boundary_out" HEIGHT="1"></TD><TD></TD></TR></TABLE>>'
+            f'{table_prefix}<TR><TD BGCOLOR="{header_fill}"></TD><TD PORT="boundary_in" HEIGHT="1" BGCOLOR="{header_fill}"></TD><TD BGCOLOR="{header_fill}"></TD><TD BGCOLOR="{header_fill}"></TD></TR>'
+            f'<TR><TD WIDTH="8"></TD><TD WIDTH="{_SPPM_TASK_MIN_WIDTH}">{content_table}</TD><TD WIDTH="8"></TD><TD WIDTH="8"></TD></TR>'
+            f'<TR><TD></TD><TD PORT="boundary_out" HEIGHT="1"></TD><TD></TD><TD></TD></TR></TABLE>>'
         )
 
-    row_count = max(1, in_count, out_count)
-    rows: list[str] = []
-    rows.append(
-        f'<TR><TD BGCOLOR="{header_fill}"></TD><TD PORT="boundary_in" HEIGHT="1" BGCOLOR="{header_fill}"></TD><TD BGCOLOR="{header_fill}"></TD></TR>'
+    return (
+        f'{table_prefix}'
+        f'<TR><TD BGCOLOR="{header_fill}"></TD><TD PORT="boundary_in" HEIGHT="1" BGCOLOR="{header_fill}"></TD><TD BGCOLOR="{header_fill}"></TD><TD BGCOLOR="{header_fill}"></TD></TR>'
+        f'<TR><TD WIDTH="8">{left_stack}</TD><TD WIDTH="{_SPPM_TASK_MIN_WIDTH}">{content_table}</TD><TD WIDTH="8">{return_in_stack}</TD><TD WIDTH="8">{right_stack}</TD></TR>'
+        f'<TR><TD></TD><TD PORT="boundary_out" HEIGHT="1"></TD><TD></TD><TD></TD></TR>'
+        f'</TABLE>>'
     )
-    for row_index in range(row_count):
-        left_cell = _port_cell(role="in", slot=row_index) if row_index < in_count else _empty_port_cell()
-        right_cell = _port_cell(role="out", slot=row_index) if row_index < out_count else _empty_port_cell()
-        if row_index == 0:
-            rows.append(
-                f"<TR>{left_cell}<TD ROWSPAN=\"{row_count}\">{content_table}</TD>{right_cell}</TR>"
-            )
-        else:
-            rows.append(f"<TR>{left_cell}{right_cell}</TR>")
-    rows.append('<TR><TD></TD><TD PORT="boundary_out" HEIGHT="1"></TD><TD></TD></TR>')
-
-    return f'{table_prefix}{"".join(rows)}</TABLE>>'
 
 
-def _port_cell(*, role: str, slot: int) -> str:
-    return f'<TD PORT="{role}_{slot}" WIDTH="0" HEIGHT="1"></TD>'
+def _sppm_port_stack_html(*, role: str, count: int) -> str:
+    if count <= 0:
+        return '<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD WIDTH="8" HEIGHT="12"></TD></TR></TABLE>'
 
-
-def _empty_port_cell() -> str:
-    return '<TD WIDTH="0" HEIGHT="1"></TD>'
+    rows = "".join(
+        f'<TR><TD PORT="{role}_{slot}" WIDTH="8" HEIGHT="12"></TD></TR>'
+        for slot in range(count)
+    )
+    return f'<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0">{rows}</TABLE>'
 
 
 def _port_counts_by_node(routing_plan: Any) -> dict[str, dict[str, int]]:
@@ -370,6 +408,13 @@ def _html_escape(text: str) -> str:
 
 def _html_escape_multiline(text: str, break_tag: str) -> str:
     return break_tag.join(_html_escape(part) for part in text.split("\n"))
+
+
+def _soft_wrap_text(text: str, *, width: int) -> str:
+    if not text or width < 2:
+        return text
+    wrapped = textwrap.wrap(text, width=width, break_long_words=False, break_on_hyphens=False)
+    return "\n".join(wrapped) if wrapped else text
 
 
 # ---------------------------------------------------------------------------
@@ -398,10 +443,166 @@ def _render_sppm_edge(
     for anchor in route.anchors:
         lines.append(f'  "{anchor.anchor_id}" [{", ".join(anchor.attrs)}];')
     for segment in route.segments:
+        source_endpoint, target_endpoint, rendered_attrs = _materialize_sppm_segment(segment)
         lines.append(
-            f'  "{_escape(segment.source_id)}" -> "{_escape(segment.target_id)}" '
-            f'[{", ".join(_escape_sppm_route_attrs(segment.attrs))}];'
+            f'  {source_endpoint} -> {target_endpoint} '
+            f'[{", ".join(_escape_sppm_route_attrs(rendered_attrs))}];'
         )
+    return lines
+
+
+def _materialize_sppm_segment(segment: Any) -> tuple[str, str, tuple[str, ...]]:
+    source_endpoint = f'"{_escape(segment.source_id)}"'
+    target_endpoint = f'"{_escape(segment.target_id)}"'
+    remaining_attrs: list[str] = []
+
+    for attr in segment.attrs:
+        if attr.startswith("tailport="):
+            source_endpoint = _apply_port_attr_to_endpoint(source_endpoint, attr)
+            continue
+        if attr.startswith("headport="):
+            target_endpoint = _apply_port_attr_to_endpoint(target_endpoint, attr)
+            continue
+        remaining_attrs.append(attr)
+
+    return source_endpoint, target_endpoint, tuple(remaining_attrs)
+
+
+def _apply_port_attr_to_endpoint(endpoint: str, attr: str) -> str:
+    _, raw_value = attr.split("=", 1)
+    value = raw_value.strip().strip('"')
+    if ":" not in value:
+        return f"{endpoint}:{value}"
+
+    port_name, compass = value.split(":", 1)
+    return f'{endpoint}:"{_escape(port_name)}":{compass}'
+
+
+def _render_sppm_spine_constraints(
+    *,
+    edges: list[dict[str, Any]],
+    routing_plan: SppmRoutingPlan,
+) -> list[str]:
+    lines: list[str] = []
+    seen: set[tuple[str, str]] = set()
+    for edge in edges:
+        source = str(edge.get("source") or "")
+        target = str(edge.get("target") or "")
+        if not source or not target:
+            continue
+        if (source, target) in seen:
+            continue
+        route = routing_plan.route_for(source, target)
+        if route is None or route.is_rework:
+            continue
+        seen.add((source, target))
+        lines.append(
+            f'  "{_escape(source)}" -> "{_escape(target)}" [style=invis, constraint=true, weight=24];'
+        )
+    return lines
+
+
+def _render_sppm_secondary_line_constraints(
+    *,
+    edges: list[dict[str, Any]],
+    routing_plan: SppmRoutingPlan,
+) -> list[str]:
+    """Emit invisible constraints for a stable secondary (rework) line.
+
+    - Align each rework target with its local rework source column.
+    - Chain rework targets left-to-right so they form a coherent lower lane.
+    """
+    rework_pairs: list[tuple[str, str]] = []
+    branch_anchor_pairs: list[tuple[str, str]] = []
+    return_anchor_pairs: list[tuple[str, str]] = []
+    seen_targets: set[str] = set()
+    all_rework_targets: set[str] = set()
+
+    for edge in edges:
+        source = str(edge.get("source") or "")
+        target = str(edge.get("target") or "")
+        if not source or not target:
+            continue
+        route = routing_plan.route_for(source, target)
+        if route is None or not route.is_rework:
+            continue
+        all_rework_targets.add(target)
+
+    for edge in edges:
+        source = str(edge.get("source") or "")
+        target = str(edge.get("target") or "")
+        if not source or not target:
+            continue
+        route = routing_plan.route_for(source, target)
+        if route is None or not route.is_rework:
+            continue
+        # Keep only branch-out rework edges (typically decision -> rework task),
+        # and skip return-loop rework edges (rework task -> mainline task).
+        if source in all_rework_targets:
+            anchor_id = route.anchors[0].anchor_id if route.anchors else ""
+            if anchor_id:
+                return_anchor_pairs.append((target, anchor_id))
+            continue
+        anchor_id = route.anchors[0].anchor_id if route.anchors else ""
+        if target in seen_targets:
+            continue
+        seen_targets.add(target)
+        rework_pairs.append((source, target))
+        if anchor_id:
+            branch_anchor_pairs.append((target, anchor_id))
+
+    if not rework_pairs:
+        return []
+
+    lines: list[str] = []
+
+    # Column-align each rework task with its branch source in LR layout.
+    # rank=same forces the same horizontal column, so the rework node lands
+    # directly below the decision that spawned it.  The return edge then
+    # travels leftward (west→east) to re-enter the mainline, producing the
+    # right-to-left secondary flow.
+    for idx, (source, target) in enumerate(rework_pairs):
+        lines.append(f"  subgraph sppm_secondary_rank_{idx} {{")
+        lines.append("    rank=same;")
+        lines.append(f'    "{_escape(source)}";')
+        lines.append(f'    "{_escape(target)}";')
+        lines.append("  }")
+
+    # Keep the secondary line ordered and compact.
+    ordered_targets = [target for _, target in rework_pairs]
+    for left, right in zip(ordered_targets, ordered_targets[1:]):
+        lines.append(
+            f'  "{_escape(left)}" -> "{_escape(right)}" [style=invis, constraint=true, weight=16, minlen=1];'
+        )
+
+    # Shared branch-out track: align and chain branch anchors so branch loops
+    # do not freely criss-cross across the secondary line.
+    for idx, (target, anchor_id) in enumerate(branch_anchor_pairs):
+        lines.append(f"  subgraph sppm_secondary_branch_track_{idx} {{")
+        lines.append("    rank=same;")
+        lines.append(f'    "{_escape(target)}";')
+        lines.append(f'    "{_escape(anchor_id)}";')
+        lines.append("  }")
+    ordered_branch_anchors = [anchor_id for _, anchor_id in branch_anchor_pairs]
+    for left, right in zip(ordered_branch_anchors, ordered_branch_anchors[1:]):
+        lines.append(
+            f'  "{_escape(left)}" -> "{_escape(right)}" [style=invis, constraint=false, weight=0, minlen=1];'
+        )
+
+    # Shared return track: align return anchors with their mainline targets so
+    # anchors do not drift off-canvas and produce long, fan-out dashed paths.
+    for idx, (target, anchor_id) in enumerate(return_anchor_pairs):
+        lines.append(f"  subgraph sppm_secondary_return_track_{idx} {{")
+        lines.append("    rank=same;")
+        lines.append(f'    "{_escape(target)}";')
+        lines.append(f'    "{_escape(anchor_id)}";')
+        lines.append("  }")
+    ordered_return_anchors = [anchor_id for _, anchor_id in return_anchor_pairs]
+    for left, right in zip(ordered_return_anchors, ordered_return_anchors[1:]):
+        lines.append(
+            f'  "{_escape(left)}" -> "{_escape(right)}" [style=invis, constraint=true, weight=18, minlen=1];'
+        )
+
     return lines
 
 

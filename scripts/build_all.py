@@ -178,6 +178,8 @@ def _render_options_for_example(example_file: Path) -> dict[str, str]:
     name = example_file.stem.lower()
     if name == "swimlane":
         return {"diagram": "swimlane"}
+    if name == "sppm_feature_showcase":
+        return {"diagram": "sppm", "orientation": "lr"}
     return {}
 
 

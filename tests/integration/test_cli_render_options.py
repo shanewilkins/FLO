@@ -461,7 +461,7 @@ def test_run_layout_wrap_off_is_unchanged_on_reference_fixture():
         ],
     )
     assert result.exit_code == 0
-    assert "splines=true" in result.output
+    assert "splines=ortho" in result.output
     assert "cluster_wrap_" not in result.output
     assert "minlen=2, penwidth=1.2" not in result.output
 

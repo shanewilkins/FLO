@@ -1,0 +1,67 @@
+spec_version: "0.1"
+
+process:
+  id: sppm_attachment_minimal_repro_v1
+  name: SPPM Attachment Minimal Repro
+
+steps:
+  - id: start
+    kind: start
+    name: Start
+
+  - id: intake
+    kind: task
+    name: Intake Request
+    workers:
+      - Coordinator
+    metadata:
+      value_class: RNVA
+      description: Capture the incoming request.
+      cycle_time:
+        value: 4
+        unit: min
+
+  - id: triage
+    kind: decision
+    name: Information Complete?
+    outcomes:
+      yes: stop
+      no: rework_intake
+
+  - id: rework_intake
+    kind: task
+    name: Rework Intake Data
+    workers:
+      - Requester
+    metadata:
+      value_class: RNVA
+      description: Fill missing request details.
+      cycle_time:
+        value: 6
+        unit: min
+
+  - id: stop
+    kind: end
+    name: Stop
+
+transitions:
+  - source: start
+    target: intake
+
+  - source: intake
+    target: triage
+
+  - source: triage
+    target: stop
+    outcome: yes
+
+  - source: triage
+    target: rework_intake
+    outcome: no
+    edge_type: rework
+    rework: true
+
+  - source: rework_intake
+    target: intake
+    edge_type: rework
+    rework: true
