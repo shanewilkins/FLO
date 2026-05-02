@@ -12,6 +12,7 @@ import re
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
+from dataclasses import dataclass
 from pathlib import Path
 
 from flo.services.errors import RenderError
@@ -19,6 +20,13 @@ from flo.services.errors import RenderError
 _SUPPORTED_FORMATS = {"png", "svg", "pdf", "eps", "ps"}
 _SVG_OUTER_PADDING_PX = 6.0
 _SVG_NS = "http://www.w3.org/2000/svg"
+
+
+@dataclass(frozen=True)
+class _SppmReturnAnchorSpec:
+    anchor_id: str
+    source_id: str
+    target_id: str
 
 
 def render_dot_to_file(dot: str, output_path: str) -> None:
@@ -44,10 +52,12 @@ def render_dot_to_file(dot: str, output_path: str) -> None:
             f"Supported extensions: {', '.join(sorted(_SUPPORTED_FORMATS))}"
         )
 
+    dot_for_render = dot
+
     try:
         result = subprocess.run(
             ["dot", f"-T{fmt}", "-o", output_path],
-            input=dot,
+            input=dot_for_render,
             text=True,
             capture_output=True,
         )
@@ -69,10 +79,127 @@ def render_dot_to_file(dot: str, output_path: str) -> None:
         svg_path = Path(output_path)
         if not svg_path.exists():
             return
+        # Two-pass SPPM anchor pinning: re-render SVG with exact anchor positions
+        # derived from pass-1 layout.  Only activates when SPPM return-loop anchors
+        # are detected; otherwise the SVG written above is already final.
+        _postprocess_sppm_return_loop_edges_svg(dot=dot, output_path=svg_path)
         _postprocess_wrapped_sppm_svg(dot=dot, output_path=svg_path)
         _postprocess_direct_midpoint_edges_svg(output_path=svg_path)
         _normalize_node_backing_fills_svg(output_path=svg_path)
         _normalize_svg_outer_padding(output_path=svg_path, padding=_SVG_OUTER_PADDING_PX)
+
+
+def _postprocess_sppm_return_loop_edges_svg(*, dot: str, output_path: Path) -> None:
+    """Rewrite SPPM return-loop edge paths to exact L-shapes.
+
+    Graphviz routes return-loop corridor edges with an extra dogleg because it
+    places the invisible anchor node at an intermediate Y between the rework
+    node and its target.  After Graphviz produces the SVG (with correct node
+    positions and sizes), we read the rendered node bounds and rewrite just the
+    two return-loop path segments to a clean L-shape: one horizontal segment
+    from the source's left edge to the target's center X, then one vertical
+    segment down into the target's south port.
+
+    Scope:
+    - Only ``__sppm_rework_corridor_*`` return-loop edges (tailport=w source,
+      headport=s target).
+    - Only SVG output.
+    """
+    specs = _extract_sppm_return_anchor_specs(dot)
+    if not specs:
+        return
+
+    tree = ET.parse(output_path)
+    root = tree.getroot()
+    node_bounds = _svg_node_bounds(root)
+    edge_groups = _svg_edge_groups(root)
+    updated = False
+
+    for spec in specs:
+        # Edge titles in SVG use HTML entities for special chars.
+        # "source":w -> "anchor"  and  "anchor" -> "target":s
+        first_title = f"{spec.source_id}:w->{spec.anchor_id}"
+        second_title = f"{spec.anchor_id}->{spec.target_id}:s"
+        first_group = edge_groups.get(first_title)
+        second_group = edge_groups.get(second_title)
+        if first_group is None or second_group is None:
+            continue
+
+        source_bounds = node_bounds.get(spec.source_id)
+        target_bounds = node_bounds.get(spec.target_id)
+        if source_bounds is None or target_bounds is None:
+            continue
+
+        # Source exits at left edge (port=w), midpoint vertically.
+        source_left = source_bounds[0]
+        source_mid_y = (source_bounds[1] + source_bounds[3]) / 2.0
+        # Target entered at bottom (port=s), horizontally centered.
+        target_center_x = (target_bounds[0] + target_bounds[2]) / 2.0
+        # Compute the corner: X of target, Y of source midpoint.
+        corner_x = target_center_x
+        corner_y = source_mid_y
+        # Target bottom entry point.
+        target_bottom = target_bounds[3]
+
+        _set_edge_path(
+            first_group,
+            [
+                (source_left, source_mid_y),
+                (corner_x, corner_y),
+            ],
+        )
+        _set_edge_path(
+            second_group,
+            [
+                (corner_x, corner_y),
+                (target_center_x, target_bottom),
+            ],
+        )
+        # direction=+1: path arrives from rework (less-negative internal Y =
+        # visually lower on screen) going toward target bottom (more-negative
+        # internal Y = visually higher). Base must be at tip_y + 8 so the
+        # rendered arrow points upward into the node's south face.
+        _set_arrow_polygon(second_group, tip=(target_center_x, target_bottom), direction=1)
+        updated = True
+
+    if updated:
+        _write_svg_tree(tree, output_path)
+
+
+def _extract_sppm_return_anchor_specs(dot: str) -> list[_SppmReturnAnchorSpec]:
+    specs: dict[str, _SppmReturnAnchorSpec] = {}
+
+    # DOT edges use endpoint notation: "node":port
+    # Return-loop second segment: "anchor" -> "target":s [...]
+    # First segment (no-arrow): "source":w -> "anchor" [... arrowhead=none ...]
+    second_segment_pattern = re.compile(
+        r'^\s*"(?P<anchor>__sppm_rework_corridor_[^"]+)"\s*->\s*"(?P<target>[^"]+)":s\s*\[(?P<attrs>[^\]]*)\];\s*$',
+        flags=re.MULTILINE,
+    )
+    first_segment_pattern = re.compile(
+        r'^\s*"(?P<source>[^"]+)"(?::[a-z_]+)?\s*->\s*"(?P<anchor>__sppm_rework_corridor_[^"]+)"\s*\[(?P<attrs>[^\]]*)\];\s*$',
+        flags=re.MULTILINE,
+    )
+
+    first_segment_by_anchor: dict[str, str] = {}
+    for match in first_segment_pattern.finditer(dot):
+        attrs = match.group("attrs")
+        if "arrowhead=none" not in attrs:
+            continue
+        first_segment_by_anchor[match.group("anchor")] = match.group("source")
+
+    for match in second_segment_pattern.finditer(dot):
+        anchor_id = match.group("anchor")
+        source_id = first_segment_by_anchor.get(anchor_id)
+        if not source_id:
+            continue
+        specs[anchor_id] = _SppmReturnAnchorSpec(
+            anchor_id=anchor_id,
+            source_id=source_id,
+            target_id=match.group("target"),
+        )
+
+    return list(specs.values())
 
 
 def _postprocess_wrapped_sppm_svg(*, dot: str, output_path: Path) -> None:
@@ -462,13 +589,24 @@ def _set_edge_path(group: ET.Element, points: list[tuple[float, float]]) -> None
     path.attrib["d"] = "M " + " L ".join(f"{x:.2f},{y:.2f}" for x, y in points)
 
 
-def _set_arrow_polygon(group: ET.Element, *, tip: tuple[float, float]) -> None:
+def _set_arrow_polygon(group: ET.Element, *, tip: tuple[float, float], direction: int = -1) -> None:
+    """Set a vertical arrowhead polygon on an edge group.
+
+    ``direction`` controls which side of the tip the base is placed on:
+    - ``-1`` (default): base at ``tip_y - 8`` — arrow points toward increasing Y
+      (visually downward in screen space when Graphviz Y-flip is in effect, this
+      actually appears as pointing upward; use for edges entering a node from above
+      in internal coords).
+    - ``+1``: base at ``tip_y + 8`` — flipped; use for return-loop edges that
+      approach a node from below in screen space (increasing internal Y direction).
+    """
     polygon = group.find("{*}polygon")
     if polygon is None:
         return
     tip_x, tip_y = tip
+    offset = 8.0 * direction
     polygon.attrib["points"] = (
-        f"{tip_x:.2f},{tip_y:.2f} {tip_x - 4.0:.2f},{tip_y - 8.0:.2f} {tip_x + 4.0:.2f},{tip_y - 8.0:.2f} {tip_x:.2f},{tip_y:.2f}"
+        f"{tip_x:.2f},{tip_y:.2f} {tip_x - 4.0:.2f},{tip_y + offset:.2f} {tip_x + 4.0:.2f},{tip_y + offset:.2f} {tip_x:.2f},{tip_y:.2f}"
     )
 
 

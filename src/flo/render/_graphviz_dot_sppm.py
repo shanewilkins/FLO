@@ -238,33 +238,13 @@ def _append_chunk_group(*, attrs: list[str], node_id: str, wrap_plan: WrapPlan) 
         attrs.append(f'group="sppm_col_{display_idx}"')
 
 
-def _sppm_html_label(
-    name: str,
+def _build_label_metric_lines(
     metadata: dict[str, Any],
     workers: list[Any],
-    style: SppmNodeStyle,
     note: str,
     options: RenderOptions,
-    port_counts: dict[str, int],
-) -> str:
-    """Build a Graphviz HTML-like table label: colored header + white info sub-row."""
-    if options.sppm_max_label_step_name is None:
-        name_text = _soft_wrap_text(normalize_space(name), width=_SPPM_NAME_SOFT_WRAP)
-    else:
-        name_text = format_text_field(
-            name,
-            max_len=options.sppm_max_label_step_name,
-            wrap_strategy=options.sppm_wrap_strategy,
-            truncation_policy=options.sppm_truncation_policy,
-            html_break="\n",
-        )
-    name_html = _html_escape_multiline(name_text, break_tag="<BR/>")
-    header = (
-        f'<TR><TD BGCOLOR="{style.fill}" ALIGN="CENTER">'
-        f'<FONT FACE="Helvetica" POINT-SIZE="11"><B>{name_html}</B></FONT>'
-        f'</TD></TR>'
-    )
-
+) -> tuple[str, str, str, str, str]:
+    """Return ``(description, ct_line, workers_line, wt_line, notes_line)`` formatted strings."""
     description = _soft_wrap_text(
         normalize_space(str(metadata.get("description") or "")),
         width=_SPPM_DESCRIPTION_SOFT_WRAP,
@@ -311,6 +291,40 @@ def _sppm_html_label(
     notes_line = ""
     if note and getattr(options, "show_notes", False):
         notes_line = f"Note: {normalize_space(note)}"
+
+    return description, ct_line, workers_line, wt_line, notes_line
+
+
+def _sppm_html_label(
+    name: str,
+    metadata: dict[str, Any],
+    workers: list[Any],
+    style: SppmNodeStyle,
+    note: str,
+    options: RenderOptions,
+    port_counts: dict[str, int],
+) -> str:
+    """Build a Graphviz HTML-like table label: colored header + white info sub-row."""
+    if options.sppm_max_label_step_name is None:
+        name_text = _soft_wrap_text(normalize_space(name), width=_SPPM_NAME_SOFT_WRAP)
+    else:
+        name_text = format_text_field(
+            name,
+            max_len=options.sppm_max_label_step_name,
+            wrap_strategy=options.sppm_wrap_strategy,
+            truncation_policy=options.sppm_truncation_policy,
+            html_break="\n",
+        )
+    name_html = _html_escape_multiline(name_text, break_tag="<BR/>")
+    header = (
+        f'<TR><TD BGCOLOR="{style.fill}" ALIGN="CENTER">'
+        f'<FONT FACE="Helvetica" POINT-SIZE="11"><B>{name_html}</B></FONT>'
+        f'</TD></TR>'
+    )
+
+    description, ct_line, workers_line, wt_line, notes_line = _build_label_metric_lines(
+        metadata, workers, note, options
+    )
 
     info_lines = apply_density_filter(
         density=options.sppm_label_density,
@@ -502,6 +516,59 @@ def _render_sppm_spine_constraints(
     return lines
 
 
+def _rework_target_ids(edges: list[dict[str, Any]], routing_plan: SppmRoutingPlan) -> set[str]:
+    """Return the set of node IDs that are targets of any rework edge."""
+    result: set[str] = set()
+    for edge in edges:
+        source = str(edge.get("source") or "")
+        target = str(edge.get("target") or "")
+        if not source or not target:
+            continue
+        route = routing_plan.route_for(source, target)
+        if route is not None and route.is_rework:
+            result.add(target)
+    return result
+
+
+def _collect_rework_pairs(
+    edges: list[dict[str, Any]],
+    routing_plan: SppmRoutingPlan,
+) -> tuple[list[tuple[str, str]], list[tuple[str, str]], list[tuple[str, str]]]:
+    """Classify rework edges into branch, return, and alignment pairs.
+
+    Returns ``(rework_pairs, branch_anchor_pairs, return_anchor_pairs)`` where
+    each element is a list of ``(node_id, anchor_id)`` or ``(source, target)``
+    tuples used to emit rank/chain constraints.
+    """
+    all_rework_targets = _rework_target_ids(edges, routing_plan)
+    rework_pairs: list[tuple[str, str]] = []
+    branch_anchor_pairs: list[tuple[str, str]] = []
+    return_anchor_pairs: list[tuple[str, str]] = []
+    seen_targets: set[str] = set()
+
+    for edge in edges:
+        source = str(edge.get("source") or "")
+        target = str(edge.get("target") or "")
+        if not source or not target:
+            continue
+        route = routing_plan.route_for(source, target)
+        if route is None or not route.is_rework:
+            continue
+        anchor_id = route.anchors[0].anchor_id if route.anchors else ""
+        if source in all_rework_targets:
+            if anchor_id:
+                return_anchor_pairs.append((target, anchor_id))
+            continue
+        if target in seen_targets:
+            continue
+        seen_targets.add(target)
+        rework_pairs.append((source, target))
+        if anchor_id:
+            branch_anchor_pairs.append((target, anchor_id))
+
+    return rework_pairs, branch_anchor_pairs, return_anchor_pairs
+
+
 def _render_sppm_secondary_line_constraints(
     *,
     edges: list[dict[str, Any]],
@@ -512,44 +579,7 @@ def _render_sppm_secondary_line_constraints(
     - Align each rework target with its local rework source column.
     - Chain rework targets left-to-right so they form a coherent lower lane.
     """
-    rework_pairs: list[tuple[str, str]] = []
-    branch_anchor_pairs: list[tuple[str, str]] = []
-    return_anchor_pairs: list[tuple[str, str]] = []
-    seen_targets: set[str] = set()
-    all_rework_targets: set[str] = set()
-
-    for edge in edges:
-        source = str(edge.get("source") or "")
-        target = str(edge.get("target") or "")
-        if not source or not target:
-            continue
-        route = routing_plan.route_for(source, target)
-        if route is None or not route.is_rework:
-            continue
-        all_rework_targets.add(target)
-
-    for edge in edges:
-        source = str(edge.get("source") or "")
-        target = str(edge.get("target") or "")
-        if not source or not target:
-            continue
-        route = routing_plan.route_for(source, target)
-        if route is None or not route.is_rework:
-            continue
-        # Keep only branch-out rework edges (typically decision -> rework task),
-        # and skip return-loop rework edges (rework task -> mainline task).
-        if source in all_rework_targets:
-            anchor_id = route.anchors[0].anchor_id if route.anchors else ""
-            if anchor_id:
-                return_anchor_pairs.append((target, anchor_id))
-            continue
-        anchor_id = route.anchors[0].anchor_id if route.anchors else ""
-        if target in seen_targets:
-            continue
-        seen_targets.add(target)
-        rework_pairs.append((source, target))
-        if anchor_id:
-            branch_anchor_pairs.append((target, anchor_id))
+    rework_pairs, branch_anchor_pairs, return_anchor_pairs = _collect_rework_pairs(edges, routing_plan)
 
     if not rework_pairs:
         return []
@@ -589,18 +619,14 @@ def _render_sppm_secondary_line_constraints(
             f'  "{_escape(left)}" -> "{_escape(right)}" [style=invis, constraint=false, weight=0, minlen=1];'
         )
 
-    # Shared return track: align return anchors with their mainline targets so
-    # anchors do not drift off-canvas and produce long, fan-out dashed paths.
-    for idx, (target, anchor_id) in enumerate(return_anchor_pairs):
-        lines.append(f"  subgraph sppm_secondary_return_track_{idx} {{")
-        lines.append("    rank=same;")
-        lines.append(f'    "{_escape(target)}";')
-        lines.append(f'    "{_escape(anchor_id)}";')
-        lines.append("  }")
+    # Return anchors: position is pinned in a two-pass render (see graphviz service).
+    # Omit rank=same so Graphviz does not pull anchors to an intermediate Y between
+    # the rework node and its mainline target.  The chain (invis edges) is retained to
+    # keep anchors in left-to-right order without adding rank constraints.
     ordered_return_anchors = [anchor_id for _, anchor_id in return_anchor_pairs]
     for left, right in zip(ordered_return_anchors, ordered_return_anchors[1:]):
         lines.append(
-            f'  "{_escape(left)}" -> "{_escape(right)}" [style=invis, constraint=true, weight=18, minlen=1];'
+            f'  "{_escape(left)}" -> "{_escape(right)}" [style=invis, constraint=false, weight=0, minlen=1];'
         )
 
     return lines

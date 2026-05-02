@@ -76,8 +76,8 @@ def test_sppm_rework_return_edge_uses_lr_west_to_west_ports():
     }
 
     out = render_dot(ir_like, options={"diagram": "sppm"})
-    assert '"rework":"in_0":w -> "__sppm_rework_corridor_rework_review" [constraint=false, style=dashed, weight=0, arrowhead=none];' in out
-    assert '"__sppm_rework_corridor_rework_review" -> "review":"in_1":w [constraint=false, minlen=3, weight=0, style=dashed];' in out
+    assert '"rework":w -> "__sppm_rework_corridor_rework_review" [constraint=false, style=dashed, weight=0, arrowhead=none];' in out
+    assert '"__sppm_rework_corridor_rework_review" -> "review":s [constraint=false, minlen=3, weight=0, style=dashed];' in out
 
 
 def test_sppm_routing_plan_marks_wrap_boundary_edges_with_ports_and_boundary_attrs():

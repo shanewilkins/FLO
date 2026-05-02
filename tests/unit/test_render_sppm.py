@@ -642,8 +642,8 @@ def test_layout_wrap_width_estimator_responds_to_dense_label_content():
     assert '"a":"out_0":e -> "__wrap_exit_lr_0" [arrowhead=none, constraint=false, weight=0];' in out
 
 
-def test_layout_spacing_compact_reduces_wrapped_graph_spacing():
-    ir_like = {
+def test_layout_spacing_compact_reduces_graph_spacing():
+    wrapped_ir = {
         "nodes": [
             {"id": "start", "kind": "start", "name": "Start"},
             {"id": "a", "kind": "task", "name": "A", "metadata": {}},
@@ -660,34 +660,12 @@ def test_layout_spacing_compact_reduces_wrapped_graph_spacing():
             {"source": "d", "target": "end"},
         ],
     }
-
-    out_standard = render_dot(
-        ir_like,
-        options={
-            "diagram": "sppm",
-            "orientation": "lr",
-            "layout_wrap": "auto",
-            "layout_target_columns": 3,
-            "layout_spacing": "standard",
-        },
-    )
-    out_compact = render_dot(
-        ir_like,
-        options={
-            "diagram": "sppm",
-            "orientation": "lr",
-            "layout_wrap": "auto",
-            "layout_target_columns": 3,
-            "layout_spacing": "compact",
-        },
-    )
-
+    out_standard = render_dot(wrapped_ir, options={"diagram": "sppm", "orientation": "lr", "layout_wrap": "auto", "layout_target_columns": 3, "layout_spacing": "standard"})
+    out_compact = render_dot(wrapped_ir, options={"diagram": "sppm", "orientation": "lr", "layout_wrap": "auto", "layout_target_columns": 3, "layout_spacing": "compact"})
     assert "nodesep=0.4, ranksep=0.35" in out_standard
     assert "nodesep=0.35, ranksep=0.3" in out_compact
 
-
-def test_layout_spacing_compact_reduces_non_wrapped_graph_spacing():
-    ir_like = {
+    unwrapped_ir = {
         "nodes": [
             {"id": "start", "kind": "start", "name": "Start"},
             {"id": "a", "kind": "task", "name": "A", "metadata": {}},
@@ -700,24 +678,8 @@ def test_layout_spacing_compact_reduces_non_wrapped_graph_spacing():
             {"source": "b", "target": "end"},
         ],
     }
-
-    out_standard = render_dot(
-        ir_like,
-        options={
-            "diagram": "sppm",
-            "layout_wrap": "off",
-            "layout_spacing": "standard",
-        },
-    )
-    out_compact = render_dot(
-        ir_like,
-        options={
-            "diagram": "sppm",
-            "layout_wrap": "off",
-            "layout_spacing": "compact",
-        },
-    )
-
+    out_standard = render_dot(unwrapped_ir, options={"diagram": "sppm", "layout_wrap": "off", "layout_spacing": "standard"})
+    out_compact = render_dot(unwrapped_ir, options={"diagram": "sppm", "layout_wrap": "off", "layout_spacing": "compact"})
     assert "nodesep=0.9, ranksep=1.2" in out_standard
     assert "nodesep=0.75, ranksep=1.0" in out_compact
 
@@ -769,8 +731,9 @@ def test_sppm_emits_secondary_line_constraints_for_rework_targets():
 
     out = render_dot(ir_like, options={"diagram": "sppm"})
     assert "subgraph sppm_secondary_rank_0" in out
-    # Rework node is aligned with its mainline return target ("intake"), not the branch source.
-    assert '"intake";' in out
+    # Rework node and branch corridor appear in the branch-track subgraph.
     assert '"rework";' in out
     assert "subgraph sppm_secondary_branch_track_0" in out
-    assert "subgraph sppm_secondary_return_track_0" in out
+    # Return-loop corridor anchors no longer use rank=same subgraphs;
+    # their paths are corrected by SVG postprocessing instead.
+    assert '"__sppm_rework_corridor_rework_intake" [shape=point' in out

@@ -270,3 +270,66 @@ Mitigation:
 - Acceptance fixture is visually sane and stable
 - Test coverage protects deterministic placement and routing behavior
 - Architecture remains clean: domain, placement, corridor, routing, rendering are separated
+
+---
+
+## Phase 6: Two-Pass Graphviz Rendering for Exact Anchor Placement
+
+### Background
+
+SPPM return-loop edges (rework → mainline) require a corridor anchor node to
+split the edge into two segments, enabling the characteristic L-shaped path:
+exit west from the rework node, turn north once, arrive at the bottom of the
+mainline box.
+
+The problem: Graphviz places the anchor's Y position freely during rank
+assignment. Any Y that differs from the rework node's Y creates an extra bend.
+We cannot express "anchor Y = rework Y, anchor X = mainline X" purely in DOT.
+
+### Solution: Two-Pass Layout
+
+**Pass 1** — layout pass:
+- Emit DOT with all nodes and constraints as normal.
+- Run `dot -Tdot` (DOT output format includes computed `pos` attributes on
+  every node after layout).
+- Parse the `pos` of each rework source node and its corresponding mainline
+  target node from the layout output.
+
+**Anchor position injection**:
+- For each return-loop anchor, compute: `x = mainline_target.x`, `y = rework_source.y`
+- Inject `pos="x,y!"` on the anchor node in the DOT (the `!` pins the position).
+
+**Pass 2** — render pass:
+- Re-run Graphviz using `-n2` flag (skip node positioning, use existing `pos`,
+  only route edges) with the desired output format (`-Tsvg`, `-Tdot`, etc).
+
+### Result
+
+The anchor is pinned at the exact corner of the desired L. Graphviz ortho
+routing then produces exactly one bend per return loop with no ambiguity.
+
+### Scope
+
+Touch points:
+- `src/flo/render/_graphviz_backend.py` (or equivalent Graphviz invocation site)
+  — add `render_dot_two_pass(dot_src, format)` function
+- `src/flo/render/_graphviz_dot_sppm.py` — tag return-loop anchor nodes with a
+  sentinel attribute (e.g. `_sppm_return_anchor_source="rework_intake"`) so the
+  post-layout injector knows which nodes to pin and which reference nodes to
+  read positions from
+
+Data flow:
+```
+DOT source
+  → dot -Tdot       (pass 1: layout)
+  → parse pos       (extract anchor, rework, mainline positions)
+  → inject pos=...! (pin anchor corners)
+  → dot -n2 -Tsvg   (pass 2: route + render)
+  → SVG output
+```
+
+### Acceptance Criteria
+- sppm_feature_showcase return loops each have exactly one bend (W→N)
+- washnfold SPPM render is not regressed
+- Single-rework diagrams (sppm_attachment_minimal_repro) are not regressed
+- Two-pass is transparent to callers: same API as current single-pass render
