@@ -316,11 +316,6 @@ def _sppm_html_label(
             html_break="\n",
         )
     name_html = _html_escape_multiline(name_text, break_tag="<BR/>")
-    header = (
-        f'<TR><TD BGCOLOR="{style.fill}" ALIGN="CENTER">'
-        f'<FONT FACE="Helvetica" POINT-SIZE="11"><B>{name_html}</B></FONT>'
-        f'</TD></TR>'
-    )
 
     description, ct_line, workers_line, wt_line, notes_line = _build_label_metric_lines(
         metadata, workers, note, options
@@ -335,24 +330,20 @@ def _sppm_html_label(
         notes_line=notes_line,
     )
 
-    rows = header
+    body_table = ""
     if info_lines:
         joined = "<BR ALIGN=\"LEFT\"/>".join(
             _html_escape_multiline(line, break_tag="<BR ALIGN=\"LEFT\"/>") for line in info_lines
         ) + "<BR ALIGN=\"LEFT\"/>"
-        rows += (
-            f"<HR/>"
+        body_table = (
+            f'<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" BGCOLOR="white">'
             f'<TR><TD BGCOLOR="white" ALIGN="LEFT">'
             f'<FONT FACE="Helvetica" POINT-SIZE="9">{joined}</FONT>'
-            f'</TD></TR>'
+            f'</TD></TR></TABLE>'
         )
-
-    content_table = (
-        f'<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" BGCOLOR="white">'
-        f'{rows}</TABLE>'
-    )
     return _wrap_sppm_label_with_ports(
-        content_table=content_table,
+        name_html=name_html,
+        body_table=body_table,
         port_counts=port_counts,
         border_color=style.border,
         header_fill=style.fill,
@@ -361,7 +352,8 @@ def _sppm_html_label(
 
 def _wrap_sppm_label_with_ports(
     *,
-    content_table: str,
+    name_html: str,
+    body_table: str,
     port_counts: dict[str, int],
     border_color: str,
     header_fill: str,
@@ -369,27 +361,33 @@ def _wrap_sppm_label_with_ports(
     in_count = max(0, int(port_counts.get("in", 0)))
     out_count = max(0, int(port_counts.get("out", 0)))
     left_stack = _sppm_port_stack_html(role="in", count=in_count)
-    return_in_stack = _sppm_port_stack_html(role="rin", count=in_count)
     right_stack = _sppm_port_stack_html(role="out", count=out_count)
     table_prefix = (
         f'<<TABLE BORDER="2" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0" '
         f'COLOR="{border_color}" BGCOLOR="white">'
     )
-
-    if in_count == 0 and out_count == 0:
-        return (
-            f'{table_prefix}<TR><TD BGCOLOR="{header_fill}"></TD><TD PORT="boundary_in" HEIGHT="1" BGCOLOR="{header_fill}"></TD><TD BGCOLOR="{header_fill}"></TD><TD BGCOLOR="{header_fill}"></TD></TR>'
-            f'<TR><TD WIDTH="8"></TD><TD WIDTH="{_SPPM_TASK_MIN_WIDTH}">{content_table}</TD><TD WIDTH="8"></TD><TD WIDTH="8"></TD></TR>'
-            f'<TR><TD></TD><TD PORT="boundary_out" HEIGHT="1"></TD><TD></TD><TD></TD></TR></TABLE>>'
-        )
-
-    return (
-        f'{table_prefix}'
-        f'<TR><TD BGCOLOR="{header_fill}"></TD><TD PORT="boundary_in" HEIGHT="1" BGCOLOR="{header_fill}"></TD><TD BGCOLOR="{header_fill}"></TD><TD BGCOLOR="{header_fill}"></TD></TR>'
-        f'<TR><TD WIDTH="8">{left_stack}</TD><TD WIDTH="{_SPPM_TASK_MIN_WIDTH}">{content_table}</TD><TD WIDTH="8">{return_in_stack}</TD><TD WIDTH="8">{right_stack}</TD></TR>'
-        f'<TR><TD></TD><TD PORT="boundary_out" HEIGHT="1"></TD><TD></TD><TD></TD></TR>'
-        f'</TABLE>>'
+    # Header spans all 3 columns so it fills the full box width.  PORT="boundary_in"
+    # is placed here for wrap-layout edges that reference "node":"boundary_in":s.
+    header_row = (
+        f'<TR><TD COLSPAN="3" BGCOLOR="{header_fill}" ALIGN="CENTER" PORT="boundary_in">'
+        f'<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" BGCOLOR="{header_fill}">'
+        f'<TR><TD ALIGN="CENTER"><FONT FACE="Helvetica" POINT-SIZE="11">'
+        f'<B>{name_html}</B></FONT></TD></TR>'
+        f'</TABLE></TD></TR>'
     )
+    hr = "<HR/>" if body_table else ""
+    content_col = (
+        f'<TD WIDTH="{_SPPM_TASK_MIN_WIDTH}">{body_table}</TD>'
+        if body_table
+        else f'<TD WIDTH="{_SPPM_TASK_MIN_WIDTH}"></TD>'
+    )
+    content_row = (
+        f'<TR><TD WIDTH="8">{left_stack}</TD>'
+        f'{content_col}'
+        f'<TD WIDTH="8">{right_stack}</TD></TR>'
+    )
+    boundary_row = '<TR><TD></TD><TD PORT="boundary_out" HEIGHT="1"></TD><TD></TD></TR>'
+    return f'{table_prefix}{header_row}{hr}{content_row}{boundary_row}</TABLE>>'
 
 
 def _sppm_port_stack_html(*, role: str, count: int) -> str:
