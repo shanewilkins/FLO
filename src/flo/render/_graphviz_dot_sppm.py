@@ -598,6 +598,14 @@ def _render_sppm_secondary_line_constraints(
         lines.append(f'    "{_escape(target)}";')
         lines.append("  }")
 
+    # Pull each rework task toward its branch source in the Y direction.
+    # High-weight invis edges attract rework nodes toward their branch sources
+    # in Y without affecting horizontal (rank) ordering.
+    for source, target in rework_pairs:
+        lines.append(
+            f'  "{_escape(source)}" -> "{_escape(target)}" [style=invis, constraint=false, weight=50, minlen=0];'
+        )
+
     # Keep the secondary line ordered and compact.
     ordered_targets = [target for _, target in rework_pairs]
     for left, right in zip(ordered_targets, ordered_targets[1:]):
@@ -613,16 +621,17 @@ def _render_sppm_secondary_line_constraints(
         lines.append(f'    "{_escape(target)}";')
         lines.append(f'    "{_escape(anchor_id)}";')
         lines.append("  }")
+        # Keep anchor close to the rework node when it is attracted upward.
+        lines.append(
+            f'  "{_escape(anchor_id)}" -> "{_escape(target)}" [style=invis, constraint=false, weight=50, minlen=0];'
+        )
     ordered_branch_anchors = [anchor_id for _, anchor_id in branch_anchor_pairs]
     for left, right in zip(ordered_branch_anchors, ordered_branch_anchors[1:]):
         lines.append(
             f'  "{_escape(left)}" -> "{_escape(right)}" [style=invis, constraint=false, weight=0, minlen=1];'
         )
 
-    # Return anchors: position is pinned in a two-pass render (see graphviz service).
-    # Omit rank=same so Graphviz does not pull anchors to an intermediate Y between
-    # the rework node and its mainline target.  The chain (invis edges) is retained to
-    # keep anchors in left-to-right order without adding rank constraints.
+    # Return anchors: chain only (no rank=same); SVG postprocessor pins paths.
     ordered_return_anchors = [anchor_id for _, anchor_id in return_anchor_pairs]
     for left, right in zip(ordered_return_anchors, ordered_return_anchors[1:]):
         lines.append(

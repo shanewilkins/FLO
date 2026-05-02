@@ -83,6 +83,7 @@ def render_dot_to_file(dot: str, output_path: str) -> None:
         # derived from pass-1 layout.  Only activates when SPPM return-loop anchors
         # are detected; otherwise the SVG written above is already final.
         _postprocess_sppm_return_loop_edges_svg(dot=dot, output_path=svg_path)
+        _postprocess_sppm_branch_edges_svg(dot=dot, output_path=svg_path)
         _postprocess_wrapped_sppm_svg(dot=dot, output_path=svg_path)
         _postprocess_direct_midpoint_edges_svg(output_path=svg_path)
         _normalize_node_backing_fills_svg(output_path=svg_path)
@@ -185,6 +186,109 @@ def _extract_sppm_return_anchor_specs(dot: str) -> list[_SppmReturnAnchorSpec]:
     for match in first_segment_pattern.finditer(dot):
         attrs = match.group("attrs")
         if "arrowhead=none" not in attrs:
+            continue
+        first_segment_by_anchor[match.group("anchor")] = match.group("source")
+
+    for match in second_segment_pattern.finditer(dot):
+        anchor_id = match.group("anchor")
+        source_id = first_segment_by_anchor.get(anchor_id)
+        if not source_id:
+            continue
+        specs[anchor_id] = _SppmReturnAnchorSpec(
+            anchor_id=anchor_id,
+            source_id=source_id,
+            target_id=match.group("target"),
+        )
+
+    return list(specs.values())
+
+
+def _postprocess_sppm_branch_edges_svg(*, dot: str, output_path: Path) -> None:
+    """Rewrite SPPM branch-down edge paths to clean L-shapes.
+
+    Graphviz routes branch corridor edges (decision:s → anchor → rework:n)
+    through an invisible anchor that may land far from the rework node,
+    creating large U-shaped paths.  After Graphviz lays out the SVG, we read
+    the rendered node bounds and rewrite the two branch-path segments to a
+    straight vertical drop: first segment goes from the source's bottom center
+    to the midpoint between nodes; second segment goes from the midpoint to
+    the target's top center with a downward-pointing arrowhead.
+
+    Scope: only ``__sppm_rework_corridor_*`` branch edges (tailport=s source,
+    headport=n target).  Only SVG output.
+    """
+    specs = _extract_sppm_branch_anchor_specs(dot)
+    if not specs:
+        return
+
+    tree = ET.parse(output_path)
+    root = tree.getroot()
+    node_bounds = _svg_node_bounds(root)
+    edge_groups = _svg_edge_groups(root)
+    updated = False
+
+    for spec in specs:
+        first_title = f"{spec.source_id}:s->{spec.anchor_id}"
+        second_title = f"{spec.anchor_id}->{spec.target_id}:n"
+        first_group = edge_groups.get(first_title)
+        second_group = edge_groups.get(second_title)
+        if first_group is None or second_group is None:
+            continue
+
+        source_bounds = node_bounds.get(spec.source_id)
+        target_bounds = node_bounds.get(spec.target_id)
+        if source_bounds is None or target_bounds is None:
+            continue
+
+        # Source exits at bottom (port=s), horizontally centered.
+        source_center_x = (source_bounds[0] + source_bounds[2]) / 2.0
+        source_bottom = source_bounds[3]
+        # Target entered at top (port=n), horizontally centered.
+        target_center_x = (target_bounds[0] + target_bounds[2]) / 2.0
+        target_top = target_bounds[1]
+        # Corner: midpoint Y between source bottom and target top.
+        corner_y = (source_bottom + target_top) / 2.0
+
+        _set_edge_path(
+            first_group,
+            [
+                (source_center_x, source_bottom),
+                (source_center_x, corner_y),
+            ],
+        )
+        _set_edge_path(
+            second_group,
+            [
+                (source_center_x, corner_y),
+                (target_center_x, target_top),
+            ],
+        )
+        # direction=-1: base at tip_y - 8 (more negative = higher on screen),
+        # making the arrowhead point downward into the node's north face.
+        _set_arrow_polygon(second_group, tip=(target_center_x, target_top), direction=-1)
+        updated = True
+
+    if updated:
+        _write_svg_tree(tree, output_path)
+
+
+def _extract_sppm_branch_anchor_specs(dot: str) -> list[_SppmReturnAnchorSpec]:
+    specs: dict[str, _SppmReturnAnchorSpec] = {}
+
+    # Branch second segment: "anchor" -> "rework":n [...]
+    second_segment_pattern = re.compile(
+        r'^\s*"(?P<anchor>__sppm_rework_corridor_[^"]+)"\s*->\s*"(?P<target>[^"]+)":n\s*\[(?P<attrs>[^\]]*)\];\s*$',
+        flags=re.MULTILINE,
+    )
+    # Branch first segment (no arrow): "decision":s -> "anchor" [... arrowhead=none ...]
+    first_segment_pattern = re.compile(
+        r'^\s*"(?P<source>[^"]+)":s\s*->\s*"(?P<anchor>__sppm_rework_corridor_[^"]+)"\s*\[(?P<attrs>[^\]]*)\];\s*$',
+        flags=re.MULTILINE,
+    )
+
+    first_segment_by_anchor: dict[str, str] = {}
+    for match in first_segment_pattern.finditer(dot):
+        if "arrowhead=none" not in match.group("attrs"):
             continue
         first_segment_by_anchor[match.group("anchor")] = match.group("source")
 
