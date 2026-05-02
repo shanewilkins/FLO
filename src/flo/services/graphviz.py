@@ -548,7 +548,7 @@ def _wrapped_sppm_boundary_pairs(dot: str) -> dict[str, tuple[str, str]]:
     second_leg: dict[str, str] = {}
     for line in dot.splitlines():
         first_match = re.match(
-            r'^\s*"(?P<source>[^"]+)" -> "(?P<anchor>__wrap_exit_lr_\d+)" \[.*arrowhead=none.*\];$',
+            r'^\s*"(?P<source>[^"]+)"(?::"[^"]*":\w+)? -> "(?P<anchor>__wrap_exit_lr_\d+)" \[.*arrowhead=none.*\];$',
             line,
         )
         if first_match:
@@ -556,7 +556,7 @@ def _wrapped_sppm_boundary_pairs(dot: str) -> dict[str, tuple[str, str]]:
             continue
 
         second_match = re.match(
-            r'^\s*"(?P<anchor>__wrap_exit_lr_\d+)" -> "(?P<target>[^"]+)" \[.*minlen=2.*penwidth=1\.2.*\];$',
+            r'^\s*"(?P<anchor>__wrap_exit_lr_\d+)" -> "(?P<target>[^"]+)"(?::"[^"]*":\w+)? \[.*minlen=2.*penwidth=1\.2.*\];$',
             line,
         )
         if second_match:
