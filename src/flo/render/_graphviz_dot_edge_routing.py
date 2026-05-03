@@ -18,67 +18,89 @@ def _append_edges(
     wrap_active: bool = False,
 ) -> None:
     """Append DOT edge lines, including shared boundary and rework routing."""
+    effective_boundary = boundary_edges or set()
+    effective_seq_index = node_sequence_index or {}
     for edge_index, edge in enumerate(edges):
-        source = edge.get("source")
-        target = edge.get("target")
-        if not source or not target:
-            continue
-
-        source_id = str(source)
-        target_id = str(target)
-        is_boundary = (source_id, target_id) in (boundary_edges or set())
-
-        if _is_rework_edge(
+        _append_single_edge(
+            lines=lines,
             edge=edge,
-            source=source_id,
-            target=target_id,
-            node_sequence_index=node_sequence_index or {},
-        ):
-            _append_rework_corridor_edge(
-                lines=lines,
-                edge=edge,
-                edge_index=edge_index,
-                source=source_id,
-                target=target_id,
-                options=options,
-                use_swimlanes=use_swimlanes,
-                node_lanes=node_lanes,
-                boundary_edges=boundary_edges or set(),
-                node_sequence_index=node_sequence_index or {},
-                wrap_active=wrap_active,
-            )
-            continue
+            edge_index=edge_index,
+            options=options,
+            use_swimlanes=use_swimlanes,
+            node_lanes=node_lanes,
+            boundary_edges=effective_boundary,
+            node_sequence_index=effective_seq_index,
+            wrap_active=wrap_active,
+        )
 
-        if is_boundary:
-            _append_boundary_corridor_edge(
-                lines=lines,
-                edge=edge,
-                edge_index=edge_index,
-                source=source_id,
-                target=target_id,
-                options=options,
-                use_swimlanes=use_swimlanes,
-                node_lanes=node_lanes,
-                boundary_edges=boundary_edges or set(),
-                node_sequence_index=node_sequence_index or {},
-                wrap_active=wrap_active,
-            )
-            continue
 
-        edge_attrs = _edge_attrs(
+def _append_single_edge(
+    *,
+    lines: list[str],
+    edge: dict[str, Any],
+    edge_index: int,
+    options: RenderOptions,
+    use_swimlanes: bool,
+    node_lanes: dict[str, str],
+    boundary_edges: set[tuple[str, str]],
+    node_sequence_index: dict[str, int],
+    wrap_active: bool,
+) -> None:
+    """Route and append DOT lines for one edge."""
+    source = edge.get("source")
+    target = edge.get("target")
+    if not source or not target:
+        return
+
+    source_id = str(source)
+    target_id = str(target)
+
+    if _is_rework_edge(edge=edge, source=source_id, target=target_id, node_sequence_index=node_sequence_index):
+        _append_rework_corridor_edge(
+            lines=lines,
             edge=edge,
+            edge_index=edge_index,
             source=source_id,
             target=target_id,
             options=options,
             use_swimlanes=use_swimlanes,
             node_lanes=node_lanes,
-            boundary_edges=boundary_edges or set(),
-            node_sequence_index=node_sequence_index or {},
+            boundary_edges=boundary_edges,
+            node_sequence_index=node_sequence_index,
+            wrap_active=wrap_active,
         )
-        lines.append(
-            f'  "{_escape(source_id)}" -> "{_escape(target_id)}" '
-            f'[{", ".join(edge_attrs)}];'
+        return
+
+    if (source_id, target_id) in boundary_edges:
+        _append_boundary_corridor_edge(
+            lines=lines,
+            edge=edge,
+            edge_index=edge_index,
+            source=source_id,
+            target=target_id,
+            options=options,
+            use_swimlanes=use_swimlanes,
+            node_lanes=node_lanes,
+            boundary_edges=boundary_edges,
+            node_sequence_index=node_sequence_index,
+            wrap_active=wrap_active,
         )
+        return
+
+    edge_attrs = _edge_attrs(
+        edge=edge,
+        source=source_id,
+        target=target_id,
+        options=options,
+        use_swimlanes=use_swimlanes,
+        node_lanes=node_lanes,
+        boundary_edges=boundary_edges,
+        node_sequence_index=node_sequence_index,
+    )
+    lines.append(
+        f'  "{_escape(source_id)}" -> "{_escape(target_id)}" '
+        f'[{", ".join(edge_attrs)}];'
+    )
 
 
 def _append_boundary_corridor_edge(

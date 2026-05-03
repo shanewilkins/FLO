@@ -16,6 +16,43 @@ _SPPM_DESCRIPTION_SOFT_WRAP = 42
 _SPPM_WORKERS_SOFT_WRAP = 36
 
 
+def _format_time_line(
+    value: Any, prefix: str, suffix: str, options: RenderOptions, *, require_positive: bool = False
+) -> str:
+    """Format a CT or WT time metric line; returns empty string when value is absent."""
+    if not isinstance(value, dict) or value.get("value") is None:
+        return ""
+    if require_positive and float(value["value"]) <= 0:
+        return ""
+    return format_text_field(
+        f"{prefix}: {value['value']} {value.get('unit', 'min')}{suffix}",
+        max_len=options.sppm_max_label_ctwt,
+        wrap_strategy=options.sppm_wrap_strategy,
+        truncation_policy=options.sppm_truncation_policy,
+        html_break="\n",
+    )
+
+
+def _format_workers_line(workers: list[Any], options: RenderOptions) -> str:
+    """Format the workers metric line; returns empty string when workers is empty."""
+    if not workers:
+        return ""
+    workers_text = (
+        abbreviate_workers([str(w) for w in workers])
+        if options.sppm_label_density == "compact"
+        else ", ".join(str(w) for w in workers)
+    )
+    if options.sppm_max_label_workers is None:
+        return _soft_wrap_text(f"Workers: {workers_text}", width=_SPPM_WORKERS_SOFT_WRAP)
+    return format_text_field(
+        f"Workers: {workers_text}",
+        max_len=options.sppm_max_label_workers,
+        wrap_strategy=options.sppm_wrap_strategy,
+        truncation_policy=options.sppm_truncation_policy,
+        html_break="\n",
+    )
+
+
 def _build_label_metric_lines(
     metadata: dict[str, Any],
     workers: list[Any],
@@ -27,49 +64,10 @@ def _build_label_metric_lines(
         normalize_space(str(metadata.get("description") or "")),
         width=_SPPM_DESCRIPTION_SOFT_WRAP,
     )
-
-    ct = metadata.get("cycle_time")
-    ct_line = ""
-    if isinstance(ct, dict) and ct.get("value") is not None:
-        ct_line = format_text_field(
-            f"CT: {ct['value']} {ct.get('unit', 'min')}",
-            max_len=options.sppm_max_label_ctwt,
-            wrap_strategy=options.sppm_wrap_strategy,
-            truncation_policy=options.sppm_truncation_policy,
-            html_break="\n",
-        )
-
-    workers_line = ""
-    if workers:
-        workers_text = ", ".join(str(w) for w in workers)
-        if options.sppm_label_density == "compact":
-            workers_text = abbreviate_workers([str(w) for w in workers])
-        if options.sppm_max_label_workers is None:
-            workers_line = _soft_wrap_text(f"Workers: {workers_text}", width=_SPPM_WORKERS_SOFT_WRAP)
-        else:
-            workers_line = format_text_field(
-                f"Workers: {workers_text}",
-                max_len=options.sppm_max_label_workers,
-                wrap_strategy=options.sppm_wrap_strategy,
-                truncation_policy=options.sppm_truncation_policy,
-                html_break="\n",
-            )
-
-    wt = metadata.get("wait_time")
-    wt_line = ""
-    if isinstance(wt, dict) and wt.get("value") is not None and float(wt["value"]) > 0:
-        wt_line = format_text_field(
-            f"WT: {wt['value']} {wt.get('unit', 'min')} wait",
-            max_len=options.sppm_max_label_ctwt,
-            wrap_strategy=options.sppm_wrap_strategy,
-            truncation_policy=options.sppm_truncation_policy,
-            html_break="\n",
-        )
-
-    notes_line = ""
-    if note and getattr(options, "show_notes", False):
-        notes_line = f"Note: {normalize_space(note)}"
-
+    ct_line = _format_time_line(metadata.get("cycle_time"), "CT", "", options)
+    wt_line = _format_time_line(metadata.get("wait_time"), "WT", " wait", options, require_positive=True)
+    workers_line = _format_workers_line(workers, options)
+    notes_line = f"Note: {normalize_space(note)}" if note and getattr(options, "show_notes", False) else ""
     return description, ct_line, workers_line, wt_line, notes_line
 
 

@@ -107,6 +107,37 @@ def _rework_target_ids(edges: list[dict[str, Any]], routing_plan: SppmRoutingPla
     return result
 
 
+def _accumulate_rework_edge(
+    *,
+    edge: dict[str, Any],
+    routing_plan: SppmRoutingPlan,
+    all_rework_targets: set[str],
+    seen_targets: set[str],
+    rework_pairs: list[tuple[str, str]],
+    branch_anchor_pairs: list[tuple[str, str]],
+    return_anchor_pairs: list[tuple[str, str]],
+) -> None:
+    """Classify and accumulate one edge into the appropriate rework pair lists."""
+    source = str(edge.get("source") or "")
+    target = str(edge.get("target") or "")
+    if not source or not target:
+        return
+    route = routing_plan.route_for(source, target)
+    if route is None or not route.is_rework:
+        return
+    anchor_id = route.anchors[0].anchor_id if route.anchors else ""
+    if source in all_rework_targets:
+        if anchor_id:
+            return_anchor_pairs.append((target, anchor_id))
+        return
+    if target in seen_targets:
+        return
+    seen_targets.add(target)
+    rework_pairs.append((source, target))
+    if anchor_id:
+        branch_anchor_pairs.append((target, anchor_id))
+
+
 def _collect_rework_pairs(
     edges: list[dict[str, Any]],
     routing_plan: SppmRoutingPlan,
@@ -124,24 +155,15 @@ def _collect_rework_pairs(
     seen_targets: set[str] = set()
 
     for edge in edges:
-        source = str(edge.get("source") or "")
-        target = str(edge.get("target") or "")
-        if not source or not target:
-            continue
-        route = routing_plan.route_for(source, target)
-        if route is None or not route.is_rework:
-            continue
-        anchor_id = route.anchors[0].anchor_id if route.anchors else ""
-        if source in all_rework_targets:
-            if anchor_id:
-                return_anchor_pairs.append((target, anchor_id))
-            continue
-        if target in seen_targets:
-            continue
-        seen_targets.add(target)
-        rework_pairs.append((source, target))
-        if anchor_id:
-            branch_anchor_pairs.append((target, anchor_id))
+        _accumulate_rework_edge(
+            edge=edge,
+            routing_plan=routing_plan,
+            all_rework_targets=all_rework_targets,
+            seen_targets=seen_targets,
+            rework_pairs=rework_pairs,
+            branch_anchor_pairs=branch_anchor_pairs,
+            return_anchor_pairs=return_anchor_pairs,
+        )
 
     return rework_pairs, branch_anchor_pairs, return_anchor_pairs
 

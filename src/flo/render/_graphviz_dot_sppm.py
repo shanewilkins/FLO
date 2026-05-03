@@ -317,6 +317,19 @@ def _extract_sppm_from_ir(process: Any) -> tuple[list[dict[str, Any]], list[dict
     return nodes, edges
 
 
+def _get_node_attr(node: dict[str, Any], field: str, *, expected_type: type) -> Any:
+    """Return node[field] if it matches expected_type, else fall back to node['attrs'][field]."""
+    value = node.get(field)
+    if isinstance(value, expected_type):
+        return value
+    attrs = node.get("attrs")
+    if isinstance(attrs, dict):
+        fallback = attrs.get(field)
+        if isinstance(fallback, expected_type):
+            return fallback
+    return None
+
+
 def _extract_sppm_from_dict(
     process: dict[str, Any],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -327,23 +340,14 @@ def _extract_sppm_from_dict(
     for node in nodes_raw:
         if not isinstance(node, dict):
             continue
-        # metadata may live at top-level or nested under attrs
-        raw_metadata = node.get("metadata")
-        if not isinstance(raw_metadata, dict):
-            nested_attrs = node.get("attrs")
-            raw_metadata = nested_attrs.get("metadata") if isinstance(nested_attrs, dict) else None
-        raw_workers = node.get("workers")
-        if not isinstance(raw_workers, list):
-            nested_attrs = node.get("attrs")
-            raw_workers = nested_attrs.get("workers") if isinstance(nested_attrs, dict) else None
         nodes.append(
             {
                 "id": node.get("id"),
                 "kind": node.get("kind") or node.get("type") or "task",
                 "name": node.get("name"),
                 "note": node.get("note"),
-                "metadata": raw_metadata if isinstance(raw_metadata, dict) else {},
-                "workers": raw_workers if isinstance(raw_workers, list) else [],
+                "metadata": _get_node_attr(node, "metadata", expected_type=dict) or {},
+                "workers": _get_node_attr(node, "workers", expected_type=list) or [],
             }
         )
 

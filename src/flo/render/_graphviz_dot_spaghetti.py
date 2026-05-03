@@ -72,6 +72,18 @@ def _append_spaghetti_location_nodes(
         lines.append(f'  "{_escape(location_id)}" [{", ".join(node_attrs)}];')
 
 
+def _coerce_boundary_point(raw_point: Any) -> tuple[float, float] | None:
+    """Return a (float, float) pair if raw_point is a valid 2-tuple of real numbers."""
+    if not isinstance(raw_point, tuple) or len(raw_point) != 2:
+        return None
+    x, y = raw_point
+    if not isinstance(x, (int, float)) or isinstance(x, bool):
+        return None
+    if not isinstance(y, (int, float)) or isinstance(y, bool):
+        return None
+    return float(x), float(y)
+
+
 def _append_spaghetti_boundary(lines: list[str], process: Dict[str, Any] | Any) -> None:
     boundary = _extract_spaghetti_boundary(process)
     if boundary is None:
@@ -81,17 +93,7 @@ def _append_spaghetti_boundary(lines: list[str], process: Dict[str, Any] | Any) 
     if not isinstance(raw_points, list):
         return
 
-    points: list[tuple[float, float]] = []
-    for raw_point in raw_points:
-        if not isinstance(raw_point, tuple) or len(raw_point) != 2:
-            continue
-        x_value = raw_point[0]
-        y_value = raw_point[1]
-        if not isinstance(x_value, (int, float)) or isinstance(x_value, bool):
-            continue
-        if not isinstance(y_value, (int, float)) or isinstance(y_value, bool):
-            continue
-        points.append((float(x_value), float(y_value)))
+    points = [p for raw in raw_points if (p := _coerce_boundary_point(raw)) is not None]
 
     if len(points) < 3:
         return
