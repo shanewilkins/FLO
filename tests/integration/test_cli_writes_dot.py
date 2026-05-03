@@ -2,21 +2,12 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from flo.core.cli import cli
-
-
-def _repo_root(start: Path | None = None) -> Path:
-    start = start or Path(__file__).resolve()
-    cur = start
-    while cur != cur.parent:
-        if (cur / "examples").is_dir():
-            return cur
-        cur = cur.parent
-    raise RuntimeError("repo root with examples/ not found")
+from tests.fixtures.sample_fixtures import repo_root
 
 
 def test_cli_writes_dot_file(tmp_path: Path):
     runner = CliRunner()
-    examples = sorted((_repo_root() / "examples" / "reference").glob("*.flo"))
+    examples = sorted((repo_root() / "examples" / "reference").glob("*.flo"))
     assert examples, "no example files found"
     example = examples[0]
 

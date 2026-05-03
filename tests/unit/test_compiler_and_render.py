@@ -1,23 +1,12 @@
-from pathlib import Path
-
 from flo.adapters import parse_adapter
 from flo.compiler import compile_adapter
 from flo.compiler.ir import validate_ir
 from flo.render import render_dot
-
-
-def _repo_root(start: Path | None = None) -> Path:
-    start = start or Path(__file__).resolve()
-    cur = start
-    while cur != cur.parent:
-        if (cur / "examples").is_dir():
-            return cur
-        cur = cur.parent
-    raise RuntimeError("repo root with examples/ not found")
+from tests.fixtures.sample_fixtures import repo_root
 
 
 def test_compile_and_render_examples():
-    examples = sorted((_repo_root() / "examples" / "reference").glob("*.flo"))
+    examples = sorted((repo_root() / "examples" / "reference").glob("*.flo"))
     assert examples
 
     for ex in examples:
@@ -27,7 +16,7 @@ def test_compile_and_render_examples():
         # validate_ir raises on failure
         validate_ir(ir)
         dot = render_dot(ir)
-        assert isinstance(dot, str)
+        assert "digraph" in dot
 
 
 def test_compile_and_render_preserves_rework_outcome_semantics():

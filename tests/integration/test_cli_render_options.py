@@ -34,12 +34,28 @@ def test_run_summary_detail_omits_outcome_edge_labels():
     assert 'label="no"' not in result.output
 
 
-def test_run_json_export_rejects_render_only_flags():
+@pytest.mark.parametrize(
+    "extra_args",
+    [
+        ["--diagram", "swimlane"],
+        ["--show-notes"],
+        ["--subprocess-view", "parent-only"],
+        ["--spaghetti-channel", "people"],
+        ["--spaghetti-people-mode", "worker"],
+        ["--sppm-label-density", "compact"],
+        pytest.param(["--export", "ingredients", "--diagram", "swimlane"], id="ingredients-rejects-diagram"),
+        pytest.param(["--export", "movement", "--diagram", "swimlane"], id="movement-rejects-diagram"),
+    ],
+)
+def test_non_dot_export_rejects_dot_only_flags(extra_args: list[str]):
+    export = extra_args[1] if extra_args[0] == "--export" else "json"
+    base_file = "examples/reference/chocolate_chip_cookies.flo" if export in ("ingredients", "movement") else "examples/reference/linear.flo"
+    args = ["run", base_file]
+    if extra_args[0] != "--export":
+        args += ["--export", "json"]
+    args += extra_args
     runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        ["run", "examples/reference/linear.flo", "--export", "json", "--diagram", "swimlane"],
-    )
+    result = runner.invoke(cli, args)
     assert result.exit_code == 1
     assert "require DOT output" in result.output
 
@@ -87,15 +103,6 @@ def test_run_show_notes_and_orientation(tmp_path):
     assert "Note: Requires manager signoff" in result.output
 
 
-def test_run_json_export_rejects_show_notes_flag():
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        ["run", "examples/reference/linear.flo", "--export", "json", "--show-notes"],
-    )
-    assert result.exit_code == 1
-    assert "require DOT output" in result.output
-
 
 def test_run_subprocess_view_parent_only_hides_subnodes():
     runner = CliRunner()
@@ -117,35 +124,6 @@ def test_run_subprocess_view_parent_only_hides_subnodes():
     assert '"gather_equipment" [label="Gather Equipment"' not in result.output
     assert '"prep_subprocess" [label="Prep Subprocess"' in result.output
 
-
-def test_run_json_export_rejects_subprocess_view_flag():
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        ["run", "examples/reference/linear.flo", "--export", "json", "--subprocess-view", "parent-only"],
-    )
-    assert result.exit_code == 1
-    assert "require DOT output" in result.output
-
-
-def test_run_ingredients_export_rejects_diagram_flag():
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        ["run", "examples/reference/chocolate_chip_cookies.flo", "--export", "ingredients", "--diagram", "swimlane"],
-    )
-    assert result.exit_code == 1
-    assert "require DOT output" in result.output
-
-
-def test_run_movement_export_rejects_diagram_flag():
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        ["run", "examples/reference/chocolate_chip_cookies.flo", "--export", "movement", "--diagram", "swimlane"],
-    )
-    assert result.exit_code == 1
-    assert "require DOT output" in result.output
 
 
 def test_run_spaghetti_diagram_emits_neato_layout():
@@ -202,35 +180,6 @@ def test_run_spaghetti_people_worker_mode_labels_worker_traces():
     assert result.exit_code == 0
     assert "xlabel=\"P assistant_baker" in result.output or "xlabel=\"P lead_baker" in result.output
 
-
-def test_run_json_export_rejects_spaghetti_channel_flag():
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        ["run", "examples/reference/linear.flo", "--export", "json", "--spaghetti-channel", "people"],
-    )
-    assert result.exit_code == 1
-    assert "require DOT output" in result.output
-
-
-def test_run_json_export_rejects_spaghetti_people_mode_flag():
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        ["run", "examples/reference/linear.flo", "--export", "json", "--spaghetti-people-mode", "worker"],
-    )
-    assert result.exit_code == 1
-    assert "require DOT output" in result.output
-
-
-def test_run_json_export_rejects_sppm_density_flag():
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        ["run", "examples/reference/linear.flo", "--export", "json", "--sppm-label-density", "compact"],
-    )
-    assert result.exit_code == 1
-    assert "require DOT output" in result.output
 
 
 @pytest.mark.parametrize(

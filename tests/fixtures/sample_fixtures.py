@@ -9,7 +9,8 @@ import pytest
 from flo.adapters.models import AdapterModel
 
 
-def _repo_root(start: Path | None = None) -> Path:
+def repo_root(start: Path | None = None) -> Path:
+    """Return repository root containing the examples/ directory."""
     start = start or Path(__file__).resolve()
     cur = start
     while cur != cur.parent:
@@ -26,7 +27,7 @@ def tmp_flo_file():
     This uses the first example from the `examples/reference/` directory so integration
     tests exercise the real parsing/compilation pipeline instead of a stub.
     """
-    examples_dir = _repo_root() / "examples" / "reference"
+    examples_dir = repo_root() / "examples" / "reference"
     example = examples_dir / "linear.flo"
     if not example.exists():
         example = sorted(examples_dir.glob("*.flo"))[0]
@@ -50,7 +51,7 @@ def adapter_model_from_example():
     Tests can use this fixture to get a validated model rather than building
     one manually or mocking the parsing step.
     """
-    examples_dir = _repo_root() / "examples" / "reference"
+    examples_dir = repo_root() / "examples" / "reference"
     example = sorted(examples_dir.glob("*.flo"))[0]
     content = example.read_text()
     model = AdapterModel.model_validate({"name": example.stem, "content": content})

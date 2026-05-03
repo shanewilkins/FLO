@@ -6,20 +6,11 @@ from flo.adapters import parse_adapter
 from flo.compiler import compile_adapter
 from flo.compiler.ir import validate_ir
 from flo.services.errors import ValidationError
-
-
-def _repo_root(start: Path | None = None) -> Path:
-    start = start or Path(__file__).resolve()
-    cur = start
-    while cur != cur.parent:
-        if (cur / "examples").is_dir():
-            return cur
-        cur = cur.parent
-    raise RuntimeError("repo root with examples/ not found")
+from tests.fixtures.sample_fixtures import repo_root
 
 
 def _conformance_files(kind: str) -> list[Path]:
-    return sorted((_repo_root() / "examples" / "conformance" / kind).glob("*.flo"))
+    return sorted((repo_root() / "examples" / "conformance" / kind).glob("*.flo"))
 
 
 @pytest.mark.parametrize("example_file", _conformance_files("valid"))

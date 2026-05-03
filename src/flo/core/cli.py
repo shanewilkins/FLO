@@ -19,41 +19,43 @@ def _execute(path: str | None, command: str, options: dict) -> int:  # pragma: n
     from flo.services import get_services
     from flo.core import run_content
     from flo.services.io import read_input, write_output
-    from flo.services.errors import CLIError, EXIT_USAGE
+    from flo.services.errors import map_exception_to_rc
 
     services = get_services(verbose=bool(options.get("verbose")))
     telemetry = services.telemetry
 
-    rc, content, err = read_input(path) if path else read_input("-")
-    if rc != 0:
-        services.error_handler(err)
+    try:
+        rc, content, err = read_input(path) if path else read_input("-")
+        if rc != 0:
+            services.error_handler(err)
+            return rc
+
+        run_options = dict(options)
+        if path and path != "-":
+            run_options.setdefault("source_path", path)
+
+        try:
+            rc, out, err = run_content(content, command=command, options=run_options)
+        except Exception as exc:
+            mapped_rc, msg, internal = map_exception_to_rc(exc)
+            if internal:
+                services.error_handler(f"Unexpected error: {msg or 'internal error'}")
+            else:
+                services.error_handler(msg)
+            return mapped_rc
+
+        if out:
+            write_rc, write_err = write_output(out, options.get("output"))
+            if write_rc != 0:
+                services.error_handler(write_err)
+                return write_rc
+
         return rc
-
-    run_options = dict(options)
-    if path and path != "-":
-        run_options.setdefault("source_path", path)
-
-    try:
-        rc, out, err = run_content(content, command=command, options=run_options)
-    except CLIError as e:
-        services.error_handler(str(e))
-        return getattr(e, "code", EXIT_USAGE)
-    except Exception as e:
-        services.error_handler(f"Unexpected error: {e}")
-        return EXIT_USAGE
-
-    if out:
-        write_rc, write_err = write_output(out, options.get("output"))
-        if write_rc != 0:
-            services.error_handler(write_err)
-            return write_rc
-
-    try:
-        telemetry.shutdown()
-    except Exception:
-        pass
-
-    return rc
+    finally:
+        try:
+            telemetry.shutdown()
+        except Exception:
+            pass
 
 
 def _build_render_opts(
@@ -343,25 +345,28 @@ def console_main(argv: list | None = None) -> int:
     Returns an integer exit code.
     """
     from flo.services import get_services
-    from flo.services.errors import CLIError, EXIT_USAGE
+    from flo.services.errors import EXIT_USAGE, map_exception_to_rc
 
     services = get_services(verbose=False)
 
     if argv is None:
         argv = sys.argv[1:]
 
-    from flo.core.cli_args import parse_args  # local import to avoid cycle
-
-    path, command, options, services, _logger = parse_args(argv, services)
-
     try:
+        from flo.core.cli_args import parse_args  # local import to avoid cycle
+
+        path, command, options, services, _logger = parse_args(argv, services)
         return _execute(path, command, dict(options or {}))
-    except CLIError as e:
-        services.error_handler(str(e))
-        return getattr(e, "code", EXIT_USAGE)
-    except Exception as e:
-        services.error_handler(f"Unexpected error: {e}")
-        return EXIT_USAGE
+    except SystemExit as exc:
+        code = getattr(exc, "code", EXIT_USAGE)
+        return code if isinstance(code, int) else EXIT_USAGE
+    except Exception as exc:
+        rc, msg, internal = map_exception_to_rc(exc)
+        if internal:
+            services.error_handler(f"Unexpected error: {msg or 'internal error'}")
+        else:
+            services.error_handler(msg)
+        return rc
 
 
 def main(argv: list | None = None) -> int:

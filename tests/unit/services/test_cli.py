@@ -20,16 +20,12 @@ def test_main_returns_zero():
     assert rc == 0
 
 
-def test_main_captures_stdout_and_stderr(capsys):
-    # Presentation-level test: ensure something goes to stdout and stderr
+def test_main_captures_stdout_and_stderr():
+    # run() with no path returns empty output
     rc, out, err = fm_core.run()
-    # Simulate console printing of returned outputs
-    print(out)
-    print(err, file=sys.stderr)
-    captured = capsys.readouterr()
     assert rc == 0
-    # We don't assert specific content; ensure capture succeeded.
-    assert captured is not None
+    assert out == ""
+    assert err == ""
 
 
 def test_cli_module_has_expected_entrypoints():
@@ -51,6 +47,5 @@ def test_main_error_path_writes_stderr(monkeypatch, capsys):
         print(err, file=sys.stderr)
     captured = capsys.readouterr()
     assert rc == 2
-    # The error may be logged to either stdout or stderr; ensure at least one
-    # stream contains output and the exit code reflects the error.
-    assert (captured.out.strip() != "") or (captured.err.strip() != "")
+    assert captured.out.strip() == ""
+    assert "fatal error occurred" in captured.err

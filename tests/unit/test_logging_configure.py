@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from flo.services.logging import configure_logging
 
@@ -13,6 +14,7 @@ def test_configure_logging_sets_handler_and_level(monkeypatch):
         configure_logging(level=logging.DEBUG)
         assert root.level == logging.DEBUG
         assert len(root.handlers) >= 1
+        assert any(getattr(handler, "stream", None) is sys.stderr for handler in root.handlers)
     finally:
         # restore original handlers
         root.handlers = old_handlers

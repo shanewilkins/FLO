@@ -6,6 +6,7 @@ configuration is defensive and safe when OTEL isn't installed.
 """
 
 import logging
+import sys
 from typing import Optional
 
 import structlog
@@ -60,7 +61,7 @@ def configure_logging(level: int = logging.INFO, service_name: Optional[str] = N
     if root.handlers:
         return
 
-    handler = logging.StreamHandler()
+    handler = logging.StreamHandler(stream=sys.stderr)
     handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
     root.addHandler(handler)
     root.setLevel(level)

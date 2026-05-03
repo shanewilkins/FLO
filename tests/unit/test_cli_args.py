@@ -31,32 +31,20 @@ def test_parse_args_with_flags(services, args, expected_command, expected_output
         assert options["output"] == expected_output
 
 
-def test_parse_args_export_json_flag(services):
-    path, command, options, _, _ = parse_args(["file.flo", "--export", "json"], services)
+@pytest.mark.parametrize(
+    "extra_args, expected_export",
+    [
+        ([], "dot"),
+        (["--export", "json"], "json"),
+        (["--export", "ingredients"], "ingredients"),
+        (["--export", "movement"], "movement"),
+    ],
+)
+def test_parse_args_export_flag(services, extra_args: list[str], expected_export: str):
+    path, command, options, _, _ = parse_args(["file.flo"] + extra_args, services)
     assert path == "file.flo"
     assert command == "run"
-    assert options["export"] == "json"
-
-
-def test_parse_args_export_ingredients_flag(services):
-    path, command, options, _, _ = parse_args(["file.flo", "--export", "ingredients"], services)
-    assert path == "file.flo"
-    assert command == "run"
-    assert options["export"] == "ingredients"
-
-
-def test_parse_args_export_movement_flag(services):
-    path, command, options, _, _ = parse_args(["file.flo", "--export", "movement"], services)
-    assert path == "file.flo"
-    assert command == "run"
-    assert options["export"] == "movement"
-
-
-def test_parse_args_run_default_export_dot(services):
-    path, command, options, _, _ = parse_args(["file.flo"], services)
-    assert path == "file.flo"
-    assert command == "run"
-    assert options["export"] == "dot"
+    assert options["export"] == expected_export
 
 
 def test_parse_args_render_options(services):

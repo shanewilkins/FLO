@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -11,6 +12,8 @@ from flo.services.errors import RenderError
 from flo.services.graphviz import (
     _normalize_node_backing_fills_svg,
     _normalize_svg_outer_padding,
+    _postprocess_sppm_branch_edges_svg,
+    _postprocess_sppm_return_loop_edges_svg,
     _postprocess_direct_midpoint_edges_svg,
     _postprocess_wrapped_sppm_svg,
     render_dot_to_file,
@@ -264,3 +267,137 @@ def test_normalize_svg_outer_padding_ignores_graph_background_bounds(tmp_path: P
         assert 'width="120.00pt"' in svg
         assert 'height="70.00pt"' in svg
         assert 'style="background:#ffffff;"' in svg
+
+
+def test_postprocess_sppm_return_loop_edges_svg_rewrites_two_leg_geometry(tmp_path: Path):
+        dot = "\n".join(
+            [
+                "digraph {",
+                '  "review":w -> "__sppm_rework_corridor_review" [arrowhead=none, constraint=false];',
+                '  "__sppm_rework_corridor_review" -> "approve":s [constraint=false];',
+                "}",
+            ]
+        )
+        svg_path = tmp_path / "return.svg"
+        svg_path.write_text(
+            """<?xml version="1.0" encoding="UTF-8"?>
+    <svg xmlns="http://www.w3.org/2000/svg">
+        <g class="node"><title>review</title><polygon points="200,100 260,100 260,140 200,140" /></g>
+        <g class="node"><title>approve</title><polygon points="80,40 140,40 140,90 80,90" /></g>
+        <g class="edge"><title>review:w-&gt;__sppm_rework_corridor_review</title><path d="M 0,0 L 1,1" /></g>
+        <g class="edge"><title>__sppm_rework_corridor_review-&gt;approve:s</title><path d="M 0,0 L 1,1" /><polygon points="0,0 1,1 2,2 0,0" /></g>
+    </svg>
+    """,
+            encoding="utf-8",
+        )
+
+        _postprocess_sppm_return_loop_edges_svg(dot=dot, output_path=svg_path)
+        svg = svg_path.read_text(encoding="utf-8")
+
+        assert 'd="M 200.00,120.00 L 110.00,120.00"' in svg
+        assert 'd="M 110.00,120.00 L 110.00,90.00"' in svg
+        assert 'points="110.00,90.00 106.00,98.00 114.00,98.00 110.00,90.00"' in svg
+
+
+def test_postprocess_sppm_branch_edges_svg_rewrites_two_leg_geometry(tmp_path: Path):
+        dot = "\n".join(
+            [
+                "digraph {",
+                '  "decision":s -> "__sppm_rework_corridor_decision" [arrowhead=none, constraint=false];',
+                '  "__sppm_rework_corridor_decision" -> "rework":n [constraint=false];',
+                "}",
+            ]
+        )
+        svg_path = tmp_path / "branch.svg"
+        svg_path.write_text(
+            """<?xml version="1.0" encoding="UTF-8"?>
+    <svg xmlns="http://www.w3.org/2000/svg">
+        <g class="node"><title>decision</title><polygon points="200,100 260,100 260,140 200,140" /></g>
+        <g class="node"><title>rework</title><polygon points="120,20 180,20 180,60 120,60" /></g>
+        <g class="edge"><title>decision:s-&gt;__sppm_rework_corridor_decision</title><path d="M 0,0 L 1,1" /></g>
+        <g class="edge"><title>__sppm_rework_corridor_decision-&gt;rework:n</title><path d="M 0,0 L 1,1" /><polygon points="0,0 1,1 2,2 0,0" /></g>
+    </svg>
+    """,
+            encoding="utf-8",
+        )
+
+        _postprocess_sppm_branch_edges_svg(dot=dot, output_path=svg_path)
+        svg = svg_path.read_text(encoding="utf-8")
+
+        assert 'd="M 230.00,140.00 L 230.00,80.00"' in svg
+        assert 'd="M 230.00,80.00 L 150.00,20.00"' in svg
+        assert 'points="150.00,20.00 146.00,12.00 154.00,12.00 150.00,20.00"' in svg
+
+
+def test_postprocess_wrapped_sppm_svg_supports_contract_and_north_port_fallback(tmp_path: Path):
+        contract = SimpleNamespace(
+            wrapped_boundary_edges=[SimpleNamespace(source_id="sort_tag", target_id="wash")]
+        )
+        svg_path = tmp_path / "wrapped_contract.svg"
+        svg_path.write_text(
+            """<?xml version="1.0" encoding="UTF-8"?>
+    <svg xmlns="http://www.w3.org/2000/svg">
+      <g class="node"><title>sort_tag</title><polygon points="300,260 380,260 380,330 300,330" /></g>
+      <g class="node"><title>wash</title><polygon points="80,140 160,140 160,210 80,210" /></g>
+      <g class="edge"><title>sort_tag:e-&gt;__wrap_exit_lr_0</title><path d="M 0,0 L 1,1" /></g>
+      <g class="edge"><title>__wrap_exit_lr_0-&gt;wash:n</title><path d="M 0,0 L 1,1" /><polygon points="0,0 1,1 2,2 0,0" /></g>
+    </svg>
+    """,
+            encoding="utf-8",
+        )
+
+        _postprocess_wrapped_sppm_svg(dot="digraph {}", output_path=svg_path, contract=contract)
+        svg = svg_path.read_text(encoding="utf-8")
+
+        assert 'd="M 380.00,295.00 L 392.00,295.00 L 392.00,128.00 L 120.00,128.00"' in svg
+        assert 'd="M 120.00,128.00 L 120.00,140.00"' in svg
+
+
+def test_normalize_svg_outer_padding_no_content_points_is_noop(tmp_path: Path):
+        svg_path = tmp_path / "empty.svg"
+        original = """<?xml version="1.0" encoding="UTF-8"?>
+    <svg width="10pt" height="10pt" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg"></svg>
+    """
+        svg_path.write_text(original, encoding="utf-8")
+
+        _normalize_svg_outer_padding(output_path=svg_path, padding=10.0)
+        assert svg_path.read_text(encoding="utf-8") == original
+
+
+def test_postprocess_direct_midpoint_edges_skips_invalid_and_internal_edges(tmp_path: Path):
+        svg_path = tmp_path / "skip_direct.svg"
+        svg_path.write_text(
+            """<?xml version="1.0" encoding="UTF-8"?>
+    <svg xmlns="http://www.w3.org/2000/svg">
+        <g class="node"><title>a</title><polygon points="0,0 40,0 40,20 0,20" /></g>
+        <g class="node"><title>b</title><polygon points="100,0 140,0 140,20 100,20" /></g>
+        <g class="edge"><title>invalid-title</title><path d="M 1,1 L 2,2" /></g>
+        <g class="edge"><title>a:n-&gt;b:s</title><path d="M 3,3 L 4,4" /></g>
+        <g class="edge"><title>__anchor:e-&gt;b:w</title><path d="M 5,5 L 6,6" /></g>
+    </svg>
+    """,
+            encoding="utf-8",
+        )
+
+        _postprocess_direct_midpoint_edges_svg(output_path=svg_path)
+        svg = svg_path.read_text(encoding="utf-8")
+
+        assert 'd="M 1,1 L 2,2"' in svg
+        assert 'd="M 3,3 L 4,4"' in svg
+        assert 'd="M 5,5 L 6,6"' in svg
+
+
+def test_normalize_node_backing_fills_svg_skips_non_none_stroke(tmp_path: Path):
+        svg_path = tmp_path / "stroke_skip.svg"
+        svg_path.write_text(
+            """<?xml version="1.0" encoding="UTF-8"?>
+    <svg xmlns="http://www.w3.org/2000/svg">
+        <g class="node"><title>a</title><polygon fill="lightgrey" stroke="black" points="0,0 10,0 10,10 0,10" /></g>
+    </svg>
+    """,
+            encoding="utf-8",
+        )
+
+        _normalize_node_backing_fills_svg(output_path=svg_path)
+        svg = svg_path.read_text(encoding="utf-8")
+        assert 'fill="lightgrey" stroke="black"' in svg
