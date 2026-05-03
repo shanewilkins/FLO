@@ -1,4 +1,4 @@
-"""CLI helpers moved under `core` package."""
+"""CLI entry points for the FLO tool."""
 from __future__ import annotations
 
 import sys
@@ -6,6 +6,126 @@ from typing import Optional
 
 import click
 
+
+# ---------------------------------------------------------------------------
+# Shared execution helper (used by both Click handlers and console_main)
+# ---------------------------------------------------------------------------
+
+def _execute(path: str | None, command: str, options: dict) -> int:  # pragma: no cover - integration
+    """Read input, run core pipeline, and write output.
+
+    Returns an integer exit code.
+    """
+    from flo.services import get_services
+    from flo.core import run_content
+    from flo.services.io import read_input, write_output
+    from flo.services.errors import CLIError, EXIT_USAGE
+
+    services = get_services(verbose=bool(options.get("verbose")))
+    telemetry = services.telemetry
+
+    rc, content, err = read_input(path) if path else read_input("-")
+    if rc != 0:
+        services.error_handler(err)
+        return rc
+
+    run_options = dict(options)
+    if path and path != "-":
+        run_options.setdefault("source_path", path)
+
+    try:
+        rc, out, err = run_content(content, command=command, options=run_options)
+    except CLIError as e:
+        services.error_handler(str(e))
+        return getattr(e, "code", EXIT_USAGE)
+    except Exception as e:
+        services.error_handler(f"Unexpected error: {e}")
+        return EXIT_USAGE
+
+    if out:
+        write_rc, write_err = write_output(out, options.get("output"))
+        if write_rc != 0:
+            services.error_handler(write_err)
+            return write_rc
+
+    try:
+        telemetry.shutdown()
+    except Exception:
+        pass
+
+    return rc
+
+
+def _build_render_opts(
+    verbose: bool,
+    output: Optional[str],
+    export_fmt: Optional[str],
+    diagram: Optional[str],
+    profile: Optional[str],
+    detail: Optional[str],
+    orientation: Optional[str],
+    show_notes: bool,
+    subprocess_view: Optional[str],
+    spaghetti_channel: Optional[str],
+    spaghetti_people_mode: Optional[str],
+    sppm_theme: Optional[str],
+    layout_wrap: Optional[str],
+    layout_fit: Optional[str],
+    layout_spacing: Optional[str],
+    sppm_step_numbering: Optional[str],
+    sppm_label_density: Optional[str],
+    sppm_wrap_strategy: Optional[str],
+    sppm_truncation_policy: Optional[str],
+    sppm_output_profile: Optional[str],
+    render_to: Optional[str],
+    layout_max_width_px: Optional[int],
+    layout_target_columns: Optional[int],
+    sppm_max_label_step_name: Optional[int],
+    sppm_max_label_workers: Optional[int],
+    sppm_max_label_ctwt: Optional[int],
+) -> dict:  # pragma: no cover - thin helper
+    """Build a normalized options dict from Click-parsed render parameters."""
+    opts: dict = {"verbose": verbose, "output": output}
+    if export_fmt:
+        opts["export"] = export_fmt
+    for key, value in (
+        ("diagram", diagram),
+        ("profile", profile),
+        ("detail", detail),
+        ("orientation", orientation),
+        ("subprocess_view", subprocess_view),
+        ("spaghetti_channel", spaghetti_channel),
+        ("spaghetti_people_mode", spaghetti_people_mode),
+        ("sppm_theme", sppm_theme),
+        ("layout_wrap", layout_wrap),
+        ("layout_fit", layout_fit),
+        ("layout_spacing", layout_spacing),
+        ("sppm_step_numbering", sppm_step_numbering),
+        ("sppm_label_density", sppm_label_density),
+        ("sppm_wrap_strategy", sppm_wrap_strategy),
+        ("sppm_truncation_policy", sppm_truncation_policy),
+        ("sppm_output_profile", sppm_output_profile),
+        ("render_to", render_to),
+    ):
+        if value is not None:
+            opts[key] = value
+    for key, value in (
+        ("layout_max_width_px", layout_max_width_px),
+        ("layout_target_columns", layout_target_columns),
+        ("sppm_max_label_step_name", sppm_max_label_step_name),
+        ("sppm_max_label_workers", sppm_max_label_workers),
+        ("sppm_max_label_ctwt", sppm_max_label_ctwt),
+    ):
+        if value is not None:
+            opts[key] = value
+    if show_notes:
+        opts["show_notes"] = True
+    return opts
+
+
+# ---------------------------------------------------------------------------
+# Click command group
+# ---------------------------------------------------------------------------
 
 @click.group()
 def cli() -> None:  # pragma: no cover - thin CLI layer
@@ -72,13 +192,12 @@ def run_cmd(
     sppm_output_profile: Optional[str],
     render_to: Optional[str],
 ) -> None:  # pragma: no cover - integration
-    """Invoke the CLI command handler with normalized arguments."""
-    args = _build_run_args(
-        path=path,
-        validate=validate,
+    """Render a FLO diagram (default command)."""
+    command = "validate" if validate else "run"
+    opts = _build_render_opts(
         verbose=verbose,
         output=output,
-        export_fmt=export_fmt,
+        export_fmt=export_fmt or "dot",
         diagram=diagram,
         profile=profile,
         detail=detail,
@@ -95,95 +214,16 @@ def run_cmd(
         sppm_label_density=sppm_label_density,
         sppm_wrap_strategy=sppm_wrap_strategy,
         sppm_truncation_policy=sppm_truncation_policy,
+        sppm_output_profile=sppm_output_profile,
+        render_to=render_to,
         layout_max_width_px=layout_max_width_px,
         layout_target_columns=layout_target_columns,
         sppm_max_label_step_name=sppm_max_label_step_name,
         sppm_max_label_workers=sppm_max_label_workers,
         sppm_max_label_ctwt=sppm_max_label_ctwt,
-        sppm_output_profile=sppm_output_profile,
-        render_to=render_to,
     )
-    rc = console_main(args)
+    rc = _execute(path, command, opts)
     raise SystemExit(rc)
-
-
-def _build_run_args(  # pragma: no cover - thin click shim helper
-    *,
-    path: Optional[str],
-    validate: bool,
-    verbose: bool,
-    output: Optional[str],
-    export_fmt: Optional[str],
-    diagram: Optional[str],
-    profile: Optional[str],
-    detail: Optional[str],
-    orientation: Optional[str],
-    show_notes: bool,
-    subprocess_view: Optional[str],
-    spaghetti_channel: Optional[str],
-    spaghetti_people_mode: Optional[str],
-    sppm_theme: Optional[str],
-    layout_wrap: Optional[str],
-    layout_fit: Optional[str],
-    layout_spacing: Optional[str],
-    sppm_step_numbering: Optional[str],
-    sppm_label_density: Optional[str],
-    sppm_wrap_strategy: Optional[str],
-    sppm_truncation_policy: Optional[str],
-    layout_max_width_px: Optional[int],
-    layout_target_columns: Optional[int],
-    sppm_max_label_step_name: Optional[int],
-    sppm_max_label_workers: Optional[int],
-    sppm_max_label_ctwt: Optional[int],
-    sppm_output_profile: Optional[str],
-    render_to: Optional[str],
-) -> list[str]:
-    """Build argparse-style argv list from Click-parsed keyword arguments."""
-    args: list[str] = ["run"]
-    if path:
-        args.append(path)
-    if validate:
-        args.append("--validate")
-    if verbose:
-        args.append("-v")
-    if output:
-        args.extend(["-o", output])
-    # flag → argparse-name pairs (all optional string args)
-    pairs: list[tuple[Optional[str], str]] = [
-        (export_fmt, "--export"),
-        (diagram, "--diagram"),
-        (profile, "--profile"),
-        (detail, "--detail"),
-        (orientation, "--orientation"),
-        (subprocess_view, "--subprocess-view"),
-        (spaghetti_channel, "--spaghetti-channel"),
-        (spaghetti_people_mode, "--spaghetti-people-mode"),
-        (sppm_theme, "--sppm-theme"),
-        (layout_wrap, "--layout-wrap"),
-        (layout_fit, "--layout-fit"),
-        (layout_spacing, "--layout-spacing"),
-        (sppm_step_numbering, "--sppm-step-numbering"),
-        (sppm_label_density, "--sppm-label-density"),
-        (sppm_wrap_strategy, "--sppm-wrap-strategy"),
-        (sppm_truncation_policy, "--sppm-truncation-policy"),
-        (sppm_output_profile, "--sppm-output-profile"),
-        (render_to, "--render-to"),
-    ]
-    for value, flag in pairs:
-        if value:
-            args.extend([flag, value])
-    for value, flag in [
-        (layout_max_width_px, "--layout-max-width-px"),
-        (layout_target_columns, "--layout-target-columns"),
-        (sppm_max_label_step_name, "--sppm-max-label-step-name"),
-        (sppm_max_label_workers, "--sppm-max-label-workers"),
-        (sppm_max_label_ctwt, "--sppm-max-label-ctwt"),
-    ]:
-        if value is not None:
-            args.extend([flag, str(value)])
-    if show_notes:
-        args.append("--show-notes")
-    return args
 
 
 @cli.command("compile")
@@ -192,14 +232,7 @@ def _build_run_args(  # pragma: no cover - thin click shim helper
 @click.option("-o", "--output", help="Write output to file")
 def compile_cmd(path: Optional[str], verbose: bool, output: Optional[str]) -> None:  # pragma: no cover - integration
     """Compile FLO input and emit a schema-shaped JSON export of the model."""
-    args: list[str] = ["compile"]
-    if path:
-        args.append(path)
-    if verbose:
-        args.append("-v")
-    if output:
-        args.extend(["-o", output])
-    rc = console_main(args)
+    rc = _execute(path, "compile", {"verbose": verbose, "output": output, "export": "json"})
     raise SystemExit(rc)
 
 
@@ -208,12 +241,7 @@ def compile_cmd(path: Optional[str], verbose: bool, output: Optional[str]) -> No
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 def validate_cmd(path: Optional[str], verbose: bool) -> None:  # pragma: no cover - integration
     """Validate FLO input and return non-zero on parse/compile/validation errors."""
-    args: list[str] = ["validate"]
-    if path:
-        args.append(path)
-    if verbose:
-        args.append("-v")
-    rc = console_main(args)
+    rc = _execute(path, "validate", {"verbose": verbose})
     raise SystemExit(rc)
 
 
@@ -273,11 +301,10 @@ def export_cmd(
     sppm_output_profile: Optional[str],
 ) -> None:  # pragma: no cover - integration
     """Export FLO input as DOT or JSON."""
-    args = _build_export_args(
-        path=path,
-        export_fmt=export_fmt,
+    opts = _build_render_opts(
         verbose=verbose,
         output=output,
+        export_fmt=export_fmt,
         diagram=diagram,
         profile=profile,
         detail=detail,
@@ -294,134 +321,41 @@ def export_cmd(
         sppm_label_density=sppm_label_density,
         sppm_wrap_strategy=sppm_wrap_strategy,
         sppm_truncation_policy=sppm_truncation_policy,
+        sppm_output_profile=sppm_output_profile,
+        render_to=None,
         layout_max_width_px=layout_max_width_px,
         layout_target_columns=layout_target_columns,
         sppm_max_label_step_name=sppm_max_label_step_name,
         sppm_max_label_workers=sppm_max_label_workers,
         sppm_max_label_ctwt=sppm_max_label_ctwt,
-        sppm_output_profile=sppm_output_profile,
     )
-    rc = console_main(args)
+    rc = _execute(path, "export", opts)
     raise SystemExit(rc)
 
 
-def _build_export_args(  # pragma: no cover - thin click shim helper
-    *,
-    path: Optional[str],
-    export_fmt: str,
-    verbose: bool,
-    output: Optional[str],
-    diagram: Optional[str],
-    profile: Optional[str],
-    detail: Optional[str],
-    orientation: Optional[str],
-    show_notes: bool,
-    subprocess_view: Optional[str],
-    spaghetti_channel: Optional[str],
-    spaghetti_people_mode: Optional[str],
-    sppm_theme: Optional[str],
-    layout_wrap: Optional[str],
-    layout_fit: Optional[str],
-    layout_spacing: Optional[str],
-    sppm_step_numbering: Optional[str],
-    sppm_label_density: Optional[str],
-    sppm_wrap_strategy: Optional[str],
-    sppm_truncation_policy: Optional[str],
-    layout_max_width_px: Optional[int],
-    layout_target_columns: Optional[int],
-    sppm_max_label_step_name: Optional[int],
-    sppm_max_label_workers: Optional[int],
-    sppm_max_label_ctwt: Optional[int],
-    sppm_output_profile: Optional[str],
-) -> list[str]:
-    args: list[str] = ["export"]
-    if path:
-        args.append(path)
-    args.extend(["--export", export_fmt])
-    _append_click_string_pairs(
-        args,
-        [
-            (diagram, "--diagram"),
-            (profile, "--profile"),
-            (detail, "--detail"),
-            (orientation, "--orientation"),
-            (subprocess_view, "--subprocess-view"),
-            (spaghetti_channel, "--spaghetti-channel"),
-            (spaghetti_people_mode, "--spaghetti-people-mode"),
-            (sppm_theme, "--sppm-theme"),
-            (layout_wrap, "--layout-wrap"),
-            (layout_fit, "--layout-fit"),
-            (layout_spacing, "--layout-spacing"),
-            (sppm_step_numbering, "--sppm-step-numbering"),
-            (sppm_label_density, "--sppm-label-density"),
-            (sppm_wrap_strategy, "--sppm-wrap-strategy"),
-            (sppm_truncation_policy, "--sppm-truncation-policy"),
-            (sppm_output_profile, "--sppm-output-profile"),
-        ],
-    )
-    _append_click_int_pairs(
-        args,
-        [
-            (layout_max_width_px, "--layout-max-width-px"),
-            (layout_target_columns, "--layout-target-columns"),
-            (sppm_max_label_step_name, "--sppm-max-label-step-name"),
-            (sppm_max_label_workers, "--sppm-max-label-workers"),
-            (sppm_max_label_ctwt, "--sppm-max-label-ctwt"),
-        ],
-    )
-    if show_notes:
-        args.append("--show-notes")
-    if verbose:
-        args.append("-v")
-    if output:
-        args.extend(["-o", output])
-    return args
+# ---------------------------------------------------------------------------
+# Argparse-based entry (for `flo <path>` without explicit subcommand)
+# ---------------------------------------------------------------------------
 
-
-def _append_click_string_pairs(args: list[str], pairs: list[tuple[Optional[str], str]]) -> None:
-    for value, flag in pairs:
-        if value:
-            args.extend([flag, value])
-
-
-def _append_click_int_pairs(args: list[str], pairs: list[tuple[Optional[int], str]]) -> None:
-    for value, flag in pairs:
-        if value is not None:
-            args.extend([flag, str(value)])
-
-
-def console_main(argv: list | None = None) -> int:  # pragma: no cover - thin wrapper
+def console_main(argv: list | None = None) -> int:
     """Thin console entry that wires services, IO, and core runners.
 
     Returns an integer exit code.
     """
     from flo.services import get_services
-    from flo.core import run_content
-    from flo.services.io import read_input, write_output
     from flo.services.errors import CLIError, EXIT_USAGE
 
     services = get_services(verbose=False)
-    logger = services.logger
 
     if argv is None:
         argv = sys.argv[1:]
 
     from flo.core.cli_args import parse_args  # local import to avoid cycle
 
-    path, command, options, services, logger = parse_args(argv, services)
-    telemetry = services.telemetry
-
-    rc, content, err = read_input(path) if path else read_input("-")
-    if rc != 0:
-        services.error_handler(err)
-        return rc
-
-    run_options = dict(options or {})
-    if path and path != "-":
-        run_options.setdefault("source_path", path)
+    path, command, options, services, _logger = parse_args(argv, services)
 
     try:
-        rc, out, err = run_content(content, command=command, options=run_options)
+        return _execute(path, command, dict(options or {}))
     except CLIError as e:
         services.error_handler(str(e))
         return getattr(e, "code", EXIT_USAGE)
@@ -429,21 +363,8 @@ def console_main(argv: list | None = None) -> int:  # pragma: no cover - thin wr
         services.error_handler(f"Unexpected error: {e}")
         return EXIT_USAGE
 
-    if out:
-        write_rc, write_err = write_output(out, options.get("output") if options else None)
-        if write_rc != 0:
-            services.error_handler(write_err)
-            return write_rc
 
-    try:
-        telemetry.shutdown()
-    except Exception:
-        pass
-
-    return rc
-
-
-def main(argv: list | None = None) -> int:  # pragma: no cover - CLI entry
+def main(argv: list | None = None) -> int:
     """Programmatic CLI entrypoint.
 
     Default behavior routes directly to `console_main` so users can run
