@@ -2,14 +2,38 @@
 from __future__ import annotations
 
 import sys
-from typing import Optional
+from typing import Any, Optional
 
 import click
+from structlog.contextvars import bind_contextvars, unbind_contextvars
 
 
 # ---------------------------------------------------------------------------
 # Shared execution helper (used by both Click handlers and console_main)
 # ---------------------------------------------------------------------------
+
+
+def _emit_error(services: Any, message: str, **event_fields: object) -> None:
+    """Emit a user-facing error message plus structured context fields.
+
+    The message contract remains unchanged (stderr), while event fields are
+    attached through structlog contextvars for observability backends.
+    """
+    bound_keys = tuple(key for key, value in event_fields.items() if value is not None)
+    try:
+        bind_contextvars(**{key: event_fields[key] for key in bound_keys})
+    except Exception:
+        bound_keys = tuple()
+
+    try:
+        services.error_handler(message)
+    finally:
+        if bound_keys:
+            try:
+                unbind_contextvars(*bound_keys)
+            except Exception:
+                pass
+
 
 def _execute(path: str | None, command: str, options: dict) -> int:  # pragma: no cover - integration
     """Read input, run core pipeline, and write output.
@@ -27,7 +51,16 @@ def _execute(path: str | None, command: str, options: dict) -> int:  # pragma: n
     try:
         rc, content, err = read_input(path) if path else read_input("-")
         if rc != 0:
-            services.error_handler(err)
+            _emit_error(
+                services,
+                err,
+                error_kind="io",
+                error_stage="read_input",
+                exit_code=rc,
+                internal=False,
+                command=command,
+                path=path or "-",
+            )
             return rc
 
         run_options = dict(options)
@@ -39,15 +72,42 @@ def _execute(path: str | None, command: str, options: dict) -> int:  # pragma: n
         except Exception as exc:
             mapped_rc, msg, internal = map_exception_to_rc(exc)
             if internal:
-                services.error_handler(f"Unexpected error: {msg or 'internal error'}")
+                _emit_error(
+                    services,
+                    f"Unexpected error: {msg or 'internal error'}",
+                    error_kind="internal",
+                    error_stage="run_content",
+                    exit_code=mapped_rc,
+                    internal=True,
+                    command=command,
+                    path=path or "-",
+                )
             else:
-                services.error_handler(msg)
+                _emit_error(
+                    services,
+                    msg,
+                    error_kind="domain",
+                    error_stage="run_content",
+                    exit_code=mapped_rc,
+                    internal=False,
+                    command=command,
+                    path=path or "-",
+                )
             return mapped_rc
 
         if out:
             write_rc, write_err = write_output(out, options.get("output"))
             if write_rc != 0:
-                services.error_handler(write_err)
+                _emit_error(
+                    services,
+                    write_err,
+                    error_kind="io",
+                    error_stage="write_output",
+                    exit_code=write_rc,
+                    internal=False,
+                    command=command,
+                    path=path or "-",
+                )
                 return write_rc
 
         return rc
@@ -363,9 +423,25 @@ def console_main(argv: list | None = None) -> int:
     except Exception as exc:
         rc, msg, internal = map_exception_to_rc(exc)
         if internal:
-            services.error_handler(f"Unexpected error: {msg or 'internal error'}")
+            _emit_error(
+                services,
+                f"Unexpected error: {msg or 'internal error'}",
+                error_kind="internal",
+                error_stage="console_main",
+                exit_code=rc,
+                internal=True,
+                command="console_main",
+            )
         else:
-            services.error_handler(msg)
+            _emit_error(
+                services,
+                msg,
+                error_kind="domain",
+                error_stage="console_main",
+                exit_code=rc,
+                internal=False,
+                command="console_main",
+            )
         return rc
 
 
