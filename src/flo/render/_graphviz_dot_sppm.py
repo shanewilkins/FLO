@@ -25,6 +25,7 @@ from flo.compiler.ir.enums import ProcessValueClass
 
 if TYPE_CHECKING:
     from flo.compiler.ir.models import IR
+    from ._sppm_postprocess_contract import SppmSvgPostprocessContract
 
 
 _SPPM_DECISION_MIN_WIDTH = 2.4
@@ -34,10 +35,11 @@ _SPPM_DECISION_MIN_HEIGHT = 1.4
 def render_sppm_dot(process: IR | dict[str, Any], options: RenderOptions | None = None) -> str:
     """Render a Standard Process Performance Map (SPPM) as Graphviz DOT."""
     render_options = options or RenderOptions()
-    return _render_sppm_graph(process, options=render_options)
+    dot, _contract = _render_sppm_graph(process, options=render_options)
+    return dot
 
 
-def _render_sppm_graph(process: IR | dict[str, Any], options: RenderOptions) -> str:
+def _render_sppm_graph(process: IR | dict[str, Any], options: RenderOptions) -> tuple[str, SppmSvgPostprocessContract]:
     nodes, edges = _extract_sppm_nodes_edges(process)
     nodes_by_id: dict[str, dict[str, Any]] = {
         str(n.get("id", "")): n for n in nodes if n.get("id")
@@ -51,8 +53,7 @@ def _render_sppm_graph(process: IR | dict[str, Any], options: RenderOptions) -> 
         step_numbering=step_numbering,
         wrap_plan=wrap_plan,
     )
-    from . import set_last_sppm_contract
-    set_last_sppm_contract(routing_plan.svg_postprocess_contract)
+    contract = routing_plan.svg_postprocess_contract
     port_counts = _port_counts_by_node(routing_plan)
     theme = resolve_sppm_theme(options.sppm_theme)
 
@@ -102,7 +103,7 @@ def _render_sppm_graph(process: IR | dict[str, Any], options: RenderOptions) -> 
     lines.extend(_render_sppm_secondary_line_constraints(edges=edges, routing_plan=routing_plan))
 
     lines.append("}")
-    return "\n".join(lines)
+    return "\n".join(lines), contract
 
 
 def _resolve_rankdir(*, options: RenderOptions, wrap_active: bool) -> str:

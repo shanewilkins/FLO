@@ -53,7 +53,7 @@ def test_run_content_render_error(monkeypatch, ir_factory, node_factory):
     def fake_render(ir, options=None):
         raise Exception("render failed")
 
-    monkeypatch.setattr("flo.core.render_dot", fake_render)
+    monkeypatch.setattr("flo.core.render_dot_and_contract", fake_render)
     with pytest.raises(RenderError):
         run_content("some content")
 
@@ -63,7 +63,7 @@ def test_postprocess_nonfatal(monkeypatch, ir_factory, node_factory):
     monkeypatch.setattr("flo.core.parse_adapter", lambda c, source_path=None: ir_factory(name="t", nodes=[node_factory("n")]))
     monkeypatch.setattr("flo.core.compile_adapter", lambda a: ir_factory(name="t", nodes=[node_factory("n")]))
     monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
-    monkeypatch.setattr("flo.core.render_dot", lambda i, options=None: "dot")
+    monkeypatch.setattr("flo.core.render_dot_and_contract", lambda i, options=None: ("dot", None))
 
     def bad_scc(ir):
         raise Exception("scc oops")
@@ -84,7 +84,7 @@ def test_run_content_render_to_calls_graphviz_service(monkeypatch, ir_factory, n
     monkeypatch.setattr("flo.core.parse_adapter", lambda c, source_path=None: ir_factory(name="t", nodes=[node_factory("n")]))
     monkeypatch.setattr("flo.core.compile_adapter", lambda a: ir_factory(name="t", nodes=[node_factory("n")]))
     monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
-    monkeypatch.setattr("flo.core.render_dot", lambda i, **kw: "dot output")
+    monkeypatch.setattr("flo.core.render_dot_and_contract", lambda i, **kw: ("dot output", None))
     monkeypatch.setattr("flo.core.scc_condense", lambda i: i)
 
     calls: list[tuple] = []

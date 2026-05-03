@@ -5,7 +5,7 @@ This module is the package-level implementation previously provided by
 """
 from __future__ import annotations
 
-from typing import Tuple
+from typing import TYPE_CHECKING, Tuple
 
 from flo.services.errors import EXIT_SUCCESS, ParseError, CompileError, ValidationError, RenderError
 
@@ -14,10 +14,13 @@ from flo.compiler import compile_adapter
 from flo.compiler.ir import validate_ir, IR
 from flo.compiler.ir import ensure_schema_aligned
 from flo.compiler.analysis import scc_condense
-from flo.render import render_dot
+from flo.render import render_dot_and_contract
 from flo.export import export_ir
 from flo.core._flo_config import merge_diagrams_toml_sppm_defaults
 from flo.core._option_validation import validate_sppm_numeric_render_options, ensure_render_options_compatible_with_output
+
+if TYPE_CHECKING:
+    from flo.render._sppm_postprocess_contract import SppmSvgPostprocessContract
 
 
 def run_content(content: str, command: str = "run", options: dict | None = None) -> Tuple[int, str, str]:
@@ -42,13 +45,10 @@ def run_content(content: str, command: str = "run", options: dict | None = None)
     resolved_options = merge_diagrams_toml_sppm_defaults(options=options)
     validate_sppm_numeric_render_options(options=resolved_options)
 
-    dot = _render_dot_with_postprocess(ir, options=resolved_options)
+    dot, contract = _render_dot_with_postprocess(ir, options=resolved_options)
     render_to = (resolved_options or {}).get("render_to")
     if render_to:
-        from flo.render import get_last_sppm_contract
         from flo.services.graphviz import render_dot_to_file
-        
-        contract = get_last_sppm_contract()
         render_dot_to_file(dot, render_to, sppm_contract=contract)
         return EXIT_SUCCESS, "", ""
     return EXIT_SUCCESS, dot, ""
@@ -88,7 +88,8 @@ def _resolve_output_format(command: str, options: dict | None) -> str:
     return "dot"
 
 
-def _render_dot_with_postprocess(ir: IR, options: dict | None = None) -> str:
+def _render_dot_with_postprocess(ir: IR, options: dict | None = None) -> tuple[str, SppmSvgPostprocessContract | None]:
+    """SCC-condense then render, returning (dot, sppm_contract)."""
     processed = ir
 
     try:
@@ -97,11 +98,11 @@ def _render_dot_with_postprocess(ir: IR, options: dict | None = None) -> str:
         pass
 
     try:
-        _dot = render_dot(processed, options=options)
+        dot, contract = render_dot_and_contract(processed, options=options)
     except Exception as e:
         raise RenderError(str(e))
 
-    return _dot
+    return dot, contract
 
 
 def run() -> Tuple[int, str, str]:
