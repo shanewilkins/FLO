@@ -61,7 +61,7 @@ def apply_density_filter(
         condensed_metric = " | ".join(line for line in [ct_line, wt_line] if line)
         return [line for line in [condensed_metric, workers_line, notes_line] if line]
 
-    return [line for line in [description, ct_line, workers_line, wt_line, notes_line] if line]
+    return [line for line in [description, workers_line, ct_line, wt_line, notes_line] if line]
 
 
 def _initials(name: str) -> str:

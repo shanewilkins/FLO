@@ -139,7 +139,8 @@ def test_sppm_task_cards_have_minimum_content_width():
         "edges": [],
     }
     out = render_dot(ir_like, options={"diagram": "sppm"})
-    assert 'WIDTH="220"' in out
+    # Minimal node (1 name line, no info) should get the floor width of 80.
+    assert 'WIDTH="80"' in out
 
 
 def test_sppm_wait_time_shown_in_node_info_box():
