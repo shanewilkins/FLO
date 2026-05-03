@@ -12,28 +12,35 @@ import re
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
+from flo.services._sppm_anchor_specs import (
+    extract_sppm_return_anchor_specs as _extract_sppm_return_anchor_specs,
+    extract_sppm_branch_anchor_specs as _extract_sppm_branch_anchor_specs,
+)
 from flo.services.errors import RenderError
+
+if TYPE_CHECKING:
+    from flo.render._sppm_postprocess_contract import SppmSvgPostprocessContract
 
 _SUPPORTED_FORMATS = {"png", "svg", "pdf", "eps", "ps"}
 _SVG_OUTER_PADDING_PX = 6.0
 _SVG_NS = "http://www.w3.org/2000/svg"
 
 
-@dataclass(frozen=True)
-class _SppmReturnAnchorSpec:
-    anchor_id: str
-    source_id: str
-    target_id: str
 
-
-def render_dot_to_file(dot: str, output_path: str) -> None:
+def render_dot_to_file(
+    dot: str,
+    output_path: str,
+    sppm_contract: SppmSvgPostprocessContract | None = None,
+) -> None:
     """Render DOT source to an image file via the system `dot` binary.
 
     The output format is inferred from the file extension.  Supported
     extensions: ``.png``, ``.svg``, ``.pdf``, ``.eps``, ``.ps``.
+    Pass *sppm_contract* to enable contract-based SVG edge rewriting instead
+    of fragile regex matching.
 
     Raises :class:`~flo.services.errors.RenderError` with exit code ``5``
     if ``dot`` is not found on PATH or the subprocess fails.
@@ -84,7 +91,7 @@ def render_dot_to_file(dot: str, output_path: str) -> None:
         # are detected; otherwise the SVG written above is already final.
         _postprocess_sppm_return_loop_edges_svg(dot=dot, output_path=svg_path)
         _postprocess_sppm_branch_edges_svg(dot=dot, output_path=svg_path)
-        _postprocess_wrapped_sppm_svg(dot=dot, output_path=svg_path)
+        _postprocess_wrapped_sppm_svg(dot=dot, output_path=svg_path, contract=sppm_contract)
         _postprocess_direct_midpoint_edges_svg(output_path=svg_path)
         _normalize_node_backing_fills_svg(output_path=svg_path)
         _normalize_svg_outer_padding(output_path=svg_path, padding=_SVG_OUTER_PADDING_PX)
@@ -167,56 +174,7 @@ def _postprocess_sppm_return_loop_edges_svg(*, dot: str, output_path: Path) -> N
         _write_svg_tree(tree, output_path)
 
 
-def _extract_sppm_return_anchor_specs(dot: str) -> list[_SppmReturnAnchorSpec]:
-    specs: dict[str, _SppmReturnAnchorSpec] = {}
-
-    # DOT edges use endpoint notation: "node":port
-    # Return-loop second segment: "anchor" -> "target":s [...]
-    # First segment (no-arrow): "source":w -> "anchor" [... arrowhead=none ...]
-    second_segment_pattern = re.compile(
-        r'^\s*"(?P<anchor>__sppm_rework_corridor_[^"]+)"\s*->\s*"(?P<target>[^"]+)":s\s*\[(?P<attrs>[^\]]*)\];\s*$',
-        flags=re.MULTILINE,
-    )
-    first_segment_pattern = re.compile(
-        r'^\s*"(?P<source>[^"]+)"(?::[a-z_]+)?\s*->\s*"(?P<anchor>__sppm_rework_corridor_[^"]+)"\s*\[(?P<attrs>[^\]]*)\];\s*$',
-        flags=re.MULTILINE,
-    )
-
-    first_segment_by_anchor: dict[str, str] = {}
-    for match in first_segment_pattern.finditer(dot):
-        attrs = match.group("attrs")
-        if "arrowhead=none" not in attrs:
-            continue
-        first_segment_by_anchor[match.group("anchor")] = match.group("source")
-
-    for match in second_segment_pattern.finditer(dot):
-        anchor_id = match.group("anchor")
-        source_id = first_segment_by_anchor.get(anchor_id)
-        if not source_id:
-            continue
-        specs[anchor_id] = _SppmReturnAnchorSpec(
-            anchor_id=anchor_id,
-            source_id=source_id,
-            target_id=match.group("target"),
-        )
-
-    return list(specs.values())
-
-
 def _postprocess_sppm_branch_edges_svg(*, dot: str, output_path: Path) -> None:
-    """Rewrite SPPM branch-down edge paths to clean L-shapes.
-
-    Graphviz routes branch corridor edges (decision:s → anchor → rework:n)
-    through an invisible anchor that may land far from the rework node,
-    creating large U-shaped paths.  After Graphviz lays out the SVG, we read
-    the rendered node bounds and rewrite the two branch-path segments to a
-    straight vertical drop: first segment goes from the source's bottom center
-    to the midpoint between nodes; second segment goes from the midpoint to
-    the target's top center with a downward-pointing arrowhead.
-
-    Scope: only ``__sppm_rework_corridor_*`` branch edges (tailport=s source,
-    headport=n target).  Only SVG output.
-    """
     specs = _extract_sppm_branch_anchor_specs(dot)
     if not specs:
         return
@@ -271,42 +229,12 @@ def _postprocess_sppm_branch_edges_svg(*, dot: str, output_path: Path) -> None:
     if updated:
         _write_svg_tree(tree, output_path)
 
-
-def _extract_sppm_branch_anchor_specs(dot: str) -> list[_SppmReturnAnchorSpec]:
-    specs: dict[str, _SppmReturnAnchorSpec] = {}
-
-    # Branch second segment: "anchor" -> "rework":n [...]
-    second_segment_pattern = re.compile(
-        r'^\s*"(?P<anchor>__sppm_rework_corridor_[^"]+)"\s*->\s*"(?P<target>[^"]+)":n\s*\[(?P<attrs>[^\]]*)\];\s*$',
-        flags=re.MULTILINE,
-    )
-    # Branch first segment (no arrow): "decision":s -> "anchor" [... arrowhead=none ...]
-    first_segment_pattern = re.compile(
-        r'^\s*"(?P<source>[^"]+)":s\s*->\s*"(?P<anchor>__sppm_rework_corridor_[^"]+)"\s*\[(?P<attrs>[^\]]*)\];\s*$',
-        flags=re.MULTILINE,
-    )
-
-    first_segment_by_anchor: dict[str, str] = {}
-    for match in first_segment_pattern.finditer(dot):
-        if "arrowhead=none" not in match.group("attrs"):
-            continue
-        first_segment_by_anchor[match.group("anchor")] = match.group("source")
-
-    for match in second_segment_pattern.finditer(dot):
-        anchor_id = match.group("anchor")
-        source_id = first_segment_by_anchor.get(anchor_id)
-        if not source_id:
-            continue
-        specs[anchor_id] = _SppmReturnAnchorSpec(
-            anchor_id=anchor_id,
-            source_id=source_id,
-            target_id=match.group("target"),
-        )
-
-    return list(specs.values())
-
-
-def _postprocess_wrapped_sppm_svg(*, dot: str, output_path: Path) -> None:
+def _postprocess_wrapped_sppm_svg(
+    *,
+    dot: str,
+    output_path: Path,
+    contract: SppmSvgPostprocessContract | None = None,
+) -> None:
     # Rewrite wrapped SPPM boundary edges into deterministic doglegs.
     #
     # Why this exists:
@@ -319,7 +247,16 @@ def _postprocess_wrapped_sppm_svg(*, dot: str, output_path: Path) -> None:
     # - only wrapped LR SPPM boundary transitions via __wrap_exit_lr_*;
     # - only SVG output (node bounds available from rendered geometry);
     # - no changes to non-SPPM or non-boundary edges.
-    boundary_pairs = _wrapped_sppm_boundary_pairs(dot)
+    
+    # Use contract-based edge lookup if available; otherwise fall back to regex DOT scanning.
+    if contract and contract.wrapped_boundary_edges:
+        boundary_pairs: dict[str, tuple[str, str]] = {
+            "__wrap_exit_lr_0": (e.source_id, e.target_id)
+            for e in contract.wrapped_boundary_edges
+        }
+    else:
+        boundary_pairs = _wrapped_sppm_boundary_pairs(dot)
+    
     if not boundary_pairs:
         return
 

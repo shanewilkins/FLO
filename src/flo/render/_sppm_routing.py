@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from ._autoformat_wrap import WrapPlan, wrap_chunk_exit_anchor_id
+from ._sppm_postprocess_contract import SppmSvgPostprocessContract, build_svg_postprocess_contract
 from .layout_core import (
     CorridorPlan,
     LinePlacement,
@@ -64,23 +65,24 @@ class SppmEdgeRoute:
 
 
 @dataclass(frozen=True)
+class SppmPortPolicy:
+    """Node-level ingress/egress policy for SPPM routing."""
+
+    secondary_line_targets: frozenset[str]
+
+
+@dataclass(frozen=True)
 class SppmRoutingPlan:
     """Collection of routed SPPM edges keyed by source and target ids."""
 
     routes: dict[tuple[str, str], SppmEdgeRoute]
     corridor_plan: CorridorPlan
     route_plan: RoutePlan
+    svg_postprocess_contract: SppmSvgPostprocessContract = SppmSvgPostprocessContract()
 
     def route_for(self, source: str, target: str) -> SppmEdgeRoute | None:
         """Return the resolved route for a source-target edge pair, if any."""
         return self.routes.get((source, target))
-
-
-@dataclass(frozen=True)
-class SppmPortPolicy:
-    """Node-level ingress/egress policy for SPPM routing."""
-
-    secondary_line_targets: frozenset[str]
 
 
 def serialize_sppm_routing_plan(plan: SppmRoutingPlan) -> str:
@@ -155,7 +157,14 @@ def build_sppm_routing_plan(
         )
         routes[(source, target)] = route
 
-    return SppmRoutingPlan(routes=routes, corridor_plan=corridor_plan, route_plan=route_plan)
+    # Build postprocess contract for SVG rewrites
+    contract = build_svg_postprocess_contract(routes=routes, wrap_active=wrap_plan.active)
+    return SppmRoutingPlan(
+        routes=routes,
+        corridor_plan=corridor_plan,
+        route_plan=route_plan,
+        svg_postprocess_contract=contract,
+    )
 
 
 def _edge_pairs(edges: list[dict[str, Any]]) -> list[tuple[str, str]]:

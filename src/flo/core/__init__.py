@@ -46,8 +46,11 @@ def run_content(content: str, command: str = "run", options: dict | None = None)
     dot = _render_dot_with_postprocess(ir, options=resolved_options)
     render_to = (resolved_options or {}).get("render_to")
     if render_to:
+        from flo.render import get_last_sppm_contract
         from flo.services.graphviz import render_dot_to_file
-        render_dot_to_file(dot, render_to)
+        
+        contract = get_last_sppm_contract()
+        render_dot_to_file(dot, render_to, sppm_contract=contract)
         return EXIT_SUCCESS, "", ""
     return EXIT_SUCCESS, dot, ""
 

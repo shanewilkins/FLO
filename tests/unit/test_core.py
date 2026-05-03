@@ -89,7 +89,7 @@ def test_run_content_render_to_calls_graphviz_service(monkeypatch, ir_factory, n
 
     calls: list[tuple] = []
 
-    def fake_render_to_file(dot: str, path: str) -> None:
+    def fake_render_to_file(dot: str, path: str, sppm_contract=None) -> None:
         calls.append((dot, path))
 
     import flo.services.graphviz as gv_mod

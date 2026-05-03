@@ -52,6 +52,8 @@ def _render_sppm_graph(process: dict[str, Any] | Any, options: RenderOptions) ->
         step_numbering=step_numbering,
         wrap_plan=wrap_plan,
     )
+    from . import set_last_sppm_contract
+    set_last_sppm_contract(routing_plan.svg_postprocess_contract)
     port_counts = _port_counts_by_node(routing_plan)
     theme = resolve_sppm_theme(options.sppm_theme)
 
