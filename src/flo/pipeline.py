@@ -11,9 +11,26 @@ from flo.compiler import compile_adapter
 from flo.compiler.ir import validate_ir
 from flo.compiler.analysis import scc_condense
 from flo.render import render_dot
+from flo.services.errors import (
+    EXIT_PARSE_ERROR,
+    EXIT_COMPILE_ERROR,
+    EXIT_VALIDATION_ERROR,
+    EXIT_RENDER_ERROR,
+    DomainError,
+)
 import time
 
 from flo.services.telemetry import get_tracer
+
+
+def _step_error(e: Exception, services: Any, default_rc: int) -> tuple[int, None, str]:
+    """Notify the error handler and map an exception to an (rc, None, message) tuple."""
+    try:
+        services.error_handler(str(e))
+    except Exception:
+        pass
+    rc = e.exit_code if isinstance(e, DomainError) else default_rc
+    return rc, None, str(e)
 
 
 class Step(Protocol):
@@ -49,20 +66,9 @@ class ParseStep:
         if rc != 0:
             return rc, None, err
         try:
-            try:
-                return 0, parse_adapter(content, source_path=self.source_path), None
-            except TypeError:
-                return 0, parse_adapter(content), None
+            return 0, parse_adapter(content, source_path=self.source_path), None
         except Exception as e:
-            try:
-                services.error_handler(str(e))
-            except Exception:
-                pass
-            from flo.services.errors import EXIT_PARSE_ERROR, ParseError
-
-            if isinstance(e, ParseError):
-                return getattr(e, "code", EXIT_PARSE_ERROR), None, str(e)
-            return EXIT_PARSE_ERROR, None, str(e)
+            return _step_error(e, services, EXIT_PARSE_ERROR)
 
 
 @dataclass
@@ -77,15 +83,7 @@ class CompileStep:
         try:
             return 0, compile_adapter(adapter_model), None
         except Exception as e:
-            try:
-                services.error_handler(str(e))
-            except Exception:
-                pass
-            from flo.services.errors import EXIT_COMPILE_ERROR, CompileError
-
-            if isinstance(e, CompileError):
-                return getattr(e, "code", EXIT_COMPILE_ERROR), None, str(e)
-            return EXIT_COMPILE_ERROR, None, str(e)
+            return _step_error(e, services, EXIT_COMPILE_ERROR)
 
 
 @dataclass
@@ -101,15 +99,7 @@ class ValidateStep:
             validate_ir(ir)
             return 0, ir, None
         except Exception as e:
-            try:
-                services.error_handler(str(e))
-            except Exception:
-                pass
-            from flo.services.errors import EXIT_VALIDATION_ERROR, ValidationError
-
-            if isinstance(e, ValidationError):
-                return getattr(e, "code", EXIT_VALIDATION_ERROR), None, str(e)
-            return EXIT_VALIDATION_ERROR, None, str(e)
+            return _step_error(e, services, EXIT_VALIDATION_ERROR)
 
 
 @dataclass
@@ -141,15 +131,7 @@ class RenderStep:
             dot = render_dot(ir)
             return 0, dot, None
         except Exception as e:
-            try:
-                services.error_handler(str(e))
-            except Exception:
-                pass
-            from flo.services.errors import EXIT_RENDER_ERROR, RenderError
-
-            if isinstance(e, RenderError):
-                return getattr(e, "code", EXIT_RENDER_ERROR), None, str(e)
-            return EXIT_RENDER_ERROR, None, str(e)
+            return _step_error(e, services, EXIT_RENDER_ERROR)
 
 
 @dataclass

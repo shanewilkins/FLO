@@ -12,7 +12,7 @@ Renders a left-to-right process map with:
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ._graphviz_dot_common import _escape
 from ._autoformat_wrap import append_wrap_layout_hints, build_wrap_plan, WrapPlan
@@ -23,18 +23,21 @@ from ._sppm_themes import resolve_sppm_theme, SppmTheme, SppmNodeStyle
 from .options import RenderOptions
 from flo.compiler.ir.enums import ProcessValueClass
 
+if TYPE_CHECKING:
+    from flo.compiler.ir.models import IR
+
 
 _SPPM_DECISION_MIN_WIDTH = 2.4
 _SPPM_DECISION_MIN_HEIGHT = 1.4
 
 
-def render_sppm_dot(process: dict[str, Any] | Any, options: RenderOptions | None = None) -> str:
+def render_sppm_dot(process: IR | dict[str, Any], options: RenderOptions | None = None) -> str:
     """Render a Standard Process Performance Map (SPPM) as Graphviz DOT."""
     render_options = options or RenderOptions()
     return _render_sppm_graph(process, options=render_options)
 
 
-def _render_sppm_graph(process: dict[str, Any] | Any, options: RenderOptions) -> str:
+def _render_sppm_graph(process: IR | dict[str, Any], options: RenderOptions) -> str:
     nodes, edges = _extract_sppm_nodes_edges(process)
     nodes_by_id: dict[str, dict[str, Any]] = {
         str(n.get("id", "")): n for n in nodes if n.get("id")
@@ -270,7 +273,7 @@ def _build_step_numbering(nodes: list[dict[str, Any]]) -> dict[str, int]:
 
 
 def _extract_sppm_nodes_edges(
-    process: dict[str, Any] | Any,
+    process: IR | dict[str, Any] | None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if process is None:
         return [], []

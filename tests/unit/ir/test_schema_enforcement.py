@@ -31,7 +31,7 @@ def test_ensure_schema_aligned_schema_invalid_raises():
 
 def test_run_content_compiled_schema_invalid_raises(monkeypatch):
     # parse returns a valid IR; compile returns an IR that fails schema export validation
-    monkeypatch.setattr("flo.core.parse_adapter", lambda c: IR(name="t", nodes=[Node(id="n", type="task")]))
+    monkeypatch.setattr("flo.core.parse_adapter", lambda c, source_path=None: IR(name="t", nodes=[Node(id="n", type="task")]))
     monkeypatch.setattr("flo.core.compile_adapter", lambda a: IR(name="t", nodes=[Node(id="n", type="process")]))
     monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
     with pytest.raises(ValidationError):

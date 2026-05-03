@@ -30,7 +30,7 @@ def test_per_step_spans(monkeypatch):
     def fake_read_input(path):
         return 0, "content", None
 
-    def fake_parse_adapter(content):
+    def fake_parse_adapter(content, source_path=None):
         return {"model": True}
 
     monkeypatch.setattr("flo.pipeline.read_input", fake_read_input)

@@ -23,13 +23,13 @@ def test_parse_step_maps_domain_and_generic_errors(monkeypatch):
     step = ParseStep()
     services = SimpleNamespace(error_handler=lambda msg: None)
 
-    monkeypatch.setattr("flo.pipeline.parse_adapter", lambda _: (_ for _ in ()).throw(ParseError("bad parse")))
+    monkeypatch.setattr("flo.pipeline.parse_adapter", lambda _, source_path=None: (_ for _ in ()).throw(ParseError("bad parse")))
     rc, payload, err = step.run((0, "content", None), services=services)
     assert rc == ParseError("x").code
     assert payload is None
     assert "bad parse" in err
 
-    monkeypatch.setattr("flo.pipeline.parse_adapter", lambda _: (_ for _ in ()).throw(Exception("boom")))
+    monkeypatch.setattr("flo.pipeline.parse_adapter", lambda _, source_path=None: (_ for _ in ()).throw(Exception("boom")))
     rc, payload, err = step.run((0, "content", None), services=services)
     assert rc == 2
     assert payload is None

@@ -57,10 +57,7 @@ def run_content(content: str, command: str = "run", options: dict | None = None)
 
 def _parse_compile_validate(content: str, source_path: str | None = None) -> IR:
     try:
-        try:
-            adapter_model = parse_adapter(content, source_path=source_path)
-        except TypeError:
-            adapter_model = parse_adapter(content)
+        adapter_model = parse_adapter(content, source_path=source_path)
     except Exception as e:
         raise ParseError(str(e))
 
@@ -302,10 +299,7 @@ def _render_dot_with_postprocess(ir: IR, options: dict | None = None) -> str:
         pass
 
     try:
-        try:
-            _dot = render_dot(processed, options=options)
-        except TypeError:
-            _dot = render_dot(processed)
+        _dot = render_dot(processed, options=options)
     except Exception as e:
         raise RenderError(str(e))
 

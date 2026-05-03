@@ -17,7 +17,7 @@ def test_pipeline_runner_happy_path(monkeypatch):
         calls.append(("read", path))
         return 0, "content", None
 
-    def fake_parse_adapter(content):
+    def fake_parse_adapter(content, source_path=None):
         calls.append(("parse", content))
         return {"model": True}
 

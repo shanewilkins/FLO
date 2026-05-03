@@ -13,7 +13,7 @@ def test_run_content_empty_returns_placeholder():
 
 def test_run_content_parse_error(monkeypatch):
     # make parse_adapter raise
-    def fake_parse(content):
+    def fake_parse(content, source_path=None):
         raise Exception("parse failed")
 
     monkeypatch.setattr("flo.core.parse_adapter", fake_parse)
@@ -23,7 +23,7 @@ def test_run_content_parse_error(monkeypatch):
 
 def test_run_content_compile_error(monkeypatch, ir_factory, node_factory):
     # return a minimal valid IR so schema validation is exercised
-    monkeypatch.setattr("flo.core.parse_adapter", lambda c: ir_factory(name="t", nodes=[node_factory("n")]))
+    monkeypatch.setattr("flo.core.parse_adapter", lambda c, source_path=None: ir_factory(name="t", nodes=[node_factory("n")]))
 
     def fake_compile(adapter):
         raise Exception("compile failed")
@@ -34,7 +34,7 @@ def test_run_content_compile_error(monkeypatch, ir_factory, node_factory):
 
 
 def test_run_content_validation_error(monkeypatch, ir_factory, node_factory):
-    monkeypatch.setattr("flo.core.parse_adapter", lambda c: ir_factory(name="t", nodes=[node_factory("n")]))
+    monkeypatch.setattr("flo.core.parse_adapter", lambda c, source_path=None: ir_factory(name="t", nodes=[node_factory("n")]))
     monkeypatch.setattr("flo.core.compile_adapter", lambda a: ir_factory(name="t", nodes=[node_factory("n")]))
 
     def fake_validate(ir):
@@ -46,11 +46,11 @@ def test_run_content_validation_error(monkeypatch, ir_factory, node_factory):
 
 
 def test_run_content_render_error(monkeypatch, ir_factory, node_factory):
-    monkeypatch.setattr("flo.core.parse_adapter", lambda c: ir_factory(name="t", nodes=[node_factory("n")]))
+    monkeypatch.setattr("flo.core.parse_adapter", lambda c, source_path=None: ir_factory(name="t", nodes=[node_factory("n")]))
     monkeypatch.setattr("flo.core.compile_adapter", lambda a: ir_factory(name="t", nodes=[node_factory("n")]))
     monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
 
-    def fake_render(ir):
+    def fake_render(ir, options=None):
         raise Exception("render failed")
 
     monkeypatch.setattr("flo.core.render_dot", fake_render)
@@ -60,10 +60,10 @@ def test_run_content_render_error(monkeypatch, ir_factory, node_factory):
 
 def test_postprocess_nonfatal(monkeypatch, ir_factory, node_factory):
     # ensure scc_condense exceptions are ignored and run_content still succeeds
-    monkeypatch.setattr("flo.core.parse_adapter", lambda c: ir_factory(name="t", nodes=[node_factory("n")]))
+    monkeypatch.setattr("flo.core.parse_adapter", lambda c, source_path=None: ir_factory(name="t", nodes=[node_factory("n")]))
     monkeypatch.setattr("flo.core.compile_adapter", lambda a: ir_factory(name="t", nodes=[node_factory("n")]))
     monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
-    monkeypatch.setattr("flo.core.render_dot", lambda i: "dot")
+    monkeypatch.setattr("flo.core.render_dot", lambda i, options=None: "dot")
 
     def bad_scc(ir):
         raise Exception("scc oops")
@@ -81,7 +81,7 @@ def test_run_wrapper():
 
 
 def test_run_content_render_to_calls_graphviz_service(monkeypatch, ir_factory, node_factory):
-    monkeypatch.setattr("flo.core.parse_adapter", lambda c: ir_factory(name="t", nodes=[node_factory("n")]))
+    monkeypatch.setattr("flo.core.parse_adapter", lambda c, source_path=None: ir_factory(name="t", nodes=[node_factory("n")]))
     monkeypatch.setattr("flo.core.compile_adapter", lambda a: ir_factory(name="t", nodes=[node_factory("n")]))
     monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
     monkeypatch.setattr("flo.core.render_dot", lambda i, **kw: "dot output")
