@@ -14,7 +14,7 @@ from flo.compiler import compile_adapter
 from flo.compiler.ir import validate_ir, IR
 from flo.compiler.ir import ensure_schema_aligned
 from flo.compiler.analysis import scc_condense
-from flo.render import render_dot_and_contract
+from flo.render import render_dot_and_contract, RenderOptions
 from flo.export import export_ir
 from flo.core._flo_config import merge_diagrams_toml_sppm_defaults
 from flo.core._option_validation import validate_sppm_numeric_render_options, ensure_render_options_compatible_with_output
@@ -44,9 +44,10 @@ def run_content(content: str, command: str = "run", options: dict | None = None)
 
     resolved_options = merge_diagrams_toml_sppm_defaults(options=options)
     validate_sppm_numeric_render_options(options=resolved_options)
+    render_to: str | None = (resolved_options or {}).get("render_to")
+    render_options = RenderOptions.from_mapping(resolved_options)
 
-    dot, contract = _render_dot_with_postprocess(ir, options=resolved_options)
-    render_to = (resolved_options or {}).get("render_to")
+    dot, contract = _render_dot_with_postprocess(ir, render_options=render_options)
     if render_to:
         from flo.services.graphviz import render_dot_to_file
         render_dot_to_file(dot, render_to, sppm_contract=contract)
@@ -88,7 +89,7 @@ def _resolve_output_format(command: str, options: dict | None) -> str:
     return "dot"
 
 
-def _render_dot_with_postprocess(ir: IR, options: dict | None = None) -> tuple[str, SppmSvgPostprocessContract | None]:
+def _render_dot_with_postprocess(ir: IR, render_options: RenderOptions) -> tuple[str, SppmSvgPostprocessContract | None]:
     """SCC-condense then render, returning (dot, sppm_contract)."""
     processed = ir
 
@@ -98,7 +99,7 @@ def _render_dot_with_postprocess(ir: IR, options: dict | None = None) -> tuple[s
         pass
 
     try:
-        dot, contract = render_dot_and_contract(processed, options=options)
+        dot, contract = render_dot_and_contract(processed, options=render_options)
     except Exception as e:
         raise RenderError(str(e))
 

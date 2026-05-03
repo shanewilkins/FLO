@@ -19,21 +19,21 @@ _DOT_RENDERERS = {
 }
 
 
-def render_dot(ir: Any, options: dict | None = None) -> str:
+def render_dot(ir: Any, options: RenderOptions | dict | None = None) -> str:
 	"""Render DOT from canonical IR using pluggable diagram strategies."""
-	render_options = RenderOptions.from_mapping(options)
+	render_options = options if isinstance(options, RenderOptions) else RenderOptions.from_mapping(options)
 	renderer = _DOT_RENDERERS.get(render_options.diagram, render_flowchart_dot)
 	return renderer(ir, options=render_options)
 
 
-def render_dot_and_contract(ir: Any, options: dict | None = None) -> tuple[str, SppmSvgPostprocessContract | None]:
+def render_dot_and_contract(ir: Any, options: RenderOptions | dict | None = None) -> tuple[str, SppmSvgPostprocessContract | None]:
 	"""Render DOT and return the SPPM postprocess contract alongside it.
 
 	For non-SPPM diagrams the contract is ``None``.  Use this instead of
 	``render_dot`` when the caller needs to pass the contract to the SVG
 	postprocessor (e.g. ``render_dot_to_file``).
 	"""
-	render_options = RenderOptions.from_mapping(options)
+	render_options = options if isinstance(options, RenderOptions) else RenderOptions.from_mapping(options)
 	if render_options.diagram == "sppm":
 		dot, contract = _render_sppm_graph(ir, render_options)
 		return dot, contract
