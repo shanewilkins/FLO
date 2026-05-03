@@ -49,7 +49,7 @@ def test_init_telemetry_with_fake_otel(monkeypatch):
 
     sdk_trace.export = types.SimpleNamespace()
 
-    class BatchSpanProcessor:
+    class SimpleSpanProcessor:
         def __init__(self, exporter):
             self.exporter = exporter
 
@@ -59,7 +59,7 @@ def test_init_telemetry_with_fake_otel(monkeypatch):
     class ConsoleSpanExporter:
         pass
 
-    sdk_trace.export.BatchSpanProcessor = BatchSpanProcessor
+    sdk_trace.export.SimpleSpanProcessor = SimpleSpanProcessor
     sdk_trace.export.ConsoleSpanExporter = ConsoleSpanExporter
 
     # Install fake modules
@@ -71,7 +71,7 @@ def test_init_telemetry_with_fake_otel(monkeypatch):
     sys.modules["opentelemetry.sdk.trace"] = types.ModuleType("opentelemetry.sdk.trace")
     sys.modules["opentelemetry.sdk.trace"].TracerProvider = TracerProvider
     sys.modules["opentelemetry.sdk.trace.export"] = types.ModuleType("opentelemetry.sdk.trace.export")
-    sys.modules["opentelemetry.sdk.trace.export"].BatchSpanProcessor = BatchSpanProcessor
+    sys.modules["opentelemetry.sdk.trace.export"].SimpleSpanProcessor = SimpleSpanProcessor
     sys.modules["opentelemetry.sdk.trace.export"].ConsoleSpanExporter = ConsoleSpanExporter
 
     # Reload telemetry module to pick up fake opentelemetry

@@ -34,7 +34,7 @@ def test_init_telemetry_with_console_processor_and_provider_shutdown(monkeypatch
         def shutdown(self):
             self.shutdown_called = True
 
-    class FakeBatchSpanProcessor:
+    class FakeSimpleSpanProcessor:
         def __init__(self, exporter):
             self.exporter = exporter
             self.shutdown_called = False
@@ -50,7 +50,7 @@ def test_init_telemetry_with_console_processor_and_provider_shutdown(monkeypatch
     monkeypatch.setattr(telemetry_mod, "trace", fake_trace)
     monkeypatch.setattr(telemetry_mod, "Resource", SimpleNamespace(create=lambda d: object()))
     monkeypatch.setattr(telemetry_mod, "SDKTracerProvider", FakeProvider)
-    monkeypatch.setattr(telemetry_mod, "BatchSpanProcessor", FakeBatchSpanProcessor)
+    monkeypatch.setattr(telemetry_mod, "SimpleSpanProcessor", FakeSimpleSpanProcessor)
     monkeypatch.setattr(telemetry_mod, "ConsoleSpanExporter", FakeConsoleSpanExporter)
 
     # Ensure provider is reset

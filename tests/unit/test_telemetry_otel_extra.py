@@ -50,7 +50,7 @@ class DummySpanProcessor:
 
 
 def test_init_telemetry_with_otel(monkeypatch):
-    # Simulate OTEL available with ConsoleSpanExporter and BatchSpanProcessor
+    # Simulate OTEL available with ConsoleSpanExporter and SimpleSpanProcessor
     monkeypatch.setattr(tel, "OTEL_AVAILABLE", True)
     dummy_trace = make_dummy_trace()
     monkeypatch.setattr(tel, "trace", dummy_trace)
@@ -58,7 +58,7 @@ def test_init_telemetry_with_otel(monkeypatch):
     monkeypatch.setattr(tel, "Resource", types.SimpleNamespace(create=lambda d: d))
     monkeypatch.setattr(tel, "SDKTracerProvider", DummyProvider)
     monkeypatch.setattr(tel, "ConsoleSpanExporter", lambda: object())
-    monkeypatch.setattr(tel, "BatchSpanProcessor", lambda exporter: DummySpanProcessor())
+    monkeypatch.setattr(tel, "SimpleSpanProcessor", lambda exporter: DummySpanProcessor())
 
     # ensure provider cleared
     monkeypatch.setattr(tel, "_provider", None)
@@ -89,7 +89,7 @@ def test_shutdown_fallback_to_span_processors(monkeypatch):
     monkeypatch.setattr(tel, "Resource", types.SimpleNamespace(create=lambda d: d))
     monkeypatch.setattr(tel, "SDKTracerProvider", ProviderNoShutdown)
     monkeypatch.setattr(tel, "ConsoleSpanExporter", None)
-    monkeypatch.setattr(tel, "BatchSpanProcessor", None)
+    monkeypatch.setattr(tel, "SimpleSpanProcessor", None)
 
     # clear provider and init
     monkeypatch.setattr(tel, "_provider", None)

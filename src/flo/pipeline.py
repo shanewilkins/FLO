@@ -20,7 +20,7 @@ from flo.services.errors import (
 )
 import time
 
-from flo.services.telemetry import get_tracer
+from flo.services.telemetry import get_tracer, record_span_error
 
 
 def _step_error(e: Exception, services: Any, default_rc: int) -> tuple[int, None, str]:
@@ -190,6 +190,7 @@ class PipelineRunner:
                     setter("pipeline.step.duration_ms", duration_ms)
                     setter("pipeline.step.status", "ok" if rc == 0 else "error")
                 if rc != 0:
+                    record_span_error(span, str(state[2] or ""))
                     # stop on first non-zero rc
                     return rc
         rc = int(state[0] or 0)

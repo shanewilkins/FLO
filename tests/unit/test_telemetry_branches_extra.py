@@ -29,7 +29,7 @@ def test_init_telemetry_console_exporter_exception_is_swallowed(monkeypatch):
     monkeypatch.setattr(telemetry_mod, "trace", _fake_trace())
     monkeypatch.setattr(telemetry_mod, "Resource", SimpleNamespace(create=lambda d: d))
     monkeypatch.setattr(telemetry_mod, "SDKTracerProvider", FakeProvider)
-    monkeypatch.setattr(telemetry_mod, "BatchSpanProcessor", lambda exporter: object())
+    monkeypatch.setattr(telemetry_mod, "SimpleSpanProcessor", lambda exporter: object())
     monkeypatch.setattr(telemetry_mod, "ConsoleSpanExporter", BoomConsoleExporter)
     monkeypatch.setattr(telemetry_mod, "_provider", None)
 
@@ -48,7 +48,7 @@ def test_init_telemetry_shutdown_closure_returns_when_provider_missing(monkeypat
     monkeypatch.setattr(telemetry_mod, "Resource", SimpleNamespace(create=lambda d: d))
     monkeypatch.setattr(telemetry_mod, "SDKTracerProvider", FakeProvider)
     monkeypatch.setattr(telemetry_mod, "ConsoleSpanExporter", None)
-    monkeypatch.setattr(telemetry_mod, "BatchSpanProcessor", None)
+    monkeypatch.setattr(telemetry_mod, "SimpleSpanProcessor", None)
     monkeypatch.setattr(telemetry_mod, "_provider", None)
 
     t = telemetry_mod.init_telemetry("svc", console_export=False)
@@ -79,7 +79,7 @@ def test_init_telemetry_shutdown_closure_falls_back_to_span_processors(monkeypat
     monkeypatch.setattr(telemetry_mod, "Resource", SimpleNamespace(create=lambda d: d))
     monkeypatch.setattr(telemetry_mod, "SDKTracerProvider", FakeProvider)
     monkeypatch.setattr(telemetry_mod, "ConsoleSpanExporter", None)
-    monkeypatch.setattr(telemetry_mod, "BatchSpanProcessor", None)
+    monkeypatch.setattr(telemetry_mod, "SimpleSpanProcessor", None)
     monkeypatch.setattr(telemetry_mod, "_provider", None)
 
     t = telemetry_mod.init_telemetry("svc", console_export=False)

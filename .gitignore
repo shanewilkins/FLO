@@ -19,6 +19,7 @@ flo.egg-info/
 .coverage
 .coverage.*
 coverage.xml
+coverage.json
 
 # Local render outputs (DOT/SVG/PNG, etc.)
 renders/*

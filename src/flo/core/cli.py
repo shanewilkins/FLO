@@ -35,82 +35,86 @@ def _emit_error(services: Any, message: str, **event_fields: object) -> None:
                 pass
 
 
+def _get_flo_version() -> str:  # pragma: no cover - importlib optional
+    """Return the installed FLO version or 'unknown' when not resolvable."""
+    try:
+        import importlib.metadata as _meta
+        return _meta.version("flo")
+    except Exception:
+        return "unknown"
+
+
+def _execute_span_body(root_span: Any, path: str | None, command: str, options: dict, services: Any) -> int:
+    """Run the FLO pipeline within an existing trace span.
+
+    Returns an integer exit code.
+    """
+    from flo.core import run_content
+    from flo.services.io import read_input, write_output
+    from flo.services.errors import map_exception_to_rc
+    from flo.services.telemetry import record_span_error
+
+    effective_path = path or "-"
+    rc, content, err = read_input(effective_path)
+    if rc != 0:
+        record_span_error(root_span, err or "")
+        _emit_error(
+            services, err,
+            error_kind="io", error_stage="read_input",
+            exit_code=rc, internal=False, command=command, path=effective_path,
+        )
+        return rc
+
+    run_options = dict(options)
+    if path and path != "-":
+        run_options.setdefault("source_path", path)
+
+    try:
+        rc, out, err = run_content(content, command=command, options=run_options)
+    except Exception as exc:
+        mapped_rc, msg, internal = map_exception_to_rc(exc)
+        record_span_error(root_span, msg or "")
+        display_msg = f"Unexpected error: {msg or 'internal error'}" if internal else msg
+        _emit_error(
+            services, display_msg,
+            error_kind="internal" if internal else "domain",
+            error_stage="run_content",
+            exit_code=mapped_rc, internal=internal, command=command, path=effective_path,
+        )
+        return mapped_rc
+
+    if out:
+        write_rc, write_err = write_output(out, options.get("output"))
+        if write_rc != 0:
+            record_span_error(root_span, write_err or "")
+            _emit_error(
+                services, write_err,
+                error_kind="io", error_stage="write_output",
+                exit_code=write_rc, internal=False, command=command, path=effective_path,
+            )
+            return write_rc
+
+    return rc
+
+
 def _execute(path: str | None, command: str, options: dict) -> int:  # pragma: no cover - integration
     """Read input, run core pipeline, and write output.
 
     Returns an integer exit code.
     """
     from flo.services import get_services
-    from flo.core import run_content
-    from flo.services.io import read_input, write_output
-    from flo.services.errors import map_exception_to_rc
+    from flo.services.telemetry import get_tracer
 
     services = get_services(verbose=bool(options.get("verbose")))
     telemetry = services.telemetry
-
+    tracer = get_tracer("flo.cli")
     try:
-        rc, content, err = read_input(path) if path else read_input("-")
-        if rc != 0:
-            _emit_error(
-                services,
-                err,
-                error_kind="io",
-                error_stage="read_input",
-                exit_code=rc,
-                internal=False,
-                command=command,
-                path=path or "-",
-            )
-            return rc
-
-        run_options = dict(options)
-        if path and path != "-":
-            run_options.setdefault("source_path", path)
-
-        try:
-            rc, out, err = run_content(content, command=command, options=run_options)
-        except Exception as exc:
-            mapped_rc, msg, internal = map_exception_to_rc(exc)
-            if internal:
-                _emit_error(
-                    services,
-                    f"Unexpected error: {msg or 'internal error'}",
-                    error_kind="internal",
-                    error_stage="run_content",
-                    exit_code=mapped_rc,
-                    internal=True,
-                    command=command,
-                    path=path or "-",
-                )
-            else:
-                _emit_error(
-                    services,
-                    msg,
-                    error_kind="domain",
-                    error_stage="run_content",
-                    exit_code=mapped_rc,
-                    internal=False,
-                    command=command,
-                    path=path or "-",
-                )
-            return mapped_rc
-
-        if out:
-            write_rc, write_err = write_output(out, options.get("output"))
-            if write_rc != 0:
-                _emit_error(
-                    services,
-                    write_err,
-                    error_kind="io",
-                    error_stage="write_output",
-                    exit_code=write_rc,
-                    internal=False,
-                    command=command,
-                    path=path or "-",
-                )
-                return write_rc
-
-        return rc
+        with tracer.start_as_current_span("flo.cli.execute") as root_span:
+            root_span.set_attribute("flo.command", command)
+            root_span.set_attribute("flo.version", _get_flo_version())
+            if path:
+                root_span.set_attribute("flo.source_path", path)
+            return _execute_span_body(root_span, path, command, options, services)
     finally:
         try:
             telemetry.shutdown()

@@ -75,7 +75,7 @@ def test_shutdown_fallback_to_span_processors(monkeypatch):
 
 
 def test_init_telemetry_adds_console_span_processor(monkeypatch):
-    # Validate that init_telemetry adds a BatchSpanProcessor when console_export True
+    # Validate that init_telemetry adds a SimpleSpanProcessor when console_export True
     class FakeProvider:
         def __init__(self, resource=None):
             self.span_processors = []
@@ -83,7 +83,7 @@ def test_init_telemetry_adds_console_span_processor(monkeypatch):
         def add_span_processor(self, sp):
             self.span_processors.append(sp)
 
-    class FakeBatchSpanProcessor:
+    class FakeSimpleSpanProcessor:
         def __init__(self, exporter):
             self.exporter = exporter
 
@@ -102,7 +102,7 @@ def test_init_telemetry_adds_console_span_processor(monkeypatch):
     monkeypatch.setattr(telemetry_mod, "trace", FakeTrace())
     monkeypatch.setattr(telemetry_mod, "Resource", SimpleNamespace(create=lambda d: d))
     monkeypatch.setattr(telemetry_mod, "SDKTracerProvider", FakeProvider)
-    monkeypatch.setattr(telemetry_mod, "BatchSpanProcessor", FakeBatchSpanProcessor)
+    monkeypatch.setattr(telemetry_mod, "SimpleSpanProcessor", FakeSimpleSpanProcessor)
     monkeypatch.setattr(telemetry_mod, "ConsoleSpanExporter", FakeConsoleSpanExporter)
     monkeypatch.setattr(telemetry_mod, "_provider", None)
 

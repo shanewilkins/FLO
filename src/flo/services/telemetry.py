@@ -14,22 +14,40 @@ try:
     from opentelemetry import trace
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider as SDKTracerProvider
-    from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor, ConsoleSpanExporter
     OTEL_AVAILABLE = True
 except Exception:  # pragma: no cover - optional dependency
     trace = None  # type: ignore
     Resource = None  # type: ignore
     SDKTracerProvider = None  # type: ignore
-    BatchSpanProcessor = None  # type: ignore
+    SimpleSpanProcessor = None  # type: ignore
     ConsoleSpanExporter = None  # type: ignore
     OTEL_AVAILABLE = False
 
 
 class _NoOpSpan:
+    """No-op span returned when OpenTelemetry is not installed."""
+
     def __enter__(self) -> "_NoOpSpan":
         return self
 
-    def __exit__(self, _exc_type, _exc, _tb) -> None:  # pragma: no cover - trivial
+    def __exit__(self, _exc_type: Any, _exc: Any, _tb: Any) -> None:
+        return None
+
+    def set_attribute(self, key: str, value: Any) -> None:  # noqa: ARG002
+        """No-op attribute setter."""
+        return None
+
+    def record_exception(self, exception: BaseException, **_: Any) -> None:
+        """No-op exception recorder."""
+        return None
+
+    def set_status(self, status: Any, description: str = "") -> None:  # noqa: ARG002
+        """No-op status setter."""
+        return None
+
+    def add_event(self, name: str, attributes: Any = None, **_: Any) -> None:  # noqa: ARG002
+        """No-op event adder."""
         return None
     
 
@@ -73,10 +91,10 @@ def init_telemetry(service_name: str = "flo", *, console_export: bool = True) ->
         resource = Resource.create({"service.name": service_name})
         provider = SDKTracerProvider(resource=resource)
 
-        if console_export and ConsoleSpanExporter is not None and BatchSpanProcessor is not None:
+        if console_export and ConsoleSpanExporter is not None and SimpleSpanProcessor is not None:
             try:
                 exporter = ConsoleSpanExporter()
-                provider.add_span_processor(BatchSpanProcessor(exporter))
+                provider.add_span_processor(SimpleSpanProcessor(exporter))
             except Exception:
                 pass
 
@@ -146,3 +164,24 @@ def shutdown() -> None:
                     pass
     finally:
         _provider = None
+
+
+def record_span_error(span: Any, message: str = "") -> None:
+    """Mark *span* as failed and attach an error event.
+
+    Sets ``StatusCode.ERROR`` (when OpenTelemetry is available) and adds a
+    span event with the error message.  Safe to call on a no-op span.
+    """
+    try:
+        from opentelemetry.trace import StatusCode  # type: ignore[import]
+        set_status = getattr(span, "set_status", None)
+        if callable(set_status):
+            set_status(StatusCode.ERROR, message)
+    except Exception:
+        pass
+    add_event = getattr(span, "add_event", None)
+    if callable(add_event):
+        try:
+            add_event("error", {"error.message": message})
+        except Exception:
+            pass
