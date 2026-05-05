@@ -104,6 +104,7 @@ def render_dot_to_file(
         # are detected; otherwise the SVG written above is already final.
         _postprocess_sppm_return_loop_edges_svg(dot=dot, output_path=svg_path)
         _postprocess_sppm_branch_edges_svg(dot=dot, output_path=svg_path)
+        _postprocess_sppm_rework_labels_svg(dot=dot, output_path=svg_path)
         _postprocess_wrapped_sppm_svg(dot=dot, output_path=svg_path, contract=sppm_contract)
         _postprocess_direct_midpoint_edges_svg(output_path=svg_path)
         _normalize_node_backing_fills_svg(output_path=svg_path)
@@ -241,6 +242,119 @@ def _postprocess_sppm_branch_edges_svg(*, dot: str, output_path: Path) -> None:
 
     if updated:
         _write_svg_tree(tree, output_path)
+
+
+def _postprocess_sppm_rework_labels_svg(*, dot: str, output_path: Path) -> None:
+    """Reposition rework annotation boxes beside their source nodes.
+
+    Graphviz places taillabel geometry based on spline heuristics, which drifts
+    noticeably once the loop spans multiple rows. After the main edge rewrite
+    pass has fixed the branch/return paths, this pass moves the rendered label
+    box polygon/text as a unit relative to the source node's rendered bounds.
+    """
+    branch_specs = _extract_sppm_branch_anchor_specs(dot)
+    return_specs = _extract_sppm_return_anchor_specs(dot)
+    if not branch_specs and not return_specs:
+        return
+
+    tree = ET.parse(output_path)
+    root = tree.getroot()
+    node_bounds = _svg_node_bounds(root)
+    edge_groups = _svg_edge_groups(root)
+    updated = False
+
+    for spec in branch_specs:
+        group = edge_groups.get(f"{spec.source_id}:s->{spec.anchor_id}")
+        source_bounds = node_bounds.get(spec.source_id)
+        if group is None or source_bounds is None:
+            continue
+        label_bounds = _svg_edge_label_bounds(group)
+        if label_bounds is None:
+            continue
+        width = label_bounds[2] - label_bounds[0]
+        height = label_bounds[3] - label_bounds[1]
+        target_left = source_bounds[2] + 14.0
+        target_top = source_bounds[3] + 6.0
+        if _reposition_svg_edge_label(group, left=target_left, top=target_top):
+            updated = True
+
+    for spec in return_specs:
+        group = edge_groups.get(f"{spec.source_id}:w->{spec.anchor_id}")
+        source_bounds = node_bounds.get(spec.source_id)
+        if group is None or source_bounds is None:
+            continue
+        label_bounds = _svg_edge_label_bounds(group)
+        if label_bounds is None:
+            continue
+        width = label_bounds[2] - label_bounds[0]
+        height = label_bounds[3] - label_bounds[1]
+        target_left = source_bounds[0] - width - 14.0
+        source_mid_y = (source_bounds[1] + source_bounds[3]) / 2.0
+        target_top = source_mid_y - (height / 2.0)
+        if _reposition_svg_edge_label(group, left=target_left, top=target_top):
+            updated = True
+
+    if updated:
+        _write_svg_tree(tree, output_path)
+
+
+def _svg_edge_label_bounds(group: ET.Element) -> tuple[float, float, float, float] | None:
+    polygons = _svg_edge_label_polygons(group)
+    if not polygons:
+        return None
+    points: list[tuple[float, float]] = []
+    for polygon in polygons:
+        raw_points = polygon.attrib.get("points", "")
+        for token in raw_points.split():
+            if "," not in token:
+                continue
+            x_text, y_text = token.split(",", 1)
+            points.append((float(x_text), float(y_text)))
+    if not points:
+        return None
+    xs = [point[0] for point in points]
+    ys = [point[1] for point in points]
+    return (min(xs), min(ys), max(xs), max(ys))
+
+
+def _svg_edge_label_polygons(group: ET.Element) -> list[ET.Element]:
+    polygons: list[ET.Element] = []
+    for polygon in group.findall("{*}polygon"):
+        fill = polygon.attrib.get("fill", "")
+        stroke = polygon.attrib.get("stroke", "")
+        if stroke == "#666666" or (fill == "#ffffff" and stroke == "none"):
+            polygons.append(polygon)
+    return polygons
+
+
+def _reposition_svg_edge_label(group: ET.Element, *, left: float, top: float) -> bool:
+    bounds = _svg_edge_label_bounds(group)
+    if bounds is None:
+        return False
+    dx = left - bounds[0]
+    dy = top - bounds[1]
+    if abs(dx) < 0.01 and abs(dy) < 0.01:
+        return False
+
+    for polygon in _svg_edge_label_polygons(group):
+        shifted: list[str] = []
+        for token in polygon.attrib.get("points", "").split():
+            if "," not in token:
+                shifted.append(token)
+                continue
+            x_text, y_text = token.split(",", 1)
+            shifted.append(f"{float(x_text) + dx:.2f},{float(y_text) + dy:.2f}")
+        polygon.attrib["points"] = " ".join(shifted)
+
+    for text in group.findall("{*}text"):
+        x = text.attrib.get("x")
+        y = text.attrib.get("y")
+        if x is not None:
+            text.attrib["x"] = f"{float(x) + dx:.2f}"
+        if y is not None:
+            text.attrib["y"] = f"{float(y) + dy:.2f}"
+
+    return True
 
 def _postprocess_wrapped_sppm_svg(
     *,

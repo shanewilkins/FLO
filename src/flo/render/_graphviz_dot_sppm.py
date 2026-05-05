@@ -28,8 +28,24 @@ if TYPE_CHECKING:
     from ._sppm_postprocess_contract import SppmSvgPostprocessContract
 
 
-_SPPM_DECISION_MIN_WIDTH = 2.4
-_SPPM_DECISION_MIN_HEIGHT = 1.4
+_SPPM_DECISION_MIN_WIDTH = 1.93
+_SPPM_DECISION_MIN_HEIGHT = 1.1
+_SPPM_QUEUE_CIRCLE_DIAMETER = 1.25  # inches
+
+
+def _get_wait_time_minutes(node: dict[str, Any]) -> float:
+    """Extract wait time in minutes from node metadata, or 0 if not present."""
+    metadata = node.get("metadata") or {}
+    wait_time_spec = metadata.get("wait_time")
+    if not isinstance(wait_time_spec, dict):
+        return 0.0
+    value = wait_time_spec.get("value")
+    if value is None:
+        return 0.0
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return 0.0
 
 
 def render_sppm_dot(process: IR | dict[str, Any], options: RenderOptions | None = None) -> str:
@@ -41,6 +57,8 @@ def render_sppm_dot(process: IR | dict[str, Any], options: RenderOptions | None 
 
 def _render_sppm_graph(process: IR | dict[str, Any], options: RenderOptions) -> tuple[str, SppmSvgPostprocessContract]:
     nodes, edges = _extract_sppm_nodes_edges(process)
+    
+    # Queue nodes are now explicit in the IR; no synthetic injection needed.
     nodes_by_id: dict[str, dict[str, Any]] = {
         str(n.get("id", "")): n for n in nodes if n.get("id")
     }
@@ -153,6 +171,8 @@ def _render_sppm_node(
         return [_render_sppm_start_end_node(node_id=node_id, name=name, theme=theme, wrap_plan=wrap_plan)]
     if kind == "decision":
         return [_render_sppm_decision_node(node_id=node_id, name=name, theme=theme, wrap_plan=wrap_plan)]
+    if kind == "queue":
+        return [_render_sppm_queue_circle(node=node, node_id=node_id, name=name, theme=theme, wrap_plan=wrap_plan)]
 
     return [
         _render_sppm_task_node(
@@ -192,6 +212,30 @@ def _render_sppm_decision_node(*, node_id: str, name: str, theme: SppmTheme, wra
         f'fillcolor="{theme.start_end.fill}"',
         f'color="{theme.start_end.border}"',
         "penwidth=1.5",
+    ]
+    _append_chunk_group(attrs=attrs, node_id=node_id, wrap_plan=wrap_plan)
+    return f'  "{_escape(node_id)}" [{", ".join(attrs)}];'
+
+
+def _render_sppm_queue_circle(*, node: dict[str, Any], node_id: str, name: str, theme: SppmTheme, wrap_plan: WrapPlan) -> str:
+    """Render a queue/bottleneck circle (orange color per spec)."""
+    # Queue circle uses orange color: fill #FF9800, border #E65100
+    queue_fill = "#FF9800"
+    queue_border = "#E65100"
+    wait_time_min = _get_wait_time_minutes(node)
+    queue_label = f"{wait_time_min:g}m" if wait_time_min > 0 else "Q"
+
+    attrs = [
+        f'label="{queue_label}"',
+        "shape=circle",
+        f"width={_SPPM_QUEUE_CIRCLE_DIAMETER}",
+        f"height={_SPPM_QUEUE_CIRCLE_DIAMETER}",
+        'style="filled"',
+        f'fillcolor="{queue_fill}"',
+        f'color="{queue_border}"',
+        "penwidth=1.5",
+        "fontsize=11",
+        "fontname=Helvetica",
     ]
     _append_chunk_group(attrs=attrs, node_id=node_id, wrap_plan=wrap_plan)
     return f'  "{_escape(node_id)}" [{", ".join(attrs)}];'
@@ -312,6 +356,7 @@ def _extract_sppm_from_ir(process: Any) -> tuple[list[dict[str, Any]], list[dict
                 "label": getattr(edge, "label", None),
                 "edge_type": getattr(edge, "edge_type", None),
                 "rework": getattr(edge, "rework", None),
+                "metadata": getattr(edge, "metadata", None),
             }
         )
     return nodes, edges
@@ -340,13 +385,14 @@ def _extract_sppm_from_dict(
     for node in nodes_raw:
         if not isinstance(node, dict):
             continue
+        metadata = _get_node_attr(node, "metadata", expected_type=dict) or {}
         nodes.append(
             {
                 "id": node.get("id"),
                 "kind": node.get("kind") or node.get("type") or "task",
                 "name": node.get("name"),
                 "note": node.get("note"),
-                "metadata": _get_node_attr(node, "metadata", expected_type=dict) or {},
+                "metadata": metadata,
                 "workers": _get_node_attr(node, "workers", expected_type=list) or [],
             }
         )

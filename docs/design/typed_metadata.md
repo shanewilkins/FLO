@@ -24,6 +24,11 @@ Key typed fields (recommended)
 - `value_class` (enum string, node/process): high-level classification used in Lean analysis (VA/RNVA/NVA/unknown).
 - `handoff` (boolean, edge): indicates a cross-lane or responsibility handoff.
 - `expected_latency_seconds` (duration/number, edge): typical latency to traverse the edge.
+- `rate` (number, rework edge): rework proportion on a rework loop, expressed as a fraction from 0 to 1.
+- `reason` (string, rework edge): short cause label for why the rework loop occurs.
+- `count` (number|string, rework edge): observed rework count, either as a positive number or compact text such as `3 per 40 cases`.
+- `frequency` (string, rework edge): frequency text such as `avg 0.12 loops/case`.
+- `note` (string, rework edge): supporting observation note shown in the rendered rework data box.
 
 Typing and coercion rules
 -------------------------
@@ -55,7 +60,11 @@ Examples
 
   {
     "handoff": true,
-    "expected_latency_seconds": 300
+    "expected_latency_seconds": 300,
+    "rate": 0.08,
+    "reason": "Missing approvals",
+    "count": "3 per 40 cases",
+    "frequency": "avg 0.12 loops/case"
   }
 
 - Process metadata example:
@@ -73,6 +82,7 @@ Best practices
 - Keep metadata small and typed for critical analysis fields; use freeform
   metadata for ad-hoc notes but expect warnings.
 - Use `sla_target_seconds` consistently as seconds for easier aggregation.
+- For SPPM rework loops, attach rework observations to edge metadata rather than the rework task node so the renderer can place the data box on the dashed loop itself.
 
 Extending the typed schema
 --------------------------

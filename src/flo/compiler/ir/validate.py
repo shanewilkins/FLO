@@ -45,6 +45,7 @@ def validate_ir(obj: Any) -> None:
     _validate_node_io_lists(obj)
     _validate_node_time_metadata(obj)
     _validate_node_value_class(obj)
+    _validate_edge_metadata(obj)
     _validate_process_resources(obj)
     _validate_node_connectivity(obj, incoming_counts, outgoing_counts)
     _validate_global_reachability(obj)
@@ -195,10 +196,9 @@ def _traverse(seed_ids: list[str], graph: dict[str, set[str]]) -> set[str]:
 
 
 def _validate_queue_metadata(node_id: str, metadata: dict[str, Any]) -> None:
-    if "queue_policy" not in metadata:
-        raise ValidationError(
-            f"E1101: queue node '{node_id}' missing required metadata.queue_policy"
-        )
+    # Queue nodes may have optional queue_policy for advanced queueing models.
+    # For basic use (SPPM, VSM), queue_policy is not required.
+    # All other fields are validated per type if present.
 
     capacity = metadata.get("buffer_capacity")
     if capacity is not None and (not isinstance(capacity, int) or capacity < 1):
@@ -470,6 +470,44 @@ def _validate_node_value_class(obj: IR) -> None:
             raise ValidationError(
                 f"E1320: node '{node.id}' metadata.value_class '{raw}' "
                 f"must be one of {sorted(valid_values)}"
+            )
+
+
+def _validate_edge_metadata(obj: IR) -> None:
+    for edge in obj.edges:
+        metadata = getattr(edge, "metadata", None)
+        if not isinstance(metadata, dict) or not metadata:
+            continue
+        if bool(getattr(edge, "rework", None)) or str(getattr(edge, "edge_type", "") or "").lower() == "rework":
+            _validate_rework_edge_metadata(edge=edge, metadata=metadata)
+
+
+def _validate_rework_edge_metadata(*, edge: Any, metadata: dict[str, Any]) -> None:
+    edge_path = f"edge '{edge.source}' -> '{edge.target}'"
+
+    rate = metadata.get("rate")
+    if rate is not None:
+        if not isinstance(rate, (int, float)) or isinstance(rate, bool) or not (0 <= float(rate) <= 1):
+            raise ValidationError(
+                f"E1401: {edge_path} metadata.rate must be a number between 0 and 1"
+            )
+
+    for key in ("reason", "frequency", "note"):
+        value = metadata.get(key)
+        if value is None:
+            continue
+        if not isinstance(value, str) or not value.strip():
+            raise ValidationError(
+                f"E1402: {edge_path} metadata.{key} must be a non-empty string"
+            )
+
+    count = metadata.get("count")
+    if count is not None:
+        is_valid_number = isinstance(count, (int, float)) and not isinstance(count, bool) and float(count) > 0
+        is_valid_text = isinstance(count, str) and bool(count.strip())
+        if not (is_valid_number or is_valid_text):
+            raise ValidationError(
+                f"E1403: {edge_path} metadata.count must be a positive number or non-empty string"
             )
 
 

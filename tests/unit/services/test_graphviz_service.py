@@ -182,6 +182,26 @@ def test_postprocess_direct_midpoint_edges_svg_rewrites_horizontal_edge_endpoint
         assert 'points="100.00,70.00 90.00,73.50 90.00,66.50 100.00,70.00"' in svg
 
 
+def test_postprocess_direct_midpoint_edges_svg_handles_ellipse_nodes(tmp_path: Path):
+    svg_path = tmp_path / "direct_ellipse.svg"
+    svg_path.write_text(
+        """<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg">
+    <g class="node"><title>triage</title><polygon fill="#ffffff" stroke="#333333" points="405,-730.42 625.83,-620 405,-509.58" /></g>
+    <g class="node"><title>process_queue</title><ellipse fill="#ff9800" stroke="#e65100" cx="756.83" cy="-620" rx="45" ry="45" /></g>
+    <g class="edge"><title>triage:e-&gt;process_queue:w</title><path d="M 1,1 L 2,2" /><polygon points="0,0 1,1 2,2 0,0" /></g>
+</svg>
+""",
+        encoding="utf-8",
+    )
+
+    _postprocess_direct_midpoint_edges_svg(output_path=svg_path)
+    svg = svg_path.read_text(encoding="utf-8")
+
+    assert 'd="M 625.83,-620.00 L 711.83,-620.00"' in svg
+    assert 'points="711.83,-620.00 701.83,-616.50 701.83,-623.50 711.83,-620.00"' in svg
+
+
 def test_normalize_node_backing_fills_svg_replaces_lightgrey_backings(tmp_path: Path):
         svg_path = tmp_path / "fills.svg"
         svg_path.write_text(

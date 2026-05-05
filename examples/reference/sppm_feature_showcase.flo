@@ -47,6 +47,14 @@ steps:
         value: 3
         unit: min
 
+  - id: process_queue
+    kind: queue
+    name: Process Queue
+    metadata:
+      wait_time:
+        value: 11
+        unit: min
+
   - id: process
     kind: task
     name: Execute Core Work
@@ -59,7 +67,7 @@ steps:
         value: 18
         unit: min
       wait_time:
-        value: 5
+        value: 11
         unit: min
 
   - id: qa
@@ -95,6 +103,32 @@ steps:
       cycle_time:
         value: 3
         unit: min
+      wait_time:
+        value: 9
+        unit: min
+
+  - id: dispatch_queue_wait
+    kind: queue
+    name: Dispatch Queue
+    metadata:
+      wait_time:
+        value: 14
+        unit: min
+
+  - id: dispatch_queue
+    kind: task
+    name: Stage Final Packet
+    workers:
+      - Coordinator
+    metadata:
+      value_class: RNVA
+      description: Hold completed work for outbound scheduling and customer notification.
+      cycle_time:
+        value: 2
+        unit: min
+      wait_time:
+        value: 14
+        unit: min
 
   - id: stop
     kind: end
@@ -108,14 +142,20 @@ transitions:
     target: triage
 
   - source: triage
-    target: process
+    target: process_queue
     outcome: yes
+
+  - source: process_queue
+    target: process
 
   - source: triage
     target: rework_intake
     outcome: no
     edge_type: rework
     rework: true
+    metadata:
+      rate: 0.12
+      reason: Missing details
 
   - source: rework_intake
     target: intake
@@ -129,16 +169,25 @@ transitions:
     target: complete
     outcome: pass
 
+  - source: complete
+    target: dispatch_queue_wait
+
+  - source: dispatch_queue_wait
+    target: dispatch_queue
+
   - source: qa
     target: rework_quality
     outcome: fail
     edge_type: rework
     rework: true
+    metadata:
+      rate: 0.08
+      reason: QA defects
 
   - source: rework_quality
     target: process
     edge_type: rework
     rework: true
 
-  - source: complete
+  - source: dispatch_queue
     target: stop

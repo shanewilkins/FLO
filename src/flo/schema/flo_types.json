@@ -125,7 +125,17 @@
       "properties": {
         "handoff": { "type": "boolean" },
         "handoff_type": { "type": "string" },
-        "expected_latency_seconds": { "$ref": "#/definitions/duration_seconds" }
+        "expected_latency_seconds": { "$ref": "#/definitions/duration_seconds" },
+        "rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "count": {
+          "oneOf": [
+            { "type": "number", "exclusiveMinimum": 0 },
+            { "type": "string", "minLength": 1 }
+          ]
+        },
+        "frequency": { "type": "string", "minLength": 1 },
+        "note": { "type": "string", "minLength": 1 }
       },
       "additionalProperties": true
     },
@@ -163,7 +173,7 @@
   },
   "recommended_keys": {
     "node": ["activity_key","sla_target_seconds","cycle_time","value_class"],
-    "edge": ["handoff","expected_latency_seconds"],
+    "edge": ["handoff","expected_latency_seconds","rate","reason","count","frequency"],
     "process": ["sla_target_seconds","value_class","materials","equipment","locations","workers"]
   },
   "examples": {
@@ -175,7 +185,12 @@
     },
     "edge_metadata": {
       "handoff": true,
-      "expected_latency_seconds": 300
+      "expected_latency_seconds": 300,
+      "rate": 0.08,
+      "reason": "Missing approvals",
+      "count": "3 per 40 cases",
+      "frequency": "avg 0.12 loops/case",
+      "note": "Most rework is caused by incomplete signatures."
     },
     "process_metadata": {
       "sla_target_seconds": 86400,

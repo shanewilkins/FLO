@@ -40,6 +40,7 @@ def _svg_group_points(group: ET.Element, *, border_only: bool) -> list[tuple[flo
     points: list[tuple[float, float]] = []
     points.extend(_svg_polygon_points(group, border_only=border_only))
     points.extend(_svg_path_points(group, border_only=border_only))
+    points.extend(_svg_ellipse_points(group, border_only=border_only))
     return points
 
 
@@ -62,6 +63,34 @@ def _svg_path_points(group: ET.Element, *, border_only: bool) -> list[tuple[floa
             if not stroke or stroke == "none":
                 continue
         points.extend(_parse_svg_path_points(path.attrib.get("d", "")))
+    return points
+
+
+def _svg_ellipse_points(group: ET.Element, *, border_only: bool) -> list[tuple[float, float]]:
+    points: list[tuple[float, float]] = []
+    for ellipse in group.findall("{*}ellipse"):
+        if border_only:
+            stroke = ellipse.attrib.get("stroke", "")
+            if not stroke or stroke == "none":
+                continue
+        cx = ellipse.attrib.get("cx")
+        cy = ellipse.attrib.get("cy")
+        rx = ellipse.attrib.get("rx")
+        ry = ellipse.attrib.get("ry")
+        if cx is None or cy is None or rx is None or ry is None:
+            continue
+        center_x = float(cx)
+        center_y = float(cy)
+        radius_x = float(rx)
+        radius_y = float(ry)
+        points.extend(
+            [
+                (center_x - radius_x, center_y),
+                (center_x + radius_x, center_y),
+                (center_x, center_y - radius_y),
+                (center_x, center_y + radius_y),
+            ]
+        )
     return points
 
 

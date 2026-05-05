@@ -194,7 +194,7 @@ def _graphviz_headport_for_spec(port_spec: Any, *, kind: str) -> str:
 
 
 def _supports_named_ports(kind: str) -> bool:
-    return kind not in {"start", "end", "decision"}
+    return kind not in {"start", "end", "decision", "queue"}
 
 
 def _resolved_boundary_ports(
@@ -260,6 +260,8 @@ def is_sppm_rework_edge(
     target: str,
 ) -> bool:
     """Return whether an SPPM edge should be rendered as rework."""
+    if bool(edge.get("synthetic_queue_connector")):
+        return False
     explicit = edge.get("rework")
     if explicit is not None:
         return bool(explicit)

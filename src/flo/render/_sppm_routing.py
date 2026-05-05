@@ -7,6 +7,8 @@ be detected before Graphviz turns the plan into geometry.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from html import escape as html_escape
+import textwrap
 from typing import Any
 
 from ._autoformat_wrap import WrapPlan, wrap_chunk_exit_anchor_id
@@ -476,6 +478,10 @@ def _build_rework_route(
             "arrowhead=none",
         ]
     )
+    rework_data_box_attrs = _build_rework_data_box_attrs(edge.get("metadata"), is_branch_out=is_branch_out)
+    if rework_data_box_attrs is not None:
+        first_segment_attrs = tuple([*first_segment_attrs, *rework_data_box_attrs])
+
     second_segment_attrs = list([target_port, *route_attrs])
     branch_label = edge.get("outcome") or edge.get("label")
     if branch_label is not None:
@@ -495,3 +501,68 @@ def _build_rework_route(
             SppmRouteSegment(source_id=anchor_id, target_id=target, attrs=tuple(second_segment_attrs)),
         ),
     )
+
+
+def _build_rework_data_box_attrs(metadata: object, *, is_branch_out: bool) -> tuple[str, ...] | None:
+    """Return compact DOT attrs for a rework data box near the loop origin."""
+    if not isinstance(metadata, dict) or not metadata:
+        return None
+
+    ordered_keys = ("rate", "reason") if is_branch_out else ("frequency", "count")
+    lines: list[str] = []
+    for key in ordered_keys:
+        if key not in metadata:
+            continue
+        formatted = _format_rework_metadata_value(key, metadata.get(key))
+        if formatted is not None:
+            lines.append(f"{key.replace('_', ' ').title()}: {formatted}")
+
+    if not lines:
+        fallback = _format_rework_metadata_value("note", metadata.get("note"))
+        if fallback is not None:
+            lines.append(f"Note: {fallback}")
+
+    if not lines:
+        return None
+
+    wrapped_lines: list[str] = []
+    for line in lines:
+        wrapped = textwrap.wrap(line, width=24, break_long_words=False, break_on_hyphens=False)
+        wrapped_lines.extend(wrapped or [line])
+
+    rows = "".join(
+        f'<TR><TD ALIGN="LEFT" BALIGN="LEFT"><FONT POINT-SIZE="10">{html_escape(line)}</FONT></TD></TR>'
+        for line in wrapped_lines
+    )
+    label_attr = (
+        'taillabel=<'
+        '<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" '
+        'COLOR="#666666" BGCOLOR="#FFFFFF">'
+        f"{rows}"
+        "</TABLE>>"
+    )
+    if is_branch_out:
+        return (label_attr, 'labeldistance="0.7"', 'labelangle="20"')
+    return (label_attr, 'labeldistance="0.9"', 'labelangle="25"')
+
+
+def _format_rework_metadata_value(key: str, value: object) -> str | None:
+    """Format supported rework metadata values for display in the edge data box."""
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return "Yes" if value else "No"
+    if isinstance(value, (int, float)):
+        if key in {"rate", "rework_rate"} and 0 <= float(value) <= 1:
+            return f"{float(value) * 100:g}%"
+        return f"{value:g}" if isinstance(value, float) else str(value)
+    if isinstance(value, dict):
+        raw_value = value.get("value")
+        unit = value.get("unit")
+        if raw_value is None:
+            return None
+        if unit is None:
+            return str(raw_value)
+        return f"{raw_value} {unit}"
+    text = str(value).strip()
+    return text or None
