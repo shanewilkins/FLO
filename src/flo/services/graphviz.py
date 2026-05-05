@@ -271,10 +271,8 @@ def _postprocess_sppm_rework_labels_svg(*, dot: str, output_path: Path) -> None:
         label_bounds = _svg_edge_label_bounds(group)
         if label_bounds is None:
             continue
-        width = label_bounds[2] - label_bounds[0]
-        height = label_bounds[3] - label_bounds[1]
-        target_left = source_bounds[2] + 14.0
-        target_top = source_bounds[3] + 6.0
+        target_left = source_bounds[2] + 8.0
+        target_top = source_bounds[3] + 2.0
         if _reposition_svg_edge_label(group, left=target_left, top=target_top):
             updated = True
 
@@ -287,10 +285,8 @@ def _postprocess_sppm_rework_labels_svg(*, dot: str, output_path: Path) -> None:
         if label_bounds is None:
             continue
         width = label_bounds[2] - label_bounds[0]
-        height = label_bounds[3] - label_bounds[1]
-        target_left = source_bounds[0] - width - 14.0
-        source_mid_y = (source_bounds[1] + source_bounds[3]) / 2.0
-        target_top = source_mid_y - (height / 2.0)
+        target_left = source_bounds[0] - width - 10.0
+        target_top = source_bounds[1] + 8.0
         if _reposition_svg_edge_label(group, left=target_left, top=target_top):
             updated = True
 

@@ -18,6 +18,7 @@ from ._graphviz_dot_common import _escape
 from ._autoformat_wrap import append_wrap_layout_hints, build_wrap_plan, WrapPlan
 from ._sppm_edge_render import _render_sppm_edge, _render_sppm_spine_constraints, _render_sppm_secondary_line_constraints
 from ._sppm_label_html import _sppm_html_label
+from ._sppm_text import format_text_field, normalize_space
 from ._sppm_routing import build_sppm_routing_plan
 from ._sppm_themes import resolve_sppm_theme, SppmTheme, SppmNodeStyle
 from .options import RenderOptions
@@ -28,9 +29,10 @@ if TYPE_CHECKING:
     from ._sppm_postprocess_contract import SppmSvgPostprocessContract
 
 
-_SPPM_DECISION_MIN_WIDTH = 1.93
-_SPPM_DECISION_MIN_HEIGHT = 1.1
-_SPPM_QUEUE_CIRCLE_DIAMETER = 1.25  # inches
+_SPPM_DECISION_MIN_WIDTH = 1.64
+_SPPM_DECISION_MIN_HEIGHT = 0.94
+_SPPM_QUEUE_CIRCLE_DIAMETER = 1.44  # inches
+_SPPM_QUEUE_NAME_MAX_LEN = 20
 
 
 def _get_wait_time_minutes(node: dict[str, Any]) -> float:
@@ -219,19 +221,26 @@ def _render_sppm_decision_node(*, node_id: str, name: str, theme: SppmTheme, wra
 
 def _render_sppm_queue_circle(*, node: dict[str, Any], node_id: str, name: str, theme: SppmTheme, wrap_plan: WrapPlan) -> str:
     """Render a queue/bottleneck circle (orange color per spec)."""
-    # Queue circle uses orange color: fill #FF9800, border #E65100
-    queue_fill = "#FF9800"
     queue_border = "#E65100"
     wait_time_min = _get_wait_time_minutes(node)
-    queue_label = f"{wait_time_min:g}m" if wait_time_min > 0 else "Q"
+    queue_name = format_text_field(
+        normalize_space(name),
+        max_len=_SPPM_QUEUE_NAME_MAX_LEN,
+        wrap_strategy="balanced",
+        truncation_policy="ellipsis",
+        html_break="\n",
+    )
+    label_lines = [queue_name] if queue_name else []
+    if wait_time_min > 0:
+        label_lines.append(f"{wait_time_min:g}m")
+    queue_label = "\n".join(label_lines) if label_lines else "Q"
 
     attrs = [
         f'label="{queue_label}"',
         "shape=circle",
         f"width={_SPPM_QUEUE_CIRCLE_DIAMETER}",
         f"height={_SPPM_QUEUE_CIRCLE_DIAMETER}",
-        'style="filled"',
-        f'fillcolor="{queue_fill}"',
+        'style="solid"',
         f'color="{queue_border}"',
         "penwidth=1.5",
         "fontsize=11",
