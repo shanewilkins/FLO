@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal
 
 PublicationRegionName = Literal["header", "body", "footer"]
+PublicationBandName = Literal["header", "footer"]
 PublicationSeriesKind = Literal["map", "child_map", "artifact"]
 PublicationArtifactKind = Literal["child_map", "artifact"]
 
@@ -66,6 +67,15 @@ class PublicationBandContent:
 
 
 @dataclass(frozen=True)
+class PublicationBand:
+    """Shared top or bottom document band bound to a named content region."""
+
+    name: PublicationBandName
+    region: PublicationRegion
+    content: PublicationBandContent
+
+
+@dataclass(frozen=True)
 class PublicationPage:
     """One page within a publication series."""
 
@@ -73,9 +83,15 @@ class PublicationPage:
     page_number: int
     series_id: str
     canvas: PublicationCanvas
-    header_content: PublicationBandContent | None = None
-    footer_content: PublicationBandContent | None = None
+    bands: tuple[PublicationBand, ...] = ()
     metadata: dict[str, Any] = field(default_factory=dict)
+
+    def band(self, name: PublicationBandName) -> PublicationBand | None:
+        """Return the named document band when it is present on the page."""
+        for band in self.bands:
+            if band.name == name:
+                return band
+        return None
 
 
 @dataclass(frozen=True)
@@ -181,3 +197,18 @@ def build_publication_canvas(
             ),
         ),
     )
+
+
+def build_publication_bands(
+    *,
+    canvas: PublicationCanvas,
+    header_content: PublicationBandContent | None = None,
+    footer_content: PublicationBandContent | None = None,
+) -> tuple[PublicationBand, ...]:
+    """Build shared band objects for populated top and bottom document regions."""
+    bands: list[PublicationBand] = []
+    if header_content is not None:
+        bands.append(PublicationBand(name="header", region=canvas.region("header"), content=header_content))
+    if footer_content is not None:
+        bands.append(PublicationBand(name="footer", region=canvas.region("footer"), content=footer_content))
+    return tuple(bands)

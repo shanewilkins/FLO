@@ -15,6 +15,7 @@ from ._publication import (
     PublicationPage,
     PublicationPlan,
     PublicationSeries,
+    build_publication_bands,
     build_publication_canvas,
 )
 from ._sppm_text import normalize_space
@@ -36,18 +37,23 @@ def build_sppm_publication_plan(
     context = extract_process_header_context(process)
     title = normalize_space(context.title)
     header_rows = _build_sppm_header_rows(context=context, options=options, nodes=nodes, edges=edges)
+    footer_notes = _build_sppm_footer_notes(context=context)
     canvas = build_publication_canvas(
         bounds=PublicationBounds(width_px=options.layout_max_width_px or _DEFAULT_SPPM_PUBLICATION_WIDTH_PX),
         margins=_DEFAULT_SPPM_PUBLICATION_MARGINS,
         header_height_px=_SPPM_HEADER_BAND_HEIGHT_PX if title else 0,
-        footer_height_px=0,
+        footer_height_px=72 if footer_notes else 0,
     )
     page = PublicationPage(
         page_id="main-p1",
         page_number=1,
         series_id="main",
         canvas=canvas,
-        header_content=PublicationBandContent(title=title, rows=tuple(header_rows)) if title else None,
+        bands=build_publication_bands(
+            canvas=canvas,
+            header_content=PublicationBandContent(title=title, rows=tuple(header_rows)) if title else None,
+            footer_content=PublicationBandContent(notes=tuple(footer_notes)) if footer_notes else None,
+        ),
         metadata={
             "diagram": "sppm",
             "projection_mode": options.subprocess_view,
@@ -117,3 +123,19 @@ def _build_sppm_child_slots(*, nodes: list[dict[str, Any]], parent_series_id: st
             )
         )
     return slots
+
+
+def _build_sppm_footer_notes(*, context: Any) -> list[str]:
+    raw_notes = (
+        context.metadata.get("publication_footer_notes")
+        or context.metadata.get("footer_notes")
+        or context.metadata.get("publication_footer")
+        or context.metadata.get("footer_note")
+    )
+    if isinstance(raw_notes, str):
+        note = normalize_space(raw_notes)
+        return [note] if note else []
+    if isinstance(raw_notes, (list, tuple)):
+        notes = [normalize_space(str(note)) for note in raw_notes if normalize_space(str(note))]
+        return notes
+    return []

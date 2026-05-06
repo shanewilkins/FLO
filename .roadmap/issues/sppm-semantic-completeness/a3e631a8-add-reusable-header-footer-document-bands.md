@@ -4,23 +4,23 @@ title: Add reusable header footer document bands
 headline: Create shared document-band primitives for titles, headers, footers, and
   metadata blocks.
 priority: critical
-status: todo
+status: closed
 archived: false
 issue_type: feature
 milestone: sppm-semantic-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-05T17:17:36.230631+00:00'
-updated: '2026-05-06T17:08:52.679217+00:00'
+updated: '2026-05-06T23:12:51.748709+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
 depends_on:
 - 07cb2436
 blocks: []
-actual_start_date: null
+actual_start_date: '2026-05-06T23:03:27.412887+00:00'
 actual_end_date: null
-progress_percentage: null
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null

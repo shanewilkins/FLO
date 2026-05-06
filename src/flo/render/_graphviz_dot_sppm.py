@@ -62,7 +62,8 @@ def _render_sppm_graph(process: IR | dict[str, Any], options: RenderOptions) -> 
     nodes, edges = _extract_sppm_nodes_edges(process)
     if options.subprocess_view == "parent_only":
         nodes, edges = _project_parent_only_subprocess_view(nodes, edges)
-    header = _build_sppm_header(process=process, options=options, nodes=nodes, edges=edges)
+    publication = build_sppm_publication_plan(process=process, options=options, nodes=nodes, edges=edges)
+    header = _build_sppm_header(publication=publication)
     
     # Queue nodes are now explicit in the IR; no synthetic injection needed.
     nodes_by_id: dict[str, dict[str, Any]] = {
@@ -129,6 +130,7 @@ def _render_sppm_graph(process: IR | dict[str, Any], options: RenderOptions) -> 
     # constraints so spacing follows the process spine rather than branch geometry.
     lines.extend(_render_sppm_spine_constraints(edges=edges, routing_plan=routing_plan))
     lines.extend(_render_sppm_secondary_line_constraints(edges=edges, routing_plan=routing_plan))
+    lines.extend(_render_sppm_footer_band(publication=publication, nodes=nodes, edges=edges))
 
     lines.append("}")
     return "\n".join(lines), contract
@@ -424,19 +426,13 @@ def _extract_sppm_from_dict(
     return nodes, edges
 
 
-def _build_sppm_header(
-    *,
-    process: IR | dict[str, Any],
-    options: RenderOptions,
-    nodes: list[dict[str, Any]],
-    edges: list[dict[str, Any]],
-) -> str:
-    publication = build_sppm_publication_plan(process=process, options=options, nodes=nodes, edges=edges)
+def _build_sppm_header(*, publication: Any) -> str:
     primary_page = publication.primary_series().pages[0]
-    header_content = primary_page.header_content
-    if header_content is None:
+    header_band = primary_page.band("header")
+    if header_band is None:
         return ""
 
+    header_content = header_band.content
     title_text = normalize_space(header_content.title)
     if not title_text:
         return ""
@@ -453,5 +449,86 @@ def _build_sppm_header(
         '<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B0BEC5" BGCOLOR="#FAFAFA">'
         f'<TR><TD ALIGN="LEFT"><FONT FACE="Helvetica" POINT-SIZE="16"><B>{_escape(title_text)}</B></FONT></TD></TR>'
         f"{metadata_row}"
+        "</TABLE>>"
+    )
+
+
+def _render_sppm_footer_band(*, publication: Any, nodes: list[dict[str, Any]], edges: list[dict[str, Any]]) -> list[str]:
+    primary_page = publication.primary_series().pages[0]
+    footer_band = primary_page.band("footer")
+    if footer_band is None or not footer_band.content.notes:
+        return []
+
+    footer_id = "__sppm_footer_band"
+    footer_label = _build_sppm_footer_label(footer_band.content.notes)
+    lines = [
+        "  {",
+        "    rank=sink;",
+        f'    "{footer_id}" [shape=none, margin=0, label={footer_label}];',
+        "  }",
+    ]
+    anchor_sources = _footer_anchor_sources(nodes=nodes, edges=edges)
+    for source_id in anchor_sources:
+        lines.append(
+            f'  "{_escape(source_id)}" -> "{footer_id}" [style=invis, weight=2, minlen=1];'
+        )
+    return lines
+
+
+def _footer_anchor_sources(*, nodes: list[dict[str, Any]], edges: list[dict[str, Any]]) -> list[str]:
+    candidates = _footer_end_nodes(nodes)
+    if candidates:
+        return candidates
+
+    terminal_nodes = _footer_terminal_nodes(nodes=nodes, edges=edges)
+    if terminal_nodes:
+        return terminal_nodes
+
+    fallback = _footer_fallback_node_id(nodes)
+    return [fallback] if fallback else []
+
+
+def _footer_end_nodes(nodes: list[dict[str, Any]]) -> list[str]:
+    return [node_id for node_id in (_node_id(node) for node in nodes) if node_id and _node_kind(nodes, node_id) == "end"]
+
+
+def _footer_terminal_nodes(*, nodes: list[dict[str, Any]], edges: list[dict[str, Any]]) -> list[str]:
+    outgoing = _edge_source_ids(edges)
+    return [node_id for node_id in (_node_id(node) for node in nodes) if node_id and node_id not in outgoing]
+
+
+def _footer_fallback_node_id(nodes: list[dict[str, Any]]) -> str:
+    if not nodes:
+        return ""
+    return _node_id(nodes[-1])
+
+
+def _edge_source_ids(edges: list[dict[str, Any]]) -> set[str]:
+    source_ids: set[str] = set()
+    for edge in edges:
+        source = str(edge.get("source") or "").strip()
+        target = str(edge.get("target") or "").strip()
+        if source and target:
+            source_ids.add(source)
+    return source_ids
+
+
+def _node_id(node: dict[str, Any]) -> str:
+    return str(node.get("id") or "").strip()
+
+
+def _node_kind(nodes: list[dict[str, Any]], node_id: str) -> str:
+    for node in nodes:
+        if _node_id(node) != node_id:
+            continue
+        return str(node.get("kind") or node.get("type") or "").strip().lower()
+    return ""
+
+
+def _build_sppm_footer_label(notes: tuple[str, ...]) -> str:
+    note_lines = "<BR ALIGN=\"LEFT\"/>".join(_escape(note) for note in notes)
+    return (
+        '<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" COLOR="#CFD8DC" BGCOLOR="#FAFAFA">'
+        f'<TR><TD ALIGN="LEFT"><FONT FACE="Helvetica" POINT-SIZE="9">{note_lines}</FONT></TD></TR>'
         "</TABLE>>"
     )

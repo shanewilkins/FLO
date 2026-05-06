@@ -33,3 +33,27 @@ def test_sppm_header_is_rendered_from_publication_plan():
     assert "print" in out
     assert "Subprocess View:" in out
     assert "parent-only" in out
+
+
+def test_sppm_footer_band_is_rendered_from_publication_plan():
+    process = {
+        "process": {
+            "id": "footer_demo",
+            "name": "Footer Demo",
+            "metadata": {
+                "footer_notes": ["Draft for review", "Confidential"],
+            },
+        },
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [{"source": "start", "target": "end"}],
+    }
+
+    out = render_dot(process, options={"diagram": "sppm"})
+
+    assert '"__sppm_footer_band" [shape=none, margin=0, label=' in out
+    assert "Draft for review" in out
+    assert "Confidential" in out
+    assert '"end" -> "__sppm_footer_band" [style=invis, weight=2, minlen=1];' in out
