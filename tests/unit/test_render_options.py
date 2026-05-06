@@ -80,3 +80,16 @@ def test_layout_spacing_tight_alias_maps_to_compact():
         }
     )
     assert options.layout_spacing == "compact"
+
+
+def test_sppm_footer_render_inputs_parse_from_mapping():
+    options = RenderOptions.from_mapping(
+        {
+            "diagram": "sppm",
+            "sppm_footer_metrics": {"Lead Time": "24 min", "Queue": "7 min"},
+            "sppm_footer_notes": ["Draft for review", "Confidential"],
+        }
+    )
+
+    assert options.sppm_footer_metrics == (("Lead Time", "24 min"), ("Queue", "7 min"))
+    assert options.sppm_footer_notes == ("Draft for review", "Confidential")

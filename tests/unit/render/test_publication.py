@@ -113,3 +113,36 @@ def test_build_sppm_publication_plan_populates_footer_band_from_process_metadata
     assert footer_band is not None
     assert footer_band.region.name == "footer"
     assert footer_band.content.notes == ("Draft for review", "Confidential")
+
+
+def test_build_sppm_publication_plan_populates_footer_metrics_and_render_inputs():
+    process = {
+        "process": {
+            "id": "ops_review",
+            "name": "Ops Review",
+            "metadata": {
+                "footer_metrics": {
+                    "Lead Time": "24 min",
+                    "VA Ratio": "61%",
+                },
+            },
+        }
+    }
+
+    plan = build_sppm_publication_plan(
+        process=process,
+        options=RenderOptions(
+            diagram="sppm",
+            sppm_footer_metrics=(("Queue", "7 min"),),
+            sppm_footer_notes=("Handcrafted note",),
+        ),
+        nodes=[{"id": "start", "kind": "start", "name": "Start"}],
+        edges=[],
+    )
+
+    footer_band = plan.primary_series().pages[0].band("footer")
+    assert footer_band is not None
+    assert ("Lead Time", "24 min") in footer_band.content.rows
+    assert ("VA Ratio", "61%") in footer_band.content.rows
+    assert ("Queue", "7 min") in footer_band.content.rows
+    assert footer_band.content.notes == ("Handcrafted note",)

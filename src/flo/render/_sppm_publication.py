@@ -37,12 +37,12 @@ def build_sppm_publication_plan(
     context = extract_process_header_context(process)
     title = normalize_space(context.title)
     header_rows = _build_sppm_header_rows(context=context, options=options, nodes=nodes, edges=edges)
-    footer_notes = _build_sppm_footer_notes(context=context)
+    footer_content = _build_sppm_footer_content(context=context, options=options)
     canvas = build_publication_canvas(
         bounds=PublicationBounds(width_px=options.layout_max_width_px or _DEFAULT_SPPM_PUBLICATION_WIDTH_PX),
         margins=_DEFAULT_SPPM_PUBLICATION_MARGINS,
         header_height_px=_SPPM_HEADER_BAND_HEIGHT_PX if title else 0,
-        footer_height_px=72 if footer_notes else 0,
+        footer_height_px=72 if footer_content is not None else 0,
     )
     page = PublicationPage(
         page_id="main-p1",
@@ -52,7 +52,7 @@ def build_sppm_publication_plan(
         bands=build_publication_bands(
             canvas=canvas,
             header_content=PublicationBandContent(title=title, rows=tuple(header_rows)) if title else None,
-            footer_content=PublicationBandContent(notes=tuple(footer_notes)) if footer_notes else None,
+            footer_content=footer_content,
         ),
         metadata={
             "diagram": "sppm",
@@ -125,17 +125,78 @@ def _build_sppm_child_slots(*, nodes: list[dict[str, Any]], parent_series_id: st
     return slots
 
 
-def _build_sppm_footer_notes(*, context: Any) -> list[str]:
+def _build_sppm_footer_content(*, context: Any, options: RenderOptions) -> PublicationBandContent | None:
+    metric_rows = [
+        *_footer_metric_rows_from_metadata(context.metadata),
+        *[(label, value) for label, value in options.sppm_footer_metrics],
+    ]
+    notes = [
+        *_footer_notes_from_metadata(context.metadata),
+        *[normalize_space(note) for note in options.sppm_footer_notes if normalize_space(note)],
+    ]
+    if not metric_rows and not notes:
+        return None
+    return PublicationBandContent(rows=tuple(metric_rows), notes=tuple(notes))
+
+
+def _footer_metric_rows_from_metadata(metadata: dict[str, Any]) -> list[tuple[str, str]]:
+    raw_metrics = (
+        metadata.get("publication_footer_metrics")
+        or metadata.get("footer_metrics")
+        or metadata.get("analytics_footer_metrics")
+        or metadata.get("analytics_metrics")
+    )
+    if isinstance(raw_metrics, dict):
+        return _footer_metric_rows_from_mapping(raw_metrics)
+    if isinstance(raw_metrics, (list, tuple)):
+        return _footer_metric_rows_from_sequence(raw_metrics)
+    return []
+
+
+def _footer_metric_rows_from_mapping(raw_metrics: dict[Any, Any]) -> list[tuple[str, str]]:
+    rows: list[tuple[str, str]] = []
+    for label, value in raw_metrics.items():
+        row = _footer_metric_row(label=label, value=value)
+        if row is not None:
+            rows.append(row)
+    return rows
+
+
+def _footer_metric_rows_from_sequence(raw_metrics: list[Any] | tuple[Any, ...]) -> list[tuple[str, str]]:
+    rows: list[tuple[str, str]] = []
+    for item in raw_metrics:
+        row = _footer_metric_row_from_item(item)
+        if row is not None:
+            rows.append(row)
+    return rows
+
+
+def _footer_metric_row_from_item(item: Any) -> tuple[str, str] | None:
+    if isinstance(item, dict):
+        return _footer_metric_row(label=item.get("label"), value=item.get("value"))
+    if isinstance(item, (list, tuple)) and len(item) == 2:
+        return _footer_metric_row(label=item[0], value=item[1])
+    return None
+
+
+def _footer_metric_row(*, label: Any, value: Any) -> tuple[str, str] | None:
+    label_text = normalize_space(str(label or ""))
+    value_text = normalize_space(str(value or ""))
+    if not label_text or not value_text:
+        return None
+    return (label_text, value_text)
+
+
+def _footer_notes_from_metadata(metadata: dict[str, Any]) -> list[str]:
     raw_notes = (
-        context.metadata.get("publication_footer_notes")
-        or context.metadata.get("footer_notes")
-        or context.metadata.get("publication_footer")
-        or context.metadata.get("footer_note")
+        metadata.get("publication_footer_notes")
+        or metadata.get("footer_notes")
+        or metadata.get("publication_footer")
+        or metadata.get("footer_note")
     )
     if isinstance(raw_notes, str):
         note = normalize_space(raw_notes)
         return [note] if note else []
     if isinstance(raw_notes, (list, tuple)):
-        notes = [normalize_space(str(note)) for note in raw_notes if normalize_space(str(note))]
-        return notes
+        return [normalize_space(str(note)) for note in raw_notes if normalize_space(str(note))]
     return []

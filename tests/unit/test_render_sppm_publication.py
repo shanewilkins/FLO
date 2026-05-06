@@ -57,3 +57,37 @@ def test_sppm_footer_band_is_rendered_from_publication_plan():
     assert "Draft for review" in out
     assert "Confidential" in out
     assert '"end" -> "__sppm_footer_band" [style=invis, weight=2, minlen=1];' in out
+
+
+def test_sppm_footer_band_renders_metrics_and_render_time_inputs():
+    process = {
+        "process": {
+            "id": "ops_review",
+            "name": "Ops Review",
+            "metadata": {
+                "footer_metrics": {"Lead Time": "24 min", "VA Ratio": "61%"},
+            },
+        },
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [{"source": "start", "target": "end"}],
+    }
+
+    out = render_dot(
+        process,
+        options={
+            "diagram": "sppm",
+            "sppm_footer_metrics": {"Queue": "7 min"},
+            "sppm_footer_notes": ["Draft for review"],
+        },
+    )
+
+    assert "Lead Time:" in out
+    assert "24 min" in out
+    assert "VA Ratio:" in out
+    assert "61%" in out
+    assert "Queue:" in out
+    assert "7 min" in out
+    assert "Draft for review" in out

@@ -88,6 +88,8 @@ class RenderOptions:
     sppm_max_label_step_name: int | None = None
     sppm_max_label_workers: int | None = None
     sppm_max_label_ctwt: int | None = None
+    sppm_footer_metrics: tuple[tuple[str, str], ...] = ()
+    sppm_footer_notes: tuple[str, ...] = ()
 
     @classmethod
     def from_mapping(cls, options: Mapping[str, Any] | None) -> "RenderOptions":
@@ -121,6 +123,8 @@ class RenderOptions:
             sppm_max_label_step_name=_parse_positive_int(effective_options.get("sppm_max_label_step_name")),
             sppm_max_label_workers=_parse_positive_int(effective_options.get("sppm_max_label_workers")),
             sppm_max_label_ctwt=_parse_positive_int(effective_options.get("sppm_max_label_ctwt")),
+            sppm_footer_metrics=_parse_footer_metrics(effective_options.get("sppm_footer_metrics")),
+            sppm_footer_notes=_parse_footer_notes(effective_options.get("sppm_footer_notes")),
         )
 
 
@@ -303,3 +307,41 @@ def _parse_bool(value: Any) -> bool:
     if isinstance(value, str):
         return value.strip().lower() in {"1", "true", "yes", "on"}
     return bool(value)
+
+
+def _parse_footer_metrics(value: Any) -> tuple[tuple[str, str], ...]:
+    if value is None:
+        return ()
+    if isinstance(value, dict):
+        items = value.items()
+    elif isinstance(value, (list, tuple)):
+        items = value
+    else:
+        return ()
+
+    rows: list[tuple[str, str]] = []
+    for item in items:
+        if isinstance(item, (tuple, list)) and len(item) == 2:
+            label, row_value = item
+        elif isinstance(item, dict):
+            label = item.get("label")
+            row_value = item.get("value")
+        else:
+            continue
+        label_text = str(label or "").strip()
+        value_text = str(row_value or "").strip()
+        if label_text and value_text:
+            rows.append((label_text, value_text))
+    return tuple(rows)
+
+
+def _parse_footer_notes(value: Any) -> tuple[str, ...]:
+    if value is None:
+        return ()
+    if isinstance(value, str):
+        note = value.strip()
+        return (note,) if note else ()
+    if not isinstance(value, (list, tuple)):
+        return ()
+    notes = [str(note).strip() for note in value if str(note).strip()]
+    return tuple(notes)

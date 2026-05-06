@@ -456,11 +456,13 @@ def _build_sppm_header(*, publication: Any) -> str:
 def _render_sppm_footer_band(*, publication: Any, nodes: list[dict[str, Any]], edges: list[dict[str, Any]]) -> list[str]:
     primary_page = publication.primary_series().pages[0]
     footer_band = primary_page.band("footer")
-    if footer_band is None or not footer_band.content.notes:
+    if footer_band is None:
+        return []
+    if not footer_band.content.rows and not footer_band.content.notes:
         return []
 
     footer_id = "__sppm_footer_band"
-    footer_label = _build_sppm_footer_label(footer_band.content.notes)
+    footer_label = _build_sppm_footer_label(footer_band.content.rows, footer_band.content.notes)
     lines = [
         "  {",
         "    rank=sink;",
@@ -525,10 +527,18 @@ def _node_kind(nodes: list[dict[str, Any]], node_id: str) -> str:
     return ""
 
 
-def _build_sppm_footer_label(notes: tuple[str, ...]) -> str:
+def _build_sppm_footer_label(rows: tuple[tuple[str, str], ...], notes: tuple[str, ...]) -> str:
+    table_rows = "".join(
+        f'<TR><TD ALIGN="LEFT"><FONT FACE="Helvetica" POINT-SIZE="9"><B>{_escape(label)}:</B> {_escape(value)}</FONT></TD></TR>'
+        for label, value in rows
+    )
     note_lines = "<BR ALIGN=\"LEFT\"/>".join(_escape(note) for note in notes)
+    notes_row = ""
+    if note_lines:
+        notes_row = f'<TR><TD ALIGN="LEFT"><FONT FACE="Helvetica" POINT-SIZE="9">{note_lines}</FONT></TD></TR>'
     return (
         '<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" COLOR="#CFD8DC" BGCOLOR="#FAFAFA">'
-        f'<TR><TD ALIGN="LEFT"><FONT FACE="Helvetica" POINT-SIZE="9">{note_lines}</FONT></TD></TR>'
+        f"{table_rows}"
+        f"{notes_row}"
         "</TABLE>>"
     )
