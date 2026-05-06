@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Any
 from ._graphviz_dot_common import _escape
 from ._graphviz_dot_common import _project_parent_only_subprocess_view
 from ._autoformat_wrap import append_wrap_layout_hints, build_wrap_plan, WrapPlan
-from ._process_header import build_process_header_rows, extract_process_header_context
+from ._sppm_publication import build_sppm_publication_plan
 from ._sppm_edge_render import _render_sppm_edge, _render_sppm_spine_constraints, _render_sppm_secondary_line_constraints
 from ._sppm_label_html import _sppm_html_label
 from ._sppm_step_refs import format_sppm_step_reference
@@ -431,20 +431,17 @@ def _build_sppm_header(
     nodes: list[dict[str, Any]],
     edges: list[dict[str, Any]],
 ) -> str:
-    context = extract_process_header_context(process)
-    title_text = normalize_space(context.title)
+    publication = build_sppm_publication_plan(process=process, options=options, nodes=nodes, edges=edges)
+    primary_page = publication.primary_series().pages[0]
+    header_content = primary_page.header_content
+    if header_content is None:
+        return ""
+
+    title_text = normalize_space(header_content.title)
     if not title_text:
         return ""
 
-    extra_rows: list[tuple[str, str]] = []
-    if options.sppm_output_profile != "default":
-        extra_rows.append(("Profile", options.sppm_output_profile))
-    if options.subprocess_view != "expanded":
-        extra_rows.append(("Subprocess View", options.subprocess_view.replace("_", "-")))
-    extra_rows.append(("Nodes", str(len(nodes))))
-    extra_rows.append(("Edges", str(len(edges))))
-
-    row_values = build_process_header_rows(context=context, extra_rows=extra_rows)
+    row_values = header_content.rows
 
     metadata_cells = "".join(
         f'<TD ALIGN="LEFT"><FONT FACE="Helvetica" POINT-SIZE="9"><B>{_escape(label)}:</B> {_escape(value)}</FONT></TD>'
