@@ -82,7 +82,9 @@ def test_sppm_queue_circles_render_larger_with_wait_label():
 
     out = render_dot(ir_like, options={"diagram": "sppm"})
 
-    assert 'label="Process Queue\n11m"' in out
+    assert 'label="Process Queue' in out
+    assert '11m' in out
+    assert '[process_queue]' in out
     assert 'shape=circle, width=1.44, height=1.44' in out
     assert 'style="solid"' in out
 
@@ -102,4 +104,6 @@ def test_sppm_queue_circle_labels_wrap_and_truncate_long_names():
 
     out = render_dot(ir_like, options={"diagram": "sppm"})
 
-    assert 'label="Extremely Long Di...\n14m"' in out
+    assert 'label="Extremely Long Di...' in out
+    assert '14m' in out
+    assert '[dispatch_queue]' in out

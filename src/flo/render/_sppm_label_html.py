@@ -7,6 +7,7 @@ from typing import Any
 
 from flo.compiler.ir.subprocess_refs import resolve_subprocess_detail_map_reference
 
+from ._sppm_step_refs import format_sppm_step_reference
 from ._sppm_text import apply_density_filter, abbreviate_workers, format_text_field, normalize_space
 from ._sppm_themes import SppmNodeStyle
 from .options import RenderOptions
@@ -111,12 +112,14 @@ def _sppm_html_label(
         workers_line=workers_line,
         notes_line=notes_line,
     )
+    info_lines = [format_sppm_step_reference(node_id), *info_lines]
     if kind == "subprocess":
         detail_map_ref = resolve_subprocess_detail_map_reference(node_id=node_id, metadata=metadata)
         info_lines = [
+            format_sppm_step_reference(node_id),
             "Subprocess",
             f"Detail map: {detail_map_ref}",
-            *info_lines,
+            *info_lines[1:],
         ]
 
     body_table = ""

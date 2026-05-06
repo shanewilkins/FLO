@@ -4,14 +4,14 @@ title: Add stable step reference labels and cross-map links
 headline: Surface visible step references derived from node ids so SPPM pages and
   child maps can cross-reference reliably.
 priority: critical
-status: todo
+status: closed
 archived: false
 issue_type: feature
 milestone: sppm-semantic-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-06T00:00:00+00:00'
-updated: '2026-05-06T17:05:34.295552+00:00'
+updated: '2026-05-06T21:20:03.593767+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
@@ -20,9 +20,9 @@ depends_on:
 - 7b3865ba
 blocks:
 - 47c38a4e
-actual_start_date: null
-actual_end_date: null
-progress_percentage: null
+actual_start_date: '2026-05-06T20:40:37.052597+00:00'
+actual_end_date: '2026-05-06T21:20:03.509210+00:00'
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null

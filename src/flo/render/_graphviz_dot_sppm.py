@@ -20,6 +20,7 @@ from ._autoformat_wrap import append_wrap_layout_hints, build_wrap_plan, WrapPla
 from ._process_header import build_process_header_rows, extract_process_header_context
 from ._sppm_edge_render import _render_sppm_edge, _render_sppm_spine_constraints, _render_sppm_secondary_line_constraints
 from ._sppm_label_html import _sppm_html_label
+from ._sppm_step_refs import format_sppm_step_reference
 from ._sppm_text import format_text_field, normalize_space
 from ._sppm_routing import build_sppm_routing_plan
 from ._sppm_themes import resolve_sppm_theme, SppmTheme, SppmNodeStyle
@@ -211,8 +212,9 @@ def _render_sppm_start_end_node(*, node_id: str, name: str, theme: SppmTheme, wr
 
 
 def _render_sppm_decision_node(*, node_id: str, name: str, theme: SppmTheme, wrap_plan: WrapPlan) -> str:
+    label = f"{name}\\n{format_sppm_step_reference(node_id)}"
     attrs = [
-        f'label="{_escape(name)}"',
+        f'label="{_escape(label)}"',
         "shape=diamond",
         "regular=true",
         f"width={_SPPM_DECISION_MIN_WIDTH}",
@@ -240,6 +242,7 @@ def _render_sppm_queue_circle(*, node: dict[str, Any], node_id: str, name: str, 
     label_lines = [queue_name] if queue_name else []
     if wait_time_min > 0:
         label_lines.append(f"{wait_time_min:g}m")
+    label_lines.append(format_sppm_step_reference(node_id))
     queue_label = "\n".join(label_lines) if label_lines else "Q"
 
     attrs = [

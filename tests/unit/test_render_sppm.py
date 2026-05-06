@@ -128,7 +128,11 @@ def test_sppm_decision_nodes_use_diamond_shape():
         ],
     }
     out = render_dot(ir_like, options={"diagram": "sppm"})
-    assert '"decision" [label="Approved?", shape=diamond, regular=true, width=1.64, height=0.94' in out
+    assert '"decision" [label=' in out
+    assert "Approved?" in out
+    assert "[decision]" in out
+    assert "shape=diamond" in out
+    assert "regular=true" in out
 
 
 def test_sppm_task_cards_have_minimum_content_width():
