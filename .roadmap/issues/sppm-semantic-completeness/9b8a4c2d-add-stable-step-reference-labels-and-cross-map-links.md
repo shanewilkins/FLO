@@ -17,7 +17,6 @@ estimated_hours: null
 due_date: null
 depends_on:
 - ce07a4e0
-- 7b3865ba
 blocks:
 - 47c38a4e
 actual_start_date: '2026-05-06T20:40:37.052597+00:00'

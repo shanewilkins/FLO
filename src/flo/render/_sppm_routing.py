@@ -12,6 +12,7 @@ import textwrap
 from typing import Any
 
 from ._autoformat_wrap import WrapPlan, wrap_chunk_exit_anchor_id
+from ._sppm_continuation_labels import build_sppm_continuation_label_attrs
 from ._sppm_postprocess_contract import SppmSvgPostprocessContract, build_svg_postprocess_contract
 from ._sppm_port_policy import (
     SppmPortPolicy,
@@ -322,6 +323,8 @@ def _build_sppm_edge_route(
             source=source,
             target=target,
             edge_attrs=edge_attrs,
+            wrap_plan=wrap_plan,
+            is_boundary=is_boundary,
             wrap_ports=resolved_ports,
             is_branch_out=is_branch_out,
             source_kind=source_kind,
@@ -373,6 +376,12 @@ def _build_boundary_corridor_route(
 ) -> SppmEdgeRoute:
     source_port, target_port = wrap_ports
     chunk_idx = wrap_plan.node_chunk_index.get(source)
+    outgoing_label_attrs, incoming_label_attrs = build_sppm_continuation_label_attrs(
+        source=source,
+        target=target,
+        wrap_plan=wrap_plan,
+        is_secondary=False,
+    )
 
     if options.orientation == "lr" and chunk_idx is not None:
         exit_anchor_id = wrap_chunk_exit_anchor_id(orientation="lr", chunk_idx=chunk_idx)
@@ -389,12 +398,12 @@ def _build_boundary_corridor_route(
                 SppmRouteSegment(
                     source_id=source,
                     target_id=exit_anchor_id,
-                    attrs=tuple([source_port, "arrowhead=none", "constraint=false", "weight=0"]),
+                    attrs=tuple([source_port, "arrowhead=none", "constraint=false", "weight=0", *outgoing_label_attrs]),
                 ),
                 SppmRouteSegment(
                     source_id=exit_anchor_id,
                     target_id=target,
-                    attrs=tuple([target_port, *edge_attrs]),
+                    attrs=tuple([target_port, *edge_attrs, *incoming_label_attrs]),
                 ),
             ),
         )
@@ -419,12 +428,12 @@ def _build_boundary_corridor_route(
             SppmRouteSegment(
                 source_id=source,
                 target_id=anchor_id,
-                attrs=tuple([source_port, "arrowhead=none", "constraint=false", "weight=0"]),
+                attrs=tuple([source_port, "arrowhead=none", "constraint=false", "weight=0", *outgoing_label_attrs]),
             ),
             SppmRouteSegment(
                 source_id=anchor_id,
                 target_id=target,
-                attrs=tuple([target_port, *edge_attrs]),
+                attrs=tuple([target_port, *edge_attrs, *incoming_label_attrs]),
             ),
         ),
     )
@@ -436,6 +445,8 @@ def _build_rework_route(
     source: str,
     target: str,
     edge_attrs: list[str],
+    wrap_plan: WrapPlan,
+    is_boundary: bool,
     wrap_ports: tuple[str, str],
     is_branch_out: bool,
     source_kind: str,
@@ -457,6 +468,12 @@ def _build_rework_route(
         port_policy=port_policy,
     )
     route_attrs = ["constraint=false", "minlen=3", "weight=0", "style=dashed", *edge_attrs]
+    outgoing_label_attrs, incoming_label_attrs = build_sppm_continuation_label_attrs(
+        source=source,
+        target=target,
+        wrap_plan=wrap_plan,
+        is_secondary=is_boundary,
+    )
     anchor_id = sppm_rework_anchor_id(source=source, target=target)
     anchor = SppmRouteAnchor(
         anchor_id=anchor_id,
@@ -481,11 +498,14 @@ def _build_rework_route(
     rework_data_box_attrs = _build_rework_data_box_attrs(edge.get("metadata"), is_branch_out=is_branch_out)
     if rework_data_box_attrs is not None:
         first_segment_attrs = tuple([*first_segment_attrs, *rework_data_box_attrs])
+    if outgoing_label_attrs:
+        first_segment_attrs = tuple([*first_segment_attrs, *outgoing_label_attrs])
 
     second_segment_attrs = list([target_port, *route_attrs])
     branch_label = edge.get("outcome") or edge.get("label")
     if branch_label is not None:
         second_segment_attrs.append(f'xlabel="{str(branch_label)}"')
+    second_segment_attrs.extend(incoming_label_attrs)
 
     return SppmEdgeRoute(
         source=source,
@@ -566,3 +586,5 @@ def _format_rework_metadata_value(key: str, value: object) -> str | None:
         return f"{raw_value} {unit}"
     text = str(value).strip()
     return text or None
+
+

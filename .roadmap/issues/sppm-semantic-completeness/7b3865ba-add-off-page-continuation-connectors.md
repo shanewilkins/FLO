@@ -3,23 +3,23 @@ id: 7b3865ba
 title: Add off-page continuation connectors
 headline: Represent flow continuation cleanly when an SPPM map resumes elsewhere.
 priority: critical
-status: todo
+status: closed
 archived: false
 issue_type: feature
 milestone: sppm-semantic-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-05T17:17:33.329455+00:00'
-updated: '2026-05-06T17:05:33.398915+00:00'
+updated: '2026-05-06T22:31:49.799524+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
 depends_on:
-- e7d428a4
+- 9b8a4c2d
 blocks: []
-actual_start_date: null
-actual_end_date: null
-progress_percentage: null
+actual_start_date: '2026-05-06T22:14:17.267797+00:00'
+actual_end_date: '2026-05-06T22:31:49.710277+00:00'
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null
