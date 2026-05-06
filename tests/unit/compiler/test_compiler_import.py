@@ -180,6 +180,8 @@ def test_compile_promotes_top_level_resources_to_process_metadata():
     assert ir.process_metadata["equipment"][0]["id"] == "oven"
     assert ir.process_metadata["locations"][0]["id"] == "prep_station"
     assert ir.process_metadata["workers"][0]["id"] == "baker"
+    assert ir.process_metadata["process_id"] == "p"
+    assert ir.process_metadata["process_name"] == "Process"
 
 
 def test_compile_promotes_grouped_materials_to_process_metadata():

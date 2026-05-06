@@ -4,14 +4,14 @@ title: Add process title and metadata header
 headline: Render a process-level title and metadata band that lets an SPPM map stand
   alone.
 priority: critical
-status: in-progress
+status: closed
 archived: false
 issue_type: feature
 milestone: sppm-semantic-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-05T17:17:31.990288+00:00'
-updated: '2026-05-06T18:17:19.933845+00:00'
+updated: '2026-05-06T20:29:50.736548+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
@@ -19,8 +19,8 @@ depends_on:
 - a3e631a8
 blocks: []
 actual_start_date: '2026-05-06T18:17:19.845643+00:00'
-actual_end_date: null
-progress_percentage: 0.0
+actual_end_date: '2026-05-06T20:29:50.639374+00:00'
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null

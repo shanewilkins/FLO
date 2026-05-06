@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any
 from ._graphviz_dot_common import _escape
 from ._graphviz_dot_common import _project_parent_only_subprocess_view
 from ._autoformat_wrap import append_wrap_layout_hints, build_wrap_plan, WrapPlan
+from ._process_header import build_process_header_rows, extract_process_header_context
 from ._sppm_edge_render import _render_sppm_edge, _render_sppm_spine_constraints, _render_sppm_secondary_line_constraints
 from ._sppm_label_html import _sppm_html_label
 from ._sppm_text import format_text_field, normalize_space
@@ -34,8 +35,6 @@ _SPPM_DECISION_MIN_WIDTH = 1.64
 _SPPM_DECISION_MIN_HEIGHT = 0.94
 _SPPM_QUEUE_CIRCLE_DIAMETER = 1.44  # inches
 _SPPM_QUEUE_NAME_MAX_LEN = 20
-
-
 def _get_wait_time_minutes(node: dict[str, Any]) -> float:
     """Extract wait time in minutes from node metadata, or 0 if not present."""
     metadata = node.get("metadata") or {}
@@ -62,6 +61,7 @@ def _render_sppm_graph(process: IR | dict[str, Any], options: RenderOptions) -> 
     nodes, edges = _extract_sppm_nodes_edges(process)
     if options.subprocess_view == "parent_only":
         nodes, edges = _project_parent_only_subprocess_view(nodes, edges)
+    header = _build_sppm_header(process=process, options=options, nodes=nodes, edges=edges)
     
     # Queue nodes are now explicit in the IR; no synthetic injection needed.
     nodes_by_id: dict[str, dict[str, Any]] = {
@@ -90,6 +90,10 @@ def _render_sppm_graph(process: IR | dict[str, Any], options: RenderOptions) -> 
     )
     lines.append("  node [fontname=Helvetica];")
     lines.append("  edge [fontname=Helvetica];")
+    if header:
+        lines.append("  labelloc=t;")
+        lines.append('  labeljust=l;')
+        lines.append(f"  label={header};")
 
     append_wrap_layout_hints(lines=lines, options=options, plan=wrap_plan)
 
@@ -415,3 +419,39 @@ def _extract_sppm_from_dict(
 
     edges = [e for e in edges_raw if isinstance(e, dict)]
     return nodes, edges
+
+
+def _build_sppm_header(
+    *,
+    process: IR | dict[str, Any],
+    options: RenderOptions,
+    nodes: list[dict[str, Any]],
+    edges: list[dict[str, Any]],
+) -> str:
+    context = extract_process_header_context(process)
+    title_text = normalize_space(context.title)
+    if not title_text:
+        return ""
+
+    extra_rows: list[tuple[str, str]] = []
+    if options.sppm_output_profile != "default":
+        extra_rows.append(("Profile", options.sppm_output_profile))
+    if options.subprocess_view != "expanded":
+        extra_rows.append(("Subprocess View", options.subprocess_view.replace("_", "-")))
+    extra_rows.append(("Nodes", str(len(nodes))))
+    extra_rows.append(("Edges", str(len(edges))))
+
+    row_values = build_process_header_rows(context=context, extra_rows=extra_rows)
+
+    metadata_cells = "".join(
+        f'<TD ALIGN="LEFT"><FONT FACE="Helvetica" POINT-SIZE="9"><B>{_escape(label)}:</B> {_escape(value)}</FONT></TD>'
+        for label, value in row_values
+    )
+    metadata_row = f"<TR>{metadata_cells}</TR>" if metadata_cells else ""
+
+    return (
+        '<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B0BEC5" BGCOLOR="#FAFAFA">'
+        f'<TR><TD ALIGN="LEFT"><FONT FACE="Helvetica" POINT-SIZE="16"><B>{_escape(title_text)}</B></FONT></TD></TR>'
+        f"{metadata_row}"
+        "</TABLE>>"
+    )

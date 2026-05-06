@@ -147,6 +147,29 @@ def test_run_sppm_parent_only_shows_subprocess_marker_and_hides_subnodes():
     assert '"execute_service"' not in result.output
 
 
+def test_run_sppm_renders_process_title_header_from_model():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "examples/reference/sppm_feature_showcase.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+            "--sppm-output-profile",
+            "print",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "SPPM Feature Showcase" in result.output
+    assert "Process:" in result.output
+    assert "sppm_feature_showcase_v1" in result.output
+    assert "Profile:" in result.output
+    assert "print" in result.output
+
+
 
 def test_run_spaghetti_diagram_emits_neato_layout():
     runner = CliRunner()

@@ -42,6 +42,14 @@ def _resolve_process_metadata(adapter: dict[str, Any]) -> dict[str, Any] | None:
     metadata_raw = process.get("metadata")
     metadata: dict[str, Any] = dict(metadata_raw) if isinstance(metadata_raw, dict) else {}
 
+    process_id = process.get("id")
+    if isinstance(process_id, str) and process_id.strip():
+        metadata.setdefault("process_id", process_id)
+
+    process_name = process.get("name")
+    if isinstance(process_name, str) and process_name.strip():
+        metadata.setdefault("process_name", process_name)
+
     for key in ("materials", "equipment", "locations", "workers"):
         value = adapter.get(key)
         if not _is_resource_collection(value):
