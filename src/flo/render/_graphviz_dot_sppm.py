@@ -15,6 +15,7 @@ from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
 from ._graphviz_dot_common import _escape
+from ._graphviz_dot_common import _project_parent_only_subprocess_view
 from ._autoformat_wrap import append_wrap_layout_hints, build_wrap_plan, WrapPlan
 from ._sppm_edge_render import _render_sppm_edge, _render_sppm_spine_constraints, _render_sppm_secondary_line_constraints
 from ._sppm_label_html import _sppm_html_label
@@ -59,6 +60,8 @@ def render_sppm_dot(process: IR | dict[str, Any], options: RenderOptions | None 
 
 def _render_sppm_graph(process: IR | dict[str, Any], options: RenderOptions) -> tuple[str, SppmSvgPostprocessContract]:
     nodes, edges = _extract_sppm_nodes_edges(process)
+    if options.subprocess_view == "parent_only":
+        nodes, edges = _project_parent_only_subprocess_view(nodes, edges)
     
     # Queue nodes are now explicit in the IR; no synthetic injection needed.
     nodes_by_id: dict[str, dict[str, Any]] = {
@@ -265,6 +268,8 @@ def _render_sppm_task_node(
     note = str(node.get("note") or "")
     style = _resolve_sppm_value_style(metadata=metadata, theme=theme)
     html_label = _sppm_html_label(
+        node_id=node_id,
+        kind=str(node.get("kind") or node.get("type") or "task").lower(),
         name=name,
         metadata=metadata,
         workers=workers,
@@ -352,6 +357,7 @@ def _extract_sppm_from_ir(process: Any) -> tuple[list[dict[str, Any]], list[dict
                 "note": attrs.get("note") if isinstance(attrs, dict) else None,
                 "metadata": raw_metadata if isinstance(raw_metadata, dict) else {},
                 "workers": raw_workers if isinstance(raw_workers, list) else [],
+                "subprocess_parent": attrs.get("subprocess_parent") if isinstance(attrs, dict) else None,
             }
         )
 
@@ -403,6 +409,7 @@ def _extract_sppm_from_dict(
                 "note": node.get("note"),
                 "metadata": metadata,
                 "workers": _get_node_attr(node, "workers", expected_type=list) or [],
+                "subprocess_parent": _get_node_attr(node, "subprocess_parent", expected_type=str),
             }
         )
 

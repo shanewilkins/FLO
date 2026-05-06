@@ -3,22 +3,22 @@ id: ce07a4e0
 title: Add subprocess notation and detail-map references
 headline: Support subprocess markers and detail-map references in native SPPM output.
 priority: critical
-status: todo
+status: closed
 archived: false
 issue_type: feature
 milestone: sppm-semantic-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-05T17:17:31.412873+00:00'
-updated: '2026-05-06T17:05:30.659514+00:00'
+updated: '2026-05-06T18:16:27.779837+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
 depends_on: []
 blocks: []
-actual_start_date: null
+actual_start_date: '2026-05-06T18:04:26.796880+00:00'
 actual_end_date: null
-progress_percentage: null
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null

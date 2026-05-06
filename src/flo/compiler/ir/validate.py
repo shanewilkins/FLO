@@ -5,6 +5,7 @@ from typing import Any
 
 from .models import IR
 from .enums import ProcessValueClass
+from .validate_subprocess import validate_subprocess_metadata
 from flo.services.errors import ValidationError
 from flo.export import ir_to_schema_dict
 from pathlib import Path
@@ -45,6 +46,7 @@ def validate_ir(obj: Any) -> None:
     _validate_node_io_lists(obj)
     _validate_node_time_metadata(obj)
     _validate_node_value_class(obj)
+    validate_subprocess_metadata(obj)
     _validate_edge_metadata(obj)
     _validate_process_resources(obj)
     _validate_node_connectivity(obj, incoming_counts, outgoing_counts)

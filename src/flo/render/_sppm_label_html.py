@@ -5,6 +5,8 @@ from __future__ import annotations
 import textwrap
 from typing import Any
 
+from flo.compiler.ir.subprocess_refs import resolve_subprocess_detail_map_reference
+
 from ._sppm_text import apply_density_filter, abbreviate_workers, format_text_field, normalize_space
 from ._sppm_themes import SppmNodeStyle
 from .options import RenderOptions
@@ -72,6 +74,8 @@ def _build_label_metric_lines(
 
 
 def _sppm_html_label(
+    node_id: str,
+    kind: str,
     name: str,
     metadata: dict[str, Any],
     workers: list[Any],
@@ -81,6 +85,8 @@ def _sppm_html_label(
     port_counts: dict[str, int],
 ) -> str:
     """Build a Graphviz HTML-like table label: colored header + white info sub-row."""
+    if kind == "subprocess":
+        name = f"[Subprocess] {name}"
     if options.sppm_max_label_step_name is None:
         name_text = _soft_wrap_text(normalize_space(name), width=_SPPM_NAME_SOFT_WRAP)
     else:
@@ -105,6 +111,13 @@ def _sppm_html_label(
         workers_line=workers_line,
         notes_line=notes_line,
     )
+    if kind == "subprocess":
+        detail_map_ref = resolve_subprocess_detail_map_reference(node_id=node_id, metadata=metadata)
+        info_lines = [
+            "Subprocess",
+            f"Detail map: {detail_map_ref}",
+            *info_lines,
+        ]
 
     body_table = ""
     if info_lines:

@@ -125,6 +125,28 @@ def test_run_subprocess_view_parent_only_hides_subnodes():
     assert '"prep_subprocess" [label="Prep Subprocess"' in result.output
 
 
+def test_run_sppm_parent_only_shows_subprocess_marker_and_hides_subnodes():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "examples/reference/sppm_feature_showcase.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+            "--subprocess-view",
+            "parent-only",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "[Subprocess] Execute" in result.output
+    assert "Detail map: process" in result.output
+    assert '"assess_scope"' not in result.output
+    assert '"execute_service"' not in result.output
+
+
 
 def test_run_spaghetti_diagram_emits_neato_layout():
     runner = CliRunner()
