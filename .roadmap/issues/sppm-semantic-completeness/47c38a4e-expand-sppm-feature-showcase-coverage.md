@@ -3,7 +3,7 @@ id: 47c38a4e
 title: Expand SPPM feature showcase coverage
 headline: Turn the showcase example into a true reference artifact for the supported
   SPPM feature set.
-priority: medium
+priority: critical
 status: todo
 archived: false
 issue_type: other
@@ -11,12 +11,14 @@ milestone: sppm-semantic-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-05T17:17:34.506491+00:00'
-updated: '2026-05-05T20:15:46.694983+00:00'
+updated: '2026-05-06T17:05:35.946999+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
 depends_on:
 - ce07a4e0
+- 5f2e3b71
+- 9b8a4c2d
 - cb312213
 - 653b0e4c
 - 7b3865ba
@@ -36,7 +38,7 @@ comments: []
 github_issue: null
 ---
 
-# Expand SPPM feature showcase coverage
+## Expand SPPM feature showcase coverage
 
 Update the showcase example so it demonstrates the full set of supported SPPM features, including newly added semantic capabilities.
 

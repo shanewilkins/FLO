@@ -2,7 +2,7 @@
 id: 653b0e4c
 title: Add analytics footer band
 headline: Add a bottom summary band for analytics and explanatory totals in SPPM output.
-priority: high
+priority: critical
 status: todo
 archived: false
 issue_type: feature
@@ -10,7 +10,7 @@ milestone: sppm-semantic-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-05T17:17:32.676748+00:00'
-updated: '2026-05-05T19:42:37.663221+00:00'
+updated: '2026-05-06T17:05:32.358520+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null

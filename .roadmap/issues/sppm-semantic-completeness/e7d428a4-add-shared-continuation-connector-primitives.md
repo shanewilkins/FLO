@@ -3,15 +3,15 @@ id: e7d428a4
 title: Add shared continuation connector primitives
 headline: Build reusable continuation primitives that any renderer can adopt when
   flow resumes elsewhere.
-priority: high
+priority: critical
 status: todo
 archived: false
 issue_type: feature
-milestone: renderer-platform-completeness
+milestone: sppm-semantic-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-05T17:17:37.385797+00:00'
-updated: '2026-05-05T19:42:35.773569+00:00'
+updated: '2026-05-06T17:08:54.323885+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null

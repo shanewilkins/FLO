@@ -3,15 +3,15 @@ id: 048bbcb1
 title: Add shared overflow and pagination rules
 headline: Define renderer-agnostic overflow behavior for document-sized outputs and
   multi-page flows.
-priority: high
+priority: critical
 status: todo
 archived: false
 issue_type: feature
-milestone: renderer-platform-completeness
+milestone: sppm-semantic-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-05T17:17:36.794398+00:00'
-updated: '2026-05-05T19:42:35.137510+00:00'
+updated: '2026-05-06T17:08:53.515012+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
@@ -31,7 +31,7 @@ comments: []
 github_issue: null
 ---
 
-# Add shared overflow and pagination rules
+## Add shared overflow and pagination rules
 
 Define renderer-agnostic overflow and pagination behavior for multi-page and print-oriented diagram outputs.
 
@@ -42,8 +42,10 @@ Once rendering targets real document constraints, oversized diagrams need consis
 ## Acceptance Criteria
 
 - The platform has explicit rules for overflow handling and page continuation.
+- Page-break rules prefer semantically stable boundaries over purely geometric splits.
 - Multi-page or overflow-aware rendering is documented well enough for renderer adoption.
 - Continuation behavior can cooperate with shared connector primitives.
+- Warning, fallback, and strict-failure behaviors are documented where overflow policy changes the requested output mode.
 - Single-page outputs preserve current behavior unless overflow rules are engaged.
 
 ## Notes

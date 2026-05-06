@@ -32,7 +32,7 @@ repos:
         language: system
         pass_filenames: true
         files: "\\.py$"
-        stages: ["commit"]
+        stages: ["pre-commit"]
         description: "Fail commit if any function/class complexity > 15"
       - id: vulture-check
         name: vulture (via uv)

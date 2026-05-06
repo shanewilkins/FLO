@@ -3,15 +3,15 @@ id: a3e631a8
 title: Add reusable header footer document bands
 headline: Create shared document-band primitives for titles, headers, footers, and
   metadata blocks.
-priority: high
+priority: critical
 status: todo
 archived: false
 issue_type: feature
-milestone: renderer-platform-completeness
+milestone: sppm-semantic-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-05T17:17:36.230631+00:00'
-updated: '2026-05-05T19:42:34.366047+00:00'
+updated: '2026-05-06T17:08:52.679217+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null

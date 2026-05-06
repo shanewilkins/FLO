@@ -2,7 +2,7 @@
 id: 7b3865ba
 title: Add off-page continuation connectors
 headline: Represent flow continuation cleanly when an SPPM map resumes elsewhere.
-priority: high
+priority: critical
 status: todo
 archived: false
 issue_type: feature
@@ -10,7 +10,7 @@ milestone: sppm-semantic-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-05T17:17:33.329455+00:00'
-updated: '2026-05-05T19:42:38.890237+00:00'
+updated: '2026-05-06T17:05:33.398915+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
@@ -30,7 +30,7 @@ comments: []
 github_issue: null
 ---
 
-# Add off-page continuation connectors
+## Add off-page continuation connectors
 
 Introduce continuation symbols for flows that resume elsewhere or on another page while preserving clear SPPM semantics.
 
@@ -42,6 +42,8 @@ Continuation markers are necessary once maps exceed a single self-contained canv
 
 - SPPM output can render explicit continuation markers for flows that resume elsewhere.
 - Continuation labels or references are stable and understandable to readers.
+- Main-spine continuation and secondary branch or rework continuation can use different visual emphasis while remaining semantically explicit.
+- Continuation labels can incorporate stable visible step references where appropriate.
 - Existing edge routing and annotations continue to render correctly around continuation markers.
 - The notation can be reused later by shared renderer-platform primitives where appropriate.
 

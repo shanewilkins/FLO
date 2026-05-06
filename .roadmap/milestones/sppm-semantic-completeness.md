@@ -1,16 +1,15 @@
 ---
 name: sppm-semantic-completeness
-headline: Complete the SPPM notation and book-grade publishing features that are specific
-  to SPPM itself.
-description: Complete the SPPM notation and book-grade publishing features that are specific
-  to SPPM itself.
-due_date: null
+headline: 'Top priority milestone for this week: complete SPPM publication semantics
+  and book-grade static output by Friday, 2026-05-08, including hierarchy-aware subprocess
+  handling, cross-map references, continuation behavior, and publication-ready artifacts.'
+due_date: '2026-05-08T00:00:00'
 status: open
 archived: false
 github_milestone: null
-created: '2026-05-05T17:16:24.580729+00:00'
-updated: '2026-05-05T17:16:24.580731+00:00'
-project_id: e7961ee8
+created: '2026-05-06T17:03:01.309966+00:00'
+updated: '2026-05-06T17:05:29.808545+00:00'
+project_id: null
 calculated_progress: null
 last_progress_update: null
 completion_velocity: null
@@ -19,10 +18,5 @@ actual_start_date: null
 actual_end_date: null
 comments: []
 ---
-
-
-# SPPM Semantic Completeness
-
-Complete the SPPM notation and book-grade publishing features that are specific to SPPM itself.
 
 

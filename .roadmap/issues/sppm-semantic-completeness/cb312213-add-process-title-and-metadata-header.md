@@ -3,7 +3,7 @@ id: cb312213
 title: Add process title and metadata header
 headline: Render a process-level title and metadata band that lets an SPPM map stand
   alone.
-priority: high
+priority: critical
 status: todo
 archived: false
 issue_type: feature
@@ -11,7 +11,7 @@ milestone: sppm-semantic-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-05T17:17:31.990288+00:00'
-updated: '2026-05-05T19:42:37.032515+00:00'
+updated: '2026-05-06T17:05:31.506199+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null

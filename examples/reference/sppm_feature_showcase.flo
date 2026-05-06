@@ -56,7 +56,7 @@ steps:
         unit: min
 
   - id: process
-    kind: task
+    kind: subprocess
     name: Execute Core Work
     workers:
       - Specialist
@@ -69,6 +69,36 @@ steps:
       wait_time:
         value: 7
         unit: min
+    subnodes:
+      - id: assess_scope
+        kind: task
+        name: Assess Service Scope
+        workers:
+          - Specialist
+        metadata:
+          value_class: RNVA
+          description: Review request details and confirm the work plan.
+          cycle_time:
+            value: 5
+            unit: min
+          wait_time:
+            value: 1
+            unit: min
+
+      - id: execute_service
+        kind: task
+        name: Execute Service Activity
+        workers:
+          - Specialist
+        metadata:
+          value_class: VA
+          description: Complete the core customer-facing service activity.
+          cycle_time:
+            value: 13
+            unit: min
+          wait_time:
+            value: 6
+            unit: min
 
   - id: qa
     kind: decision
@@ -148,6 +178,12 @@ transitions:
   - source: process_queue
     target: process
 
+  - source: process
+    target: assess_scope
+
+  - source: assess_scope
+    target: execute_service
+
   - source: triage
     target: rework_intake
     outcome: no
@@ -162,7 +198,7 @@ transitions:
     edge_type: rework
     rework: true
 
-  - source: process
+  - source: execute_service
     target: qa
 
   - source: qa
