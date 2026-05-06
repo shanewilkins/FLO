@@ -5,9 +5,9 @@ from typing import Any
 
 from .models import IR
 from .enums import ProcessValueClass
+from .schema_projection import ir_to_schema_dict
 from .validate_subprocess import validate_subprocess_metadata
 from flo.services.errors import ValidationError
-from flo.export import ir_to_schema_dict
 from pathlib import Path
 import json
 
