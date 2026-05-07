@@ -60,6 +60,8 @@ def test_explicit_layout_fit_overrides_profile_defaults():
 def test_layout_spacing_defaults_to_standard():
     options = RenderOptions.from_mapping({"diagram": "sppm"})
     assert options.layout_spacing == "standard"
+    assert options.subprocess_view == "parent_only"
+    assert options.sppm_projection == "top_level"
 
 
 def test_layout_spacing_compact_is_respected():
@@ -93,3 +95,17 @@ def test_sppm_footer_render_inputs_parse_from_mapping():
 
     assert options.sppm_footer_metrics == (("Lead Time", "24 min"), ("Queue", "7 min"))
     assert options.sppm_footer_notes == ("Draft for review", "Confidential")
+
+
+def test_sppm_projection_and_focus_parse_from_mapping():
+    options = RenderOptions.from_mapping(
+        {
+            "diagram": "sppm",
+            "sppm_projection": "child-map",
+            "sppm_focus_subprocess": " prep ",
+        }
+    )
+
+    assert options.sppm_projection == "child_map"
+    assert options.sppm_focus_subprocess == "prep"
+    assert options.subprocess_view == "parent_only"

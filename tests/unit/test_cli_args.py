@@ -128,6 +128,26 @@ def test_parse_args_sppm_extended_options(services):
     )
 
 
+def test_parse_args_sppm_projection_options(services):
+    path, command, options, _, _ = parse_args(
+        [
+            "file.flo",
+            "--diagram",
+            "sppm",
+            "--sppm-projection",
+            "child-map",
+            "--sppm-focus-subprocess",
+            "prep",
+        ],
+        services,
+    )
+
+    assert path == "file.flo"
+    assert command == "run"
+    assert options["sppm_projection"] == "child-map"
+    assert options["sppm_focus_subprocess"] == "prep"
+
+
 def _assert_expected_options(options: dict[str, object], expected: dict[str, object]) -> None:
     for key, value in expected.items():
         assert options[key] == value

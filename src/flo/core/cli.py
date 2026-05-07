@@ -132,6 +132,8 @@ def _build_render_opts(
     orientation: Optional[str],
     show_notes: bool,
     subprocess_view: Optional[str],
+    sppm_projection: Optional[str],
+    sppm_focus_subprocess: Optional[str],
     spaghetti_channel: Optional[str],
     spaghetti_people_mode: Optional[str],
     sppm_theme: Optional[str],
@@ -160,6 +162,8 @@ def _build_render_opts(
         ("detail", detail),
         ("orientation", orientation),
         ("subprocess_view", subprocess_view),
+        ("sppm_projection", sppm_projection),
+        ("sppm_focus_subprocess", sppm_focus_subprocess),
         ("spaghetti_channel", spaghetti_channel),
         ("spaghetti_people_mode", spaghetti_people_mode),
         ("sppm_theme", sppm_theme),
@@ -211,6 +215,8 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
 @click.option("--orientation", type=click.Choice(["lr", "tb"]), help="Layout orientation for DOT output")
 @click.option("--show-notes", is_flag=True, help="Include node notes in DOT labels")
 @click.option("--subprocess-view", type=click.Choice(["expanded", "parent-only"]), help="Subprocess rendering mode")
+@click.option("--sppm-projection", type=click.Choice(["top-level", "child-map", "inline"]), help="SPPM hierarchy projection mode")
+@click.option("--sppm-focus-subprocess", help="Subprocess node id to focus for child-map or inline SPPM output")
 @click.option("--spaghetti-channel", type=click.Choice(["both", "material", "people"]), help="Movement channel for spaghetti diagrams")
 @click.option("--spaghetti-people-mode", type=click.Choice(["worker", "aggregate"]), help="People trace mode for spaghetti diagrams")
 @click.option("--sppm-theme", type=click.Choice(["default", "print", "monochrome"]), help="Color theme for SPPM diagrams")
@@ -240,6 +246,8 @@ def run_cmd(
     orientation: Optional[str],
     show_notes: bool,
     subprocess_view: Optional[str],
+    sppm_projection: Optional[str],
+    sppm_focus_subprocess: Optional[str],
     spaghetti_channel: Optional[str],
     spaghetti_people_mode: Optional[str],
     sppm_theme: Optional[str],
@@ -270,6 +278,8 @@ def run_cmd(
         orientation=orientation,
         show_notes=show_notes,
         subprocess_view=subprocess_view,
+        sppm_projection=sppm_projection,
+        sppm_focus_subprocess=sppm_focus_subprocess,
         spaghetti_channel=spaghetti_channel,
         spaghetti_people_mode=spaghetti_people_mode,
         sppm_theme=sppm_theme,
@@ -322,6 +332,8 @@ def validate_cmd(path: Optional[str], verbose: bool) -> None:  # pragma: no cove
 @click.option("--orientation", type=click.Choice(["lr", "tb"]), help="Layout orientation for DOT output")
 @click.option("--show-notes", is_flag=True, help="Include node notes in DOT labels")
 @click.option("--subprocess-view", type=click.Choice(["expanded", "parent-only"]), help="Subprocess rendering mode")
+@click.option("--sppm-projection", type=click.Choice(["top-level", "child-map", "inline"]), help="SPPM hierarchy projection mode")
+@click.option("--sppm-focus-subprocess", help="Subprocess node id to focus for child-map or inline SPPM output")
 @click.option("--spaghetti-channel", type=click.Choice(["both", "material", "people"]), help="Movement channel for spaghetti diagrams")
 @click.option("--spaghetti-people-mode", type=click.Choice(["worker", "aggregate"]), help="People trace mode for spaghetti diagrams")
 @click.option("--sppm-theme", type=click.Choice(["default", "print", "monochrome"]), help="Color theme for SPPM diagrams")
@@ -349,6 +361,8 @@ def export_cmd(
     orientation: Optional[str],
     show_notes: bool,
     subprocess_view: Optional[str],
+    sppm_projection: Optional[str],
+    sppm_focus_subprocess: Optional[str],
     spaghetti_channel: Optional[str],
     spaghetti_people_mode: Optional[str],
     sppm_theme: Optional[str],
@@ -377,6 +391,8 @@ def export_cmd(
         orientation=orientation,
         show_notes=show_notes,
         subprocess_view=subprocess_view,
+        sppm_projection=sppm_projection,
+        sppm_focus_subprocess=sppm_focus_subprocess,
         spaghetti_channel=spaghetti_channel,
         spaghetti_people_mode=spaghetti_people_mode,
         sppm_theme=sppm_theme,

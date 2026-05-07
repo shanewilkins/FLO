@@ -1,6 +1,28 @@
 from flo.render import render_dot
 
 
+def test_sppm_default_top_level_collapses_subprocess_children():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "prep", "kind": "subprocess", "name": "Prep"},
+            {"id": "gather", "kind": "task", "name": "Gather", "subprocess_parent": "prep"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "prep"},
+            {"source": "prep", "target": "gather"},
+            {"source": "gather", "target": "end"},
+        ],
+    }
+
+    out = render_dot(ir_like, options={"diagram": "sppm"})
+
+    assert '"gather"' not in out
+    assert '"prep"' in out
+    assert '"prep" -> "end"' in out
+
+
 def test_sppm_parent_only_hides_subprocess_children_and_collapses_path():
     ir_like = {
         "nodes": [
@@ -23,6 +45,89 @@ def test_sppm_parent_only_hides_subprocess_children_and_collapses_path():
     assert '"prep"' in out
     assert '"start" -> "prep"' in out
     assert '"prep" -> "end"' in out
+
+
+def test_sppm_child_map_focuses_one_subprocess_with_entry_and_exit_context():
+    ir_like = {
+        "process": {"id": "demo", "name": "Demo Process"},
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "prep", "kind": "subprocess", "name": "Prep"},
+            {"id": "gather", "kind": "task", "name": "Gather", "subprocess_parent": "prep"},
+            {"id": "mix", "kind": "task", "name": "Mix", "subprocess_parent": "prep"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "prep"},
+            {"source": "prep", "target": "gather"},
+            {"source": "gather", "target": "mix"},
+            {"source": "mix", "target": "end"},
+        ],
+    }
+
+    out = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "sppm_projection": "child-map",
+            "sppm_focus_subprocess": "prep",
+        },
+    )
+
+    assert '"start"' in out
+    assert '"prep"' in out
+    assert '"gather"' in out
+    assert '"mix"' in out
+    assert '"end"' in out
+    assert "Projection:" in out
+    assert "child-map" in out
+    assert "Focus:" in out
+    assert "prep" in out
+    assert "Entry Context:" in out
+    assert "start" in out
+    assert "Exit Context:" in out
+    assert "end" in out
+
+
+def test_sppm_inline_projection_falls_back_to_child_map_when_budget_exceeded():
+    ir_like = {
+        "process": {"id": "demo", "name": "Demo Process"},
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "prep", "kind": "subprocess", "name": "Prep"},
+            {"id": "a", "kind": "task", "name": "A", "subprocess_parent": "prep"},
+            {"id": "b", "kind": "task", "name": "B", "subprocess_parent": "prep"},
+            {"id": "c", "kind": "task", "name": "C", "subprocess_parent": "prep"},
+            {"id": "d", "kind": "task", "name": "D", "subprocess_parent": "prep"},
+            {"id": "e", "kind": "task", "name": "E", "subprocess_parent": "prep"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "prep"},
+            {"source": "prep", "target": "a"},
+            {"source": "a", "target": "b"},
+            {"source": "b", "target": "c"},
+            {"source": "c", "target": "d"},
+            {"source": "d", "target": "e"},
+            {"source": "e", "target": "end"},
+        ],
+    }
+
+    out = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "sppm_projection": "inline",
+            "sppm_focus_subprocess": "prep",
+            "layout_fit": "fit-strict",
+            "layout_target_columns": 3,
+        },
+    )
+
+    assert "Projection Fallback:" in out
+    assert "inline budget exceeded" in out
+    assert "Projection:" in out
+    assert "child-map" in out
 
 
 def test_sppm_subprocess_nodes_include_marker_and_detail_map_reference():

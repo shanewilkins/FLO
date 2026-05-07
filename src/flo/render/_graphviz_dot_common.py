@@ -15,9 +15,26 @@ def _project_parent_only_subprocess_view(
 
     if not hidden_ids:
         return nodes, edges
+    return _project_subprocess_visible_ids(nodes, edges, visible_ids=visible_ids)
+
+
+def _project_subprocess_visible_ids(
+    nodes: list[dict[str, Any]],
+    edges: list[dict[str, Any]],
+    *,
+    visible_ids: set[str],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    all_ids = {str(node.get("id") or "") for node in nodes if node.get("id")}
+    effective_visible_ids = {node_id for node_id in visible_ids if node_id in all_ids}
+    hidden_ids = all_ids - effective_visible_ids
+    visible_nodes = [
+        node
+        for node in nodes
+        if (node_id := str(node.get("id") or "")) and node_id in effective_visible_ids
+    ]
     outgoing = _index_outgoing_edges(edges)
     collapsed_edges = _collapse_parent_only_edges(
-        visible_ids=visible_ids,
+        visible_ids=effective_visible_ids,
         hidden_ids=hidden_ids,
         outgoing=outgoing,
     )

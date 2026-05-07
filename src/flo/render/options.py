@@ -9,7 +9,8 @@ DiagramType = Literal["flowchart", "swimlane", "spaghetti", "sppm"]
 RenderProfile = Literal["default", "analysis"]
 DetailLevel = Literal["summary", "standard", "verbose"]
 Orientation = Literal["lr", "tb"]
-SubprocessView = Literal["expanded", "parent_only"]
+SubprocessView = Literal["expanded", "parent_only", "child_map", "inline"]
+SppmProjectionMode = Literal["top_level", "child_map", "inline"]
 SpaghettiChannel = Literal["both", "material", "people"]
 SpaghettiPeopleMode = Literal["aggregate", "worker"]
 SppmThemeName = Literal["default", "print", "monochrome"]
@@ -72,6 +73,8 @@ class RenderOptions:
     orientation: Orientation = "lr"
     show_notes: bool = False
     subprocess_view: SubprocessView = "expanded"
+    sppm_projection: SppmProjectionMode = "top_level"
+    sppm_focus_subprocess: str | None = None
     spaghetti_channel: SpaghettiChannel = "both"
     spaghetti_people_mode: SpaghettiPeopleMode = "aggregate"
     sppm_theme: SppmThemeName = "default"
@@ -107,6 +110,8 @@ class RenderOptions:
             orientation=_parse_orientation(effective_options),
             show_notes=_parse_bool(effective_options.get("show_notes", False)),
             subprocess_view=_parse_subprocess_view(effective_options),
+            sppm_projection=_parse_sppm_projection(effective_options),
+            sppm_focus_subprocess=_parse_optional_string(effective_options.get("sppm_focus_subprocess")),
             spaghetti_channel=_parse_spaghetti_channel(effective_options),
             spaghetti_people_mode=_parse_spaghetti_people_mode(effective_options, profile=profile),
             sppm_theme=_parse_sppm_theme(effective_options),
@@ -183,10 +188,37 @@ def _parse_orientation(options: Mapping[str, Any]) -> Orientation:
 
 
 def _parse_subprocess_view(options: Mapping[str, Any]) -> SubprocessView:
-    subprocess_view_raw = _normalized_option(options, "subprocess_view", "expanded")
+    default = "parent_only" if _parse_diagram(options) == "sppm" else "expanded"
+    subprocess_view_raw = _normalized_option(options, "subprocess_view", default)
     if subprocess_view_raw in {"parent-only", "parent_only", "parents-only", "parents_only"}:
         return "parent_only"
+    if subprocess_view_raw in {"child-map", "child_map", "child", "focused-child"}:
+        return "child_map"
+    if subprocess_view_raw in {"inline", "inline-expand", "inline_expand"}:
+        return "inline"
     return "expanded"
+
+
+def _parse_sppm_projection(options: Mapping[str, Any]) -> SppmProjectionMode:
+    raw = _normalized_option(options, "sppm_projection", "")
+    if raw in {"child-map", "child_map", "child"}:
+        return "child_map"
+    if raw in {"inline", "inline-expand", "inline_expand"}:
+        return "inline"
+
+    subprocess_view = _parse_subprocess_view(options)
+    if subprocess_view == "child_map":
+        return "child_map"
+    if subprocess_view == "inline":
+        return "inline"
+    return "top_level"
+
+
+def _parse_optional_string(value: Any) -> str | None:
+    if value is None:
+        return None
+    normalized = str(value).strip()
+    return normalized or None
 
 
 def _parse_spaghetti_channel(options: Mapping[str, Any]) -> SpaghettiChannel:

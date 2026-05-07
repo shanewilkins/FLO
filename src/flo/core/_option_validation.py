@@ -62,6 +62,8 @@ def ensure_render_options_compatible_with_output(options: dict | None, output_fo
             "orientation",
             "show_notes",
             "subprocess_view",
+            "sppm_projection",
+            "sppm_focus_subprocess",
             "spaghetti_channel",
             "spaghetti_people_mode",
             "sppm_theme",

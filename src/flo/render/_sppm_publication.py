@@ -18,6 +18,7 @@ from ._publication import (
     build_publication_bands,
     build_publication_canvas,
 )
+from ._sppm_projection import SppmProjectionContext
 from ._sppm_text import normalize_space
 from .options import RenderOptions
 
@@ -32,11 +33,19 @@ def build_sppm_publication_plan(
     options: RenderOptions,
     nodes: list[dict[str, Any]],
     edges: list[dict[str, Any]],
+    projection: SppmProjectionContext | None = None,
 ) -> PublicationPlan:
     """Build a renderer-independent single-page publication plan for SPPM output."""
     context = extract_process_header_context(process)
     title = normalize_space(context.title)
-    header_rows = _build_sppm_header_rows(context=context, options=options, nodes=nodes, edges=edges)
+    projection_context = projection or SppmProjectionContext(requested_mode="top_level", effective_mode="top_level")
+    header_rows = _build_sppm_header_rows(
+        context=context,
+        options=options,
+        nodes=nodes,
+        edges=edges,
+        projection=projection_context,
+    )
     footer_content = _build_sppm_footer_content(context=context, options=options)
     canvas = build_publication_canvas(
         bounds=PublicationBounds(width_px=options.layout_max_width_px or _DEFAULT_SPPM_PUBLICATION_WIDTH_PX),
@@ -56,7 +65,9 @@ def build_sppm_publication_plan(
         ),
         metadata={
             "diagram": "sppm",
-            "projection_mode": options.subprocess_view,
+            "projection_mode": projection_context.effective_mode,
+            "requested_projection_mode": projection_context.requested_mode,
+            "focus_subprocess": projection_context.focus_subprocess,
         },
     )
     series = PublicationSeries(
@@ -66,7 +77,9 @@ def build_sppm_publication_plan(
         pages=(page,),
         metadata={
             "diagram": "sppm",
-            "projection_mode": options.subprocess_view,
+            "projection_mode": projection_context.effective_mode,
+            "requested_projection_mode": projection_context.requested_mode,
+            "focus_subprocess": projection_context.focus_subprocess,
             "page_count": 1,
         },
     )
@@ -74,11 +87,18 @@ def build_sppm_publication_plan(
         title=title,
         primary_series_id=series.series_id,
         series=(series,),
-        artifact_slots=tuple(_build_sppm_child_slots(nodes=nodes, parent_series_id=series.series_id)),
+        artifact_slots=tuple(
+            _build_sppm_child_slots(
+                nodes=nodes,
+                parent_series_id=series.series_id,
+                focus_subprocess=projection_context.focus_subprocess,
+            )
+        ),
         metadata={
             "diagram": "sppm",
             "node_count": len(nodes),
             "edge_count": len(edges),
+            "projection_mode": projection_context.effective_mode,
         },
     )
 
@@ -89,22 +109,42 @@ def _build_sppm_header_rows(
     options: RenderOptions,
     nodes: list[dict[str, Any]],
     edges: list[dict[str, Any]],
+    projection: SppmProjectionContext,
 ) -> list[tuple[str, str]]:
     extra_rows: list[tuple[str, str]] = []
     if options.sppm_output_profile != "default":
         extra_rows.append(("Profile", options.sppm_output_profile))
-    if options.subprocess_view != "expanded":
-        extra_rows.append(("Subprocess View", options.subprocess_view.replace("_", "-")))
+    if projection.effective_mode == "top_level" and options.subprocess_view == "parent_only":
+        extra_rows.append(("Subprocess View", "parent-only"))
+    if projection.effective_mode != "top_level":
+        extra_rows.append(("Projection", projection.effective_mode.replace("_", "-")))
+    if projection.focus_subprocess:
+        extra_rows.append(("Focus", projection.focus_subprocess))
+    if projection.parent_subprocess:
+        extra_rows.append(("Parent", projection.parent_subprocess))
+    if projection.entry_context:
+        extra_rows.append(("Entry Context", ", ".join(projection.entry_context)))
+    if projection.exit_context:
+        extra_rows.append(("Exit Context", ", ".join(projection.exit_context)))
+    if projection.fallback_reason:
+        extra_rows.append(("Projection Fallback", projection.fallback_reason.replace("-", " ")))
     extra_rows.append(("Nodes", str(len(nodes))))
     extra_rows.append(("Edges", str(len(edges))))
     return build_process_header_rows(context=context, extra_rows=extra_rows)
 
 
-def _build_sppm_child_slots(*, nodes: list[dict[str, Any]], parent_series_id: str) -> list[PublicationArtifactSlot]:
+def _build_sppm_child_slots(
+    *,
+    nodes: list[dict[str, Any]],
+    parent_series_id: str,
+    focus_subprocess: str | None,
+) -> list[PublicationArtifactSlot]:
     slots: list[PublicationArtifactSlot] = []
     for node in nodes:
         node_id = str(node.get("id") or "").strip()
         if not node_id:
+            continue
+        if focus_subprocess and node_id == focus_subprocess:
             continue
         kind = str(node.get("kind") or node.get("type") or "").strip().lower()
         if kind != "subprocess":

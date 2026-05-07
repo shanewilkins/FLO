@@ -15,7 +15,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from ._autoformat_wrap import append_wrap_layout_hints, build_wrap_plan
-from ._graphviz_dot_common import _project_parent_only_subprocess_view
 from ._sppm_band_render import build_sppm_header, render_sppm_footer_band
 from ._sppm_edge_render import (
     _render_sppm_edge,
@@ -23,6 +22,7 @@ from ._sppm_edge_render import (
     _render_sppm_spine_constraints,
 )
 from ._sppm_node_render import render_sppm_node
+from ._sppm_projection import project_sppm_subprocess_view
 from ._sppm_publication import build_sppm_publication_plan
 from ._sppm_render_data import (
     SppmRenderNode,
@@ -48,10 +48,15 @@ def build_sppm_graph(
 ) -> tuple[str, SppmSvgPostprocessContract]:
     """Return DOT and postprocess contract for an SPPM render request."""
     nodes, edges = extract_sppm_nodes_edges(process)
-    if options.subprocess_view == "parent_only":
-        nodes, edges = _project_parent_only_subprocess_view(nodes, edges)
+    nodes, edges, projection = project_sppm_subprocess_view(nodes, edges, options=options)
 
-    publication = build_sppm_publication_plan(process=process, options=options, nodes=nodes, edges=edges)
+    publication = build_sppm_publication_plan(
+        process=process,
+        options=options,
+        nodes=nodes,
+        edges=edges,
+        projection=projection,
+    )
     header = build_sppm_header(publication=publication)
 
     nodes_by_id: dict[str, SppmRenderNode] = {str(node.get("id", "")): node for node in nodes if node.get("id")}

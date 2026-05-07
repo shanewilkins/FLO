@@ -38,6 +38,12 @@ def parse_args(argv: list | None, services: Services) -> Tuple[str | None, str, 
     parser.add_argument("--show-notes", action="store_true", help="Include node notes in DOT labels")
     parser.add_argument("--subprocess-view", choices=["expanded", "parent-only"], help="Subprocess rendering mode")
     parser.add_argument(
+        "--sppm-projection",
+        choices=["top-level", "child-map", "inline"],
+        help="SPPM hierarchy projection mode",
+    )
+    parser.add_argument("--sppm-focus-subprocess", help="Subprocess node id to focus for child-map or inline SPPM output")
+    parser.add_argument(
         "--spaghetti-channel",
         choices=["both", "material", "people"],
         help="Movement channel for spaghetti diagrams",
@@ -145,6 +151,8 @@ def _build_options_from_parsed(parsed: object) -> dict:
         "detail",
         "orientation",
         "subprocess_view",
+        "sppm_projection",
+        "sppm_focus_subprocess",
         "spaghetti_channel",
         "spaghetti_people_mode",
         "sppm_theme",
