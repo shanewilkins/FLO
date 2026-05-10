@@ -7,6 +7,7 @@ any invalid combination so the caller gets a clean, actionable message.
 
 from __future__ import annotations
 
+from flo.render._publication import resolve_publication_page_format
 from flo.render.options import parse_dimension
 from flo.services.errors import CLIError, EXIT_USAGE
 
@@ -19,6 +20,11 @@ def validate_sppm_numeric_render_options(options: dict | None) -> None:
             "Invalid value for --layout-max-width-px: expected a positive dimension using px, in, or cm.",
             code=EXIT_USAGE,
         )
+    if "publication_page_format" in opts:
+        try:
+            resolve_publication_page_format(str(opts.get("publication_page_format") or ""))
+        except ValueError as exc:
+            raise CLIError(str(exc), code=EXIT_USAGE) from exc
 
     numeric_flags = (
         "layout_target_columns",

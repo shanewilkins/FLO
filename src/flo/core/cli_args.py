@@ -97,6 +97,10 @@ def parse_args(argv: list | None, services: Services) -> Tuple[str | None, str, 
         "--layout-max-width-px",
         help="Max layout width hint for autoformat wrapping (supports px, in, cm)",
     )
+    parser.add_argument(
+        "--publication-page-format",
+        help="Named publication page preset (letter, a4, legal, tabloid)",
+    )
     parser.add_argument("--layout-target-columns", type=int, help="Target columns/steps per wrapped chunk")
     parser.add_argument("--sppm-max-label-step-name", type=int, help="Max step-name label length for SPPM")
     parser.add_argument("--sppm-max-label-workers", type=int, help="Max workers label length for SPPM")
@@ -162,6 +166,7 @@ def _build_options_from_parsed(parsed: object) -> dict:
         "layout_wrap",
         "layout_fit",
         "layout_spacing",
+        "publication_page_format",
         "sppm_step_numbering",
         "sppm_label_density",
         "sppm_wrap_strategy",

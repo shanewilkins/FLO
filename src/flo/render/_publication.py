@@ -9,6 +9,7 @@ PublicationRegionName = Literal["header", "body", "footer"]
 PublicationBandName = Literal["header", "footer"]
 PublicationSeriesKind = Literal["map", "child_map", "artifact"]
 PublicationArtifactKind = Literal["child_map", "artifact"]
+PublicationPageFormatName = Literal["letter", "a4", "legal", "tabloid"]
 
 
 @dataclass(frozen=True)
@@ -19,6 +20,50 @@ class PublicationMargins:
     right_px: int = 48
     bottom_px: int = 48
     left_px: int = 48
+
+
+@dataclass(frozen=True)
+class PublicationPageFormat:
+    """Named page-size preset with shared geometry defaults."""
+
+    name: PublicationPageFormatName
+    width_px: int
+    height_px: int
+    margins: PublicationMargins
+
+
+_PAGE_FORMAT_PRESETS: dict[str, PublicationPageFormat] = {
+    "letter": PublicationPageFormat(
+        name="letter",
+        width_px=816,
+        height_px=1056,
+        margins=PublicationMargins(top_px=48, right_px=48, bottom_px=48, left_px=48),
+    ),
+    "a4": PublicationPageFormat(
+        name="a4",
+        width_px=794,
+        height_px=1123,
+        margins=PublicationMargins(top_px=48, right_px=48, bottom_px=48, left_px=48),
+    ),
+    "legal": PublicationPageFormat(
+        name="legal",
+        width_px=816,
+        height_px=1344,
+        margins=PublicationMargins(top_px=48, right_px=48, bottom_px=48, left_px=48),
+    ),
+    "tabloid": PublicationPageFormat(
+        name="tabloid",
+        width_px=1056,
+        height_px=1632,
+        margins=PublicationMargins(top_px=48, right_px=48, bottom_px=48, left_px=48),
+    ),
+}
+
+_PAGE_FORMAT_ALIASES = {
+    "us-letter": "letter",
+    "us_legal": "legal",
+    "ledger": "tabloid",
+}
 
 
 @dataclass(frozen=True)
@@ -198,6 +243,34 @@ def _publication_page_id(*, series_id: str, page_key: str, page_number: int) -> 
     if normalized_key:
         return f"{series_id}-{normalized_key}"
     return f"{series_id}-p{page_number}"
+
+
+def resolve_publication_page_format(name: str) -> PublicationPageFormat:
+    """Return the named page-format preset or raise for unsupported names."""
+    normalized = str(name).strip().lower()
+    canonical = _PAGE_FORMAT_ALIASES.get(normalized, normalized)
+    preset = _PAGE_FORMAT_PRESETS.get(canonical)
+    if preset is None:
+        supported = ", ".join(sorted(_PAGE_FORMAT_PRESETS))
+        raise ValueError(f"Unsupported publication_page_format '{name}'. Supported formats: {supported}.")
+    return preset
+
+
+def build_publication_canvas_for_format(
+    *,
+    page_format: str,
+    header_height_px: int = 0,
+    footer_height_px: int = 0,
+    width_px_override: int | None = None,
+) -> PublicationCanvas:
+    """Build a page canvas from a shared named page-format preset."""
+    preset = resolve_publication_page_format(page_format)
+    return build_publication_canvas(
+        bounds=PublicationBounds(width_px=width_px_override or preset.width_px, height_px=preset.height_px),
+        margins=preset.margins,
+        header_height_px=header_height_px,
+        footer_height_px=footer_height_px,
+    )
 
 
 def build_publication_canvas(

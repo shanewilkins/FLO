@@ -2,10 +2,12 @@ from flo.render._publication import (
     PublicationBandContent,
     PublicationBounds,
     PublicationMargins,
+    build_publication_canvas_for_format,
     build_publication_bands,
     build_publication_canvas,
     materialize_publication_series,
     PublicationPageSpec,
+    resolve_publication_page_format,
 )
 from flo.render._sppm_publication import build_sppm_publication_plan
 from flo.render.options import RenderOptions
@@ -29,39 +31,42 @@ def test_build_publication_canvas_keeps_margins_outside_content_regions():
     assert canvas.region("footer").y_px == 800
 
 
-def test_build_sppm_publication_plan_includes_primary_series_and_child_slots():
-    process = {
-        "process": {
-            "id": "wash_n_fold",
-            "name": "Wash n' Fold",
-            "metadata": {"owner": "Laundry Ops", "revision": "R2"},
-        }
-    }
-    nodes = [
-        {"id": "start", "kind": "start", "name": "Start"},
-        {
-            "id": "prep",
-            "kind": "subprocess",
-            "name": "Prep",
-            "metadata": {"detail_map_ref": "SP-01"},
-        },
-        {"id": "end", "kind": "end", "name": "End"},
-    ]
-    edges = [{"source": "start", "target": "prep"}, {"source": "prep", "target": "end"}]
+def test_resolve_publication_page_format_supports_named_presets():
+    preset = resolve_publication_page_format("a4")
 
-    plan = build_sppm_publication_plan(
-        process=process,
-        options=RenderOptions(diagram="sppm", sppm_output_profile="print", subprocess_view="parent_only"),
-        nodes=nodes,
-        edges=edges,
-    )
+    assert preset.name == "a4"
+    assert preset.width_px == 794
+    assert preset.height_px == 1123
+    assert preset.margins.left_px == 48
+
+
+def test_build_publication_canvas_for_format_uses_named_preset_geometry():
+    canvas = build_publication_canvas_for_format(page_format="letter", header_height_px=96, footer_height_px=72)
+
+    assert canvas.bounds.width_px == 816
+    assert canvas.bounds.height_px == 1056
+    assert canvas.usable_region.width_px == 720
+    assert canvas.region("body").height_px == 792
+
+
+def test_resolve_publication_page_format_rejects_unknown_names():
+    import pytest
+
+    with pytest.raises(ValueError, match="publication_page_format"):
+        resolve_publication_page_format("broadsheet")
+
+
+def test_build_sppm_publication_plan_uses_print_page_format_and_header_rows():
+    plan = _build_print_publication_plan()
 
     primary_series = plan.primary_series()
     primary_page = primary_series.pages[0]
 
     assert plan.title == "Wash n' Fold"
     assert primary_series.kind == "map"
-    assert primary_page.canvas.usable_region.width_px == 1104
+    assert primary_page.canvas.bounds.width_px == 1000
+    assert primary_page.canvas.bounds.height_px == 1123
+    assert primary_page.canvas.usable_region.width_px == 904
     header_band = primary_page.band("header")
     assert header_band is not None
     assert header_band.region.name == "header"
@@ -69,10 +74,41 @@ def test_build_sppm_publication_plan_includes_primary_series_and_child_slots():
     assert ("Profile", "print") in header_band.content.rows
     assert ("Subprocess View", "parent-only") in header_band.content.rows
     assert ("Nodes", "3") in header_band.content.rows
+
+
+def test_build_sppm_publication_plan_emits_child_slots_for_subprocesses():
+    plan = _build_print_publication_plan()
+
     assert len(plan.artifact_slots) == 1
     assert plan.artifact_slots[0].slot_id == "child:prep"
     assert plan.artifact_slots[0].kind == "child_map"
     assert plan.artifact_slots[0].metadata["detail_map_ref"] == "SP-01"
+
+
+def _build_print_publication_plan():
+    return build_sppm_publication_plan(
+        process={
+            "process": {
+                "id": "wash_n_fold",
+                "name": "Wash n' Fold",
+                "metadata": {"owner": "Laundry Ops", "revision": "R2"},
+            }
+        },
+        options=RenderOptions.from_mapping(
+            {"diagram": "sppm", "sppm_output_profile": "print", "subprocess_view": "parent_only"}
+        ),
+        nodes=[
+            {"id": "start", "kind": "start", "name": "Start"},
+            {
+                "id": "prep",
+                "kind": "subprocess",
+                "name": "Prep",
+                "metadata": {"detail_map_ref": "SP-01"},
+            },
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        edges=[{"source": "start", "target": "prep"}, {"source": "prep", "target": "end"}],
+    )
 
 
 def test_materialize_publication_series_builds_stable_multi_page_ids_and_metadata():
@@ -142,6 +178,23 @@ def test_build_sppm_publication_plan_uses_shared_series_materialization_metadata
     assert page.page_id == "main-p1"
     assert page.metadata["page_number"] == 1
     assert page.metadata["page_count"] == 1
+    assert page.metadata["page_format"] is None
+
+
+def test_build_sppm_publication_plan_records_page_format_metadata():
+    process = {"process": {"id": "wash_n_fold", "name": "Wash n' Fold"}}
+
+    plan = build_sppm_publication_plan(
+        process=process,
+        options=RenderOptions.from_mapping({"diagram": "sppm", "publication_page_format": "letter"}),
+        nodes=[{"id": "start", "kind": "start", "name": "Start"}],
+        edges=[],
+    )
+
+    page = plan.primary_series().pages[0]
+    assert page.canvas.bounds.width_px == 816
+    assert page.canvas.bounds.height_px == 1056
+    assert page.metadata["page_format"] == "letter"
 
 
 def test_build_publication_bands_omits_unpopulated_regions():

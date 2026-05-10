@@ -86,6 +86,7 @@ def _flatten_sppm_config_options(sppm_section: dict) -> dict[str, object]:
     set_if_present(sppm_section, "wrap_layout", "layout_wrap")
     set_if_present(sppm_section, "spacing", "layout_spacing")
     set_if_present(sppm_section, "layout_spacing", "layout_spacing")
+    set_if_present(sppm_section, "page_format", "publication_page_format")
     set_if_present(sppm_section, "step_numbering", "sppm_step_numbering")
     set_if_present(sppm_section, "label_density", "sppm_label_density")
     set_if_present(sppm_section, "output_profile", "sppm_output_profile")
@@ -125,6 +126,7 @@ def _extract_sppm_preset_options(sppm_section: dict, profile_name: str) -> dict[
     set_if_present(preset, "wrap_layout", "layout_wrap")
     set_if_present(preset, "spacing", "layout_spacing")
     set_if_present(preset, "layout_spacing", "layout_spacing")
+    set_if_present(preset, "page_format", "publication_page_format")
     set_if_present(preset, "label_density", "sppm_label_density")
 
     text_section = preset.get("text")

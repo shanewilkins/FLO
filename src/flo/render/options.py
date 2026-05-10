@@ -24,6 +24,7 @@ SppmLabelDensity = Literal["full", "compact", "teaching"]
 SppmWrapStrategy = Literal["word", "balanced", "hard"]
 SppmTruncationPolicy = Literal["ellipsis", "clip", "none"]
 SppmOutputProfile = Literal["default", "book", "web", "print", "slide"]
+PublicationPageFormatName = Literal["letter", "a4", "legal", "tabloid"]
 DimensionUnit = Literal["px", "in", "cm"]
 
 _DIMENSION_TO_PX: dict[str, float] = {
@@ -41,6 +42,7 @@ _SPPM_PROFILE_DEFAULTS: dict[str, dict[str, Any]] = {
         "layout_max_width_px": 1200,
         "layout_target_columns": 6,
         "sppm_label_density": "compact",
+        "publication_page_format": "letter",
     },
     "web": {
         "orientation": "lr",
@@ -57,6 +59,7 @@ _SPPM_PROFILE_DEFAULTS: dict[str, dict[str, Any]] = {
         "layout_max_width_px": 1000,
         "layout_target_columns": 5,
         "sppm_label_density": "teaching",
+        "publication_page_format": "a4",
     },
     "slide": {
         "orientation": "lr",
@@ -65,6 +68,7 @@ _SPPM_PROFILE_DEFAULTS: dict[str, dict[str, Any]] = {
         "layout_max_width_px": 2200,
         "layout_target_columns": 12,
         "sppm_label_density": "compact",
+        "publication_page_format": "tabloid",
     },
 }
 
@@ -136,6 +140,7 @@ class RenderOptions:
     sppm_wrap_strategy: SppmWrapStrategy = "word"
     sppm_truncation_policy: SppmTruncationPolicy = "ellipsis"
     sppm_output_profile: SppmOutputProfile = "default"
+    publication_page_format: PublicationPageFormatName | None = None
     layout_max_width: Dimension | None = None
     layout_max_width_px: int | None = None
     layout_target_columns: int | None = None
@@ -178,6 +183,7 @@ class RenderOptions:
             sppm_wrap_strategy=_parse_sppm_wrap_strategy(effective_options),
             sppm_truncation_policy=_parse_sppm_truncation_policy(effective_options),
             sppm_output_profile=_parse_sppm_output_profile(effective_options),
+            publication_page_format=_parse_publication_page_format(effective_options),
             layout_max_width=layout_max_width,
             layout_max_width_px=layout_max_width.to_px() if layout_max_width else None,
             layout_target_columns=_parse_positive_int(effective_options.get("layout_target_columns")),
@@ -375,6 +381,24 @@ def _parse_sppm_output_profile(options: Mapping[str, Any]) -> SppmOutputProfile:
     if raw == "slide":
         return "slide"
     return "default"
+
+
+def _parse_publication_page_format(options: Mapping[str, Any]) -> PublicationPageFormatName | None:
+    raw = options.get("publication_page_format")
+    if raw is None:
+        return None
+    normalized = str(raw).strip().lower()
+    if normalized == "letter":
+        return "letter"
+    if normalized == "a4":
+        return "a4"
+    if normalized == "legal":
+        return "legal"
+    if normalized == "tabloid":
+        return "tabloid"
+    raise ValueError(
+        "Invalid value for publication_page_format: expected one of letter, a4, legal, or tabloid."
+    )
 
 
 def _parse_positive_int(value: Any) -> int | None:

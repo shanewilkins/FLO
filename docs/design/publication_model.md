@@ -10,6 +10,13 @@ The initial contract is intentionally small:
 - `PublicationCanvas` represents page bounds, outer margins, the usable canvas, and named content regions.
 - `PublicationArtifactSlot` reserves future child-map or artifact outputs without forcing hierarchy behavior into this issue.
 
+Named page formats are now part of the shared planner surface.
+
+- Supported built-in presets are `letter`, `a4`, `legal`, and `tabloid`.
+- Each preset resolves shared width, height, and default margins.
+- Renderers should reference these presets by name rather than hardcoding page geometry.
+- To add a new preset, extend the shared registry in `src/flo/render/_publication.py` and document the new canonical name and aliases here.
+
 ## Geometry
 
 Margins are part of page geometry, not content regions.

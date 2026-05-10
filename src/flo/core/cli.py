@@ -140,6 +140,7 @@ def _build_render_opts(
     layout_wrap: Optional[str],
     layout_fit: Optional[str],
     layout_spacing: Optional[str],
+    publication_page_format: Optional[str],
     sppm_step_numbering: Optional[str],
     sppm_label_density: Optional[str],
     sppm_wrap_strategy: Optional[str],
@@ -170,6 +171,7 @@ def _build_render_opts(
         ("layout_wrap", layout_wrap),
         ("layout_fit", layout_fit),
         ("layout_spacing", layout_spacing),
+        ("publication_page_format", publication_page_format),
         ("sppm_step_numbering", sppm_step_numbering),
         ("sppm_label_density", sppm_label_density),
         ("sppm_wrap_strategy", sppm_wrap_strategy),
@@ -223,6 +225,7 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
 @click.option("--layout-wrap", type=click.Choice(["auto", "off"]), help="Shared autoformat wrapping mode (orientation-aware)")
 @click.option("--layout-fit", type=click.Choice(["fit-preferred", "fit-strict"]), help="Shared autoformat fit mode")
 @click.option("--layout-spacing", type=click.Choice(["standard", "compact"]), help="Shared graph spacing profile")
+@click.option("--publication-page-format", type=click.Choice(["letter", "a4", "legal", "tabloid"]), help="Named publication page preset")
 @click.option("--sppm-step-numbering", type=click.Choice(["off", "node", "edge"]), help="SPPM step numbering mode")
 @click.option("--sppm-label-density", type=click.Choice(["full", "compact", "teaching"]), help="SPPM label density mode")
 @click.option("--sppm-wrap-strategy", type=click.Choice(["word", "balanced", "hard"]), help="Text wrapping strategy for SPPM labels")
@@ -254,6 +257,7 @@ def run_cmd(
     layout_wrap: Optional[str],
     layout_fit: Optional[str],
     layout_spacing: Optional[str],
+    publication_page_format: Optional[str],
     sppm_step_numbering: Optional[str],
     sppm_label_density: Optional[str],
     sppm_wrap_strategy: Optional[str],
@@ -286,6 +290,7 @@ def run_cmd(
         layout_wrap=layout_wrap,
         layout_fit=layout_fit,
         layout_spacing=layout_spacing,
+        publication_page_format=publication_page_format,
         sppm_step_numbering=sppm_step_numbering,
         sppm_label_density=sppm_label_density,
         sppm_wrap_strategy=sppm_wrap_strategy,
@@ -340,6 +345,7 @@ def validate_cmd(path: Optional[str], verbose: bool) -> None:  # pragma: no cove
 @click.option("--layout-wrap", type=click.Choice(["auto", "off"]), help="Shared autoformat wrapping mode (orientation-aware)")
 @click.option("--layout-fit", type=click.Choice(["fit-preferred", "fit-strict"]), help="Shared autoformat fit mode")
 @click.option("--layout-spacing", type=click.Choice(["standard", "compact"]), help="Shared graph spacing profile")
+@click.option("--publication-page-format", type=click.Choice(["letter", "a4", "legal", "tabloid"]), help="Named publication page preset")
 @click.option("--sppm-step-numbering", type=click.Choice(["off", "node", "edge"]), help="SPPM step numbering mode")
 @click.option("--sppm-label-density", type=click.Choice(["full", "compact", "teaching"]), help="SPPM label density mode")
 @click.option("--sppm-wrap-strategy", type=click.Choice(["word", "balanced", "hard"]), help="Text wrapping strategy for SPPM labels")
@@ -369,6 +375,7 @@ def export_cmd(
     layout_wrap: Optional[str],
     layout_fit: Optional[str],
     layout_spacing: Optional[str],
+    publication_page_format: Optional[str],
     sppm_step_numbering: Optional[str],
     sppm_label_density: Optional[str],
     sppm_wrap_strategy: Optional[str],
@@ -399,6 +406,7 @@ def export_cmd(
         layout_wrap=layout_wrap,
         layout_fit=layout_fit,
         layout_spacing=layout_spacing,
+        publication_page_format=publication_page_format,
         sppm_step_numbering=sppm_step_numbering,
         sppm_label_density=sppm_label_density,
         sppm_wrap_strategy=sppm_wrap_strategy,

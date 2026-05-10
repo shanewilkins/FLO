@@ -15,6 +15,7 @@ def test_sppm_output_profile_book_applies_defaults():
     assert options.layout_fit == "fit-preferred"
     assert options.layout_max_width_px == 1200
     assert options.layout_target_columns == 6
+    assert options.publication_page_format == "letter"
     assert options.sppm_label_density == "compact"
 
 
@@ -30,6 +31,7 @@ def test_sppm_output_profile_print_applies_tb_defaults():
     assert options.layout_fit == "fit-strict"
     assert options.layout_max_width_px == 1000
     assert options.layout_target_columns == 5
+    assert options.publication_page_format == "a4"
     assert options.sppm_label_density == "teaching"
 
 
@@ -39,11 +41,13 @@ def test_explicit_sppm_options_override_profile_defaults():
             "diagram": "sppm",
             "sppm_output_profile": "print",
             "orientation": "lr",
+            "publication_page_format": "legal",
             "sppm_label_density": "full",
             "layout_target_columns": 8,
         }
     )
     assert options.orientation == "lr"
+    assert options.publication_page_format == "legal"
     assert options.sppm_label_density == "full"
     assert options.layout_target_columns == 8
 

@@ -14,6 +14,7 @@ from ._publication import (
     PublicationMargins,
     PublicationPlan,
     build_publication_canvas,
+    build_publication_canvas_for_format,
     materialize_publication_series,
     PublicationPageSpec,
 )
@@ -46,12 +47,7 @@ def build_sppm_publication_plan(
         projection=projection_context,
     )
     footer_content = _build_sppm_footer_content(context=context, options=options)
-    canvas = build_publication_canvas(
-        bounds=PublicationBounds(width_px=options.layout_max_width_px or _DEFAULT_SPPM_PUBLICATION_WIDTH_PX),
-        margins=_DEFAULT_SPPM_PUBLICATION_MARGINS,
-        header_height_px=_SPPM_HEADER_BAND_HEIGHT_PX if title else 0,
-        footer_height_px=72 if footer_content is not None else 0,
-    )
+    canvas = _build_sppm_publication_canvas(title=title, footer_content=footer_content, options=options)
     series = materialize_publication_series(
         series_id="main",
         title=title or "SPPM Publication",
@@ -64,6 +60,7 @@ def build_sppm_publication_plan(
                 footer_content=footer_content,
                 metadata={
                     "diagram": "sppm",
+                    "page_format": options.publication_page_format,
                     "projection_mode": projection_context.effective_mode,
                     "requested_projection_mode": projection_context.requested_mode,
                     "focus_subprocess": projection_context.focus_subprocess,
@@ -72,6 +69,7 @@ def build_sppm_publication_plan(
         ),
         metadata={
             "diagram": "sppm",
+            "page_format": options.publication_page_format,
             "projection_mode": projection_context.effective_mode,
             "requested_projection_mode": projection_context.requested_mode,
             "focus_subprocess": projection_context.focus_subprocess,
@@ -93,7 +91,31 @@ def build_sppm_publication_plan(
             "node_count": len(nodes),
             "edge_count": len(edges),
             "projection_mode": projection_context.effective_mode,
+            "page_format": options.publication_page_format,
         },
+    )
+
+
+def _build_sppm_publication_canvas(
+    *,
+    title: str,
+    footer_content: PublicationBandContent | None,
+    options: RenderOptions,
+) -> Any:
+    header_height_px = _SPPM_HEADER_BAND_HEIGHT_PX if title else 0
+    footer_height_px = 72 if footer_content is not None else 0
+    if options.publication_page_format:
+        return build_publication_canvas_for_format(
+            page_format=options.publication_page_format,
+            header_height_px=header_height_px,
+            footer_height_px=footer_height_px,
+            width_px_override=options.layout_max_width_px,
+        )
+    return build_publication_canvas(
+        bounds=PublicationBounds(width_px=options.layout_max_width_px or _DEFAULT_SPPM_PUBLICATION_WIDTH_PX),
+        margins=_DEFAULT_SPPM_PUBLICATION_MARGINS,
+        header_height_px=header_height_px,
+        footer_height_px=footer_height_px,
     )
 
 

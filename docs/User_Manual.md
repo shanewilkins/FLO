@@ -598,8 +598,9 @@ Render options (DOT only):
 - `--sppm-label-density {full,compact,teaching}`
 - `--sppm-wrap-strategy {word,balanced,hard}`
 - `--sppm-truncation-policy {ellipsis,clip,none}`
-- `--layout-max-width-px <int>` (positive integer)
+- `--layout-max-width-px <dimension>` (positive `px`, `in`, or `cm`; examples: `800`, `8.5in`, `21cm`)
 - `--layout-target-columns <int>` (positive integer)
+- `--publication-page-format {letter,a4,legal,tabloid}`
 - `--sppm-max-label-step-name <int>` (positive integer)
 - `--sppm-max-label-workers <int>` (positive integer)
 - `--sppm-max-label-ctwt <int>` (positive integer)
@@ -648,7 +649,7 @@ Renderer policy decisions:
 
 SPPM preset/config defaults:
 - Built-in `--sppm-output-profile` presets set baseline SPPM defaults for orientation,
-  wrapping, and density (`book`, `web`, `print`, `slide`).
+  wrapping, density, and named page formats (`book` -> `letter`, `print` -> `a4`, `slide` -> `tabloid`).
 - If a `diagrams.toml` file exists beside the source `.flo` file (or in the current
   working directory), FLO loads `[sppm]` defaults automatically.
 - Precedence is: CLI flags > `diagrams.toml` explicit `[sppm]` keys >
