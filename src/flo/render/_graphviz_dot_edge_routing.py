@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from ._autoformat_wrap import WrapPlan
+from ._continuation_labels import build_continuation_label_attrs
 from .options import RenderOptions
 
 
@@ -13,6 +15,7 @@ def _append_edges(
     options: RenderOptions,
     use_swimlanes: bool,
     node_lanes: dict[str, str],
+    wrap_plan: WrapPlan | None = None,
     boundary_edges: set[tuple[str, str]] | None = None,
     node_sequence_index: dict[str, int] | None = None,
     wrap_active: bool = False,
@@ -28,6 +31,7 @@ def _append_edges(
             options=options,
             use_swimlanes=use_swimlanes,
             node_lanes=node_lanes,
+            wrap_plan=wrap_plan,
             boundary_edges=effective_boundary,
             node_sequence_index=effective_seq_index,
             wrap_active=wrap_active,
@@ -42,6 +46,7 @@ def _append_single_edge(
     options: RenderOptions,
     use_swimlanes: bool,
     node_lanes: dict[str, str],
+    wrap_plan: WrapPlan | None,
     boundary_edges: set[tuple[str, str]],
     node_sequence_index: dict[str, int],
     wrap_active: bool,
@@ -65,6 +70,7 @@ def _append_single_edge(
             options=options,
             use_swimlanes=use_swimlanes,
             node_lanes=node_lanes,
+            wrap_plan=wrap_plan,
             boundary_edges=boundary_edges,
             node_sequence_index=node_sequence_index,
             wrap_active=wrap_active,
@@ -81,6 +87,7 @@ def _append_single_edge(
             options=options,
             use_swimlanes=use_swimlanes,
             node_lanes=node_lanes,
+            wrap_plan=wrap_plan,
             boundary_edges=boundary_edges,
             node_sequence_index=node_sequence_index,
             wrap_active=wrap_active,
@@ -113,6 +120,7 @@ def _append_boundary_corridor_edge(
     options: RenderOptions,
     use_swimlanes: bool,
     node_lanes: dict[str, str],
+    wrap_plan: WrapPlan | None,
     boundary_edges: set[tuple[str, str]],
     node_sequence_index: dict[str, int],
     wrap_active: bool,
@@ -138,9 +146,17 @@ def _append_boundary_corridor_edge(
         source_port,
         *_without_boundary_span_attrs(_without_edge_label(base_segment_attrs)),
     ]
+    outgoing_label_attrs, incoming_label_attrs = _generic_continuation_label_attrs(
+        source=source,
+        target=target,
+        wrap_plan=wrap_plan,
+        is_secondary=False,
+    )
     _append_unique_attr(first_segment_attrs, "constraint=false")
     _append_unique_attr(first_segment_attrs, "weight=0")
     _append_unique_attr(first_segment_attrs, "arrowhead=none")
+    first_segment_attrs.extend(outgoing_label_attrs)
+    second_segment_attrs.extend(incoming_label_attrs)
 
     lines.append(
         f'  "{_escape(source)}" -> "{anchor_id}" '
@@ -162,6 +178,7 @@ def _append_rework_corridor_edge(
     options: RenderOptions,
     use_swimlanes: bool,
     node_lanes: dict[str, str],
+    wrap_plan: WrapPlan | None,
     boundary_edges: set[tuple[str, str]],
     node_sequence_index: dict[str, int],
     wrap_active: bool,
@@ -187,9 +204,17 @@ def _append_rework_corridor_edge(
         source_port,
         *_without_boundary_span_attrs(_without_edge_label(base_segment_attrs)),
     ]
+    outgoing_label_attrs, incoming_label_attrs = _generic_continuation_label_attrs(
+        source=source,
+        target=target,
+        wrap_plan=wrap_plan,
+        is_secondary=True,
+    )
     _append_unique_attr(first_segment_attrs, "constraint=false")
     _append_unique_attr(first_segment_attrs, "weight=0")
     _append_unique_attr(first_segment_attrs, "arrowhead=none")
+    first_segment_attrs.extend(outgoing_label_attrs)
+    second_segment_attrs.extend(incoming_label_attrs)
 
     lines.append(
         f'  "{_escape(source)}" -> "{anchor_id}" '
@@ -212,6 +237,24 @@ def _without_boundary_span_attrs(edge_attrs: list[str]) -> list[str]:
 def _append_unique_attr(attrs: list[str], value: str) -> None:
     if value not in attrs:
         attrs.append(value)
+
+
+def _generic_continuation_label_attrs(
+    *,
+    source: str,
+    target: str,
+    wrap_plan: WrapPlan | None,
+    is_secondary: bool,
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    if wrap_plan is None:
+        return (), ()
+    return build_continuation_label_attrs(
+        source=source,
+        target=target,
+        wrap_plan=wrap_plan,
+        is_secondary=is_secondary,
+        reference_formatter=lambda node_id: f"[{node_id}]",
+    )
 
 
 def _corridor_ports(*, options: RenderOptions, wrap_active: bool) -> tuple[str, str]:

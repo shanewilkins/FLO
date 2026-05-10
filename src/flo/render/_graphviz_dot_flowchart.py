@@ -55,6 +55,7 @@ def _render_flowchart_graph(process: dict[str, Any] | Any, options: RenderOption
         options=options,
         use_swimlanes=False,
         node_lanes=node_lanes,
+        wrap_plan=wrap_plan,
         boundary_edges=wrap_plan.boundary_edges,
         node_sequence_index=node_sequence_index,
         wrap_active=wrap_plan.active,
