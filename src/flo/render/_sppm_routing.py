@@ -616,43 +616,27 @@ def _build_rework_route(
         wrap_plan=wrap_plan,
     )
     anchor_id = sppm_rework_anchor_id(source=source, target=target)
-    anchor_attrs: tuple[str, ...]
-    if is_boundary and incoming_token is not None:
-        anchor_attrs = build_sppm_continuation_anchor_attrs(token=incoming_token, is_secondary=True)
-    elif is_boundary and outgoing_token is not None:
-        anchor_attrs = build_sppm_continuation_anchor_attrs(token=outgoing_token, is_secondary=True)
-    else:
-        anchor_attrs = ("shape=point", "width=0.01", "height=0.01", 'label=""', "style=invis")
+    rework_data_box_attrs = _build_rework_data_box_attrs(edge.get("metadata"), is_branch_out=is_branch_out)
     anchor = SppmRouteAnchor(
         anchor_id=anchor_id,
-        attrs=anchor_attrs,
+        attrs=_build_rework_anchor_attrs(
+            is_boundary=is_boundary,
+            incoming_token=incoming_token,
+            outgoing_token=outgoing_token,
+        ),
     )
-    first_segment_attrs = tuple(
-        [
-            source_port,
-            *[
-                attr
-                for attr in route_attrs
-                if not attr.startswith("label=")
-                and not attr.startswith("xlabel=")
-                and not attr.startswith("minlen=")
-                and not attr.startswith("penwidth=")
-                and not attr.startswith("weight=")
-            ],
-            "weight=0",
-            "arrowhead=none",
-        ]
+    first_segment_attrs = _build_rework_first_segment_attrs(
+        source_port=source_port,
+        route_attrs=route_attrs,
+        rework_data_box_attrs=rework_data_box_attrs,
+        is_branch_out=is_branch_out,
     )
-    rework_data_box_attrs = _build_rework_data_box_attrs(edge.get("metadata"), is_branch_out=is_branch_out)
-    if rework_data_box_attrs is not None and is_branch_out:
-        first_segment_attrs = tuple([*first_segment_attrs, *rework_data_box_attrs])
-
-    second_segment_attrs = list([target_port, *route_attrs])
-    if rework_data_box_attrs is not None and not is_branch_out:
-        second_segment_attrs.extend(rework_data_box_attrs)
-    branch_label = edge.get("outcome") or edge.get("label")
-    if branch_label is not None:
-        second_segment_attrs.append(f'xlabel="{str(branch_label)}"')
+    second_segment_attrs = _build_rework_second_segment_attrs(
+        target_port=target_port,
+        route_attrs=route_attrs,
+        rework_data_box_attrs=rework_data_box_attrs,
+        branch_label=edge.get("outcome") or edge.get("label"),
+    )
 
     return SppmEdgeRoute(
         source=source,
@@ -668,6 +652,62 @@ def _build_rework_route(
             SppmRouteSegment(source_id=anchor_id, target_id=target, attrs=tuple(second_segment_attrs)),
         ),
     )
+
+
+def _build_rework_anchor_attrs(
+    *,
+    is_boundary: bool,
+    incoming_token: str | None,
+    outgoing_token: str | None,
+) -> tuple[str, ...]:
+    if is_boundary and incoming_token is not None:
+        return build_sppm_continuation_anchor_attrs(token=incoming_token, is_secondary=True)
+    if is_boundary and outgoing_token is not None:
+        return build_sppm_continuation_anchor_attrs(token=outgoing_token, is_secondary=True)
+    return ("shape=point", "width=0.01", "height=0.01", 'label=""', "style=invis")
+
+
+def _build_rework_first_segment_attrs(
+    *,
+    source_port: str,
+    route_attrs: list[str],
+    rework_data_box_attrs: tuple[str, ...] | None,
+    is_branch_out: bool,
+) -> tuple[str, ...]:
+    filtered_attrs = tuple(
+        [
+            source_port,
+            *[
+                attr
+                for attr in route_attrs
+                if not attr.startswith("label=")
+                and not attr.startswith("xlabel=")
+                and not attr.startswith("minlen=")
+                and not attr.startswith("penwidth=")
+                and not attr.startswith("weight=")
+            ],
+            "weight=0",
+            "arrowhead=none",
+        ]
+    )
+    if rework_data_box_attrs is not None and is_branch_out:
+        return tuple([*filtered_attrs, *rework_data_box_attrs])
+    return filtered_attrs
+
+
+def _build_rework_second_segment_attrs(
+    *,
+    target_port: str,
+    route_attrs: list[str],
+    rework_data_box_attrs: tuple[str, ...] | None,
+    branch_label: object | None,
+) -> tuple[str, ...]:
+    attrs = [target_port, *route_attrs]
+    if rework_data_box_attrs is not None:
+        attrs.extend(rework_data_box_attrs)
+    if branch_label is not None:
+        attrs.append(f'xlabel="{str(branch_label)}"')
+    return tuple(attrs)
 
 
 def _build_rework_data_box_attrs(metadata: object, *, is_branch_out: bool) -> tuple[str, ...] | None:

@@ -35,7 +35,11 @@ def _wrapped_lr_demo() -> str:
 
 def test_layout_wrap_lr_emits_first_boundary_connector_with_continuation_labels():
     out = _wrapped_lr_demo()
+    _assert_wrapped_lr_layout_structure(out)
+    _assert_wrapped_lr_boundary_labels(out)
 
+
+def _assert_wrapped_lr_layout_structure(out: str) -> None:
     assert "splines=ortho" in out
     assert "subgraph wrap_rank_lr_0" in out
     assert "subgraph cluster_wrap_" not in out
@@ -46,6 +50,9 @@ def test_layout_wrap_lr_emits_first_boundary_connector_with_continuation_labels(
     assert '"b":"out_0":e -> "__wrap_exit_lr_0" [' in out
     assert 'arrowhead=none' in out
     assert 'constraint=false' in out
+
+
+def _assert_wrapped_lr_boundary_labels(out: str) -> None:
     assert '"__wrap_exit_lr_0" -> "__sppm_boundary_corridor_b_c_out" [' in out
     assert 'label="P2-C"' in out
     assert '"__sppm_boundary_corridor_b_c_in" -> "c":"boundary_in":s [' in out

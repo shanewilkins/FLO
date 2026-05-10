@@ -110,23 +110,7 @@ def test_sppm_routing_plan_marks_wrap_boundary_edges_with_ports_and_boundary_att
     assert route.kind == "corridor"
     assert route.is_boundary is True
     assert route.lane_id == "wrap_lane_0"
-    assert route.corridor_nodes == ()
-    assert route.anchors == ()
-    assert route.segments[0].target_id == "__wrap_exit_lr_0"
-    assert route.segments[0].attrs == (
-        'tailport="out_0:e"',
-        "arrowhead=none",
-        "constraint=false",
-        "weight=0",
-        'headlabel=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#455A64" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#455A64"><B>Continue to p2 [b]</B></FONT></TD></TR></TABLE>>',
-    )
-    assert route.segments[1].source_id == "__wrap_exit_lr_0"
-    assert route.segments[1].attrs == (
-        'headport="boundary_in:s"',
-        "minlen=2",
-        "penwidth=1.2",
-        'taillabel=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#455A64" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#455A64"><B>Continued from p1 [a]</B></FONT></TD></TR></TABLE>>',
-    )
+    _assert_lr_boundary_route(route)
     assert set(routing_plan.route_plan.routes.keys()) == {("start", "a"), ("a", "b"), ("b", "c"), ("c", "end")}
 
 
@@ -170,6 +154,33 @@ def test_sppm_routing_plan_splits_rework_edges_into_anchor_segments():
     assert ("decision", "rework") in routing_plan.route_plan.routes
 
 
+def _assert_lr_boundary_route(route) -> None:
+    _assert_lr_boundary_route_layout(route)
+    _assert_lr_boundary_route_links(route)
+
+
+def _assert_lr_boundary_route_layout(route) -> None:
+    assert route.corridor_nodes == ()
+    assert len(route.anchors) == 2
+    assert route.anchors[0].anchor_id == "__sppm_boundary_corridor_a_b_out"
+    assert route.anchors[0].attrs[-1] == 'label="P2-B"'
+    assert route.anchors[1].anchor_id == "__sppm_boundary_corridor_a_b_in"
+    assert route.anchors[1].attrs[-1] == 'label="P1-A"'
+    assert route.segments[0].target_id == "__wrap_exit_lr_0"
+    assert route.segments[0].attrs == ('tailport="out_0:e"', "arrowhead=none", "constraint=false", "weight=0")
+
+
+def _assert_lr_boundary_route_links(route) -> None:
+    assert route.segments[1].source_id == "__wrap_exit_lr_0"
+    assert route.segments[1].target_id == "__sppm_boundary_corridor_a_b_out"
+    assert route.segments[1].attrs == ("arrowhead=none", "constraint=false", "weight=0")
+    assert route.segments[2].source_id == "__sppm_boundary_corridor_a_b_out"
+    assert route.segments[2].target_id == "__sppm_boundary_corridor_a_b_in"
+    assert route.segments[2].attrs == ("arrowhead=none", "constraint=false", "weight=0")
+    assert route.segments[3].source_id == "__sppm_boundary_corridor_a_b_in"
+    assert route.segments[3].attrs == ('headport="boundary_in:s"', "minlen=2", "penwidth=1.2")
+
+
 def test_sppm_routing_plan_uses_tb_ports_for_wrapped_tb_layout():
     nodes = [
         {"id": "start", "kind": "start", "name": "Start"},
@@ -192,20 +203,7 @@ def test_sppm_routing_plan_uses_tb_ports_for_wrapped_tb_layout():
     route = routing_plan.route_for("a", "b")
     assert route is not None
     assert route.kind == "corridor"
-    assert route.anchors[0].anchor_id == "__sppm_boundary_corridor_a_b"
-    assert route.segments[0].attrs == (
-        "tailport=s",
-        "arrowhead=none",
-        "constraint=false",
-        "weight=0",
-        'headlabel=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#455A64" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#455A64"><B>Continue to p2 [b]</B></FONT></TD></TR></TABLE>>',
-    )
-    assert route.segments[1].attrs == (
-        "headport=n",
-        "minlen=2",
-        "penwidth=1.2",
-        'taillabel=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#455A64" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#455A64"><B>Continued from p1 [a]</B></FONT></TD></TR></TABLE>>',
-    )
+    _assert_tb_boundary_route(route)
 
 
 def test_sppm_routing_plan_snapshot_wrap_boundary_and_direct_segments():
@@ -238,19 +236,41 @@ def test_sppm_routing_plan_snapshot_wrap_boundary_and_direct_segments():
         [
             "edge a->b kind=corridor boundary=True rework=False",
             "  lane wrap_lane_0",
-            "  segment a->__wrap_exit_lr_0 [tailport=\"out_0:e\", arrowhead=none, constraint=false, weight=0, headlabel=<<TABLE BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"3\" COLOR=\"#455A64\" BGCOLOR=\"#FFFFFF\"><TR><TD ALIGN=\"LEFT\"><FONT POINT-SIZE=\"10\" COLOR=\"#455A64\"><B>Continue to p2 [b]</B></FONT></TD></TR></TABLE>>]",
-            "  segment __wrap_exit_lr_0->b [headport=\"boundary_in:s\", minlen=2, penwidth=1.2, taillabel=<<TABLE BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"3\" COLOR=\"#455A64\" BGCOLOR=\"#FFFFFF\"><TR><TD ALIGN=\"LEFT\"><FONT POINT-SIZE=\"10\" COLOR=\"#455A64\"><B>Continued from p1 [a]</B></FONT></TD></TR></TABLE>>]",
+            '  anchor __sppm_boundary_corridor_a_b_out [shape=circle, width=0.58, height=0.58, fixedsize=true, style=filled, fillcolor="#FFFFFF", color="#455A64", penwidth=1.2, fontname=Helvetica, fontsize=9, label="P2-B"]',
+            '  anchor __sppm_boundary_corridor_a_b_in [shape=circle, width=0.58, height=0.58, fixedsize=true, style=filled, fillcolor="#FFFFFF", color="#455A64", penwidth=1.2, fontname=Helvetica, fontsize=9, label="P1-A"]',
+            '  segment a->__wrap_exit_lr_0 [tailport="out_0:e", arrowhead=none, constraint=false, weight=0]',
+            '  segment __wrap_exit_lr_0->__sppm_boundary_corridor_a_b_out [arrowhead=none, constraint=false, weight=0]',
+            '  segment __sppm_boundary_corridor_a_b_out->__sppm_boundary_corridor_a_b_in [arrowhead=none, constraint=false, weight=0]',
+            '  segment __sppm_boundary_corridor_a_b_in->b [headport="boundary_in:s", minlen=2, penwidth=1.2]',
             "edge b->c kind=direct boundary=False rework=False",
             "  segment b->c [tailport=e, headport=w]",
             "edge c->end kind=corridor boundary=True rework=False",
             "  lane wrap_lane_1",
-            "  segment c->__wrap_exit_lr_1 [tailport=\"out_0:e\", arrowhead=none, constraint=false, weight=0, headlabel=<<TABLE BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"3\" COLOR=\"#455A64\" BGCOLOR=\"#FFFFFF\"><TR><TD ALIGN=\"LEFT\"><FONT POINT-SIZE=\"10\" COLOR=\"#455A64\"><B>Continue to p3 [end]</B></FONT></TD></TR></TABLE>>]",
-            "  segment __wrap_exit_lr_1->end [headport=n, minlen=2, penwidth=1.2, taillabel=<<TABLE BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"3\" COLOR=\"#455A64\" BGCOLOR=\"#FFFFFF\"><TR><TD ALIGN=\"LEFT\"><FONT POINT-SIZE=\"10\" COLOR=\"#455A64\"><B>Continued from p2 [c]</B></FONT></TD></TR></TABLE>>]",
+            '  anchor __sppm_boundary_corridor_c_end_out [shape=circle, width=0.58, height=0.58, fixedsize=true, style=filled, fillcolor="#FFFFFF", color="#455A64", penwidth=1.2, fontname=Helvetica, fontsize=9, label="P3-E"]',
+            '  anchor __sppm_boundary_corridor_c_end_in [shape=circle, width=0.58, height=0.58, fixedsize=true, style=filled, fillcolor="#FFFFFF", color="#455A64", penwidth=1.2, fontname=Helvetica, fontsize=9, label="P2-C"]',
+            '  segment c->__wrap_exit_lr_1 [tailport="out_0:e", arrowhead=none, constraint=false, weight=0]',
+            '  segment __wrap_exit_lr_1->__sppm_boundary_corridor_c_end_out [arrowhead=none, constraint=false, weight=0]',
+            '  segment __sppm_boundary_corridor_c_end_out->__sppm_boundary_corridor_c_end_in [arrowhead=none, constraint=false, weight=0]',
+            '  segment __sppm_boundary_corridor_c_end_in->end [headport=n, minlen=2, penwidth=1.2]',
             "edge start->a kind=direct boundary=False rework=False",
             "  segment start->a [tailport=e, headport=w]",
         ]
     )
     assert snapshot == expected
+
+
+def _assert_tb_boundary_route(route) -> None:
+    assert route.anchors[0].anchor_id == "__sppm_boundary_corridor_a_b_out"
+    assert route.anchors[0].attrs[-1] == 'label="P2-B"'
+    assert route.anchors[1].anchor_id == "__sppm_boundary_corridor_a_b_in"
+    assert route.anchors[1].attrs[-1] == 'label="P1-A"'
+    assert route.segments[0].attrs == ("tailport=s", "arrowhead=none", "constraint=false", "weight=0")
+    assert route.segments[1].source_id == "__sppm_boundary_corridor_a_b_out"
+    assert route.segments[1].target_id == "__sppm_boundary_corridor_a_b_in"
+    assert route.segments[1].attrs == ("arrowhead=none", "constraint=false", "weight=0")
+    assert route.segments[2].source_id == "__sppm_boundary_corridor_a_b_in"
+    assert route.segments[2].target_id == "b"
+    assert route.segments[2].attrs == ("headport=n", "minlen=2", "penwidth=1.2")
 
 
 def test_sppm_routing_plan_snapshot_rework_includes_anchor_segments():
