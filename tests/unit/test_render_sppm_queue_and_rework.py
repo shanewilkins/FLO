@@ -28,6 +28,37 @@ def test_sppm_rework_edges_render_metadata_as_data_box():
     assert 'approvals' in out
 
 
+def test_sppm_rework_return_edges_render_frequency_and_count_metadata():
+    ir_like = {
+        "nodes": [
+            {"id": "decision", "kind": "decision", "name": "Approved?"},
+            {"id": "rework", "kind": "task", "name": "Rework", "metadata": {"value_class": "NVA"}},
+            {"id": "review", "kind": "task", "name": "Review", "metadata": {"value_class": "RNVA"}},
+        ],
+        "edges": [
+            {
+                "source": "decision",
+                "target": "rework",
+                "outcome": "no",
+                "edge_type": "rework",
+                "rework": True,
+            },
+            {
+                "source": "rework",
+                "target": "review",
+                "edge_type": "rework",
+                "rework": True,
+                "metadata": {"frequency": "3/day", "count": "12 per week"},
+            },
+        ],
+    }
+
+    out = render_dot(ir_like, options={"diagram": "sppm"})
+
+    assert 'Frequency: 3/day' in out
+    assert 'Count: 12 per week' in out
+
+
 def test_sppm_queue_connector_to_rework_target_is_not_rendered_as_rework():
     ir_like = {
         "nodes": [

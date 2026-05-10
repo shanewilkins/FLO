@@ -91,3 +91,27 @@ def test_sppm_footer_band_renders_metrics_and_render_time_inputs():
     assert "Queue:" in out
     assert "7 min" in out
     assert "Draft for review" in out
+
+
+def test_sppm_footer_band_renders_legend_and_caption_alias_inputs():
+    process = {
+        "process": {
+            "id": "ops_review",
+            "name": "Ops Review",
+            "metadata": {
+                "legend_items": {"Queue": "7 min"},
+                "caption": "Draft for review",
+            },
+        },
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [{"source": "start", "target": "end"}],
+    }
+
+    out = render_dot(process, options={"diagram": "sppm"})
+
+    assert "Queue:" in out
+    assert "7 min" in out
+    assert "Draft for review" in out

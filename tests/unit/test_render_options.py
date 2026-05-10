@@ -97,6 +97,19 @@ def test_sppm_footer_render_inputs_parse_from_mapping():
     assert options.sppm_footer_notes == ("Draft for review", "Confidential")
 
 
+def test_sppm_legend_and_caption_aliases_parse_into_footer_inputs():
+    options = RenderOptions.from_mapping(
+        {
+            "diagram": "sppm",
+            "sppm_legend_items": {"Queue": "7 min", "Rework": "8%"},
+            "sppm_caption": "Draft for review",
+        }
+    )
+
+    assert options.sppm_footer_metrics == (("Queue", "7 min"), ("Rework", "8%"))
+    assert options.sppm_footer_notes == ("Draft for review",)
+
+
 def test_sppm_projection_and_focus_parse_from_mapping():
     options = RenderOptions.from_mapping(
         {

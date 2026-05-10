@@ -181,7 +181,10 @@ def _build_sppm_footer_content(*, context: Any, options: RenderOptions) -> Publi
 
 def _footer_metric_rows_from_metadata(metadata: dict[str, Any]) -> list[tuple[str, str]]:
     raw_metrics = (
-        metadata.get("publication_footer_metrics")
+        metadata.get("publication_legend_items")
+        or metadata.get("legend_items")
+        or metadata.get("legend")
+        or metadata.get("publication_footer_metrics")
         or metadata.get("footer_metrics")
         or metadata.get("analytics_footer_metrics")
         or metadata.get("analytics_metrics")
@@ -229,7 +232,9 @@ def _footer_metric_row(*, label: Any, value: Any) -> tuple[str, str] | None:
 
 def _footer_notes_from_metadata(metadata: dict[str, Any]) -> list[str]:
     raw_notes = (
-        metadata.get("publication_footer_notes")
+        metadata.get("publication_caption")
+        or metadata.get("caption")
+        or metadata.get("publication_footer_notes")
         or metadata.get("footer_notes")
         or metadata.get("publication_footer")
         or metadata.get("footer_note")

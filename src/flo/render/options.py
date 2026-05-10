@@ -128,8 +128,8 @@ class RenderOptions:
             sppm_max_label_step_name=_parse_positive_int(effective_options.get("sppm_max_label_step_name")),
             sppm_max_label_workers=_parse_positive_int(effective_options.get("sppm_max_label_workers")),
             sppm_max_label_ctwt=_parse_positive_int(effective_options.get("sppm_max_label_ctwt")),
-            sppm_footer_metrics=_parse_footer_metrics(effective_options.get("sppm_footer_metrics")),
-            sppm_footer_notes=_parse_footer_notes(effective_options.get("sppm_footer_notes")),
+            sppm_footer_metrics=_parse_footer_metrics(_footer_metric_source(effective_options)),
+            sppm_footer_notes=_parse_footer_notes(_footer_note_source(effective_options)),
         )
 
 
@@ -377,3 +377,20 @@ def _parse_footer_notes(value: Any) -> tuple[str, ...]:
         return ()
     notes = [str(note).strip() for note in value if str(note).strip()]
     return tuple(notes)
+
+
+def _footer_metric_source(options: Mapping[str, Any]) -> Any:
+    return (
+        options.get("sppm_footer_metrics")
+        or options.get("sppm_legend_items")
+        or options.get("legend_items")
+        or options.get("legend")
+    )
+
+
+def _footer_note_source(options: Mapping[str, Any]) -> Any:
+    return (
+        options.get("sppm_footer_notes")
+        or options.get("sppm_caption")
+        or options.get("caption")
+    )

@@ -146,3 +146,29 @@ def test_build_sppm_publication_plan_populates_footer_metrics_and_render_inputs(
     assert ("VA Ratio", "61%") in footer_band.content.rows
     assert ("Queue", "7 min") in footer_band.content.rows
     assert footer_band.content.notes == ("Handcrafted note",)
+
+
+def test_build_sppm_publication_plan_supports_legend_and_caption_metadata_aliases():
+    process = {
+        "process": {
+            "id": "ops_review",
+            "name": "Ops Review",
+            "metadata": {
+                "legend_items": {"Queue": "7 min", "Rework": "8%"},
+                "caption": "Draft for review",
+            },
+        }
+    }
+
+    plan = build_sppm_publication_plan(
+        process=process,
+        options=RenderOptions(diagram="sppm"),
+        nodes=[{"id": "start", "kind": "start", "name": "Start"}],
+        edges=[],
+    )
+
+    footer_band = plan.primary_series().pages[0].band("footer")
+    assert footer_band is not None
+    assert ("Queue", "7 min") in footer_band.content.rows
+    assert ("Rework", "8%") in footer_band.content.rows
+    assert footer_band.content.notes == ("Draft for review",)
