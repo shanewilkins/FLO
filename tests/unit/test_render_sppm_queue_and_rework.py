@@ -91,7 +91,7 @@ def test_sppm_queue_connector_to_rework_target_is_not_rendered_as_rework():
     assert '"process_queue":w -> "__sppm_rework_corridor__queue_process_process"' not in out
 
 
-def test_sppm_queue_circles_render_larger_with_wait_label():
+def test_sppm_queue_triangles_render_with_wait_metadata_box():
     ir_like = {
         "nodes": [
             {"id": "start", "kind": "start", "name": "Start"},
@@ -114,13 +114,13 @@ def test_sppm_queue_circles_render_larger_with_wait_label():
     out = render_dot(ir_like, options={"diagram": "sppm"})
 
     assert 'label="Process Queue' in out
-    assert '11m' in out
+    assert 'WT: 11 min' in out
     assert '[process_queue]' in out
-    assert 'shape=circle, width=1.44, height=1.44' in out
-    assert 'style="solid"' in out
+    assert 'shape=triangle, width=1.5, height=1.32' in out
+    assert 'style="filled"' in out
 
 
-def test_sppm_queue_circle_labels_wrap_and_truncate_long_names():
+def test_sppm_queue_triangle_labels_wrap_and_truncate_long_names():
     ir_like = {
         "nodes": [
             {
@@ -135,6 +135,6 @@ def test_sppm_queue_circle_labels_wrap_and_truncate_long_names():
 
     out = render_dot(ir_like, options={"diagram": "sppm"})
 
-    assert 'label="Extremely Long Di...' in out
-    assert '14m' in out
+    assert 'label="Extremely L...' in out
+    assert 'WT: 14 min' in out
     assert '[dispatch_queue]' in out

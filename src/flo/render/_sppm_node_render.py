@@ -7,8 +7,10 @@ evolve per concern instead of by growing one hotspot file.
 
 from __future__ import annotations
 
+from html import escape as html_escape
 from typing import Any
 
+from flo.compiler.ir.subprocess_refs import resolve_subprocess_detail_map_reference
 from flo.compiler.ir.enums import ProcessValueClass
 
 from ._autoformat_wrap import WrapPlan
@@ -22,8 +24,9 @@ from .options import RenderOptions
 
 _SPPM_DECISION_MIN_WIDTH = 1.64
 _SPPM_DECISION_MIN_HEIGHT = 0.94
-_SPPM_QUEUE_CIRCLE_DIAMETER = 1.44  # inches
-_SPPM_QUEUE_NAME_MAX_LEN = 20
+_SPPM_QUEUE_TRIANGLE_WIDTH = 1.5  # inches
+_SPPM_QUEUE_TRIANGLE_HEIGHT = 1.32  # inches
+_SPPM_QUEUE_NAME_MAX_LEN = 14
 
 __all__ = ["render_sppm_node"]
 
@@ -52,7 +55,9 @@ def render_sppm_node(
     if kind == "decision":
         return [_render_sppm_decision_node(node_id=node_id, name=name, theme=theme, wrap_plan=wrap_plan)]
     if kind == "queue":
-        return [_render_sppm_queue_circle(node=node, node_id=node_id, name=name, theme=theme, wrap_plan=wrap_plan)]
+        return [_render_sppm_queue_triangle(node=node, node_id=node_id, name=name, theme=theme, wrap_plan=wrap_plan)]
+    if kind == "subprocess":
+        return [_render_sppm_subprocess_node(node=node, node_id=node_id, name=name, wrap_plan=wrap_plan)]
 
     return [
         _render_sppm_task_node(
@@ -98,9 +103,11 @@ def _render_sppm_decision_node(*, node_id: str, name: str, theme: SppmTheme, wra
     return f'  "{_escape(node_id)}" [{", ".join(attrs)}];'
 
 
-def _render_sppm_queue_circle(*, node: SppmRenderNode, node_id: str, name: str, theme: SppmTheme, wrap_plan: WrapPlan) -> str:
-    """Render a queue or bottleneck node as a compact circular marker."""
+def _render_sppm_queue_triangle(*, node: SppmRenderNode, node_id: str, name: str, theme: SppmTheme, wrap_plan: WrapPlan) -> str:
+    """Render a queue marker as an upright fixed-size triangle with a metadata box below."""
+    _ = theme
     queue_border = "#E65100"
+    queue_fill = "#FF9800"
     wait_time_min = _get_wait_time_minutes(node)
     queue_name = format_text_field(
         normalize_space(name),
@@ -109,25 +116,76 @@ def _render_sppm_queue_circle(*, node: SppmRenderNode, node_id: str, name: str, 
         truncation_policy="ellipsis",
         html_break="\n",
     )
-    label_lines = [queue_name] if queue_name else []
-    if wait_time_min > 0:
-        label_lines.append(f"{wait_time_min:g}m")
+    label_lines = [queue_name] if queue_name else ["Q"]
     label_lines.append(format_sppm_step_reference(node_id))
-    queue_label = "\n".join(label_lines) if label_lines else "Q"
+    queue_label = "\n".join(label_lines)
+    queue_xlabel = _render_queue_metadata_xlabel(wait_time_min)
 
     attrs = [
         f'label="{queue_label}"',
-        "shape=circle",
-        f"width={_SPPM_QUEUE_CIRCLE_DIAMETER}",
-        f"height={_SPPM_QUEUE_CIRCLE_DIAMETER}",
-        'style="solid"',
+        "shape=triangle",
+        f"width={_SPPM_QUEUE_TRIANGLE_WIDTH}",
+        f"height={_SPPM_QUEUE_TRIANGLE_HEIGHT}",
+        "fixedsize=true",
+        'style="filled"',
+        f'fillcolor="{queue_fill}"',
         f'color="{queue_border}"',
         "penwidth=1.5",
         "fontsize=11",
         "fontname=Helvetica",
     ]
+    if queue_xlabel:
+        attrs.append(f"xlabel={queue_xlabel}")
     _append_chunk_group(attrs=attrs, node_id=node_id, wrap_plan=wrap_plan)
     return f'  "{_escape(node_id)}" [{", ".join(attrs)}];'
+
+
+def _render_sppm_subprocess_node(*, node: SppmRenderNode, node_id: str, name: str, wrap_plan: WrapPlan) -> str:
+    """Render subprocesses as dotted oval containers with detail-map metadata below."""
+    metadata: dict[str, Any] = node.get("metadata") or {}
+    detail_map_ref = resolve_subprocess_detail_map_reference(node_id=node_id, metadata=metadata)
+    subprocess_label = f"{name}\\n{format_sppm_step_reference(node_id)}"
+    attrs = [
+        f'label="{_escape(subprocess_label)}"',
+        "shape=ellipse",
+        'style="filled,dotted"',
+        'fillcolor="#F8FAFC"',
+        'color="#607D8B"',
+        "penwidth=1.8",
+        "fontsize=11",
+        "fontname=Helvetica",
+        f"xlabel={_render_subprocess_metadata_xlabel(detail_map_ref)}",
+    ]
+    _append_chunk_group(attrs=attrs, node_id=node_id, wrap_plan=wrap_plan)
+    return f'  "{_escape(node_id)}" [{", ".join(attrs)}];'
+
+
+def _render_queue_metadata_xlabel(wait_time_min: float) -> str:
+    """Return a queue metadata box shown below the triangle marker."""
+    if wait_time_min <= 0:
+        return ""
+    rows = (
+        '<TR><TD ALIGN="LEFT" BALIGN="LEFT"><FONT POINT-SIZE="10">'
+        f"WT: {wait_time_min:g} min"
+        "</FONT></TD></TR>"
+    )
+    return (
+        "<<TABLE BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"3\" "
+        "COLOR=\"#666666\" BGCOLOR=\"#FFFFFF\">"
+        f"{rows}</TABLE>>"
+    )
+
+
+def _render_subprocess_metadata_xlabel(detail_map_ref: str) -> str:
+    """Return a subprocess metadata box shown below the dotted oval marker."""
+    safe_ref = html_escape(detail_map_ref)
+    return (
+        "<<TABLE BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"3\" "
+        "COLOR=\"#607D8B\" BGCOLOR=\"#FFFFFF\">"
+        '<TR><TD ALIGN="LEFT" BALIGN="LEFT"><FONT POINT-SIZE="10">Subprocess</FONT></TD></TR>'
+        f'<TR><TD ALIGN="LEFT" BALIGN="LEFT"><FONT POINT-SIZE="10">Detail map: {safe_ref}</FONT></TD></TR>'
+        "</TABLE>>"
+    )
 
 
 def _render_sppm_task_node(

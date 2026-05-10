@@ -12,7 +12,10 @@ import textwrap
 from typing import Any
 
 from ._autoformat_wrap import WrapPlan, wrap_chunk_exit_anchor_id
-from ._sppm_continuation_labels import build_sppm_continuation_label_attrs
+from ._sppm_continuation_labels import (
+    build_sppm_continuation_anchor_attrs,
+    build_sppm_continuation_anchor_tokens,
+)
 from ._sppm_postprocess_contract import SppmSvgPostprocessContract, build_svg_postprocess_contract
 from ._sppm_port_policy import (
     SppmPortPolicy,
@@ -431,15 +434,59 @@ def _build_boundary_corridor_route(
 ) -> SppmEdgeRoute:
     source_port, target_port = wrap_ports
     chunk_idx = wrap_plan.node_chunk_index.get(source)
-    outgoing_label_attrs, incoming_label_attrs = build_sppm_continuation_label_attrs(
+    outgoing_token, incoming_token = build_sppm_continuation_anchor_tokens(
         source=source,
         target=target,
         wrap_plan=wrap_plan,
-        is_secondary=False,
     )
+    boundary_anchor_base = sppm_boundary_anchor_id(source=source, target=target)
 
     if options.orientation == "lr" and chunk_idx is not None:
         exit_anchor_id = wrap_chunk_exit_anchor_id(orientation="lr", chunk_idx=chunk_idx)
+        if outgoing_token is not None and incoming_token is not None:
+            outgoing_anchor_id = f"{boundary_anchor_base}_out"
+            incoming_anchor_id = f"{boundary_anchor_base}_in"
+            return SppmEdgeRoute(
+                source=source,
+                target=target,
+                kind="corridor",
+                is_boundary=True,
+                is_rework=False,
+                lane_id=lane_id,
+                corridor_nodes=(),
+                anchors=(
+                    SppmRouteAnchor(
+                        anchor_id=outgoing_anchor_id,
+                        attrs=build_sppm_continuation_anchor_attrs(token=outgoing_token, is_secondary=False),
+                    ),
+                    SppmRouteAnchor(
+                        anchor_id=incoming_anchor_id,
+                        attrs=build_sppm_continuation_anchor_attrs(token=incoming_token, is_secondary=False),
+                    ),
+                ),
+                segments=(
+                    SppmRouteSegment(
+                        source_id=source,
+                        target_id=exit_anchor_id,
+                        attrs=tuple([source_port, "arrowhead=none", "constraint=false", "weight=0"]),
+                    ),
+                    SppmRouteSegment(
+                        source_id=exit_anchor_id,
+                        target_id=outgoing_anchor_id,
+                        attrs=("arrowhead=none", "constraint=false", "weight=0"),
+                    ),
+                    SppmRouteSegment(
+                        source_id=outgoing_anchor_id,
+                        target_id=incoming_anchor_id,
+                        attrs=("arrowhead=none", "constraint=false", "weight=0"),
+                    ),
+                    SppmRouteSegment(
+                        source_id=incoming_anchor_id,
+                        target_id=target,
+                        attrs=tuple([target_port, *edge_attrs]),
+                    ),
+                ),
+            )
         return SppmEdgeRoute(
             source=source,
             target=target,
@@ -453,18 +500,58 @@ def _build_boundary_corridor_route(
                 SppmRouteSegment(
                     source_id=source,
                     target_id=exit_anchor_id,
-                    attrs=tuple([source_port, "arrowhead=none", "constraint=false", "weight=0", *outgoing_label_attrs]),
+                    attrs=tuple([source_port, "arrowhead=none", "constraint=false", "weight=0"]),
                 ),
                 SppmRouteSegment(
                     source_id=exit_anchor_id,
                     target_id=target,
-                    attrs=tuple([target_port, *edge_attrs, *incoming_label_attrs]),
+                    attrs=tuple([target_port, *edge_attrs]),
                 ),
             ),
         )
 
     _ = lane_id
-    anchor_id = sppm_boundary_anchor_id(source=source, target=target)
+    anchor_id = boundary_anchor_base
+    if outgoing_token is not None and incoming_token is not None:
+        outgoing_anchor_id = f"{boundary_anchor_base}_out"
+        incoming_anchor_id = f"{boundary_anchor_base}_in"
+        return SppmEdgeRoute(
+            source=source,
+            target=target,
+            kind="corridor",
+            is_boundary=True,
+            is_rework=False,
+            lane_id=lane_id,
+            corridor_nodes=(),
+            anchors=(
+                SppmRouteAnchor(
+                    anchor_id=outgoing_anchor_id,
+                    attrs=build_sppm_continuation_anchor_attrs(token=outgoing_token, is_secondary=False),
+                ),
+                SppmRouteAnchor(
+                    anchor_id=incoming_anchor_id,
+                    attrs=build_sppm_continuation_anchor_attrs(token=incoming_token, is_secondary=False),
+                ),
+            ),
+            segments=(
+                SppmRouteSegment(
+                    source_id=source,
+                    target_id=outgoing_anchor_id,
+                    attrs=tuple([source_port, "arrowhead=none", "constraint=false", "weight=0"]),
+                ),
+                SppmRouteSegment(
+                    source_id=outgoing_anchor_id,
+                    target_id=incoming_anchor_id,
+                    attrs=("arrowhead=none", "constraint=false", "weight=0"),
+                ),
+                SppmRouteSegment(
+                    source_id=incoming_anchor_id,
+                    target_id=target,
+                    attrs=tuple([target_port, *edge_attrs]),
+                ),
+            ),
+        )
+
     anchor = SppmRouteAnchor(
         anchor_id=anchor_id,
         attrs=("shape=point", "width=0.01", "height=0.01", 'label=""', "style=invis"),
@@ -483,12 +570,12 @@ def _build_boundary_corridor_route(
             SppmRouteSegment(
                 source_id=source,
                 target_id=anchor_id,
-                attrs=tuple([source_port, "arrowhead=none", "constraint=false", "weight=0", *outgoing_label_attrs]),
+                attrs=tuple([source_port, "arrowhead=none", "constraint=false", "weight=0"]),
             ),
             SppmRouteSegment(
                 source_id=anchor_id,
                 target_id=target,
-                attrs=tuple([target_port, *edge_attrs, *incoming_label_attrs]),
+                attrs=tuple([target_port, *edge_attrs]),
             ),
         ),
     )
@@ -523,16 +610,22 @@ def _build_rework_route(
         port_policy=port_policy,
     )
     route_attrs = ["constraint=false", "minlen=3", "weight=0", "style=dashed", *edge_attrs]
-    outgoing_label_attrs, incoming_label_attrs = build_sppm_continuation_label_attrs(
+    outgoing_token, incoming_token = build_sppm_continuation_anchor_tokens(
         source=source,
         target=target,
         wrap_plan=wrap_plan,
-        is_secondary=is_boundary,
     )
     anchor_id = sppm_rework_anchor_id(source=source, target=target)
+    anchor_attrs: tuple[str, ...]
+    if is_boundary and incoming_token is not None:
+        anchor_attrs = build_sppm_continuation_anchor_attrs(token=incoming_token, is_secondary=True)
+    elif is_boundary and outgoing_token is not None:
+        anchor_attrs = build_sppm_continuation_anchor_attrs(token=outgoing_token, is_secondary=True)
+    else:
+        anchor_attrs = ("shape=point", "width=0.01", "height=0.01", 'label=""', "style=invis")
     anchor = SppmRouteAnchor(
         anchor_id=anchor_id,
-        attrs=("shape=point", "width=0.01", "height=0.01", 'label=""', "style=invis"),
+        attrs=anchor_attrs,
     )
     first_segment_attrs = tuple(
         [
@@ -551,16 +644,15 @@ def _build_rework_route(
         ]
     )
     rework_data_box_attrs = _build_rework_data_box_attrs(edge.get("metadata"), is_branch_out=is_branch_out)
-    if rework_data_box_attrs is not None:
+    if rework_data_box_attrs is not None and is_branch_out:
         first_segment_attrs = tuple([*first_segment_attrs, *rework_data_box_attrs])
-    if outgoing_label_attrs:
-        first_segment_attrs = tuple([*first_segment_attrs, *outgoing_label_attrs])
 
     second_segment_attrs = list([target_port, *route_attrs])
+    if rework_data_box_attrs is not None and not is_branch_out:
+        second_segment_attrs.extend(rework_data_box_attrs)
     branch_label = edge.get("outcome") or edge.get("label")
     if branch_label is not None:
         second_segment_attrs.append(f'xlabel="{str(branch_label)}"')
-    second_segment_attrs.extend(incoming_label_attrs)
 
     return SppmEdgeRoute(
         source=source,
@@ -609,16 +701,23 @@ def _build_rework_data_box_attrs(metadata: object, *, is_branch_out: bool) -> tu
         f'<TR><TD ALIGN="LEFT" BALIGN="LEFT"><FONT POINT-SIZE="10">{html_escape(line)}</FONT></TD></TR>'
         for line in wrapped_lines
     )
+    if is_branch_out:
+        label_attr = (
+            'taillabel=<'
+            '<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" '
+            'COLOR="#666666" BGCOLOR="#FFFFFF">'
+            f"{rows}"
+            "</TABLE>>"
+        )
+        return (label_attr, 'labeldistance="0.7"', 'labelangle="20"')
     label_attr = (
-        'taillabel=<'
+        'xlabel=<'
         '<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" '
         'COLOR="#666666" BGCOLOR="#FFFFFF">'
         f"{rows}"
         "</TABLE>>"
     )
-    if is_branch_out:
-        return (label_attr, 'labeldistance="0.7"', 'labelangle="20"')
-    return (label_attr, 'labeldistance="0.9"', 'labelangle="25"')
+    return (label_attr,)
 
 
 def _format_rework_metadata_value(key: str, value: object) -> str | None:

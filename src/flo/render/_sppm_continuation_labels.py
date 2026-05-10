@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from ._autoformat_wrap import WrapPlan
 from ._continuation_labels import build_continuation_label_attrs, format_continuation_html_label
 from ._sppm_step_refs import format_sppm_step_reference
@@ -27,3 +29,54 @@ def build_sppm_continuation_label_attrs(
 def format_sppm_continuation_html_label(*, text: str, is_secondary: bool) -> str:
     """Return styled HTML-like Graphviz label markup for an SPPM continuation."""
     return format_continuation_html_label(text=text, is_secondary=is_secondary)
+
+
+def build_sppm_continuation_anchor_tokens(
+    *,
+    source: str,
+    target: str,
+    wrap_plan: WrapPlan,
+) -> tuple[str | None, str | None]:
+    """Return outgoing/incoming continuation token labels for circular anchor markers."""
+    if not wrap_plan.active or (source, target) not in wrap_plan.boundary_edges:
+        return None, None
+
+    source_chunk = wrap_plan.node_chunk_index.get(source)
+    target_chunk = wrap_plan.node_chunk_index.get(target)
+    if source_chunk is None or target_chunk is None or source_chunk == target_chunk:
+        return None, None
+
+    source_page = source_chunk + 1
+    target_page = target_chunk + 1
+    outgoing = f"P{target_page}-{_continuation_suffix(format_sppm_step_reference(target))}"
+    incoming = f"P{source_page}-{_continuation_suffix(format_sppm_step_reference(source))}"
+    return outgoing, incoming
+
+
+def build_sppm_continuation_anchor_attrs(*, token: str, is_secondary: bool) -> tuple[str, ...]:
+    """Return DOT node attrs for a circular continuation anchor marker."""
+    border = "#90A4AE" if is_secondary else "#455A64"
+    fill = "#ECEFF1" if is_secondary else "#FFFFFF"
+    fontsize = "8" if is_secondary else "9"
+    return (
+        "shape=circle",
+        "width=0.58",
+        "height=0.58",
+        "fixedsize=true",
+        "style=filled",
+        f'fillcolor="{fill}"',
+        f'color="{border}"',
+        "penwidth=1.2",
+        "fontname=Helvetica",
+        f"fontsize={fontsize}",
+        f'label="{token}"',
+    )
+
+
+def _continuation_suffix(reference: str) -> str:
+    """Return the first alphanumeric marker from a step reference (e.g. ``[queue]`` -> ``Q``)."""
+    normalized = reference.strip().strip("[]")
+    match = re.search(r"[A-Za-z0-9]", normalized)
+    if match is None:
+        return "X"
+    return match.group(0).upper()

@@ -26,7 +26,7 @@ previous_assignee: null
 handoff_date: null
 git_branches: []
 git_commits: []
-completed_date: null
+completed_date: '2026-05-10T00:00:00+00:00'
 comments: []
 github_issue: null
 ---

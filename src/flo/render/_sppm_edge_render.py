@@ -88,7 +88,7 @@ def _render_sppm_spine_constraints(
             continue
         seen.add((source, target))
         lines.append(
-            f'  "{_escape(source)}" -> "{_escape(target)}" [style=invis, constraint=true, weight=24];'
+            f'  "{_escape(source)}" -> "{_escape(target)}" [style=invis, constraint=true, weight=80, minlen=1];'
         )
     return lines
 

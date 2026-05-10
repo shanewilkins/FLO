@@ -141,7 +141,7 @@ def test_run_sppm_parent_only_shows_subprocess_marker_and_hides_subnodes():
         ],
     )
     assert result.exit_code == 0
-    assert "[Subprocess] Execute" in result.output
+    assert '"process" [label="Execute Core Work\\n[process]", shape=ellipse, style="filled,dotted"' in result.output
     assert "Detail map: process" in result.output
     assert '"assess_scope"' not in result.output
     assert '"execute_service"' not in result.output
@@ -186,10 +186,10 @@ def test_run_sppm_feature_showcase_covers_publication_and_rework_semantics():
     assert result.exit_code == 0
     for token in (
         "Queue:",
-        "Orange circles indicate staged work.",
+        "Orange upright triangles indicate staged work.",
         "Rework:",
         "Red cards and dashed returns indicate corrective loops.",
-        "Reference map covering queueing, subprocess, rework, and publication footer semantics.",
+        "Reference map covering queueing triangles, continuation anchors, subprocess markers, rework, and publication footer semantics.",
         "Rate: 12%",
         "Reason: Missing details",
         'xlabel="yes"',

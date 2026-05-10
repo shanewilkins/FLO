@@ -44,23 +44,23 @@ SPPM is a pedagogical notation system designed to balance **simplicity with anal
 
 ---
 
-### 2.2 Queue / Waiting State (Circle)
+### 2.2 Queue / Waiting State (Triangle)
 
-**Shape:** Circle (or rounded square for tool compatibility)  
+**Shape:** Upright triangle (fixed size)  
 **Color:** Light Orange (Alert Orange #FF9800, border #E65100; distinct from value-type colors to signal "delay" or "idle state")
 
 **Placement:** Before the step at which wait time is most pronounced  
-**Example:** In Wash n' Fold, a queue circle appears before "Fold & Pack" because the 35-minute wait is the biggest bottleneck.
+**Example:** In Wash n' Fold, a queue triangle appears before "Fold & Pack" because the 35-minute wait is the biggest bottleneck.
 
 **Labeling and sizing:**
-- Optional: label with wait time or queue count (e.g., `WT: 35 min` or `Q: 12 units`)
-- Circle diameter can be scaled to queue size (rough visualization of bottleneck severity), or all circles can be uniform size
-- If queue data is in the data box of the preceding step, the circle serves as a visual cue; if queue is complex (e.g., "WT ranges 18–60 min depending on shift"), label it
+- Keep queue triangles at a fixed size for readability and stable routing
+- Place a short queue label inside the triangle (for example, queue name and step reference)
+- Put queue metadata in a data box below the triangle (for example, `WT: 35 min`)
 
 **Use in the map:**
 - **When to include:** Any step where you want to highlight a waiting or queueing condition; typically steps with WT ≥ 10 min
 - **Why:** Makes bottlenecks jump out visually; students instantly see where congestion lives
-- **Frequency in Wash n' Fold example:** 2–3 queue circles (before fold+pack, possibly after wash exit if dry queue is high)
+- **Frequency in Wash n' Fold example:** 2–3 queue triangles (before fold+pack, possibly after wash exit if dry queue is high)
 
 **Implementation (FLO):**  
 ✅ **Implemented** — Queue nodes are first-class elements in FLO. Define a queue as a node with `kind: queue`, positioned in the flow immediately before the task it serves. Example:
@@ -89,7 +89,7 @@ transitions:
 ```
 
 FLO will render the queue node according to the diagram type:
-- **SPPM:** Orange circle (#FF9800 fill, #E65100 border) with optional wait-time label (e.g., `35m`)
+- **SPPM:** Orange upright triangle (#FF9800 fill, #E65100 border) with a compact in-shape label; wait-time metadata is rendered in a data box below
 - **Flowchart:** Queue node may be rendered inline or skipped depending on visualization
 - **Swimlane:** Queue indicator in the same lane as the target task
 - **Other VSM variants:** Rendered per diagram conventions
@@ -98,17 +98,29 @@ Manually authored diagrams (Google Drawings, Draw.io) can include queue symbols 
 
 ---
 
-### 2.3 Subprocess (Double-Line Rectangle or ⊡ Marker)
+### 2.3 Subprocess (Dotted Oval Container)
 
-**Shape:** Rectangle with double-line border, or single rectangle with a small ⊡ corner notation  
-**Color:** Same value-type color as the underlying process
+**Shape:** Dotted oval container  
+**Color:** Neutral/light fill with dotted border, distinct from value-class task cards
 
 **Placement:** On the main map where detail will be "exploded"
 
 **Annotation:**
-- Label subprocess name in the rectangle: `"Wash Cycle" (See Detail Map 3.1)`
-- Include reference number or link to separate detail map
+- Label subprocess name and step reference inside the dotted oval
+- Include a detail-map reference in metadata below the subprocess symbol (for example, `Detail map: 3.1`)
 - Optional: show internal structure as a brief note, e.g., `"Load → Run → Unload → QC"`
+
+### 2.4 Continuation Anchor (Circle)
+
+**Shape:** Circle
+**Color:** White/light fill with dark border for primary flow; lighter border for secondary/rework flow
+
+**Placement:** At continuation breakpoints for cross-page flow and long-distance jumps
+
+**Labeling:**
+- Use stable anchor IDs in `P{page}-{letter}` format (for example, `P2-B`)
+- Anchor labels must be deterministic across re-renders for the same model and options
+- Use paired outgoing/incoming anchors to show where flow exits and re-enters
 
 **Separate detail map:**
 - Created as a complete SPPM within a bounded region (e.g., in the appendix or as an inset)

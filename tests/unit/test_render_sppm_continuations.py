@@ -30,8 +30,10 @@ def test_sppm_wrap_boundary_edges_show_continuation_labels():
         },
     )
 
-    assert 'Continue to p2 [c]' in out
-    assert 'Continued from p1 [b]' in out
+    assert '"__sppm_boundary_corridor_b_c_out" [shape=circle' in out
+    assert 'label="P2-C"' in out
+    assert '"__sppm_boundary_corridor_b_c_in" [shape=circle' in out
+    assert 'label="P1-B"' in out
 
 
 def test_sppm_wrap_rework_edges_show_lighter_continuation_labels():
@@ -64,6 +66,7 @@ def test_sppm_wrap_rework_edges_show_lighter_continuation_labels():
         },
     )
 
-    assert 'Continue to p2 [rework]' in out
-    assert 'Continued from p1 [decision]' in out
+    assert '"__sppm_rework_corridor_decision_rework" [shape=circle' in out
+    assert 'label="P1-D"' in out
+    assert 'color="#90A4AE"' in out
     assert 'style=dashed' in out

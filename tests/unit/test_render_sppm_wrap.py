@@ -46,9 +46,10 @@ def test_layout_wrap_lr_emits_first_boundary_connector_with_continuation_labels(
     assert '"b":"out_0":e -> "__wrap_exit_lr_0" [' in out
     assert 'arrowhead=none' in out
     assert 'constraint=false' in out
-    assert 'Continue to p2 [c]' in out
-    assert '"__wrap_exit_lr_0" -> "c":"boundary_in":s [' in out
-    assert 'Continued from p1 [b]' in out
+    assert '"__wrap_exit_lr_0" -> "__sppm_boundary_corridor_b_c_out" [' in out
+    assert 'label="P2-C"' in out
+    assert '"__sppm_boundary_corridor_b_c_in" -> "c":"boundary_in":s [' in out
+    assert 'label="P1-B"' in out
     assert "__sppm_wrap_corridor_" not in out
 
 
@@ -56,9 +57,10 @@ def test_layout_wrap_lr_emits_trailing_boundary_connector_with_continuation_labe
     out = _wrapped_lr_demo()
 
     assert '"e":"out_0":e -> "__wrap_exit_lr_1" [' in out
-    assert 'Continue to p3 [end]' in out
-    assert '"__wrap_exit_lr_1" -> "end":n [' in out
-    assert 'Continued from p2 [e]' in out
+    assert '"__wrap_exit_lr_1" -> "__sppm_boundary_corridor_e_end_out" [' in out
+    assert 'label="P3-E"' in out
+    assert '"__sppm_boundary_corridor_e_end_in" -> "end":n [' in out
+    assert 'label="P2-E"' in out
 
 
 def test_layout_wrap_tb_emits_wrap_hints_and_boundary_connector():
@@ -95,14 +97,14 @@ def test_layout_wrap_tb_emits_wrap_hints_and_boundary_connector():
     assert "rankdir=LR;" in out
     assert "subgraph wrap_rank_tb_0" in out
     assert 'group="__wrap_exit_column"' in out
-    assert '"a":s -> "__sppm_boundary_corridor_a_b" [' in out
-    assert 'Continue to p2 [b]' in out
-    assert '"__sppm_boundary_corridor_a_b" -> "b":n [' in out
-    assert 'Continued from p1 [a]' in out
-    assert '"c":s -> "__sppm_boundary_corridor_c_d" [' in out
-    assert 'Continue to p3 [d]' in out
-    assert '"__sppm_boundary_corridor_c_d" -> "d":n [' in out
-    assert 'Continued from p2 [c]' in out
+    assert '"a":s -> "__sppm_boundary_corridor_a_b_out" [' in out
+    assert 'label="P2-B"' in out
+    assert '"__sppm_boundary_corridor_a_b_in" -> "b":n [' in out
+    assert 'label="P1-A"' in out
+    assert '"c":s -> "__sppm_boundary_corridor_c_d_out" [' in out
+    assert 'label="P3-D"' in out
+    assert '"__sppm_boundary_corridor_c_d_in" -> "d":n [' in out
+    assert 'label="P2-C"' in out
     assert "__sppm_wrap_corridor_" not in out
 
 
@@ -207,13 +209,15 @@ def test_layout_wrap_activates_from_width_threshold_only():
     assert "subgraph wrap_rank_lr_0" in out
     assert "splines=ortho" in out
     assert '"b":"out_0":e -> "__wrap_exit_lr_0" [' in out
-    assert 'Continue to p2 [c]' in out
-    assert '"__wrap_exit_lr_0" -> "c":"boundary_in":s [' in out
-    assert 'Continued from p1 [b]' in out
+    assert '"__wrap_exit_lr_0" -> "__sppm_boundary_corridor_b_c_out" [' in out
+    assert 'label="P2-C"' in out
+    assert '"__sppm_boundary_corridor_b_c_in" -> "c":"boundary_in":s [' in out
+    assert 'label="P1-B"' in out
     assert '"e":"out_0":e -> "__wrap_exit_lr_1" [' in out
-    assert 'Continue to p3 [end]' in out
-    assert '"__wrap_exit_lr_1" -> "end":n [' in out
-    assert 'Continued from p2 [e]' in out
+    assert '"__wrap_exit_lr_1" -> "__sppm_boundary_corridor_e_end_out" [' in out
+    assert 'label="P3-E"' in out
+    assert '"__sppm_boundary_corridor_e_end_in" -> "end":n [' in out
+    assert 'label="P2-E"' in out
 
 
 def test_layout_wrap_tiny_width_uses_min_chunk_floor_of_three():
@@ -247,13 +251,15 @@ def test_layout_wrap_tiny_width_uses_min_chunk_floor_of_three():
     )
 
     assert '"b":"out_0":e -> "__wrap_exit_lr_2" [' in out
-    assert 'Continue to p4 [c]' in out
-    assert '"__wrap_exit_lr_2" -> "c":"boundary_in":s [' in out
-    assert 'Continued from p3 [b]' in out
+    assert '"__wrap_exit_lr_2" -> "__sppm_boundary_corridor_b_c_out" [' in out
+    assert 'label="P4-C"' in out
+    assert '"__sppm_boundary_corridor_b_c_in" -> "c":"boundary_in":s [' in out
+    assert 'label="P3-B"' in out
     assert '"e":"out_0":e -> "__wrap_exit_lr_5" [' in out
-    assert 'Continue to p7 [end]' in out
-    assert '"__wrap_exit_lr_5" -> "end":n [' in out
-    assert 'Continued from p6 [e]' in out
+    assert '"__wrap_exit_lr_5" -> "__sppm_boundary_corridor_e_end_out" [' in out
+    assert 'label="P7-E"' in out
+    assert '"__sppm_boundary_corridor_e_end_in" -> "end":n [' in out
+    assert 'label="P6-E"' in out
 
 
 def test_layout_wrap_fit_strict_wraps_sooner_than_fit_preferred_for_same_content():
@@ -311,9 +317,9 @@ def test_layout_wrap_fit_strict_wraps_sooner_than_fit_preferred_for_same_content
     )
 
     assert '"b":"out_0":e -> "__wrap_exit_lr_0" [' in out_preferred
-    assert 'Continue to p2 [c]' in out_preferred
+    assert 'label="P2-C"' in out_preferred
     assert '"a":"out_0":e -> "__wrap_exit_lr_0" [' in out_strict
-    assert 'Continue to p2 [b]' in out_strict
+    assert 'label="P2-B"' in out_strict
 
 
 def test_layout_wrap_width_estimator_responds_to_dense_label_content():
@@ -354,4 +360,4 @@ def test_layout_wrap_width_estimator_responds_to_dense_label_content():
     )
 
     assert '"a":"out_0":e -> "__wrap_exit_lr_0" [' in out
-    assert 'Continue to p2 [b]' in out
+    assert 'label="P2-B"' in out

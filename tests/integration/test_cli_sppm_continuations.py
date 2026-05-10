@@ -46,5 +46,5 @@ def test_run_sppm_wrap_outputs_continuation_labels(tmp_path):
     )
 
     assert result.exit_code == 0
-    assert "Continued from p1 [decision]" in result.output
-    assert "Continue to p2 [rework]" in result.output
+    assert '"__sppm_rework_corridor_decision_rework" [shape=circle' in result.output
+    assert 'label="P1-D"' in result.output

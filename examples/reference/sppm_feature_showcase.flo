@@ -5,9 +5,10 @@ process:
   name: SPPM Feature Showcase
   metadata:
     legend_items:
-      Queue: Orange circles indicate staged work.
+      Queue: Orange upright triangles indicate staged work.
+      Continuation: Labeled circles indicate page/jump anchors (P{page}-{letter}).
       Rework: Red cards and dashed returns indicate corrective loops.
-    caption: Reference map covering queueing, subprocess, rework, and publication footer semantics.
+    caption: Reference map covering queueing triangles, continuation anchors, subprocess markers, rework, and publication footer semantics.
 
 steps:
   - id: start
