@@ -5,7 +5,7 @@ owner: shanewilkins
 priority: high
 status: active
 created: 2026-05-05T17:09:49.038989+00:00
-updated: 2026-05-05T17:09:49.038989+00:00
+updated: 2026-05-10T00:00:00+00:00
 github_repo: shanewilkins/FLO
 timeline:
   start_date: 2026-05-05T17:09:49.038989+00:00
@@ -30,27 +30,35 @@ Project roadmap for FLO renderer and language evolution
 ## Milestones
 
 ### v0.1 Core Completion
+
 - Finish schema-aligned IR JSON export.
 - Complete advanced compiler edge wiring.
 - Deliver the remaining CLI polish and reference-implementation cleanup.
 
 ### SPPM Semantic Completeness
+
 - Add subprocess notation, header/footer bands, and continuation markers.
 - Complete the SPPM publishing surface without relying on manual post-editing.
+- Fix wrapped SPPM pagination artifacts, including repeated header leakage and broken continuation routing.
+- Fix non-wrapped SPPM mainline drift so showcase-grade outputs preserve straight spine geometry and visible branch labels.
 
 ### Renderer Platform Completeness
+
 - Add shared dimension, page, overflow, and continuation primitives.
 - Keep document-layout concerns reusable across future renderers.
 
 ### Spaghetti and Swimlane Renderers
+
 - Finish swimlane renderer output after the shared renderer platform is in place.
 - Extend spaghetti rendering beyond material-only routes with richer movement and spatial semantics.
 
 ### v0.2 Static Analytics
+
 - Add handoff, rework, and path-length analysis on canonical IR.
 - Produce analysis-oriented summaries suitable for Lean modeling.
 
 ### v0.3 Telemetry Alignment
+
 - Define the minimal event schema and alignment workflow.
 - Bridge observed traces to model-level frequency and rework metrics.
 
