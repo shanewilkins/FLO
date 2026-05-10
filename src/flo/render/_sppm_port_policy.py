@@ -54,7 +54,7 @@ def _sppm_rework_ports(
                 return ("tailport=s", "headport=n")
             return ("tailport=e", "headport=w")
 
-        return ("tailport=w", "headport=s")
+        return ("tailport=w", "headport=w")
     if source_port == "tailport=s" and target_port == "headport=n":
         if is_branch_out:
             return ("tailport=e", "headport=w")

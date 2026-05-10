@@ -22,6 +22,9 @@ def test_sppm_nodes_show_stable_visible_reference_tokens():
     assert "Review Request" in out
     assert "Approved?" in out
     assert "Dispatch Queue" in out
-    assert "[review_request]" in out
-    assert "[approve_request]" in out
-    assert "[dispatch_queue]" in out
+    assert "[review_request]" not in out
+    assert '"approve_request" [label="Approved?", shape=diamond' in out
+    assert '"dispatch_queue" [label="Dispatch Queue' in out
+    assert 'shape=triangle' in out
+    assert "[approve_request]" not in out
+    assert "[dispatch_queue]" not in out

@@ -184,7 +184,7 @@ def test_sppm_subprocess_nodes_include_marker_and_detail_map_reference():
         "edges": [],
     }
     out = render_dot(ir_like, options={"diagram": "sppm"})
-    assert '"prep" [label="Prep\\n[prep]", shape=ellipse, style="filled,dotted"' in out
+    assert '"prep" [label="Prep\\nSubprocess\\nDetail map: SP-01", shape=ellipse, style="filled,dotted"' in out
     assert "Subprocess" in out
     assert "Detail map: SP-01" in out
 

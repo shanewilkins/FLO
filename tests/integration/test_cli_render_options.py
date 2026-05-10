@@ -141,7 +141,7 @@ def test_run_sppm_parent_only_shows_subprocess_marker_and_hides_subnodes():
         ],
     )
     assert result.exit_code == 0
-    assert '"process" [label="Execute Core Work\\n[process]", shape=ellipse, style="filled,dotted"' in result.output
+    assert '"process" [label="Execute Core Work\\nSubprocess\\nDetail map: process", shape=ellipse, style="filled,dotted"' in result.output
     assert "Detail map: process" in result.output
     assert '"assess_scope"' not in result.output
     assert '"execute_service"' not in result.output

@@ -7,7 +7,6 @@ evolve per concern instead of by growing one hotspot file.
 
 from __future__ import annotations
 
-from html import escape as html_escape
 from typing import Any
 
 from flo.compiler.ir.subprocess_refs import resolve_subprocess_detail_map_reference
@@ -17,15 +16,15 @@ from ._autoformat_wrap import WrapPlan
 from ._graphviz_dot_common import _escape
 from ._sppm_label_html import _sppm_html_label
 from ._sppm_render_data import SppmRenderNode
-from ._sppm_step_refs import format_sppm_step_reference
 from ._sppm_text import format_text_field, normalize_space
 from ._sppm_themes import SppmNodeStyle, SppmTheme
 from .options import RenderOptions
 
 _SPPM_DECISION_MIN_WIDTH = 1.64
 _SPPM_DECISION_MIN_HEIGHT = 0.94
+_SPPM_DEFAULT_BOX_HEIGHT = 1.2  # inches
 _SPPM_QUEUE_TRIANGLE_WIDTH = 1.5  # inches
-_SPPM_QUEUE_TRIANGLE_HEIGHT = 1.32  # inches
+_SPPM_QUEUE_TRIANGLE_HEIGHT = _SPPM_DEFAULT_BOX_HEIGHT * 1.6  # inches
 _SPPM_QUEUE_NAME_MAX_LEN = 14
 
 __all__ = ["render_sppm_node"]
@@ -87,7 +86,7 @@ def _render_sppm_start_end_node(*, node_id: str, name: str, theme: SppmTheme, wr
 
 
 def _render_sppm_decision_node(*, node_id: str, name: str, theme: SppmTheme, wrap_plan: WrapPlan) -> str:
-    label = f"{name}\\n{format_sppm_step_reference(node_id)}"
+    label = name
     attrs = [
         f'label="{_escape(label)}"',
         "shape=diamond",
@@ -116,14 +115,15 @@ def _render_sppm_queue_triangle(*, node: SppmRenderNode, node_id: str, name: str
         truncation_policy="ellipsis",
         html_break="\n",
     )
-    label_lines = [queue_name] if queue_name else ["Q"]
-    label_lines.append(format_sppm_step_reference(node_id))
+    label_lines = [queue_name if queue_name else "Q"]
+    if wait_time_min > 0:
+        label_lines.append(f"WT: {wait_time_min:g} min")
     queue_label = "\n".join(label_lines)
-    queue_xlabel = _render_queue_metadata_xlabel(wait_time_min)
 
     attrs = [
         f'label="{queue_label}"',
         "shape=triangle",
+        "orientation=270",
         f"width={_SPPM_QUEUE_TRIANGLE_WIDTH}",
         f"height={_SPPM_QUEUE_TRIANGLE_HEIGHT}",
         "fixedsize=true",
@@ -134,8 +134,6 @@ def _render_sppm_queue_triangle(*, node: SppmRenderNode, node_id: str, name: str
         "fontsize=11",
         "fontname=Helvetica",
     ]
-    if queue_xlabel:
-        attrs.append(f"xlabel={queue_xlabel}")
     _append_chunk_group(attrs=attrs, node_id=node_id, wrap_plan=wrap_plan)
     return f'  "{_escape(node_id)}" [{", ".join(attrs)}];'
 
@@ -144,7 +142,7 @@ def _render_sppm_subprocess_node(*, node: SppmRenderNode, node_id: str, name: st
     """Render subprocesses as dotted oval containers with detail-map metadata below."""
     metadata: dict[str, Any] = node.get("metadata") or {}
     detail_map_ref = resolve_subprocess_detail_map_reference(node_id=node_id, metadata=metadata)
-    subprocess_label = f"{name}\\n{format_sppm_step_reference(node_id)}"
+    subprocess_label = f"{name}\\nSubprocess\\nDetail map: {detail_map_ref}"
     attrs = [
         f'label="{_escape(subprocess_label)}"',
         "shape=ellipse",
@@ -154,38 +152,9 @@ def _render_sppm_subprocess_node(*, node: SppmRenderNode, node_id: str, name: st
         "penwidth=1.8",
         "fontsize=11",
         "fontname=Helvetica",
-        f"xlabel={_render_subprocess_metadata_xlabel(detail_map_ref)}",
     ]
     _append_chunk_group(attrs=attrs, node_id=node_id, wrap_plan=wrap_plan)
     return f'  "{_escape(node_id)}" [{", ".join(attrs)}];'
-
-
-def _render_queue_metadata_xlabel(wait_time_min: float) -> str:
-    """Return a queue metadata box shown below the triangle marker."""
-    if wait_time_min <= 0:
-        return ""
-    rows = (
-        '<TR><TD ALIGN="LEFT" BALIGN="LEFT"><FONT POINT-SIZE="10">'
-        f"WT: {wait_time_min:g} min"
-        "</FONT></TD></TR>"
-    )
-    return (
-        "<<TABLE BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"3\" "
-        "COLOR=\"#666666\" BGCOLOR=\"#FFFFFF\">"
-        f"{rows}</TABLE>>"
-    )
-
-
-def _render_subprocess_metadata_xlabel(detail_map_ref: str) -> str:
-    """Return a subprocess metadata box shown below the dotted oval marker."""
-    safe_ref = html_escape(detail_map_ref)
-    return (
-        "<<TABLE BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"3\" "
-        "COLOR=\"#607D8B\" BGCOLOR=\"#FFFFFF\">"
-        '<TR><TD ALIGN="LEFT" BALIGN="LEFT"><FONT POINT-SIZE="10">Subprocess</FONT></TD></TR>'
-        f'<TR><TD ALIGN="LEFT" BALIGN="LEFT"><FONT POINT-SIZE="10">Detail map: {safe_ref}</FONT></TD></TR>'
-        "</TABLE>>"
-    )
 
 
 def _render_sppm_task_node(

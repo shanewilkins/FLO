@@ -113,10 +113,11 @@ def test_sppm_queue_triangles_render_with_wait_metadata_box():
 
     out = render_dot(ir_like, options={"diagram": "sppm"})
 
-    assert 'label="Process Queue' in out
+    assert '"process_queue" [label="Process Queue' in out
     assert 'WT: 11 min' in out
-    assert '[process_queue]' in out
-    assert 'shape=triangle, width=1.5, height=1.32' in out
+    assert 'shape=triangle' in out
+    assert 'Process Queue\nprocess_queue' not in out
+    assert 'shape=triangle, orientation=270, width=1.5, height=1.92' in out
     assert 'style="filled"' in out
 
 
@@ -135,6 +136,7 @@ def test_sppm_queue_triangle_labels_wrap_and_truncate_long_names():
 
     out = render_dot(ir_like, options={"diagram": "sppm"})
 
-    assert 'label="Extremely L...' in out
+    assert '"dispatch_queue" [label="Extremely L...' in out
+    assert 'shape=triangle' in out
     assert 'WT: 14 min' in out
-    assert '[dispatch_queue]' in out
+    assert '[dispatch_queue]' not in out

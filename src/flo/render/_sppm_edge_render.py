@@ -128,7 +128,7 @@ def _accumulate_rework_edge(
     anchor_id = route.anchors[0].anchor_id if route.anchors else ""
     if source in all_rework_targets:
         if anchor_id:
-            return_anchor_pairs.append((target, anchor_id))
+            return_anchor_pairs.append((source, anchor_id))
         return
     if target in seen_targets:
         return
@@ -222,11 +222,15 @@ def _render_sppm_secondary_line_constraints(
             f'  "{_escape(left)}" -> "{_escape(right)}" [style=invis, constraint=false, weight=0, minlen=1];'
         )
 
-    # Return anchors: chain only (no rank=same); SVG postprocessor pins paths.
-    ordered_return_anchors = [anchor_id for _, anchor_id in return_anchor_pairs]
-    for left, right in zip(ordered_return_anchors, ordered_return_anchors[1:]):
+    # Return-loop track: keep each anchor adjacent to its return source node.
+    for idx, (source, anchor_id) in enumerate(return_anchor_pairs):
+        lines.append(f"  subgraph sppm_secondary_return_track_{idx} {{")
+        lines.append("    rank=same;")
+        lines.append(f'    "{_escape(source)}";')
+        lines.append(f'    "{_escape(anchor_id)}";')
+        lines.append("  }")
         lines.append(
-            f'  "{_escape(left)}" -> "{_escape(right)}" [style=invis, constraint=false, weight=0, minlen=1];'
+            f'  "{_escape(source)}" -> "{_escape(anchor_id)}" [style=invis, constraint=false, weight=50, minlen=0];'
         )
 
     return lines

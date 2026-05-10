@@ -130,7 +130,8 @@ def test_sppm_decision_nodes_use_diamond_shape():
     out = render_dot(ir_like, options={"diagram": "sppm"})
     assert '"decision" [label=' in out
     assert "Approved?" in out
-    assert "[decision]" in out
+    assert '"decision" [label="Approved?", shape=diamond' in out
+    assert "\\ndecision" not in out
     assert "shape=diamond" in out
     assert "regular=true" in out
 

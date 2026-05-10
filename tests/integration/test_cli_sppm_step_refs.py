@@ -18,7 +18,11 @@ def test_run_sppm_shows_stable_step_reference_tokens():
     )
 
     assert result.exit_code == 0
-    assert "[intake]" in result.output
-    assert "[triage]" in result.output
-    assert "[process_queue]" in result.output
-    assert "[process]" in result.output
+    assert "[intake]" not in result.output
+    assert '"triage" [label="Information Complete?", shape=diamond' in result.output
+    assert "[process_queue]" not in result.output
+    assert '"process_queue" [label="Process Queue' in result.output
+    assert 'shape=triangle' in result.output
+    assert "\ntriage\"" not in result.output
+    assert "\nprocess_queue\"" not in result.output
+    assert "[process]" not in result.output

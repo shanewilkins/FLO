@@ -141,6 +141,13 @@ def build_sppm_routing_plan(
     )
     node_kinds = _node_kinds(nodes)
     port_policy = _build_sppm_port_policy(edges=edges, node_kinds=node_kinds)
+    branch_metadata_by_rework_target = _collect_rework_branch_metadata(edges=edges, node_kinds=node_kinds)
+    rework_return_sources = _collect_rework_return_sources(
+        edges=edges,
+        step_numbering=step_numbering,
+        node_kinds=node_kinds,
+        branch_metadata_by_rework_target=branch_metadata_by_rework_target,
+    )
 
     for edge in edges:
         source = str(edge.get("source") or "")
@@ -148,8 +155,18 @@ def build_sppm_routing_plan(
         if not source or not target:
             continue
 
-        route = _build_sppm_edge_route(
+        effective_edge = _edge_with_rework_metadata_policy(
             edge=edge,
+            source=source,
+            target=target,
+            step_numbering=step_numbering,
+            node_kinds=node_kinds,
+            branch_metadata_by_rework_target=branch_metadata_by_rework_target,
+            rework_return_sources=rework_return_sources,
+        )
+
+        route = _build_sppm_edge_route(
+            edge=effective_edge,
             source=source,
             target=target,
             options=options,
@@ -264,6 +281,88 @@ def _node_kinds(nodes: list[dict[str, Any]]) -> dict[str, str]:
             continue
         kinds[node_id] = str(node.get("kind") or node.get("type") or "task").strip().lower()
     return kinds
+
+
+def _collect_rework_branch_metadata(
+    *,
+    edges: list[dict[str, Any]],
+    node_kinds: dict[str, str],
+) -> dict[str, dict[str, Any]]:
+    """Return branch-out rework metadata keyed by rework target node id."""
+    metadata_by_target: dict[str, dict[str, Any]] = {}
+    for edge in edges:
+        source = str(edge.get("source") or "")
+        target = str(edge.get("target") or "")
+        if not source or not target:
+            continue
+        if not _is_explicit_rework_branch_out(edge=edge, source_kind=node_kinds.get(source, "task")):
+            continue
+        raw = edge.get("metadata")
+        if isinstance(raw, dict) and raw:
+            metadata_by_target[target] = dict(raw)
+    return metadata_by_target
+
+
+def _collect_rework_return_sources(
+    *,
+    edges: list[dict[str, Any]],
+    step_numbering: dict[str, int],
+    node_kinds: dict[str, str],
+    branch_metadata_by_rework_target: dict[str, dict[str, Any]],
+) -> set[str]:
+    """Return rework-source node ids that have explicit return rework edges."""
+    sources: set[str] = set()
+    for edge in edges:
+        source = str(edge.get("source") or "")
+        target = str(edge.get("target") or "")
+        if not source or not target:
+            continue
+        if source not in branch_metadata_by_rework_target:
+            continue
+        if not is_sppm_rework_edge(edge=edge, step_numbering=step_numbering, source=source, target=target):
+            continue
+        if _is_explicit_rework_branch_out(edge=edge, source_kind=node_kinds.get(source, "task")):
+            continue
+        sources.add(source)
+    return sources
+
+
+def _edge_with_rework_metadata_policy(
+    *,
+    edge: dict[str, Any],
+    source: str,
+    target: str,
+    step_numbering: dict[str, int],
+    node_kinds: dict[str, str],
+    branch_metadata_by_rework_target: dict[str, dict[str, Any]],
+    rework_return_sources: set[str],
+) -> dict[str, Any]:
+    """Return edge copy with merged/suppressed rework databox metadata policy applied."""
+    effective = dict(edge)
+    if not is_sppm_rework_edge(edge=edge, step_numbering=step_numbering, source=source, target=target):
+        return effective
+
+    source_kind = node_kinds.get(source, "task")
+    is_branch_out = _is_explicit_rework_branch_out(edge=edge, source_kind=source_kind)
+    if is_branch_out and target in rework_return_sources:
+        effective["_sppm_suppress_rework_databox"] = True
+        return effective
+
+    if source in branch_metadata_by_rework_target and not is_branch_out:
+        merged: dict[str, Any] = {}
+        merged.update(branch_metadata_by_rework_target[source])
+        raw = edge.get("metadata")
+        if isinstance(raw, dict):
+            merged.update(raw)
+        if merged:
+            effective["metadata"] = merged
+    return effective
+
+
+def _is_explicit_rework_branch_out(*, edge: dict[str, Any], source_kind: str) -> bool:
+    if str(edge.get("edge_type") or "").strip().lower() != "rework" and edge.get("rework") is not True:
+        return False
+    return source_kind == "decision" or edge.get("outcome") is not None or edge.get("label") is not None
 
 
 def _resolve_lane_id(
@@ -616,7 +715,12 @@ def _build_rework_route(
         wrap_plan=wrap_plan,
     )
     anchor_id = sppm_rework_anchor_id(source=source, target=target)
-    rework_data_box_attrs = _build_rework_data_box_attrs(edge.get("metadata"), is_branch_out=is_branch_out)
+    suppress_databox = bool(edge.get("_sppm_suppress_rework_databox"))
+    rework_data_box_attrs = (
+        None
+        if suppress_databox
+        else _build_rework_data_box_attrs(edge.get("metadata"), is_branch_out=is_branch_out)
+    )
     anchor = SppmRouteAnchor(
         anchor_id=anchor_id,
         attrs=_build_rework_anchor_attrs(
@@ -635,6 +739,7 @@ def _build_rework_route(
         target_port=target_port,
         route_attrs=route_attrs,
         rework_data_box_attrs=rework_data_box_attrs,
+        is_branch_out=is_branch_out,
         branch_label=edge.get("outcome") or edge.get("label"),
     )
 
@@ -700,10 +805,11 @@ def _build_rework_second_segment_attrs(
     target_port: str,
     route_attrs: list[str],
     rework_data_box_attrs: tuple[str, ...] | None,
+    is_branch_out: bool,
     branch_label: object | None,
 ) -> tuple[str, ...]:
     attrs = [target_port, *route_attrs]
-    if rework_data_box_attrs is not None:
+    if rework_data_box_attrs is not None and not is_branch_out:
         attrs.extend(rework_data_box_attrs)
     if branch_label is not None:
         attrs.append(f'xlabel="{str(branch_label)}"')
@@ -715,7 +821,7 @@ def _build_rework_data_box_attrs(metadata: object, *, is_branch_out: bool) -> tu
     if not isinstance(metadata, dict) or not metadata:
         return None
 
-    ordered_keys = ("rate", "reason") if is_branch_out else ("frequency", "count")
+    ordered_keys = ("rate", "reason", "frequency", "count")
     lines: list[str] = []
     for key in ordered_keys:
         if key not in metadata:
