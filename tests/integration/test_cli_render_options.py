@@ -266,7 +266,6 @@ def test_run_spaghetti_people_worker_mode_labels_worker_traces():
 @pytest.mark.parametrize(
     "flag",
     [
-        "--layout-max-width-px",
         "--layout-target-columns",
         "--sppm-max-label-step-name",
         "--sppm-max-label-workers",
@@ -290,6 +289,47 @@ def test_run_sppm_rejects_non_positive_numeric_render_options(flag: str):
     )
     assert result.exit_code == 1
     assert "expected a positive integer" in result.output
+
+
+@pytest.mark.parametrize("value", ["0", "12pt", "wide"])
+def test_run_sppm_rejects_invalid_layout_max_width_dimension(value: str):
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "examples/reference/washnfold.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+            "--layout-max-width-px",
+            value,
+        ],
+    )
+    assert result.exit_code == 1
+    assert "expected a positive dimension using px, in, or cm" in result.output
+
+
+def test_run_sppm_accepts_layout_max_width_dimension_units():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "examples/reference/washnfold.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+            "--layout-wrap",
+            "auto",
+            "--layout-max-width-px",
+            "8.5in",
+        ],
+    )
+    assert result.exit_code == 0
+    assert result.output.startswith("digraph")
 
 
 def test_run_spaghetti_renders_boundary_overlay_from_process_metadata(tmp_path):

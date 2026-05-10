@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Literal, Mapping
+import math
+import re
+from typing import Any, Literal, Mapping, cast
 
 DiagramType = Literal["flowchart", "swimlane", "spaghetti", "sppm"]
 RenderProfile = Literal["default", "analysis"]
@@ -22,6 +24,14 @@ SppmLabelDensity = Literal["full", "compact", "teaching"]
 SppmWrapStrategy = Literal["word", "balanced", "hard"]
 SppmTruncationPolicy = Literal["ellipsis", "clip", "none"]
 SppmOutputProfile = Literal["default", "book", "web", "print", "slide"]
+DimensionUnit = Literal["px", "in", "cm"]
+
+_DIMENSION_TO_PX: dict[str, float] = {
+    "px": 1.0,
+    "in": 96.0,
+    "cm": 96.0 / 2.54,
+}
+_DIMENSION_RE = re.compile(r"^(?P<value>(?:\d+(?:\.\d+)?|\.\d+))\s*(?P<unit>px|in|cm)?$")
 
 _SPPM_PROFILE_DEFAULTS: dict[str, dict[str, Any]] = {
     "book": {
@@ -60,6 +70,46 @@ _SPPM_PROFILE_DEFAULTS: dict[str, dict[str, Any]] = {
 
 
 @dataclass(frozen=True)
+class Dimension:
+    """A positive display dimension that can be normalized to pixels."""
+
+    value: float
+    unit: DimensionUnit = "px"
+
+    def to_px(self) -> int:
+        """Return the dimension normalized to rounded device pixels."""
+        pixels = self.value * _DIMENSION_TO_PX[self.unit]
+        return max(1, math.floor(pixels + 0.5))
+
+
+def parse_dimension(value: Any) -> Dimension | None:
+    """Parse a positive dimension in px, in, or cm."""
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, Dimension):
+        return value if value.value > 0 else None
+    if isinstance(value, (int, float)):
+        numeric = float(value)
+        return Dimension(value=numeric, unit="px") if numeric > 0 else None
+    if not isinstance(value, str):
+        return None
+
+    normalized = value.strip().lower()
+    if not normalized:
+        return None
+    match = _DIMENSION_RE.fullmatch(normalized)
+    if not match:
+        return None
+
+    numeric = float(match.group("value"))
+    if numeric <= 0:
+        return None
+
+    unit = cast(DimensionUnit, match.group("unit") or "px")
+    return Dimension(value=numeric, unit=unit)
+
+
+@dataclass(frozen=True)
 class RenderOptions:
     """Configuration for selecting renderer behavior.
 
@@ -86,6 +136,7 @@ class RenderOptions:
     sppm_wrap_strategy: SppmWrapStrategy = "word"
     sppm_truncation_policy: SppmTruncationPolicy = "ellipsis"
     sppm_output_profile: SppmOutputProfile = "default"
+    layout_max_width: Dimension | None = None
     layout_max_width_px: int | None = None
     layout_target_columns: int | None = None
     sppm_max_label_step_name: int | None = None
@@ -102,6 +153,10 @@ class RenderOptions:
 
         effective_options = _effective_render_options(options)
         profile = _parse_profile(effective_options)
+        layout_max_width = _parse_dimension_option(
+            "layout_max_width_px",
+            effective_options.get("layout_max_width_px"),
+        )
 
         return cls(
             diagram=_parse_diagram(effective_options),
@@ -123,7 +178,8 @@ class RenderOptions:
             sppm_wrap_strategy=_parse_sppm_wrap_strategy(effective_options),
             sppm_truncation_policy=_parse_sppm_truncation_policy(effective_options),
             sppm_output_profile=_parse_sppm_output_profile(effective_options),
-            layout_max_width_px=_parse_positive_int(effective_options.get("layout_max_width_px")),
+            layout_max_width=layout_max_width,
+            layout_max_width_px=layout_max_width.to_px() if layout_max_width else None,
             layout_target_columns=_parse_positive_int(effective_options.get("layout_target_columns")),
             sppm_max_label_step_name=_parse_positive_int(effective_options.get("sppm_max_label_step_name")),
             sppm_max_label_workers=_parse_positive_int(effective_options.get("sppm_max_label_workers")),
@@ -329,6 +385,17 @@ def _parse_positive_int(value: Any) -> int | None:
     except (TypeError, ValueError):
         return None
     return parsed if parsed > 0 else None
+
+
+def _parse_dimension_option(option_name: str, value: Any) -> Dimension | None:
+    if value is None:
+        return None
+    parsed = parse_dimension(value)
+    if parsed is None:
+        raise ValueError(
+            f"Invalid value for {option_name}: expected a positive dimension using px, in, or cm."
+        )
+    return parsed
 
 
 def _parse_bool(value: Any) -> bool:

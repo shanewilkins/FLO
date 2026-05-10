@@ -93,7 +93,10 @@ def parse_args(argv: list | None, services: Services) -> Tuple[str | None, str, 
         choices=["ellipsis", "clip", "none"],
         help="Label truncation policy for SPPM text",
     )
-    parser.add_argument("--layout-max-width-px", type=int, help="Max layout width hint for autoformat wrapping")
+    parser.add_argument(
+        "--layout-max-width-px",
+        help="Max layout width hint for autoformat wrapping (supports px, in, cm)",
+    )
     parser.add_argument("--layout-target-columns", type=int, help="Target columns/steps per wrapped chunk")
     parser.add_argument("--sppm-max-label-step-name", type=int, help="Max step-name label length for SPPM")
     parser.add_argument("--sppm-max-label-workers", type=int, help="Max workers label length for SPPM")

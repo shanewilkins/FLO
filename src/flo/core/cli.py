@@ -146,7 +146,7 @@ def _build_render_opts(
     sppm_truncation_policy: Optional[str],
     sppm_output_profile: Optional[str],
     render_to: Optional[str],
-    layout_max_width_px: Optional[int],
+    layout_max_width_px: Optional[str],
     layout_target_columns: Optional[int],
     sppm_max_label_step_name: Optional[int],
     sppm_max_label_workers: Optional[int],
@@ -227,7 +227,7 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
 @click.option("--sppm-label-density", type=click.Choice(["full", "compact", "teaching"]), help="SPPM label density mode")
 @click.option("--sppm-wrap-strategy", type=click.Choice(["word", "balanced", "hard"]), help="Text wrapping strategy for SPPM labels")
 @click.option("--sppm-truncation-policy", type=click.Choice(["ellipsis", "clip", "none"]), help="Label truncation policy for SPPM text")
-@click.option("--layout-max-width-px", type=int, help="Max layout width hint for autoformat wrapping")
+@click.option("--layout-max-width-px", help="Max layout width hint for autoformat wrapping (supports px, in, cm)")
 @click.option("--layout-target-columns", type=int, help="Target columns/steps per wrapped chunk")
 @click.option("--sppm-max-label-step-name", type=int, help="Max step-name label length for SPPM")
 @click.option("--sppm-max-label-workers", type=int, help="Max workers label length for SPPM")
@@ -258,7 +258,7 @@ def run_cmd(
     sppm_label_density: Optional[str],
     sppm_wrap_strategy: Optional[str],
     sppm_truncation_policy: Optional[str],
-    layout_max_width_px: Optional[int],
+    layout_max_width_px: Optional[str],
     layout_target_columns: Optional[int],
     sppm_max_label_step_name: Optional[int],
     sppm_max_label_workers: Optional[int],
@@ -344,7 +344,7 @@ def validate_cmd(path: Optional[str], verbose: bool) -> None:  # pragma: no cove
 @click.option("--sppm-label-density", type=click.Choice(["full", "compact", "teaching"]), help="SPPM label density mode")
 @click.option("--sppm-wrap-strategy", type=click.Choice(["word", "balanced", "hard"]), help="Text wrapping strategy for SPPM labels")
 @click.option("--sppm-truncation-policy", type=click.Choice(["ellipsis", "clip", "none"]), help="Label truncation policy for SPPM text")
-@click.option("--layout-max-width-px", type=int, help="Max layout width hint for autoformat wrapping")
+@click.option("--layout-max-width-px", help="Max layout width hint for autoformat wrapping (supports px, in, cm)")
 @click.option("--layout-target-columns", type=int, help="Target columns/steps per wrapped chunk")
 @click.option("--sppm-max-label-step-name", type=int, help="Max step-name label length for SPPM")
 @click.option("--sppm-max-label-workers", type=int, help="Max workers label length for SPPM")
@@ -373,7 +373,7 @@ def export_cmd(
     sppm_label_density: Optional[str],
     sppm_wrap_strategy: Optional[str],
     sppm_truncation_policy: Optional[str],
-    layout_max_width_px: Optional[int],
+    layout_max_width_px: Optional[str],
     layout_target_columns: Optional[int],
     sppm_max_label_step_name: Optional[int],
     sppm_max_label_workers: Optional[int],

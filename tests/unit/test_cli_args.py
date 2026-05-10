@@ -118,7 +118,7 @@ def test_parse_args_sppm_extended_options(services):
             "sppm_label_density": "compact",
             "sppm_wrap_strategy": "balanced",
             "sppm_truncation_policy": "clip",
-            "layout_max_width_px": 1200,
+            "layout_max_width_px": "1200",
             "layout_target_columns": 7,
             "sppm_max_label_step_name": 48,
             "sppm_max_label_workers": 24,
@@ -126,6 +126,23 @@ def test_parse_args_sppm_extended_options(services):
             "sppm_output_profile": "book",
         },
     )
+
+
+def test_parse_args_accepts_dimension_layout_width(services):
+    path, command, options, _, _ = parse_args(
+        [
+            "file.flo",
+            "--diagram",
+            "sppm",
+            "--layout-max-width-px",
+            "8.5in",
+        ],
+        services,
+    )
+
+    assert path == "file.flo"
+    assert command == "run"
+    assert options["layout_max_width_px"] == "8.5in"
 
 
 def test_parse_args_sppm_projection_options(services):

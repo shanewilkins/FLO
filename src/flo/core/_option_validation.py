@@ -7,14 +7,20 @@ any invalid combination so the caller gets a clean, actionable message.
 
 from __future__ import annotations
 
+from flo.render.options import parse_dimension
 from flo.services.errors import CLIError, EXIT_USAGE
 
 
 def validate_sppm_numeric_render_options(options: dict | None) -> None:
-    """Raise ``CLIError`` if any SPPM numeric option is not a positive integer."""
+    """Raise ``CLIError`` if any SPPM numeric option is invalid."""
     opts = options or {}
+    if "layout_max_width_px" in opts and parse_dimension(opts.get("layout_max_width_px")) is None:
+        raise CLIError(
+            "Invalid value for --layout-max-width-px: expected a positive dimension using px, in, or cm.",
+            code=EXIT_USAGE,
+        )
+
     numeric_flags = (
-        "layout_max_width_px",
         "layout_target_columns",
         "sppm_max_label_step_name",
         "sppm_max_label_workers",
