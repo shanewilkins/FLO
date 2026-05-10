@@ -4,7 +4,7 @@ title: Fix wrapped SPPM cluster label leak and continuation routing
 headline: Keep wrapped SPPM pages readable by removing chunk-as-cluster artifacts
   and aligning continuation routing with the intended reading direction.
 priority: high
-status: todo
+status: closed
 archived: false
 issue_type: other
 milestone: sppm-semantic-completeness
@@ -20,9 +20,9 @@ depends_on:
 - 7b3865ba
 - e7d428a4
 blocks: []
-actual_start_date: null
-actual_end_date: null
-progress_percentage: null
+actual_start_date: '2026-05-10T00:00:00+00:00'
+actual_end_date: '2026-05-10T00:00:00+00:00'
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null

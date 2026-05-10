@@ -434,7 +434,9 @@ def test_run_layout_wrap_lr_on_reference_fixture():
     assert result.exit_code == 0
     assert "// Autoformat wrapped layout: orientation=lr" in result.output
     assert "rankdir=TB;" in result.output
-    assert "cluster_wrap_lr_0" in result.output
+    assert "subgraph wrap_rank_lr_0" in result.output
+    assert "subgraph cluster_wrap_" not in result.output
+    assert 'group="__wrap_exit_column"' not in result.output
     assert "splines=ortho" in result.output
     assert "minlen=2, penwidth=1.2" in result.output
 
@@ -461,7 +463,7 @@ def test_run_layout_wrap_tb_on_reference_fixture():
     assert result.exit_code == 0
     assert "// Autoformat wrapped layout: orientation=tb" in result.output
     assert "rankdir=LR;" in result.output
-    assert "cluster_wrap_tb_0" in result.output
+    assert "subgraph wrap_rank_tb_0" in result.output
     assert "splines=ortho" in result.output
     assert "minlen=2, penwidth=1.2" in result.output
 
@@ -485,7 +487,7 @@ def test_run_layout_wrap_off_is_unchanged_on_reference_fixture():
     )
     assert result.exit_code == 0
     assert "splines=ortho" in result.output
-    assert "cluster_wrap_" not in result.output
+    assert "subgraph wrap_rank_" not in result.output
     assert "minlen=2, penwidth=1.2" not in result.output
 
 
@@ -552,7 +554,7 @@ def test_run_sppm_uses_diagrams_toml_defaults(tmp_path, monkeypatch):
     assert result.exit_code == 0
     assert "// Autoformat wrapped layout: orientation=tb" in result.output
     assert "rankdir=LR;" in result.output
-    assert "cluster_wrap_tb_0" in result.output
+    assert "subgraph wrap_rank_tb_0" in result.output
 
 
 def test_run_sppm_cli_overrides_diagrams_toml_defaults(tmp_path, monkeypatch):

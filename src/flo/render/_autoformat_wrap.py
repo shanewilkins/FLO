@@ -326,15 +326,20 @@ def append_wrap_layout_hints(lines: list[str], options: RenderOptions, plan: Wra
             f'  "{anchor_id}" [shape=point, width=0.01, label="", style=invis, height=0.01, group="__wrap_margin_column"];'
         )
     for anchor_id in exit_anchor_ids:
-        lines.append(
-            f'  "{anchor_id}" [shape=point, width=0.01, label="", style=invis, height=0.01, group="__wrap_exit_column"];'
-        )
+        if orientation == "lr":
+            lines.append(
+                f'  "{anchor_id}" [shape=point, width=0.01, label="", style=invis, height=0.01];'
+            )
+        else:
+            lines.append(
+                f'  "{anchor_id}" [shape=point, width=0.01, label="", style=invis, height=0.01, group="__wrap_exit_column"];'
+            )
 
     for chunk_idx, chunk in enumerate(plan.display_chunks):
         if not chunk:
             continue
-        cluster_name = f"cluster_wrap_{orientation}_{chunk_idx}"
-        lines.append(f"  subgraph {cluster_name} {{")
+        rank_group_name = f"wrap_rank_{orientation}_{chunk_idx}"
+        lines.append(f"  subgraph {rank_group_name} {{")
         lines.append("    color=none;")
         lines.append("    margin=0;")
         lines.append("    rank=same;")

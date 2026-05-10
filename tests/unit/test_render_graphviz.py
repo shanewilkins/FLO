@@ -399,7 +399,7 @@ def test_flowchart_layout_wrap_uses_shared_autoformat_hints():
     assert "// Autoformat wrapped layout: orientation=lr" in out
     assert "// Overflow policy: planner=chunked, wrap=auto, fit=fit-preferred" in out
     assert "rankdir=TB;" in out
-    assert "cluster_wrap_lr_0" in out
+    assert "subgraph wrap_rank_lr_0" in out
     assert "splines=ortho" in out
     assert '"__boundary_corridor_a_b_1" [shape=point, width=0.01, height=0.01, label="", style=invis];' in out
     assert '"a" -> "__boundary_corridor_a_b_1" [tailport=s, constraint=false, weight=0, arrowhead=none, headlabel=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#455A64" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#455A64"><B>Continue to p2 [b]</B></FONT></TD></TR></TABLE>>];' in out
@@ -431,7 +431,7 @@ def test_swimlane_layout_wrap_uses_shared_autoformat_hints():
     assert "// Autoformat wrapped layout: orientation=tb" in out
     assert "// Overflow policy: planner=chunked, wrap=auto, fit=fit-preferred" in out
     assert "rankdir=LR;" in out
-    assert "cluster_wrap_tb_0" in out
+    assert "subgraph wrap_rank_tb_0" in out
     assert "subgraph cluster_sales" in out
     assert "subgraph cluster_ops" in out
     assert '"__boundary_corridor_a_b_1" [shape=point, width=0.01, height=0.01, label="", style=invis];' in out
