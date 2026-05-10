@@ -66,10 +66,26 @@ def test_common_parent_only_view_and_edge_collapse_dedup_paths():
 
     collapsed_edges: list[dict[str, str]] = []
     seen_edges: set[tuple[str, str, str | None]] = set()
-    common._add_collapsed_edge(collapsed_edges, seen_edges, source="a", target="a", branch_label=None)
-    common._add_collapsed_edge(collapsed_edges, seen_edges, source="a", target="b", branch_label="yes")
-    common._add_collapsed_edge(collapsed_edges, seen_edges, source="a", target="b", branch_label="yes")
-    assert collapsed_edges == [{"source": "a", "target": "b", "label": "yes"}]
+    common._add_collapsed_edge(collapsed_edges, seen_edges, source="a", target="a", branch_label=None, semantic_edge=None)
+    common._add_collapsed_edge(
+        collapsed_edges,
+        seen_edges,
+        source="a",
+        target="b",
+        branch_label="yes",
+        semantic_edge={"outcome": "yes", "rework": True, "metadata": {"rate": 0.12}},
+    )
+    common._add_collapsed_edge(
+        collapsed_edges,
+        seen_edges,
+        source="a",
+        target="b",
+        branch_label="yes",
+        semantic_edge={"outcome": "yes", "rework": True, "metadata": {"rate": 0.12}},
+    )
+    assert collapsed_edges == [
+        {"source": "a", "target": "b", "outcome": "yes", "rework": True, "metadata": {"rate": 0.12}}
+    ]
 
 
 def test_common_branch_label_trimming_and_hidden_target_traversal():
@@ -81,6 +97,7 @@ def test_common_branch_label_trimming_and_hidden_target_traversal():
     targets = common._visible_targets_through_hidden(
         start_hidden="h1",
         initial_label=None,
+        initial_edge=None,
         hidden_ids={"h1", "h2"},
         visible_ids={"visible"},
         outgoing={
@@ -88,7 +105,38 @@ def test_common_branch_label_trimming_and_hidden_target_traversal():
             "h2": [{"target": "h1"}, {"target": "visible"}],
         },
     )
-    assert ("visible", None) in targets
+    assert ("visible", None, {"target": "h2"}) in targets
+
+
+def test_common_parent_only_view_preserves_rework_semantics_for_visible_edges():
+    nodes = [
+        {"id": "triage"},
+        {"id": "rework_intake"},
+        {"id": "process"},
+        {"id": "assess_scope", "subprocess_parent": "process"},
+    ]
+    edges = [
+        {
+            "source": "triage",
+            "target": "rework_intake",
+            "outcome": "no",
+            "edge_type": "rework",
+            "rework": True,
+            "metadata": {"rate": 0.12, "reason": "Missing details"},
+        },
+        {"source": "process", "target": "assess_scope"},
+    ]
+
+    _, projected_edges = common._project_parent_only_subprocess_view(nodes, edges)
+
+    assert projected_edges[0] == {
+        "source": "triage",
+        "target": "rework_intake",
+        "outcome": "no",
+        "edge_type": "rework",
+        "rework": True,
+        "metadata": {"rate": 0.12, "reason": "Missing details"},
+    }
 
 
 def test_common_append_node_cluster_handles_reentry_skip_missing_and_child_recursion():

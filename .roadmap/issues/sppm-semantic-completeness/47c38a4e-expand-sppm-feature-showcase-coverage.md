@@ -4,14 +4,14 @@ title: Expand SPPM feature showcase coverage
 headline: Turn the showcase example into a true reference artifact for the supported
   SPPM feature set.
 priority: critical
-status: todo
+status: closed
 archived: false
 issue_type: other
 milestone: sppm-semantic-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-05T17:17:34.506491+00:00'
-updated: '2026-05-06T17:05:35.946999+00:00'
+updated: '2026-05-10T00:00:00+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
@@ -25,9 +25,9 @@ depends_on:
 - 10da2d9d
 - 1d872681
 blocks: []
-actual_start_date: null
-actual_end_date: null
-progress_percentage: null
+actual_start_date: '2026-05-10T00:00:00+00:00'
+actual_end_date: '2026-05-10T00:00:00+00:00'
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null

@@ -3,6 +3,11 @@ spec_version: "0.1"
 process:
   id: sppm_feature_showcase_v1
   name: SPPM Feature Showcase
+  metadata:
+    legend_items:
+      Queue: Orange circles indicate staged work.
+      Rework: Red cards and dashed returns indicate corrective loops.
+    caption: Reference map covering queueing, subprocess, rework, and publication footer semantics.
 
 steps:
   - id: start
@@ -200,6 +205,9 @@ transitions:
     target: intake
     edge_type: rework
     rework: true
+    metadata:
+      frequency: 3/day
+      count: 12 per week
 
   - source: execute_service
     target: qa
@@ -227,6 +235,9 @@ transitions:
     target: process
     edge_type: rework
     rework: true
+    metadata:
+      frequency: 1/day
+      count: 4 per week
 
   - source: dispatch_queue
     target: stop

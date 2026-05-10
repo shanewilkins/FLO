@@ -170,6 +170,35 @@ def test_run_sppm_renders_process_title_header_from_model():
     assert "print" in result.output
 
 
+def test_run_sppm_feature_showcase_covers_publication_and_rework_semantics():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "examples/reference/sppm_feature_showcase.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "Queue:" in result.output
+    assert "Orange circles indicate staged work." in result.output
+    assert "Rework:" in result.output
+    assert "Red cards and dashed returns indicate corrective loops." in result.output
+    assert "Reference map covering queueing, subprocess, rework, and publication footer semantics." in result.output
+    assert "Rate: 12%" in result.output
+    assert "Reason: Missing details" in result.output
+    assert "Frequency: 3/day" in result.output
+    assert "Count: 12 per week" in result.output
+    assert "Frequency: 1/day" in result.output
+    assert "Count: 4 per week" in result.output
+    assert "Detail map: process" in result.output
+    assert "Dispatch Queue" in result.output
+
+
 
 def test_run_spaghetti_diagram_emits_neato_layout():
     runner = CliRunner()

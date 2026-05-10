@@ -97,14 +97,16 @@ def _collapse_parent_only_edges(
                     source=source,
                     target=target,
                     branch_label=branch_label,
+                    semantic_edge=edge,
                 )
                 continue
             if target not in hidden_ids:
                 continue
 
-            for nested_target, next_label in _visible_targets_through_hidden(
+            for nested_target, next_label, semantic_edge in _visible_targets_through_hidden(
                 start_hidden=target,
                 initial_label=branch_label,
+                initial_edge=edge,
                 hidden_ids=hidden_ids,
                 visible_ids=visible_ids,
                 outgoing=outgoing,
@@ -115,6 +117,7 @@ def _collapse_parent_only_edges(
                     source=source,
                     target=nested_target,
                     branch_label=next_label,
+                    semantic_edge=semantic_edge,
                 )
 
     return collapsed_edges
@@ -126,6 +129,7 @@ def _add_collapsed_edge(
     source: str,
     target: str,
     branch_label: str | None,
+    semantic_edge: dict[str, Any] | None,
 ) -> None:
     if source == target:
         return
@@ -135,7 +139,15 @@ def _add_collapsed_edge(
     seen_edges.add(edge_key)
 
     edge: dict[str, Any] = {"source": source, "target": target}
-    if branch_label is not None:
+    if isinstance(semantic_edge, dict):
+        for key in ("outcome", "label", "edge_type", "rework"):
+            value = semantic_edge.get(key)
+            if value is not None:
+                edge[key] = value
+        metadata = semantic_edge.get("metadata")
+        if isinstance(metadata, dict) and metadata:
+            edge["metadata"] = metadata
+    if branch_label is not None and "outcome" not in edge and "label" not in edge:
         edge["label"] = branch_label
     collapsed_edges.append(edge)
 
@@ -143,16 +155,17 @@ def _add_collapsed_edge(
 def _visible_targets_through_hidden(
     start_hidden: str,
     initial_label: str | None,
+    initial_edge: dict[str, Any] | None,
     hidden_ids: set[str],
     visible_ids: set[str],
     outgoing: dict[str, list[dict[str, Any]]],
-) -> list[tuple[str, str | None]]:
-    targets: list[tuple[str, str | None]] = []
-    pending: list[tuple[str, str | None]] = [(start_hidden, initial_label)]
+) -> list[tuple[str, str | None, dict[str, Any] | None]]:
+    targets: list[tuple[str, str | None, dict[str, Any] | None]] = []
+    pending: list[tuple[str, str | None, dict[str, Any] | None]] = [(start_hidden, initial_label, initial_edge)]
     visited_hidden: set[tuple[str, str | None]] = set()
 
     while pending:
-        hidden_id, active_label = pending.pop()
+        hidden_id, active_label, active_edge = pending.pop()
         hidden_state = (hidden_id, active_label)
         if hidden_state in visited_hidden:
             continue
@@ -164,10 +177,11 @@ def _visible_targets_through_hidden(
                 continue
 
             next_label = active_label or _edge_branch_label(nested_edge)
+            next_edge = active_edge or nested_edge
             if nested_target in visible_ids:
-                targets.append((nested_target, next_label))
+                targets.append((nested_target, next_label, next_edge))
             elif nested_target in hidden_ids:
-                pending.append((nested_target, next_label))
+                pending.append((nested_target, next_label, next_edge))
 
     return targets
 
