@@ -181,6 +181,23 @@ def test_sppm_zero_wait_time_omitted_from_info_box():
     assert "wait" not in out
 
 
+def test_sppm_changeover_time_shown_in_node_info_box():
+    ir_like = {
+        "nodes": [
+            {"id": "a", "kind": "task", "name": "A", "metadata": {}},
+            {
+                "id": "b",
+                "kind": "task",
+                "name": "B",
+                "metadata": {"changeover_time": {"value": 6, "unit": "min"}},
+            },
+        ],
+        "edges": [{"source": "a", "target": "b"}],
+    }
+    out = render_dot(ir_like, options={"diagram": "sppm"})
+    assert "CO: 6 min changeover" in out
+
+
 def test_sppm_workers_omitted_from_start_end_labels():
     ir_like = {
         "nodes": [
@@ -279,6 +296,26 @@ def test_sppm_teaching_density_keeps_key_metric_only():
     assert "WT: 9 min wait" not in out
     assert "Workers:" not in out
     assert "Detailed explanation" not in out
+
+
+def test_sppm_compact_density_includes_changeover_time():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "mix",
+                "kind": "task",
+                "name": "Mix",
+                "metadata": {
+                    "cycle_time": {"value": 12, "unit": "min"},
+                    "wait_time": {"value": 3, "unit": "min"},
+                    "changeover_time": {"value": 6, "unit": "min"},
+                },
+            }
+        ],
+        "edges": [],
+    }
+    out = render_dot(ir_like, options={"diagram": "sppm", "sppm_label_density": "compact"})
+    assert "CT: 12 min | WT: 3 min wait | CO: 6 min changeover" in out
 
 
 def test_sppm_max_step_name_truncates_with_ellipsis_policy():

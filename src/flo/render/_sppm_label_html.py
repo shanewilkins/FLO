@@ -61,17 +61,18 @@ def _build_label_metric_lines(
     workers: list[Any],
     note: str,
     options: RenderOptions,
-) -> tuple[str, str, str, str, str]:
-    """Return ``(description, ct_line, workers_line, wt_line, notes_line)`` formatted strings."""
+) -> tuple[str, str, str, str, str, str]:
+    """Return formatted description, metric, worker, and note lines."""
     description = _soft_wrap_text(
         normalize_space(str(metadata.get("description") or "")),
         width=_SPPM_DESCRIPTION_SOFT_WRAP,
     )
     ct_line = _format_time_line(metadata.get("cycle_time"), "CT", "", options)
     wt_line = _format_time_line(metadata.get("wait_time"), "WT", " wait", options, require_positive=True)
+    co_line = _format_time_line(metadata.get("changeover_time"), "CO", " changeover", options, require_positive=True)
     workers_line = _format_workers_line(workers, options)
     notes_line = f"Note: {normalize_space(note)}" if note and getattr(options, "show_notes", False) else ""
-    return description, ct_line, workers_line, wt_line, notes_line
+    return description, ct_line, workers_line, wt_line, co_line, notes_line
 
 
 def _sppm_html_label(
@@ -100,7 +101,7 @@ def _sppm_html_label(
         )
     name_html = _html_escape_multiline(name_text, break_tag="<BR/>")
 
-    description, ct_line, workers_line, wt_line, notes_line = _build_label_metric_lines(
+    description, ct_line, workers_line, wt_line, co_line, notes_line = _build_label_metric_lines(
         metadata, workers, note, options
     )
 
@@ -109,6 +110,7 @@ def _sppm_html_label(
         description=description,
         ct_line=ct_line,
         wt_line=wt_line,
+        co_line=co_line,
         workers_line=workers_line,
         notes_line=notes_line,
     )

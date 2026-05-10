@@ -113,6 +113,7 @@
         "sla_target_seconds": { "$ref": "#/definitions/duration_seconds" },
         "cycle_time": { "$ref": "#/definitions/time_duration" },
         "wait_time": { "$ref": "#/definitions/time_duration" },
+        "changeover_time": { "$ref": "#/definitions/time_duration" },
         "lead_time": { "$ref": "#/definitions/time_duration" },
         "value_class": { "$ref": "#/definitions/value_class" },
         "priority": { "type": "integer" }

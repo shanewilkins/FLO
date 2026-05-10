@@ -49,19 +49,20 @@ def apply_density_filter(
     description: str,
     ct_line: str,
     wt_line: str,
+    co_line: str = "",
     workers_line: str,
     notes_line: str,
 ) -> list[str]:
     """Return info-box lines for full/compact/teaching density modes."""
     if density == "teaching":
-        key_metric = ct_line or wt_line
+        key_metric = ct_line or wt_line or co_line
         return [line for line in [key_metric, notes_line] if line]
 
     if density == "compact":
-        condensed_metric = " | ".join(line for line in [ct_line, wt_line] if line)
+        condensed_metric = " | ".join(line for line in [ct_line, wt_line, co_line] if line)
         return [line for line in [condensed_metric, workers_line, notes_line] if line]
 
-    return [line for line in [description, workers_line, ct_line, wt_line, notes_line] if line]
+    return [line for line in [description, workers_line, ct_line, wt_line, co_line, notes_line] if line]
 
 
 def _initials(name: str) -> str:

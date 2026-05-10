@@ -439,6 +439,13 @@ def _estimate_sppm_node_width_px(*, node: dict[str, Any], kind: str, options: Re
         suffix=" wait",
         options=options,
     )
+    co_line = _format_time_width_field(
+        prefix="CO",
+        value=metadata.get("changeover_time"),
+        suffix=" changeover",
+        options=options,
+        require_positive=True,
+    )
     workers_line = _format_workers_width_field(workers=workers, options=options)
     notes_line = normalize_space(f"Note: {note}") if note and options.show_notes else ""
 
@@ -447,6 +454,7 @@ def _estimate_sppm_node_width_px(*, node: dict[str, Any], kind: str, options: Re
         description=description,
         ct_line=ct_line,
         wt_line=wt_line,
+        co_line=co_line,
         workers_line=workers_line,
         notes_line=notes_line,
     )
@@ -471,9 +479,16 @@ def _format_time_width_field(
     value: Any,
     suffix: str,
     options: RenderOptions,
+    require_positive: bool = False,
 ) -> str:
     if not isinstance(value, dict) or value.get("value") is None:
         return ""
+    if require_positive:
+        try:
+            if float(value["value"]) <= 0:
+                return ""
+        except (ValueError, TypeError):
+            return ""
     unit = value.get("unit", "min")
     return _format_sppm_width_field(
         f"{prefix}: {value['value']} {unit}{suffix}",
