@@ -1,4 +1,7 @@
+import pytest
+
 from flo.render import render_dot
+from flo.services.errors import RenderError
 
 
 def test_sppm_default_top_level_collapses_subprocess_children():
@@ -119,15 +122,53 @@ def test_sppm_inline_projection_falls_back_to_child_map_when_budget_exceeded():
             "diagram": "sppm",
             "sppm_projection": "inline",
             "sppm_focus_subprocess": "prep",
-            "layout_fit": "fit-strict",
+            "layout_fit": "fit-preferred",
             "layout_target_columns": 3,
         },
     )
 
     assert "Projection Fallback:" in out
     assert "inline budget exceeded" in out
+    assert "Readability Warning:" in out
     assert "Projection:" in out
     assert "child-map" in out
+
+
+def test_sppm_inline_projection_strict_mode_fails_when_budget_exceeded():
+    ir_like = {
+        "process": {"id": "demo", "name": "Demo Process"},
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "prep", "kind": "subprocess", "name": "Prep"},
+            {"id": "a", "kind": "task", "name": "A", "subprocess_parent": "prep"},
+            {"id": "b", "kind": "task", "name": "B", "subprocess_parent": "prep"},
+            {"id": "c", "kind": "task", "name": "C", "subprocess_parent": "prep"},
+            {"id": "d", "kind": "task", "name": "D", "subprocess_parent": "prep"},
+            {"id": "e", "kind": "task", "name": "E", "subprocess_parent": "prep"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "prep"},
+            {"source": "prep", "target": "a"},
+            {"source": "a", "target": "b"},
+            {"source": "b", "target": "c"},
+            {"source": "c", "target": "d"},
+            {"source": "d", "target": "e"},
+            {"source": "e", "target": "end"},
+        ],
+    }
+
+    with pytest.raises(RenderError, match="fell back to 'child_map'"):
+        render_dot(
+            ir_like,
+            options={
+                "diagram": "sppm",
+                "sppm_projection": "inline",
+                "sppm_focus_subprocess": "prep",
+                "layout_fit": "fit-strict",
+                "layout_target_columns": 3,
+            },
+        )
 
 
 def test_sppm_subprocess_nodes_include_marker_and_detail_map_reference():

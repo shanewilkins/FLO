@@ -1,16 +1,22 @@
+from typing import Any
+
 from flo.render._publication import (
     PublicationBandContent,
     PublicationBounds,
+    PublicationDiagnostic,
     PublicationMargins,
     build_publication_canvas_for_format,
     build_publication_bands,
     build_publication_canvas,
+    evaluate_publication_fallback,
     materialize_publication_series,
     PublicationPageSpec,
     resolve_publication_page_format,
 )
+from flo.render._sppm_projection import project_sppm_subprocess_view
 from flo.render._sppm_publication import build_sppm_publication_plan
 from flo.render.options import RenderOptions
+from flo.services.errors import RenderError
 
 
 def test_build_publication_canvas_keeps_margins_outside_content_regions():
@@ -54,6 +60,29 @@ def test_resolve_publication_page_format_rejects_unknown_names():
 
     with pytest.raises(ValueError, match="publication_page_format"):
         resolve_publication_page_format("broadsheet")
+
+
+def test_evaluate_publication_fallback_warns_in_non_strict_mode():
+    diagnostics = evaluate_publication_fallback(
+        requested_mode="inline",
+        effective_mode="child_map",
+        fallback_reason="inline-budget-exceeded",
+        strict=False,
+    )
+
+    assert diagnostics == (
+        PublicationDiagnostic(
+            code="publication-fallback",
+            severity="warning",
+            message="Requested publication mode 'inline' fell back to 'child_map' because inline budget exceeded.",
+            metadata={
+                "requested_mode": "inline",
+                "effective_mode": "child_map",
+                "fallback_reason": "inline-budget-exceeded",
+                "strict": False,
+            },
+        ),
+    )
 
 
 def test_build_sppm_publication_plan_uses_print_page_format_and_header_rows():
@@ -109,6 +138,30 @@ def _build_print_publication_plan():
         ],
         edges=[{"source": "start", "target": "prep"}, {"source": "prep", "target": "end"}],
     )
+
+
+def _inline_budget_process() -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]]]:
+    process = {"process": {"id": "demo", "name": "Demo Process"}}
+    nodes = [
+        {"id": "start", "kind": "start", "name": "Start"},
+        {"id": "prep", "kind": "subprocess", "name": "Prep"},
+        {"id": "a", "kind": "task", "name": "A", "subprocess_parent": "prep"},
+        {"id": "b", "kind": "task", "name": "B", "subprocess_parent": "prep"},
+        {"id": "c", "kind": "task", "name": "C", "subprocess_parent": "prep"},
+        {"id": "d", "kind": "task", "name": "D", "subprocess_parent": "prep"},
+        {"id": "e", "kind": "task", "name": "E", "subprocess_parent": "prep"},
+        {"id": "end", "kind": "end", "name": "End"},
+    ]
+    edges = [
+        {"source": "start", "target": "prep"},
+        {"source": "prep", "target": "a"},
+        {"source": "a", "target": "b"},
+        {"source": "b", "target": "c"},
+        {"source": "c", "target": "d"},
+        {"source": "d", "target": "e"},
+        {"source": "e", "target": "end"},
+    ]
+    return process, nodes, edges
 
 
 def test_materialize_publication_series_builds_stable_multi_page_ids_and_metadata():
@@ -195,6 +248,59 @@ def test_build_sppm_publication_plan_records_page_format_metadata():
     assert page.canvas.bounds.width_px == 816
     assert page.canvas.bounds.height_px == 1056
     assert page.metadata["page_format"] == "letter"
+
+
+def test_build_sppm_publication_plan_records_non_strict_readability_warning():
+    process, nodes, edges = _inline_budget_process()
+    options = RenderOptions.from_mapping(
+        {
+            "diagram": "sppm",
+            "sppm_projection": "inline",
+            "sppm_focus_subprocess": "prep",
+            "layout_fit": "fit-preferred",
+            "layout_target_columns": 3,
+        }
+    )
+    projected_nodes, projected_edges, projection = project_sppm_subprocess_view(nodes, edges, options=options)
+
+    plan = build_sppm_publication_plan(
+        process=process,
+        options=options,
+        nodes=projected_nodes,
+        edges=projected_edges,
+        projection=projection,
+    )
+
+    diagnostics = plan.metadata["publication_diagnostics"]
+    assert diagnostics[0]["severity"] == "warning"
+    assert diagnostics[0]["fallback_reason"] == "inline-budget-exceeded"
+    header_rows = plan.primary_series().pages[0].band("header").content.rows
+    assert any(label == "Readability Warning" and "inline budget exceeded" in value for label, value in header_rows)
+
+
+def test_build_sppm_publication_plan_raises_on_strict_publication_fallback():
+    import pytest
+
+    process, nodes, edges = _inline_budget_process()
+    options = RenderOptions.from_mapping(
+        {
+            "diagram": "sppm",
+            "sppm_projection": "inline",
+            "sppm_focus_subprocess": "prep",
+            "layout_fit": "fit-strict",
+            "layout_target_columns": 3,
+        }
+    )
+    projected_nodes, projected_edges, projection = project_sppm_subprocess_view(nodes, edges, options=options)
+
+    with pytest.raises(RenderError, match="fell back to 'child_map'"):
+        build_sppm_publication_plan(
+            process=process,
+            options=options,
+            nodes=projected_nodes,
+            edges=projected_edges,
+            projection=projection,
+        )
 
 
 def test_build_publication_bands_omits_unpopulated_regions():

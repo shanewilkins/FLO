@@ -5,16 +5,19 @@ from __future__ import annotations
 from typing import Any
 
 from flo.compiler.ir.subprocess_refs import resolve_subprocess_detail_map_reference
+from flo.services.errors import RenderError
 
 from ._process_header import build_process_header_rows, extract_process_header_context
 from ._publication import (
     PublicationArtifactSlot,
     PublicationBandContent,
     PublicationBounds,
+    PublicationDiagnostic,
     PublicationMargins,
     PublicationPlan,
     build_publication_canvas,
     build_publication_canvas_for_format,
+    evaluate_publication_fallback,
     materialize_publication_series,
     PublicationPageSpec,
 )
@@ -39,12 +42,15 @@ def build_sppm_publication_plan(
     context = extract_process_header_context(process)
     title = normalize_space(context.title)
     projection_context = projection or SppmProjectionContext(requested_mode="top_level", effective_mode="top_level")
+    diagnostics = _publication_diagnostics(projection=projection_context, options=options)
+    _raise_for_publication_errors(diagnostics)
     header_rows = _build_sppm_header_rows(
         context=context,
         options=options,
         nodes=nodes,
         edges=edges,
         projection=projection_context,
+        diagnostics=diagnostics,
     )
     footer_content = _build_sppm_footer_content(context=context, options=options)
     canvas = _build_sppm_publication_canvas(title=title, footer_content=footer_content, options=options)
@@ -60,6 +66,7 @@ def build_sppm_publication_plan(
                 footer_content=footer_content,
                 metadata={
                     "diagram": "sppm",
+                    "publication_diagnostics": _serialize_diagnostics(diagnostics),
                     "page_format": options.publication_page_format,
                     "projection_mode": projection_context.effective_mode,
                     "requested_projection_mode": projection_context.requested_mode,
@@ -69,6 +76,7 @@ def build_sppm_publication_plan(
         ),
         metadata={
             "diagram": "sppm",
+            "publication_diagnostics": _serialize_diagnostics(diagnostics),
             "page_format": options.publication_page_format,
             "projection_mode": projection_context.effective_mode,
             "requested_projection_mode": projection_context.requested_mode,
@@ -91,6 +99,7 @@ def build_sppm_publication_plan(
             "node_count": len(nodes),
             "edge_count": len(edges),
             "projection_mode": projection_context.effective_mode,
+            "publication_diagnostics": _serialize_diagnostics(diagnostics),
             "page_format": options.publication_page_format,
         },
     )
@@ -126,6 +135,7 @@ def _build_sppm_header_rows(
     nodes: list[dict[str, Any]],
     edges: list[dict[str, Any]],
     projection: SppmProjectionContext,
+    diagnostics: tuple[PublicationDiagnostic, ...],
 ) -> list[tuple[str, str]]:
     extra_rows: list[tuple[str, str]] = []
     if options.sppm_output_profile != "default":
@@ -144,9 +154,43 @@ def _build_sppm_header_rows(
         extra_rows.append(("Exit Context", ", ".join(projection.exit_context)))
     if projection.fallback_reason:
         extra_rows.append(("Projection Fallback", projection.fallback_reason.replace("-", " ")))
+    for diagnostic in diagnostics:
+        if diagnostic.severity == "warning":
+            extra_rows.append(("Readability Warning", diagnostic.message))
     extra_rows.append(("Nodes", str(len(nodes))))
     extra_rows.append(("Edges", str(len(edges))))
     return build_process_header_rows(context=context, extra_rows=extra_rows)
+
+
+def _publication_diagnostics(
+    *,
+    projection: SppmProjectionContext,
+    options: RenderOptions,
+) -> tuple[PublicationDiagnostic, ...]:
+    return evaluate_publication_fallback(
+        requested_mode=projection.requested_mode,
+        effective_mode=projection.effective_mode,
+        fallback_reason=projection.fallback_reason,
+        strict=options.layout_fit == "fit-strict",
+    )
+
+
+def _raise_for_publication_errors(diagnostics: tuple[PublicationDiagnostic, ...]) -> None:
+    errors = [diagnostic.message for diagnostic in diagnostics if diagnostic.severity == "error"]
+    if errors:
+        raise RenderError("; ".join(errors))
+
+
+def _serialize_diagnostics(diagnostics: tuple[PublicationDiagnostic, ...]) -> tuple[dict[str, Any], ...]:
+    return tuple(
+        {
+            "code": diagnostic.code,
+            "severity": diagnostic.severity,
+            "message": diagnostic.message,
+            **diagnostic.metadata,
+        }
+        for diagnostic in diagnostics
+    )
 
 
 def _build_sppm_child_slots(

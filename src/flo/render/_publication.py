@@ -10,6 +10,7 @@ PublicationBandName = Literal["header", "footer"]
 PublicationSeriesKind = Literal["map", "child_map", "artifact"]
 PublicationArtifactKind = Literal["child_map", "artifact"]
 PublicationPageFormatName = Literal["letter", "a4", "legal", "tabloid"]
+PublicationDiagnosticSeverity = Literal["warning", "error"]
 
 
 @dataclass(frozen=True)
@@ -30,6 +31,16 @@ class PublicationPageFormat:
     width_px: int
     height_px: int
     margins: PublicationMargins
+
+
+@dataclass(frozen=True)
+class PublicationDiagnostic:
+    """A reusable readability or fallback diagnostic for publication output."""
+
+    code: str
+    severity: PublicationDiagnosticSeverity
+    message: str
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 _PAGE_FORMAT_PRESETS: dict[str, PublicationPageFormat] = {
@@ -270,6 +281,37 @@ def build_publication_canvas_for_format(
         margins=preset.margins,
         header_height_px=header_height_px,
         footer_height_px=footer_height_px,
+    )
+
+
+def evaluate_publication_fallback(
+    *,
+    requested_mode: str,
+    effective_mode: str,
+    fallback_reason: str | None,
+    strict: bool,
+) -> tuple[PublicationDiagnostic, ...]:
+    """Translate a publication fallback into warning or error diagnostics."""
+    if fallback_reason is None or requested_mode == effective_mode:
+        return ()
+
+    severity: PublicationDiagnosticSeverity = "error" if strict else "warning"
+    reason_text = fallback_reason.replace("-", " ")
+    return (
+        PublicationDiagnostic(
+            code="publication-fallback",
+            severity=severity,
+            message=(
+                f"Requested publication mode '{requested_mode}' fell back to '{effective_mode}' "
+                f"because {reason_text}."
+            ),
+            metadata={
+                "requested_mode": requested_mode,
+                "effective_mode": effective_mode,
+                "fallback_reason": fallback_reason,
+                "strict": strict,
+            },
+        ),
     )
 
 

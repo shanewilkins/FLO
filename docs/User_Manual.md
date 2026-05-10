@@ -646,6 +646,7 @@ Renderer policy decisions:
 - Cross-lane rework uses composite behavior (cross-lane routing + dashed styling).
 - Layout fit modes are policy-defined as fit-preferred and fit-strict; readability
   is prioritized over geometric symmetry.
+- Publication readability follows the same fit policy: `fit-preferred` may fall back with explicit warnings, while `fit-strict` fails instead of silently changing the requested publication mode.
 
 SPPM preset/config defaults:
 - Built-in `--sppm-output-profile` presets set baseline SPPM defaults for orientation,

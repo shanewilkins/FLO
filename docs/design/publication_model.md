@@ -17,6 +17,12 @@ Named page formats are now part of the shared planner surface.
 - Renderers should reference these presets by name rather than hardcoding page geometry.
 - To add a new preset, extend the shared registry in `src/flo/render/_publication.py` and document the new canonical name and aliases here.
 
+Publication readability diagnostics are also shared.
+
+- Non-strict publication requests may fall back with an explicit warning diagnostic.
+- Strict publication requests must fail instead of silently switching the requested mode.
+- SPPM adopts this policy first for projection/readability fallbacks, and later renderers should reuse the same warning-vs-error distinction.
+
 ## Geometry
 
 Margins are part of page geometry, not content regions.
