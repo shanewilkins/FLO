@@ -38,6 +38,7 @@ def test_layout_wrap_lr_emits_first_boundary_connector_with_continuation_labels(
 
     assert "splines=ortho" in out
     assert "cluster_wrap_lr_0" in out
+    assert "// Overflow policy: planner=placement, wrap=auto, fit=fit-preferred" in out
     assert '"a":e -> "b":w [];' in out
     assert '"__wrap_exit_lr_0" [shape=point, width=0.01, label="", style=invis, height=0.01, group="__wrap_exit_column"];' in out
     assert '"b":"out_0":e -> "__wrap_exit_lr_0" [' in out
@@ -88,6 +89,7 @@ def test_layout_wrap_tb_emits_wrap_hints_and_boundary_connector():
     )
 
     assert "// Autoformat wrapped layout: orientation=tb" in out
+    assert "// Overflow policy: planner=placement, wrap=auto, fit=fit-preferred" in out
     assert "rankdir=LR;" in out
     assert "cluster_wrap_tb_0" in out
     assert '"a":s -> "__sppm_boundary_corridor_a_b" [' in out
@@ -132,6 +134,7 @@ def test_layout_wrap_tb_honors_width_budget_in_fit_strict_mode():
     )
 
     assert "// Autoformat wrapped layout: orientation=tb" in out
+    assert "// Overflow policy: planner=placement, wrap=auto, fit=fit-strict" in out
     assert "minlen=2, penwidth=1.2" in out
 
 

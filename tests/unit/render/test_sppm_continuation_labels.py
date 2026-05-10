@@ -1,4 +1,4 @@
-from flo.render._autoformat_wrap import WrapPlan
+from flo.render._autoformat_wrap import OverflowPolicy, WrapPlan
 from flo.render._sppm_continuation_labels import (
     build_sppm_continuation_label_attrs,
     format_sppm_continuation_html_label,
@@ -15,6 +15,17 @@ def test_build_sppm_continuation_label_attrs_uses_step_refs_and_page_numbers():
         node_chunk_index={"a": 0, "b": 0, "c": 1, "d": 1},
         node_display_index={"a": 0, "b": 1, "c": 0, "d": 1},
         placement_plan=None,
+        overflow_policy=OverflowPolicy(
+            planner="chunked",
+            wrap_mode="auto",
+            fit_mode="fit-preferred",
+            max_major_px=None,
+            margin_px=48,
+            min_chunk_size=3,
+            break_preference="sequence-boundary",
+            continuation_mode="boundary-corridor",
+            strict=False,
+        ),
     )
 
     outgoing, incoming = build_sppm_continuation_label_attrs(

@@ -30,6 +30,21 @@ WrapPlannerKind = Literal["chunked", "placement"]
 
 
 @dataclass(frozen=True)
+class OverflowPolicy:
+    """Shared overflow and pagination policy derived from render options."""
+
+    planner: WrapPlannerKind
+    wrap_mode: str
+    fit_mode: str
+    max_major_px: int | None
+    margin_px: int
+    min_chunk_size: int
+    break_preference: str
+    continuation_mode: str
+    strict: bool
+
+
+@dataclass(frozen=True)
 class WrapPlan:
     """Deterministic wrap plan for sequence-oriented layout."""
 
@@ -41,6 +56,7 @@ class WrapPlan:
     node_chunk_index: dict[str, int]
     node_display_index: dict[str, int]
     placement_plan: PlacementPlan | None
+    overflow_policy: OverflowPolicy
 
 
 def build_wrap_plan(
@@ -57,13 +73,20 @@ def build_wrap_plan(
         planner: Wrap planning strategy. Use "chunked" for classic chunk sizing
             and "placement" for placement-core line packing.
     """
+    overflow_policy = _resolve_overflow_policy(nodes=nodes, options=options, planner=planner)
+
     # Canonical dispatch point for all renderer wrap planning.
     if planner == "placement":
-        return _build_placement_wrap_plan(nodes=nodes, options=options)
-    return _build_chunked_wrap_plan(nodes=nodes, options=options)
+        return _build_placement_wrap_plan(nodes=nodes, options=options, overflow_policy=overflow_policy)
+    return _build_chunked_wrap_plan(nodes=nodes, options=options, overflow_policy=overflow_policy)
 
 
-def _build_placement_wrap_plan(nodes: list[dict[str, Any]], options: RenderOptions) -> WrapPlan:
+def _build_placement_wrap_plan(
+    nodes: list[dict[str, Any]],
+    options: RenderOptions,
+    *,
+    overflow_policy: OverflowPolicy,
+) -> WrapPlan:
     """Build wrap plan using the shared placement core strategy.
 
     Replaces chunk-based wrapping math with PlacementPlan-derived line breaks
@@ -71,28 +94,28 @@ def _build_placement_wrap_plan(nodes: list[dict[str, Any]], options: RenderOptio
     chunk size formula.
     """
     if options.layout_wrap != "auto":
-        return _inactive_wrap_plan()
+        return _inactive_wrap_plan(overflow_policy=overflow_policy)
 
     sequence_ids = _collect_sequence_ids(nodes)
     if len(sequence_ids) < 2:
-        return _inactive_wrap_plan()
+        return _inactive_wrap_plan(overflow_policy=overflow_policy)
 
     measures = _sppm_node_measures(nodes=nodes, options=options)
-    max_major_px = _sppm_max_major_px(measures=measures, options=options)
+    max_major_px = overflow_policy.max_major_px
     if max_major_px is None:
-        return _inactive_wrap_plan()
+        return _inactive_wrap_plan(overflow_policy=overflow_policy)
 
     constraints = _sppm_placement_constraints(
         orientation=options.orientation, max_major_px=max_major_px
     )
     plan = build_placement_plan(measures, [], constraints)
     if len(plan.lines) <= 1:
-        return _inactive_wrap_plan()
+        return _inactive_wrap_plan(overflow_policy=overflow_policy)
 
-    return _wrap_plan_from_placement(plan)
+    return _wrap_plan_from_placement(plan, overflow_policy=overflow_policy)
 
 
-def _inactive_wrap_plan() -> WrapPlan:
+def _inactive_wrap_plan(*, overflow_policy: OverflowPolicy) -> WrapPlan:
     return WrapPlan(
         active=False,
         chunk_size=0,
@@ -102,6 +125,7 @@ def _inactive_wrap_plan() -> WrapPlan:
         node_chunk_index={},
         node_display_index={},
         placement_plan=None,
+        overflow_policy=overflow_policy,
     )
 
 
@@ -175,7 +199,7 @@ def _sppm_placement_constraints(
     )
 
 
-def _wrap_plan_from_placement(plan: PlacementPlan) -> WrapPlan:
+def _wrap_plan_from_placement(plan: PlacementPlan, *, overflow_policy: OverflowPolicy) -> WrapPlan:
     chunks = [list(line.node_ids) for line in plan.lines]
     boundary_edges: set[tuple[str, str]] = set()
     for idx in range(len(chunks) - 1):
@@ -201,19 +225,25 @@ def _wrap_plan_from_placement(plan: PlacementPlan) -> WrapPlan:
         node_chunk_index=node_chunk_index,
         node_display_index=node_display_index,
         placement_plan=plan,
+        overflow_policy=overflow_policy,
     )
 
 
-def _build_chunked_wrap_plan(nodes: list[dict[str, Any]], options: RenderOptions) -> WrapPlan:
+def _build_chunked_wrap_plan(
+    nodes: list[dict[str, Any]],
+    options: RenderOptions,
+    *,
+    overflow_policy: OverflowPolicy,
+) -> WrapPlan:
     """Build chunk plan for LR rows or TB columns based on current options."""
     if options.layout_wrap != "auto":
-        return _inactive_wrap_plan()
+        return _inactive_wrap_plan(overflow_policy=overflow_policy)
 
     sequence_ids = _collect_sequence_ids(nodes)
     if len(sequence_ids) < 2:
-        return _inactive_wrap_plan()
+        return _inactive_wrap_plan(overflow_policy=overflow_policy)
 
-    chunk_size = _resolve_chunk_size(nodes=nodes, options=options)
+    chunk_size = _resolve_chunk_size(nodes=nodes, options=options, overflow_policy=overflow_policy)
     if chunk_size <= 0 or len(sequence_ids) <= chunk_size:
         return WrapPlan(
             active=False,
@@ -224,6 +254,7 @@ def _build_chunked_wrap_plan(nodes: list[dict[str, Any]], options: RenderOptions
             node_chunk_index={},
             node_display_index={},
             placement_plan=None,
+            overflow_policy=overflow_policy,
         )
 
     chunks = [sequence_ids[i : i + chunk_size] for i in range(0, len(sequence_ids), chunk_size)]
@@ -238,6 +269,7 @@ def _build_chunked_wrap_plan(nodes: list[dict[str, Any]], options: RenderOptions
             node_chunk_index={},
             node_display_index={},
             placement_plan=None,
+            overflow_policy=overflow_policy,
         )
 
     boundary_edges: set[tuple[str, str]] = set()
@@ -264,6 +296,7 @@ def _build_chunked_wrap_plan(nodes: list[dict[str, Any]], options: RenderOptions
         node_chunk_index=node_chunk_index,
         node_display_index=node_display_index,
         placement_plan=None,
+        overflow_policy=overflow_policy,
     )
 
 
@@ -274,6 +307,14 @@ def append_wrap_layout_hints(lines: list[str], options: RenderOptions, plan: Wra
 
     orientation = "lr" if options.orientation == "lr" else "tb"
     lines.append(f"  // Autoformat wrapped layout: orientation={orientation}, chunk_size={plan.chunk_size}")
+    lines.append(
+        "  // Overflow policy: "
+        f"planner={plan.overflow_policy.planner}, wrap={plan.overflow_policy.wrap_mode}, "
+        f"fit={plan.overflow_policy.fit_mode}, max_major_px={plan.overflow_policy.max_major_px}, "
+        f"margin_px={plan.overflow_policy.margin_px}, min_chunk_size={plan.overflow_policy.min_chunk_size}, "
+        f"break_bias={plan.overflow_policy.break_preference}, "
+        f"continuation={plan.overflow_policy.continuation_mode}, strict={str(plan.overflow_policy.strict).lower()}"
+    )
 
     anchor_ids = [wrap_chunk_anchor_id(orientation=orientation, chunk_idx=idx) for idx in range(len(plan.display_chunks))]
     exit_anchor_ids = [
@@ -333,14 +374,14 @@ def append_wrap_layout_hints(lines: list[str], options: RenderOptions, plan: Wra
         )
 
 
-def _resolve_chunk_size(*, nodes: list[dict[str, Any]], options: RenderOptions) -> int:
+def _resolve_chunk_size(*, nodes: list[dict[str, Any]], options: RenderOptions, overflow_policy: OverflowPolicy) -> int:
     candidates: list[int] = []
 
     if options.layout_target_columns and options.layout_target_columns > 0:
         candidates.append(options.layout_target_columns)
 
     if options.layout_max_width_px and options.layout_max_width_px > 0:
-        width_based = _resolve_width_based_chunk_size(nodes=nodes, options=options)
+        width_based = _resolve_width_based_chunk_size(nodes=nodes, options=options, overflow_policy=overflow_policy)
         candidates.append(width_based)
 
     if not candidates:
@@ -348,14 +389,19 @@ def _resolve_chunk_size(*, nodes: list[dict[str, Any]], options: RenderOptions) 
     return min(candidates)
 
 
-def _resolve_width_based_chunk_size(*, nodes: list[dict[str, Any]], options: RenderOptions) -> int:
+def _resolve_width_based_chunk_size(
+    *,
+    nodes: list[dict[str, Any]],
+    options: RenderOptions,
+    overflow_policy: OverflowPolicy,
+) -> int:
     widths = [_estimate_node_width_px(node=node, options=options) for node in nodes if str(node.get("id") or "")]
-    min_chunk_size = _min_chunk_size(options)
-    max_width_px = options.layout_max_width_px or 0
+    min_chunk_size = overflow_policy.min_chunk_size
+    max_width_px = overflow_policy.max_major_px or 0
     if not widths:
         return max(min_chunk_size, max_width_px // _DEFAULT_NODE_WIDTH_PX)
 
-    available_width = max(200, max_width_px - _layout_margin_px(options))
+    available_width = max(200, max_width_px - overflow_policy.margin_px)
     representative_width = _representative_node_width_px(widths=widths, options=options)
     effective_per_node = representative_width + _HORIZONTAL_GAP_PX
     if effective_per_node <= 0:
@@ -384,6 +430,29 @@ def _min_chunk_size(options: RenderOptions) -> int:
     if options.layout_fit == "fit-strict":
         return _STRICT_MIN_CHUNK_SIZE
     return _PREFERRED_MIN_CHUNK_SIZE
+
+
+def _resolve_overflow_policy(
+    *,
+    nodes: list[dict[str, Any]],
+    options: RenderOptions,
+    planner: WrapPlannerKind,
+) -> OverflowPolicy:
+    _ = nodes
+    strict = options.layout_fit == "fit-strict"
+    return OverflowPolicy(
+        planner=planner,
+        wrap_mode=options.layout_wrap,
+        fit_mode=options.layout_fit,
+        max_major_px=_sppm_max_major_px(measures=[], options=options)
+        if planner == "placement"
+        else (options.layout_max_width_px if options.layout_max_width_px and options.layout_max_width_px > 0 else None),
+        margin_px=_layout_margin_px(options),
+        min_chunk_size=_min_chunk_size(options),
+        break_preference="sequence-boundary",
+        continuation_mode="boundary-corridor",
+        strict=strict,
+    )
 
 
 def _estimate_node_width_px(*, node: dict[str, Any], options: RenderOptions) -> int:

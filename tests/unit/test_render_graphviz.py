@@ -397,6 +397,7 @@ def test_flowchart_layout_wrap_uses_shared_autoformat_hints():
     )
 
     assert "// Autoformat wrapped layout: orientation=lr" in out
+    assert "// Overflow policy: planner=chunked, wrap=auto, fit=fit-preferred" in out
     assert "rankdir=TB;" in out
     assert "cluster_wrap_lr_0" in out
     assert "splines=ortho" in out
@@ -428,6 +429,7 @@ def test_swimlane_layout_wrap_uses_shared_autoformat_hints():
     )
 
     assert "// Autoformat wrapped layout: orientation=tb" in out
+    assert "// Overflow policy: planner=chunked, wrap=auto, fit=fit-preferred" in out
     assert "rankdir=LR;" in out
     assert "cluster_wrap_tb_0" in out
     assert "subgraph cluster_sales" in out
