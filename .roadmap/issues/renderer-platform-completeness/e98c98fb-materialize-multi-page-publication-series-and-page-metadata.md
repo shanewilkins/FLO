@@ -3,14 +3,14 @@ id: e98c98fb
 title: Materialize multi-page publication series and page metadata
 headline: ''
 priority: high
-status: todo
+status: closed
 archived: false
 issue_type: feature
 milestone: renderer-platform-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-06T23:01:40.232753+00:00'
-updated: '2026-05-06T23:01:40.232755+00:00'
+updated: '2026-05-10T00:00:00+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
@@ -18,9 +18,9 @@ depends_on:
 - 07cb2436
 - 048bbcb1
 blocks: []
-actual_start_date: null
-actual_end_date: null
-progress_percentage: null
+actual_start_date: '2026-05-10T00:00:00+00:00'
+actual_end_date: '2026-05-10T00:00:00+00:00'
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null

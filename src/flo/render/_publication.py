@@ -76,6 +76,17 @@ class PublicationBand:
 
 
 @dataclass(frozen=True)
+class PublicationPageSpec:
+    """Declarative page input used to materialize a publication series."""
+
+    page_key: str
+    canvas: PublicationCanvas
+    header_content: PublicationBandContent | None = None
+    footer_content: PublicationBandContent | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class PublicationPage:
     """One page within a publication series."""
 
@@ -133,6 +144,60 @@ class PublicationPlan:
             if series.series_id == self.primary_series_id:
                 return series
         raise KeyError(self.primary_series_id)
+
+
+def materialize_publication_series(
+    *,
+    series_id: str,
+    title: str,
+    kind: PublicationSeriesKind,
+    page_specs: tuple[PublicationPageSpec, ...] | list[PublicationPageSpec],
+    metadata: dict[str, Any] | None = None,
+) -> PublicationSeries:
+    """Build a concrete page series with deterministic page ids and metadata."""
+    normalized_specs = tuple(page_specs)
+    pages: list[PublicationPage] = []
+    page_count = len(normalized_specs)
+
+    for idx, spec in enumerate(normalized_specs, start=1):
+        page_id = _publication_page_id(series_id=series_id, page_key=spec.page_key, page_number=idx)
+        page_metadata = {
+            **spec.metadata,
+            "series_id": series_id,
+            "page_id": page_id,
+            "page_number": idx,
+            "page_count": page_count,
+        }
+        pages.append(
+            PublicationPage(
+                page_id=page_id,
+                page_number=idx,
+                series_id=series_id,
+                canvas=spec.canvas,
+                bands=build_publication_bands(
+                    canvas=spec.canvas,
+                    header_content=spec.header_content,
+                    footer_content=spec.footer_content,
+                ),
+                metadata=page_metadata,
+            )
+        )
+
+    series_metadata = {**(metadata or {}), "page_count": page_count}
+    return PublicationSeries(
+        series_id=series_id,
+        title=title,
+        kind=kind,
+        pages=tuple(pages),
+        metadata=series_metadata,
+    )
+
+
+def _publication_page_id(*, series_id: str, page_key: str, page_number: int) -> str:
+    normalized_key = str(page_key).strip()
+    if normalized_key:
+        return f"{series_id}-{normalized_key}"
+    return f"{series_id}-p{page_number}"
 
 
 def build_publication_canvas(

@@ -12,11 +12,10 @@ from ._publication import (
     PublicationBandContent,
     PublicationBounds,
     PublicationMargins,
-    PublicationPage,
     PublicationPlan,
-    PublicationSeries,
-    build_publication_bands,
     build_publication_canvas,
+    materialize_publication_series,
+    PublicationPageSpec,
 )
 from ._sppm_projection import SppmProjectionContext
 from ._sppm_text import normalize_space
@@ -53,34 +52,29 @@ def build_sppm_publication_plan(
         header_height_px=_SPPM_HEADER_BAND_HEIGHT_PX if title else 0,
         footer_height_px=72 if footer_content is not None else 0,
     )
-    page = PublicationPage(
-        page_id="main-p1",
-        page_number=1,
+    series = materialize_publication_series(
         series_id="main",
-        canvas=canvas,
-        bands=build_publication_bands(
-            canvas=canvas,
-            header_content=PublicationBandContent(title=title, rows=tuple(header_rows)) if title else None,
-            footer_content=footer_content,
+        title=title or "SPPM Publication",
+        kind="map",
+        page_specs=(
+            PublicationPageSpec(
+                page_key="p1",
+                canvas=canvas,
+                header_content=PublicationBandContent(title=title, rows=tuple(header_rows)) if title else None,
+                footer_content=footer_content,
+                metadata={
+                    "diagram": "sppm",
+                    "projection_mode": projection_context.effective_mode,
+                    "requested_projection_mode": projection_context.requested_mode,
+                    "focus_subprocess": projection_context.focus_subprocess,
+                },
+            ),
         ),
         metadata={
             "diagram": "sppm",
             "projection_mode": projection_context.effective_mode,
             "requested_projection_mode": projection_context.requested_mode,
             "focus_subprocess": projection_context.focus_subprocess,
-        },
-    )
-    series = PublicationSeries(
-        series_id="main",
-        title=title or "SPPM Publication",
-        kind="map",
-        pages=(page,),
-        metadata={
-            "diagram": "sppm",
-            "projection_mode": projection_context.effective_mode,
-            "requested_projection_mode": projection_context.requested_mode,
-            "focus_subprocess": projection_context.focus_subprocess,
-            "page_count": 1,
         },
     )
     return PublicationPlan(

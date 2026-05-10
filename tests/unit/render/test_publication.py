@@ -4,6 +4,8 @@ from flo.render._publication import (
     PublicationMargins,
     build_publication_bands,
     build_publication_canvas,
+    materialize_publication_series,
+    PublicationPageSpec,
 )
 from flo.render._sppm_publication import build_sppm_publication_plan
 from flo.render.options import RenderOptions
@@ -71,6 +73,75 @@ def test_build_sppm_publication_plan_includes_primary_series_and_child_slots():
     assert plan.artifact_slots[0].slot_id == "child:prep"
     assert plan.artifact_slots[0].kind == "child_map"
     assert plan.artifact_slots[0].metadata["detail_map_ref"] == "SP-01"
+
+
+def test_materialize_publication_series_builds_stable_multi_page_ids_and_metadata():
+    first_canvas = build_publication_canvas(
+        bounds=PublicationBounds(width_px=1200, height_px=900),
+        margins=PublicationMargins(),
+        header_height_px=100,
+        footer_height_px=80,
+    )
+    second_canvas = build_publication_canvas(
+        bounds=PublicationBounds(width_px=1200, height_px=900),
+        margins=PublicationMargins(),
+        header_height_px=100,
+        footer_height_px=80,
+    )
+
+    series = materialize_publication_series(
+        series_id="main",
+        title="Publication Demo",
+        kind="map",
+        page_specs=(
+            PublicationPageSpec(
+                page_key="p1",
+                canvas=first_canvas,
+                header_content=PublicationBandContent(title="Page 1"),
+                metadata={"section": "alpha"},
+            ),
+            PublicationPageSpec(
+                page_key="p2",
+                canvas=second_canvas,
+                footer_content=PublicationBandContent(notes=("Page 2 footer",)),
+                metadata={"section": "beta"},
+            ),
+        ),
+        metadata={"diagram": "sppm"},
+    )
+
+    assert series.metadata["page_count"] == 2
+    assert series.pages[0].page_id == "main-p1"
+    assert series.pages[0].page_number == 1
+    assert series.pages[0].metadata["page_count"] == 2
+    assert series.pages[0].metadata["section"] == "alpha"
+    assert series.pages[1].page_id == "main-p2"
+    assert series.pages[1].page_number == 2
+    assert series.pages[1].metadata["page_id"] == "main-p2"
+    assert series.pages[1].metadata["section"] == "beta"
+    assert series.pages[1].band("footer") is not None
+
+
+def test_build_sppm_publication_plan_uses_shared_series_materialization_metadata():
+    process = {
+        "process": {
+            "id": "wash_n_fold",
+            "name": "Wash n' Fold",
+        }
+    }
+
+    plan = build_sppm_publication_plan(
+        process=process,
+        options=RenderOptions(diagram="sppm"),
+        nodes=[{"id": "start", "kind": "start", "name": "Start"}],
+        edges=[],
+    )
+
+    page = plan.primary_series().pages[0]
+    assert plan.primary_series().metadata["page_count"] == 1
+    assert page.page_id == "main-p1"
+    assert page.metadata["page_number"] == 1
+    assert page.metadata["page_count"] == 1
 
 
 def test_build_publication_bands_omits_unpopulated_regions():
