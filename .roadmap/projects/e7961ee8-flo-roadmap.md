@@ -37,10 +37,10 @@ Project roadmap for FLO renderer and language evolution
 
 ### SPPM Semantic Completeness
 
-- Add subprocess notation, header/footer bands, and continuation markers.
-- Complete the SPPM publishing surface without relying on manual post-editing.
-- Fix wrapped SPPM pagination artifacts, including repeated header leakage and broken continuation routing.
-- Fix non-wrapped SPPM mainline drift so showcase-grade outputs preserve straight spine geometry and visible branch labels.
+- Completed subprocess notation, header/footer bands, continuation markers, and hierarchy-aware child-map publication support.
+- Completed the SPPM publishing surface without relying on manual post-editing.
+- Closed wrapped SPPM pagination artifacts, including repeated header leakage and broken continuation routing.
+- Closed non-wrapped SPPM mainline drift and restored visible showcase branch labels.
 
 ### Renderer Platform Completeness
 
