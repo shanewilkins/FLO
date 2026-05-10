@@ -4,14 +4,14 @@ title: Add automatic child-map emission and publication-aware hierarchy fallback
 headline: Build on the new SPPM projection seam to automatically emit child maps when
   publication profile or r
 priority: high
-status: todo
+status: closed
 archived: false
 issue_type: feature
 milestone: sppm-semantic-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-07T18:28:37.524279+00:00'
-updated: '2026-05-07T18:29:05.913926+00:00'
+updated: '2026-05-10T00:00:00+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
@@ -22,9 +22,9 @@ depends_on:
 - 5f2e3b71
 - 13abd93e
 blocks: []
-actual_start_date: null
-actual_end_date: null
-progress_percentage: null
+actual_start_date: '2026-05-10T00:00:00+00:00'
+actual_end_date: '2026-05-10T00:00:00+00:00'
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null
