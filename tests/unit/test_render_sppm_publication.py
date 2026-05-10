@@ -1,3 +1,13 @@
+from flo.render._publication import (
+    PublicationBandContent,
+    PublicationBounds,
+    PublicationMargins,
+    PublicationPageSpec,
+    PublicationPlan,
+    build_publication_canvas,
+    materialize_publication_series,
+)
+from flo.render._sppm_band_render import build_sppm_header, render_sppm_footer_band
 from flo.render import render_dot
 
 
@@ -115,3 +125,49 @@ def test_sppm_footer_band_renders_legend_and_caption_alias_inputs():
     assert "Queue:" in out
     assert "7 min" in out
     assert "Draft for review" in out
+
+
+def test_sppm_bands_render_shared_page_context_rows_when_present():
+    canvas = build_publication_canvas(
+        bounds=PublicationBounds(width_px=1200, height_px=900),
+        margins=PublicationMargins(),
+        header_height_px=96,
+        footer_height_px=72,
+    )
+    series = materialize_publication_series(
+        series_id="main",
+        title="Ops Review",
+        kind="map",
+        page_specs=(
+            PublicationPageSpec(
+                page_key="p1",
+                canvas=canvas,
+                header_content=PublicationBandContent(title="Ops Review"),
+                footer_content=PublicationBandContent(rows=(("Queue", "7 min"),), notes=("Draft for review",)),
+            ),
+            PublicationPageSpec(
+                page_key="p2",
+                canvas=canvas,
+                header_content=PublicationBandContent(title="Ops Review"),
+                footer_content=PublicationBandContent(rows=(("Queue", "7 min"),), notes=("Draft for review",)),
+            ),
+        ),
+    )
+    publication = PublicationPlan(title="Ops Review", primary_series_id="main", series=(series,))
+
+    header = build_sppm_header(publication=publication)
+    footer_lines = render_sppm_footer_band(
+        publication=publication,
+        nodes=[{"id": "end", "kind": "end", "name": "End"}],
+        edges=[],
+    )
+
+    assert "Page:" in header
+    assert "1/2" in header
+    assert "Series:" in header
+    assert "main" in header
+    footer = "\n".join(footer_lines)
+    assert "Page:" in footer
+    assert "1/2" in footer
+    assert "Series:" in footer
+    assert "main" in footer

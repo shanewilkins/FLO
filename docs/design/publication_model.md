@@ -23,6 +23,12 @@ Publication readability diagnostics are also shared.
 - Strict publication requests must fail instead of silently switching the requested mode.
 - SPPM adopts this policy first for projection/readability fallbacks, and later renderers should reuse the same warning-vs-error distinction.
 
+Band content is split into shared context versus renderer semantics.
+
+- Shared `context_rows` carry reusable page-aware metadata such as page number, series identity, parent-map references, child-map references, and continuation references.
+- Renderer-specific `rows` and `notes` still carry semantic content such as SPPM metrics, captions, or process metadata.
+- Renderers should render `context_rows` when present, but single-page output stays unchanged when no shared page context applies.
+
 ## Geometry
 
 Margins are part of page geometry, not content regions.

@@ -3,6 +3,7 @@ from typing import Any
 from flo.render._publication import (
     PublicationBandContent,
     PublicationBounds,
+    build_publication_band_context,
     PublicationDiagnostic,
     PublicationMargins,
     build_publication_canvas_for_format,
@@ -82,6 +83,29 @@ def test_evaluate_publication_fallback_warns_in_non_strict_mode():
                 "strict": False,
             },
         ),
+    )
+
+
+def test_build_publication_band_context_supports_page_parent_child_and_continuation_refs():
+    context_rows = build_publication_band_context(
+        {
+            "series_id": "child-series",
+            "page_number": 2,
+            "page_count": 3,
+            "parent_series_id": "main",
+            "source_node_id": "prep",
+            "continuation_from": "main-p1",
+            "continuation_to": "child-series-p3",
+        }
+    )
+
+    assert context_rows == (
+        ("Page", "2/3"),
+        ("Series", "child-series"),
+        ("Parent Map", "main"),
+        ("Child Map", "prep"),
+        ("Continues From", "main-p1"),
+        ("Continues To", "child-series-p3"),
     )
 
 
@@ -204,11 +228,14 @@ def test_materialize_publication_series_builds_stable_multi_page_ids_and_metadat
     assert series.pages[0].page_number == 1
     assert series.pages[0].metadata["page_count"] == 2
     assert series.pages[0].metadata["section"] == "alpha"
+    assert series.pages[0].band("header").content.context_rows == (("Page", "1/2"), ("Series", "main"))
     assert series.pages[1].page_id == "main-p2"
     assert series.pages[1].page_number == 2
     assert series.pages[1].metadata["page_id"] == "main-p2"
     assert series.pages[1].metadata["section"] == "beta"
-    assert series.pages[1].band("footer") is not None
+    footer_band = series.pages[1].band("footer")
+    assert footer_band is not None
+    assert footer_band.content.context_rows == (("Page", "2/2"), ("Series", "main"))
 
 
 def test_build_sppm_publication_plan_uses_shared_series_materialization_metadata():

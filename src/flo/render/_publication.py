@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any, Literal, Mapping
 
 PublicationRegionName = Literal["header", "body", "footer"]
 PublicationBandName = Literal["header", "footer"]
@@ -120,6 +120,7 @@ class PublicationBandContent:
     title: str = ""
     rows: tuple[tuple[str, str], ...] = ()
     notes: tuple[str, ...] = ()
+    context_rows: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -224,6 +225,7 @@ def materialize_publication_series(
             "page_number": idx,
             "page_count": page_count,
         }
+        band_context = build_publication_band_context(page_metadata)
         pages.append(
             PublicationPage(
                 page_id=page_id,
@@ -232,8 +234,8 @@ def materialize_publication_series(
                 canvas=spec.canvas,
                 bands=build_publication_bands(
                     canvas=spec.canvas,
-                    header_content=spec.header_content,
-                    footer_content=spec.footer_content,
+                    header_content=_merge_band_context(spec.header_content, band_context),
+                    footer_content=_merge_band_context(spec.footer_content, band_context),
                 ),
                 metadata=page_metadata,
             )
@@ -313,6 +315,59 @@ def evaluate_publication_fallback(
             },
         ),
     )
+
+
+def build_publication_band_context(metadata: Mapping[str, Any]) -> tuple[tuple[str, str], ...]:
+    """Build shared page-aware band context rows from publication metadata."""
+    rows: list[tuple[str, str]] = []
+    page_number = _positive_int(metadata.get("page_number"))
+    page_count = _positive_int(metadata.get("page_count"))
+    series_id = _normalized_context_value(metadata.get("series_id"))
+    parent_series_id = _normalized_context_value(metadata.get("parent_series_id"))
+    source_node_id = _normalized_context_value(metadata.get("source_node_id"))
+    continuation_from = _normalized_context_value(metadata.get("continuation_from"))
+    continuation_to = _normalized_context_value(metadata.get("continuation_to"))
+
+    if page_number is not None and page_count is not None and page_count > 1:
+        rows.append(("Page", f"{page_number}/{page_count}"))
+    if series_id and page_count is not None and page_count > 1:
+        rows.append(("Series", series_id))
+    if parent_series_id:
+        rows.append(("Parent Map", parent_series_id))
+    if source_node_id:
+        rows.append(("Child Map", source_node_id))
+    if continuation_from:
+        rows.append(("Continues From", continuation_from))
+    if continuation_to:
+        rows.append(("Continues To", continuation_to))
+    return tuple(rows)
+
+
+def _merge_band_context(
+    content: PublicationBandContent | None,
+    context_rows: tuple[tuple[str, str], ...],
+) -> PublicationBandContent | None:
+    if content is None or not context_rows:
+        return content
+    return PublicationBandContent(
+        title=content.title,
+        rows=content.rows,
+        notes=content.notes,
+        context_rows=(*content.context_rows, *context_rows),
+    )
+
+
+def _normalized_context_value(value: Any) -> str | None:
+    normalized = str(value or "").strip()
+    return normalized or None
+
+
+def _positive_int(value: Any) -> int | None:
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed > 0 else None
 
 
 def build_publication_canvas(

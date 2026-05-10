@@ -27,9 +27,10 @@ def build_sppm_header(*, publication: Any) -> str:
     if not title_text:
         return ""
 
+    header_rows = header_content.rows + header_content.context_rows
     metadata_cells = "".join(
         f'<TD ALIGN="LEFT"><FONT FACE="Helvetica" POINT-SIZE="9"><B>{_escape(label)}:</B> {_escape(value)}</FONT></TD>'
-        for label, value in header_content.rows
+        for label, value in header_rows
     )
     metadata_row = f"<TR>{metadata_cells}</TR>" if metadata_cells else ""
 
@@ -47,11 +48,12 @@ def render_sppm_footer_band(*, publication: Any, nodes: list[SppmRenderNode], ed
     footer_band = primary_page.band("footer")
     if footer_band is None:
         return []
-    if not footer_band.content.rows and not footer_band.content.notes:
+    footer_rows = footer_band.content.rows + footer_band.content.context_rows
+    if not footer_rows and not footer_band.content.notes:
         return []
 
     footer_id = "__sppm_footer_band"
-    footer_label = _build_sppm_footer_label(footer_band.content.rows, footer_band.content.notes)
+    footer_label = _build_sppm_footer_label(footer_rows, footer_band.content.notes)
     lines = [
         "  {",
         "    rank=sink;",
