@@ -4,7 +4,7 @@ title: Fix SPPM mainline rank drift and missing branch labels
 headline: Preserve a straight primary SPPM spine in non-wrapped renders and keep
   decision branch semantics visible in reference outputs.
 priority: high
-status: todo
+status: closed
 archived: false
 issue_type: other
 milestone: sppm-semantic-completeness
@@ -19,9 +19,9 @@ depends_on:
 - 47c38a4e
 - ce07a4e0
 blocks: []
-actual_start_date: null
-actual_end_date: null
-progress_percentage: null
+actual_start_date: '2026-05-10T00:00:00+00:00'
+actual_end_date: '2026-05-10T00:00:00+00:00'
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null

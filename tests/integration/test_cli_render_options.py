@@ -184,19 +184,26 @@ def test_run_sppm_feature_showcase_covers_publication_and_rework_semantics():
         ],
     )
     assert result.exit_code == 0
-    assert "Queue:" in result.output
-    assert "Orange circles indicate staged work." in result.output
-    assert "Rework:" in result.output
-    assert "Red cards and dashed returns indicate corrective loops." in result.output
-    assert "Reference map covering queueing, subprocess, rework, and publication footer semantics." in result.output
-    assert "Rate: 12%" in result.output
-    assert "Reason: Missing details" in result.output
-    assert "Frequency: 3/day" in result.output
-    assert "Count: 12 per week" in result.output
-    assert "Frequency: 1/day" in result.output
-    assert "Count: 4 per week" in result.output
-    assert "Detail map: process" in result.output
-    assert "Dispatch Queue" in result.output
+    for token in (
+        "Queue:",
+        "Orange circles indicate staged work.",
+        "Rework:",
+        "Red cards and dashed returns indicate corrective loops.",
+        "Reference map covering queueing, subprocess, rework, and publication footer semantics.",
+        "Rate: 12%",
+        "Reason: Missing details",
+        'xlabel="yes"',
+        'xlabel="no"',
+        'xlabel="pass"',
+        'xlabel="fail"',
+        "Frequency: 3/day",
+        "Count: 12 per week",
+        "Frequency: 1/day",
+        "Count: 4 per week",
+        "Detail map: process",
+        "Dispatch Queue",
+    ):
+        assert token in result.output
 
 
 

@@ -292,12 +292,12 @@ def _build_sppm_edge_route(
     target_kind: str,
     port_policy: SppmPortPolicy,
 ) -> SppmEdgeRoute:
-    edge_attrs: list[str] = []
-    if options.sppm_step_numbering == "edge":
-        src_num = step_numbering.get(source)
-        dst_num = step_numbering.get(target)
-        if src_num is not None and dst_num is not None:
-            edge_attrs.append(f'xlabel="{src_num}->{dst_num}"')
+    edge_attrs = _base_sppm_edge_attrs(
+        source=source,
+        target=target,
+        options=options,
+        step_numbering=step_numbering,
+    )
 
     is_rework = is_sppm_rework_edge(
         edge=edge,
@@ -308,6 +308,7 @@ def _build_sppm_edge_route(
     is_boundary = wrap_plan.active and (source, target) in wrap_plan.boundary_edges
     if is_boundary and not is_rework:
         edge_attrs.extend(["minlen=2", "penwidth=1.2"])
+    _append_non_rework_branch_label(edge_attrs=edge_attrs, edge=edge, is_rework=is_rework)
     resolved_ports = _resolved_ports(
         core_route=core_route,
         options=options,
@@ -333,6 +334,60 @@ def _build_sppm_edge_route(
             port_policy=port_policy,
         )
 
+    return _build_non_rework_route(
+        source=source,
+        target=target,
+        edge_attrs=edge_attrs,
+        is_boundary=is_boundary,
+        resolved_ports=resolved_ports,
+        core_route=core_route,
+        options=options,
+        source_kind=source_kind,
+        target_kind=target_kind,
+        lane_id=lane_id,
+        wrap_plan=wrap_plan,
+    )
+
+
+def _base_sppm_edge_attrs(
+    *,
+    source: str,
+    target: str,
+    options: RenderOptions,
+    step_numbering: dict[str, int],
+) -> list[str]:
+    edge_attrs: list[str] = []
+    if options.sppm_step_numbering != "edge":
+        return edge_attrs
+    src_num = step_numbering.get(source)
+    dst_num = step_numbering.get(target)
+    if src_num is not None and dst_num is not None:
+        edge_attrs.append(f'xlabel="{src_num}->{dst_num}"')
+    return edge_attrs
+
+
+def _append_non_rework_branch_label(*, edge_attrs: list[str], edge: dict[str, Any], is_rework: bool) -> None:
+    if is_rework or any(attr.startswith("xlabel=") for attr in edge_attrs):
+        return
+    branch_label = edge.get("outcome") or edge.get("label")
+    if branch_label is not None:
+        edge_attrs.append(f'xlabel="{str(branch_label)}"')
+
+
+def _build_non_rework_route(
+    *,
+    source: str,
+    target: str,
+    edge_attrs: list[str],
+    is_boundary: bool,
+    resolved_ports: tuple[str, str] | None,
+    core_route: Any | None,
+    options: RenderOptions,
+    source_kind: str,
+    target_kind: str,
+    lane_id: str | None,
+    wrap_plan: WrapPlan,
+) -> SppmEdgeRoute:
     if is_boundary and resolved_ports is not None:
         boundary_ports = _resolved_boundary_ports(
             core_route=core_route,
