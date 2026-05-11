@@ -28,10 +28,6 @@ from flo.services._svg_utils import (
     _set_arrow_polygon_horizontal,
     _write_svg_tree,
 )
-from flo.services._sppm_anchor_specs import (
-    extract_sppm_return_anchor_specs as _extract_sppm_return_anchor_specs,
-    extract_sppm_branch_anchor_specs as _extract_sppm_branch_anchor_specs,
-)
 from flo.services.errors import RenderError
 
 if TYPE_CHECKING:
@@ -102,16 +98,21 @@ def render_dot_to_file(
         # Two-pass SPPM anchor pinning: re-render SVG with exact anchor positions
         # derived from pass-1 layout.  Only activates when SPPM return-loop anchors
         # are detected; otherwise the SVG written above is already final.
-        _postprocess_sppm_return_loop_edges_svg(dot=dot, output_path=svg_path)
-        _postprocess_sppm_branch_edges_svg(dot=dot, output_path=svg_path)
-        _postprocess_sppm_rework_labels_svg(dot=dot, output_path=svg_path)
+        _postprocess_sppm_return_loop_edges_svg(dot=dot, output_path=svg_path, contract=sppm_contract)
+        _postprocess_sppm_branch_edges_svg(dot=dot, output_path=svg_path, contract=sppm_contract)
+        _postprocess_sppm_rework_labels_svg(dot=dot, output_path=svg_path, contract=sppm_contract)
         _postprocess_wrapped_sppm_svg(dot=dot, output_path=svg_path, contract=sppm_contract)
         _postprocess_direct_midpoint_edges_svg(output_path=svg_path)
         _normalize_node_backing_fills_svg(output_path=svg_path)
         _normalize_svg_outer_padding(output_path=svg_path, padding=_SVG_OUTER_PADDING_PX)
 
 
-def _postprocess_sppm_return_loop_edges_svg(*, dot: str, output_path: Path) -> None:
+def _postprocess_sppm_return_loop_edges_svg(
+    *,
+    dot: str,
+    output_path: Path,
+    contract: SppmSvgPostprocessContract | None = None,
+) -> None:
     """Rewrite SPPM return-loop edge paths to exact L-shapes.
 
     Graphviz routes return-loop corridor edges with an extra dogleg because it
@@ -127,7 +128,7 @@ def _postprocess_sppm_return_loop_edges_svg(*, dot: str, output_path: Path) -> N
       headport=s target).
     - Only SVG output.
     """
-    specs = _extract_sppm_return_anchor_specs(dot)
+    specs = _collect_return_anchor_specs(dot=dot, contract=contract)
     if not specs:
         return
 
@@ -137,18 +138,18 @@ def _postprocess_sppm_return_loop_edges_svg(*, dot: str, output_path: Path) -> N
     edge_groups = _svg_edge_groups(root)
     updated = False
 
-    for spec in specs:
+    for source_id, anchor_id, target_id in specs:
         # Edge titles in SVG use HTML entities for special chars.
         # "source":w -> "anchor"  and  "anchor" -> "target":s
-        first_title = f"{spec.source_id}:w->{spec.anchor_id}"
-        second_title = f"{spec.anchor_id}->{spec.target_id}:s"
+        first_title = f"{source_id}:w->{anchor_id}"
+        second_title = f"{anchor_id}->{target_id}:s"
         first_group = edge_groups.get(first_title)
         second_group = edge_groups.get(second_title)
         if first_group is None or second_group is None:
             continue
 
-        source_bounds = node_bounds.get(spec.source_id)
-        target_bounds = node_bounds.get(spec.target_id)
+        source_bounds = node_bounds.get(source_id)
+        target_bounds = node_bounds.get(target_id)
         if source_bounds is None or target_bounds is None:
             continue
 
@@ -188,8 +189,13 @@ def _postprocess_sppm_return_loop_edges_svg(*, dot: str, output_path: Path) -> N
         _write_svg_tree(tree, output_path)
 
 
-def _postprocess_sppm_branch_edges_svg(*, dot: str, output_path: Path) -> None:
-    specs = _extract_sppm_branch_anchor_specs(dot)
+def _postprocess_sppm_branch_edges_svg(
+    *,
+    dot: str,
+    output_path: Path,
+    contract: SppmSvgPostprocessContract | None = None,
+) -> None:
+    specs = _collect_branch_anchor_specs(dot=dot, contract=contract)
     if not specs:
         return
 
@@ -199,16 +205,16 @@ def _postprocess_sppm_branch_edges_svg(*, dot: str, output_path: Path) -> None:
     edge_groups = _svg_edge_groups(root)
     updated = False
 
-    for spec in specs:
-        first_title = f"{spec.source_id}:s->{spec.anchor_id}"
-        second_title = f"{spec.anchor_id}->{spec.target_id}:n"
+    for source_id, anchor_id, target_id in specs:
+        first_title = f"{source_id}:s->{anchor_id}"
+        second_title = f"{anchor_id}->{target_id}:n"
         first_group = edge_groups.get(first_title)
         second_group = edge_groups.get(second_title)
         if first_group is None or second_group is None:
             continue
 
-        source_bounds = node_bounds.get(spec.source_id)
-        target_bounds = node_bounds.get(spec.target_id)
+        source_bounds = node_bounds.get(source_id)
+        target_bounds = node_bounds.get(target_id)
         if source_bounds is None or target_bounds is None:
             continue
 
@@ -244,7 +250,12 @@ def _postprocess_sppm_branch_edges_svg(*, dot: str, output_path: Path) -> None:
         _write_svg_tree(tree, output_path)
 
 
-def _postprocess_sppm_rework_labels_svg(*, dot: str, output_path: Path) -> None:
+def _postprocess_sppm_rework_labels_svg(
+    *,
+    dot: str,
+    output_path: Path,
+    contract: SppmSvgPostprocessContract | None = None,
+) -> None:
     """Reposition rework annotation boxes beside their source nodes.
 
     Graphviz places taillabel geometry based on spline heuristics, which drifts
@@ -252,8 +263,8 @@ def _postprocess_sppm_rework_labels_svg(*, dot: str, output_path: Path) -> None:
     pass has fixed the branch/return paths, this pass moves the rendered label
     box polygon/text as a unit relative to the source node's rendered bounds.
     """
-    branch_specs = _extract_sppm_branch_anchor_specs(dot)
-    return_specs = _extract_sppm_return_anchor_specs(dot)
+    branch_specs = _collect_branch_anchor_specs(dot=dot, contract=contract)
+    return_specs = _collect_return_anchor_specs(dot=dot, contract=contract)
     if not branch_specs and not return_specs:
         return
 
@@ -263,9 +274,9 @@ def _postprocess_sppm_rework_labels_svg(*, dot: str, output_path: Path) -> None:
     edge_groups = _svg_edge_groups(root)
     updated = False
 
-    for spec in branch_specs:
-        group = edge_groups.get(f"{spec.source_id}:s->{spec.anchor_id}")
-        source_bounds = node_bounds.get(spec.source_id)
+    for source_id, anchor_id, _target_id in branch_specs:
+        group = edge_groups.get(f"{source_id}:s->{anchor_id}")
+        source_bounds = node_bounds.get(source_id)
         if group is None or source_bounds is None:
             continue
         label_bounds = _svg_edge_label_bounds(group)
@@ -276,9 +287,9 @@ def _postprocess_sppm_rework_labels_svg(*, dot: str, output_path: Path) -> None:
         if _reposition_svg_edge_label(group, left=target_left, top=target_top):
             updated = True
 
-    for spec in return_specs:
-        group = edge_groups.get(f"{spec.source_id}:w->{spec.anchor_id}")
-        source_bounds = node_bounds.get(spec.source_id)
+    for source_id, anchor_id, _target_id in return_specs:
+        group = edge_groups.get(f"{source_id}:w->{anchor_id}")
+        source_bounds = node_bounds.get(source_id)
         if group is None or source_bounds is None:
             continue
         label_bounds = _svg_edge_label_bounds(group)
@@ -292,6 +303,42 @@ def _postprocess_sppm_rework_labels_svg(*, dot: str, output_path: Path) -> None:
 
     if updated:
         _write_svg_tree(tree, output_path)
+
+
+def _collect_return_anchor_specs(
+    *,
+    dot: str,
+    contract: SppmSvgPostprocessContract | None,
+):
+    _ = dot
+    if contract and contract.rework_return_edges:
+        specs = []
+        for edge in contract.rework_return_edges:
+            anchor_id = getattr(edge, "anchor_id", None)
+            if not anchor_id:
+                continue
+            specs.append((edge.source_id, anchor_id, edge.target_id))
+        return specs
+
+    return []
+
+
+def _collect_branch_anchor_specs(
+    *,
+    dot: str,
+    contract: SppmSvgPostprocessContract | None,
+):
+    _ = dot
+    if contract and contract.rework_branch_edges:
+        specs = []
+        for edge in contract.rework_branch_edges:
+            anchor_id = getattr(edge, "anchor_id", None)
+            if not anchor_id:
+                continue
+            specs.append((edge.source_id, anchor_id, edge.target_id))
+        return specs
+
+    return []
 
 
 def _svg_edge_label_bounds(group: ET.Element) -> tuple[float, float, float, float] | None:
@@ -373,10 +420,10 @@ def _postprocess_wrapped_sppm_svg(
     
     # Use contract-based edge lookup if available; otherwise fall back to regex DOT scanning.
     if contract and contract.wrapped_boundary_edges:
-        boundary_pairs: dict[str, tuple[str, str]] = {
-            "__wrap_exit_lr_0": (e.source_id, e.target_id)
-            for e in contract.wrapped_boundary_edges
-        }
+        boundary_pairs: dict[str, tuple[str, str]] = {}
+        for idx, edge in enumerate(contract.wrapped_boundary_edges):
+            anchor_id = getattr(edge, "anchor_id", None) or f"__wrap_exit_lr_{idx}"
+            boundary_pairs[anchor_id] = (edge.source_id, edge.target_id)
     else:
         boundary_pairs = _wrapped_sppm_boundary_pairs(dot)
     

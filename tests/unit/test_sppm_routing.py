@@ -110,6 +110,12 @@ def test_sppm_routing_plan_marks_wrap_boundary_edges_with_ports_and_boundary_att
     assert route.kind == "corridor"
     assert route.is_boundary is True
     assert route.lane_id == "wrap_lane_0"
+    contract_edges = sorted(
+        routing_plan.svg_postprocess_contract.wrapped_boundary_edges,
+        key=lambda edge: edge.source_id,
+    )
+    assert [edge.source_id for edge in contract_edges] == ["a", "c"]
+    assert [edge.anchor_id for edge in contract_edges] == ["__wrap_exit_lr_0", "__wrap_exit_lr_1"]
     _assert_lr_boundary_route(route)
     assert set(routing_plan.route_plan.routes.keys()) == {("start", "a"), ("a", "b"), ("b", "c"), ("c", "end")}
 

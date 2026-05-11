@@ -23,6 +23,7 @@ class SppmSvgPostprocessEdge:
     target_id: str
     edge_kind: str  # "wrap_boundary" | "rework_return" | "rework_branch"
     expected_segment_count: int
+    anchor_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -58,8 +59,14 @@ def build_svg_postprocess_contract(
     for (source, target), route in routes.items():
         if route.is_boundary and not route.is_rework and wrap_active:
             edge_id = f"wrap_boundary:{source}:{target}"
+            anchor_id: str | None = None
+            if route.segments:
+                first_leg_target = route.segments[0].target_id
+                if first_leg_target.startswith("__wrap_exit_lr_"):
+                    anchor_id = first_leg_target
             wrapped_boundary.append(SppmSvgPostprocessEdge(
                 edge_id=edge_id, source_id=source, target_id=target,
+                anchor_id=anchor_id,
                 edge_kind="wrap_boundary", expected_segment_count=len(route.segments),
             ))
         elif route.is_rework and route.anchors:
@@ -67,10 +74,12 @@ def build_svg_postprocess_contract(
             seg_count = len(route.segments)
             rework_branch.append(SppmSvgPostprocessEdge(
                 edge_id=edge_id, source_id=source, target_id=target,
+                anchor_id=route.anchors[0].anchor_id,
                 edge_kind="rework_branch", expected_segment_count=seg_count,
             ))
             rework_return.append(SppmSvgPostprocessEdge(
                 edge_id=edge_id, source_id=source, target_id=target,
+                anchor_id=route.anchors[0].anchor_id,
                 edge_kind="rework_return", expected_segment_count=seg_count,
             ))
     return SppmSvgPostprocessContract(
