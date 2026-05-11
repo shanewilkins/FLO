@@ -13,6 +13,7 @@ from flo.services.graphviz import (
     _normalize_node_backing_fills_svg,
     _normalize_svg_outer_padding,
     _postprocess_sppm_branch_edges_svg,
+    _postprocess_queue_baseline_alignment_svg,
     _postprocess_sppm_return_loop_edges_svg,
     _postprocess_direct_midpoint_edges_svg,
     _postprocess_wrapped_sppm_svg,
@@ -200,6 +201,73 @@ def test_postprocess_direct_midpoint_edges_svg_handles_ellipse_nodes(tmp_path: P
 
     assert 'd="M 625.83,-620.00 L 711.83,-620.00"' in svg
     assert 'points="711.83,-620.00 701.83,-616.50 701.83,-623.50 711.83,-620.00"' in svg
+
+
+def test_postprocess_direct_midpoint_edges_svg_uses_triangle_side_midpoint_for_queue(tmp_path: Path):
+    svg_path = tmp_path / "direct_triangle_midpoint.svg"
+    svg_path.write_text(
+        """<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg">
+    <g class="node"><title>start</title><polygon points="0,40 40,40 40,80 0,80" /></g>
+    <g class="node"><title>queue</title><polygon fill="#ff9800" stroke="#e65100" points="100,0 50,100 150,100 100,0" /></g>
+    <g class="edge"><title>start:e-&gt;queue:w</title><path d="M 1,1 L 2,2" /><polygon points="0,0 1,1 2,2 0,0" /></g>
+</svg>
+""",
+        encoding="utf-8",
+    )
+
+    _postprocess_direct_midpoint_edges_svg(output_path=svg_path)
+    svg = svg_path.read_text(encoding="utf-8")
+
+    # Left non-base side midpoint of the triangle is (75, 50).
+    assert 'd="M 40.00,50.00 L 75.00,50.00"' in svg
+    assert 'points="75.00,50.00 65.00,53.50 65.00,46.50 75.00,50.00"' in svg
+
+
+def test_postprocess_queue_baseline_alignment_svg_moves_queue_to_mainline_baseline(tmp_path: Path):
+    svg_path = tmp_path / "queue_baseline.svg"
+    svg_path.write_text(
+        """<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg">
+    <g class="node"><title>left</title><polygon fill="#ffffff" stroke="#333333" points="0,50 40,50 40,90 0,90" /></g>
+    <g class="node"><title>queue</title><polygon fill="#ff9800" stroke="#e65100" points="100,0 50,100 150,100 100,0" /></g>
+    <g class="node"><title>right</title><polygon fill="#ffffff" stroke="#333333" points="200,50 240,50 240,90 200,90" /></g>
+    <g class="edge"><title>left:e-&gt;queue:w</title><path d="M 40,60 L 75,60" /></g>
+    <g class="edge"><title>queue:e-&gt;right:w</title><path d="M 125,60 L 200,60" /></g>
+</svg>
+""",
+        encoding="utf-8",
+    )
+
+    _postprocess_queue_baseline_alignment_svg(output_path=svg_path)
+    _postprocess_direct_midpoint_edges_svg(output_path=svg_path)
+    svg = svg_path.read_text(encoding="utf-8")
+
+    # Triangle gets shifted so side-midpoint Y aligns with neighboring baseline Y=70.
+    # Edges initially at Y=60 get rewritten to Y=70 with .2f formatting.
+    assert 'points="100.00,20.00 50.00,120.00 150.00,120.00 100.00,20.00"' in svg
+    assert 'd="M 40.00,70.00 L 75.00,70.00"' in svg
+    assert 'd="M 125.00,70.00 L 200.00,70.00"' in svg
+
+
+def test_postprocess_direct_midpoint_edges_svg_preserves_existing_horizontal_paths(tmp_path: Path):
+    svg_path = tmp_path / "direct_preserve_horizontal.svg"
+    svg_path.write_text(
+        """<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg">
+    <g class="node"><title>triage</title><polygon fill="#ffffff" stroke="#333333" points="510,-570 630,-570 630,-530 510,-530" /></g>
+    <g class="node"><title>process_queue</title><polygon fill="#ffffff" stroke="#333333" points="770,-575 716,-525 824,-525 770,-575" /></g>
+    <g class="edge"><title>triage:e-&gt;process_queue:w</title><path d="M630.00,-550.00C630.00,-550.00 716.00,-550.00 716.00,-550.00" /><polygon points="716.00,-553.50 726.00,-550.00 716.00,-546.50 716.00,-553.50" /></g>
+</svg>
+""",
+        encoding="utf-8",
+    )
+
+    _postprocess_direct_midpoint_edges_svg(output_path=svg_path)
+    svg = svg_path.read_text(encoding="utf-8")
+
+    # Already-horizontal path at correct Y should remain untouched.
+    assert 'd="M630.00,-550.00C630.00,-550.00 716.00,-550.00 716.00,-550.00"' in svg
 
 
 def test_normalize_node_backing_fills_svg_replaces_lightgrey_backings(tmp_path: Path):

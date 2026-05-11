@@ -23,8 +23,8 @@ from .options import RenderOptions
 _SPPM_DECISION_MIN_WIDTH = 1.64
 _SPPM_DECISION_MIN_HEIGHT = 0.94
 _SPPM_DEFAULT_BOX_HEIGHT = 1.2  # inches
-_SPPM_QUEUE_TRIANGLE_WIDTH = 1.5  # inches
-_SPPM_QUEUE_TRIANGLE_HEIGHT = _SPPM_DEFAULT_BOX_HEIGHT * 1.6  # inches
+_SPPM_QUEUE_TRIANGLE_WIDTH = 2.1  # inches
+_SPPM_QUEUE_TRIANGLE_HEIGHT = 3.0  # inches; almost as tall as rendered decision diamonds
 _SPPM_QUEUE_NAME_MAX_LEN = 14
 
 __all__ = ["render_sppm_node"]
@@ -123,7 +123,7 @@ def _render_sppm_queue_triangle(*, node: SppmRenderNode, node_id: str, name: str
     attrs = [
         f'label="{queue_label}"',
         "shape=triangle",
-        "orientation=270",
+        "orientation=0",
         f"width={_SPPM_QUEUE_TRIANGLE_WIDTH}",
         f"height={_SPPM_QUEUE_TRIANGLE_HEIGHT}",
         "fixedsize=true",
@@ -131,7 +131,7 @@ def _render_sppm_queue_triangle(*, node: SppmRenderNode, node_id: str, name: str
         f'fillcolor="{queue_fill}"',
         f'color="{queue_border}"',
         "penwidth=1.5",
-        "fontsize=11",
+        "fontsize=13",
         "fontname=Helvetica",
     ]
     _append_chunk_group(attrs=attrs, node_id=node_id, wrap_plan=wrap_plan)

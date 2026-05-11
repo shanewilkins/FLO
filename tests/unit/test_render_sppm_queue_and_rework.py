@@ -117,7 +117,7 @@ def test_sppm_queue_triangles_render_with_wait_metadata_box():
     assert 'WT: 11 min' in out
     assert 'shape=triangle' in out
     assert 'Process Queue\nprocess_queue' not in out
-    assert 'shape=triangle, orientation=270, width=1.5, height=1.92' in out
+    assert 'shape=triangle, orientation=0, width=2.1, height=3.0' in out
     assert 'style="filled"' in out
 
 
