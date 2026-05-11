@@ -1,16 +1,17 @@
 ---
 id: 77ebdb56
 title: Define SPPM footer metrics catalog and computation policy
-headline: ''
+headline: Decide which analytics belong in the SPPM footer, how each metric is computed,
+  and where those compu
 priority: medium
 status: todo
 archived: false
 issue_type: feature
-milestone: null
+milestone: renderer-platform-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-06T23:20:19.934006+00:00'
-updated: '2026-05-06T23:20:19.934010+00:00'
+updated: '2026-05-11T17:28:37.160444+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
