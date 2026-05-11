@@ -157,7 +157,41 @@ def test_sppm_routing_plan_splits_rework_edges_into_anchor_segments():
         "style=dashed",
         'xlabel="no"',
     )
+    contract = routing_plan.svg_postprocess_contract
+    assert [(edge.source_id, edge.target_id) for edge in contract.rework_branch_edges] == [
+        ("decision", "rework")
+    ]
+    assert contract.rework_return_edges == ()
     assert ("decision", "rework") in routing_plan.route_plan.routes
+
+
+def test_sppm_routing_plan_classifies_rework_return_contract_edges_separately():
+    nodes = [
+        {"id": "decision", "kind": "decision", "name": "Valid?", "metadata": {}},
+        {"id": "rework", "kind": "task", "name": "Rework", "metadata": {}},
+        {"id": "review", "kind": "task", "name": "Review", "metadata": {}},
+    ]
+    edges = [
+        {"source": "decision", "target": "rework", "outcome": "no", "edge_type": "rework", "rework": True},
+        {"source": "rework", "target": "review", "edge_type": "rework", "rework": True},
+    ]
+    options = RenderOptions(diagram="sppm")
+
+    routing_plan = build_sppm_routing_plan(
+        nodes=nodes,
+        edges=edges,
+        options=options,
+        step_numbering={"decision": 2, "rework": 1, "review": 3},
+        wrap_plan=build_wrap_plan([], options, planner="chunked"),
+    )
+
+    contract = routing_plan.svg_postprocess_contract
+    assert [(edge.source_id, edge.target_id) for edge in contract.rework_branch_edges] == [
+        ("decision", "rework")
+    ]
+    assert [(edge.source_id, edge.target_id) for edge in contract.rework_return_edges] == [
+        ("rework", "review")
+    ]
 
 
 def _assert_lr_boundary_route(route) -> None:

@@ -53,6 +53,16 @@ def build_svg_postprocess_contract(
     def _id_part(s: str) -> str:
         return "".join(c if c.isalnum() or c == "_" else "_" for c in s) or "edge"
 
+    def _tailport_side(attrs: tuple[str, ...]) -> str | None:
+        for attr in attrs:
+            if not attr.startswith("tailport="):
+                continue
+            raw = attr.split("=", 1)[1].strip().strip('"')
+            if ":" in raw:
+                return raw.rsplit(":", 1)[1]
+            return raw
+        return None
+
     wrapped_boundary: list[SppmSvgPostprocessEdge] = []
     rework_return: list[SppmSvgPostprocessEdge] = []
     rework_branch: list[SppmSvgPostprocessEdge] = []
@@ -72,16 +82,19 @@ def build_svg_postprocess_contract(
         elif route.is_rework and route.anchors:
             edge_id = f"rework:{_id_part(source)}:{_id_part(target)}"
             seg_count = len(route.segments)
-            rework_branch.append(SppmSvgPostprocessEdge(
-                edge_id=edge_id, source_id=source, target_id=target,
+            tail_side = _tailport_side(route.segments[0].attrs) if route.segments else None
+            item = SppmSvgPostprocessEdge(
+                edge_id=edge_id,
+                source_id=source,
+                target_id=target,
                 anchor_id=route.anchors[0].anchor_id,
-                edge_kind="rework_branch", expected_segment_count=seg_count,
-            ))
-            rework_return.append(SppmSvgPostprocessEdge(
-                edge_id=edge_id, source_id=source, target_id=target,
-                anchor_id=route.anchors[0].anchor_id,
-                edge_kind="rework_return", expected_segment_count=seg_count,
-            ))
+                edge_kind="rework_return" if tail_side in {"w", "n"} else "rework_branch",
+                expected_segment_count=seg_count,
+            )
+            if item.edge_kind == "rework_return":
+                rework_return.append(item)
+            else:
+                rework_branch.append(item)
     return SppmSvgPostprocessContract(
         wrapped_boundary_edges=tuple(wrapped_boundary),
         rework_return_edges=tuple(rework_return),

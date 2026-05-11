@@ -86,7 +86,7 @@ def _build_one(example_file: Path, examples_dir: Path, renders_dir: Path) -> tup
     from flo.compiler import compile_adapter
     from flo.compiler.ir import ensure_schema_aligned, validate_ir
     from flo.export import export_ir
-    from flo.render import render_dot
+    from flo.render import render_dot_and_contract
     from flo.services.graphviz import render_dot_to_file
 
     rel = example_file.relative_to(examples_dir)
@@ -108,12 +108,12 @@ def _build_one(example_file: Path, examples_dir: Path, renders_dir: Path) -> tup
             dot_out = base_out.with_name(f"{base_out.name}{suffix}").with_suffix(".dot")
             svg_out = base_out.with_name(f"{base_out.name}{suffix}").with_suffix(".svg")
 
-            dot = render_dot(ir, options=render_options)
+            dot, contract = render_dot_and_contract(ir, options=render_options)
             dot_out.write_text(dot, encoding="utf-8")
             created.append(str(dot_out.relative_to(REPO_ROOT)))
 
             if has_dot:
-                render_dot_to_file(dot, str(svg_out))
+                render_dot_to_file(dot, str(svg_out), sppm_contract=contract)
                 created.append(str(svg_out.relative_to(REPO_ROOT)))
 
         if _has_materials_or_equipment_collection(ir):

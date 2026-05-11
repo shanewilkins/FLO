@@ -134,40 +134,50 @@ def _postprocess_sppm_return_loop_edges_svg(
 
     tree = ET.parse(output_path)
     root = tree.getroot()
-    node_bounds = _svg_node_bounds(root)
+    node_bounds = _svg_node_outer_bounds(root)
     edge_groups = _svg_edge_groups(root)
     updated = False
 
     for source_id, anchor_id, target_id in specs:
-        # Edge titles in SVG use HTML entities for special chars.
-        # "source":w -> "anchor"  and  "anchor" -> "target":s
-        first_title = f"{source_id}:w->{anchor_id}"
-        second_title = f"{anchor_id}->{target_id}:s"
-        first_group = edge_groups.get(first_title)
-        second_group = edge_groups.get(second_title)
+        first_group, first_source_side, _first_target_side = _find_rework_edge_group(
+            edge_groups=edge_groups,
+            source_id=source_id,
+            target_id=anchor_id,
+        )
+        second_group, _second_source_side, second_target_side = _find_rework_edge_group(
+            edge_groups=edge_groups,
+            source_id=anchor_id,
+            target_id=target_id,
+        )
         if first_group is None or second_group is None:
             continue
 
         source_bounds = node_bounds.get(source_id)
         target_bounds = node_bounds.get(target_id)
-        if source_bounds is None or target_bounds is None:
+        if source_bounds is None:
             continue
 
-        # Source exits at left edge (port=w), midpoint vertically.
-        source_left = source_bounds[0]
-        source_mid_y = (source_bounds[1] + source_bounds[3]) / 2.0
-        # Target entered at bottom (port=s), horizontally centered.
-        target_center_x = (target_bounds[0] + target_bounds[2]) / 2.0
+        _ = first_source_side
+        # Return-loop policy: always exit the rework node from west face.
+        source_point = _point_on_bounds(source_bounds, "w")
+        if target_bounds is not None:
+            # Return-loop policy: always rejoin main line at target south face.
+            target_point = _point_on_bounds(target_bounds, "s")
+        else:
+            _start, fallback_end = _edge_path_start_end(second_group)
+            if fallback_end is None:
+                continue
+            target_point = fallback_end
+        source_x, source_y = source_point
+        target_x, target_y = target_point
         # Compute the corner: X of target, Y of source midpoint.
-        corner_x = target_center_x
-        corner_y = source_mid_y
-        # Target bottom entry point.
-        target_bottom = target_bounds[3]
+        corner_x = target_x
+        corner_y = source_y
 
         _set_edge_path(
             first_group,
             [
-                (source_left, source_mid_y),
+                (source_x, source_y),
                 (corner_x, corner_y),
             ],
         )
@@ -175,14 +185,11 @@ def _postprocess_sppm_return_loop_edges_svg(
             second_group,
             [
                 (corner_x, corner_y),
-                (target_center_x, target_bottom),
+                (target_x, target_y),
             ],
         )
-        # direction=+1: path arrives from rework (less-negative internal Y =
-        # visually lower on screen) going toward target bottom (more-negative
-        # internal Y = visually higher). Base must be at tip_y + 8 so the
-        # rendered arrow points upward into the node's south face.
-        _set_arrow_polygon(second_group, tip=(target_center_x, target_bottom), direction=1)
+        # Arrowhead should point into the target's south face.
+        _set_arrow_polygon(second_group, tip=(target_x, target_y), direction=1)
         updated = True
 
     if updated:
@@ -201,15 +208,21 @@ def _postprocess_sppm_branch_edges_svg(
 
     tree = ET.parse(output_path)
     root = tree.getroot()
-    node_bounds = _svg_node_bounds(root)
+    node_bounds = _svg_node_outer_bounds(root)
     edge_groups = _svg_edge_groups(root)
     updated = False
 
     for source_id, anchor_id, target_id in specs:
-        first_title = f"{source_id}:s->{anchor_id}"
-        second_title = f"{anchor_id}->{target_id}:n"
-        first_group = edge_groups.get(first_title)
-        second_group = edge_groups.get(second_title)
+        first_group, first_source_side, _first_target_side = _find_rework_edge_group(
+            edge_groups=edge_groups,
+            source_id=source_id,
+            target_id=anchor_id,
+        )
+        second_group, _second_source_side, second_target_side = _find_rework_edge_group(
+            edge_groups=edge_groups,
+            source_id=anchor_id,
+            target_id=target_id,
+        )
         if first_group is None or second_group is None:
             continue
 
@@ -218,32 +231,26 @@ def _postprocess_sppm_branch_edges_svg(
         if source_bounds is None or target_bounds is None:
             continue
 
-        # Source exits at bottom (port=s), horizontally centered.
-        source_center_x = (source_bounds[0] + source_bounds[2]) / 2.0
-        source_bottom = source_bounds[3]
-        # Target entered at top (port=n), horizontally centered.
-        target_center_x = (target_bounds[0] + target_bounds[2]) / 2.0
-        target_top = target_bounds[1]
+        source_x, source_y = _point_on_bounds(source_bounds, first_source_side)
+        target_x, target_y = _point_on_bounds(target_bounds, second_target_side)
         # Corner: midpoint Y between source bottom and target top.
-        corner_y = (source_bottom + target_top) / 2.0
+        corner_y = (source_y + target_y) / 2.0
 
         _set_edge_path(
             first_group,
             [
-                (source_center_x, source_bottom),
-                (source_center_x, corner_y),
+                (source_x, source_y),
+                (source_x, corner_y),
             ],
         )
         _set_edge_path(
             second_group,
             [
-                (source_center_x, corner_y),
-                (target_center_x, target_top),
+                (source_x, corner_y),
+                (target_x, target_y),
             ],
         )
-        # direction=-1: base at tip_y - 8 (more negative = higher on screen),
-        # making the arrowhead point downward into the node's north face.
-        _set_arrow_polygon(second_group, tip=(target_center_x, target_top), direction=-1)
+        _set_arrow_for_side(second_group, tip=(target_x, target_y), side=second_target_side)
         updated = True
 
     if updated:
@@ -270,7 +277,7 @@ def _postprocess_sppm_rework_labels_svg(
 
     tree = ET.parse(output_path)
     root = tree.getroot()
-    node_bounds = _svg_node_bounds(root)
+    node_bounds = _svg_node_outer_bounds(root)
     edge_groups = _svg_edge_groups(root)
     updated = False
 
@@ -339,6 +346,89 @@ def _collect_branch_anchor_specs(
         return specs
 
     return []
+
+
+def _find_rework_edge_group(
+    *,
+    edge_groups: dict[str, ET.Element],
+    source_id: str,
+    target_id: str,
+) -> tuple[ET.Element | None, str, str]:
+    best: tuple[ET.Element | None, str, str, int] = (None, "e", "w", -1)
+    for title, group in edge_groups.items():
+        parsed = _parse_edge_title_for_ids(title=title, source_id=source_id, target_id=target_id)
+        if parsed is None:
+            continue
+        source_side, target_side = parsed
+        score = int(source_side in {"n", "s", "e", "w"}) + int(target_side in {"n", "s", "e", "w"})
+        if score > best[3]:
+            best = (group, source_side, target_side, score)
+            if score == 2:
+                break
+
+    return best[0], best[1], best[2]
+
+
+def _parse_edge_title_for_ids(*, title: str, source_id: str, target_id: str) -> tuple[str, str] | None:
+    if "->" not in title:
+        return None
+    left, right = title.split("->", 1)
+    if not _endpoint_matches_node_id(left, source_id):
+        return None
+    if not _endpoint_matches_node_id(right, target_id):
+        return None
+    return (_endpoint_compass_side(left), _endpoint_compass_side(right))
+
+
+def _endpoint_matches_node_id(endpoint: str, node_id: str) -> bool:
+    return endpoint == node_id or endpoint.startswith(f"{node_id}:")
+
+
+def _endpoint_compass_side(endpoint: str) -> str:
+    if ":" not in endpoint:
+        return "e"
+    side = endpoint.rsplit(":", 1)[-1]
+    if side in {"n", "s", "e", "w"}:
+        return side
+    return "e"
+
+
+def _point_on_bounds(bounds: tuple[float, float, float, float], side: str) -> tuple[float, float]:
+    left, top, right, bottom = bounds
+    if side == "n":
+        return ((left + right) / 2.0, top)
+    if side == "s":
+        return ((left + right) / 2.0, bottom)
+    if side == "w":
+        return (left, (top + bottom) / 2.0)
+    if side == "e":
+        return (right, (top + bottom) / 2.0)
+    return ((left + right) / 2.0, (top + bottom) / 2.0)
+
+
+def _set_arrow_for_side(group: ET.Element, *, tip: tuple[float, float], side: str) -> None:
+    if side == "w":
+        _set_arrow_polygon_horizontal(group, tip=tip, direction=-1)
+        return
+    if side == "e":
+        _set_arrow_polygon_horizontal(group, tip=tip, direction=1)
+        return
+    if side == "s":
+        _set_arrow_polygon(group, tip=tip, direction=1)
+        return
+    _set_arrow_polygon(group, tip=tip, direction=-1)
+
+
+def _edge_path_start_end(group: ET.Element) -> tuple[tuple[float, float] | None, tuple[float, float] | None]:
+    path = group.find("{*}path")
+    if path is None:
+        return None, None
+    d = path.attrib.get("d", "")
+    coords = [float(value) for value in re.findall(r"-?\d+(?:\.\d+)?", d)]
+    points = [(coords[idx], coords[idx + 1]) for idx in range(0, len(coords) - 1, 2)]
+    if not points:
+        return None, None
+    return points[0], points[-1]
 
 
 def _svg_edge_label_bounds(group: ET.Element) -> tuple[float, float, float, float] | None:
