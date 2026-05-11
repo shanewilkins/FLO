@@ -1,0 +1,209 @@
+"""Support helpers for SPPM routing plan construction."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from ._autoformat_wrap import WrapPlan
+from ._sppm_port_policy import is_sppm_rework_edge
+from .layout_core import (
+    CorridorPlan,
+    LinePlacement,
+    PlacementPlan,
+    RoutePlan,
+    build_corridor_plan,
+    build_route_plan,
+)
+from .options import RenderOptions
+
+
+def edge_pairs(edges: list[dict[str, Any]]) -> list[tuple[str, str]]:
+    """Return normalized (source, target) pairs for valid edges."""
+    pairs: list[tuple[str, str]] = []
+    for edge in edges:
+        source = str(edge.get("source") or "")
+        target = str(edge.get("target") or "")
+        if source and target:
+            pairs.append((source, target))
+    return pairs
+
+
+def build_corridor_metadata(*, placement: PlacementPlan, edge_pairs: list[tuple[str, str]]) -> CorridorPlan:
+    """Build corridor metadata, using empty metadata for single-line layouts."""
+    if len(placement.lines) <= 1:
+        return CorridorPlan(
+            lanes=(),
+            entry_anchors={},
+            exit_anchors={},
+            lane_occupancy={},
+            edge_lane_hops={},
+        )
+    return build_corridor_plan(placement=placement, edges=edge_pairs)
+
+
+def build_core_route_plan(
+    *,
+    placement: PlacementPlan,
+    edge_pairs: list[tuple[str, str]],
+    corridor_plan: CorridorPlan,
+) -> RoutePlan:
+    """Build core route plan from placement and corridor metadata."""
+    return build_route_plan(placement=placement, corridor=corridor_plan, edges=edge_pairs)
+
+
+def placement_for_routing(
+    *,
+    nodes: list[dict[str, Any]],
+    options: RenderOptions,
+    wrap_plan: WrapPlan,
+) -> PlacementPlan:
+    """Build a placement plan suitable for deterministic SPPM routing."""
+    if wrap_plan.placement_plan is not None:
+        return wrap_plan.placement_plan
+
+    line_node_ids = wrap_plan.chunks if wrap_plan.active and wrap_plan.chunks else [ordered_node_ids(nodes)]
+    lines: list[LinePlacement] = []
+    node_line_index: dict[str, int] = {}
+    for line_index, node_ids in enumerate(line_node_ids):
+        tuple_ids = tuple(node_ids)
+        lines.append(
+            LinePlacement(
+                line_index=line_index,
+                node_ids=tuple_ids,
+                node_major_offsets=tuple(0 for _ in tuple_ids),
+                node_cross_offsets=tuple(0 for _ in tuple_ids),
+                major_size=0,
+                cross_offset=0,
+                cross_size=0,
+            )
+        )
+        for node_id in tuple_ids:
+            node_line_index[node_id] = line_index
+
+    return PlacementPlan(
+        lines=tuple(lines),
+        node_line_index=node_line_index,
+        boundary_edges=frozenset(wrap_plan.boundary_edges),
+        total_major=0,
+        total_cross=0,
+        orientation=options.orientation,
+    )
+
+
+def ordered_node_ids(nodes: list[dict[str, Any]]) -> list[str]:
+    """Return node ids in input order, skipping empty ids."""
+    ordered: list[str] = []
+    for node in nodes:
+        node_id = str(node.get("id") or "")
+        if node_id:
+            ordered.append(node_id)
+    return ordered
+
+
+def node_kinds(nodes: list[dict[str, Any]]) -> dict[str, str]:
+    """Return normalized node kind keyed by node id."""
+    kinds: dict[str, str] = {}
+    for node in nodes:
+        node_id = str(node.get("id") or "")
+        if not node_id:
+            continue
+        kinds[node_id] = str(node.get("kind") or node.get("type") or "task").strip().lower()
+    return kinds
+
+
+def collect_rework_branch_metadata(
+    *,
+    edges: list[dict[str, Any]],
+    node_kinds: dict[str, str],
+) -> dict[str, dict[str, Any]]:
+    """Return branch-out rework metadata keyed by rework target node id."""
+    metadata_by_target: dict[str, dict[str, Any]] = {}
+    for edge in edges:
+        source = str(edge.get("source") or "")
+        target = str(edge.get("target") or "")
+        if not source or not target:
+            continue
+        if not is_explicit_rework_branch_out(edge=edge, source_kind=node_kinds.get(source, "task")):
+            continue
+        raw = edge.get("metadata")
+        if isinstance(raw, dict) and raw:
+            metadata_by_target[target] = dict(raw)
+    return metadata_by_target
+
+
+def collect_rework_return_sources(
+    *,
+    edges: list[dict[str, Any]],
+    step_numbering: dict[str, int],
+    node_kinds: dict[str, str],
+    branch_metadata_by_rework_target: dict[str, dict[str, Any]],
+) -> set[str]:
+    """Return rework-source node ids that have explicit return rework edges."""
+    sources: set[str] = set()
+    for edge in edges:
+        source = str(edge.get("source") or "")
+        target = str(edge.get("target") or "")
+        if not source or not target:
+            continue
+        if source not in branch_metadata_by_rework_target:
+            continue
+        if not is_sppm_rework_edge(edge=edge, step_numbering=step_numbering, source=source, target=target):
+            continue
+        if is_explicit_rework_branch_out(edge=edge, source_kind=node_kinds.get(source, "task")):
+            continue
+        sources.add(source)
+    return sources
+
+
+def edge_with_rework_metadata_policy(
+    *,
+    edge: dict[str, Any],
+    source: str,
+    target: str,
+    step_numbering: dict[str, int],
+    node_kinds: dict[str, str],
+    branch_metadata_by_rework_target: dict[str, dict[str, Any]],
+    rework_return_sources: set[str],
+) -> dict[str, Any]:
+    """Return edge copy with merged/suppressed rework databox metadata policy applied."""
+    effective = dict(edge)
+    if not is_sppm_rework_edge(edge=edge, step_numbering=step_numbering, source=source, target=target):
+        return effective
+
+    source_kind = node_kinds.get(source, "task")
+    is_branch_out = is_explicit_rework_branch_out(edge=edge, source_kind=source_kind)
+    if is_branch_out and target in rework_return_sources:
+        effective["_sppm_suppress_rework_databox"] = True
+        return effective
+
+    if source in branch_metadata_by_rework_target and not is_branch_out:
+        merged: dict[str, Any] = {}
+        merged.update(branch_metadata_by_rework_target[source])
+        raw = edge.get("metadata")
+        if isinstance(raw, dict):
+            merged.update(raw)
+        if merged:
+            effective["metadata"] = merged
+    return effective
+
+
+def is_explicit_rework_branch_out(*, edge: dict[str, Any], source_kind: str) -> bool:
+    """Return True when edge explicitly represents outbound rework from a decision context."""
+    if str(edge.get("edge_type") or "").strip().lower() != "rework" and edge.get("rework") is not True:
+        return False
+    return source_kind == "decision" or edge.get("outcome") is not None or edge.get("label") is not None
+
+
+def resolve_lane_id(
+    *,
+    edge: tuple[str, str],
+    route_plan: RoutePlan,
+    boundary_lanes: dict[tuple[str, str], str],
+) -> str | None:
+    """Resolve the preferred lane id for an edge from boundary or core-route hops."""
+    if edge in boundary_lanes:
+        return boundary_lanes[edge]
+    core_route = route_plan.route_for(edge[0], edge[1])
+    if core_route is not None and core_route.lane_hops:
+        return core_route.lane_hops[0]
+    return None

@@ -29,13 +29,20 @@ from ._sppm_port_policy import (
     sppm_boundary_anchor_id,
     is_sppm_rework_edge,
 )
+from ._sppm_routing_support import (
+    build_core_route_plan,
+    build_corridor_metadata,
+    collect_rework_branch_metadata,
+    collect_rework_return_sources,
+    edge_pairs,
+    edge_with_rework_metadata_policy,
+    node_kinds,
+    placement_for_routing,
+    resolve_lane_id,
+)
 from .layout_core import (
     CorridorPlan,
-    LinePlacement,
-    PlacementPlan,
     RoutePlan,
-    build_corridor_plan,
-    build_route_plan,
 )
 from .options import RenderOptions
 
@@ -131,21 +138,21 @@ def build_sppm_routing_plan(
     routes: dict[tuple[str, str], SppmEdgeRoute] = {}
     wrap_ports = _sppm_wrap_ports(options=options) if wrap_plan.active else None
     boundary_lanes = _build_boundary_lane_map(wrap_plan=wrap_plan)
-    edge_pairs = _edge_pairs(edges)
-    placement = _placement_for_routing(nodes=nodes, options=options, wrap_plan=wrap_plan)
-    corridor_plan = _build_corridor_metadata(placement=placement, edge_pairs=edge_pairs)
-    route_plan = _build_core_route_plan(
+    edge_pairs_list = edge_pairs(edges)
+    placement = placement_for_routing(nodes=nodes, options=options, wrap_plan=wrap_plan)
+    corridor_plan = build_corridor_metadata(placement=placement, edge_pairs=edge_pairs_list)
+    route_plan = build_core_route_plan(
         placement=placement,
-        edge_pairs=edge_pairs,
+        edge_pairs=edge_pairs_list,
         corridor_plan=corridor_plan,
     )
-    node_kinds = _node_kinds(nodes)
-    port_policy = _build_sppm_port_policy(edges=edges, node_kinds=node_kinds)
-    branch_metadata_by_rework_target = _collect_rework_branch_metadata(edges=edges, node_kinds=node_kinds)
-    rework_return_sources = _collect_rework_return_sources(
+    node_kinds_by_id = node_kinds(nodes)
+    port_policy = _build_sppm_port_policy(edges=edges, node_kinds=node_kinds_by_id)
+    branch_metadata_by_rework_target = collect_rework_branch_metadata(edges=edges, node_kinds=node_kinds_by_id)
+    rework_return_sources = collect_rework_return_sources(
         edges=edges,
         step_numbering=step_numbering,
-        node_kinds=node_kinds,
+        node_kinds=node_kinds_by_id,
         branch_metadata_by_rework_target=branch_metadata_by_rework_target,
     )
 
@@ -155,12 +162,12 @@ def build_sppm_routing_plan(
         if not source or not target:
             continue
 
-        effective_edge = _edge_with_rework_metadata_policy(
+        effective_edge = edge_with_rework_metadata_policy(
             edge=edge,
             source=source,
             target=target,
             step_numbering=step_numbering,
-            node_kinds=node_kinds,
+            node_kinds=node_kinds_by_id,
             branch_metadata_by_rework_target=branch_metadata_by_rework_target,
             rework_return_sources=rework_return_sources,
         )
@@ -173,14 +180,14 @@ def build_sppm_routing_plan(
             step_numbering=step_numbering,
             wrap_plan=wrap_plan,
             wrap_ports=wrap_ports,
-            lane_id=_resolve_lane_id(
+            lane_id=resolve_lane_id(
                 edge=(source, target),
                 route_plan=route_plan,
                 boundary_lanes=boundary_lanes,
             ),
             core_route=route_plan.route_for(source, target),
-            source_kind=node_kinds.get(source, "task"),
-            target_kind=node_kinds.get(target, "task"),
+            source_kind=node_kinds_by_id.get(source, "task"),
+            target_kind=node_kinds_by_id.get(target, "task"),
             port_policy=port_policy,
         )
         routes[(source, target)] = route
@@ -193,190 +200,6 @@ def build_sppm_routing_plan(
         route_plan=route_plan,
         svg_postprocess_contract=contract,
     )
-
-
-def _edge_pairs(edges: list[dict[str, Any]]) -> list[tuple[str, str]]:
-    pairs: list[tuple[str, str]] = []
-    for edge in edges:
-        source = str(edge.get("source") or "")
-        target = str(edge.get("target") or "")
-        if source and target:
-            pairs.append((source, target))
-    return pairs
-
-
-def _build_corridor_metadata(*, placement: PlacementPlan, edge_pairs: list[tuple[str, str]]) -> CorridorPlan:
-    if len(placement.lines) <= 1:
-        return CorridorPlan(
-            lanes=(),
-            entry_anchors={},
-            exit_anchors={},
-            lane_occupancy={},
-            edge_lane_hops={},
-        )
-    return build_corridor_plan(placement=placement, edges=edge_pairs)
-
-
-def _build_core_route_plan(
-    *,
-    placement: PlacementPlan,
-    edge_pairs: list[tuple[str, str]],
-    corridor_plan: CorridorPlan,
-) -> RoutePlan:
-    return build_route_plan(placement=placement, corridor=corridor_plan, edges=edge_pairs)
-
-
-def _placement_for_routing(
-    *,
-    nodes: list[dict[str, Any]],
-    options: RenderOptions,
-    wrap_plan: WrapPlan,
-) -> PlacementPlan:
-    if wrap_plan.placement_plan is not None:
-        return wrap_plan.placement_plan
-
-    line_node_ids = wrap_plan.chunks if wrap_plan.active and wrap_plan.chunks else [_ordered_node_ids(nodes)]
-    lines: list[LinePlacement] = []
-    node_line_index: dict[str, int] = {}
-    for line_index, node_ids in enumerate(line_node_ids):
-        tuple_ids = tuple(node_ids)
-        lines.append(
-            LinePlacement(
-                line_index=line_index,
-                node_ids=tuple_ids,
-                node_major_offsets=tuple(0 for _ in tuple_ids),
-                node_cross_offsets=tuple(0 for _ in tuple_ids),
-                major_size=0,
-                cross_offset=0,
-                cross_size=0,
-            )
-        )
-        for node_id in tuple_ids:
-            node_line_index[node_id] = line_index
-
-    return PlacementPlan(
-        lines=tuple(lines),
-        node_line_index=node_line_index,
-        boundary_edges=frozenset(wrap_plan.boundary_edges),
-        total_major=0,
-        total_cross=0,
-        orientation=options.orientation,
-    )
-
-
-def _ordered_node_ids(nodes: list[dict[str, Any]]) -> list[str]:
-    ordered: list[str] = []
-    for node in nodes:
-        node_id = str(node.get("id") or "")
-        if node_id:
-            ordered.append(node_id)
-    return ordered
-
-
-def _node_kinds(nodes: list[dict[str, Any]]) -> dict[str, str]:
-    kinds: dict[str, str] = {}
-    for node in nodes:
-        node_id = str(node.get("id") or "")
-        if not node_id:
-            continue
-        kinds[node_id] = str(node.get("kind") or node.get("type") or "task").strip().lower()
-    return kinds
-
-
-def _collect_rework_branch_metadata(
-    *,
-    edges: list[dict[str, Any]],
-    node_kinds: dict[str, str],
-) -> dict[str, dict[str, Any]]:
-    """Return branch-out rework metadata keyed by rework target node id."""
-    metadata_by_target: dict[str, dict[str, Any]] = {}
-    for edge in edges:
-        source = str(edge.get("source") or "")
-        target = str(edge.get("target") or "")
-        if not source or not target:
-            continue
-        if not _is_explicit_rework_branch_out(edge=edge, source_kind=node_kinds.get(source, "task")):
-            continue
-        raw = edge.get("metadata")
-        if isinstance(raw, dict) and raw:
-            metadata_by_target[target] = dict(raw)
-    return metadata_by_target
-
-
-def _collect_rework_return_sources(
-    *,
-    edges: list[dict[str, Any]],
-    step_numbering: dict[str, int],
-    node_kinds: dict[str, str],
-    branch_metadata_by_rework_target: dict[str, dict[str, Any]],
-) -> set[str]:
-    """Return rework-source node ids that have explicit return rework edges."""
-    sources: set[str] = set()
-    for edge in edges:
-        source = str(edge.get("source") or "")
-        target = str(edge.get("target") or "")
-        if not source or not target:
-            continue
-        if source not in branch_metadata_by_rework_target:
-            continue
-        if not is_sppm_rework_edge(edge=edge, step_numbering=step_numbering, source=source, target=target):
-            continue
-        if _is_explicit_rework_branch_out(edge=edge, source_kind=node_kinds.get(source, "task")):
-            continue
-        sources.add(source)
-    return sources
-
-
-def _edge_with_rework_metadata_policy(
-    *,
-    edge: dict[str, Any],
-    source: str,
-    target: str,
-    step_numbering: dict[str, int],
-    node_kinds: dict[str, str],
-    branch_metadata_by_rework_target: dict[str, dict[str, Any]],
-    rework_return_sources: set[str],
-) -> dict[str, Any]:
-    """Return edge copy with merged/suppressed rework databox metadata policy applied."""
-    effective = dict(edge)
-    if not is_sppm_rework_edge(edge=edge, step_numbering=step_numbering, source=source, target=target):
-        return effective
-
-    source_kind = node_kinds.get(source, "task")
-    is_branch_out = _is_explicit_rework_branch_out(edge=edge, source_kind=source_kind)
-    if is_branch_out and target in rework_return_sources:
-        effective["_sppm_suppress_rework_databox"] = True
-        return effective
-
-    if source in branch_metadata_by_rework_target and not is_branch_out:
-        merged: dict[str, Any] = {}
-        merged.update(branch_metadata_by_rework_target[source])
-        raw = edge.get("metadata")
-        if isinstance(raw, dict):
-            merged.update(raw)
-        if merged:
-            effective["metadata"] = merged
-    return effective
-
-
-def _is_explicit_rework_branch_out(*, edge: dict[str, Any], source_kind: str) -> bool:
-    if str(edge.get("edge_type") or "").strip().lower() != "rework" and edge.get("rework") is not True:
-        return False
-    return source_kind == "decision" or edge.get("outcome") is not None or edge.get("label") is not None
-
-
-def _resolve_lane_id(
-    *,
-    edge: tuple[str, str],
-    route_plan: RoutePlan,
-    boundary_lanes: dict[tuple[str, str], str],
-) -> str | None:
-    if edge in boundary_lanes:
-        return boundary_lanes[edge]
-    core_route = route_plan.route_for(edge[0], edge[1])
-    if core_route is not None and core_route.lane_hops:
-        return core_route.lane_hops[0]
-    return None
 
 
 def _build_sppm_edge_route(

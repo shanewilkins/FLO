@@ -7,6 +7,7 @@ evolve per concern instead of by growing one hotspot file.
 
 from __future__ import annotations
 
+from html import escape as html_escape
 from typing import Any
 
 from flo.compiler.ir.subprocess_refs import resolve_subprocess_detail_map_reference
@@ -106,7 +107,7 @@ def _render_sppm_queue_triangle(*, node: SppmRenderNode, node_id: str, name: str
     """Render a queue marker as an upright fixed-size triangle with a metadata box below."""
     _ = theme
     queue_border = "#E65100"
-    queue_fill = "#FF9800"
+    queue_label_bg = "#FFB74D"
     wait_time_min = _get_wait_time_minutes(node)
     queue_name = format_text_field(
         normalize_space(name),
@@ -118,18 +119,22 @@ def _render_sppm_queue_triangle(*, node: SppmRenderNode, node_id: str, name: str
     label_lines = [queue_name if queue_name else "Q"]
     if wait_time_min > 0:
         label_lines.append(f"WT: {wait_time_min:g} min")
-    queue_label = "\n".join(label_lines)
+    queue_label_html = "<BR/>".join(html_escape(line) for line in label_lines)
+    queue_label = (
+        f"<<TABLE BORDER=\"1\" COLOR=\"{queue_border}\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"2\">"
+        f"<TR><TD BGCOLOR=\"{queue_label_bg}\" COLOR=\"#000000\">{queue_label_html}</TD></TR></TABLE>>"
+    )
 
     attrs = [
-        f'label="{queue_label}"',
+        f"label={queue_label}",
         "shape=triangle",
         "orientation=0",
         f"width={_SPPM_QUEUE_TRIANGLE_WIDTH}",
         f"height={_SPPM_QUEUE_TRIANGLE_HEIGHT}",
         "fixedsize=true",
-        'style="filled"',
-        f'fillcolor="{queue_fill}"',
+        'style="solid"',
         f'color="{queue_border}"',
+        'fontcolor="#000000"',
         "penwidth=1.5",
         "fontsize=13",
         "fontname=Helvetica",
