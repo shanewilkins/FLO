@@ -4,7 +4,7 @@ title: Refactor SPPM showcase subprocess into explicit mainline steps
 headline: Rework the showcase process flow so subprocess internals are visible in
   realistic, readable mainline sequencing.
 priority: high
-status: in-progress
+status: closed
 archived: false
 issue_type: other
 milestone: renderer-platform-completeness
@@ -12,7 +12,7 @@ labels:
 - sppm,showcase,subprocess
 remote_ids: {}
 created: '2026-05-12T18:40:00+00:00'
-updated: '2026-05-12T19:02:00+00:00'
+updated: '2026-05-12T19:14:00+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
@@ -20,14 +20,14 @@ depends_on: []
 blocks:
 - 6f1ad0c3
 actual_start_date: '2026-05-12T19:02:00+00:00'
-actual_end_date: null
-progress_percentage: 20.0
+actual_end_date: '2026-05-12T19:14:00+00:00'
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null
 git_branches: []
 git_commits: []
-completed_date: null
+completed_date: '2026-05-12T19:14:00+00:00'
 comments: []
 github_issue: null
 ---
