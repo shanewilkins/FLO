@@ -234,6 +234,39 @@ Resolved in this revision:
 - Decision default handling: explicit modeled paths required; no implicit runtime wait semantics.
 - Lane kind policy: optional; defaults to `default` when omitted.
 
+## 12) Renderer Specifications and Architecture
+
+FLO v0.1 supports multiple diagram types, each with distinct visual conventions
+and use cases. Specification documents exist for each renderer to guide
+implementation and reduce ambiguity for contributors:
+
+- **Flowchart** (`docs/design/flowchart_renderer_design.md`)
+  Simple control-flow visualization. Baseline renderer for process topology.
+  
+- **Swimlane** (`docs/design/swimlane_renderer_design.md`)
+  Lane-based organization by role/system. Groups nodes by `lane` field to show
+  cross-functional process flow.
+  
+- **Spaghetti** (`docs/design/spaghetti_renderer_design.md`)
+  Movement-path visualization for lean analysis (material and people flows).
+  Infers flows from process model and renders as spatial diagram.
+  
+- **SPPM** (`docs/design/sppm_renderer_design.md`)
+  Production scheduling and process metrics. Includes publication bands,
+  footer metrics, and SPPM-specific visual semantics.
+
+All renderers share:
+
+- Canonical IR as input (dict-compatible).
+- Graphviz DOT as output (except future backends).
+- Shared edge routing infrastructure (boundary corridors, rework semantics).
+- Subprocess projection and clustering (parent-only view support).
+
+Renderer-specific concerns are isolated in dedicated modules to prevent
+SPPM-specific or swimlane-specific semantics from leaking into shared code.
+See `docs/design/renderer_architecture_boundaries.md` for shared-core vs.
+renderer-specific module placement rules.
+
 ## 13) v0.1 Metadata Recommendations (Minimal)
 
 Given the current priorities, v0.1 should keep metadata intentionally small.
