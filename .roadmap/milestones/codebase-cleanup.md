@@ -3,11 +3,11 @@ name: codebase-cleanup
 headline: 'Codebase cleanup: targeted pre-release architectural debt, coupling, option-plumbing
   drift, and maintainability hotspots identified during the 0.1-0.2 code review.'
 due_date: null
-status: open
+status: closed
 archived: false
 github_milestone: null
 created: '2026-05-06T23:34:29.653994+00:00'
-updated: '2026-05-06T23:34:29.653997+00:00'
+updated: '2026-05-12T13:08:33.257726+00:00'
 project_id: null
 calculated_progress: null
 last_progress_update: null
