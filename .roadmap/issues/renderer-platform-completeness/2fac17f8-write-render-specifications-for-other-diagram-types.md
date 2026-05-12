@@ -3,14 +3,14 @@ id: 2fac17f8
 title: Write render specifications for other diagram types
 headline: Document visual and behavioral standards for non-SPPM renderers.
 priority: low
-status: todo
+status: closed
 archived: false
 issue_type: other
 milestone: renderer-platform-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-05T18:57:03.774739+00:00'
-updated: '2026-05-05T18:57:03.774741+00:00'
+updated: '2026-05-12T18:59:16.286848+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
@@ -18,7 +18,7 @@ depends_on: []
 blocks: []
 actual_start_date: null
 actual_end_date: null
-progress_percentage: null
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null
