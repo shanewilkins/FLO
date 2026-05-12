@@ -8,7 +8,7 @@ process:
       Queue: Orange upright triangles indicate staged work.
       Continuation: Labeled circles indicate page/jump anchors (P{page}-{letter}).
       Rework: Red cards and dashed returns indicate corrective loops.
-    caption: Reference map covering queueing triangles, continuation anchors, subprocess markers, rework, and publication footer semantics.
+    caption: Reference map covering queueing triangles, continuation anchors, expanded subprocess flow steps, rework, and publication footer semantics.
 
 steps:
   - id: start
@@ -61,53 +61,35 @@ steps:
         value: 7
         unit: min
 
-  - id: process
-    kind: subprocess
-    name: Execute Core Work
+  - id: assess_scope
+    kind: task
+    name: Assess Service Scope
+    workers:
+      - Specialist
+    metadata:
+      value_class: RNVA
+      description: Review request details and confirm the work plan.
+      cycle_time:
+        value: 5
+        unit: min
+      wait_time:
+        value: 1
+        unit: min
+
+  - id: execute_service
+    kind: task
+    name: Execute Service Activity
     workers:
       - Specialist
     metadata:
       value_class: VA
-      description: Perform the value-adding service step.
+      description: Complete the core customer-facing service activity.
       cycle_time:
-        value: 18
-        unit: min
-      changeover_time:
-        value: 5
+        value: 13
         unit: min
       wait_time:
-        value: 7
+        value: 6
         unit: min
-    subnodes:
-      - id: assess_scope
-        kind: task
-        name: Assess Service Scope
-        workers:
-          - Specialist
-        metadata:
-          value_class: RNVA
-          description: Review request details and confirm the work plan.
-          cycle_time:
-            value: 5
-            unit: min
-          wait_time:
-            value: 1
-            unit: min
-
-      - id: execute_service
-        kind: task
-        name: Execute Service Activity
-        workers:
-          - Specialist
-        metadata:
-          value_class: VA
-          description: Complete the core customer-facing service activity.
-          cycle_time:
-            value: 13
-            unit: min
-          wait_time:
-            value: 6
-            unit: min
 
   - id: qa
     kind: decision
@@ -185,9 +167,6 @@ transitions:
     outcome: yes
 
   - source: process_queue
-    target: process
-
-  - source: process
     target: assess_scope
 
   - source: assess_scope
@@ -233,7 +212,7 @@ transitions:
       reason: QA defects
 
   - source: rework_quality
-    target: process
+    target: assess_scope
     edge_type: rework
     rework: true
     metadata:

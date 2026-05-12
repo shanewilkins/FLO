@@ -125,7 +125,7 @@ def test_run_subprocess_view_parent_only_hides_subnodes():
     assert '"prep_subprocess" [label="Prep Subprocess"' in result.output
 
 
-def test_run_sppm_parent_only_shows_subprocess_marker_and_hides_subnodes():
+def test_run_sppm_parent_only_preserves_expanded_showcase_mainline_steps():
     runner = CliRunner()
     result = runner.invoke(
         cli,
@@ -141,10 +141,11 @@ def test_run_sppm_parent_only_shows_subprocess_marker_and_hides_subnodes():
         ],
     )
     assert result.exit_code == 0
-    assert '"process" [label="Execute Core Work\\nSubprocess\\nDetail map: process", shape=ellipse, style="filled,dotted"' in result.output
-    assert "Detail map: process" in result.output
-    assert '"assess_scope"' not in result.output
-    assert '"execute_service"' not in result.output
+    assert "Detail map: process" not in result.output
+    assert '"assess_scope" [shape=none' in result.output
+    assert '"execute_service" [shape=none' in result.output
+    assert "Assess Service Scope" in result.output
+    assert "Execute Service Activity" in result.output
 
 
 def test_run_sppm_renders_process_title_header_from_model():
@@ -229,7 +230,7 @@ def test_run_sppm_feature_showcase_covers_publication_and_rework_semantics():
         "Orange upright triangles indicate staged work.",
         "Rework:",
         "Red cards and dashed returns indicate corrective loops.",
-        "Reference map covering queueing triangles, continuation anchors, subprocess markers, rework, and publication footer semantics.",
+        "Reference map covering queueing triangles, continuation anchors, expanded subprocess flow steps, rework, and publication footer semantics.",
         "Rate: 12%",
         "Reason: Missing details",
         'xlabel="yes"',
@@ -240,7 +241,8 @@ def test_run_sppm_feature_showcase_covers_publication_and_rework_semantics():
         "Count: 12 per week",
         "Frequency: 1/day",
         "Count: 4 per week",
-        "Detail map: process",
+        "Assess Service Scope",
+        "Execute Service Activity",
         "Dispatch Queue",
     ):
         assert token in result.output
