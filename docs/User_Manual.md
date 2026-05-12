@@ -527,6 +527,10 @@ border = "#F77F00"
 fill = "#FFADAD"
 border = "#D00000"
 
+[sppm.themes.sunrise.decision]
+fill = "#FFF8E1"
+border = "#B28704"
+
 [sppm.themes.sunrise.unknown]
 fill = "#FFFFFF"
 border = "#6C757D"

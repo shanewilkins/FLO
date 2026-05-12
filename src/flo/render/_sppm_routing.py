@@ -301,6 +301,7 @@ def _append_non_rework_branch_label(*, edge_attrs: list[str], edge: dict[str, An
     branch_label = edge.get("outcome") or edge.get("label")
     if branch_label is not None:
         edge_attrs.append(f'xlabel="{str(branch_label)}"')
+        edge_attrs.append('fontcolor="#455A64"')
 
 
 def _build_non_rework_route(

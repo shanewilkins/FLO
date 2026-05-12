@@ -89,6 +89,30 @@ Policy rules:
 This keeps the footer useful for at-a-glance publication output while avoiding
 quiet duplication of the broader analytics layer.
 
+## Decision Visual Policy
+
+Decision nodes use a dedicated, high-contrast style so branching points remain
+visually distinct without overpowering the rest of the map.
+
+- Decision diamonds use a pale amber fill with a darker amber border.
+- The same policy applies in print-friendly output, but print mode tightens the
+  palette to black-and-white-friendly contrast.
+- Outcome labels use neutral gray text, not bright accent colors, so they read
+  clearly without competing with the node itself.
+- The label text stays attached to the routing edge; the SVG postprocessor only
+  repositions it deterministically.
+
+Chosen defaults:
+
+| Surface | Default treatment |
+| --- | --- |
+| Decision node fill | `#FFF8E1` |
+| Decision node border | `#B28704` |
+| Decision outcome label text | `#455A64` |
+
+This keeps the decision branch legible in both dense diagrams and print output
+while remaining compatible with theme overrides.
+
 ## Guidance For Future Renderers
 
 Future renderers should prefer the same shape:

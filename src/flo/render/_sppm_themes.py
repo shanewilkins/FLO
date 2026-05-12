@@ -23,6 +23,7 @@ class SppmTheme:
     va: SppmNodeStyle
     rnva: SppmNodeStyle
     nva: SppmNodeStyle
+    decision: SppmNodeStyle
     unknown: SppmNodeStyle
     start_end: SppmNodeStyle
 
@@ -42,6 +43,7 @@ SPPM_THEMES: dict[str, SppmTheme] = {
         va=SppmNodeStyle(fill="#81C784", border="#2E7D32"),
         rnva=SppmNodeStyle(fill="#FFF176", border="#F9A825"),
         nva=SppmNodeStyle(fill="#EF9A9A", border="#C62828"),
+        decision=SppmNodeStyle(fill="#FFF8E1", border="#B28704"),
         unknown=SppmNodeStyle(fill="#FFFFFF", border="#9E9E9E"),
         start_end=SppmNodeStyle(fill="#FFFFFF", border="#333333"),
     ),
@@ -50,6 +52,7 @@ SPPM_THEMES: dict[str, SppmTheme] = {
         va=SppmNodeStyle(fill="#D5E8D4", border="#1A5C1A"),
         rnva=SppmNodeStyle(fill="#DAE8FC", border="#23527C"),
         nva=SppmNodeStyle(fill="#F8CECC", border="#8B0000"),
+        decision=SppmNodeStyle(fill="#FFFFFF", border="#000000"),
         unknown=SppmNodeStyle(fill="#FFFFFF", border="#555555"),
         start_end=SppmNodeStyle(fill="#FFFFFF", border="#000000"),
     ),
@@ -58,6 +61,7 @@ SPPM_THEMES: dict[str, SppmTheme] = {
         va=SppmNodeStyle(fill="#CCCCCC", border="#333333"),
         rnva=SppmNodeStyle(fill="#888888", border="#333333"),
         nva=SppmNodeStyle(fill="#444444", border="#000000"),
+        decision=SppmNodeStyle(fill="#FFFFFF", border="#333333"),
         unknown=SppmNodeStyle(fill="#FFFFFF", border="#333333"),
         start_end=SppmNodeStyle(fill="#FFFFFF", border="#333333"),
     ),
@@ -100,7 +104,7 @@ def _parse_theme_definition(value: Any) -> SppmTheme | None:
         return None
 
     styles: dict[str, SppmNodeStyle] = {}
-    for key in ("va", "rnva", "nva", "unknown", "start_end"):
+    for key in ("va", "rnva", "nva", "decision", "unknown", "start_end"):
         style = _parse_style_definition(value, key)
         if style is None:
             return None
@@ -110,6 +114,7 @@ def _parse_theme_definition(value: Any) -> SppmTheme | None:
         va=styles["va"],
         rnva=styles["rnva"],
         nva=styles["nva"],
+        decision=styles["decision"],
         unknown=styles["unknown"],
         start_end=styles["start_end"],
     )

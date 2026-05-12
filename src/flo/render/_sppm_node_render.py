@@ -99,8 +99,8 @@ def _render_sppm_decision_node(*, node_id: str, name: str, theme: SppmTheme, wra
         f"width={_SPPM_DECISION_MIN_WIDTH}",
         f"height={_SPPM_DECISION_MIN_HEIGHT}",
         'style="filled"',
-        f'fillcolor="{theme.start_end.fill}"',
-        f'color="{theme.start_end.border}"',
+        f'fillcolor="{theme.decision.fill}"',
+        f'color="{theme.decision.border}"',
         "penwidth=1.5",
     ]
     _append_chunk_group(attrs=attrs, node_id=node_id, wrap_plan=wrap_plan)

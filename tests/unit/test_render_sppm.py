@@ -134,6 +134,26 @@ def test_sppm_decision_nodes_use_diamond_shape():
     assert "\\ndecision" not in out
     assert "shape=diamond" in out
     assert "regular=true" in out
+    assert 'fillcolor="#FFF8E1"' in out
+    assert 'color="#B28704"' in out
+
+
+def test_sppm_decision_outcome_labels_use_neutral_fontcolor():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "decision", "kind": "decision", "name": "Approved?"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "decision"},
+            {"source": "decision", "target": "end", "outcome": "yes"},
+        ],
+    }
+    out = render_dot(ir_like, options={"diagram": "sppm"})
+
+    assert 'xlabel="yes"' in out
+    assert 'fontcolor="#455A64"' in out
 
 
 def test_sppm_task_cards_have_minimum_content_width():
@@ -262,6 +282,7 @@ def test_sppm_custom_theme_from_config_is_resolved():
                     "va": {"fill": "#FFF3B0", "border": "#E09F3E"},
                     "rnva": {"fill": "#FFD6A5", "border": "#F77F00"},
                     "nva": {"fill": "#FFADAD", "border": "#D00000"},
+                    "decision": {"fill": "#FFF8E1", "border": "#B28704"},
                     "unknown": {"fill": "#FFFFFF", "border": "#6C757D"},
                     "start_end": {"fill": "#FFFFFF", "border": "#343A40"},
                 }

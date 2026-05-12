@@ -80,6 +80,10 @@ def test_merge_diagrams_toml_loads_custom_themes(tmp_path, monkeypatch):
                 "fill = '#FFADAD'",
                 "border = '#D00000'",
                 "",
+                "[sppm.themes.sunrise.decision]",
+                "fill = '#FFF8E1'",
+                "border = '#B28704'",
+                "",
                 "[sppm.themes.sunrise.unknown]",
                 "fill = '#FFFFFF'",
                 "border = '#6C757D'",
@@ -96,6 +100,7 @@ def test_merge_diagrams_toml_loads_custom_themes(tmp_path, monkeypatch):
     out = merge_diagrams_toml_sppm_defaults({"source_path": str(model_path), "diagram": "sppm"})
 
     assert out["sppm_themes"]["sunrise"]["va"]["fill"] == "#FFF3B0"
+    assert out["sppm_themes"]["sunrise"]["decision"]["border"] == "#B28704"
     assert out["sppm_themes"]["sunrise"]["start_end"]["border"] == "#343A40"
 
 
@@ -187,6 +192,7 @@ def _sample_sppm_config() -> dict:
                 "va": {"fill": "#FFF3B0", "border": "#E09F3E"},
                 "rnva": {"fill": "#FFD6A5", "border": "#F77F00"},
                 "nva": {"fill": "#FFADAD", "border": "#D00000"},
+                "decision": {"fill": "#FFF8E1", "border": "#B28704"},
                 "unknown": {"fill": "#FFFFFF", "border": "#6C757D"},
                 "start_end": {"fill": "#FFFFFF", "border": "#343A40"},
             }
@@ -211,6 +217,7 @@ def test_flatten_helper_maps_nested_text_options():
     assert flattened["sppm_max_label_workers"] == 24
     assert flattened["sppm_max_label_ctwt"] == 18
     assert flattened["sppm_themes"]["sunrise"]["va"]["fill"] == "#FFF3B0"
+    assert flattened["sppm_themes"]["sunrise"]["decision"]["border"] == "#B28704"
 
 
 def test_preset_helper_maps_profile_specific_options():
