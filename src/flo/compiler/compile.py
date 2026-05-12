@@ -6,12 +6,15 @@ is a placeholder that will be implemented as part of v0.1.
 """
 from typing import Any, Dict
 
-from flo.schema.render_metadata import (
-    PROCESS_METADATA_PROCESS_ID_KEY,
-    PROCESS_METADATA_PROCESS_NAME_KEY,
+from ._adapter_normalization import (
+    coerce_adapter_model,
+    flatten_source_nodes,
+    resolve_process_metadata,
+    resolve_process_name,
+    resolve_source_nodes,
 )
-
-from .ir.models import IR, Node, Edge
+from ._ir_assembly import build_edges, build_nodes_from_flat_source
+from .ir.models import IR, Node
 
 
 def compile_adapter(adapter_model: Dict[str, Any]) -> IR:
@@ -20,282 +23,16 @@ def compile_adapter(adapter_model: Dict[str, Any]) -> IR:
     This is a tiny, pragmatic implementation used by the test harness
     to validate wiring; real compilation logic will replace this.
     """
-    adapter = adapter_model or {}
-    name = _resolve_process_name(adapter)
-    process_metadata = _resolve_process_metadata(adapter)
-    source_nodes = _resolve_source_nodes(adapter)
+    adapter = coerce_adapter_model(adapter_model)
+    name = resolve_process_name(adapter)
+    process_metadata = resolve_process_metadata(adapter)
+    source_nodes = resolve_source_nodes(adapter)
 
     if not isinstance(source_nodes, list):
         fallback_node = Node(id="n1", type="task", attrs={"name": name})
         return IR(name=name, nodes=[fallback_node], edges=[], process_metadata=process_metadata)
 
-    nodes = _build_nodes(source_nodes)
-    edges = _build_edges(adapter=adapter, nodes=nodes)
+    flat_source_nodes = flatten_source_nodes(source_nodes)
+    nodes = build_nodes_from_flat_source(flat_source_nodes)
+    edges = build_edges(adapter=adapter, nodes=nodes)
     return IR(name=name, nodes=nodes, edges=edges, process_metadata=process_metadata)
-
-
-def _resolve_process_name(adapter: dict[str, Any]) -> str:
-    process_raw = adapter.get("process")
-    process: dict[str, Any] = process_raw if isinstance(process_raw, dict) else {}
-    return str(process.get("id") or process.get("name") or adapter.get("name") or "unnamed")
-
-
-def _resolve_process_metadata(adapter: dict[str, Any]) -> dict[str, Any] | None:
-    process_raw = adapter.get("process")
-    process: dict[str, Any] = process_raw if isinstance(process_raw, dict) else {}
-
-    metadata_raw = process.get("metadata")
-    metadata: dict[str, Any] = dict(metadata_raw) if isinstance(metadata_raw, dict) else {}
-
-    process_id = process.get("id")
-    if isinstance(process_id, str) and process_id.strip():
-        metadata.setdefault(PROCESS_METADATA_PROCESS_ID_KEY, process_id)
-
-    process_name = process.get("name")
-    if isinstance(process_name, str) and process_name.strip():
-        metadata.setdefault(PROCESS_METADATA_PROCESS_NAME_KEY, process_name)
-
-    for key in ("materials", "equipment", "locations", "workers"):
-        value = adapter.get(key)
-        if not _is_resource_collection(value):
-            value = process.get(key)
-        if _is_resource_collection(value):
-            metadata[key] = value
-
-    return metadata or None
-
-
-def _is_resource_collection(value: Any) -> bool:
-    if isinstance(value, list):
-        return True
-    if not isinstance(value, dict):
-        return False
-
-    has_nested_collection = False
-    for group_name, group_value in value.items():
-        if not isinstance(group_name, str) or not group_name.strip():
-            return False
-
-        if group_name == "name":
-            if not isinstance(group_value, str) or not group_value.strip():
-                return False
-            continue
-
-        if not isinstance(group_value, (list, dict)):
-            return False
-        has_nested_collection = True
-
-    return has_nested_collection
-
-
-def _resolve_source_nodes(adapter: dict[str, Any]) -> Any:
-    steps = adapter.get("steps")
-    if isinstance(steps, list):
-        return steps
-    return adapter.get("nodes")
-
-
-def _build_nodes(source_nodes: list[Any]) -> list[Node]:
-    flat_source_nodes = _flatten_source_nodes(source_nodes)
-    nodes: list[Node] = []
-    for idx, a_node in enumerate(flat_source_nodes):
-        if not isinstance(a_node, dict):
-            continue
-        nid = a_node.get("id") or f"n{idx}"
-        ntype = a_node.get("kind") or a_node.get("type") or "task"
-        attrs = _normalize_node_attrs(a_node)
-        nodes.append(Node(id=str(nid), type=str(ntype), attrs=attrs))
-    return nodes
-
-
-def _flatten_source_nodes(
-    source_nodes: list[Any],
-    parent_subprocess: str | None = None,
-) -> list[dict[str, Any]]:
-    flattened: list[dict[str, Any]] = []
-    for a_node in source_nodes:
-        if not isinstance(a_node, dict):
-            continue
-
-        node_entry: dict[str, Any] = dict(a_node)
-        if parent_subprocess and not node_entry.get("subprocess_parent"):
-            node_entry["subprocess_parent"] = parent_subprocess
-
-        node_id = node_entry.get("id")
-        nested_nodes = _resolve_subnodes(node_entry)
-        flattened.append(node_entry)
-
-        if isinstance(nested_nodes, list):
-            next_parent = str(node_id) if node_id is not None else None
-            flattened.extend(_flatten_source_nodes(nested_nodes, parent_subprocess=next_parent))
-
-    return flattened
-
-
-def _resolve_subnodes(node_entry: dict[str, Any]) -> Any:
-    subnodes = node_entry.pop("subnodes", None)
-    if isinstance(subnodes, list):
-        return subnodes
-
-    kind = str(node_entry.get("kind") or node_entry.get("type") or "").strip().lower()
-    if kind != "subprocess":
-        return None
-
-    nested_steps = node_entry.pop("steps", None)
-    if isinstance(nested_steps, list):
-        return nested_steps
-
-    return None
-
-
-def _normalize_node_attrs(a_node: dict[str, Any]) -> dict[str, Any]:
-    attrs = a_node.get("attrs")
-    normalized: dict[str, Any] = dict(attrs) if isinstance(attrs, dict) else {}
-
-    for key in (
-        "name",
-        "lane",
-        "location",
-        "workers",
-        "equipment",
-        "note",
-        "metadata",
-        "inputs",
-        "outputs",
-        "subprocess_parent",
-    ):
-        if key in a_node:
-            normalized.setdefault(key, a_node[key])
-    outcomes = a_node.get("outcomes")
-    if isinstance(outcomes, dict) and "outcomes" not in normalized:
-        normalized["outcomes"] = outcomes
-    return normalized
-
-
-def _build_edges(adapter: dict[str, Any], nodes: list[Node]) -> list[Edge]:
-    explicit_transitions = _resolve_explicit_transitions(adapter)
-    if isinstance(explicit_transitions, list):
-        return _build_explicit_edges(explicit_transitions)
-
-    outcome_edges = _build_outcome_edges(nodes)
-    sequential_edges = _build_sequential_edges(nodes)
-    return _merge_edges(outcome_edges, sequential_edges)
-
-
-def _resolve_explicit_transitions(adapter: dict[str, Any]) -> Any:
-    transitions = adapter.get("transitions")
-    if isinstance(transitions, list):
-        return transitions
-
-    return adapter.get("edges")
-
-
-def _build_explicit_edges(explicit_edges: list[Any]) -> list[Edge]:
-    edges: list[Edge] = []
-    for edge in explicit_edges:
-        if not isinstance(edge, dict):
-            continue
-        src = edge.get("source")
-        if src is None:
-            src = edge.get("from")
-        tgt = edge.get("target")
-        if tgt is None:
-            tgt = edge.get("to")
-        if src is None or tgt is None:
-            continue
-        edges.append(
-            Edge(
-                source=str(src),
-                target=str(tgt),
-                id=str(edge.get("id")) if edge.get("id") is not None else None,
-                outcome=_normalize_outcome_value(edge.get("outcome")),
-                label=str(edge.get("label")) if edge.get("label") is not None else None,
-                edge_type=str(edge.get("edge_type")) if edge.get("edge_type") is not None else None,
-                rework=edge.get("rework") if isinstance(edge.get("rework"), bool) else None,
-                metadata=edge.get("metadata") if isinstance(edge.get("metadata"), dict) else None,
-            )
-        )
-    return edges
-
-
-def _build_outcome_edges(nodes: list[Node]) -> list[Edge]:
-    edges: list[Edge] = []
-    for node in nodes:
-        attrs = node.attrs or {}
-        outcomes = attrs.get("outcomes") if isinstance(attrs, dict) else None
-        if not isinstance(outcomes, dict):
-            continue
-        for outcome, target in outcomes.items():
-            outcome_edge = _build_outcome_edge(source=node.id, outcome=outcome, target_spec=target)
-            if outcome_edge is not None:
-                edges.append(outcome_edge)
-    return edges
-
-
-def _build_outcome_edge(*, source: str, outcome: Any, target_spec: Any) -> Edge | None:
-    if isinstance(target_spec, dict):
-        target = target_spec.get("target")
-        if target is None:
-            target = target_spec.get("to")
-        if target is None:
-            return None
-        return Edge(
-            source=source,
-            target=str(target),
-            outcome=_normalize_outcome_value(outcome),
-            id=str(target_spec.get("id")) if target_spec.get("id") is not None else None,
-            label=str(target_spec.get("label")) if target_spec.get("label") is not None else None,
-            edge_type=str(target_spec.get("edge_type")) if target_spec.get("edge_type") is not None else None,
-            rework=target_spec.get("rework") if isinstance(target_spec.get("rework"), bool) else None,
-            metadata=target_spec.get("metadata") if isinstance(target_spec.get("metadata"), dict) else None,
-        )
-
-    if target_spec is None:
-        return None
-    return Edge(source=source, target=str(target_spec), outcome=_normalize_outcome_value(outcome))
-
-
-def _normalize_outcome_value(value: Any) -> str | None:
-    if value is None:
-        return None
-    if value is True:
-        return "yes"
-    if value is False:
-        return "no"
-    return str(value)
-
-
-def _build_sequential_edges(nodes: list[Node]) -> list[Edge]:
-    edges: list[Edge] = []
-    if len(nodes) < 2:
-        return edges
-
-    for current, nxt in zip(nodes, nodes[1:]):
-        current_type = (current.type or "").lower()
-        if current_type == "end":
-            continue
-
-        attrs = current.attrs or {}
-        outcomes = attrs.get("outcomes") if isinstance(attrs, dict) else None
-        if isinstance(outcomes, dict) and outcomes:
-            # Decision-like nodes with explicit outcomes should not also get
-            # an implicit sequential edge.
-            continue
-
-        edges.append(Edge(source=current.id, target=nxt.id))
-
-    return edges
-
-
-def _merge_edges(primary: list[Edge], secondary: list[Edge]) -> list[Edge]:
-    merged: list[Edge] = []
-    seen: set[tuple[str, str, str | None]] = set()
-
-    for edge in [*primary, *secondary]:
-        key = (edge.source, edge.target, edge.outcome)
-        if key in seen:
-            continue
-        seen.add(key)
-        merged.append(edge)
-
-    return merged

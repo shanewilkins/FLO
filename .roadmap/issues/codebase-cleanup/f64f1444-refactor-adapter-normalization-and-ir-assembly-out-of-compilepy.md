@@ -1,24 +1,25 @@
 ---
 id: f64f1444
 title: Refactor adapter normalization and IR assembly out of compile.py
-headline: ''
+headline: '`compile.py` now carries source-node flattening, attribute normalization,
+  subprocess nesting behavio'
 priority: medium
-status: todo
+status: closed
 archived: false
 issue_type: other
 milestone: codebase-cleanup
 labels: []
 remote_ids: {}
 created: '2026-05-06T23:35:38.647507+00:00'
-updated: '2026-05-06T23:35:38.647519+00:00'
+updated: '2026-05-12T13:01:48.058998+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
 depends_on: []
 blocks: []
-actual_start_date: null
+actual_start_date: '2026-05-12T12:58:53.812576+00:00'
 actual_end_date: null
-progress_percentage: null
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null
