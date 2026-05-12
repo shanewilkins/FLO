@@ -4,18 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from flo.services.errors import RenderError
-
 from ._process_header import extract_process_header_context
 from ._publication import (
     PublicationBandContent,
-    PublicationBounds,
-    PublicationDiagnostic,
-    PublicationMargins,
     PublicationPlan,
-    build_publication_canvas,
-    build_publication_canvas_for_format,
-    evaluate_publication_fallback,
     materialize_publication_series,
     PublicationPageSpec,
 )
@@ -24,13 +16,13 @@ from ._sppm_publication_support import (
     _build_sppm_child_slots,
     _build_sppm_footer_content,
     _build_sppm_header_rows,
+    _build_sppm_publication_canvas,
+    _publication_diagnostics,
+    _raise_for_publication_errors,
+    _serialize_diagnostics,
 )
 from ._sppm_text import normalize_space
 from .options import RenderOptions
-
-_DEFAULT_SPPM_PUBLICATION_WIDTH_PX = 1200
-_DEFAULT_SPPM_PUBLICATION_MARGINS = PublicationMargins(top_px=48, right_px=48, bottom_px=48, left_px=48)
-_SPPM_HEADER_BAND_HEIGHT_PX = 96
 
 
 def build_sppm_publication_plan(
@@ -114,60 +106,5 @@ def build_sppm_publication_plan(
             "publication_diagnostics": _serialize_diagnostics(diagnostics),
             "page_format": options.publication_page_format,
         },
-    )
-
-
-def _build_sppm_publication_canvas(
-    *,
-    title: str,
-    footer_content: PublicationBandContent | None,
-    options: RenderOptions,
-    show_header: bool,
-) -> Any:
-    header_height_px = _SPPM_HEADER_BAND_HEIGHT_PX if (show_header and title) else 0
-    footer_height_px = 72 if footer_content is not None else 0
-    if options.publication_page_format:
-        return build_publication_canvas_for_format(
-            page_format=options.publication_page_format,
-            header_height_px=header_height_px,
-            footer_height_px=footer_height_px,
-            width_px_override=options.layout_max_width_px,
-        )
-    return build_publication_canvas(
-        bounds=PublicationBounds(width_px=options.layout_max_width_px or _DEFAULT_SPPM_PUBLICATION_WIDTH_PX),
-        margins=_DEFAULT_SPPM_PUBLICATION_MARGINS,
-        header_height_px=header_height_px,
-        footer_height_px=footer_height_px,
-    )
-
-
-def _publication_diagnostics(
-    *,
-    projection: SppmProjectionContext,
-    options: RenderOptions,
-) -> tuple[PublicationDiagnostic, ...]:
-    return evaluate_publication_fallback(
-        requested_mode=projection.requested_mode,
-        effective_mode=projection.effective_mode,
-        fallback_reason=projection.fallback_reason,
-        strict=options.layout_fit == "fit-strict",
-    )
-
-
-def _raise_for_publication_errors(diagnostics: tuple[PublicationDiagnostic, ...]) -> None:
-    errors = [diagnostic.message for diagnostic in diagnostics if diagnostic.severity == "error"]
-    if errors:
-        raise RenderError("; ".join(errors))
-
-
-def _serialize_diagnostics(diagnostics: tuple[PublicationDiagnostic, ...]) -> tuple[dict[str, Any], ...]:
-    return tuple(
-        {
-            "code": diagnostic.code,
-            "severity": diagnostic.severity,
-            "message": diagnostic.message,
-            **diagnostic.metadata,
-        }
-        for diagnostic in diagnostics
     )
 
