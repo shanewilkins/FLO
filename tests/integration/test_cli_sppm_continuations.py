@@ -136,3 +136,61 @@ def test_rendered_svg_preserves_explicit_continuation_anchor_tokens(tmp_path):
     svg_text = svg_output.read_text(encoding="utf-8")
     assert "P2-OPS" in svg_text
     assert "P1-H" in svg_text
+
+
+def test_run_wrapped_showcase_uses_explicit_continuation_override_tokens():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "examples/reference/sppm_feature_showcase_wrapped.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+            "--orientation",
+            "lr",
+            "--layout-wrap",
+            "auto",
+            "--layout-target-columns",
+            "3",
+            "--publication-page-format",
+            "letter",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "// Autoformat wrapped layout: orientation=lr" in result.output
+    assert "subgraph wrap_rank_lr_0" in result.output
+    assert 'label="P2-QA"' in result.output
+    assert 'label="P1-SVC"' in result.output
+
+
+def test_wrapped_showcase_svg_preserves_explicit_continuation_override_tokens(tmp_path):
+    svg_output = tmp_path / "wrapped_showcase.svg"
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "examples/reference/sppm_feature_showcase_wrapped.flo",
+            "--diagram",
+            "sppm",
+            "--orientation",
+            "lr",
+            "--layout-wrap",
+            "auto",
+            "--layout-target-columns",
+            "3",
+            "--publication-page-format",
+            "letter",
+            "--render-to",
+            str(svg_output),
+        ],
+    )
+
+    assert result.exit_code == 0
+    svg_text = svg_output.read_text(encoding="utf-8")
+    assert "P2-QA" in svg_text
+    assert "P1-SVC" in svg_text

@@ -1,0 +1,226 @@
+spec_version: "0.1"
+
+process:
+  id: sppm_feature_showcase_wrapped_v1
+  name: SPPM Feature Showcase (Wrapped)
+  metadata:
+    legend_items:
+      Queue: Orange upright triangles indicate staged work.
+      Continuation: Labeled circles indicate page/jump anchors (P{page}-{letter}).
+      Rework: Red cards and dashed returns indicate corrective loops.
+    caption: Reference map covering wrapped publication flow, continuation anchors, explicit override tokens, rework, and publication footer semantics.
+
+steps:
+  - id: start
+    kind: start
+    name: Start
+
+  - id: intake
+    kind: task
+    name: Intake Request
+    workers:
+      - Coordinator
+      - Requester
+    metadata:
+      value_class: RNVA
+      description: Capture request details and context.
+      cycle_time:
+        value: 4
+        unit: min
+      wait_time:
+        value: 2
+        unit: min
+
+  - id: triage
+    kind: decision
+    name: Information Complete?
+    outcomes:
+      yes: process
+      no: rework_intake
+
+  - id: rework_intake
+    kind: task
+    name: Rework Intake Data
+    workers:
+      - Requester
+    metadata:
+      value_class: RNVA
+      description: Fill missing or ambiguous request data.
+      cycle_time:
+        value: 6
+        unit: min
+      wait_time:
+        value: 3
+        unit: min
+
+  - id: process_queue
+    kind: queue
+    name: Process Queue
+    metadata:
+      wait_time:
+        value: 7
+        unit: min
+
+  - id: assess_scope
+    kind: task
+    name: Assess Service Scope
+    workers:
+      - Specialist
+    metadata:
+      value_class: RNVA
+      description: Review request details and confirm the work plan.
+      cycle_time:
+        value: 5
+        unit: min
+      wait_time:
+        value: 1
+        unit: min
+
+  - id: execute_service
+    kind: task
+    name: Execute Service Activity
+    workers:
+      - Specialist
+    metadata:
+      value_class: VA
+      description: Complete the core customer-facing service activity.
+      cycle_time:
+        value: 13
+        unit: min
+      wait_time:
+        value: 6
+        unit: min
+
+  - id: qa
+    kind: decision
+    name: Quality Check Pass?
+    outcomes:
+      pass: complete
+      fail: rework_quality
+
+  - id: rework_quality
+    kind: task
+    name: Rework Quality Issues
+    workers:
+      - Specialist
+    metadata:
+      value_class: NVA
+      description: Correct defects found during QA.
+      cycle_time:
+        value: 7
+        unit: min
+      wait_time:
+        value: 2
+        unit: min
+
+  - id: complete
+    kind: task
+    name: Close Request
+    workers:
+      - Coordinator
+    metadata:
+      value_class: RNVA
+      description: Finalize records and communicate completion.
+      cycle_time:
+        value: 3
+        unit: min
+      wait_time:
+        value: 9
+        unit: min
+
+  - id: dispatch_queue_wait
+    kind: queue
+    name: Dispatch Queue
+    metadata:
+      wait_time:
+        value: 5
+        unit: min
+
+  - id: dispatch_queue
+    kind: task
+    name: Stage Final Packet
+    workers:
+      - Coordinator
+    metadata:
+      value_class: RNVA
+      description: Hold completed work for outbound scheduling and customer notification.
+      cycle_time:
+        value: 2
+        unit: min
+      wait_time:
+        value: 5
+        unit: min
+
+  - id: stop
+    kind: end
+    name: Stop
+
+transitions:
+  - source: start
+    target: intake
+
+  - source: intake
+    target: triage
+
+  - source: triage
+    target: process_queue
+    outcome: yes
+
+  - source: process_queue
+    target: assess_scope
+
+  - source: assess_scope
+    target: execute_service
+
+  - source: triage
+    target: rework_intake
+    outcome: no
+    edge_type: rework
+    rework: true
+    metadata:
+      rate: 0.12
+      reason: Missing details
+
+  - source: rework_intake
+    target: intake
+    edge_type: rework
+    rework: true
+    metadata:
+      frequency: 3/day
+      count: 12 per week
+
+  - source: execute_service
+    target: qa
+    metadata:
+      continuation_to: P2-QA
+      continuation_from: P1-SVC
+
+  - source: qa
+    target: complete
+    outcome: pass
+
+  - source: complete
+    target: dispatch_queue_wait
+
+  - source: dispatch_queue_wait
+    target: dispatch_queue
+
+  - source: qa
+    target: rework_quality
+    outcome: fail
+    edge_type: rework
+    rework: true
+    metadata:
+      rate: 0.08
+      reason: QA defects
+
+  - source: rework_quality
+    target: assess_scope
+    edge_type: rework
+    rework: true
+    metadata:
+      frequency: 1/day
+      count: 4 per week
+
+  - source: dispatch_queue
+    target: stop

@@ -180,6 +180,14 @@ def _render_options_for_example(example_file: Path) -> dict[str, str]:
         return {"diagram": "swimlane"}
     if name == "sppm_feature_showcase":
         return {"diagram": "sppm", "orientation": "lr"}
+    if name == "sppm_feature_showcase_wrapped":
+        return {
+            "diagram": "sppm",
+            "orientation": "lr",
+            "layout_wrap": "auto",
+            "layout_target_columns": "3",
+            "publication_page_format": "letter",
+        }
     return {}
 
 

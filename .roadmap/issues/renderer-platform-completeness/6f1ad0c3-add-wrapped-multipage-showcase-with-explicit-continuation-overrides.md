@@ -4,7 +4,7 @@ title: Add wrapped multi-page showcase with explicit continuation overrides
 headline: Add a publication-oriented showcase variant that demonstrates deterministic
   continuation anchors across page/process boundaries.
 priority: high
-status: todo
+status: closed
 archived: false
 issue_type: feature
 milestone: renderer-platform-completeness
@@ -12,7 +12,7 @@ labels:
 - sppm,showcase,continuations
 remote_ids: {}
 created: '2026-05-12T18:40:00+00:00'
-updated: '2026-05-12T18:40:00+00:00'
+updated: '2026-05-12T19:28:00+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
@@ -20,15 +20,15 @@ depends_on:
 - a3f99e65
 - 9c2e4b7a
 blocks: []
-actual_start_date: null
-actual_end_date: null
-progress_percentage: null
+actual_start_date: '2026-05-12T19:18:00+00:00'
+actual_end_date: '2026-05-12T19:28:00+00:00'
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null
 git_branches: []
 git_commits: []
-completed_date: null
+completed_date: '2026-05-12T19:28:00+00:00'
 comments: []
 github_issue: null
 ---
