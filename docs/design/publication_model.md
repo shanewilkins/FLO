@@ -29,6 +29,13 @@ Band content is split into shared context versus renderer semantics.
 - Renderer-specific `rows` and `notes` still carry semantic content such as SPPM metrics, captions, or process metadata.
 - Renderers should render `context_rows` when present, but single-page output stays unchanged when no shared page context applies.
 
+Footer metric policy follows the same split:
+
+- Renderer-owned structural metrics such as counts may be derived inside FLO at render time.
+- Process-performance metrics such as cycle time, wait time, and changeover time should come from model metadata or an analysis layer, not from the publication planner.
+- Render-time rows remain the escape hatch for externally computed KPIs when a caller wants to override or extend the footer.
+- The publication model should never guess at metric meaning; it only transports and places the values supplied by the renderer.
+
 ## Geometry
 
 Margins are part of page geometry, not content regions.

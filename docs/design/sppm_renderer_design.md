@@ -58,6 +58,37 @@ chrome separate from core graph topology.
 Those remain separate concerns so this refactor can improve legibility without
 quietly expanding scope.
 
+## Footer Metric Policy
+
+The footer band is intentionally narrow: it should surface a small set of
+canonical process metrics that help a reader understand flow health without
+turning the footer into a full analytics dashboard.
+
+Approved footer metrics for SPPM:
+
+| Metric | Intended audience | Computation/source |
+| --- | --- | --- |
+| Step count | Operators and reviewers | Derived inside FLO from rendered node count on the active page/map. |
+| Edge count | Operators and reviewers | Derived inside FLO from rendered edge count on the active page/map. |
+| Handoff count | Improvement analysts | Derived inside FLO from edge or step metadata when a handoff marker exists; otherwise omitted. |
+| Rework count / rework rate | Improvement analysts | Derived in FLO analysis surfaces from rework-classified edges or telemetry-backed analysis; footer only renders the value when supplied. |
+| Cycle time | Improvement analysts | Precomputed in model metadata or provided at render time; renderer does not infer it from geometry. |
+| Wait time | Improvement analysts and supervisors | Precomputed in model metadata or provided at render time; renderer only formats the supplied value. |
+| Changeover time | Improvement analysts and supervisors | Precomputed in model metadata or provided at render time; renderer only formats the supplied value. |
+| Value-class mix summary | Lean coaches and reviewers | Derived from node metadata when value-class tags are present; otherwise omitted. |
+
+Policy rules:
+
+- Structural metrics belong in FLO itself and can be derived at render time.
+- Process-performance metrics belong in the model metadata or analysis layer.
+- Render-time footer rows remain the escape hatch for externally computed KPIs.
+- The footer should not invent metrics that are absent from metadata or analysis inputs.
+- If a diagram needs a richer KPI table, that should become a separate report,
+  not an ever-growing footer.
+
+This keeps the footer useful for at-a-glance publication output while avoiding
+quiet duplication of the broader analytics layer.
+
 ## Guidance For Future Renderers
 
 Future renderers should prefer the same shape:
