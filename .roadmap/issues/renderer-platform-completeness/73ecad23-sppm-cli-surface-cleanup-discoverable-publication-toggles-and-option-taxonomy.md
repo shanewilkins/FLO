@@ -4,7 +4,7 @@ title: 'SPPM CLI surface cleanup: discoverable publication toggles and option ta
 headline: Refine SPPM CLI ergonomics so publication options are intuitive and discoverable,
   including explicit
 priority: high
-status: todo
+status: closed
 archived: false
 issue_type: feature
 milestone: renderer-platform-completeness
@@ -12,7 +12,7 @@ labels:
 - cli,sppm,ux
 remote_ids: {}
 created: '2026-05-11T17:23:08.972080+00:00'
-updated: '2026-05-11T17:27:08.461708+00:00'
+updated: '2026-05-12T17:27:54+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
@@ -20,15 +20,15 @@ depends_on:
 - 63da7b5d
 - '10085780'
 blocks: []
-actual_start_date: null
-actual_end_date: null
+actual_start_date: '2026-05-12T17:26:24+00:00'
+actual_end_date: '2026-05-12T17:27:54+00:00'
 progress_percentage: null
 handoff_notes: null
 previous_assignee: null
 handoff_date: null
 git_branches: []
 git_commits: []
-completed_date: null
+completed_date: '2026-05-12T17:27:54+00:00'
 comments: []
 github_issue: null
 ---

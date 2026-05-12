@@ -27,11 +27,11 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
     RenderOptionSpec("detail", "--detail", "Detail level", choices=("summary", "standard", "verbose")),
     RenderOptionSpec("orientation", "--orientation", "Layout orientation for DOT output", choices=("lr", "tb")),
     RenderOptionSpec("show_notes", "--show-notes", "Include node notes in DOT labels", is_flag=True),
-    RenderOptionSpec("no_header", "--no-header", "Hide SPPM publication header block", is_flag=True),
-    RenderOptionSpec("no_footer", "--no-footer", "Hide SPPM publication footer block", is_flag=True),
+    RenderOptionSpec("no_header", "--no-header", "SPPM publication: hide header band", is_flag=True),
+    RenderOptionSpec("no_footer", "--no-footer", "SPPM publication: hide footer band", is_flag=True),
     RenderOptionSpec("subprocess_view", "--subprocess-view", "Subprocess rendering mode", choices=("expanded", "parent-only")),
-    RenderOptionSpec("sppm_projection", "--sppm-projection", "SPPM hierarchy projection mode", choices=("top-level", "child-map", "inline")),
-    RenderOptionSpec("sppm_focus_subprocess", "--sppm-focus-subprocess", "Subprocess node id to focus for child-map or inline SPPM output"),
+    RenderOptionSpec("sppm_projection", "--sppm-projection", "SPPM publication: hierarchy projection mode", choices=("top-level", "child-map", "inline")),
+    RenderOptionSpec("sppm_focus_subprocess", "--sppm-focus-subprocess", "SPPM publication: subprocess node id to focus for child-map/inline"),
     RenderOptionSpec("spaghetti_channel", "--spaghetti-channel", "Movement channel for spaghetti diagrams", choices=("both", "material", "people")),
     RenderOptionSpec("spaghetti_people_mode", "--spaghetti-people-mode", "People trace mode for spaghetti diagrams", choices=("worker", "aggregate")),
     RenderOptionSpec("sppm_theme", "--sppm-theme", "Color theme for SPPM diagrams", choices=("default", "print", "monochrome")),
@@ -41,7 +41,7 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
     RenderOptionSpec(
         "publication_page_format",
         "--publication-page-format",
-        "Named publication page preset (letter, a4, legal, tabloid)",
+        "SPPM publication: named page preset (letter, a4, legal, tabloid)",
         choices=("letter", "a4", "legal", "tabloid"),
         argparse_choices=False,
     ),
@@ -54,7 +54,7 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
     RenderOptionSpec("sppm_max_label_step_name", "--sppm-max-label-step-name", "Max step-name label length for SPPM", value_type=int),
     RenderOptionSpec("sppm_max_label_workers", "--sppm-max-label-workers", "Max workers label length for SPPM", value_type=int),
     RenderOptionSpec("sppm_max_label_ctwt", "--sppm-max-label-ctwt", "Max CT/WT label length for SPPM", value_type=int),
-    RenderOptionSpec("sppm_output_profile", "--sppm-output-profile", "SPPM output profile preset", choices=("default", "book", "web", "print", "slide")),
+    RenderOptionSpec("sppm_output_profile", "--sppm-output-profile", "SPPM publication: output profile preset", choices=("default", "book", "web", "print", "slide")),
     RenderOptionSpec("render_to", "--render-to", "Render DOT output to an image file via Graphviz", metavar="FILE"),
 )
 

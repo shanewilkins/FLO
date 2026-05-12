@@ -35,6 +35,8 @@ Current mappings:
 
 - Primary command output/artifacts are written to `stdout`.
 - Diagnostics/errors are written via CLI error handling (stderr-oriented logging path).
+- Telemetry/logging output must not be emitted on `stdout` when commands return
+  payloads (for example JSON/DOT); use `stderr` or an external exporter sink.
 - Input `-` means read from `stdin`.
 - Output `-` means write to `stdout`.
 

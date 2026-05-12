@@ -3,28 +3,28 @@ id: f096c888
 title: Schema-aligned IR JSON export
 headline: Make compiled JSON conform to schema/flo_ir.json and become the stable export shape.
 priority: high
-status: todo
+status: closed
 archived: false
 issue_type: feature
 milestone: v0-1-core-completion
 labels: []
 remote_ids: {}
 created: '2026-05-05T17:16:35.110835+00:00'
-updated: '2026-05-05T17:16:35.110838+00:00'
+updated: '2026-05-12T17:22:37+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
 depends_on: []
 blocks: []
 actual_start_date: null
-actual_end_date: null
+actual_end_date: '2026-05-12T17:22:37+00:00'
 progress_percentage: null
 handoff_notes: null
 previous_assignee: null
 handoff_date: null
 git_branches: []
 git_commits: []
-completed_date: null
+completed_date: '2026-05-12T17:22:37+00:00'
 comments: []
 github_issue: null
 ---

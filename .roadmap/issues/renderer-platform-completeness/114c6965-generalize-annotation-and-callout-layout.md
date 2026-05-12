@@ -33,6 +33,8 @@ github_issue: null
 
 Extract shared annotation and callout placement logic from renderer-specific implementations so labels and data boxes can be managed consistently.
 
+Boundary reference: `docs/design/renderer_architecture_boundaries.md` (shared-core placement rules).
+
 ## Why
 
 Annotation and callout placement is already showing up in renderer-specific postprocessing. Pulling out the reusable placement logic now reduces duplication and avoids baking SPPM quirks into the general rendering stack.

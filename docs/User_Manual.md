@@ -610,7 +610,17 @@ Render options (DOT only):
 - `--orientation {lr,tb}`
 - `--show-notes`
 - `--subprocess-view {expanded,parent-only}`
+- `--sppm-projection {top-level,child-map,inline}`
+- `--sppm-focus-subprocess <node-id>`
 - `--render-to <file>`: render directly to an image file via Graphviz `dot` (e.g. `output.png`, `output.svg`, `output.pdf`). Requires Graphviz to be installed. Supported extensions: `.png`, `.svg`, `.pdf`, `.eps`, `.ps`. When used, nothing is written to stdout.
+
+SPPM publication controls (discoverability quick list):
+- `--no-header`: hide publication header band.
+- `--no-footer`: hide publication footer band.
+- `--publication-page-format {letter,a4,legal,tabloid}`: set named page preset.
+- `--sppm-output-profile {default,book,web,print,slide}`: apply publication defaults profile.
+- `--sppm-projection {top-level,child-map,inline}`: choose hierarchy projection mode.
+- `--sppm-focus-subprocess <node-id>`: focus subprocess for `child-map` or `inline` projection.
 
 Examples:
 
@@ -622,6 +632,8 @@ flo run examples/reference/chocolate_chip_cookies.flo --export dot --subprocess-
 flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram spaghetti
 flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram spaghetti --spaghetti-channel people
 flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram spaghetti --spaghetti-channel people --spaghetti-people-mode worker --profile analysis
+flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram sppm --sppm-projection child-map --sppm-focus-subprocess prep_subprocess
+flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram sppm --sppm-projection inline --sppm-focus-subprocess prep_subprocess
 flo run examples/reference/washnfold.flo --export dot --diagram sppm
 flo run examples/reference/washnfold.flo --export dot --diagram sppm --sppm-theme print
 flo run examples/reference/washnfold.flo --export dot --diagram sppm --orientation lr --layout-wrap auto --layout-target-columns 6
@@ -638,6 +650,14 @@ Important:
 - If you pass render-only flags (`--diagram`, `--spaghetti-channel`, `--spaghetti-people-mode`, `--layout-wrap`, `--layout-max-width-px`, `--layout-target-columns`, any `--sppm-*` render option, `--render-to`, `--profile`, `--detail`, `--orientation`, `--show-notes`, or `--subprocess-view`) together with JSON, ingredients, or movement export, FLO returns usage error code `1`.
 - Wrapped SPPM layout is orientation-aware: with `--orientation lr` it wraps into rows (snake down), and with `--orientation tb` it wraps into columns (snake right).
 - Wrapped LR SPPM SVG output applies a narrow deterministic boundary-edge normalization pass after Graphviz layout so boundary doglegs keep stable top-entry landing behavior.
+
+SPPM subprocess projection contract:
+- `--subprocess-view parent-only` keeps subprocesses collapsed on the parent map and hides nested child nodes.
+- `--sppm-projection top-level` is the default SPPM projection and renders the top-level map.
+- `--sppm-projection child-map` focuses one subprocess and includes entry/exit context nodes; use `--sppm-focus-subprocess` to pick the subprocess node id.
+- `--sppm-projection inline` tries to expand child steps inline near the parent context. If readability budget is exceeded, FLO falls back to `child-map` under `fit-preferred`, or fails under `fit-strict`.
+- Discovery cues for collapsed subprocesses are always explicit in SPPM node labels: `Subprocess` and `Detail map: <ref>`.
+- Parent/detail-map linkage is stable by subprocess id plus detail-map reference metadata (`detail_map_ref` or compatible fallback metadata keys).
 
 Renderer policy decisions:
 - Rework edges are always dashed.
@@ -703,6 +723,8 @@ FLO supports POSIX-style streams:
 
 - Input path `-` means read from stdin
 - Output path `-` means write to stdout
+- Telemetry/debug output is kept off stdout payload streams (use stderr or
+  external telemetry sinks) so JSON/DOT output remains parse-safe.
 
 Examples:
 

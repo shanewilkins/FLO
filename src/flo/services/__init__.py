@@ -46,6 +46,7 @@ def get_services(verbose: bool = False) -> Services:
         errors.handle_error(msg, logger)
 
     # Initialize telemetry (returns a no-op Telemetry if OTEL not installed).
-    telemetry = init_telemetry(service_name="flo", console_export=True)
+    # Keep CLI stdout deterministic (e.g., JSON/DOT exports) by default.
+    telemetry = init_telemetry(service_name="flo", console_export=False)
 
     return Services(logger=logger, error_handler=_error_handler, telemetry=telemetry)
