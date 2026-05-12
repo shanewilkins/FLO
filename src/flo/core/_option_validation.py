@@ -7,6 +7,7 @@ any invalid combination so the caller gets a clean, actionable message.
 
 from __future__ import annotations
 
+from flo.core.render_option_schema import render_option_keys
 from flo.render._publication import resolve_publication_page_format
 from flo.render.options import parse_dimension
 from flo.services.errors import CLIError, EXIT_USAGE
@@ -65,37 +66,7 @@ def ensure_render_options_compatible_with_output(options: dict | None, output_fo
         return
 
     opts = options or {}
-    invalid = [
-        flag
-        for flag in (
-            "diagram",
-            "profile",
-            "detail",
-            "orientation",
-            "show_notes",
-            "subprocess_view",
-            "sppm_projection",
-            "sppm_focus_subprocess",
-            "spaghetti_channel",
-            "spaghetti_people_mode",
-            "sppm_theme",
-            "layout_wrap",
-            "layout_fit",
-            "layout_spacing",
-            "sppm_step_numbering",
-            "sppm_label_density",
-            "sppm_wrap_strategy",
-            "sppm_truncation_policy",
-            "layout_max_width_px",
-            "layout_target_columns",
-            "sppm_max_label_step_name",
-            "sppm_max_label_workers",
-            "sppm_max_label_ctwt",
-            "sppm_output_profile",
-            "render_to",
-        )
-        if flag in opts
-    ]
+    invalid = [flag for flag in render_option_keys(include_render_to=True) if flag in opts]
     if invalid:
         names = ", ".join(f"--{name}" for name in invalid)
         raise CLIError(

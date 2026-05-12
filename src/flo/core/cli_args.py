@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Tuple
 
+from flo.core.render_option_schema import add_argparse_render_options, build_render_options_from_namespace
 from flo.services import get_services, Services
 from structlog.stdlib import BoundLogger
 
@@ -31,90 +32,7 @@ def parse_args(argv: list | None, services: Services) -> Tuple[str | None, str, 
     parser.add_argument("--validate", action="store_true", help="Only validate the file")
     parser.add_argument("--export", choices=["dot", "json", "ingredients", "movement"], help="Export format (dot|json|ingredients|movement)")
     parser.add_argument("--format", choices=["dot", "json", "ingredients", "movement"], help=argparse.SUPPRESS)
-    parser.add_argument("--diagram", choices=["flowchart", "swimlane", "spaghetti", "sppm"], help="Diagram type for DOT output")
-    parser.add_argument("--profile", choices=["default", "analysis"], help="Projection rule profile")
-    parser.add_argument("--detail", choices=["summary", "standard", "verbose"], help="Detail level")
-    parser.add_argument("--orientation", choices=["lr", "tb"], help="Layout orientation for DOT output")
-    parser.add_argument("--show-notes", action="store_true", help="Include node notes in DOT labels")
-    parser.add_argument("--subprocess-view", choices=["expanded", "parent-only"], help="Subprocess rendering mode")
-    parser.add_argument(
-        "--sppm-projection",
-        choices=["top-level", "child-map", "inline"],
-        help="SPPM hierarchy projection mode",
-    )
-    parser.add_argument("--sppm-focus-subprocess", help="Subprocess node id to focus for child-map or inline SPPM output")
-    parser.add_argument(
-        "--spaghetti-channel",
-        choices=["both", "material", "people"],
-        help="Movement channel for spaghetti diagrams",
-    )
-    parser.add_argument(
-        "--spaghetti-people-mode",
-        choices=["worker", "aggregate"],
-        help="People trace mode for spaghetti diagrams",
-    )
-    parser.add_argument(
-        "--sppm-theme",
-        choices=["default", "print", "monochrome"],
-        help="Color theme for SPPM diagrams",
-    )
-    parser.add_argument(
-        "--layout-wrap",
-        choices=["auto", "off"],
-        help="Shared autoformat wrapping mode (orientation-aware)",
-    )
-    parser.add_argument(
-        "--layout-fit",
-        choices=["fit-preferred", "fit-strict"],
-        help="Shared autoformat fit mode",
-    )
-    parser.add_argument(
-        "--layout-spacing",
-        choices=["standard", "compact"],
-        help="Shared graph spacing profile",
-    )
-    parser.add_argument(
-        "--sppm-step-numbering",
-        choices=["off", "node", "edge"],
-        help="SPPM step numbering mode",
-    )
-    parser.add_argument(
-        "--sppm-label-density",
-        choices=["full", "compact", "teaching"],
-        help="SPPM label density mode",
-    )
-    parser.add_argument(
-        "--sppm-wrap-strategy",
-        choices=["word", "balanced", "hard"],
-        help="Text wrapping strategy for SPPM labels",
-    )
-    parser.add_argument(
-        "--sppm-truncation-policy",
-        choices=["ellipsis", "clip", "none"],
-        help="Label truncation policy for SPPM text",
-    )
-    parser.add_argument(
-        "--layout-max-width-px",
-        help="Max layout width hint for autoformat wrapping (supports px, in, cm)",
-    )
-    parser.add_argument(
-        "--publication-page-format",
-        help="Named publication page preset (letter, a4, legal, tabloid)",
-    )
-    parser.add_argument("--layout-target-columns", type=int, help="Target columns/steps per wrapped chunk")
-    parser.add_argument("--sppm-max-label-step-name", type=int, help="Max step-name label length for SPPM")
-    parser.add_argument("--sppm-max-label-workers", type=int, help="Max workers label length for SPPM")
-    parser.add_argument("--sppm-max-label-ctwt", type=int, help="Max CT/WT label length for SPPM")
-    parser.add_argument(
-        "--sppm-output-profile",
-        choices=["default", "book", "web", "print", "slide"],
-        help="SPPM output profile preset",
-    )
-    parser.add_argument(
-        "--render-to",
-        metavar="FILE",
-        help="Render DOT output to an image file (e.g. output.png, output.svg) via Graphviz",
-    )
+    add_argparse_render_options(parser, include_render_to=True)
     parsed = parser.parse_args(argv)
 
     supported_commands = {"run", "compile", "validate", "export"}
@@ -151,47 +69,9 @@ def _build_options_from_parsed(parsed: object) -> dict:
         "verbose": bool(getattr(parsed, "verbose", False)),
         "output": getattr(parsed, "output", None),
     }
-
-    for key in (
-        "diagram",
-        "profile",
-        "detail",
-        "orientation",
-        "subprocess_view",
-        "sppm_projection",
-        "sppm_focus_subprocess",
-        "spaghetti_channel",
-        "spaghetti_people_mode",
-        "sppm_theme",
-        "layout_wrap",
-        "layout_fit",
-        "layout_spacing",
-        "publication_page_format",
-        "sppm_step_numbering",
-        "sppm_label_density",
-        "sppm_wrap_strategy",
-        "sppm_truncation_policy",
-        "sppm_output_profile",
-        "render_to",
-    ):
-        value = getattr(parsed, key, None)
-        if value:
-            options[key] = value
-
-    for key in (
-        "layout_max_width_px",
-        "layout_target_columns",
-        "sppm_max_label_step_name",
-        "sppm_max_label_workers",
-        "sppm_max_label_ctwt",
-    ):
-        value = getattr(parsed, key, None)
-        if value is not None:
-            options[key] = value
+    options.update(build_render_options_from_namespace(parsed, include_render_to=True))
 
     if export_value:
         options["export"] = export_value
-    if bool(getattr(parsed, "show_notes", False)):
-        options["show_notes"] = True
 
     return options

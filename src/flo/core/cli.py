@@ -5,6 +5,7 @@ import sys
 from typing import Any, Optional
 
 import click
+from flo.core.render_option_schema import iter_render_option_specs
 from structlog.contextvars import bind_contextvars, unbind_contextvars
 
 
@@ -195,6 +196,27 @@ def _build_render_opts(
     return opts
 
 
+def _apply_render_click_options(*, include_render_to: bool) -> Any:
+    """Apply shared render click options from the canonical option schema."""
+
+    def _decorator(func: Any) -> Any:
+        for spec in reversed(iter_render_option_specs(include_render_to=include_render_to)):
+            kwargs: dict[str, Any] = {"help": spec.help_text}
+            if spec.is_flag:
+                kwargs["is_flag"] = True
+            else:
+                if spec.choices is not None:
+                    kwargs["type"] = click.Choice(list(spec.choices))
+                elif spec.value_type is not None:
+                    kwargs["type"] = spec.value_type
+                if spec.metavar is not None:
+                    kwargs["metavar"] = spec.metavar
+            func = click.option(spec.flag, **kwargs)(func)
+        return func
+
+    return _decorator
+
+
 # ---------------------------------------------------------------------------
 # Click command group
 # ---------------------------------------------------------------------------
@@ -211,32 +233,7 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.option("-o", "--output", help="Write output to file")
 @click.option("--export", "export_fmt", type=click.Choice(["dot", "json", "ingredients", "movement"]), help="Export format")
-@click.option("--diagram", type=click.Choice(["flowchart", "swimlane", "spaghetti", "sppm"]), help="Diagram type for DOT output")
-@click.option("--profile", type=click.Choice(["default", "analysis"]), help="Projection rule profile")
-@click.option("--detail", type=click.Choice(["summary", "standard", "verbose"]), help="Detail level")
-@click.option("--orientation", type=click.Choice(["lr", "tb"]), help="Layout orientation for DOT output")
-@click.option("--show-notes", is_flag=True, help="Include node notes in DOT labels")
-@click.option("--subprocess-view", type=click.Choice(["expanded", "parent-only"]), help="Subprocess rendering mode")
-@click.option("--sppm-projection", type=click.Choice(["top-level", "child-map", "inline"]), help="SPPM hierarchy projection mode")
-@click.option("--sppm-focus-subprocess", help="Subprocess node id to focus for child-map or inline SPPM output")
-@click.option("--spaghetti-channel", type=click.Choice(["both", "material", "people"]), help="Movement channel for spaghetti diagrams")
-@click.option("--spaghetti-people-mode", type=click.Choice(["worker", "aggregate"]), help="People trace mode for spaghetti diagrams")
-@click.option("--sppm-theme", type=click.Choice(["default", "print", "monochrome"]), help="Color theme for SPPM diagrams")
-@click.option("--layout-wrap", type=click.Choice(["auto", "off"]), help="Shared autoformat wrapping mode (orientation-aware)")
-@click.option("--layout-fit", type=click.Choice(["fit-preferred", "fit-strict"]), help="Shared autoformat fit mode")
-@click.option("--layout-spacing", type=click.Choice(["standard", "compact"]), help="Shared graph spacing profile")
-@click.option("--publication-page-format", type=click.Choice(["letter", "a4", "legal", "tabloid"]), help="Named publication page preset")
-@click.option("--sppm-step-numbering", type=click.Choice(["off", "node", "edge"]), help="SPPM step numbering mode")
-@click.option("--sppm-label-density", type=click.Choice(["full", "compact", "teaching"]), help="SPPM label density mode")
-@click.option("--sppm-wrap-strategy", type=click.Choice(["word", "balanced", "hard"]), help="Text wrapping strategy for SPPM labels")
-@click.option("--sppm-truncation-policy", type=click.Choice(["ellipsis", "clip", "none"]), help="Label truncation policy for SPPM text")
-@click.option("--layout-max-width-px", help="Max layout width hint for autoformat wrapping (supports px, in, cm)")
-@click.option("--layout-target-columns", type=int, help="Target columns/steps per wrapped chunk")
-@click.option("--sppm-max-label-step-name", type=int, help="Max step-name label length for SPPM")
-@click.option("--sppm-max-label-workers", type=int, help="Max workers label length for SPPM")
-@click.option("--sppm-max-label-ctwt", type=int, help="Max CT/WT label length for SPPM")
-@click.option("--sppm-output-profile", type=click.Choice(["default", "book", "web", "print", "slide"]), help="SPPM output profile preset")
-@click.option("--render-to", metavar="FILE", help="Render DOT output to an image file via Graphviz")
+@_apply_render_click_options(include_render_to=True)
 def run_cmd(
     path: Optional[str],
     validate: bool,
@@ -331,31 +328,7 @@ def validate_cmd(path: Optional[str], verbose: bool) -> None:  # pragma: no cove
 @click.option("--export", "export_fmt", type=click.Choice(["dot", "json", "ingredients", "movement"]), default="dot", show_default=True)
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.option("-o", "--output", help="Write output to file")
-@click.option("--diagram", type=click.Choice(["flowchart", "swimlane", "spaghetti", "sppm"]), help="Diagram type for DOT output")
-@click.option("--profile", type=click.Choice(["default", "analysis"]), help="Projection rule profile")
-@click.option("--detail", type=click.Choice(["summary", "standard", "verbose"]), help="Detail level")
-@click.option("--orientation", type=click.Choice(["lr", "tb"]), help="Layout orientation for DOT output")
-@click.option("--show-notes", is_flag=True, help="Include node notes in DOT labels")
-@click.option("--subprocess-view", type=click.Choice(["expanded", "parent-only"]), help="Subprocess rendering mode")
-@click.option("--sppm-projection", type=click.Choice(["top-level", "child-map", "inline"]), help="SPPM hierarchy projection mode")
-@click.option("--sppm-focus-subprocess", help="Subprocess node id to focus for child-map or inline SPPM output")
-@click.option("--spaghetti-channel", type=click.Choice(["both", "material", "people"]), help="Movement channel for spaghetti diagrams")
-@click.option("--spaghetti-people-mode", type=click.Choice(["worker", "aggregate"]), help="People trace mode for spaghetti diagrams")
-@click.option("--sppm-theme", type=click.Choice(["default", "print", "monochrome"]), help="Color theme for SPPM diagrams")
-@click.option("--layout-wrap", type=click.Choice(["auto", "off"]), help="Shared autoformat wrapping mode (orientation-aware)")
-@click.option("--layout-fit", type=click.Choice(["fit-preferred", "fit-strict"]), help="Shared autoformat fit mode")
-@click.option("--layout-spacing", type=click.Choice(["standard", "compact"]), help="Shared graph spacing profile")
-@click.option("--publication-page-format", type=click.Choice(["letter", "a4", "legal", "tabloid"]), help="Named publication page preset")
-@click.option("--sppm-step-numbering", type=click.Choice(["off", "node", "edge"]), help="SPPM step numbering mode")
-@click.option("--sppm-label-density", type=click.Choice(["full", "compact", "teaching"]), help="SPPM label density mode")
-@click.option("--sppm-wrap-strategy", type=click.Choice(["word", "balanced", "hard"]), help="Text wrapping strategy for SPPM labels")
-@click.option("--sppm-truncation-policy", type=click.Choice(["ellipsis", "clip", "none"]), help="Label truncation policy for SPPM text")
-@click.option("--layout-max-width-px", help="Max layout width hint for autoformat wrapping (supports px, in, cm)")
-@click.option("--layout-target-columns", type=int, help="Target columns/steps per wrapped chunk")
-@click.option("--sppm-max-label-step-name", type=int, help="Max step-name label length for SPPM")
-@click.option("--sppm-max-label-workers", type=int, help="Max workers label length for SPPM")
-@click.option("--sppm-max-label-ctwt", type=int, help="Max CT/WT label length for SPPM")
-@click.option("--sppm-output-profile", type=click.Choice(["default", "book", "web", "print", "slide"]), help="SPPM output profile preset")
+@_apply_render_click_options(include_render_to=False)
 def export_cmd(
     path: Optional[str],
     export_fmt: str,
