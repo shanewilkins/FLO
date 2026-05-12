@@ -38,6 +38,8 @@ from ._sppm_routing_support import (
     build_corridor_metadata,
     _build_lr_boundary_corridor_direct,
     _build_lr_boundary_corridor_with_continuations,
+    _build_non_boundary_continuation_route,
+    _build_non_rework_direct_route,
     collect_rework_branch_metadata,
     collect_rework_return_sources,
     edge_pairs,
@@ -292,57 +294,23 @@ def _build_non_rework_route(
         )
 
     if outgoing_token is not None and incoming_token is not None:
-        source_attrs = [resolved_ports[0]] if resolved_ports is not None else []
-        target_attrs = [resolved_ports[1]] if resolved_ports is not None else []
         boundary_anchor_base = sppm_boundary_anchor_id(source=source, target=target)
-        outgoing_anchor_id = f"{boundary_anchor_base}_out"
-        incoming_anchor_id = f"{boundary_anchor_base}_in"
-        outgoing_anchor = SppmRouteAnchor(
-            anchor_id=outgoing_anchor_id,
-            attrs=build_sppm_continuation_anchor_attrs(token=outgoing_token, is_secondary=False),
-        )
-        incoming_anchor = SppmRouteAnchor(
-            anchor_id=incoming_anchor_id,
-            attrs=build_sppm_continuation_anchor_attrs(token=incoming_token, is_secondary=False),
-        )
-        outgoing_segment = SppmRouteSegment(
-            source_id=source,
-            target_id=outgoing_anchor_id,
-            attrs=tuple([*source_attrs, "arrowhead=none", "constraint=false", "weight=0"]),
-        )
-        bridge_segment = SppmRouteSegment(
-            source_id=outgoing_anchor_id,
-            target_id=incoming_anchor_id,
-            attrs=("arrowhead=none", "constraint=false", "weight=0"),
-        )
-        incoming_segment = SppmRouteSegment(
-            source_id=incoming_anchor_id,
-            target_id=target,
-            attrs=tuple([*target_attrs, *edge_attrs]),
-        )
-        return SppmEdgeRoute(
+        return _build_non_boundary_continuation_route(
             source=source,
             target=target,
-            kind="corridor",
-            is_boundary=False,
-            is_rework=False,
-            lane_id=None,
-            corridor_nodes=(),
-            anchors=(outgoing_anchor, incoming_anchor),
-            segments=(outgoing_segment, bridge_segment, incoming_segment),
+            edge_attrs=edge_attrs,
+            resolved_ports=resolved_ports,
+            outgoing_token=outgoing_token,
+            incoming_token=incoming_token,
+            boundary_anchor_base=boundary_anchor_base,
         )
 
-    segment_attrs = tuple((list(resolved_ports) if resolved_ports is not None else []) + edge_attrs)
-    return SppmEdgeRoute(
+    return _build_non_rework_direct_route(
         source=source,
         target=target,
-        kind="direct",
         is_boundary=is_boundary,
-        is_rework=False,
-        lane_id=None,
-        corridor_nodes=(),
-        anchors=(),
-        segments=(SppmRouteSegment(source_id=source, target_id=target, attrs=segment_attrs),),
+        edge_attrs=edge_attrs,
+        resolved_ports=resolved_ports,
     )
 
 

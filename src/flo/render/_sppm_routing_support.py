@@ -481,6 +481,8 @@ __all__ = [
     "_build_boundary_corridor_with_point_anchor",
     "_build_lr_boundary_corridor_direct",
     "_build_lr_boundary_corridor_with_continuations",
+    "_build_non_boundary_continuation_route",
+    "_build_non_rework_direct_route",
     "build_core_route_plan",
     "build_corridor_metadata",
     "collect_rework_branch_metadata",
@@ -491,3 +493,76 @@ __all__ = [
     "placement_for_routing",
     "resolve_lane_id",
 ]
+
+
+def _build_non_boundary_continuation_route(
+    *,
+    source: str,
+    target: str,
+    edge_attrs: list[str],
+    resolved_ports: tuple[str, str] | None,
+    outgoing_token: str,
+    incoming_token: str,
+    boundary_anchor_base: str,
+) -> SppmEdgeRoute:
+    """Build a non-boundary route that uses continuation anchors."""
+    source_attrs = [resolved_ports[0]] if resolved_ports is not None else []
+    target_attrs = [resolved_ports[1]] if resolved_ports is not None else []
+    outgoing_anchor_id = f"{boundary_anchor_base}_out"
+    incoming_anchor_id = f"{boundary_anchor_base}_in"
+    anchors = _build_boundary_continuation_anchors(
+        outgoing_anchor_id=outgoing_anchor_id,
+        incoming_anchor_id=incoming_anchor_id,
+        outgoing_token=outgoing_token,
+        incoming_token=incoming_token,
+    )
+    return SppmEdgeRoute(
+        source=source,
+        target=target,
+        kind="corridor",
+        is_boundary=False,
+        is_rework=False,
+        lane_id=None,
+        corridor_nodes=(),
+        anchors=anchors,
+        segments=(
+            _build_route_segment(
+                source_id=source,
+                target_id=outgoing_anchor_id,
+                attrs=[*source_attrs, "arrowhead=none", "constraint=false", "weight=0"],
+            ),
+            _build_route_segment(
+                source_id=outgoing_anchor_id,
+                target_id=incoming_anchor_id,
+                attrs=["arrowhead=none", "constraint=false", "weight=0"],
+            ),
+            _build_route_segment(
+                source_id=incoming_anchor_id,
+                target_id=target,
+                attrs=[*target_attrs, *edge_attrs],
+            ),
+        ),
+    )
+
+
+def _build_non_rework_direct_route(
+    *,
+    source: str,
+    target: str,
+    edge_attrs: list[str],
+    is_boundary: bool,
+    resolved_ports: tuple[str, str] | None,
+) -> SppmEdgeRoute:
+    """Build the direct non-rework route when no continuation anchors are needed."""
+    segment_attrs = tuple((list(resolved_ports) if resolved_ports is not None else []) + edge_attrs)
+    return SppmEdgeRoute(
+        source=source,
+        target=target,
+        kind="direct",
+        is_boundary=is_boundary,
+        is_rework=False,
+        lane_id=None,
+        corridor_nodes=(),
+        anchors=(),
+        segments=(SppmRouteSegment(source_id=source, target_id=target, attrs=segment_attrs),),
+    )
