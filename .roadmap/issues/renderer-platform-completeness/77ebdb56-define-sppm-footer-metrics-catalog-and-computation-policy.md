@@ -4,14 +4,14 @@ title: Define SPPM footer metrics catalog and computation policy
 headline: Decide which analytics belong in the SPPM footer, how each metric is computed,
   and where those compu
 priority: medium
-status: todo
+status: closed
 archived: false
 issue_type: feature
 milestone: renderer-platform-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-06T23:20:19.934006+00:00'
-updated: '2026-05-11T17:28:37.160444+00:00'
+updated: '2026-05-12T19:39:53.771111+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
@@ -19,7 +19,7 @@ depends_on: []
 blocks: []
 actual_start_date: null
 actual_end_date: null
-progress_percentage: null
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null
