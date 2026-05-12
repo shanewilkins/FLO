@@ -3,7 +3,7 @@ id: e4d655b4
 title: SPPM label length policy and truncation matrix
 headline: Formalize and implement max-length, wrapping, and truncation policy per SPPM label surface
 priority: medium
-status: in_progress
+status: done
 archived: false
 issue_type: feature
 milestone: renderer-platform-completeness
@@ -13,21 +13,22 @@ labels:
 - ux
 remote_ids: {}
 created: '2026-05-11T17:22:35.634128+00:00'
-updated: '2026-05-12T00:00:00+00:00'
+updated: '2026-05-12T20:54:16+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
 depends_on: []
 blocks: []
 actual_start_date: '2026-05-12T00:00:00+00:00'
-actual_end_date: null
-progress_percentage: 85
+actual_end_date: '2026-05-12T20:54:16+00:00'
+progress_percentage: 100
 handoff_notes: null
 previous_assignee: null
 handoff_date: null
 git_branches: []
-git_commits: []
-completed_date: null
+git_commits:
+- 24efe1b0c74c685b1ec1c63bb90a5deb195674e4
+completed_date: '2026-05-12T20:54:16+00:00'
 comments: []
 github_issue: null
 ---
