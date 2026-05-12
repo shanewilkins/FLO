@@ -31,7 +31,7 @@ from ._sppm_render_data import (
     port_counts_by_node,
 )
 from ._sppm_routing import build_sppm_routing_plan
-from ._sppm_themes import resolve_sppm_theme
+from ._sppm_themes import resolve_sppm_theme_with_custom
 from .options import RenderOptions
 
 if TYPE_CHECKING:
@@ -71,7 +71,7 @@ def build_sppm_graph(
     )
     contract = routing_plan.svg_postprocess_contract
     port_counts = port_counts_by_node(routing_plan)
-    theme = resolve_sppm_theme(options.sppm_theme)
+    theme = resolve_sppm_theme_with_custom(options.sppm_theme, options.sppm_themes)
 
     lines: list[str] = ["digraph {"]
     rankdir = _resolve_rankdir(options=options, wrap_active=wrap_plan.active)

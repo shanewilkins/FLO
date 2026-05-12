@@ -166,6 +166,14 @@ def test_parse_args_sppm_projection_options(services):
     assert options["sppm_focus_subprocess"] == "prep"
 
 
+def test_parse_args_accepts_custom_sppm_theme_name(services):
+    path, command, options, _, _ = parse_args(["file.flo", "--diagram", "sppm", "--sppm-theme", "sunrise"], services)
+
+    assert path == "file.flo"
+    assert command == "run"
+    assert options["sppm_theme"] == "sunrise"
+
+
 def _assert_expected_options(options: dict[str, object], expected: dict[str, object]) -> None:
     for key, value in expected.items():
         assert options[key] == value

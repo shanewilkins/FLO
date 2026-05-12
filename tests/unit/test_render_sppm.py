@@ -247,6 +247,32 @@ def test_sppm_print_theme_resolves_correctly():
     assert print_theme.nva.border in out
 
 
+def test_sppm_custom_theme_from_config_is_resolved():
+    ir_like = {
+        "nodes": [{"id": "step", "kind": "task", "name": "Step", "metadata": {"value_class": "VA"}}],
+        "edges": [],
+    }
+    out = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "sppm_theme": "sunrise",
+            "sppm_themes": {
+                "sunrise": {
+                    "va": {"fill": "#FFF3B0", "border": "#E09F3E"},
+                    "rnva": {"fill": "#FFD6A5", "border": "#F77F00"},
+                    "nva": {"fill": "#FFADAD", "border": "#D00000"},
+                    "unknown": {"fill": "#FFFFFF", "border": "#6C757D"},
+                    "start_end": {"fill": "#FFFFFF", "border": "#343A40"},
+                }
+            },
+        },
+    )
+
+    assert "#FFF3B0" in out
+    assert "#E09F3E" in out
+
+
 def test_sppm_unknown_theme_name_falls_back_to_default():
     from flo.render._sppm_themes import resolve_sppm_theme, SPPM_THEMES
     theme = resolve_sppm_theme("nonexistent")

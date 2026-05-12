@@ -91,6 +91,10 @@ def _flatten_sppm_config_options(sppm_section: dict) -> dict[str, object]:
     set_if_present(sppm_section, "label_density", "sppm_label_density")
     set_if_present(sppm_section, "output_profile", "sppm_output_profile")
 
+    themes_section = sppm_section.get("themes")
+    if isinstance(themes_section, dict):
+        mapped["sppm_themes"] = themes_section
+
     text_section = sppm_section.get("text")
     if isinstance(text_section, dict):
         set_if_present(text_section, "wrap_strategy", "sppm_wrap_strategy")

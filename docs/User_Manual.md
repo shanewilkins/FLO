@@ -509,6 +509,35 @@ SPPM-relevant fields per step:
 The default theme uses stoplight colors. Alternative themes:
 - `--sppm-theme print` — high-contrast fills suitable for black-and-white printing
 - `--sppm-theme monochrome` — grayscale only
+- `--sppm-theme <name>` — any custom theme defined under `[sppm.themes.<name>]` in `diagrams.toml`
+
+Custom theme example:
+
+```toml
+[sppm.themes.sunrise]
+[sppm.themes.sunrise.va]
+fill = "#FFF3B0"
+border = "#E09F3E"
+
+[sppm.themes.sunrise.rnva]
+fill = "#FFD6A5"
+border = "#F77F00"
+
+[sppm.themes.sunrise.nva]
+fill = "#FFADAD"
+border = "#D00000"
+
+[sppm.themes.sunrise.unknown]
+fill = "#FFFFFF"
+border = "#6C757D"
+
+[sppm.themes.sunrise.start_end]
+fill = "#FFFFFF"
+border = "#343A40"
+```
+
+If a theme name is missing or the configuration is malformed, FLO falls back
+to the built-in default theme.
 
 SPPM DOT output must be piped through Graphviz `dot` to produce an image:
 

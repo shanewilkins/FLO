@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import math
 import re
 from typing import Any, Literal, Mapping, cast
+
+from ._sppm_themes import SppmTheme, parse_custom_sppm_themes
 
 DiagramType = Literal["flowchart", "swimlane", "spaghetti", "sppm"]
 RenderProfile = Literal["default", "analysis"]
@@ -15,7 +17,7 @@ SubprocessView = Literal["expanded", "parent_only", "child_map", "inline"]
 SppmProjectionMode = Literal["top_level", "child_map", "inline"]
 SpaghettiChannel = Literal["both", "material", "people"]
 SpaghettiPeopleMode = Literal["aggregate", "worker"]
-SppmThemeName = Literal["default", "print", "monochrome"]
+SppmThemeName = str
 LayoutWrap = Literal["auto", "off"]
 LayoutFit = Literal["fit-preferred", "fit-strict"]
 LayoutSpacing = Literal["standard", "compact"]
@@ -132,6 +134,7 @@ class RenderOptions:
     spaghetti_channel: SpaghettiChannel = "both"
     spaghetti_people_mode: SpaghettiPeopleMode = "aggregate"
     sppm_theme: SppmThemeName = "default"
+    sppm_themes: dict[str, SppmTheme] = field(default_factory=dict)
     layout_wrap: LayoutWrap = "off"
     layout_fit: LayoutFit = "fit-preferred"
     layout_spacing: LayoutSpacing = "standard"
@@ -177,6 +180,7 @@ class RenderOptions:
             spaghetti_channel=_parse_spaghetti_channel(effective_options),
             spaghetti_people_mode=_parse_spaghetti_people_mode(effective_options, profile=profile),
             sppm_theme=_parse_sppm_theme(effective_options),
+            sppm_themes=_parse_sppm_themes(effective_options),
             layout_wrap=_parse_layout_wrap(effective_options),
             layout_fit=_parse_layout_fit(effective_options),
             layout_spacing=_parse_layout_spacing(effective_options),
@@ -320,7 +324,11 @@ def _parse_sppm_theme(options: Mapping[str, Any]) -> SppmThemeName:
         return "print"
     if raw in {"monochrome", "mono", "greyscale", "grayscale"}:
         return "monochrome"
-    return "default"
+    return raw
+
+
+def _parse_sppm_themes(options: Mapping[str, Any]) -> dict[str, SppmTheme]:
+    return parse_custom_sppm_themes(options.get("sppm_themes"))
 
 
 def _parse_layout_wrap(options: Mapping[str, Any]) -> LayoutWrap:

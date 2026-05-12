@@ -58,6 +58,47 @@ def test_merge_diagrams_toml_prefers_source_dir_and_preserves_cli_overrides(tmp_
     assert out["sppm_output_profile"] == "book"
 
 
+def test_merge_diagrams_toml_loads_custom_themes(tmp_path, monkeypatch):
+    model_path = tmp_path / "demo.flo"
+    model_path.write_text("spec_version: '0.1'\n", encoding="utf-8")
+
+    (tmp_path / "diagrams.toml").write_text(
+        "\n".join(
+            [
+                "[sppm]",
+                "output_profile = 'default'",
+                "",
+                "[sppm.themes.sunrise.va]",
+                "fill = '#FFF3B0'",
+                "border = '#E09F3E'",
+                "",
+                "[sppm.themes.sunrise.rnva]",
+                "fill = '#FFD6A5'",
+                "border = '#F77F00'",
+                "",
+                "[sppm.themes.sunrise.nva]",
+                "fill = '#FFADAD'",
+                "border = '#D00000'",
+                "",
+                "[sppm.themes.sunrise.unknown]",
+                "fill = '#FFFFFF'",
+                "border = '#6C757D'",
+                "",
+                "[sppm.themes.sunrise.start_end]",
+                "fill = '#FFFFFF'",
+                "border = '#343A40'",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.chdir(tmp_path)
+    out = merge_diagrams_toml_sppm_defaults({"source_path": str(model_path), "diagram": "sppm"})
+
+    assert out["sppm_themes"]["sunrise"]["va"]["fill"] == "#FFF3B0"
+    assert out["sppm_themes"]["sunrise"]["start_end"]["border"] == "#343A40"
+
+
 def test_merge_diagrams_toml_invalid_toml_raises_clierror(tmp_path, monkeypatch):
     (tmp_path / "diagrams.toml").write_text("[sppm\nnot valid", encoding="utf-8")
     monkeypatch.chdir(tmp_path)
@@ -141,6 +182,15 @@ def _sample_sppm_config() -> dict:
                 },
             }
         },
+        "themes": {
+            "sunrise": {
+                "va": {"fill": "#FFF3B0", "border": "#E09F3E"},
+                "rnva": {"fill": "#FFD6A5", "border": "#F77F00"},
+                "nva": {"fill": "#FFADAD", "border": "#D00000"},
+                "unknown": {"fill": "#FFFFFF", "border": "#6C757D"},
+                "start_end": {"fill": "#FFFFFF", "border": "#343A40"},
+            }
+        },
     }
 
 
@@ -160,6 +210,7 @@ def test_flatten_helper_maps_nested_text_options():
     assert flattened["sppm_max_label_step_name"] == 48
     assert flattened["sppm_max_label_workers"] == 24
     assert flattened["sppm_max_label_ctwt"] == 18
+    assert flattened["sppm_themes"]["sunrise"]["va"]["fill"] == "#FFF3B0"
 
 
 def test_preset_helper_maps_profile_specific_options():

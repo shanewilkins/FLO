@@ -34,7 +34,7 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
     RenderOptionSpec("sppm_focus_subprocess", "--sppm-focus-subprocess", "SPPM publication: subprocess node id to focus for child-map/inline"),
     RenderOptionSpec("spaghetti_channel", "--spaghetti-channel", "Movement channel for spaghetti diagrams", choices=("both", "material", "people")),
     RenderOptionSpec("spaghetti_people_mode", "--spaghetti-people-mode", "People trace mode for spaghetti diagrams", choices=("worker", "aggregate")),
-    RenderOptionSpec("sppm_theme", "--sppm-theme", "Color theme for SPPM diagrams", choices=("default", "print", "monochrome")),
+    RenderOptionSpec("sppm_theme", "--sppm-theme", "Color theme for SPPM diagrams (built-in or config-defined)"),
     RenderOptionSpec("layout_wrap", "--layout-wrap", "Shared autoformat wrapping mode (orientation-aware)", choices=("auto", "off")),
     RenderOptionSpec("layout_fit", "--layout-fit", "Shared autoformat fit mode", choices=("fit-preferred", "fit-strict")),
     RenderOptionSpec("layout_spacing", "--layout-spacing", "Shared graph spacing profile", choices=("standard", "compact")),

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal, Mapping
 
 SppmThemeName = Literal["default", "print", "monochrome"]
 
@@ -68,7 +68,81 @@ _DEFAULT_THEME_NAME: SppmThemeName = "default"
 
 def resolve_sppm_theme(name: str | None) -> SppmTheme:
     """Return the named theme, falling back to default for unknown names."""
-    return SPPM_THEMES.get(str(name or ""), SPPM_THEMES[_DEFAULT_THEME_NAME])
+    return resolve_sppm_theme_with_custom(name=name, custom_themes=None)
 
 
-__all__ = ["SppmThemeName", "SppmNodeStyle", "SppmTheme", "SPPM_THEMES", "resolve_sppm_theme"]
+def resolve_sppm_theme_with_custom(name: str | None, custom_themes: Mapping[str, SppmTheme] | None) -> SppmTheme:
+    """Return a built-in or custom theme, falling back to default when missing."""
+    registry: dict[str, SppmTheme] = dict(SPPM_THEMES)
+    if custom_themes:
+        for theme_name, theme in custom_themes.items():
+            registry[str(theme_name).strip()] = theme
+
+    theme_name = str(name or "").strip()
+    return registry.get(theme_name, registry[_DEFAULT_THEME_NAME])
+
+
+def parse_custom_sppm_themes(value: Any) -> dict[str, SppmTheme]:
+    """Parse custom theme definitions from a mapping-like config value."""
+    if not isinstance(value, Mapping):
+        return {}
+
+    parsed: dict[str, SppmTheme] = {}
+    for theme_name, theme_value in value.items():
+        theme = _parse_theme_definition(theme_value)
+        if theme is not None:
+            parsed[str(theme_name).strip()] = theme
+    return parsed
+
+
+def _parse_theme_definition(value: Any) -> SppmTheme | None:
+    if not isinstance(value, Mapping):
+        return None
+
+    styles: dict[str, SppmNodeStyle] = {}
+    for key in ("va", "rnva", "nva", "unknown", "start_end"):
+        style = _parse_style_definition(value, key)
+        if style is None:
+            return None
+        styles[key] = style
+
+    return SppmTheme(
+        va=styles["va"],
+        rnva=styles["rnva"],
+        nva=styles["nva"],
+        unknown=styles["unknown"],
+        start_end=styles["start_end"],
+    )
+
+
+def _parse_style_definition(theme_value: Mapping[str, Any], style_name: str) -> SppmNodeStyle | None:
+    nested = theme_value.get(style_name)
+    if isinstance(nested, Mapping):
+        return _parse_node_style(nested)
+
+    fill_key = f"{style_name}_fill"
+    border_key = f"{style_name}_border"
+    if fill_key in theme_value or border_key in theme_value:
+        return _parse_node_style({"fill": theme_value.get(fill_key), "border": theme_value.get(border_key)})
+    return None
+
+
+def _parse_node_style(value: Mapping[str, Any]) -> SppmNodeStyle | None:
+    fill = value.get("fill")
+    border = value.get("border")
+    if not isinstance(fill, str) or not fill.strip():
+        return None
+    if not isinstance(border, str) or not border.strip():
+        return None
+    return SppmNodeStyle(fill=fill.strip(), border=border.strip())
+
+
+__all__ = [
+    "SppmThemeName",
+    "SppmNodeStyle",
+    "SppmTheme",
+    "SPPM_THEMES",
+    "parse_custom_sppm_themes",
+    "resolve_sppm_theme",
+    "resolve_sppm_theme_with_custom",
+]
