@@ -4,7 +4,7 @@ title: 'SPPM showcase: configurable header/footer blocks'
 headline: Add explicit header and footer blocks for SPPM publication output, with
   clean CLI control over visib
 priority: high
-status: todo
+status: closed
 archived: false
 issue_type: feature
 milestone: renderer-platform-completeness
@@ -12,16 +12,16 @@ labels:
 - sppm,renderer,cli
 remote_ids: {}
 created: '2026-05-11T17:22:28.119390+00:00'
-updated: '2026-05-11T17:27:01.065938+00:00'
+updated: '2026-05-12T13:19:55.409718+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
 depends_on:
 - 63da7b5d
 blocks: []
-actual_start_date: null
+actual_start_date: '2026-05-12T13:14:14.852135+00:00'
 actual_end_date: null
-progress_percentage: null
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null

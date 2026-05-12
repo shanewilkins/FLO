@@ -170,6 +170,46 @@ def test_run_sppm_renders_process_title_header_from_model():
     assert "print" in result.output
 
 
+def test_run_sppm_no_header_hides_only_header_block():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "examples/reference/sppm_feature_showcase.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+            "--no-header",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "SPPM Feature Showcase" not in result.output
+    assert "Process:" not in result.output
+    assert '"__sppm_footer_band" [shape=none, margin=0, label=' in result.output
+
+
+def test_run_sppm_no_footer_hides_only_footer_block():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "examples/reference/sppm_feature_showcase.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+            "--no-footer",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "SPPM Feature Showcase" in result.output
+    assert "Process:" in result.output
+    assert '"__sppm_footer_band" [shape=none, margin=0, label=' not in result.output
+
+
 def test_run_sppm_feature_showcase_covers_publication_and_rework_semantics():
     runner = CliRunner()
     result = runner.invoke(

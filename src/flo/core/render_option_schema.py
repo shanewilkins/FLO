@@ -27,6 +27,8 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
     RenderOptionSpec("detail", "--detail", "Detail level", choices=("summary", "standard", "verbose")),
     RenderOptionSpec("orientation", "--orientation", "Layout orientation for DOT output", choices=("lr", "tb")),
     RenderOptionSpec("show_notes", "--show-notes", "Include node notes in DOT labels", is_flag=True),
+    RenderOptionSpec("no_header", "--no-header", "Hide SPPM publication header block", is_flag=True),
+    RenderOptionSpec("no_footer", "--no-footer", "Hide SPPM publication footer block", is_flag=True),
     RenderOptionSpec("subprocess_view", "--subprocess-view", "Subprocess rendering mode", choices=("expanded", "parent-only")),
     RenderOptionSpec("sppm_projection", "--sppm-projection", "SPPM hierarchy projection mode", choices=("top-level", "child-map", "inline")),
     RenderOptionSpec("sppm_focus_subprocess", "--sppm-focus-subprocess", "Subprocess node id to focus for child-map or inline SPPM output"),

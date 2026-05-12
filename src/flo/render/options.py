@@ -140,6 +140,8 @@ class RenderOptions:
     sppm_wrap_strategy: SppmWrapStrategy = "word"
     sppm_truncation_policy: SppmTruncationPolicy = "ellipsis"
     sppm_output_profile: SppmOutputProfile = "default"
+    sppm_show_header: bool = True
+    sppm_show_footer: bool = True
     publication_page_format: PublicationPageFormatName | None = None
     layout_max_width: Dimension | None = None
     layout_max_width_px: int | None = None
@@ -183,6 +185,14 @@ class RenderOptions:
             sppm_wrap_strategy=_parse_sppm_wrap_strategy(effective_options),
             sppm_truncation_policy=_parse_sppm_truncation_policy(effective_options),
             sppm_output_profile=_parse_sppm_output_profile(effective_options),
+            sppm_show_header=not (
+                _parse_bool(effective_options.get("no_header", False))
+                or _parse_bool(effective_options.get("sppm_no_header", False))
+            ),
+            sppm_show_footer=not (
+                _parse_bool(effective_options.get("no_footer", False))
+                or _parse_bool(effective_options.get("sppm_no_footer", False))
+            ),
             publication_page_format=_parse_publication_page_format(effective_options),
             layout_max_width=layout_max_width,
             layout_max_width_px=layout_max_width.to_px() if layout_max_width else None,

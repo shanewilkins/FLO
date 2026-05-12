@@ -166,3 +166,25 @@ def test_sppm_projection_and_focus_parse_from_mapping():
     assert options.sppm_projection == "child_map"
     assert options.sppm_focus_subprocess == "prep"
     assert options.subprocess_view == "parent_only"
+
+
+def test_sppm_no_header_flag_disables_header_band():
+    options = RenderOptions.from_mapping(
+        {
+            "diagram": "sppm",
+            "no_header": True,
+        }
+    )
+    assert options.sppm_show_header is False
+    assert options.sppm_show_footer is True
+
+
+def test_sppm_no_footer_flag_disables_footer_band():
+    options = RenderOptions.from_mapping(
+        {
+            "diagram": "sppm",
+            "no_footer": True,
+        }
+    )
+    assert options.sppm_show_header is True
+    assert options.sppm_show_footer is False

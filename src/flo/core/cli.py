@@ -132,6 +132,8 @@ def _build_render_opts(
     detail: Optional[str],
     orientation: Optional[str],
     show_notes: bool,
+    no_header: bool,
+    no_footer: bool,
     subprocess_view: Optional[str],
     sppm_projection: Optional[str],
     sppm_focus_subprocess: Optional[str],
@@ -193,6 +195,10 @@ def _build_render_opts(
             opts[key] = value
     if show_notes:
         opts["show_notes"] = True
+    if no_header:
+        opts["no_header"] = True
+    if no_footer:
+        opts["no_footer"] = True
     return opts
 
 
@@ -245,6 +251,8 @@ def run_cmd(
     detail: Optional[str],
     orientation: Optional[str],
     show_notes: bool,
+    no_header: bool,
+    no_footer: bool,
     subprocess_view: Optional[str],
     sppm_projection: Optional[str],
     sppm_focus_subprocess: Optional[str],
@@ -278,6 +286,8 @@ def run_cmd(
         detail=detail,
         orientation=orientation,
         show_notes=show_notes,
+        no_header=no_header,
+        no_footer=no_footer,
         subprocess_view=subprocess_view,
         sppm_projection=sppm_projection,
         sppm_focus_subprocess=sppm_focus_subprocess,
@@ -339,6 +349,8 @@ def export_cmd(
     detail: Optional[str],
     orientation: Optional[str],
     show_notes: bool,
+    no_header: bool,
+    no_footer: bool,
     subprocess_view: Optional[str],
     sppm_projection: Optional[str],
     sppm_focus_subprocess: Optional[str],
@@ -370,6 +382,8 @@ def export_cmd(
         detail=detail,
         orientation=orientation,
         show_notes=show_notes,
+        no_header=no_header,
+        no_footer=no_footer,
         subprocess_view=subprocess_view,
         sppm_projection=sppm_projection,
         sppm_focus_subprocess=sppm_focus_subprocess,

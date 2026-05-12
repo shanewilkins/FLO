@@ -46,19 +46,28 @@ def build_sppm_publication_plan(
     """Build a renderer-independent single-page publication plan for SPPM output."""
     context = extract_process_header_context(process)
     title = normalize_space(context.title)
+    show_header = options.sppm_show_header
+    show_footer = options.sppm_show_footer
     projection_context = projection or SppmProjectionContext(requested_mode="top_level", effective_mode="top_level")
     diagnostics = _publication_diagnostics(projection=projection_context, options=options)
     _raise_for_publication_errors(diagnostics)
-    header_rows = _build_sppm_header_rows(
-        context=context,
+    header_rows: list[tuple[str, str]] = []
+    if show_header:
+        header_rows = _build_sppm_header_rows(
+            context=context,
+            options=options,
+            nodes=nodes,
+            edges=edges,
+            projection=projection_context,
+            diagnostics=diagnostics,
+        )
+    footer_content = _build_sppm_footer_content(context=context, options=options) if show_footer else None
+    canvas = _build_sppm_publication_canvas(
+        title=title,
+        footer_content=footer_content,
         options=options,
-        nodes=nodes,
-        edges=edges,
-        projection=projection_context,
-        diagnostics=diagnostics,
+        show_header=show_header,
     )
-    footer_content = _build_sppm_footer_content(context=context, options=options)
-    canvas = _build_sppm_publication_canvas(title=title, footer_content=footer_content, options=options)
     series = materialize_publication_series(
         series_id="main",
         title=title or "SPPM Publication",
@@ -67,7 +76,7 @@ def build_sppm_publication_plan(
             PublicationPageSpec(
                 page_key="p1",
                 canvas=canvas,
-                header_content=PublicationBandContent(title=title, rows=tuple(header_rows)) if title else None,
+                header_content=PublicationBandContent(title=title, rows=tuple(header_rows)) if (show_header and title) else None,
                 footer_content=footer_content,
                 metadata={
                     "diagram": "sppm",
@@ -115,8 +124,9 @@ def _build_sppm_publication_canvas(
     title: str,
     footer_content: PublicationBandContent | None,
     options: RenderOptions,
+    show_header: bool,
 ) -> Any:
-    header_height_px = _SPPM_HEADER_BAND_HEIGHT_PX if title else 0
+    header_height_px = _SPPM_HEADER_BAND_HEIGHT_PX if (show_header and title) else 0
     footer_height_px = 72 if footer_content is not None else 0
     if options.publication_page_format:
         return build_publication_canvas_for_format(
