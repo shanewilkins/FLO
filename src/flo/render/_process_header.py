@@ -5,14 +5,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from flo.schema.render_metadata import (
+    PROCESS_HEADER_METADATA_FIELDS,
+    PROCESS_METADATA_PROCESS_ID_KEY,
+    PROCESS_METADATA_PROCESS_NAME_KEY,
+)
+
 from ._sppm_text import normalize_space
 
-DEFAULT_PROCESS_HEADER_METADATA_FIELDS: tuple[tuple[str, str], ...] = (
-    ("process_id", "Process"),
-    ("owner", "Owner"),
-    ("revision", "Revision"),
-    ("publication_date", "Date"),
-)
+DEFAULT_PROCESS_HEADER_METADATA_FIELDS = PROCESS_HEADER_METADATA_FIELDS
 
 
 @dataclass(frozen=True)
@@ -33,15 +34,19 @@ def extract_process_header_context(process: Any) -> ProcessHeaderContext:
 def _extract_dict_header_context(process: dict[str, Any]) -> ProcessHeaderContext:
     process_dict = _as_string_key_dict(process.get("process"))
     metadata = _as_string_key_dict(process_dict.get("metadata"))
-    _set_metadata_if_present(metadata, "process_id", process_dict.get("id"))
-    _set_metadata_if_present(metadata, "process_name", process_dict.get("name"))
+    _set_metadata_if_present(metadata, PROCESS_METADATA_PROCESS_ID_KEY, process_dict.get("id"))
+    _set_metadata_if_present(metadata, PROCESS_METADATA_PROCESS_NAME_KEY, process_dict.get("name"))
     title = _first_nonempty_text(process_dict.get("name"), process_dict.get("id"), process.get("name"))
     return ProcessHeaderContext(title=normalize_space(title), metadata=metadata)
 
 
 def _extract_ir_header_context(process: Any) -> ProcessHeaderContext:
     metadata = _as_string_key_dict(getattr(process, "process_metadata", None))
-    title = _first_nonempty_text(metadata.get("process_name"), getattr(process, "name", None), metadata.get("process_id"))
+    title = _first_nonempty_text(
+        metadata.get(PROCESS_METADATA_PROCESS_NAME_KEY),
+        getattr(process, "name", None),
+        metadata.get(PROCESS_METADATA_PROCESS_ID_KEY),
+    )
     return ProcessHeaderContext(title=normalize_space(title), metadata=metadata)
 
 
@@ -83,7 +88,7 @@ def build_process_header_rows(
         value = context.metadata.get(key)
         if isinstance(value, str) and value.strip():
             normalized = normalize_space(value)
-            if key == "process_id" and normalized == context.title:
+            if key == PROCESS_METADATA_PROCESS_ID_KEY and normalized == context.title:
                 continue
             rows.append((label, normalized))
     if extra_rows:

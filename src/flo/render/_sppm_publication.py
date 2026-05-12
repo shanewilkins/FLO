@@ -4,6 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
+from flo.schema.render_metadata import (
+    SPPM_FOOTER_METRIC_METADATA_KEYS,
+    SPPM_FOOTER_NOTES_METADATA_KEYS,
+    first_present_metadata_value,
+)
 from flo.schema.subprocess_refs import resolve_subprocess_detail_map_reference
 from flo.services.errors import RenderError
 
@@ -240,15 +245,7 @@ def _build_sppm_footer_content(*, context: Any, options: RenderOptions) -> Publi
 
 
 def _footer_metric_rows_from_metadata(metadata: dict[str, Any]) -> list[tuple[str, str]]:
-    raw_metrics = (
-        metadata.get("publication_legend_items")
-        or metadata.get("legend_items")
-        or metadata.get("legend")
-        or metadata.get("publication_footer_metrics")
-        or metadata.get("footer_metrics")
-        or metadata.get("analytics_footer_metrics")
-        or metadata.get("analytics_metrics")
-    )
+    raw_metrics = first_present_metadata_value(metadata, SPPM_FOOTER_METRIC_METADATA_KEYS)
     if isinstance(raw_metrics, dict):
         return _footer_metric_rows_from_mapping(raw_metrics)
     if isinstance(raw_metrics, (list, tuple)):
@@ -291,14 +288,7 @@ def _footer_metric_row(*, label: Any, value: Any) -> tuple[str, str] | None:
 
 
 def _footer_notes_from_metadata(metadata: dict[str, Any]) -> list[str]:
-    raw_notes = (
-        metadata.get("publication_caption")
-        or metadata.get("caption")
-        or metadata.get("publication_footer_notes")
-        or metadata.get("footer_notes")
-        or metadata.get("publication_footer")
-        or metadata.get("footer_note")
-    )
+    raw_notes = first_present_metadata_value(metadata, SPPM_FOOTER_NOTES_METADATA_KEYS)
     if isinstance(raw_notes, str):
         note = normalize_space(raw_notes)
         return [note] if note else []

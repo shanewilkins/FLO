@@ -127,6 +127,30 @@ def test_sppm_footer_band_renders_legend_and_caption_alias_inputs():
     assert "Draft for review" in out
 
 
+def test_sppm_footer_band_prefers_earlier_metric_alias_key_order():
+    process = {
+        "process": {
+            "id": "ops_review",
+            "name": "Ops Review",
+            "metadata": {
+                "publication_legend_items": {"Preferred": "yes"},
+                "footer_metrics": {"Fallback": "no"},
+            },
+        },
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [{"source": "start", "target": "end"}],
+    }
+
+    out = render_dot(process, options={"diagram": "sppm"})
+
+    assert "Preferred:" in out
+    assert "yes" in out
+    assert "Fallback:" not in out
+
+
 def test_sppm_bands_render_shared_page_context_rows_when_present():
     canvas = build_publication_canvas(
         bounds=PublicationBounds(width_px=1200, height_px=900),

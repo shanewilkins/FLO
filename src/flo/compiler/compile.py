@@ -6,6 +6,11 @@ is a placeholder that will be implemented as part of v0.1.
 """
 from typing import Any, Dict
 
+from flo.schema.render_metadata import (
+    PROCESS_METADATA_PROCESS_ID_KEY,
+    PROCESS_METADATA_PROCESS_NAME_KEY,
+)
+
 from .ir.models import IR, Node, Edge
 
 
@@ -44,11 +49,11 @@ def _resolve_process_metadata(adapter: dict[str, Any]) -> dict[str, Any] | None:
 
     process_id = process.get("id")
     if isinstance(process_id, str) and process_id.strip():
-        metadata.setdefault("process_id", process_id)
+        metadata.setdefault(PROCESS_METADATA_PROCESS_ID_KEY, process_id)
 
     process_name = process.get("name")
     if isinstance(process_name, str) and process_name.strip():
-        metadata.setdefault("process_name", process_name)
+        metadata.setdefault(PROCESS_METADATA_PROCESS_NAME_KEY, process_name)
 
     for key in ("materials", "equipment", "locations", "workers"):
         value = adapter.get(key)

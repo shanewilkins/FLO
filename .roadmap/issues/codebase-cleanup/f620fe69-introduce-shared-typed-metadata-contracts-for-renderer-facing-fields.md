@@ -1,24 +1,25 @@
 ---
 id: f620fe69
 title: Introduce shared typed metadata contracts for renderer-facing fields
-headline: ''
+headline: Renderer-facing metadata such as process headers, subprocess detail-map
+  references, and footer/heade
 priority: medium
-status: todo
+status: closed
 archived: false
 issue_type: other
 milestone: codebase-cleanup
 labels: []
 remote_ids: {}
 created: '2026-05-06T23:35:37.017723+00:00'
-updated: '2026-05-06T23:35:37.017725+00:00'
+updated: '2026-05-12T12:56:51.238685+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
 depends_on: []
 blocks: []
-actual_start_date: null
+actual_start_date: '2026-05-12T12:53:00.430849+00:00'
 actual_end_date: null
-progress_percentage: null
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null
