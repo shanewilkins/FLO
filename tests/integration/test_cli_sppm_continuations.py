@@ -1,5 +1,6 @@
 from click.testing import CliRunner
 import yaml
+import xml.etree.ElementTree as ET
 
 from flo.core.cli import cli
 
@@ -194,3 +195,76 @@ def test_wrapped_showcase_svg_preserves_explicit_continuation_override_tokens(tm
     svg_text = svg_output.read_text(encoding="utf-8")
     assert "P2-QA" in svg_text
     assert "P1-SVC" in svg_text
+
+
+def test_sppm_decision_outcome_label_positions_are_stable_across_repeated_svg_renders(tmp_path):
+    model = tmp_path / "decision_labels_stable.flo"
+    payload = {
+        "spec_version": "0.1",
+        "process": {"id": "decision_labels_stable", "name": "Decision Labels Stable"},
+        "steps": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "decision", "kind": "decision", "name": "Approved?"},
+            {"id": "approve", "kind": "task", "name": "Approve"},
+            {"id": "rework", "kind": "task", "name": "Rework"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "transitions": [
+            {"source": "start", "target": "decision"},
+            {"source": "decision", "target": "approve", "outcome": "yes"},
+            {"source": "decision", "target": "rework", "outcome": "no", "edge_type": "rework", "rework": True},
+            {"source": "approve", "target": "end"},
+            {"source": "rework", "target": "end"},
+        ],
+    }
+    model.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    svg_one = tmp_path / "decision_labels_1.svg"
+    svg_two = tmp_path / "decision_labels_2.svg"
+    runner = CliRunner()
+
+    result_one = runner.invoke(
+        cli,
+        [
+            "run",
+            str(model),
+            "--diagram",
+            "sppm",
+            "--orientation",
+            "lr",
+            "--render-to",
+            str(svg_one),
+        ],
+    )
+    result_two = runner.invoke(
+        cli,
+        [
+            "run",
+            str(model),
+            "--diagram",
+            "sppm",
+            "--orientation",
+            "lr",
+            "--render-to",
+            str(svg_two),
+        ],
+    )
+
+    assert result_one.exit_code == 0
+    assert result_two.exit_code == 0
+    assert _decision_label_positions(svg_one) == _decision_label_positions(svg_two)
+
+
+def _decision_label_positions(svg_path) -> dict[str, tuple[str, str]]:
+    root = ET.parse(svg_path).getroot()
+    positions: dict[str, tuple[str, str]] = {}
+    for text in root.findall(".//{*}text"):
+        label = "".join(text.itertext()).strip()
+        if label not in {"yes", "no"}:
+            continue
+        x = text.attrib.get("x")
+        y = text.attrib.get("y")
+        if x is None or y is None:
+            continue
+        positions[label] = (x, y)
+    return positions
