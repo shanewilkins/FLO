@@ -14,6 +14,10 @@ from flo.compiler.ir.enums import ProcessValueClass
 from flo.schema.subprocess_refs import resolve_subprocess_detail_map_reference
 
 from ._autoformat_wrap import WrapPlan
+from ._sppm_metadata_schema import (
+    get_metadata_value_class,
+    get_metadata_wait_time_minutes,
+)
 from ._graphviz_dot_common import _escape
 from ._sppm_label_html import _sppm_html_label
 from ._sppm_render_data import SppmRenderNode
@@ -193,7 +197,7 @@ def _render_sppm_task_node(
 
 
 def _resolve_sppm_value_style(*, metadata: dict[str, Any], theme: SppmTheme) -> SppmNodeStyle:
-    value_class_raw = str(metadata.get("value_class") or "")
+    value_class_raw = get_metadata_value_class(metadata)
     try:
         value_class = ProcessValueClass(value_class_raw) if value_class_raw else None
     except ValueError:
@@ -208,14 +212,5 @@ def _append_chunk_group(*, attrs: list[str], node_id: str, wrap_plan: WrapPlan) 
 
 
 def _get_wait_time_minutes(node: SppmRenderNode) -> float:
-    metadata = node.get("metadata") or {}
-    wait_time_spec = metadata.get("wait_time")
-    if not isinstance(wait_time_spec, dict):
-        return 0.0
-    value = wait_time_spec.get("value")
-    if value is None:
-        return 0.0
-    try:
-        return float(value)
-    except (ValueError, TypeError):
-        return 0.0
+    metadata = node.get("metadata")
+    return get_metadata_wait_time_minutes(metadata)

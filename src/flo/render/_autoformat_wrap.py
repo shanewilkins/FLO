@@ -14,6 +14,12 @@ from typing import Any, Literal
 
 from .layout_core import NodeMeasure, PlacementConstraints, PlacementPlan, build_placement_plan
 from .options import RenderOptions
+from ._sppm_metadata_schema import (
+    get_metadata_description,
+    get_metadata_cycle_time,
+    get_metadata_wait_time_minutes,
+    get_metadata_changeover_time,
+)
 from ._sppm_text import apply_density_filter, abbreviate_workers, format_text_field, normalize_space
 
 _DEFAULT_NODE_WIDTH_PX = 220
@@ -492,30 +498,33 @@ def _estimate_sppm_node_width_px(*, node: dict[str, Any], kind: str, options: Re
     if kind in {"start", "end"}:
         return max(120, min(260, 90 + len(normalize_space(name)) * 7))
 
-    metadata: dict[str, Any] = node.get("metadata") or {}
+    metadata: dict[str, Any] | None = node.get("metadata")
     workers: list[Any] = node.get("workers") or []
     note = str(node.get("note") or "")
-    description = normalize_space(str(metadata.get("description") or ""))
+    description = normalize_space(get_metadata_description(metadata))
     header = _format_sppm_width_field(
         name,
         max_len=options.sppm_max_label_step_name,
         options=options,
     )
-    ct_line = _format_time_width_field(
+    ct_spec = get_metadata_cycle_time(metadata)
+    ct_line = _format_time_width_field_from_spec(
         prefix="CT",
-        value=metadata.get("cycle_time"),
+        spec=ct_spec,
         suffix="",
         options=options,
     )
-    wt_line = _format_time_width_field(
+    wt_minutes = get_metadata_wait_time_minutes(metadata)
+    wt_line = _format_time_width_field_from_minutes(
         prefix="WT",
-        value=metadata.get("wait_time"),
+        minutes=wt_minutes,
         suffix=" wait",
         options=options,
     )
-    co_line = _format_time_width_field(
+    co_spec = get_metadata_changeover_time(metadata)
+    co_line = _format_time_width_field_from_spec(
         prefix="CO",
-        value=metadata.get("changeover_time"),
+        spec=co_spec,
         suffix=" changeover",
         options=options,
         require_positive=True,
@@ -547,29 +556,48 @@ def _format_sppm_width_field(raw: str, *, max_len: int | None, options: RenderOp
     )
 
 
-def _format_time_width_field(
+def _format_time_width_field_from_spec(
     *,
     prefix: str,
-    value: Any,
+    spec: Any,
     suffix: str,
     options: RenderOptions,
     require_positive: bool = False,
 ) -> str:
-    if not isinstance(value, dict) or value.get("value") is None:
+    """Format time field from SppmMetadataValue (cycle_time, changeover_time)."""
+    if spec is None:
         return ""
-    if require_positive:
-        try:
-            if float(value["value"]) <= 0:
-                return ""
-        except (ValueError, TypeError):
-            return ""
-    unit = value.get("unit", "min")
+    if require_positive and spec.numeric_value <= 0:
+        return ""
+    unit = spec.unit or "min"
     return _format_sppm_width_field(
-        f"{prefix}: {value['value']} {unit}{suffix}",
+        f"{prefix}: {spec.value} {unit}{suffix}",
         max_len=options.sppm_max_label_ctwt,
         options=options,
     )
 
+
+
+def _format_time_width_field_from_minutes(
+    *,
+    prefix: str,
+    minutes: Any,
+    suffix: str,
+    options: RenderOptions,
+    require_positive: bool = False,
+) -> str:
+    """Format time field from numeric minutes (wait_time)."""
+    if not isinstance(minutes, (int, float)) or minutes <= 0:
+        return ""
+    if require_positive and minutes <= 0:
+        return ""
+    # Format as int if it's a whole number, otherwise as float
+    value_str = str(int(minutes)) if isinstance(minutes, float) and minutes.is_integer() else str(minutes)
+    return _format_sppm_width_field(
+        f"{prefix}: {value_str} min{suffix}",
+        max_len=options.sppm_max_label_ctwt,
+        options=options,
+    )
 
 def _format_workers_width_field(*, workers: list[Any], options: RenderOptions) -> str:
     if not workers:

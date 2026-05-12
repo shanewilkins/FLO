@@ -1,24 +1,25 @@
 ---
 id: 5fbc5f50
 title: Reduce dict marshalling between canonical IR and SPPM rendering
-headline: ''
+headline: The SPPM renderer currently re-shapes typed IR objects into ad hoc dictionaries
+  before doing most of
 priority: medium
-status: todo
+status: closed
 archived: false
 issue_type: other
 milestone: codebase-cleanup
 labels: []
 remote_ids: {}
 created: '2026-05-06T23:35:36.196857+00:00'
-updated: '2026-05-06T23:35:36.196859+00:00'
+updated: '2026-05-12T12:48:47.083386+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
 depends_on: []
 blocks: []
-actual_start_date: null
+actual_start_date: '2026-05-12T12:40:25.381823+00:00'
 actual_end_date: null
-progress_percentage: null
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null

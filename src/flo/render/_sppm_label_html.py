@@ -7,6 +7,12 @@ from typing import Any
 
 from flo.schema.subprocess_refs import resolve_subprocess_detail_map_reference
 
+from ._sppm_metadata_schema import (
+    get_metadata_description,
+    get_metadata_cycle_time,
+    get_metadata_wait_time_minutes,
+    get_metadata_changeover_time,
+)
 from ._sppm_text import apply_density_filter, abbreviate_workers, format_text_field, normalize_space
 from ._sppm_themes import SppmNodeStyle
 from .options import RenderOptions
@@ -21,13 +27,31 @@ _SPPM_WORKERS_SOFT_WRAP = 36
 def _format_time_line(
     value: Any, prefix: str, suffix: str, options: RenderOptions, *, require_positive: bool = False
 ) -> str:
-    """Format a CT or WT time metric line; returns empty string when value is absent."""
-    if not isinstance(value, dict) or value.get("value") is None:
+    """Format a CT or WT time metric line; returns empty string when value is absent or invalid.
+    
+    Args:
+        value: Either SppmMetadataValue (for cycle/changeover times) or numeric (for wait_time).
+    """
+    if value is None:
         return ""
-    if require_positive and float(value["value"]) <= 0:
+    # Handle wait_time which is numeric (int or float) from get_metadata_wait_time_minutes
+    if isinstance(value, (int, float)):
+        if require_positive and value <= 0:
+            return ""
+        # Format as int if it's a whole number, otherwise as float
+        value_str = str(int(value)) if isinstance(value, float) and value.is_integer() else str(value)
+        return format_text_field(
+            f"{prefix}: {value_str} min{suffix}",
+            max_len=options.sppm_max_label_ctwt,
+            wrap_strategy=options.sppm_wrap_strategy,
+            truncation_policy=options.sppm_truncation_policy,
+            html_break="\n",
+        )
+    # Handle SppmMetadataValue (cycle_time, changeover_time)
+    if require_positive and value.numeric_value <= 0:
         return ""
     return format_text_field(
-        f"{prefix}: {value['value']} {value.get('unit', 'min')}{suffix}",
+        f"{prefix}: {value.value} {value.unit or 'min'}{suffix}",
         max_len=options.sppm_max_label_ctwt,
         wrap_strategy=options.sppm_wrap_strategy,
         truncation_policy=options.sppm_truncation_policy,
@@ -63,12 +87,13 @@ def _build_label_metric_lines(
 ) -> tuple[str, str, str, str, str, str]:
     """Return formatted description, metric, worker, and note lines."""
     description = _soft_wrap_text(
-        normalize_space(str(metadata.get("description") or "")),
+        normalize_space(get_metadata_description(metadata)),
         width=_SPPM_DESCRIPTION_SOFT_WRAP,
     )
-    ct_line = _format_time_line(metadata.get("cycle_time"), "CT", "", options)
-    wt_line = _format_time_line(metadata.get("wait_time"), "WT", " wait", options, require_positive=True)
-    co_line = _format_time_line(metadata.get("changeover_time"), "CO", " changeover", options, require_positive=True)
+    ct_line = _format_time_line(get_metadata_cycle_time(metadata), "CT", "", options)
+    wt_minutes = get_metadata_wait_time_minutes(metadata)
+    wt_line = _format_time_line(wt_minutes, "WT", " wait", options, require_positive=True)
+    co_line = _format_time_line(get_metadata_changeover_time(metadata), "CO", " changeover", options, require_positive=True)
     workers_line = _format_workers_line(workers, options)
     notes_line = f"Note: {normalize_space(note)}" if note and getattr(options, "show_notes", False) else ""
     return description, ct_line, workers_line, wt_line, co_line, notes_line
