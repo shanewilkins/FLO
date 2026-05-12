@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from flo.schema.subprocess_refs import iter_subprocess_detail_map_reference_values
+
 from .models import IR
-from .subprocess_refs import iter_subprocess_detail_map_reference_values
 from flo.services.errors import ValidationError
 
 

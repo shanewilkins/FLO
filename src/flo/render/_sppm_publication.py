@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from flo.compiler.ir.subprocess_refs import resolve_subprocess_detail_map_reference
+from flo.schema.subprocess_refs import resolve_subprocess_detail_map_reference
 from flo.services.errors import RenderError
 
 from ._process_header import build_process_header_rows, extract_process_header_context

@@ -10,8 +10,8 @@ from __future__ import annotations
 from html import escape as html_escape
 from typing import Any
 
-from flo.compiler.ir.subprocess_refs import resolve_subprocess_detail_map_reference
 from flo.compiler.ir.enums import ProcessValueClass
+from flo.schema.subprocess_refs import resolve_subprocess_detail_map_reference
 
 from ._autoformat_wrap import WrapPlan
 from ._graphviz_dot_common import _escape

@@ -5,7 +5,7 @@ from __future__ import annotations
 import textwrap
 from typing import Any
 
-from flo.compiler.ir.subprocess_refs import resolve_subprocess_detail_map_reference
+from flo.schema.subprocess_refs import resolve_subprocess_detail_map_reference
 
 from ._sppm_text import apply_density_filter, abbreviate_workers, format_text_field, normalize_space
 from ._sppm_themes import SppmNodeStyle

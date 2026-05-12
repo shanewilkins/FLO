@@ -189,6 +189,24 @@ def test_sppm_subprocess_nodes_include_marker_and_detail_map_reference():
     assert "Detail map: SP-01" in out
 
 
+def test_sppm_subprocess_nodes_resolve_detail_map_fallback_keys():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "prep",
+                "kind": "subprocess",
+                "name": "Prep",
+                "metadata": {"detail_map_label": "SP-LABEL"},
+            }
+        ],
+        "edges": [],
+    }
+
+    out = render_dot(ir_like, options={"diagram": "sppm"})
+
+    assert "Detail map: SP-LABEL" in out
+
+
 def test_sppm_renders_process_title_and_header_metadata():
     ir_like = {
         "process": {

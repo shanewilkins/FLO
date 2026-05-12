@@ -1,24 +1,25 @@
 ---
 id: 47ad9c62
 title: Move subprocess detail-map handling to a shared domain seam
-headline: ''
+headline: Renderer code currently imports subprocess detail-map reference helpers
+  from a compiler-internal mod
 priority: high
-status: todo
+status: closed
 archived: false
 issue_type: other
 milestone: codebase-cleanup
 labels: []
 remote_ids: {}
 created: '2026-05-06T23:35:34.550974+00:00'
-updated: '2026-05-06T23:35:34.550977+00:00'
+updated: '2026-05-12T12:31:13.992965+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
 depends_on: []
 blocks: []
-actual_start_date: null
+actual_start_date: '2026-05-12T12:24:55.277958+00:00'
 actual_end_date: null
-progress_percentage: null
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null
