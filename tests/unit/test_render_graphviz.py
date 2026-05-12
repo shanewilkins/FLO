@@ -512,6 +512,8 @@ def test_spaghetti_renders_material_and_people_channels_by_default():
     assert 'xlabel="P 1x"' in out
     assert 'taillabel="items: flour"' in out
     assert 'taillabel="workers: assistant_baker"' in out
+    assert 'labeldistance="0.7"' in out
+    assert 'labelangle="20"' in out
 
 
 def test_spaghetti_people_channel_filters_material_routes():

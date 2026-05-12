@@ -1,5 +1,6 @@
 from flo.render._callout_layout import (
     build_edge_callout_attrs,
+    build_edge_text_callout_attrs,
     format_callout_table_html,
     format_callout_text_row,
     resolve_callout_near_source,
@@ -65,3 +66,19 @@ def test_resolve_callout_near_source_allows_center_when_no_overlap_signal():
         prefer_near_source=False,
         edge_attrs=('constraint=false',),
     ) is False
+
+
+def test_build_edge_text_callout_attrs_near_source_adds_offsets():
+    attrs = build_edge_text_callout_attrs(text="workers: assistant_baker", near_source=True)
+
+    assert attrs == (
+        'taillabel="workers: assistant_baker"',
+        'labeldistance="0.7"',
+        'labelangle="20"',
+    )
+
+
+def test_build_edge_text_callout_attrs_center_uses_xlabel_only():
+    attrs = build_edge_text_callout_attrs(text="workers: assistant_baker", near_source=False)
+
+    assert attrs == ('xlabel="workers: assistant_baker"',)

@@ -27,6 +27,23 @@ def build_edge_callout_attrs(
     return (f"xlabel=<{table_html}>",)
 
 
+def build_edge_text_callout_attrs(
+    *,
+    text: str,
+    near_source: bool,
+    source_label_distance: str = "0.7",
+    source_label_angle: str = "20",
+) -> tuple[str, ...]:
+    """Return DOT attrs for a plain-text edge callout label."""
+    if near_source:
+        return (
+            f'taillabel="{text}"',
+            f'labeldistance="{source_label_distance}"',
+            f'labelangle="{source_label_angle}"',
+        )
+    return (f'xlabel="{text}"',)
+
+
 def resolve_callout_near_source(*, prefer_near_source: bool, edge_attrs: tuple[str, ...] | list[str]) -> bool:
     """Return whether a callout should be placed near source to reduce overlap.
 

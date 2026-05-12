@@ -15,6 +15,7 @@ from flo.compiler.analysis import (
 )
 
 from .options import RenderOptions
+from ._callout_layout import build_edge_text_callout_attrs, resolve_callout_near_source
 
 
 def render_spaghetti_dot(process: Dict[str, Any] | Any, options: RenderOptions | None = None) -> str:
@@ -425,9 +426,15 @@ def _spaghetti_route_edge_line(route: dict[str, Any], options: RenderOptions, ch
         edge_attrs.append(distance_label)
 
     if options.detail == "verbose":
-        taillabel = _spaghetti_route_entities_taillabel(route=route, channel=channel)
-        if taillabel is not None:
-            edge_attrs.append(taillabel)
+        entities_callout = _spaghetti_route_entities_callout_text(route=route, channel=channel)
+        if entities_callout is not None:
+            near_source = resolve_callout_near_source(prefer_near_source=False, edge_attrs=edge_attrs)
+            edge_attrs.extend(
+                build_edge_text_callout_attrs(
+                    text=_escape(entities_callout),
+                    near_source=near_source,
+                )
+            )
 
     return f'  "{_escape(source)}" -> "{_escape(target)}" [{", ".join(edge_attrs)}];'
 
@@ -443,13 +450,20 @@ def _spaghetti_distance_label(route: dict[str, Any]) -> str | None:
     return f'label="{float(value):.2f} {str(unit)}"'
 
 
-def _spaghetti_route_entities_taillabel(route: dict[str, Any], channel: str) -> str | None:
+def _spaghetti_route_entities_callout_text(route: dict[str, Any], channel: str) -> str | None:
     entities_key = "items" if channel == "material" else "workers"
     entities = route.get(entities_key) if isinstance(route.get(entities_key), list) else []
     if not entities:
         return None
     label_prefix = "items" if channel == "material" else "workers"
-    return f'taillabel="{_escape(label_prefix + ": " + ", ".join(str(item) for item in entities))}"'
+    return label_prefix + ": " + ", ".join(str(item) for item in entities)
+
+
+def _spaghetti_route_entities_taillabel(route: dict[str, Any], channel: str) -> str | None:
+    text = _spaghetti_route_entities_callout_text(route, channel)
+    if text is None:
+        return None
+    return f'taillabel="{_escape(text)}"'
 
 
 def _spaghetti_channels(options: RenderOptions) -> tuple[bool, bool]:

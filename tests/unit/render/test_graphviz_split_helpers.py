@@ -259,7 +259,13 @@ def test_spaghetti_route_helpers_cover_missing_and_worker_fallbacks():
     ) is None
     assert spaghetti._spaghetti_distance_label({"distance": {"value": "far", "unit": "m"}}) is None
     assert spaghetti._spaghetti_route_entities_taillabel({"workers": []}, channel="people") is None
+    assert spaghetti._spaghetti_route_entities_callout_text({"workers": []}, channel="people") is None
     assert spaghetti._spaghetti_primary_worker({"workers": ["   "]}) is None
+
+    assert spaghetti._spaghetti_route_entities_callout_text(
+        {"workers": ["assistant_baker"]},
+        channel="people",
+    ) == "workers: assistant_baker"
 
     edge_attrs = spaghetti._spaghetti_channel_edge_attrs(
         channel="people",
