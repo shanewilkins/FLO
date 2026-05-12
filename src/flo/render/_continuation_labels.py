@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from html import escape as html_escape
 
 from ._autoformat_wrap import WrapPlan
+from ._callout_layout import format_callout_table_html, format_callout_text_row
 
 
 def build_continuation_label_attrs(
@@ -42,13 +42,10 @@ def format_continuation_html_label(*, text: str, is_secondary: bool) -> str:
     """Return styled HTML-like Graphviz label markup for a continuation."""
     color = "#90A4AE" if is_secondary else "#455A64"
     point_size = "9" if is_secondary else "10"
-    font_open = f'<FONT POINT-SIZE="{point_size}" COLOR="{color}">'
-    font_close = "</FONT>"
-    if not is_secondary:
-        font_open += "<B>"
-        font_close = "</B>" + font_close
-    return (
-        '<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" '
-        f'COLOR="{color}" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT">'
-        f"{font_open}{html_escape(text)}{font_close}</TD></TR></TABLE>"
+    row_html = format_callout_text_row(
+        text=text,
+        point_size=point_size,
+        text_color=color,
+        bold=not is_secondary,
     )
+    return format_callout_table_html(row_html=row_html, border_color=color)

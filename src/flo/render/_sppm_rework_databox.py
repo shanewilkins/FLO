@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
-from html import escape as html_escape
 import textwrap
+
+from ._callout_layout import (
+    build_edge_callout_attrs,
+    format_callout_table_html,
+    format_callout_text_row,
+)
 
 
 def build_sppm_rework_data_box_attrs(metadata: object, *, is_branch_out: bool) -> tuple[str, ...] | None:
@@ -33,27 +38,23 @@ def build_sppm_rework_data_box_attrs(metadata: object, *, is_branch_out: bool) -
         wrapped = textwrap.wrap(line, width=24, break_long_words=False, break_on_hyphens=False)
         wrapped_lines.extend(wrapped or [line])
 
-    rows = "".join(
-        f'<TR><TD ALIGN="LEFT" BALIGN="LEFT"><FONT POINT-SIZE="10">{html_escape(line)}</FONT></TD></TR>'
+    row_html = "".join(
+        format_callout_text_row(
+            text=line,
+            point_size="10",
+            text_color="#000000",
+            align="LEFT",
+            balign="LEFT",
+        )
         for line in wrapped_lines
     )
-    if is_branch_out:
-        label_attr = (
-            'taillabel=<'
-            '<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" '
-            'COLOR="#666666" BGCOLOR="#FFFFFF">'
-            f"{rows}"
-            "</TABLE>>"
-        )
-        return (label_attr, 'labeldistance="0.7"', 'labelangle="20"')
-    label_attr = (
-        'xlabel=<'
-        '<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" '
-        'COLOR="#666666" BGCOLOR="#FFFFFF">'
-        f"{rows}"
-        "</TABLE>>"
+    table_html = format_callout_table_html(
+        row_html=row_html,
+        border_color="#666666",
+        background_color="#FFFFFF",
+        cell_padding="3",
     )
-    return (label_attr,)
+    return build_edge_callout_attrs(table_html=table_html, near_source=is_branch_out)
 
 
 def _format_rework_metadata_value(key: str, value: object) -> str | None:
