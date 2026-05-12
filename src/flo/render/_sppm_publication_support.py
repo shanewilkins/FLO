@@ -24,7 +24,7 @@ from ._publication import (
     evaluate_publication_fallback,
 )
 from ._sppm_projection import SppmProjectionContext
-from ._sppm_text import normalize_space
+from ._sppm_text import format_text_field, normalize_space
 from .options import RenderOptions
 
 _DEFAULT_SPPM_PUBLICATION_WIDTH_PX = 1200
@@ -63,6 +63,13 @@ def _build_sppm_header_rows(
             extra_rows.append(("Readability Warning", diagnostic.message))
     extra_rows.append(("Nodes", str(len(nodes))))
     extra_rows.append(("Edges", str(len(edges))))
+    extra_rows = [
+        (
+            _format_sppm_publication_text(label, options=options, max_len=options.sppm_max_label_step_name),
+            _format_sppm_publication_text(value, options=options, max_len=options.sppm_max_label_step_name),
+        )
+        for label, value in extra_rows
+    ]
     return build_process_header_rows(context=context, extra_rows=extra_rows)
 
 
@@ -100,69 +107,96 @@ def _build_sppm_child_slots(
 
 def _build_sppm_footer_content(*, context: Any, options: RenderOptions) -> PublicationBandContent | None:
     metric_rows = [
-        *_footer_metric_rows_from_metadata(context.metadata),
-        *[(label, value) for label, value in options.sppm_footer_metrics],
+        *_footer_metric_rows_from_metadata(context.metadata, options=options),
+        *[_footer_metric_row(label=label, value=value, options=options) for label, value in options.sppm_footer_metrics],
     ]
+    metric_rows = [row for row in metric_rows if row is not None]
     notes = [
-        *_footer_notes_from_metadata(context.metadata),
-        *[normalize_space(note) for note in options.sppm_footer_notes if normalize_space(note)],
+        *_footer_notes_from_metadata(context.metadata, options=options),
+        *[
+            _format_sppm_publication_text(note, options=options, max_len=options.sppm_max_label_step_name)
+            for note in options.sppm_footer_notes
+            if normalize_space(note)
+        ],
     ]
+    notes = [note for note in notes if note]
     if not metric_rows and not notes:
         return None
     return PublicationBandContent(rows=tuple(metric_rows), notes=tuple(notes))
 
 
-def _footer_metric_rows_from_metadata(metadata: dict[str, Any]) -> list[tuple[str, str]]:
+def _footer_metric_rows_from_metadata(metadata: dict[str, Any], *, options: RenderOptions) -> list[tuple[str, str]]:
     raw_metrics = first_present_metadata_value(metadata, SPPM_FOOTER_METRIC_METADATA_KEYS)
     if isinstance(raw_metrics, dict):
-        return _footer_metric_rows_from_mapping(raw_metrics)
+        return _footer_metric_rows_from_mapping(raw_metrics, options=options)
     if isinstance(raw_metrics, (list, tuple)):
-        return _footer_metric_rows_from_sequence(raw_metrics)
+        return _footer_metric_rows_from_sequence(raw_metrics, options=options)
     return []
 
 
-def _footer_metric_rows_from_mapping(raw_metrics: dict[Any, Any]) -> list[tuple[str, str]]:
+def _footer_metric_rows_from_mapping(raw_metrics: dict[Any, Any], *, options: RenderOptions) -> list[tuple[str, str]]:
     rows: list[tuple[str, str]] = []
     for label, value in raw_metrics.items():
-        row = _footer_metric_row(label=label, value=value)
+        row = _footer_metric_row(label=label, value=value, options=options)
         if row is not None:
             rows.append(row)
     return rows
 
 
-def _footer_metric_rows_from_sequence(raw_metrics: list[Any] | tuple[Any, ...]) -> list[tuple[str, str]]:
+def _footer_metric_rows_from_sequence(
+    raw_metrics: list[Any] | tuple[Any, ...],
+    *,
+    options: RenderOptions,
+) -> list[tuple[str, str]]:
     rows: list[tuple[str, str]] = []
     for item in raw_metrics:
-        row = _footer_metric_row_from_item(item)
+        row = _footer_metric_row_from_item(item, options=options)
         if row is not None:
             rows.append(row)
     return rows
 
 
-def _footer_metric_row_from_item(item: Any) -> tuple[str, str] | None:
+def _footer_metric_row_from_item(item: Any, *, options: RenderOptions) -> tuple[str, str] | None:
     if isinstance(item, dict):
-        return _footer_metric_row(label=item.get("label"), value=item.get("value"))
+        return _footer_metric_row(label=item.get("label"), value=item.get("value"), options=options)
     if isinstance(item, (list, tuple)) and len(item) == 2:
-        return _footer_metric_row(label=item[0], value=item[1])
+        return _footer_metric_row(label=item[0], value=item[1], options=options)
     return None
 
 
-def _footer_metric_row(*, label: Any, value: Any) -> tuple[str, str] | None:
-    label_text = normalize_space(str(label or ""))
-    value_text = normalize_space(str(value or ""))
+def _footer_metric_row(*, label: Any, value: Any, options: RenderOptions) -> tuple[str, str] | None:
+    label_text = _format_sppm_publication_text(label, options=options, max_len=options.sppm_max_label_step_name)
+    value_text = _format_sppm_publication_text(value, options=options, max_len=options.sppm_max_label_ctwt)
     if not label_text or not value_text:
         return None
     return (label_text, value_text)
 
 
-def _footer_notes_from_metadata(metadata: dict[str, Any]) -> list[str]:
+def _footer_notes_from_metadata(metadata: dict[str, Any], *, options: RenderOptions) -> list[str]:
     raw_notes = first_present_metadata_value(metadata, SPPM_FOOTER_NOTES_METADATA_KEYS)
     if isinstance(raw_notes, str):
-        note = normalize_space(raw_notes)
+        note = _format_sppm_publication_text(raw_notes, options=options, max_len=options.sppm_max_label_step_name)
         return [note] if note else []
     if isinstance(raw_notes, (list, tuple)):
-        return [normalize_space(str(note)) for note in raw_notes if normalize_space(str(note))]
+        return [
+            _format_sppm_publication_text(note, options=options, max_len=options.sppm_max_label_step_name)
+            for note in raw_notes
+            if normalize_space(str(note))
+        ]
     return []
+
+
+def _format_sppm_publication_text(value: Any, *, options: RenderOptions, max_len: int | None) -> str:
+    text = normalize_space(str(value or ""))
+    if not text:
+        return ""
+    return format_text_field(
+        text,
+        max_len=max_len,
+        wrap_strategy=options.sppm_wrap_strategy,
+        truncation_policy=options.sppm_truncation_policy,
+        html_break=" ",
+    )
 
 
 def _build_sppm_publication_canvas(

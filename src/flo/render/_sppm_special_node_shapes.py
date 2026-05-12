@@ -11,23 +11,35 @@ from ._autoformat_wrap import WrapPlan
 from ._graphviz_dot_common import _escape
 from ._sppm_text import format_text_field, normalize_space
 from ._sppm_themes import SppmTheme
+from .options import RenderOptions
 
 _SPPM_QUEUE_TRIANGLE_WIDTH = 2.1  # inches
 _SPPM_QUEUE_TRIANGLE_HEIGHT = 3.0  # inches; almost as tall as rendered decision diamonds
 _SPPM_QUEUE_NAME_MAX_LEN = 14
 
 
-def render_sppm_queue_triangle(*, node: dict[str, Any], node_id: str, name: str, theme: SppmTheme, wrap_plan: WrapPlan) -> str:
+def render_sppm_queue_triangle(
+    *,
+    node: dict[str, Any],
+    node_id: str,
+    name: str,
+    options: RenderOptions,
+    theme: SppmTheme,
+    wrap_plan: WrapPlan,
+) -> str:
     """Render a queue marker as an upright fixed-size triangle with a metadata box below."""
     _ = theme
     queue_border = "#E65100"
     queue_label_bg = "#FFB74D"
     wait_time_min = _get_wait_time_minutes(node)
+    queue_max_len = _SPPM_QUEUE_NAME_MAX_LEN
+    if options.sppm_max_label_step_name is not None:
+        queue_max_len = min(queue_max_len, options.sppm_max_label_step_name)
     queue_name = format_text_field(
         normalize_space(name),
-        max_len=_SPPM_QUEUE_NAME_MAX_LEN,
-        wrap_strategy="balanced",
-        truncation_policy="ellipsis",
+        max_len=queue_max_len,
+        wrap_strategy=options.sppm_wrap_strategy,
+        truncation_policy=options.sppm_truncation_policy,
         html_break="\n",
     )
     label_lines = [queue_name if queue_name else "Q"]
@@ -57,11 +69,25 @@ def render_sppm_queue_triangle(*, node: dict[str, Any], node_id: str, name: str,
     return f'  "{_escape(node_id)}" [{", ".join(attrs)}];'
 
 
-def render_sppm_subprocess_node(*, node: dict[str, Any], node_id: str, name: str, wrap_plan: WrapPlan) -> str:
+def render_sppm_subprocess_node(
+    *,
+    node: dict[str, Any],
+    node_id: str,
+    name: str,
+    options: RenderOptions,
+    wrap_plan: WrapPlan,
+) -> str:
     """Render subprocesses as dotted oval containers with detail-map metadata below."""
     metadata: dict[str, Any] = node.get("metadata") or {}
     detail_map_ref = resolve_subprocess_detail_map_reference(node_id=node_id, metadata=metadata)
-    subprocess_label = f"{name}\\nSubprocess\\nDetail map: {detail_map_ref}"
+    name_label = format_text_field(
+        normalize_space(name),
+        max_len=options.sppm_max_label_step_name,
+        wrap_strategy=options.sppm_wrap_strategy,
+        truncation_policy=options.sppm_truncation_policy,
+        html_break="\\n",
+    )
+    subprocess_label = f"{name_label}\\nSubprocess\\nDetail map: {detail_map_ref}"
     attrs = [
         f'label="{_escape(subprocess_label)}"',
         "shape=ellipse",

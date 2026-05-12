@@ -1,0 +1,99 @@
+spec_version: "0.1"
+
+process:
+  id: sppm_long_label_stress
+  name: SPPM Long Label Stress Demonstration for Predictable Truncation Behavior
+  metadata:
+    footer_metrics:
+      Very Long Operational Throughput Metric Name: Exceptionally verbose value text for clipping checks
+    footer_notes:
+      - This footer note is intentionally long so truncation policy behavior is easy to inspect.
+
+steps:
+  - id: start
+    kind: start
+    name: Start
+
+  - id: intake
+    kind: task
+    name: Intake a customer request requiring extensive descriptive context for stress testing
+    workers:
+      - Primary Intake Coordinator
+      - Senior Quality Analyst
+    metadata:
+      value_class: RNVA
+      cycle_time:
+        value: 11
+        unit: min
+      wait_time:
+        value: 8
+        unit: min
+
+  - id: quality_gate
+    kind: decision
+    name: Should this request continue through the accelerated quality assurance gate?
+    outcomes:
+      yes: process_queue
+      no: rework
+
+  - id: process_queue
+    kind: queue
+    name: Exceptionally Long Dispatch Review Queue Label
+    metadata:
+      wait_time:
+        value: 19
+        unit: min
+
+  - id: process
+    kind: task
+    name: Perform the core service operation with full traceability markers attached
+    workers:
+      - Operations Specialist
+    metadata:
+      value_class: VA
+      cycle_time:
+        value: 14
+        unit: min
+
+  - id: rework
+    kind: task
+    name: Rework upstream intake details and route back for verification
+    workers:
+      - Intake Coordinator
+    metadata:
+      value_class: NVA
+      cycle_time:
+        value: 7
+        unit: min
+
+  - id: end
+    kind: end
+    name: End
+
+transitions:
+  - source: start
+    target: intake
+
+  - source: intake
+    target: quality_gate
+
+  - source: quality_gate
+    target: process_queue
+    outcome: Continue through quality gate with manual oversight path
+
+  - source: process_queue
+    target: process
+
+  - source: process
+    target: end
+
+  - source: quality_gate
+    target: rework
+    outcome: Return to intake and request revised package details immediately
+    edge_type: rework
+    rework: true
+
+  - source: rework
+    target: intake
+    edge_type: rework
+    rework: true

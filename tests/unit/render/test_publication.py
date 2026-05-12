@@ -258,7 +258,38 @@ def test_build_sppm_publication_plan_uses_shared_series_materialization_metadata
     assert page.page_id == "main-p1"
     assert page.metadata["page_number"] == 1
     assert page.metadata["page_count"] == 1
-    assert page.metadata["page_format"] is None
+
+
+def test_build_sppm_publication_plan_applies_footer_label_limits():
+    process = {
+        "process": {
+            "id": "wash_n_fold",
+            "name": "Wash n' Fold",
+            "metadata": {
+                "footer_metrics": {"Longest Metric Label": "Extremely verbose metric value"},
+                "footer_notes": ["Long footer note for publication readability validation"],
+            },
+        }
+    }
+
+    plan = build_sppm_publication_plan(
+        process=process,
+        options=RenderOptions.from_mapping(
+            {
+                "diagram": "sppm",
+                "sppm_max_label_step_name": 12,
+                "sppm_max_label_ctwt": 10,
+                "sppm_truncation_policy": "clip",
+            }
+        ),
+        nodes=[{"id": "start", "kind": "start", "name": "Start"}],
+        edges=[],
+    )
+
+    footer = plan.primary_series().pages[0].band("footer")
+    assert footer is not None
+    assert footer.content.rows == (("Longest Metr", "Extremely "),)
+    assert footer.content.notes == ("Long footer ",)
 
 
 def test_build_sppm_publication_plan_records_page_format_metadata():

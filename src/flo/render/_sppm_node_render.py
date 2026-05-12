@@ -20,6 +20,7 @@ from ._sppm_label_html import _sppm_html_label
 from ._sppm_render_data import SppmRenderNode
 from ._sppm_special_node_shapes import render_sppm_queue_triangle, render_sppm_subprocess_node
 from ._sppm_themes import SppmNodeStyle, SppmTheme
+from ._sppm_text import format_text_field
 from .options import RenderOptions
 
 _SPPM_DECISION_MIN_WIDTH = 1.64
@@ -51,11 +52,11 @@ def render_sppm_node(
     if kind in ("start", "end"):
         return [_render_sppm_start_end_node(node_id=node_id, name=name, theme=theme, wrap_plan=wrap_plan)]
     if kind == "decision":
-        return [_render_sppm_decision_node(node_id=node_id, name=name, theme=theme, wrap_plan=wrap_plan)]
+        return [_render_sppm_decision_node(node_id=node_id, name=name, options=options, theme=theme, wrap_plan=wrap_plan)]
     if kind == "queue":
-        return [render_sppm_queue_triangle(node=node, node_id=node_id, name=name, theme=theme, wrap_plan=wrap_plan)]
+        return [render_sppm_queue_triangle(node=node, node_id=node_id, name=name, options=options, theme=theme, wrap_plan=wrap_plan)]
     if kind == "subprocess":
-        return [render_sppm_subprocess_node(node=node, node_id=node_id, name=name, wrap_plan=wrap_plan)]
+        return [render_sppm_subprocess_node(node=node, node_id=node_id, name=name, options=options, wrap_plan=wrap_plan)]
 
     return [
         _render_sppm_task_node(
@@ -84,8 +85,21 @@ def _render_sppm_start_end_node(*, node_id: str, name: str, theme: SppmTheme, wr
     return f'  "{_escape(node_id)}" [{", ".join(attrs)}];'
 
 
-def _render_sppm_decision_node(*, node_id: str, name: str, theme: SppmTheme, wrap_plan: WrapPlan) -> str:
-    label = name
+def _render_sppm_decision_node(
+    *,
+    node_id: str,
+    name: str,
+    options: RenderOptions,
+    theme: SppmTheme,
+    wrap_plan: WrapPlan,
+) -> str:
+    label = format_text_field(
+        name,
+        max_len=options.sppm_max_label_step_name,
+        wrap_strategy=options.sppm_wrap_strategy,
+        truncation_policy=options.sppm_truncation_policy,
+        html_break="\\n",
+    )
     attrs = [
         f'label="{_escape(label)}"',
         "shape=diamond",

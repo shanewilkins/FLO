@@ -138,6 +138,30 @@ def test_sppm_decision_nodes_use_diamond_shape():
     assert 'color="#B28704"' in out
 
 
+def test_sppm_decision_name_uses_truncation_policy_for_long_text():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "decision", "kind": "decision", "name": "Approve customer escalation path now?"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "decision"},
+            {"source": "decision", "target": "end", "outcome": "yes"},
+        ],
+    }
+    out = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "sppm_max_label_step_name": 12,
+            "sppm_truncation_policy": "ellipsis",
+        },
+    )
+
+    assert '"decision" [label="Approve c...", shape=diamond' in out
+
+
 def test_sppm_decision_outcome_labels_use_neutral_fontcolor():
     ir_like = {
         "nodes": [
@@ -154,6 +178,30 @@ def test_sppm_decision_outcome_labels_use_neutral_fontcolor():
 
     assert 'xlabel="yes"' in out
     assert 'fontcolor="#455A64"' in out
+
+
+def test_sppm_decision_outcome_labels_follow_truncation_policy():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "decision", "kind": "decision", "name": "Approved?"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "decision"},
+            {"source": "decision", "target": "end", "outcome": "Route to manual quality gate"},
+        ],
+    }
+    out = render_dot(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "sppm_max_label_step_name": 10,
+            "sppm_truncation_policy": "clip",
+        },
+    )
+
+    assert 'xlabel="Route to m"' in out
 
 
 def test_sppm_task_cards_have_minimum_content_width():

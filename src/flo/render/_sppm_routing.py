@@ -48,6 +48,7 @@ from ._sppm_routing_support import (
     placement_for_routing,
     resolve_lane_id,
 )
+from ._sppm_text import format_text_field
 from .options import RenderOptions
 
 
@@ -185,7 +186,7 @@ def _build_sppm_edge_route(
     is_boundary = wrap_plan.active and (source, target) in wrap_plan.boundary_edges
     if is_boundary and not is_rework:
         edge_attrs.extend(["minlen=2", "penwidth=1.2"])
-    _append_non_rework_branch_label(edge_attrs=edge_attrs, edge=edge, is_rework=is_rework)
+    _append_non_rework_branch_label(edge_attrs=edge_attrs, edge=edge, is_rework=is_rework, options=options)
     resolved_ports = _resolved_ports(
         core_route=core_route,
         options=options,
@@ -244,12 +245,27 @@ def _base_sppm_edge_attrs(
     return edge_attrs
 
 
-def _append_non_rework_branch_label(*, edge_attrs: list[str], edge: dict[str, Any], is_rework: bool) -> None:
+def _append_non_rework_branch_label(
+    *,
+    edge_attrs: list[str],
+    edge: dict[str, Any],
+    is_rework: bool,
+    options: RenderOptions,
+) -> None:
     if is_rework or any(attr.startswith("xlabel=") for attr in edge_attrs):
         return
     branch_label = edge.get("outcome") or edge.get("label")
     if branch_label is not None:
-        edge_attrs.append(f'xlabel="{str(branch_label)}"')
+        label_text = format_text_field(
+            str(branch_label),
+            max_len=options.sppm_max_label_step_name,
+            wrap_strategy=options.sppm_wrap_strategy,
+            truncation_policy=options.sppm_truncation_policy,
+            html_break="\\n",
+        )
+        if not label_text:
+            return
+        edge_attrs.append(f'xlabel="{label_text}"')
         edge_attrs.append('fontcolor="#455A64"')
 
 

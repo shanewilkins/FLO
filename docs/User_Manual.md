@@ -709,6 +709,17 @@ SPPM preset/config defaults:
 - Precedence is: CLI flags > `diagrams.toml` explicit `[sppm]` keys >
   `diagrams.toml` preset overrides (`[sppm.presets.<profile>]`) > built-in profile defaults.
 
+SPPM label policy matrix:
+- Shared controls:
+  - `--sppm-wrap-strategy` selects wrapping behavior (`word`, `balanced`, `hard`).
+  - `--sppm-truncation-policy` selects overflow behavior (`ellipsis`, `clip`, `none`).
+- Surface mapping:
+  - Task node names, decision labels, subprocess titles, queue badges, decision/branch edge labels, and publication header/footer text all use `--sppm-max-label-step-name`.
+  - Worker-line text uses `--sppm-max-label-workers`.
+  - CT/WT metric lines and footer metric values use `--sppm-max-label-ctwt`.
+- Determinism:
+  - The same policy is applied consistently across these surfaces, so long labels behave predictably for each truncation mode.
+
 ### AI Quick Reference: Max Width and Compact Density
 
 Use this section for direct command recipes.
