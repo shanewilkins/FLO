@@ -405,24 +405,22 @@ def console_main(argv: list | None = None) -> int:
 
     Returns an integer exit code.
     """
-    from flo.services import get_services
     from flo.services.errors import EXIT_USAGE, map_exception_to_rc
-
-    services = get_services(verbose=False)
+    from flo.core._cli_contract import parse_cli_args
 
     if argv is None:
         argv = sys.argv[1:]
 
     try:
-        from flo.core.cli_args import parse_args  # local import to avoid cycle
-
-        path, command, options, services, _logger = parse_args(argv, services)
-        return _execute(path, command, dict(options or {}))
+        parsed = parse_cli_args(argv)
+        return _execute(parsed.path, parsed.command, parsed.options)
     except SystemExit as exc:
         code = getattr(exc, "code", EXIT_USAGE)
         return code if isinstance(code, int) else EXIT_USAGE
     except Exception as exc:
         rc, msg, internal = map_exception_to_rc(exc)
+        from flo.services import get_services
+        services = get_services(verbose=False)
         if internal:
             _emit_error(
                 services,
