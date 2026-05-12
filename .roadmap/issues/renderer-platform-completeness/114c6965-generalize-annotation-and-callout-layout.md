@@ -3,28 +3,31 @@ id: 114c6965
 title: Generalize annotation and callout layout
 headline: Extract shared placement rules for annotations, callouts, and nearby explanatory boxes.
 priority: medium
-status: in_progress
+status: done
 archived: false
 issue_type: feature
 milestone: renderer-platform-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-05T17:17:37.925760+00:00'
-updated: '2026-05-12T21:35:00+00:00'
+updated: '2026-05-12T21:29:25+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
 depends_on: []
 blocks: []
 actual_start_date: '2026-05-12T20:54:16+00:00'
-actual_end_date: null
-progress_percentage: 75
+actual_end_date: '2026-05-12T21:29:25+00:00'
+progress_percentage: 100
 handoff_notes: null
 previous_assignee: null
 handoff_date: null
 git_branches: []
-git_commits: []
-completed_date: null
+git_commits:
+- 6fe5389605266d9adf3dd8fb5191a760ce4608d3
+- aaca55aa06f7cdfd64cb6c4f4a796972bd8a5191
+- dc89466d82969fc602f66f68fe348076aeca57fc
+completed_date: '2026-05-12T21:29:25+00:00'
 comments: []
 github_issue: null
 ---
@@ -59,3 +62,5 @@ This issue is about placement mechanics, not about standardizing every annotatio
 - Added shared overlap-avoidance heuristic (`resolve_callout_near_source`) so callouts move off the center label slot when an edge already has `xlabel` content.
 - Wired overlap heuristic into SPPM rework data-box placement and added regression coverage for return-loop branch labels.
 - Adopted shared callout placement/offset behavior in a non-SPPM renderer path (`_graphviz_dot_spaghetti.py`) for verbose entity callouts, proving incremental cross-render reuse.
+- Added policy assertions that shared callout helpers are consumed from both SPPM and non-SPPM paths.
+- Added regression guard that flowchart output remains free of callout offset attrs, confirming unaffected non-callout renderers.

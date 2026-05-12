@@ -71,3 +71,13 @@ def test_shared_callout_layout_is_consumed_by_sppm_rework_path() -> None:
     )
 
     assert "._callout_layout" in rework_databox_imports
+
+
+def test_shared_callout_layout_is_consumed_by_non_sppm_path() -> None:
+    root = _find_repo_root()
+
+    spaghetti_imports = _import_modules_for_file(
+        root / "src" / "flo" / "render" / "_graphviz_dot_spaghetti.py"
+    )
+
+    assert "._callout_layout" in spaghetti_imports

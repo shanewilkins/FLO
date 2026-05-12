@@ -24,6 +24,21 @@ def test_flowchart_does_not_emit_lane_clusters_for_laned_nodes():
     assert "subgraph cluster_" not in out
 
 
+def test_flowchart_output_remains_free_of_callout_offset_attrs():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "task", "kind": "task", "name": "Task"},
+        ],
+        "edges": [{"source": "start", "target": "task"}],
+    }
+
+    out = render_dot(ir_like, options={"diagram": "flowchart"})
+
+    assert 'labeldistance="0.7"' not in out
+    assert 'labelangle="20"' not in out
+
+
 def test_swimlane_emits_lane_clusters_for_laned_nodes():
     ir_like = {
         "nodes": [
