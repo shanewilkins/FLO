@@ -237,6 +237,33 @@ def test_sppm_routing_plan_classifies_rework_return_contract_edges_separately():
     ]
 
 
+def test_sppm_routing_plan_collects_decision_outcome_label_contract_edges():
+    nodes = [
+        {"id": "decision", "kind": "decision", "name": "Valid?", "metadata": {}},
+        {"id": "approve", "kind": "task", "name": "Approve", "metadata": {}},
+        {"id": "rework", "kind": "task", "name": "Rework", "metadata": {}},
+    ]
+    edges = [
+        {"source": "decision", "target": "approve", "outcome": "yes"},
+        {"source": "decision", "target": "rework", "outcome": "no", "edge_type": "rework", "rework": True},
+    ]
+    options = RenderOptions(diagram="sppm")
+
+    routing_plan = build_sppm_routing_plan(
+        nodes=nodes,
+        edges=edges,
+        options=options,
+        step_numbering={"decision": 1, "approve": 2, "rework": 3},
+        wrap_plan=build_wrap_plan([], options, planner="chunked"),
+    )
+
+    contract = routing_plan.svg_postprocess_contract
+    assert len(contract.decision_outcome_label_edges) == 2
+    pairs = {(edge.source_id, edge.target_id) for edge in contract.decision_outcome_label_edges}
+    assert ("decision", "approve") in pairs
+    assert ("__sppm_rework_corridor_decision_rework", "rework") in pairs
+
+
 def _assert_lr_boundary_route(route) -> None:
     _assert_lr_boundary_route_layout(route)
     _assert_lr_boundary_route_links(route)

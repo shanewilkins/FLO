@@ -192,7 +192,11 @@ def build_sppm_routing_plan(
         routes[(source, target)] = route
 
     # Build postprocess contract for SVG rewrites
-    contract = build_svg_postprocess_contract(routes=routes, wrap_active=wrap_plan.active)
+    contract = build_svg_postprocess_contract(
+        routes=routes,
+        wrap_active=wrap_plan.active,
+        node_kinds=node_kinds_by_id,
+    )
     return SppmRoutingPlan(
         routes=routes,
         corridor_plan=corridor_plan,

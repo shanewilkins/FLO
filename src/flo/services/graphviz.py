@@ -32,6 +32,9 @@ from flo.services._graphviz_direct_midpoint import (
     _postprocess_direct_midpoint_edges_svg,
     _postprocess_queue_baseline_alignment_svg,
 )
+from flo.services._graphviz_decision_labels import (
+    postprocess_sppm_decision_outcome_labels_svg,
+)
 from flo.services.errors import RenderError
 
 if TYPE_CHECKING:
@@ -105,6 +108,7 @@ def render_dot_to_file(
         _postprocess_sppm_return_loop_edges_svg(dot=dot, output_path=svg_path, contract=sppm_contract)
         _postprocess_sppm_branch_edges_svg(dot=dot, output_path=svg_path, contract=sppm_contract)
         _postprocess_sppm_rework_labels_svg(dot=dot, output_path=svg_path, contract=sppm_contract)
+        postprocess_sppm_decision_outcome_labels_svg(output_path=svg_path, contract=sppm_contract)
         _postprocess_wrapped_sppm_svg(dot=dot, output_path=svg_path, contract=sppm_contract)
         _postprocess_queue_baseline_alignment_svg(output_path=svg_path)
         _postprocess_direct_midpoint_edges_svg(output_path=svg_path)
