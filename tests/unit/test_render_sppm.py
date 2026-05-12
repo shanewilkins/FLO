@@ -264,7 +264,47 @@ def test_sppm_changeover_time_shown_in_node_info_box():
         "edges": [{"source": "a", "target": "b"}],
     }
     out = render_dot(ir_like, options={"diagram": "sppm"})
-    assert "CO: 6 min changeover" in out
+    assert "CO: 6 min crossover" in out
+
+
+def test_sppm_crossover_time_precedence_prefers_canonical_field_over_legacy_alias():
+    ir_like = {
+        "nodes": [
+            {"id": "a", "kind": "task", "name": "A", "metadata": {}},
+            {
+                "id": "b",
+                "kind": "task",
+                "name": "B",
+                "metadata": {
+                    "crossover_time": {"value": 4, "unit": "min"},
+                    "changeover_time": {"value": 9, "unit": "min"},
+                },
+            },
+        ],
+        "edges": [{"source": "a", "target": "b"}],
+    }
+    out = render_dot(ir_like, options={"diagram": "sppm"})
+
+    assert "CO: 4 min crossover" in out
+    assert "CO: 9 min crossover" not in out
+
+
+def test_sppm_transfer_time_alias_renders_as_crossover_metric():
+    ir_like = {
+        "nodes": [
+            {"id": "a", "kind": "task", "name": "A", "metadata": {}},
+            {
+                "id": "b",
+                "kind": "task",
+                "name": "B",
+                "metadata": {"transfer_time": {"value": 5, "unit": "min"}},
+            },
+        ],
+        "edges": [{"source": "a", "target": "b"}],
+    }
+    out = render_dot(ir_like, options={"diagram": "sppm"})
+
+    assert "CO: 5 min crossover" in out
 
 
 def test_sppm_workers_omitted_from_start_end_labels():
@@ -411,7 +451,7 @@ def test_sppm_compact_density_includes_changeover_time():
         "edges": [],
     }
     out = render_dot(ir_like, options={"diagram": "sppm", "sppm_label_density": "compact"})
-    assert "CT: 12 min | WT: 3 min wait | CO: 6 min changeover" in out
+    assert "CT: 12 min | WT: 3 min wait | CO: 6 min crossover" in out
 
 
 def test_sppm_max_step_name_truncates_with_ellipsis_policy():

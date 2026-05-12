@@ -11,7 +11,7 @@ from ._sppm_metadata_schema import (
     get_metadata_description,
     get_metadata_cycle_time,
     get_metadata_wait_time_minutes,
-    get_metadata_changeover_time,
+    get_metadata_crossover_time,
 )
 from ._sppm_text import apply_density_filter, abbreviate_workers, format_text_field, normalize_space
 from ._sppm_themes import SppmNodeStyle
@@ -93,7 +93,7 @@ def _build_label_metric_lines(
     ct_line = _format_time_line(get_metadata_cycle_time(metadata), "CT", "", options)
     wt_minutes = get_metadata_wait_time_minutes(metadata)
     wt_line = _format_time_line(wt_minutes, "WT", " wait", options, require_positive=True)
-    co_line = _format_time_line(get_metadata_changeover_time(metadata), "CO", " changeover", options, require_positive=True)
+    co_line = _format_time_line(get_metadata_crossover_time(metadata), "CO", " crossover", options, require_positive=True)
     workers_line = _format_workers_line(workers, options)
     notes_line = f"Note: {normalize_space(note)}" if note and getattr(options, "show_notes", False) else ""
     return description, ct_line, workers_line, wt_line, co_line, notes_line

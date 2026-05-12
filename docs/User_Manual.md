@@ -720,6 +720,17 @@ SPPM label policy matrix:
 - Determinism:
   - The same policy is applied consistently across these surfaces, so long labels behave predictably for each truncation mode.
 
+SPPM time semantics (waiting vs crossover):
+- Waiting time (`wait_time`) is queue/delay time and renders as `WT`.
+- Crossover time is transfer/changeover time and renders as `CO`.
+- Canonical crossover metadata key precedence is:
+  - `crossover_time`
+  - `transfer_time`
+  - `changeover_time` (legacy alias)
+- Footer metric policy should keep these distinct when both are present, for example:
+  - `Waiting Time: 9 min`
+  - `Crossover Time: 2 min`
+
 ### AI Quick Reference: Max Width and Compact Density
 
 Use this section for direct command recipes.

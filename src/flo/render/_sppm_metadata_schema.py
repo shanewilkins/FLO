@@ -17,6 +17,7 @@ __all__ = [
     "get_metadata_value_class",
     "get_metadata_wait_time_minutes",
     "get_metadata_cycle_time",
+    "get_metadata_crossover_time",
     "get_metadata_changeover_time",
     "get_metadata_description",
     "get_metadata_field",
@@ -101,10 +102,25 @@ def get_metadata_cycle_time(metadata: dict[str, Any] | None) -> SppmMetadataValu
     return _parse_time_spec(time_spec)
 
 
+def get_metadata_crossover_time(metadata: dict[str, Any] | None) -> SppmMetadataValue | None:
+    """Extract crossover/transfer time using canonical precedence.
+
+    Precedence order:
+    1. ``crossover_time``
+    2. ``transfer_time``
+    3. ``changeover_time`` (legacy alias)
+    """
+    for field_name in ("crossover_time", "transfer_time", "changeover_time"):
+        time_spec = get_metadata_field(metadata, field_name, expected_type=dict)
+        parsed = _parse_time_spec(time_spec)
+        if parsed is not None:
+            return parsed
+    return None
+
+
 def get_metadata_changeover_time(metadata: dict[str, Any] | None) -> SppmMetadataValue | None:
-    """Extract changeover_time from metadata as SppmMetadataValue, or None if absent."""
-    time_spec = get_metadata_field(metadata, "changeover_time", expected_type=dict)
-    return _parse_time_spec(time_spec)
+    """Backward-compatible alias for crossover/transfer time extraction."""
+    return get_metadata_crossover_time(metadata)
 
 
 def get_metadata_description(metadata: dict[str, Any] | None) -> str:

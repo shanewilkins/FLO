@@ -18,7 +18,7 @@ from ._sppm_metadata_schema import (
     get_metadata_description,
     get_metadata_cycle_time,
     get_metadata_wait_time_minutes,
-    get_metadata_changeover_time,
+    get_metadata_crossover_time,
 )
 from ._sppm_text import apply_density_filter, abbreviate_workers, format_text_field, normalize_space
 
@@ -521,11 +521,11 @@ def _estimate_sppm_node_width_px(*, node: dict[str, Any], kind: str, options: Re
         suffix=" wait",
         options=options,
     )
-    co_spec = get_metadata_changeover_time(metadata)
+    co_spec = get_metadata_crossover_time(metadata)
     co_line = _format_time_width_field_from_spec(
         prefix="CO",
         spec=co_spec,
-        suffix=" changeover",
+        suffix=" crossover",
         options=options,
         require_positive=True,
     )

@@ -103,6 +103,33 @@ def test_sppm_footer_band_renders_metrics_and_render_time_inputs():
     assert "Draft for review" in out
 
 
+def test_sppm_footer_band_preserves_waiting_vs_crossover_metric_distinction():
+    process = {
+        "process": {
+            "id": "ops_review",
+            "name": "Ops Review",
+            "metadata": {
+                "footer_metrics": {
+                    "Waiting Time": "9 min",
+                    "Crossover Time": "2 min",
+                },
+            },
+        },
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [{"source": "start", "target": "end"}],
+    }
+
+    out = render_dot(process, options={"diagram": "sppm"})
+
+    assert "Waiting Time:" in out
+    assert "9 min" in out
+    assert "Crossover Time:" in out
+    assert "2 min" in out
+
+
 def test_sppm_footer_band_renders_legend_and_caption_alias_inputs():
     process = {
         "process": {
