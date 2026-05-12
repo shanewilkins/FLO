@@ -7,15 +7,14 @@ be detected before Graphviz turns the plan into geometry.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from html import escape as html_escape
-import textwrap
 from typing import Any
 
 from ._autoformat_wrap import WrapPlan, wrap_chunk_exit_anchor_id
 from ._sppm_continuation_labels import (
     build_sppm_continuation_anchor_attrs,
-    build_sppm_continuation_anchor_tokens,
+    resolve_sppm_continuation_anchor_tokens,
 )
+from ._sppm_rework_databox import build_sppm_rework_data_box_attrs
 from ._sppm_postprocess_contract import SppmSvgPostprocessContract, build_svg_postprocess_contract
 from ._sppm_port_policy import (
     SppmPortPolicy,
@@ -260,6 +259,7 @@ def _build_sppm_edge_route(
         )
 
     return _build_non_rework_route(
+        edge=edge,
         source=source,
         target=target,
         edge_attrs=edge_attrs,
@@ -301,6 +301,7 @@ def _append_non_rework_branch_label(*, edge_attrs: list[str], edge: dict[str, An
 
 def _build_non_rework_route(
     *,
+    edge: dict[str, Any],
     source: str,
     target: str,
     edge_attrs: list[str],
@@ -313,6 +314,13 @@ def _build_non_rework_route(
     lane_id: str | None,
     wrap_plan: WrapPlan,
 ) -> SppmEdgeRoute:
+    outgoing_token, incoming_token = resolve_sppm_continuation_anchor_tokens(
+        edge=edge,
+        source=source,
+        target=target,
+        wrap_plan=wrap_plan,
+    )
+
     if is_boundary and resolved_ports is not None:
         boundary_ports = _resolved_boundary_ports(
             core_route=core_route,
@@ -321,6 +329,7 @@ def _build_non_rework_route(
             target_kind=target_kind,
         )
         return _build_boundary_corridor_route(
+            edge=edge,
             source=source,
             target=target,
             edge_attrs=edge_attrs,
@@ -328,6 +337,47 @@ def _build_non_rework_route(
             lane_id=lane_id or "wrap_lane_unknown",
             wrap_plan=wrap_plan,
             options=options,
+        )
+
+    if outgoing_token is not None and incoming_token is not None:
+        source_attrs = [resolved_ports[0]] if resolved_ports is not None else []
+        target_attrs = [resolved_ports[1]] if resolved_ports is not None else []
+        boundary_anchor_base = sppm_boundary_anchor_id(source=source, target=target)
+        outgoing_anchor_id = f"{boundary_anchor_base}_out"
+        incoming_anchor_id = f"{boundary_anchor_base}_in"
+        outgoing_anchor = SppmRouteAnchor(
+            anchor_id=outgoing_anchor_id,
+            attrs=build_sppm_continuation_anchor_attrs(token=outgoing_token, is_secondary=False),
+        )
+        incoming_anchor = SppmRouteAnchor(
+            anchor_id=incoming_anchor_id,
+            attrs=build_sppm_continuation_anchor_attrs(token=incoming_token, is_secondary=False),
+        )
+        outgoing_segment = SppmRouteSegment(
+            source_id=source,
+            target_id=outgoing_anchor_id,
+            attrs=tuple([*source_attrs, "arrowhead=none", "constraint=false", "weight=0"]),
+        )
+        bridge_segment = SppmRouteSegment(
+            source_id=outgoing_anchor_id,
+            target_id=incoming_anchor_id,
+            attrs=("arrowhead=none", "constraint=false", "weight=0"),
+        )
+        incoming_segment = SppmRouteSegment(
+            source_id=incoming_anchor_id,
+            target_id=target,
+            attrs=tuple([*target_attrs, *edge_attrs]),
+        )
+        return SppmEdgeRoute(
+            source=source,
+            target=target,
+            kind="corridor",
+            is_boundary=False,
+            is_rework=False,
+            lane_id=None,
+            corridor_nodes=(),
+            anchors=(outgoing_anchor, incoming_anchor),
+            segments=(outgoing_segment, bridge_segment, incoming_segment),
         )
 
     segment_attrs = tuple((list(resolved_ports) if resolved_ports is not None else []) + edge_attrs)
@@ -346,6 +396,7 @@ def _build_non_rework_route(
 
 def _build_boundary_corridor_route(
     *,
+    edge: dict[str, Any],
     source: str,
     target: str,
     edge_attrs: list[str],
@@ -356,7 +407,8 @@ def _build_boundary_corridor_route(
 ) -> SppmEdgeRoute:
     source_port, target_port = wrap_ports
     chunk_idx = wrap_plan.node_chunk_index.get(source)
-    outgoing_token, incoming_token = build_sppm_continuation_anchor_tokens(
+    outgoing_token, incoming_token = resolve_sppm_continuation_anchor_tokens(
+        edge=edge,
         source=source,
         target=target,
         wrap_plan=wrap_plan,
@@ -532,7 +584,8 @@ def _build_rework_route(
         port_policy=port_policy,
     )
     route_attrs = ["constraint=false", "minlen=3", "weight=0", "style=dashed", *edge_attrs]
-    outgoing_token, incoming_token = build_sppm_continuation_anchor_tokens(
+    outgoing_token, incoming_token = resolve_sppm_continuation_anchor_tokens(
+        edge=edge,
         source=source,
         target=target,
         wrap_plan=wrap_plan,
@@ -542,7 +595,7 @@ def _build_rework_route(
     rework_data_box_attrs = (
         None
         if suppress_databox
-        else _build_rework_data_box_attrs(edge.get("metadata"), is_branch_out=is_branch_out)
+        else build_sppm_rework_data_box_attrs(edge.get("metadata"), is_branch_out=is_branch_out)
     )
     anchor = SppmRouteAnchor(
         anchor_id=anchor_id,
@@ -637,77 +690,5 @@ def _build_rework_second_segment_attrs(
     if branch_label is not None:
         attrs.append(f'xlabel="{str(branch_label)}"')
     return tuple(attrs)
-
-
-def _build_rework_data_box_attrs(metadata: object, *, is_branch_out: bool) -> tuple[str, ...] | None:
-    """Return compact DOT attrs for a rework data box near the loop origin."""
-    if not isinstance(metadata, dict) or not metadata:
-        return None
-
-    ordered_keys = ("rate", "reason", "frequency", "count")
-    lines: list[str] = []
-    for key in ordered_keys:
-        if key not in metadata:
-            continue
-        formatted = _format_rework_metadata_value(key, metadata.get(key))
-        if formatted is not None:
-            lines.append(f"{key.replace('_', ' ').title()}: {formatted}")
-
-    if not lines:
-        fallback = _format_rework_metadata_value("note", metadata.get("note"))
-        if fallback is not None:
-            lines.append(f"Note: {fallback}")
-
-    if not lines:
-        return None
-
-    wrapped_lines: list[str] = []
-    for line in lines:
-        wrapped = textwrap.wrap(line, width=24, break_long_words=False, break_on_hyphens=False)
-        wrapped_lines.extend(wrapped or [line])
-
-    rows = "".join(
-        f'<TR><TD ALIGN="LEFT" BALIGN="LEFT"><FONT POINT-SIZE="10">{html_escape(line)}</FONT></TD></TR>'
-        for line in wrapped_lines
-    )
-    if is_branch_out:
-        label_attr = (
-            'taillabel=<'
-            '<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" '
-            'COLOR="#666666" BGCOLOR="#FFFFFF">'
-            f"{rows}"
-            "</TABLE>>"
-        )
-        return (label_attr, 'labeldistance="0.7"', 'labelangle="20"')
-    label_attr = (
-        'xlabel=<'
-        '<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" '
-        'COLOR="#666666" BGCOLOR="#FFFFFF">'
-        f"{rows}"
-        "</TABLE>>"
-    )
-    return (label_attr,)
-
-
-def _format_rework_metadata_value(key: str, value: object) -> str | None:
-    """Format supported rework metadata values for display in the edge data box."""
-    if value is None:
-        return None
-    if isinstance(value, bool):
-        return "Yes" if value else "No"
-    if isinstance(value, (int, float)):
-        if key in {"rate", "rework_rate"} and 0 <= float(value) <= 1:
-            return f"{float(value) * 100:g}%"
-        return f"{value:g}" if isinstance(value, float) else str(value)
-    if isinstance(value, dict):
-        raw_value = value.get("value")
-        unit = value.get("unit")
-        if raw_value is None:
-            return None
-        if unit is None:
-            return str(raw_value)
-        return f"{raw_value} {unit}"
-    text = str(value).strip()
-    return text or None
 
 

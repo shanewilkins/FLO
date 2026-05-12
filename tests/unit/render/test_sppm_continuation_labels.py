@@ -2,6 +2,7 @@ from flo.render._autoformat_wrap import OverflowPolicy, WrapPlan
 from flo.render._sppm_continuation_labels import (
     build_sppm_continuation_label_attrs,
     format_sppm_continuation_html_label,
+    resolve_sppm_continuation_anchor_tokens,
 )
 
 
@@ -47,3 +48,71 @@ def test_format_sppm_continuation_html_label_uses_lighter_secondary_emphasis():
     assert 'COLOR="#455A64"' in primary
     assert '<B>' not in secondary
     assert 'COLOR="#90A4AE"' in secondary
+
+
+def test_resolve_sppm_continuation_anchor_tokens_prefers_explicit_metadata_aliases():
+    wrap_plan = WrapPlan(
+        active=False,
+        chunk_size=2,
+        chunks=[],
+        display_chunks=[],
+        boundary_edges=set(),
+        node_chunk_index={},
+        node_display_index={},
+        placement_plan=None,
+        overflow_policy=OverflowPolicy(
+            planner="chunked",
+            wrap_mode="off",
+            fit_mode="fit-preferred",
+            max_major_px=None,
+            margin_px=48,
+            min_chunk_size=3,
+            break_preference="sequence-boundary",
+            continuation_mode="boundary-corridor",
+            strict=False,
+        ),
+    )
+
+    outgoing, incoming = resolve_sppm_continuation_anchor_tokens(
+        edge={"metadata": {"continuation_out": "P9-Z", "continuation_in": "P7-A"}},
+        source="a",
+        target="b",
+        wrap_plan=wrap_plan,
+    )
+
+    assert outgoing == "P9-Z"
+    assert incoming == "P7-A"
+
+
+def test_resolve_sppm_continuation_anchor_tokens_falls_back_to_wrap_tokens():
+    wrap_plan = WrapPlan(
+        active=True,
+        chunk_size=2,
+        chunks=[["a", "b"], ["c", "d"]],
+        display_chunks=[["a", "b"], ["c", "d"]],
+        boundary_edges={("b", "c")},
+        node_chunk_index={"a": 0, "b": 0, "c": 1, "d": 1},
+        node_display_index={"a": 0, "b": 1, "c": 0, "d": 1},
+        placement_plan=None,
+        overflow_policy=OverflowPolicy(
+            planner="chunked",
+            wrap_mode="auto",
+            fit_mode="fit-preferred",
+            max_major_px=None,
+            margin_px=48,
+            min_chunk_size=3,
+            break_preference="sequence-boundary",
+            continuation_mode="boundary-corridor",
+            strict=False,
+        ),
+    )
+
+    outgoing, incoming = resolve_sppm_continuation_anchor_tokens(
+        edge={"metadata": {}},
+        source="b",
+        target="c",
+        wrap_plan=wrap_plan,
+    )
+
+    assert outgoing == "P2-C"
+    assert incoming == "P1-B"

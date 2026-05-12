@@ -42,6 +42,18 @@ SPPM_FOOTER_NOTES_METADATA_KEYS: tuple[str, ...] = (
     "footer_note",
 )
 
+SPPM_CONTINUATION_OUTGOING_METADATA_KEYS: tuple[str, ...] = (
+    "continuation_to",
+    "continuation_out",
+    "continuation_token_out",
+)
+
+SPPM_CONTINUATION_INCOMING_METADATA_KEYS: tuple[str, ...] = (
+    "continuation_from",
+    "continuation_in",
+    "continuation_token_in",
+)
+
 
 def first_present_metadata_value(metadata: dict[str, Any], candidate_keys: tuple[str, ...]) -> Any:
     """Return the first truthy metadata value for a candidate key list."""
@@ -56,6 +68,8 @@ __all__ = [
     "PROCESS_HEADER_METADATA_FIELDS",
     "PROCESS_METADATA_PROCESS_ID_KEY",
     "PROCESS_METADATA_PROCESS_NAME_KEY",
+    "SPPM_CONTINUATION_INCOMING_METADATA_KEYS",
+    "SPPM_CONTINUATION_OUTGOING_METADATA_KEYS",
     "SPPM_FOOTER_METRIC_METADATA_KEYS",
     "SPPM_FOOTER_NOTES_METADATA_KEYS",
     "SUBPROCESS_DETAIL_MAP_REFERENCE_KEYS",

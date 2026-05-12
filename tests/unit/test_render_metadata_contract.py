@@ -2,6 +2,8 @@ from flo.schema.render_metadata import (
     PROCESS_HEADER_METADATA_FIELDS,
     PROCESS_METADATA_PROCESS_ID_KEY,
     PROCESS_METADATA_PROCESS_NAME_KEY,
+    SPPM_CONTINUATION_INCOMING_METADATA_KEYS,
+    SPPM_CONTINUATION_OUTGOING_METADATA_KEYS,
     SPPM_FOOTER_METRIC_METADATA_KEYS,
     SPPM_FOOTER_NOTES_METADATA_KEYS,
     SUBPROCESS_DETAIL_MAP_REFERENCE_KEYS,
@@ -43,6 +45,19 @@ def test_sppm_footer_note_alias_contract_is_stable():
         "footer_notes",
         "publication_footer",
         "footer_note",
+    )
+
+
+def test_sppm_continuation_token_alias_contracts_are_stable():
+    assert SPPM_CONTINUATION_OUTGOING_METADATA_KEYS == (
+        "continuation_to",
+        "continuation_out",
+        "continuation_token_out",
+    )
+    assert SPPM_CONTINUATION_INCOMING_METADATA_KEYS == (
+        "continuation_from",
+        "continuation_in",
+        "continuation_token_in",
     )
 
 

@@ -3,6 +3,13 @@
 from __future__ import annotations
 
 import re
+from typing import Any
+
+from flo.schema.render_metadata import (
+    SPPM_CONTINUATION_INCOMING_METADATA_KEYS,
+    SPPM_CONTINUATION_OUTGOING_METADATA_KEYS,
+    first_present_metadata_value,
+)
 
 from ._autoformat_wrap import WrapPlan
 from ._continuation_labels import build_continuation_label_attrs, format_continuation_html_label
@@ -53,6 +60,43 @@ def build_sppm_continuation_anchor_tokens(
     return outgoing, incoming
 
 
+def resolve_sppm_continuation_anchor_tokens(
+    *,
+    edge: dict[str, Any],
+    source: str,
+    target: str,
+    wrap_plan: WrapPlan,
+) -> tuple[str | None, str | None]:
+    """Return continuation tokens using explicit metadata aliases with wrap fallback."""
+    metadata_obj = edge.get("metadata")
+    metadata: dict[str, Any] = metadata_obj if isinstance(metadata_obj, dict) else {}
+    outgoing = _normalize_continuation_token(
+        first_present_metadata_value(metadata, SPPM_CONTINUATION_OUTGOING_METADATA_KEYS)
+    )
+    incoming = _normalize_continuation_token(
+        first_present_metadata_value(metadata, SPPM_CONTINUATION_INCOMING_METADATA_KEYS)
+    )
+
+    if outgoing is None or incoming is None:
+        derived_outgoing, derived_incoming = build_sppm_continuation_anchor_tokens(
+            source=source,
+            target=target,
+            wrap_plan=wrap_plan,
+        )
+        if outgoing is None:
+            outgoing = derived_outgoing
+        if incoming is None:
+            incoming = derived_incoming
+
+    # For explicit single-sided tokens, mirror into the opposite marker so the
+    # continuation remains visually explicit at both ends.
+    if outgoing is None and incoming is not None:
+        outgoing = incoming
+    if incoming is None and outgoing is not None:
+        incoming = outgoing
+    return outgoing, incoming
+
+
 def build_sppm_continuation_anchor_attrs(*, token: str, is_secondary: bool) -> tuple[str, ...]:
     """Return DOT node attrs for a circular continuation anchor marker."""
     border = "#90A4AE" if is_secondary else "#455A64"
@@ -80,3 +124,12 @@ def _continuation_suffix(reference: str) -> str:
     if match is None:
         return "X"
     return match.group(0).upper()
+
+
+def _normalize_continuation_token(value: Any) -> str | None:
+    if value is None:
+        return None
+    normalized = str(value).strip()
+    if not normalized:
+        return None
+    return normalized

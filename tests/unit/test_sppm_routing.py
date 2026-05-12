@@ -165,6 +165,49 @@ def test_sppm_routing_plan_splits_rework_edges_into_anchor_segments():
     assert ("decision", "rework") in routing_plan.route_plan.routes
 
 
+def test_sppm_routing_plan_uses_explicit_continuation_anchor_metadata_for_non_boundary_edge():
+    nodes = [
+        {"id": "a", "kind": "task", "name": "A", "metadata": {}},
+        {"id": "b", "kind": "task", "name": "B", "metadata": {}},
+    ]
+    edges = [
+        {
+            "source": "a",
+            "target": "b",
+            "metadata": {"continuation_to": "P2-EXT", "continuation_from": "P1-A"},
+        }
+    ]
+    options = RenderOptions(diagram="sppm")
+    wrap_plan = build_wrap_plan([], options, planner="chunked")
+
+    routing_plan_one = build_sppm_routing_plan(
+        nodes=nodes,
+        edges=edges,
+        options=options,
+        step_numbering={"a": 1, "b": 2},
+        wrap_plan=wrap_plan,
+    )
+    routing_plan_two = build_sppm_routing_plan(
+        nodes=nodes,
+        edges=edges,
+        options=options,
+        step_numbering={"a": 1, "b": 2},
+        wrap_plan=wrap_plan,
+    )
+
+    route = routing_plan_one.route_for("a", "b")
+    assert route is not None
+    assert route.kind == "corridor"
+    assert route.is_boundary is False
+    assert route.anchors[0].anchor_id == "__sppm_boundary_corridor_a_b_out"
+    assert route.anchors[1].anchor_id == "__sppm_boundary_corridor_a_b_in"
+    assert route.anchors[0].attrs[-1] == 'label="P2-EXT"'
+    assert route.anchors[1].attrs[-1] == 'label="P1-A"'
+    assert route.segments[0].attrs == ("tailport=e", "arrowhead=none", "constraint=false", "weight=0")
+    assert route.segments[2].attrs == ("headport=w",)
+    assert serialize_sppm_routing_plan(routing_plan_one) == serialize_sppm_routing_plan(routing_plan_two)
+
+
 def test_sppm_routing_plan_classifies_rework_return_contract_edges_separately():
     nodes = [
         {"id": "decision", "kind": "decision", "name": "Valid?", "metadata": {}},
