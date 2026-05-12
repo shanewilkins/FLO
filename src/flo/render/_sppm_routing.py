@@ -430,6 +430,7 @@ def _build_rework_route(
         port_policy=port_policy,
     )
     route_attrs = ["constraint=false", "minlen=3", "weight=0", "style=dashed", *edge_attrs]
+    branch_label = edge.get("outcome") or edge.get("label")
     outgoing_token, incoming_token = resolve_sppm_continuation_anchor_tokens(
         edge=edge,
         source=source,
@@ -441,7 +442,11 @@ def _build_rework_route(
     rework_data_box_attrs = (
         None
         if suppress_databox
-        else build_sppm_rework_data_box_attrs(edge.get("metadata"), is_branch_out=is_branch_out)
+        else build_sppm_rework_data_box_attrs(
+            edge.get("metadata"),
+            is_branch_out=is_branch_out,
+            edge_attrs=(f'xlabel="{branch_label}"',) if branch_label is not None else (),
+        )
     )
     anchor = SppmRouteAnchor(
         anchor_id=anchor_id,
@@ -462,7 +467,7 @@ def _build_rework_route(
         route_attrs=route_attrs,
         rework_data_box_attrs=rework_data_box_attrs,
         is_branch_out=is_branch_out,
-        branch_label=edge.get("outcome") or edge.get("label"),
+        branch_label=branch_label,
     )
 
     return SppmEdgeRoute(

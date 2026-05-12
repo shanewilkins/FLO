@@ -8,10 +8,16 @@ from ._callout_layout import (
     build_edge_callout_attrs,
     format_callout_table_html,
     format_callout_text_row,
+    resolve_callout_near_source,
 )
 
 
-def build_sppm_rework_data_box_attrs(metadata: object, *, is_branch_out: bool) -> tuple[str, ...] | None:
+def build_sppm_rework_data_box_attrs(
+    metadata: object,
+    *,
+    is_branch_out: bool,
+    edge_attrs: tuple[str, ...] = (),
+) -> tuple[str, ...] | None:
     """Return compact DOT attrs for a rework data box near the loop origin."""
     if not isinstance(metadata, dict) or not metadata:
         return None
@@ -54,7 +60,8 @@ def build_sppm_rework_data_box_attrs(metadata: object, *, is_branch_out: bool) -
         background_color="#FFFFFF",
         cell_padding="3",
     )
-    return build_edge_callout_attrs(table_html=table_html, near_source=is_branch_out)
+    near_source = resolve_callout_near_source(prefer_near_source=is_branch_out, edge_attrs=edge_attrs)
+    return build_edge_callout_attrs(table_html=table_html, near_source=near_source)
 
 
 def _format_rework_metadata_value(key: str, value: object) -> str | None:

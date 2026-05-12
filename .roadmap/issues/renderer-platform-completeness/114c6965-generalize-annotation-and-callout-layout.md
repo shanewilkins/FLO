@@ -10,7 +10,7 @@ milestone: renderer-platform-completeness
 labels: []
 remote_ids: {}
 created: '2026-05-05T17:17:37.925760+00:00'
-updated: '2026-05-12T21:05:00+00:00'
+updated: '2026-05-12T21:20:00+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
@@ -18,7 +18,7 @@ depends_on: []
 blocks: []
 actual_start_date: '2026-05-12T20:54:16+00:00'
 actual_end_date: null
-progress_percentage: 45
+progress_percentage: 60
 handoff_notes: null
 previous_assignee: null
 handoff_date: null
@@ -56,3 +56,5 @@ This issue is about placement mechanics, not about standardizing every annotatio
 - Updated SPPM rework data-box placement to consume shared helper via `src/flo/render/_sppm_rework_databox.py`.
 - Added policy/coverage tests for shared callout helper and boundary consumption.
 - Extracted shared callout table/text formatting helpers and adopted them in both continuation labels and SPPM rework data-box rendering.
+- Added shared overlap-avoidance heuristic (`resolve_callout_near_source`) so callouts move off the center label slot when an edge already has `xlabel` content.
+- Wired overlap heuristic into SPPM rework data-box placement and added regression coverage for return-loop branch labels.

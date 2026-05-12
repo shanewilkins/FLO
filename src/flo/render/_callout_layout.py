@@ -27,6 +27,17 @@ def build_edge_callout_attrs(
     return (f"xlabel=<{table_html}>",)
 
 
+def resolve_callout_near_source(*, prefer_near_source: bool, edge_attrs: tuple[str, ...] | list[str]) -> bool:
+    """Return whether a callout should be placed near source to reduce overlap.
+
+    If the edge already has center label attrs (`xlabel=`), prefer source-side
+    placement for the callout to avoid callout/label collisions.
+    """
+    if prefer_near_source:
+        return True
+    return any(str(attr).startswith("xlabel=") for attr in edge_attrs)
+
+
 def format_callout_text_row(
     *,
     text: str,

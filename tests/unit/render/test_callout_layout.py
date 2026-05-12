@@ -2,6 +2,7 @@ from flo.render._callout_layout import (
     build_edge_callout_attrs,
     format_callout_table_html,
     format_callout_text_row,
+    resolve_callout_near_source,
 )
 
 
@@ -46,3 +47,21 @@ def test_format_callout_table_html_wraps_rows_with_standard_table_shell():
     assert table == (
         '<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" COLOR="#666666" BGCOLOR="#FAFAFA"><TR><TD ALIGN="LEFT">Row</TD></TR></TABLE>'
     )
+
+
+def test_resolve_callout_near_source_prefers_source_when_requested():
+    assert resolve_callout_near_source(prefer_near_source=True, edge_attrs=()) is True
+
+
+def test_resolve_callout_near_source_avoids_center_overlap_with_existing_xlabel():
+    assert resolve_callout_near_source(
+        prefer_near_source=False,
+        edge_attrs=('xlabel="decision"',),
+    ) is True
+
+
+def test_resolve_callout_near_source_allows_center_when_no_overlap_signal():
+    assert resolve_callout_near_source(
+        prefer_near_source=False,
+        edge_attrs=('constraint=false',),
+    ) is False

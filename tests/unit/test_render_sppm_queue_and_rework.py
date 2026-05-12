@@ -59,6 +59,39 @@ def test_sppm_rework_return_edges_render_frequency_and_count_metadata():
     assert 'Count: 12 per week' in out
 
 
+def test_sppm_rework_return_databox_moves_near_source_when_branch_label_present():
+    ir_like = {
+        "nodes": [
+            {"id": "decision", "kind": "decision", "name": "Approved?"},
+            {"id": "rework", "kind": "task", "name": "Rework", "metadata": {"value_class": "NVA"}},
+            {"id": "review", "kind": "task", "name": "Review", "metadata": {"value_class": "RNVA"}},
+        ],
+        "edges": [
+            {
+                "source": "decision",
+                "target": "rework",
+                "outcome": "no",
+                "edge_type": "rework",
+                "rework": True,
+            },
+            {
+                "source": "rework",
+                "target": "review",
+                "label": "retry",
+                "edge_type": "rework",
+                "rework": True,
+                "metadata": {"frequency": "3/day"},
+            },
+        ],
+    }
+
+    out = render_dot(ir_like, options={"diagram": "sppm"})
+
+    assert '"__sppm_rework_corridor_rework_review" -> "review"' in out
+    assert 'xlabel="retry"' in out
+    assert 'taillabel=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#666666" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT" BALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#000000">Frequency: 3/day</FONT></TD></TR></TABLE>>' in out
+
+
 def test_sppm_queue_connector_to_rework_target_is_not_rendered_as_rework():
     ir_like = {
         "nodes": [
