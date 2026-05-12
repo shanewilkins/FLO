@@ -4,7 +4,7 @@ title: Decision diamond visual policy and outcome label styling
 headline: Decide and implement default visual policy for decision diamonds and decision
   outcome labels, includ
 priority: medium
-status: todo
+status: closed
 archived: false
 issue_type: feature
 milestone: renderer-platform-completeness
@@ -12,7 +12,7 @@ labels:
 - sppm,design-system,theming
 remote_ids: {}
 created: '2026-05-11T17:23:02.922879+00:00'
-updated: '2026-05-11T17:27:06.320827+00:00'
+updated: '2026-05-12T19:44:16.324143+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
@@ -21,7 +21,7 @@ depends_on:
 blocks: []
 actual_start_date: null
 actual_end_date: null
-progress_percentage: null
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null
