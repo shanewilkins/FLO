@@ -5,11 +5,7 @@ from __future__ import annotations
 import textwrap
 from typing import Iterable
 
-
-def normalize_space(value: str) -> str:
-    """Collapse repeated whitespace into single spaces."""
-    return " ".join(str(value or "").split())
-
+from ._text import normalize_space
 
 def abbreviate_workers(workers: Iterable[str], max_items: int = 3) -> str:
     """Return a compact worker list for dense labels."""

@@ -11,7 +11,7 @@ from flo.schema.render_metadata import (
     PROCESS_METADATA_PROCESS_NAME_KEY,
 )
 
-from ._sppm_text import normalize_space
+from ._text import normalize_space
 
 DEFAULT_PROCESS_HEADER_METADATA_FIELDS = PROCESS_HEADER_METADATA_FIELDS
 

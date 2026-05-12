@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 from ._autoformat_wrap import WrapPlan
+from ._sppm_continuation_labels import build_sppm_continuation_anchor_attrs
+from ._sppm_postprocess_contract import SppmSvgPostprocessContract
 from ._sppm_port_policy import is_sppm_rework_edge
 from .layout_core import (
     CorridorPlan,
@@ -15,6 +18,62 @@ from .layout_core import (
     build_route_plan,
 )
 from .options import RenderOptions
+
+
+@dataclass(frozen=True)
+class SppmRouteAnchor:
+    """Invisible anchor node used to split a routed edge into segments."""
+
+    anchor_id: str
+    attrs: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class SppmCorridorNode:
+    """Reserved corridor node metadata for future lane-aware routing."""
+
+    node_id: str
+    lane_id: str
+    role: str
+    attrs: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class SppmRouteSegment:
+    """A single directed segment within a routed edge."""
+
+    source_id: str
+    target_id: str
+    attrs: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class SppmEdgeRoute:
+    """Resolved route description for one logical edge."""
+
+    source: str
+    target: str
+    kind: str
+    is_boundary: bool
+    is_rework: bool
+    lane_id: str | None
+    corridor_nodes: tuple[SppmCorridorNode, ...]
+    anchors: tuple[SppmRouteAnchor, ...]
+    segments: tuple[SppmRouteSegment, ...]
+
+
+@dataclass(frozen=True)
+class SppmRoutingPlan:
+    """Collection of routed SPPM edges keyed by source and target ids."""
+
+    routes: dict[tuple[str, str], SppmEdgeRoute]
+    corridor_plan: CorridorPlan
+    route_plan: RoutePlan
+    svg_postprocess_contract: SppmSvgPostprocessContract = SppmSvgPostprocessContract()
+
+    def route_for(self, source: str, target: str) -> SppmEdgeRoute | None:
+        """Return the resolved route for a source-target edge pair, if any."""
+        return self.routes.get((source, target))
 
 
 def edge_pairs(edges: list[dict[str, Any]]) -> list[tuple[str, str]]:
@@ -207,3 +266,228 @@ def resolve_lane_id(
     if core_route is not None and core_route.lane_hops:
         return core_route.lane_hops[0]
     return None
+
+
+def _build_lr_boundary_corridor_with_continuations(
+    *,
+    source: str,
+    target: str,
+    edge_attrs: list[str],
+    source_port: str,
+    target_port: str,
+    lane_id: str,
+    exit_anchor_id: str,
+    boundary_anchor_base: str,
+    outgoing_token: str,
+    incoming_token: str,
+) -> SppmEdgeRoute:
+    """Build an LR wrapped boundary route that uses continuation anchors."""
+    outgoing_anchor_id = f"{boundary_anchor_base}_out"
+    incoming_anchor_id = f"{boundary_anchor_base}_in"
+    anchors = _build_boundary_continuation_anchors(
+        outgoing_anchor_id=outgoing_anchor_id,
+        incoming_anchor_id=incoming_anchor_id,
+        outgoing_token=outgoing_token,
+        incoming_token=incoming_token,
+    )
+    return SppmEdgeRoute(
+        source=source,
+        target=target,
+        kind="corridor",
+        is_boundary=True,
+        is_rework=False,
+        lane_id=lane_id,
+        corridor_nodes=(),
+        anchors=anchors,
+        segments=(
+            _build_route_segment(
+                source_id=source,
+                target_id=exit_anchor_id,
+                attrs=[source_port, "arrowhead=none", "constraint=false", "weight=0"],
+            ),
+            _build_route_segment(
+                source_id=exit_anchor_id,
+                target_id=outgoing_anchor_id,
+                attrs=["arrowhead=none", "constraint=false", "weight=0"],
+            ),
+            _build_route_segment(
+                source_id=outgoing_anchor_id,
+                target_id=incoming_anchor_id,
+                attrs=["arrowhead=none", "constraint=false", "weight=0"],
+            ),
+            _build_route_segment(
+                source_id=incoming_anchor_id,
+                target_id=target,
+                attrs=[target_port, *edge_attrs],
+            ),
+        ),
+    )
+
+
+def _build_lr_boundary_corridor_direct(
+    *,
+    source: str,
+    target: str,
+    edge_attrs: list[str],
+    source_port: str,
+    target_port: str,
+    lane_id: str,
+    exit_anchor_id: str,
+) -> SppmEdgeRoute:
+    """Build an LR wrapped boundary route without continuation anchors."""
+    return SppmEdgeRoute(
+        source=source,
+        target=target,
+        kind="corridor",
+        is_boundary=True,
+        is_rework=False,
+        lane_id=lane_id,
+        corridor_nodes=(),
+        anchors=(),
+        segments=(
+            _build_route_segment(
+                source_id=source,
+                target_id=exit_anchor_id,
+                attrs=[source_port, "arrowhead=none", "constraint=false", "weight=0"],
+            ),
+            _build_route_segment(
+                source_id=exit_anchor_id,
+                target_id=target,
+                attrs=[target_port, *edge_attrs],
+            ),
+        ),
+    )
+
+
+def _build_boundary_corridor_with_continuations(
+    *,
+    source: str,
+    target: str,
+    edge_attrs: list[str],
+    source_port: str,
+    target_port: str,
+    lane_id: str,
+    boundary_anchor_base: str,
+    outgoing_token: str,
+    incoming_token: str,
+) -> SppmEdgeRoute:
+    """Build a boundary corridor route that uses continuation anchors."""
+    outgoing_anchor_id = f"{boundary_anchor_base}_out"
+    incoming_anchor_id = f"{boundary_anchor_base}_in"
+    anchors = _build_boundary_continuation_anchors(
+        outgoing_anchor_id=outgoing_anchor_id,
+        incoming_anchor_id=incoming_anchor_id,
+        outgoing_token=outgoing_token,
+        incoming_token=incoming_token,
+    )
+    return SppmEdgeRoute(
+        source=source,
+        target=target,
+        kind="corridor",
+        is_boundary=True,
+        is_rework=False,
+        lane_id=lane_id,
+        corridor_nodes=(),
+        anchors=anchors,
+        segments=(
+            _build_route_segment(
+                source_id=source,
+                target_id=outgoing_anchor_id,
+                attrs=[source_port, "arrowhead=none", "constraint=false", "weight=0"],
+            ),
+            _build_route_segment(
+                source_id=outgoing_anchor_id,
+                target_id=incoming_anchor_id,
+                attrs=["arrowhead=none", "constraint=false", "weight=0"],
+            ),
+            _build_route_segment(
+                source_id=incoming_anchor_id,
+                target_id=target,
+                attrs=[target_port, *edge_attrs],
+            ),
+        ),
+    )
+
+
+def _build_boundary_corridor_with_point_anchor(
+    *,
+    source: str,
+    target: str,
+    edge_attrs: list[str],
+    source_port: str,
+    target_port: str,
+    lane_id: str,
+    anchor_id: str,
+) -> SppmEdgeRoute:
+    """Build a boundary corridor route that uses a single invisible point anchor."""
+    anchor = SppmRouteAnchor(
+        anchor_id=anchor_id,
+        attrs=("shape=point", "width=0.01", "height=0.01", 'label=""', "style=invis"),
+    )
+    return SppmEdgeRoute(
+        source=source,
+        target=target,
+        kind="corridor",
+        is_boundary=True,
+        is_rework=False,
+        lane_id=lane_id,
+        corridor_nodes=(),
+        anchors=(anchor,),
+        segments=(
+            _build_route_segment(
+                source_id=source,
+                target_id=anchor_id,
+                attrs=[source_port, "arrowhead=none", "constraint=false", "weight=0"],
+            ),
+            _build_route_segment(
+                source_id=anchor_id,
+                target_id=target,
+                attrs=[target_port, *edge_attrs],
+            ),
+        ),
+    )
+
+
+def _build_boundary_continuation_anchors(
+    *,
+    outgoing_anchor_id: str,
+    incoming_anchor_id: str,
+    outgoing_token: str,
+    incoming_token: str,
+) -> tuple[SppmRouteAnchor, SppmRouteAnchor]:
+    return (
+        SppmRouteAnchor(
+            anchor_id=outgoing_anchor_id,
+            attrs=build_sppm_continuation_anchor_attrs(token=outgoing_token, is_secondary=False),
+        ),
+        SppmRouteAnchor(
+            anchor_id=incoming_anchor_id,
+            attrs=build_sppm_continuation_anchor_attrs(token=incoming_token, is_secondary=False),
+        ),
+    )
+
+
+def _build_route_segment(*, source_id: str, target_id: str, attrs: list[str]) -> SppmRouteSegment:
+    return SppmRouteSegment(source_id=source_id, target_id=target_id, attrs=tuple(attrs))
+
+
+__all__ = [
+    "SppmCorridorNode",
+    "SppmEdgeRoute",
+    "SppmRouteAnchor",
+    "SppmRouteSegment",
+    "SppmRoutingPlan",
+    "_build_boundary_corridor_with_continuations",
+    "_build_boundary_corridor_with_point_anchor",
+    "_build_lr_boundary_corridor_direct",
+    "_build_lr_boundary_corridor_with_continuations",
+    "build_core_route_plan",
+    "build_corridor_metadata",
+    "collect_rework_branch_metadata",
+    "collect_rework_return_sources",
+    "edge_pairs",
+    "edge_with_rework_metadata_policy",
+    "node_kinds",
+    "placement_for_routing",
+    "resolve_lane_id",
+]
