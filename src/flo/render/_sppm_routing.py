@@ -48,6 +48,7 @@ from ._sppm_routing_support import (
     placement_for_routing,
     resolve_lane_id,
 )
+from ._sppm_metadata_schema import get_metadata_crossover_time
 from ._sppm_text import format_text_field
 from .options import RenderOptions
 
@@ -96,6 +97,7 @@ def build_sppm_routing_plan(
         corridor_plan=corridor_plan,
     )
     node_kinds_by_id = node_kinds(nodes)
+    nodes_by_id = {str(n.get("id") or ""): n for n in nodes}
     port_policy = _build_sppm_port_policy(edges=edges, node_kinds=node_kinds_by_id)
     branch_metadata_by_rework_target = collect_rework_branch_metadata(edges=edges, node_kinds=node_kinds_by_id)
     rework_return_sources = collect_rework_return_sources(
@@ -125,6 +127,7 @@ def build_sppm_routing_plan(
             edge=effective_edge,
             source=source,
             target=target,
+            target_node=nodes_by_id.get(target),
             options=options,
             step_numbering=step_numbering,
             wrap_plan=wrap_plan,
@@ -160,6 +163,7 @@ def _build_sppm_edge_route(
     edge: dict[str, Any],
     source: str,
     target: str,
+    target_node: dict[str, Any] | None,
     options: RenderOptions,
     step_numbering: dict[str, int],
     wrap_plan: WrapPlan,
@@ -173,6 +177,7 @@ def _build_sppm_edge_route(
     edge_attrs = _base_sppm_edge_attrs(
         source=source,
         target=target,
+        target_node=target_node,
         options=options,
         step_numbering=step_numbering,
     )
@@ -232,6 +237,7 @@ def _base_sppm_edge_attrs(
     *,
     source: str,
     target: str,
+    target_node: dict[str, Any] | None,
     options: RenderOptions,
     step_numbering: dict[str, int],
 ) -> list[str]:
@@ -242,7 +248,36 @@ def _base_sppm_edge_attrs(
     dst_num = step_numbering.get(target)
     if src_num is not None and dst_num is not None:
         edge_attrs.append(f'xlabel="{src_num}->{dst_num}"')
+    _append_edge_crossover_time_callout(
+        edge_attrs=edge_attrs,
+        target_node=target_node,
+        options=options,
+    )
     return edge_attrs
+
+
+def _append_edge_crossover_time_callout(
+    *,
+    edge_attrs: list[str],
+    target_node: dict[str, Any] | None,
+    options: RenderOptions,
+) -> None:
+    """Append CO (changeover time) callout to edge if target node has changeover metadata.
+
+    This helps distinguish setup/reconfiguration time (CO) from queue delays (WT),
+    aiding diagnostic clarity in process improvement.
+    """
+    if target_node is None:
+        return
+    target_metadata = target_node.get("metadata") or {}
+    if not isinstance(target_metadata, dict):
+        return
+    co_value = get_metadata_crossover_time(target_metadata)
+    if co_value is None:
+        return
+    co_label = f"CO: {co_value.value} {co_value.unit or 'min'}"
+    edge_attrs.append(f'xlabel="{co_label}"')
+    edge_attrs.append('fontcolor="#D84315"')
 
 
 def _append_non_rework_branch_label(

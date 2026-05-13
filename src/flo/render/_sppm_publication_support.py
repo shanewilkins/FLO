@@ -23,6 +23,10 @@ from ._publication import (
     build_publication_canvas_for_format,
     evaluate_publication_fallback,
 )
+from ._sppm_metadata_schema import (
+    get_metadata_wait_time_minutes,
+    get_metadata_crossover_time,
+)
 from ._sppm_projection import SppmProjectionContext
 from ._sppm_text import format_text_field, normalize_space
 from .options import RenderOptions
@@ -105,9 +109,10 @@ def _build_sppm_child_slots(
     return slots
 
 
-def _build_sppm_footer_content(*, context: Any, options: RenderOptions) -> PublicationBandContent | None:
+def _build_sppm_footer_content(*, context: Any, options: RenderOptions, nodes: list[dict[str, Any]] | None = None) -> PublicationBandContent | None:
     metric_rows = [
         *_footer_metric_rows_from_metadata(context.metadata, options=options),
+        *_footer_metric_rows_from_node_aggregation(nodes=nodes or [], options=options),
         *[_footer_metric_row(label=label, value=value, options=options) for label, value in options.sppm_footer_metrics],
     ]
     metric_rows = [row for row in metric_rows if row is not None]
@@ -123,6 +128,54 @@ def _build_sppm_footer_content(*, context: Any, options: RenderOptions) -> Publi
     if not metric_rows and not notes:
         return None
     return PublicationBandContent(rows=tuple(metric_rows), notes=tuple(notes))
+
+
+def _footer_metric_rows_from_node_aggregation(
+    *,
+    nodes: list[dict[str, Any]],
+    options: RenderOptions,
+) -> list[tuple[str, str]]:
+    """Auto-aggregate wait time and crossover time metrics from process nodes.
+    
+    Collects WT and CO values from all nodes and sums them for footer display.
+    This helps visualize total process delays in a diagnostic way.
+    """
+    rows: list[tuple[str, str]] = []
+    total_wt: float = 0.0
+    total_co: float = 0.0
+    
+    for node in nodes:
+        metadata = node.get("metadata") or {}
+        if not isinstance(metadata, dict):
+            continue
+        
+        wt_minutes = get_metadata_wait_time_minutes(metadata)
+        if wt_minutes and wt_minutes > 0:
+            total_wt += wt_minutes
+        
+        co_value = get_metadata_crossover_time(metadata)
+        if co_value is not None and co_value.numeric_value > 0:
+            total_co += co_value.numeric_value
+    
+    if total_wt > 0:
+        wt_row = _footer_metric_row(
+            label="Waiting Time",
+            value=f"{int(total_wt) if total_wt == int(total_wt) else total_wt} min",
+            options=options,
+        )
+        if wt_row is not None:
+            rows.append(wt_row)
+    
+    if total_co > 0:
+        co_row = _footer_metric_row(
+            label="Changeover Time",
+            value=f"{int(total_co) if total_co == int(total_co) else total_co} min",
+            options=options,
+        )
+        if co_row is not None:
+            rows.append(co_row)
+    
+    return rows
 
 
 def _footer_metric_rows_from_metadata(metadata: dict[str, Any], *, options: RenderOptions) -> list[tuple[str, str]]:

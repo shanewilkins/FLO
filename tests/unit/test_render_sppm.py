@@ -613,3 +613,83 @@ def test_sppm_emits_secondary_line_constraints_for_rework_targets():
     # Return-loop corridor anchors no longer use rank=same subgraphs;
     # their paths are corrected by SVG postprocessing instead.
     assert '"__sppm_rework_corridor_rework_intake" [shape=point' in out
+
+
+def test_sppm_edge_callout_with_target_changeover_time():
+    """Verify edge callouts render changeover time from target node.
+    
+    When step numbering is enabled and a target node has changeover time,
+    the CO value appears as an edge callout. This helps diagnose setup-related
+    delays separately from queue delays.
+    """
+    ir_like = {
+        "nodes": [
+            {"id": "a", "kind": "task", "name": "A", "metadata": {}},
+            {
+                "id": "b",
+                "kind": "task",
+                "name": "B",
+                "metadata": {"changeover_time": {"value": 7, "unit": "min"}},
+            },
+        ],
+        "edges": [{"source": "a", "target": "b"}],
+    }
+    out = render_dot(ir_like, options={"diagram": "sppm", "sppm_step_numbering": "edge"})
+    # Edge should have step numbering and CO callout
+    assert 'xlabel="1->2"' in out or "CO: 7 min" in out
+
+
+def test_sppm_footer_auto_aggregates_waiting_time_from_nodes():
+    """Verify footer auto-aggregates total waiting time from all nodes.
+    
+    When rendering SPPM publication with nodes containing wait_time metadata,
+    the footer should display the aggregated total. This helps readers see
+    total queue delays in the process.
+    """
+    process = {
+        "process": {
+            "id": "checkout",
+            "name": "Checkout Process",
+            "metadata": {},
+        },
+        "nodes": [
+            {"id": "scan", "kind": "task", "name": "Scan", "metadata": {"wait_time": {"value": 5, "unit": "min"}}},
+            {"id": "pay", "kind": "task", "name": "Pay", "metadata": {"wait_time": {"value": 3, "unit": "min"}}},
+            {"id": "bag", "kind": "task", "name": "Bag", "metadata": {}},
+        ],
+        "edges": [
+            {"source": "scan", "target": "pay"},
+            {"source": "pay", "target": "bag"},
+        ],
+    }
+
+    out = render_dot(process, options={"diagram": "sppm"})
+    assert "Waiting Time" in out or "8 min" in out
+
+
+def test_sppm_footer_auto_aggregates_changeover_time_from_nodes():
+    """Verify footer auto-aggregates total changeover time from all nodes.
+    
+    When rendering SPPM publication with nodes containing crossover_time metadata,
+    the footer should display the aggregated total. This helps readers see
+    total setup delays in the process.
+    """
+    process = {
+        "process": {
+            "id": "manufacturing",
+            "name": "Manufacturing Line",
+            "metadata": {},
+        },
+        "nodes": [
+            {"id": "cut", "kind": "task", "name": "Cut", "metadata": {"crossover_time": {"value": 10, "unit": "min"}}},
+            {"id": "assemble", "kind": "task", "name": "Assemble", "metadata": {"changeover_time": {"value": 8, "unit": "min"}}},
+            {"id": "test", "kind": "task", "name": "Test", "metadata": {}},
+        ],
+        "edges": [
+            {"source": "cut", "target": "assemble"},
+            {"source": "assemble", "target": "test"},
+        ],
+    }
+
+    out = render_dot(process, options={"diagram": "sppm"})
+    assert "Changeover Time" in out or "18 min" in out

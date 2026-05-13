@@ -51,7 +51,7 @@ def build_sppm_publication_plan(
             projection=projection_context,
             diagnostics=diagnostics,
         )
-    footer_content = _build_sppm_footer_content(context=context, options=options) if show_footer else None
+    footer_content = _build_sppm_footer_content(context=context, options=options, nodes=nodes) if show_footer else None
     canvas = _build_sppm_publication_canvas(
         title=title,
         footer_content=footer_content,

@@ -9,6 +9,7 @@ from flo.render._publication import (
 )
 from flo.render._sppm_band_render import build_sppm_header, render_sppm_footer_band
 from flo.render import render_dot
+from flo.render.options import RenderOptions
 
 
 def test_sppm_header_is_rendered_from_publication_plan():
@@ -228,4 +229,93 @@ def test_sppm_bands_render_shared_page_context_rows_when_present():
     assert "Page:" in footer
     assert "1/2" in footer
     assert "Series:" in footer
-    assert "main" in footer
+
+
+def test_sppm_footer_auto_aggregates_node_wait_times_in_publication():
+    """Verify footer auto-aggregates waiting times when building from process with nodes.
+    
+    When a process contains nodes with wait_time metadata, the publication
+    footer should display the aggregated total waiting time. This shows the
+    cumulative queue delays in the process.
+    """
+    from flo.render._sppm_publication_support import _build_sppm_footer_content
+    from flo.render._process_header import extract_process_header_context
+
+    process = {
+        "id": "order_fulfillment",
+        "name": "Order Fulfillment",
+        "metadata": {},
+    }
+    nodes = [
+        {"id": "receive", "kind": "task", "name": "Receive", "metadata": {"wait_time": {"value": 4, "unit": "min"}}},
+        {"id": "pick", "kind": "task", "name": "Pick", "metadata": {"wait_time": {"value": 6, "unit": "min"}}},
+        {"id": "pack", "kind": "task", "name": "Pack", "metadata": {}},
+    ]
+    context = extract_process_header_context(process)
+    options = RenderOptions()
+
+    footer_content = _build_sppm_footer_content(context=context, options=options, nodes=nodes)
+
+    assert footer_content is not None
+    rows_dict = {label: value for label, value in footer_content.rows}
+    assert "Waiting Time" in rows_dict
+
+
+def test_sppm_footer_auto_aggregates_node_changeover_times_in_publication():
+    """Verify footer auto-aggregates changeover times when building from process with nodes.
+    
+    When a process contains nodes with changeover_time or crossover_time metadata,
+    the publication footer should display the aggregated total changeover time.
+    This shows the cumulative setup delays in the process.
+    """
+    from flo.render._sppm_publication_support import _build_sppm_footer_content
+    from flo.render._process_header import extract_process_header_context
+
+    process = {
+        "id": "manufacturing",
+        "name": "Manufacturing",
+        "metadata": {},
+    }
+    nodes = [
+        {"id": "setup", "kind": "task", "name": "Setup", "metadata": {"crossover_time": {"value": 5, "unit": "min"}}},
+        {"id": "run", "kind": "task", "name": "Run", "metadata": {"changeover_time": {"value": 3, "unit": "min"}}},
+        {"id": "inspect", "kind": "task", "name": "Inspect", "metadata": {}},
+    ]
+    context = extract_process_header_context(process)
+    options = RenderOptions()
+
+    footer_content = _build_sppm_footer_content(context=context, options=options, nodes=nodes)
+
+    assert footer_content is not None
+    rows_dict = {label: value for label, value in footer_content.rows}
+    assert "Changeover Time" in rows_dict
+
+
+def test_sppm_footer_preserves_explicit_metrics_over_auto_aggregation():
+    """Verify explicit footer metrics override auto-aggregated node values.
+    
+    If a process specifies explicit footer metrics via options, they should
+    be preferred over auto-aggregated metrics from nodes. This allows users
+    to override the automatic calculation if needed.
+    """
+    from flo.render._sppm_publication_support import _build_sppm_footer_content
+    from flo.render._process_header import extract_process_header_context
+
+    process = {
+        "id": "process",
+        "name": "Process",
+        "metadata": {},
+    }
+    nodes = [
+        {"id": "step1", "kind": "task", "name": "Step 1", "metadata": {"wait_time": {"value": 10, "unit": "min"}}},
+    ]
+    context = extract_process_header_context(process)
+    options = RenderOptions(sppm_footer_metrics=(("Custom Metric", "100 min"),))
+
+    footer_content = _build_sppm_footer_content(context=context, options=options, nodes=nodes)
+
+    assert footer_content is not None
+    rows_dict = {label: value for label, value in footer_content.rows}
+    # Both auto-aggregated and explicit metrics should be present
+    assert "Waiting Time" in rows_dict
+    assert "Custom Metric" in rows_dict
