@@ -4,7 +4,7 @@ title: Differentiate crossover time from waiting time in SPPM
 headline: Add explicit distinction between crossover/transfer time and waiting time
   in SPPM semantics and rend
 priority: medium
-status: in_progress
+status: done
 archived: false
 issue_type: feature
 milestone: renderer-platform-completeness
@@ -12,7 +12,7 @@ labels:
 - sppm,metrics,semantics
 remote_ids: {}
 created: '2026-05-11T17:22:38.096691+00:00'
-updated: '2026-05-12T22:00:00+00:00'
+updated: '2026-05-13T15:42:00+00:00'
 assignee: shanewilkins
 estimated_hours: null
 due_date: null
@@ -20,14 +20,14 @@ depends_on:
 - 77ebdb56
 blocks: []
 actual_start_date: '2026-05-12T22:00:00+00:00'
-actual_end_date: null
-progress_percentage: 40
+actual_end_date: '2026-05-13T15:42:00+00:00'
+progress_percentage: 100
 handoff_notes: null
 previous_assignee: null
 handoff_date: null
 git_branches: []
 git_commits: []
-completed_date: null
+completed_date: '2026-05-13T15:42:00+00:00'
 comments: []
 github_issue: null
 ---

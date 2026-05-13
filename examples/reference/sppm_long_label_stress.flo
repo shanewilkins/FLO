@@ -14,6 +14,17 @@ steps:
     kind: start
     name: Start
 
+  - id: intake_wait_queue
+    kind: queue
+    name: Intake Queue for Extensive Context Review
+    workers:
+      - Primary Intake Coordinator
+      - Senior Quality Analyst
+    metadata:
+      wait_time:
+        value: 8
+        unit: min
+
   - id: intake
     kind: task
     name: Intake a customer request requiring extensive descriptive context for stress testing
@@ -24,9 +35,6 @@ steps:
       value_class: RNVA
       cycle_time:
         value: 11
-        unit: min
-      wait_time:
-        value: 8
         unit: min
 
   - id: quality_gate
@@ -72,6 +80,9 @@ steps:
 
 transitions:
   - source: start
+    target: intake_wait_queue
+
+  - source: intake_wait_queue
     target: intake
 
   - source: intake
@@ -94,6 +105,6 @@ transitions:
     rework: true
 
   - source: rework
-    target: intake
+    target: intake_wait_queue
     edge_type: rework
     rework: true

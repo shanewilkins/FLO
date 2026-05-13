@@ -21,6 +21,14 @@ steps:
         value: 3
         unit: min
 
+  - id: sort_tag_wait_queue
+    name: Sort Queue
+    kind: queue
+    metadata:
+      wait_time:
+        value: 8
+        unit: min
+
   - id: sort_tag
     name: Sort and tag
     kind: task
@@ -31,8 +39,13 @@ steps:
       cycle_time:
         value: 5
         unit: min
+
+  - id: wash_wait_queue
+    name: Washer Queue
+    kind: queue
+    metadata:
       wait_time:
-        value: 8
+        value: 18
         unit: min
 
   - id: wash
@@ -45,8 +58,13 @@ steps:
       cycle_time:
         value: 30
         unit: min
+
+  - id: dry_wait_queue
+    name: Dryer Queue
+    kind: queue
+    metadata:
       wait_time:
-        value: 18
+        value: 22
         unit: min
 
   - id: dry
@@ -59,8 +77,13 @@ steps:
       cycle_time:
         value: 45
         unit: min
+
+  - id: fold_package_wait_queue
+    name: Folding Queue
+    kind: queue
+    metadata:
       wait_time:
-        value: 22
+        value: 35
         unit: min
 
   - id: fold_package
@@ -73,8 +96,13 @@ steps:
       cycle_time:
         value: 15
         unit: min
+
+  - id: stage_notify_wait_queue
+    name: Dispatch Queue
+    kind: queue
+    metadata:
       wait_time:
-        value: 35
+        value: 12
         unit: min
 
   - id: stage_notify
@@ -86,9 +114,6 @@ steps:
       value_class: RNVA
       cycle_time:
         value: 4
-        unit: min
-      wait_time:
-        value: 12
         unit: min
 
   - id: payment_delivery

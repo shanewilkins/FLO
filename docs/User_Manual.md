@@ -189,22 +189,54 @@ The `value_class` field classifies a step by its Lean value contribution:
 
 The `description` field is a free-text string providing a human-readable explanation of what the step does. It is displayed in the SPPM info box and is available as a pass-through field in other renderers.
 
+Queue/task timing constraint:
+
+- `wait_time` is valid only on `queue` nodes.
+- `cycle_time`, `crossover_time`, `transfer_time`, and `changeover_time` are valid on work nodes such as `task`, `system_task`, and `subprocess`.
+- If `wait_time` appears on a work node, compiler validation fails and the model must be restructured by inserting a queue node.
+
 The following metadata keys are recognized and validated by FLO. Any other keys are passed through to the IR without validation and can be used for custom tooling.
 
 | Key | Type | Description |
 |---|---|---|
 | `cycle_time` | time object | Active processing time for the step |
-| `wait_time` | time object | Idle time before the step begins |
+| `wait_time` | time object | Queue delay before work begins — `queue` nodes only |
 | `lead_time` | time object | Total elapsed time including wait |
 | `value_class` | `VA`\|`RNVA`\|`NVA`\|`unknown` | Lean value classification |
 | `description` | string | Human-readable explanation of the step |
 | `queue_policy` | string | Queue discipline (e.g. `fifo`, `lifo`) — `queue` nodes |
 | `buffer_capacity` | integer | Maximum queue depth — `queue` nodes |
 
-Example with both fields:
+Pattern: task with queue delay
+
+Bad (rejected by compiler):
 
 ```yaml
 steps:
+  - id: wash
+    kind: task
+    name: Wash
+    metadata:
+      cycle_time:
+        value: 30
+        unit: min
+      wait_time:
+        value: 18
+        unit: min
+```
+
+Good (queue + task split):
+
+```yaml
+steps:
+  - id: wash_queue
+    kind: queue
+    name: Washer Queue
+    metadata:
+      wait_time:
+        value: 18
+        unit: min
+
   - id: wash
     kind: task
     name: Wash
@@ -214,9 +246,6 @@ steps:
       value_class: VA
       cycle_time:
         value: 30
-        unit: min
-      wait_time:
-        value: 18
         unit: min
 ```
 
@@ -239,6 +268,55 @@ steps:
   - id: finish
     kind: end
     name: Complete
+```
+
+## 4.2.1) Modeling Queues and Process Steps
+
+FLO enforces queue/task semantics at compile time to keep process diagnostics correct:
+
+- Queue nodes represent waiting.
+- Task-like nodes represent active work and setup/changeover.
+
+Core modeling rules:
+
+- Use `kind: queue` + `metadata.wait_time` for delays caused by unavailable downstream capacity.
+- Use `kind: task`/`system_task`/`subprocess` + `metadata.cycle_time` for active work duration.
+- Use `metadata.crossover_time` for setup/changeover on work nodes.
+
+Lean alignment:
+
+- Waiting and setup are both non-value-adding, but they are not the same problem.
+- Queue reduction methods: pull systems, kanban, takt leveling, WIP limits.
+- Changeover reduction methods: SMED, 5S, standard work, cross-training.
+
+Restructuring guide for existing models:
+
+1. Find task-like nodes that contain `metadata.wait_time`.
+2. Insert a preceding `queue` node for each waiting segment.
+3. Move `wait_time` from the task-like node to the new queue node.
+4. Rewire transitions so flow goes through the queue node first.
+5. Re-validate: `uv run flo validate <file>.flo`.
+
+Real-world example (before/after):
+
+```yaml
+# Before (invalid)
+- id: execute_service
+  kind: task
+  metadata:
+    cycle_time: {value: 13, unit: min}
+    wait_time: {value: 6, unit: min}
+
+# After (valid)
+- id: execute_service_wait_queue
+  kind: queue
+  metadata:
+    wait_time: {value: 6, unit: min}
+
+- id: execute_service
+  kind: task
+  metadata:
+    cycle_time: {value: 13, unit: min}
 ```
 
 ## 4.3) Transition Forms
@@ -487,7 +565,7 @@ FLO can render a process model as several different diagram types, each suited t
 | Flowchart | `--diagram flowchart` (default) | General process documentation, decision flows |
 | Swimlane | `--diagram swimlane` | Handoff analysis — requires `lane` on steps |
 | Spaghetti map | `--diagram spaghetti` | Movement/travel path analysis — requires `location` on steps |
-| SPPM | `--diagram sppm` | Lean process performance — uses `value_class`, `cycle_time`, `wait_time`, `workers` |
+| SPPM | `--diagram sppm` | Lean process performance — uses `value_class`, `cycle_time`, queue `wait_time`, `workers` |
 
 ### SPPM (Standard Process Performance Map)
 
@@ -497,12 +575,13 @@ SPPM renders a left-to-right (or top-to-bottom with `--orientation tb`) process 
 - **Yellow** — Required non-value-adding (`RNVA`)
 - **Red** — Non-value-adding (`NVA`)
 
-Each step node has a colored header (the step name) and a white info sub-box showing: description, cycle time, workers, and wait time — whichever are populated.
+Each step node has a colored header (the step name) and a white info sub-box showing available metrics (for example description, cycle time, workers, wait time on queue nodes, and changeover time on task-like nodes).
 
 SPPM-relevant fields per step:
 - `metadata.value_class`: controls node color
 - `metadata.cycle_time`: shown in info box as `CT:`
-- `metadata.wait_time`: shown in info box as `WT:`
+- `metadata.wait_time`: shown in info box as `WT:` (queue nodes)
+- `metadata.crossover_time`: shown in info box as `CO:` (task/system_task/subprocess)
 - `metadata.description`: shown as the first line of the info box
 - `workers`: shown as `Workers:` in info box
 

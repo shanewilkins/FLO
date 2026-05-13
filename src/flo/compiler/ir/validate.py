@@ -43,6 +43,7 @@ def validate_ir(obj: Any) -> None:
     incoming_counts, outgoing_counts = _build_edge_degree_maps(obj, ids)
     _validate_decision_nodes(obj, outgoing_counts)
     _validate_queue_nodes(obj, incoming_counts, outgoing_counts)
+    _validate_queue_wait_time_semantics(obj)
     _validate_node_io_lists(obj)
     _validate_node_time_metadata(obj)
     _validate_node_value_class(obj)
@@ -104,6 +105,42 @@ def _validate_queue_nodes(obj: IR, incoming_counts: dict[str, int], outgoing_cou
             raise ValidationError(
                 f"E1104: queue node '{node.id}' must have at least one outgoing edge"
             )
+
+
+def _validate_queue_wait_time_semantics(obj: IR) -> None:
+    """Enforce queue/task semantic constraint: wait_time only on queue nodes.
+    
+    - Queue nodes (kind: queue) may have wait_time (queue delays).
+    - Task nodes (task, system_task, subprocess) must NOT have wait_time.
+    - Task nodes may have cycle_time and crossover_time (work duration and setup).
+    - Queue nodes must NOT have cycle_time or crossover_time.
+    """
+    for node in obj.nodes:
+        node_type = (node.type or "").lower()
+        metadata = _extract_node_metadata(node)
+        
+        if node_type == "queue":
+            # Queue nodes: reject cycle_time and crossover_time
+            if "cycle_time" in metadata:
+                raise ValidationError(
+                    f"E1501: queue node '{node.id}' has cycle_time metadata. "
+                    f"Queues represent delays only; use wait_time. "
+                    f"Cycle time belongs on task nodes."
+                )
+            if "crossover_time" in metadata or "transfer_time" in metadata or "changeover_time" in metadata:
+                raise ValidationError(
+                    f"E1502: queue node '{node.id}' has crossover/transfer/changeover_time metadata. "
+                    f"Queues represent delays only; use wait_time. "
+                    f"Setup time belongs on task nodes."
+                )
+        elif node_type in {"task", "system_task", "subprocess"}:
+            # Task nodes: reject wait_time
+            if "wait_time" in metadata:
+                raise ValidationError(
+                    f"E1503: {node_type} node '{node.id}' has wait_time metadata. "
+                    f"wait_time is only valid on queue nodes. "
+                    f"Restructure: insert a queue node before this task to represent the delay."
+                )
 
 
 def _validate_node_connectivity(

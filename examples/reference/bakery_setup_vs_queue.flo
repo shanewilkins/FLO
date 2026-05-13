@@ -23,6 +23,15 @@ steps:
     kind: start
     name: Start Batch
 
+  - id: prepare_dough_wait_queue
+    kind: queue
+    name: Dough Prep Queue
+    metadata:
+      description: Waiting to start dough prep activities.
+      wait_time:
+        value: 5
+        unit: min
+
   - id: prepare_dough
     kind: task
     name: Prepare Dough
@@ -34,9 +43,6 @@ steps:
       cycle_time:
         value: 20
         unit: min
-      wait_time:
-        value: 5
-        unit: min
 
   - id: laminate_queue
     kind: queue
@@ -45,6 +51,15 @@ steps:
       description: Waiting for lamination station availability.
       wait_time:
         value: 45
+        unit: min
+
+  - id: laminate_wait_queue
+    kind: queue
+    name: Lamination Staging Queue
+    metadata:
+      description: Waiting for prep handoff into active lamination work.
+      wait_time:
+        value: 10
         unit: min
 
   - id: laminate
@@ -57,9 +72,6 @@ steps:
       description: Fold and roll dough to create layers.
       cycle_time:
         value: 25
-        unit: min
-      wait_time:
-        value: 10
         unit: min
 
   - id: rest_queue
@@ -81,9 +93,6 @@ steps:
       description: Place dough in controlled climate to rise.
       cycle_time:
         value: 120
-        unit: min
-      wait_time:
-        value: 0
         unit: min
 
   - id: oven_setup
@@ -110,6 +119,15 @@ steps:
         value: 120
         unit: min
 
+  - id: bake_wait_queue
+    kind: queue
+    name: Bake Load Queue
+    metadata:
+      description: Waiting to load trays into an active bake slot.
+      wait_time:
+        value: 3
+        unit: min
+
   - id: bake
     kind: task
     name: Bake Croissants
@@ -121,8 +139,14 @@ steps:
       cycle_time:
         value: 25
         unit: min
+
+  - id: cool_wait_queue
+    kind: queue
+    name: Cooling Rack Queue
+    metadata:
+      description: Waiting for rack and packaging bench availability.
       wait_time:
-        value: 3
+        value: 2
         unit: min
 
   - id: cool
@@ -136,9 +160,6 @@ steps:
       cycle_time:
         value: 15
         unit: min
-      wait_time:
-        value: 2
-        unit: min
 
   - id: end
     kind: end
@@ -146,12 +167,18 @@ steps:
 
 edges:
   - source: start
+    target: prepare_dough_wait_queue
+
+  - source: prepare_dough_wait_queue
     target: prepare_dough
 
   - source: prepare_dough
     target: laminate_queue
 
   - source: laminate_queue
+    target: laminate_wait_queue
+
+  - source: laminate_wait_queue
     target: laminate
 
   - source: laminate
@@ -167,9 +194,15 @@ edges:
     target: oven_queue
 
   - source: oven_queue
+    target: bake_wait_queue
+
+  - source: bake_wait_queue
     target: bake
 
   - source: bake
+    target: cool_wait_queue
+
+  - source: cool_wait_queue
     target: cool
 
   - source: cool

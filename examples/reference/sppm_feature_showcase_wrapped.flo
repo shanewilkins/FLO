@@ -15,6 +15,14 @@ steps:
     kind: start
     name: Start
 
+  - id: intake_wait_queue
+    kind: queue
+    name: Intake Queue
+    metadata:
+      wait_time:
+        value: 2
+        unit: min
+
   - id: intake
     kind: task
     name: Intake Request
@@ -27,16 +35,21 @@ steps:
       cycle_time:
         value: 4
         unit: min
-      wait_time:
-        value: 2
-        unit: min
 
   - id: triage
     kind: decision
     name: Information Complete?
     outcomes:
       yes: process
-      no: rework_intake
+      no: rework_intake_wait_queue
+
+  - id: rework_intake_wait_queue
+    kind: queue
+    name: Rework Intake Queue
+    metadata:
+      wait_time:
+        value: 3
+        unit: min
 
   - id: rework_intake
     kind: task
@@ -49,9 +62,6 @@ steps:
       cycle_time:
         value: 6
         unit: min
-      wait_time:
-        value: 3
-        unit: min
 
   - id: process_queue
     kind: queue
@@ -59,6 +69,14 @@ steps:
     metadata:
       wait_time:
         value: 7
+        unit: min
+
+  - id: assess_scope_wait_queue
+    kind: queue
+    name: Assess Scope Queue
+    metadata:
+      wait_time:
+        value: 1
         unit: min
 
   - id: assess_scope
@@ -72,8 +90,13 @@ steps:
       cycle_time:
         value: 5
         unit: min
+
+  - id: execute_service_wait_queue
+    kind: queue
+    name: Execute Service Queue
+    metadata:
       wait_time:
-        value: 1
+        value: 6
         unit: min
 
   - id: execute_service
@@ -87,16 +110,22 @@ steps:
       cycle_time:
         value: 13
         unit: min
-      wait_time:
-        value: 6
-        unit: min
 
   - id: qa
     kind: decision
     name: Quality Check Pass?
     outcomes:
       pass: complete
-      fail: rework_quality
+      pass: complete_wait_queue
+      fail: rework_quality_wait_queue
+
+  - id: rework_quality_wait_queue
+    kind: queue
+    name: Rework Quality Queue
+    metadata:
+      wait_time:
+        value: 2
+        unit: min
 
   - id: rework_quality
     kind: task
@@ -109,8 +138,13 @@ steps:
       cycle_time:
         value: 7
         unit: min
+
+  - id: complete_wait_queue
+    kind: queue
+    name: Close Request Queue
+    metadata:
       wait_time:
-        value: 2
+        value: 9
         unit: min
 
   - id: complete
@@ -123,9 +157,6 @@ steps:
       description: Finalize records and communicate completion.
       cycle_time:
         value: 3
-        unit: min
-      wait_time:
-        value: 9
         unit: min
 
   - id: dispatch_queue_wait
@@ -147,9 +178,6 @@ steps:
       cycle_time:
         value: 2
         unit: min
-      wait_time:
-        value: 5
-        unit: min
 
   - id: stop
     kind: end
@@ -157,6 +185,9 @@ steps:
 
 transitions:
   - source: start
+    target: intake_wait_queue
+
+  - source: intake_wait_queue
     target: intake
 
   - source: intake
@@ -166,20 +197,17 @@ transitions:
     target: process_queue
     outcome: yes
 
-  - source: process_queue
-    target: assess_scope
-
-  - source: assess_scope
-    target: execute_service
-
   - source: triage
-    target: rework_intake
+    target: rework_intake_wait_queue
     outcome: no
     edge_type: rework
     rework: true
     metadata:
       rate: 0.12
       reason: Missing details
+
+  - source: rework_intake_wait_queue
+    target: rework_intake
 
   - source: rework_intake
     target: intake
@@ -189,6 +217,18 @@ transitions:
       frequency: 3/day
       count: 12 per week
 
+  - source: process_queue
+    target: assess_scope_wait_queue
+
+  - source: assess_scope_wait_queue
+    target: assess_scope
+
+  - source: assess_scope
+    target: execute_service_wait_queue
+
+  - source: execute_service_wait_queue
+    target: execute_service
+
   - source: execute_service
     target: qa
     metadata:
@@ -196,8 +236,11 @@ transitions:
       continuation_from: P1-SVC
 
   - source: qa
-    target: complete
+    target: complete_wait_queue
     outcome: pass
+
+  - source: complete_wait_queue
+    target: complete
 
   - source: complete
     target: dispatch_queue_wait
@@ -206,13 +249,16 @@ transitions:
     target: dispatch_queue
 
   - source: qa
-    target: rework_quality
+    target: rework_quality_wait_queue
     outcome: fail
     edge_type: rework
     rework: true
     metadata:
       rate: 0.08
       reason: QA defects
+
+  - source: rework_quality_wait_queue
+    target: rework_quality
 
   - source: rework_quality
     target: assess_scope
@@ -221,6 +267,5 @@ transitions:
     metadata:
       frequency: 1/day
       count: 4 per week
-
   - source: dispatch_queue
     target: stop
