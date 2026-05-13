@@ -52,6 +52,9 @@ steps:
       wait_time:
         value: 3
         unit: min
+      changeover_time:
+        value: 4
+        unit: min
 
   - id: process_queue
     kind: queue
@@ -74,6 +77,9 @@ steps:
         unit: min
       wait_time:
         value: 1
+        unit: min
+      changeover_time:
+        value: 3
         unit: min
 
   - id: execute_service
@@ -112,6 +118,9 @@ steps:
       wait_time:
         value: 2
         unit: min
+      changeover_time:
+        value: 5
+        unit: min
 
   - id: complete
     kind: task
@@ -149,6 +158,9 @@ steps:
         unit: min
       wait_time:
         value: 5
+        unit: min
+      changeover_time:
+        value: 2
         unit: min
 
   - id: stop
