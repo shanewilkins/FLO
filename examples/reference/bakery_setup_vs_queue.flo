@@ -1,0 +1,176 @@
+spec_version: "0.1"
+
+process:
+  id: bakery_croissants_v1
+  name: Croissant Baking
+  version: 1
+  owner:
+    id: baker
+    name: Bakery Manager
+  metadata:
+    description: |
+      Pedagogical example: Demonstrates the distinction between wait time (queue)
+      and changeover time (setup). Both are non-value-adding but require different
+      improvement approaches.
+    
+    caption: |
+      Oven changeover (setup, 30 min) is different from waiting for oven availability
+      (queue, 120 min). Reducing oven setup via SMED does NOT fix waiting-for-oven.
+      Pull systems or additional ovens fix the queue, not setup optimization.
+
+steps:
+  - id: start
+    kind: start
+    name: Start Batch
+
+  - id: prepare_dough
+    kind: task
+    name: Prepare Dough
+    workers:
+      - Pastry Chef
+    metadata:
+      value_class: VA
+      description: Mix and knead croissant dough.
+      cycle_time:
+        value: 20
+        unit: min
+      wait_time:
+        value: 5
+        unit: min
+
+  - id: laminate_queue
+    kind: queue
+    name: Laminate Queue
+    metadata:
+      description: Waiting for lamination station availability.
+      wait_time:
+        value: 45
+        unit: min
+
+  - id: laminate
+    kind: task
+    name: Laminate Dough
+    workers:
+      - Pastry Chef
+    metadata:
+      value_class: VA
+      description: Fold and roll dough to create layers.
+      cycle_time:
+        value: 25
+        unit: min
+      wait_time:
+        value: 10
+        unit: min
+
+  - id: rest_queue
+    kind: queue
+    name: Rest Queue (Fridge)
+    metadata:
+      description: Waiting for available rack space in proof box.
+      wait_time:
+        value: 60
+        unit: min
+
+  - id: proof
+    kind: task
+    name: Proof Dough
+    workers:
+      - Proofer
+    metadata:
+      value_class: VA
+      description: Place dough in controlled climate to rise.
+      cycle_time:
+        value: 120
+        unit: min
+      wait_time:
+        value: 0
+        unit: min
+
+  - id: oven_setup
+    kind: task
+    name: Oven Changeover
+    workers:
+      - Baker
+    metadata:
+      value_class: NVA
+      description: Clean oven from previous batch, set temperature, load pans.
+      cycle_time:
+        value: 5
+        unit: min
+      crossover_time:
+        value: 30
+        unit: min
+
+  - id: oven_queue
+    kind: queue
+    name: Oven Queue
+    metadata:
+      description: Waiting for oven availability. Different problem from setup.
+      wait_time:
+        value: 120
+        unit: min
+
+  - id: bake
+    kind: task
+    name: Bake Croissants
+    workers:
+      - Baker
+    metadata:
+      value_class: VA
+      description: Place trays in oven, monitor baking.
+      cycle_time:
+        value: 25
+        unit: min
+      wait_time:
+        value: 3
+        unit: min
+
+  - id: cool
+    kind: task
+    name: Cool & Package
+    workers:
+      - Packer
+    metadata:
+      value_class: VA
+      description: Cool on racks, package for delivery.
+      cycle_time:
+        value: 15
+        unit: min
+      wait_time:
+        value: 2
+        unit: min
+
+  - id: end
+    kind: end
+    name: Ready for Delivery
+
+edges:
+  - source: start
+    target: prepare_dough
+
+  - source: prepare_dough
+    target: laminate_queue
+
+  - source: laminate_queue
+    target: laminate
+
+  - source: laminate
+    target: rest_queue
+
+  - source: rest_queue
+    target: proof
+
+  - source: proof
+    target: oven_setup
+
+  - source: oven_setup
+    target: oven_queue
+
+  - source: oven_queue
+    target: bake
+
+  - source: bake
+    target: cool
+
+  - source: cool
+    target: end
