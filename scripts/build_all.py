@@ -176,18 +176,25 @@ def main() -> int:
 
 def _render_options_for_example(example_file: Path) -> dict[str, str]:
     name = example_file.stem.lower()
-    if name == "swimlane":
-        return {"diagram": "swimlane"}
-    if name == "sppm_feature_showcase":
-        return {"diagram": "sppm", "orientation": "lr"}
-    if name == "sppm_feature_showcase_wrapped":
-        return {
+    sppm_defaults: dict[str, dict[str, str]] = {
+        "linear": {"diagram": "sppm", "orientation": "lr"},
+        "rework_loop": {"diagram": "sppm", "orientation": "lr"},
+        "sppm_feature_showcase": {"diagram": "sppm", "orientation": "lr"},
+        "sppm_feature_showcase_wrapped": {
             "diagram": "sppm",
             "orientation": "lr",
             "layout_wrap": "auto",
             "layout_target_columns": "3",
             "publication_page_format": "letter",
-        }
+        },
+        "sppm_long_label_stress": {"diagram": "sppm", "orientation": "lr"},
+        "bakery_setup_vs_queue": {"diagram": "sppm", "orientation": "lr"},
+        "washnfold": {"diagram": "sppm", "orientation": "lr"},
+    }
+    if name == "swimlane":
+        return {"diagram": "swimlane"}
+    if name in sppm_defaults:
+        return sppm_defaults[name]
     return {}
 
 
@@ -199,7 +206,6 @@ def _extra_render_variants_for_example(example_file: Path) -> list[tuple[str, di
         ]
     if example_file.stem.lower() == "washnfold":
         return [
-            ("_sppm", {"diagram": "sppm", "orientation": "lr"}),
             (
                 "_sppm_wrap800",
                 {

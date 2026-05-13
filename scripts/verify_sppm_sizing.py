@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 """SPPM sizing verification script.
 
-Audits rendered SPPM SVG output against spec dimensions.
+Audits rendered SPPM SVG output against intended dimensions and reports
+rendered approximations.
 
-Spec dimensions (at 96 DPI):
-- Process step rectangle: 1.5"W × 0.6"H (144px × 57.6px)
-- Data box: 1.5"W × 0.4"H (144px × 38.4px)
-- Queue circle: 0.5"–0.7" diameter (48–67px)
-- Spacing (horizontal): 0.2" (19.2px)
-- Spacing (vertical): 0.3" (28.8px)
+This script consumes FLO's shared dimension model (`px`, `in`, `cm`) so the
+verification workflow stays aligned with render/layout option semantics.
 
 Usage:
     python scripts/verify_sppm_sizing.py renders/reference/washnfold.svg [--dpi 96]
@@ -16,7 +13,7 @@ Usage:
 Exit codes:
     0 = All checks passed
     1 = Some dimensions out of spec
-    2 = Error parsing file
+    2 = Error parsing file or arguments
 """
 
 from __future__ import annotations
@@ -26,6 +23,8 @@ import sys
 from pathlib import Path
 from typing import NamedTuple
 from xml.etree import ElementTree as ET
+
+from flo.render.options import Dimension, parse_dimension
 
 
 class DimensionSpec(NamedTuple):
@@ -43,59 +42,100 @@ class DimensionSpec(NamedTuple):
 class SizingSpec:
     """SPPM spec dimensions at a given DPI."""
 
-    def __init__(self, dpi: int = 96):
-        """Initialize specs at given DPI (default 96 DPI for screen/web)."""
-        self.dpi = dpi
-        # Conversion factor: 1 inch = dpi pixels
-        self.px_per_inch = dpi
+    def __init__(
+        self,
+        *,
+        dpi: int = 96,
+        process_box_width: str = "1.5in",
+        process_box_height: str = "0.6in",
+        data_box_width: str = "1.5in",
+        data_box_height: str = "0.4in",
+        queue_circle_min: str = "0.5in",
+        queue_circle_max: str = "0.7in",
+        spacing_h: str = "0.2in",
+        spacing_v: str = "0.3in",
+    ):
+        """Initialize specs at given DPI.
 
-        # Process step box (1.5" × 0.6")
+        Input dimensions are parsed through FLO's shared dimension model.
+        """
+        self.dpi = dpi
+        self.px_scale = dpi / 96.0
+
+        # Preserve intended dimension inputs for clearer reporting.
+        self.process_box_width_input = process_box_width
+        self.process_box_height_input = process_box_height
+        self.data_box_width_input = data_box_width
+        self.data_box_height_input = data_box_height
+        self.queue_circle_min_input = queue_circle_min
+        self.queue_circle_max_input = queue_circle_max
+        self.spacing_h_input = spacing_h
+        self.spacing_v_input = spacing_v
+
+        # Process step box
         self.process_box_width = DimensionSpec(
-            value=1.5 * self.px_per_inch,
+            value=_scaled_px(_parse_required_dimension(process_box_width), dpi),
             tolerance=5,
             unit="px"
         )
         self.process_box_height = DimensionSpec(
-            value=0.6 * self.px_per_inch,
+            value=_scaled_px(_parse_required_dimension(process_box_height), dpi),
             tolerance=5,
             unit="px"
         )
 
-        # Data box (1.5" × 0.4")
+        # Data box
         self.data_box_width = DimensionSpec(
-            value=1.5 * self.px_per_inch,
+            value=_scaled_px(_parse_required_dimension(data_box_width), dpi),
             tolerance=5,
             unit="px"
         )
         self.data_box_height = DimensionSpec(
-            value=0.4 * self.px_per_inch,
+            value=_scaled_px(_parse_required_dimension(data_box_height), dpi),
             tolerance=5,
             unit="px"
         )
 
-        # Queue circle (0.5"–0.7" diameter)
+        # Queue circle diameter range
         self.queue_circle_min = DimensionSpec(
-            value=0.5 * self.px_per_inch,
+            value=_scaled_px(_parse_required_dimension(queue_circle_min), dpi),
             tolerance=2,
             unit="diameter"
         )
         self.queue_circle_max = DimensionSpec(
-            value=0.7 * self.px_per_inch,
+            value=_scaled_px(_parse_required_dimension(queue_circle_max), dpi),
             tolerance=2,
             unit="diameter"
         )
 
         # Spacing
         self.spacing_h = DimensionSpec(
-            value=0.2 * self.px_per_inch,
+            value=_scaled_px(_parse_required_dimension(spacing_h), dpi),
             tolerance=3,
             unit="px"
         )
         self.spacing_v = DimensionSpec(
-            value=0.3 * self.px_per_inch,
+            value=_scaled_px(_parse_required_dimension(spacing_v), dpi),
             tolerance=3,
             unit="px"
         )
+
+
+def _parse_required_dimension(value: str) -> Dimension:
+    parsed = parse_dimension(value)
+    if parsed is None:
+        raise ValueError(
+            "Invalid dimension value '"
+            f"{value}'"
+            "; expected positive dimension with px, in, or cm"
+        )
+    return parsed
+
+
+def _scaled_px(dimension: Dimension, dpi: int) -> float:
+    """Convert shared dimension to pixel target at selected DPI."""
+    base_px = float(dimension.to_px())
+    return base_px * (dpi / 96.0)
 
 
 class SVGElement(NamedTuple):
@@ -144,12 +184,10 @@ def extract_svg_dimensions(svg_path: Path) -> list[SVGElement]:
         print(f"Error parsing SVG: {e}")
         return []
 
-    # Handle namespace
-    ns = {"svg": "http://www.w3.org/2000/svg"}
     elements = []
 
     # Extract rectangles
-    for rect in root.findall(".//svg:rect", ns):
+    for rect in _iter_svg_elements(root, "rect"):
         elem_id = rect.get("id")
         x = float(rect.get("x", 0))
         y = float(rect.get("y", 0))
@@ -164,7 +202,7 @@ def extract_svg_dimensions(svg_path: Path) -> list[SVGElement]:
         ))
 
     # Extract circles
-    for circle in root.findall(".//svg:circle", ns):
+    for circle in _iter_svg_elements(root, "circle"):
         elem_id = circle.get("id")
         cx = float(circle.get("cx", 0))
         cy = float(circle.get("cy", 0))
@@ -179,7 +217,7 @@ def extract_svg_dimensions(svg_path: Path) -> list[SVGElement]:
         ))
 
     # Extract ellipses
-    for ellipse in root.findall(".//svg:ellipse", ns):
+    for ellipse in _iter_svg_elements(root, "ellipse"):
         elem_id = ellipse.get("id")
         cx = float(ellipse.get("cx", 0))
         cy = float(ellipse.get("cy", 0))
@@ -194,7 +232,7 @@ def extract_svg_dimensions(svg_path: Path) -> list[SVGElement]:
         ))
 
     # Extract polygons (for table cells in SPPM)
-    for polygon in root.findall(".//svg:polygon", ns):
+    for polygon in _iter_svg_elements(root, "polygon"):
         elem_id = polygon.get("id")
         points_str = polygon.get("points", "")
         x, y, width, height = parse_polygon_bounds(points_str)
@@ -209,22 +247,44 @@ def extract_svg_dimensions(svg_path: Path) -> list[SVGElement]:
     return elements
 
 
-def _content_elements(elements: list[SVGElement]) -> list[SVGElement]:
-    content_elements = [
-        element
-        for element in elements
-        if element.elem_id and not element.elem_id.startswith("__flo_canvas") and not element.elem_id.startswith("__sppm")
-    ]
-    content_elements.extend(element for element in elements if element.elem_type in ("circle", "ellipse"))
+def _iter_svg_elements(root: ET.Element, tag: str):
+    """Yield elements by local name regardless of namespace form."""
+    for element in root.iter():
+        if _local_name(element.tag) == tag:
+            yield element
 
-    seen_ids: set[str | None] = set()
+
+def _local_name(tag: str) -> str:
+    """Return tag local name from namespaced or plain XML tags."""
+    if "}" in tag:
+        return tag.split("}", 1)[1]
+    return tag
+
+
+def _content_elements(elements: list[SVGElement]) -> list[SVGElement]:
+    content_elements = []
+    for element in elements:
+        if element.elem_id and (
+            element.elem_id.startswith("__flo_canvas") or element.elem_id.startswith("__sppm")
+        ):
+            continue
+        content_elements.append(element)
+
+    seen_keys: set[tuple[object, ...]] = set()
     unique_elements: list[SVGElement] = []
     for element in content_elements:
-        if element.elem_id in seen_ids:
+        key = (
+            element.elem_id,
+            element.elem_type,
+            round(element.x, 3),
+            round(element.y, 3),
+            round(element.width or 0, 3),
+            round(element.height or 0, 3),
+        )
+        if key in seen_keys:
             continue
         unique_elements.append(element)
-        if element.elem_id is not None:
-            seen_ids.add(element.elem_id)
+        seen_keys.add(key)
     return unique_elements
 
 
@@ -234,7 +294,13 @@ def _build_report_header(*, svg_path: Path, dpi: int, spec: SizingSpec) -> list[
         "=" * 60,
         f"SVG File: {svg_path.name}",
         f"DPI: {dpi}",
-        f"Spec values (at {dpi} DPI):",
+        "Spec inputs (shared dimension model):",
+        f"  Process Box: {spec.process_box_width_input} W × {spec.process_box_height_input} H",
+        f"  Data Box: {spec.data_box_width_input} W × {spec.data_box_height_input} H",
+        f"  Queue Circle: {spec.queue_circle_min_input}–{spec.queue_circle_max_input} diameter",
+        f"  Spacing (H): {spec.spacing_h_input}",
+        f"  Spacing (V): {spec.spacing_v_input}",
+        f"Derived pixel targets (at {dpi} DPI):",
         f"  Process Box: {spec.process_box_width.value:.1f}px W × {spec.process_box_height.value:.1f}px H (±{spec.process_box_width.tolerance}px)",
         f"  Data Box: {spec.data_box_width.value:.1f}px W × {spec.data_box_height.value:.1f}px H (±{spec.data_box_width.tolerance}px)",
         f"  Queue Circle: {spec.queue_circle_min.value:.1f}–{spec.queue_circle_max.value:.1f}px diameter",
@@ -323,15 +389,43 @@ def _append_summary(report: list[str], *, all_passed: bool, rectangles: list[SVG
     circle_summary = "✓ all within spec" if _circles_within_spec(circles, spec) else "⚠ some out of spec"
     report.append(f"  Circles/ellipses: {len(circles)} ({circle_summary})")
     report.append(f"  Polygons (table cells): {len(polygons)} (requires manual review)")
+    report.append("  Note: SVG geometry reflects rendered approximations from Graphviz/DOT layout.")
+    report.append("        This check compares those approximations against intended dimensions.")
     if all_passed:
         report.append("\n✓ All dimensional checks passed.\n")
     else:
         report.append("\n✗ Some dimensions out of spec. Review rectangles above.\n")
 
 
-def verify_sizing(svg_path: Path, dpi: int = 96) -> tuple[bool, list[str]]:
+def verify_sizing(
+    svg_path: Path,
+    *,
+    dpi: int = 96,
+    process_box_width: str = "1.5in",
+    process_box_height: str = "0.6in",
+    data_box_width: str = "1.5in",
+    data_box_height: str = "0.4in",
+    queue_circle_min: str = "0.5in",
+    queue_circle_max: str = "0.7in",
+    spacing_h: str = "0.2in",
+    spacing_v: str = "0.3in",
+) -> tuple[bool, list[str]]:
     """Verify SVG sizing against SPPM spec."""
-    spec = SizingSpec(dpi=dpi)
+    try:
+        spec = SizingSpec(
+            dpi=dpi,
+            process_box_width=process_box_width,
+            process_box_height=process_box_height,
+            data_box_width=data_box_width,
+            data_box_height=data_box_height,
+            queue_circle_min=queue_circle_min,
+            queue_circle_max=queue_circle_max,
+            spacing_h=spacing_h,
+            spacing_v=spacing_v,
+        )
+    except ValueError as exc:
+        return False, [str(exc)]
+
     elements = extract_svg_dimensions(svg_path)
     if not elements:
         return False, ["No SVG elements found."]
@@ -362,6 +456,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("svg_file", type=Path, help="Path to SVG file to verify")
     parser.add_argument("--dpi", type=int, default=96, help="DPI for spec conversion (default 96)")
+    parser.add_argument("--process-box-width", default="1.5in", help="Expected process box width (px/in/cm)")
+    parser.add_argument("--process-box-height", default="0.6in", help="Expected process box height (px/in/cm)")
+    parser.add_argument("--data-box-width", default="1.5in", help="Expected data box width (px/in/cm)")
+    parser.add_argument("--data-box-height", default="0.4in", help="Expected data box height (px/in/cm)")
+    parser.add_argument("--queue-min-diameter", default="0.5in", help="Expected minimum queue diameter (px/in/cm)")
+    parser.add_argument("--queue-max-diameter", default="0.7in", help="Expected maximum queue diameter (px/in/cm)")
+    parser.add_argument("--spacing-h", default="0.2in", help="Expected horizontal spacing target (px/in/cm)")
+    parser.add_argument("--spacing-v", default="0.3in", help="Expected vertical spacing target (px/in/cm)")
 
     args = parser.parse_args()
 
@@ -369,7 +471,18 @@ def main():
         print(f"Error: File not found: {args.svg_file}")
         sys.exit(2)
 
-    all_passed, report = verify_sizing(args.svg_file, dpi=args.dpi)
+    all_passed, report = verify_sizing(
+        args.svg_file,
+        dpi=args.dpi,
+        process_box_width=args.process_box_width,
+        process_box_height=args.process_box_height,
+        data_box_width=args.data_box_width,
+        data_box_height=args.data_box_height,
+        queue_circle_min=args.queue_min_diameter,
+        queue_circle_max=args.queue_max_diameter,
+        spacing_h=args.spacing_h,
+        spacing_v=args.spacing_v,
+    )
 
     for line in report:
         print(line)
