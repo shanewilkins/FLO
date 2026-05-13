@@ -103,5 +103,7 @@ Next steps
 
 - Integrate typed-schema checks into the CLI `flo validate` command.
 - Add examples demonstrating invalid metadata and expected diagnostics.
+- See `docs/design/render_intent_schema.md` for the proposed source-level
+  render/publication intent schema and multi-view render design.
 
 Document version: draft (v0.0)
