@@ -104,6 +104,13 @@ def test_sppm_footer_band_renders_metrics_and_render_time_inputs():
 
 
 def test_sppm_footer_band_preserves_waiting_vs_crossover_metric_distinction():
+    """Verify footer metrics can display queue time and setup time as distinct entries.
+    
+    The distinction between waiting time (queue/resource scheduling) and
+    crossover time (setup/SMED) is critical for diagnostic clarity. The
+    footer should preserve this separation so users can see both metrics
+    and understand the different improvement approaches needed for each.
+    """
     process = {
         "process": {
             "id": "ops_review",

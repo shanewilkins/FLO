@@ -81,7 +81,11 @@ def _parse_time_spec(time_spec: Any) -> SppmMetadataValue | None:
 
 
 def get_metadata_wait_time_minutes(metadata: dict[str, Any] | None) -> Any:
-    """Extract wait_time value from metadata, defaulting to 0.
+    """Extract wait_time (queue delay) from metadata, defaulting to 0.
+    
+    Wait time represents queue/idle delay caused by unavailability of the next
+    resource or step. This is distinct from changeover/setup time, which is
+    reconfiguration time within a step itself.
     
     Returns the raw numeric value (int or float) to preserve formatting,
     or 0 if absent/invalid.
@@ -103,12 +107,21 @@ def get_metadata_cycle_time(metadata: dict[str, Any] | None) -> SppmMetadataValu
 
 
 def get_metadata_crossover_time(metadata: dict[str, Any] | None) -> SppmMetadataValue | None:
-    """Extract crossover/transfer time using canonical precedence.
+    """Extract changeover/setup time using canonical precedence.
 
-    Precedence order:
-    1. ``crossover_time``
+    Changeover time represents setup/reconfiguration time required to transition
+    a step to the next product, batch, or mode. This is distinct from wait time
+    (queue delay), which is caused by unavailability of resources.
+
+    Precedence order for metadata field lookup:
+    1. ``crossover_time`` (preferred)
     2. ``transfer_time``
     3. ``changeover_time`` (legacy alias)
+
+    Note: The distinction between wait time and changeover time is pedagogically
+    important. Both are non-value-adding, but they have different root causes
+    and solutions: queues are solved by scheduling/pull; setup is solved by
+    standardization/SMED.
     """
     for field_name in ("crossover_time", "transfer_time", "changeover_time"):
         time_spec = get_metadata_field(metadata, field_name, expected_type=dict)
@@ -119,7 +132,11 @@ def get_metadata_crossover_time(metadata: dict[str, Any] | None) -> SppmMetadata
 
 
 def get_metadata_changeover_time(metadata: dict[str, Any] | None) -> SppmMetadataValue | None:
-    """Backward-compatible alias for crossover/transfer time extraction."""
+    """Backward-compatible alias for crossover/transfer/changeover time extraction.
+    
+    This function delegates to get_metadata_crossover_time() for compatibility.
+    Prefer get_metadata_crossover_time() in new code.
+    """
     return get_metadata_crossover_time(metadata)
 
 

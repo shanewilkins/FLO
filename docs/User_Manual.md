@@ -720,16 +720,28 @@ SPPM label policy matrix:
 - Determinism:
   - The same policy is applied consistently across these surfaces, so long labels behave predictably for each truncation mode.
 
-SPPM time semantics (waiting vs crossover):
-- Waiting time (`wait_time`) is queue/delay time and renders as `WT`.
-- Crossover time is transfer/changeover time and renders as `CO`.
-- Canonical crossover metadata key precedence is:
-  - `crossover_time`
-  - `transfer_time`
-  - `changeover_time` (legacy alias)
-- Footer metric policy should keep these distinct when both are present, for example:
-  - `Waiting Time: 9 min`
-  - `Crossover Time: 2 min`
+SPPM time semantics (waiting vs changeover):
+
+**Core Distinction**: FLO separates queue delays from setup/changeover time because they represent different operational problems with different solutions.
+
+- **Waiting Time (WT)**: Queue/idle delay caused by unavailability of the next resource or step (e.g., waiting in line, awaiting the oven to be free). Metric: `wait_time`.
+  - Root cause: Resource scheduling, demand leveling, batch economics
+  - Countermeasures: Pull systems, kanban, takt time alignment, work-in-progress limits
+
+- **Changeover Time (CO)**: Setup/transition time required to reconfigure a step for the next product or mode (e.g., oven preheat, equipment changeover). Metric: `crossover_time` (or `transfer_time`/`changeover_time` as legacy aliases).
+  - Root cause: Process design, lack of standardization, skill gaps
+  - Countermeasures: 5S, SMED, process documentation, cross-training
+
+**Why This Distinction Matters**: 5S and SMED reduce changeover time, but don't solve queue delays. A bakery might reduce oven changeover from 30 min to 5 min (via SMED), but if croissants spend 2 hours waiting for the oven to be available, the problem isn't setup—it's resource scheduling. Teaching students to ask "Is this a queue or a setup?" directs them to the right improvement tools.
+
+**Metadata Field Precedence** for crossover time extraction:
+  1. `crossover_time` (preferred)
+  2. `transfer_time`
+  3. `changeover_time` (legacy alias)
+
+**Rendering**: Both metrics render distinctly in node labels and publication footers when present:
+  - `WT: 9 min` (queue time)
+  - `CO: 2 min` (setup time)
 
 ### AI Quick Reference: Max Width and Compact Density
 

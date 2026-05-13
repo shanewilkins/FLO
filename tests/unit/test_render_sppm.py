@@ -217,6 +217,12 @@ def test_sppm_task_cards_have_minimum_content_width():
 
 
 def test_sppm_wait_time_shown_in_node_info_box():
+    """Verify queue delay (wait_time) renders in node labels.
+    
+    Wait time represents queue/idle delays (e.g., waiting for a resource to
+    be available). This is distinct from changeover time, which is setup/
+    reconfiguration within a step.
+    """
     ir_like = {
         "nodes": [
             {"id": "dropoff", "kind": "task", "name": "Drop-off", "metadata": {}},
@@ -251,6 +257,14 @@ def test_sppm_zero_wait_time_omitted_from_info_box():
 
 
 def test_sppm_changeover_time_shown_in_node_info_box():
+    """Verify setup/changeover time renders in node labels as a distinct metric.
+    
+    Changeover time represents setup/reconfiguration delays (e.g., equipment
+    changeover, oven preheat). This is distinct from wait time, which is queue
+    delays. Both are non-value-adding, but require different improvement approaches:
+    - Wait time solutions: pull systems, kanban, leveling
+    - Changeover time solutions: 5S, SMED, standardization
+    """
     ir_like = {
         "nodes": [
             {"id": "a", "kind": "task", "name": "A", "metadata": {}},
@@ -268,6 +282,12 @@ def test_sppm_changeover_time_shown_in_node_info_box():
 
 
 def test_sppm_crossover_time_precedence_prefers_canonical_field_over_legacy_alias():
+    """Verify that canonical field names take precedence in metadata extraction.
+    
+    When both crossover_time and changeover_time (legacy alias) are present,
+    the canonical crossover_time field is preferred. This ensures clean
+    backward compatibility while directing new code to the standard field.
+    """
     ir_like = {
         "nodes": [
             {"id": "a", "kind": "task", "name": "A", "metadata": {}},
