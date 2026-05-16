@@ -1,24 +1,29 @@
 ---
 id: 6a2c8f9b
 title: Build bundle orchestration layer for multi-view, multi-artifact rendering
-headline: Create executor that chains view selections and emits ordered artifacts (SPPM, spaghetti, topdown in one invocation).
+headline: Create executor that chains view selections and emits ordered artifacts
+  (SPPM, spaghetti, topdown in one invocation).
 priority: critical
 status: todo
 archived: false
 issue_type: feature
 milestone: render-intent-schema-and-multi-view-support
-labels: [architecture, critical-path]
+labels:
+- architecture
+- critical-path
 remote_ids: {}
 created: '2026-05-13T17:30:00+00:00'
-updated: '2026-05-13T17:30:00+00:00'
-assignee: null
-estimated_hours: 10
+updated: '2026-05-16T19:11:56.291378+00:00'
+assignee: shanewilkins
+estimated_hours: 10.0
 due_date: null
-depends_on: [a1d9f4c6, 5e6b7d3a]
+depends_on:
+- a1d9f4c6
+- 5e6b7d3a
 blocks: []
 actual_start_date: null
 actual_end_date: null
-progress_percentage: 0
+progress_percentage: 0.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null

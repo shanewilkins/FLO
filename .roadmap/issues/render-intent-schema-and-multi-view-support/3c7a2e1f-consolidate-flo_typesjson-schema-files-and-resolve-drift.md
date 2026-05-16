@@ -1,24 +1,28 @@
 ---
 id: 3c7a2e1f
 title: Consolidate flo_types.json schema files and resolve drift
-headline: Merge duplicate schema files and ensure single source of truth for typed metadata validation.
+headline: Merge duplicate schema files and ensure single source of truth for typed
+  metadata validation.
 priority: critical
-status: open
+status: closed
 archived: false
-issue_type: refactor
+issue_type: feature
 milestone: render-intent-schema-and-multi-view-support
-labels: [schema, critical-path]
+labels:
+- schema
+- critical-path
 remote_ids: {}
 created: '2026-05-13T17:30:00+00:00'
-updated: '2026-05-13T17:30:00+00:00'
+updated: '2026-05-16T19:14:04.019702+00:00'
 assignee: null
-estimated_hours: 3
+estimated_hours: 3.0
 due_date: null
 depends_on: []
-blocks: [4f8b5c2d]
+blocks:
+- 4f8b5c2d
 actual_start_date: null
 actual_end_date: null
-progress_percentage: 0
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null

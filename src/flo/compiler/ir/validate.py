@@ -7,6 +7,7 @@ from .models import IR
 from .enums import ProcessValueClass
 from .schema_projection import ir_to_schema_dict
 from .validate_subprocess import validate_subprocess_metadata
+from .validate_render_intent import validate_render_intent
 from flo.services.errors import ValidationError
 from pathlib import Path
 import json
@@ -590,6 +591,7 @@ def ensure_schema_aligned(ir: object) -> None:
         raise ValidationError("compiled output is not an IR instance")
 
     validate_against_schema(ir)
+    validate_render_intent(ir)
 
 
 def _locate_schema(name: str) -> Path:

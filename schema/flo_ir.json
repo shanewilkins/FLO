@@ -11,7 +11,13 @@
         "id": { "type": "string" },
         "name": { "type": "string" },
         "version": { "oneOf": [{"type":"integer"},{"type":"string"}] },
-        "metadata": { "type": "object", "additionalProperties": true }
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "render": { "$ref": "#/definitions/render_intent" }
+          },
+          "additionalProperties": true
+        }
       },
       "additionalProperties": false
     },
@@ -81,5 +87,111 @@
       }
     }
   },
+  "definitions": {
+    "render_intent": {
+      "type": "object",
+      "properties": {
+        "defaults": { "$ref": "#/definitions/render_view" },
+        "views": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/render_view" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "render_view": {
+      "type": "object",
+      "properties": {
+        "diagram": {
+          "type": "string",
+          "enum": ["sppm","spaghetti","topdown"]
+        },
+        "publication": { "$ref": "#/definitions/publication_config" },
+        "layout": { "$ref": "#/definitions/layout_config" },
+        "sppm": { "$ref": "#/definitions/sppm_config" },
+        "spaghetti": { "$ref": "#/definitions/spaghetti_config" }
+      },
+      "additionalProperties": false
+    },
+    "publication_config": {
+      "type": "object",
+      "properties": {
+        "page_format": {
+          "type": "string",
+          "enum": ["letter","a4","legal","tabloid"]
+        },
+        "margins": {
+          "type": "object",
+          "properties": {
+            "top": { "type": "integer", "minimum": 0 },
+            "right": { "type": "integer", "minimum": 0 },
+            "bottom": { "type": "integer", "minimum": 0 },
+            "left": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "header": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "footer": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "layout_config": {
+      "type": "object",
+      "properties": {
+        "wrap": {
+          "type": "string",
+          "enum": ["none","auto","manual"]
+        },
+        "max_width": { "type": "integer", "minimum": 1 },
+        "target_columns": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "sppm_config": {
+      "type": "object",
+      "properties": {
+        "label_density": {
+          "type": "string",
+          "enum": ["full","compact","teaching"]
+        },
+        "node_numbering": {
+          "type": "string",
+          "enum": ["none","visible","hidden"]
+        },
+        "edge_numbering": {
+          "type": "string",
+          "enum": ["none","visible","hidden"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "spaghetti_config": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "type": "string",
+          "enum": ["material","people","equipment"]
+        },
+        "people_mode": {
+          "type": "string",
+          "enum": ["aggregate","individual"]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
   "additionalProperties": false
 }
+

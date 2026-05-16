@@ -1,24 +1,30 @@
 ---
 id: a1d9f4c6
 title: Introduce RenderIntent domain model and view-aware resolver
-headline: Create typed RenderIntent dataclass and implement source-view-first option resolution with strict precedence.
+headline: Create typed RenderIntent dataclass and implement source-view-first option
+  resolution with strict precedence.
 priority: critical
 status: todo
 archived: false
 issue_type: feature
 milestone: render-intent-schema-and-multi-view-support
-labels: [domain-model, critical-path]
+labels:
+- domain-model
+- critical-path
 remote_ids: {}
 created: '2026-05-13T17:30:00+00:00'
-updated: '2026-05-13T17:30:00+00:00'
-assignee: null
-estimated_hours: 8
+updated: '2026-05-16T19:11:54.297643+00:00'
+assignee: shanewilkins
+estimated_hours: 8.0
 due_date: null
-depends_on: [4f8b5c2d]
-blocks: [5e6b7d3a, 6a2c8f9b]
+depends_on:
+- 4f8b5c2d
+blocks:
+- 5e6b7d3a
+- 6a2c8f9b
 actual_start_date: null
 actual_end_date: null
-progress_percentage: 0
+progress_percentage: 0.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null

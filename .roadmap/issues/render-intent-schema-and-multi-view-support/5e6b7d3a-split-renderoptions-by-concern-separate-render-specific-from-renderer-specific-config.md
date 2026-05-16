@@ -1,24 +1,30 @@
 ---
 id: 5e6b7d3a
-title: Split RenderOptions by concern; separate render-specific from renderer-specific config
-headline: Refactor monolithic RenderOptions into focused domain objects; decouple SPPM-specific fields from shared core.
+title: Split RenderOptions by concern; separate render-specific from renderer-specific
+  config
+headline: Refactor monolithic RenderOptions into focused domain objects; decouple
+  SPPM-specific fields from shared core.
 priority: critical
 status: todo
 archived: false
 issue_type: feature
 milestone: render-intent-schema-and-multi-view-support
-labels: [refactor, critical-path]
+labels:
+- refactor
+- critical-path
 remote_ids: {}
 created: '2026-05-13T17:30:00+00:00'
-updated: '2026-05-13T17:30:00+00:00'
-assignee: null
-estimated_hours: 8
+updated: '2026-05-16T19:11:55.292085+00:00'
+assignee: shanewilkins
+estimated_hours: 8.0
 due_date: null
-depends_on: [a1d9f4c6]
-blocks: [6a2c8f9b]
+depends_on:
+- a1d9f4c6
+blocks:
+- 6a2c8f9b
 actual_start_date: null
 actual_end_date: null
-progress_percentage: 0
+progress_percentage: 0.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null
