@@ -18,6 +18,7 @@ from flo.render import render_dot_and_contract, RenderOptions
 from flo.export import export_ir
 from flo.core._flo_config import merge_diagrams_toml_sppm_defaults
 from flo.core._option_validation import validate_sppm_numeric_render_options, ensure_render_options_compatible_with_output
+from flo.core.render_intent import RenderIntentResolver
 
 if TYPE_CHECKING:
     from flo.render._sppm_postprocess_contract import SppmSvgPostprocessContract
@@ -45,6 +46,19 @@ def run_content(content: str, command: str = "run", options: dict | None = None)
     resolved_options = merge_diagrams_toml_sppm_defaults(options=options)
     validate_sppm_numeric_render_options(options=resolved_options)
     render_to: str | None = (resolved_options or {}).get("render_to")
+
+    # Extract view-aware render intent from compiled IR (wires resolver into pipeline)
+    render_metadata = None
+    if isinstance(ir, IR) and isinstance(ir.process_metadata, dict):
+        render_metadata = ir.process_metadata.get("render")
+    # TODO: integrate resolved view_intent into RenderOptions.from_mapping() (issue 5e6b7d3a)
+    _view_intent = RenderIntentResolver.resolve(
+        render_metadata=render_metadata,
+        cli_overrides=resolved_options,
+        profile="default",
+        view_name="default",
+    )
+
     render_options = RenderOptions.from_mapping(resolved_options)
 
     dot, contract = _render_dot_with_postprocess(ir, render_options=render_options)

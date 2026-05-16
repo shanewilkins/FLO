@@ -4,7 +4,7 @@ title: Add strict render-intent validation in compile/validate pipeline
 headline: Extend schema and validator to enforce render-intent structure and catch
   malformed process.metadata.render keys.
 priority: critical
-status: in-progress
+status: closed
 archived: false
 issue_type: feature
 milestone: render-intent-schema-and-multi-view-support
@@ -13,7 +13,7 @@ labels:
 - critical-path
 remote_ids: {}
 created: '2026-05-13T17:30:00+00:00'
-updated: '2026-05-16T19:14:09.779972+00:00'
+updated: '2026-05-16T19:19:53.771212+00:00'
 assignee: shanewilkins
 estimated_hours: 5.0
 due_date: null
@@ -23,7 +23,7 @@ blocks:
 - a1d9f4c6
 actual_start_date: '2026-05-16T19:14:09.591584+00:00'
 actual_end_date: null
-progress_percentage: 0.0
+progress_percentage: 100.0
 handoff_notes: null
 previous_assignee: null
 handoff_date: null
