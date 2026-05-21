@@ -46,12 +46,12 @@ def parse_args(
     )
     parser.add_argument(
         "--export",
-        choices=["dot", "json", "ingredients", "movement"],
-        help="Export format (dot|json|ingredients|movement)",
+        choices=["dot", "svg", "json", "ingredients", "movement"],
+        help="Export format (dot|svg|json|ingredients|movement)",
     )
     parser.add_argument(
         "--format",
-        choices=["dot", "json", "ingredients", "movement"],
+        choices=["dot", "svg", "json", "ingredients", "movement"],
         help=argparse.SUPPRESS,
     )
     add_argparse_render_options(parser, include_render_to=True)

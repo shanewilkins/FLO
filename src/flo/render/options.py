@@ -28,6 +28,7 @@ SppmTruncationPolicy = Literal["ellipsis", "clip", "none"]
 SppmOutputProfile = Literal["default", "book", "web", "print", "slide"]
 PublicationPageFormatName = Literal["letter", "a4", "legal", "tabloid"]
 DimensionUnit = Literal["px", "in", "cm"]
+RenderBackend = Literal["graphviz", "svg"]
 
 _DIMENSION_TO_PX: dict[str, float] = {
     "px": 1.0,
@@ -126,6 +127,7 @@ class RenderOptions:
     """
 
     diagram: DiagramType = "flowchart"
+    backend: RenderBackend = "graphviz"
     profile: RenderProfile = "default"
     detail: DetailLevel = "standard"
     orientation: Orientation = "lr"
@@ -172,6 +174,7 @@ class RenderOptions:
 
         return cls(
             diagram=_parse_diagram(effective_options),
+            backend=_parse_backend(effective_options),
             profile=profile,
             detail=_parse_detail(effective_options),
             orientation=_parse_orientation(effective_options),
@@ -256,6 +259,13 @@ def _parse_diagram(options: Mapping[str, Any]) -> DiagramType:
     if diagram_raw == "sppm":
         return "sppm"
     return "flowchart"
+
+
+def _parse_backend(options: Mapping[str, Any]) -> RenderBackend:
+    backend_raw = _normalized_option(options, "render_backend", "graphviz")
+    if backend_raw == "svg":
+        return "svg"
+    return "graphviz"
 
 
 def _parse_profile(options: Mapping[str, Any]) -> RenderProfile:

@@ -10,7 +10,7 @@ from flo.adapters import parse_adapter
 from flo.compiler import compile_adapter
 from flo.compiler.ir import validate_ir
 from flo.compiler.analysis import scc_condense
-from flo.render import render_dot
+from flo.render import render_artifact
 from flo.services.errors import (
     EXIT_PARSE_ERROR,
     EXIT_COMPILE_ERROR,
@@ -130,8 +130,8 @@ class RenderStep:
         if rc != 0:
             return rc, None, err
         try:
-            dot = render_dot(ir)
-            return 0, dot, None
+            artifact = render_artifact(ir)
+            return 0, artifact.content, None
         except Exception as e:
             return _step_error(e, services, EXIT_RENDER_ERROR)
 

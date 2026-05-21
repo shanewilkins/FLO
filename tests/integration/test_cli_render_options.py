@@ -74,7 +74,7 @@ def test_non_dot_export_rejects_dot_only_flags(extra_args: list[str]):
     runner = CliRunner()
     result = runner.invoke(cli, args)
     assert result.exit_code == 1
-    assert "require DOT output" in result.output
+    assert "require a diagram render output" in result.output
 
 
 def test_run_show_notes_and_orientation(tmp_path):

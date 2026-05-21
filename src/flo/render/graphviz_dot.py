@@ -1,13 +1,17 @@
-"""Graphviz DOT renderers for FLO models.
+"""Legacy compatibility facade for Graphviz DOT renderer imports.
 
-Compatibility facade that re-exports concern-specific renderers.
+Prefer importing from ``flo.render.graphviz_backend`` for backend-oriented
+package structure. This module remains to avoid breaking older callers.
 """
 
 from __future__ import annotations
 
-from ._graphviz_dot_flow import render_flowchart_dot, render_swimlane_dot
-from ._graphviz_dot_spaghetti import render_spaghetti_dot
-from ._graphviz_dot_sppm import render_sppm_dot
+from .graphviz_backend import (
+    render_flowchart_dot,
+    render_spaghetti_dot,
+    render_sppm_dot,
+    render_swimlane_dot,
+)
 
 __all__ = [
     "render_flowchart_dot",

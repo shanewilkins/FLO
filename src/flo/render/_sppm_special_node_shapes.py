@@ -8,7 +8,7 @@ from typing import Any
 from flo.schema.subprocess_refs import resolve_subprocess_detail_map_reference
 
 from ._autoformat_wrap import WrapPlan
-from ._graphviz_dot_common import _escape
+from ._graphviz_backend_common import _escape
 from ._sppm_text import format_text_field, normalize_space
 from ._sppm_themes import SppmTheme
 from .options import RenderOptions

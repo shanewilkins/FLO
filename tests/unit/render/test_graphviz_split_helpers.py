@@ -1,4 +1,4 @@
-import flo.render._graphviz_dot_common as common
+import flo.render._graphviz_backend_common as common
 import flo.render._graphviz_dot_spaghetti as spaghetti
 from flo.render.options import RenderOptions
 

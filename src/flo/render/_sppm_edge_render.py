@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ._graphviz_dot_common import _escape
+from ._graphviz_backend_common import _escape
 from ._autoformat_wrap import WrapPlan
 from ._sppm_secondary_line_constraints import (
     _collect_rework_pairs,

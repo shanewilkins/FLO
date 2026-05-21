@@ -1,6 +1,6 @@
 # Render Platform Migration Plan
 
-Status: proposed implementation plan (May 2026)
+Status: active migration plan, in progress (May 2026)
 
 ## Purpose
 
@@ -10,6 +10,44 @@ to the accepted target stack:
 - ELK for graph layout where needed
 - FLO-owned SVG for standalone graphics
 - Typst for true document composition
+
+## Current State
+
+The migration is no longer at proposal-only stage.
+
+Completed so far:
+
+- backend-neutral render artifacts exist in code
+- backend selection is explicit in orchestration rather than implied by shared
+  Graphviz-shaped helpers
+- Graphviz remains available behind a compatibility path for DOT-oriented
+  behavior
+- Graphviz package and helper entrypoints have been moved toward backend-oriented
+  naming, with legacy DOT-facing module names retained as compatibility shims
+- a narrow FLO-owned SVG backend exists for spaghetti rendering
+- CLI and core export flow now treat `svg` as a first-class output mode
+- the direct-SVG spaghetti slice now has focused artifact-contract coverage for
+  channel selection, route labels/titles/styles, boundary rendering, location
+  shape semantics, missing-spatial failure behavior, and multi-route
+  aggregation counts
+- focused validation passes across the affected render, core, pipeline, and CLI
+  slices
+
+Current phase assessment:
+
+- Phase 0 is complete
+- Phase 1 is substantially complete for the initial boundary cut
+- Phase 2 has started through the direct-SVG spaghetti slice and first-class
+  SVG export semantics
+- Phase 3 onward remain future work
+
+Current working interpretation:
+
+- DOT is now a legacy and compatibility artifact, not the target architectural
+  center
+- SVG is the canonical standalone graphics artifact
+- PDF remains the canonical composed publication artifact once Typst
+  composition lands
 
 ## Migration Principles
 
@@ -21,13 +59,20 @@ to the accepted target stack:
 
 ## Immediate Execution Plan: Boundary-Freeze Day
 
-This is the recommended battle plan for the next implementation session now
-that the design direction is locked.
+This section records the boundary-freeze execution plan that launched the
+refactor. Its core objectives have now been met and should be treated as the
+completed foundation for the next slices.
 
 ### Goal
 
 Make the codebase structurally ready for the refactor without trying to land
 ELK, FLO SVG, Typst composition, and package reorganization all at once.
+
+Status:
+
+- complete for the initial cut
+- follow-on work should build on these seams rather than reopen Graphviz-first
+  shared abstractions
 
 ### Priority Order
 
@@ -55,6 +100,12 @@ Work:
 - update any stale developer-facing command examples that still imply ambient
   interpreter selection
 
+Current state:
+
+- repository automation for the affected quality gates has been normalized
+  through `uv`
+- the radon complexity hook mismatch was resolved by running it through `uv`
+
 #### 2. Freeze the backend-neutral contracts
 
 Outcome:
@@ -67,6 +118,13 @@ Work:
   `LayoutRequest`, `LayoutResult`, and `GraphicAsset`
 - keep these contracts intentionally narrow and backend-neutral
 - avoid encoding DOT or Graphviz assumptions into the contract names or fields
+
+Current state:
+
+- the implemented seam is currently centered on render artifacts and explicit
+  backend selection rather than the fuller contract family named here
+- this is sufficient for the migration stage and should be extended only when a
+  concrete next backend needs the added abstraction
 
 #### 3. Split intent from execution
 
@@ -82,6 +140,13 @@ Work:
 - stop letting shared render assembly functions decide both semantics and DOT
   syntax in the same step
 
+Current state:
+
+- core and pipeline flow can now request render artifacts without assuming DOT
+  output as the only meaningful result
+- compatibility helpers still exist, but they no longer define the target
+  direction of the platform
+
 #### 4. Stand up a first non-Graphviz slice
 
 Outcome:
@@ -94,6 +159,12 @@ Work:
 - implement one narrow direct-SVG path
 - prefer spaghetti as the first slice because it depends more on explicit
   spatial semantics than on graph layout
+
+Current state:
+
+- complete for the first proving slice
+- spaghetti has a narrow direct-SVG backend for explicit spatial inputs
+- `--export svg` is now a first-class CLI-visible path for that slice
 
 #### 5. Hold the line on publication scope
 
@@ -108,6 +179,12 @@ Work:
 - avoid adding new DOT-era pagination or page-furniture logic to shared render
   code
 
+Current state:
+
+- still in force
+- no new shared pagination or DOT-era document-composition logic should be
+  added while SVG and layout migration continue
+
 ### Stop Line For The Day
 
 Today is successful if all of the following are true:
@@ -118,6 +195,10 @@ Today is successful if all of the following are true:
   abstraction for new work
 - one narrow SVG-backed path exists
 - no newly introduced shared code depends on Graphviz-specific concepts
+
+Observed result:
+
+- this stop line has been met for the initial migration cut
 
 ## Backend Selection Guidance
 
@@ -160,6 +241,8 @@ contracts.
 
 ## Phase 0: Freeze The New Boundaries
 
+Status: complete
+
 Outcome:
 
 - architecture decision recorded
@@ -174,6 +257,8 @@ Work:
   postprocessing
 
 ## Phase 1: Extract Backend-Neutral Contracts
+
+Status: mostly complete for the first migration cut
 
 Outcome:
 
@@ -201,7 +286,18 @@ Exit criteria:
 - pipeline and core orchestration can talk about diagram artifacts without
   assuming DOT as the only intermediate
 
+Current state:
+
+- met for the current artifact seam
+- further cleanup should reduce remaining Graphviz-oriented naming and module
+  boundaries without reopening the contract shape unnecessarily
+- one live shared-helper implementation has already been moved behind a
+  backend-oriented implementation name, with DOT-era module paths preserved as
+  compatibility shims during migration
+
 ## Phase 2: Build FLO SVG Emission
+
+Status: in progress
 
 Outcome:
 
@@ -228,7 +324,19 @@ Exit criteria:
 - spaghetti can emit standalone SVG directly from FLO
 - PNG and PDF can be derived from SVG without Graphviz-specific geometry
 
+Current state:
+
+- the first exit criterion is partially met for the explicit-spatial spaghetti
+  slice
+- SVG export is first-class in CLI/core semantics
+- the direct-SVG spaghetti backend now has meaningful artifact-contract tests
+  for both happy-path and failure-path behavior
+- image-fixture depth, broader per-family SVG coverage, and downstream SVG to
+  PNG/PDF derivation remain open work
+
 ## Phase 3: Add ELK For Graph-Like Diagram Families
+
+Status: not started
 
 Outcome:
 
@@ -255,6 +363,8 @@ Exit criteria:
 - Graphviz remains available as a fallback for non-migrated families
 
 ## Phase 4: Introduce Typst Composition
+
+Status: not started
 
 Outcome:
 
@@ -285,6 +395,8 @@ Exit criteria:
 
 ## Phase 5: Reduce Graphviz To Legacy Status
 
+Status: not started
+
 Outcome:
 
 - Graphviz is no longer the default architectural center
@@ -309,6 +421,21 @@ Exit criteria:
 
 This order avoids using SPPM as the proving ground for every new abstraction at
 once.
+
+## Next Slices
+
+The next implementation work should stay adjacent to the code already moved.
+
+Priority order:
+
+1. deepen SVG validation for the spaghetti path from focused contract tests
+  toward richer fixture-style artifact coverage
+2. reduce the remaining Graphviz leakage in legacy implementation module names
+  where the migration value is still worth the churn
+3. choose the first ELK candidate between flowchart and swimlane, then define
+  the minimal layout contract expansion required for that slice
+4. continue treating SPPM publication and Typst composition as a separate lane
+  until SVG and layout contracts are more stable
 
 ## Validation Strategy
 

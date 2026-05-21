@@ -1,7 +1,14 @@
 import pytest
 
 from flo.core import run_content, run
-from flo.services.errors import ParseError, CompileError, ValidationError, RenderError
+from flo.render import RenderArtifact
+from flo.services.errors import (
+    CLIError,
+    ParseError,
+    CompileError,
+    ValidationError,
+    RenderError,
+)
 
 
 def test_run_content_empty_returns_placeholder():
@@ -68,7 +75,7 @@ def test_run_content_render_error(monkeypatch, ir_factory, node_factory):
     def fake_render(ir, options=None):
         raise Exception("render failed")
 
-    monkeypatch.setattr("flo.core.render_dot_and_contract", fake_render)
+    monkeypatch.setattr("flo.core.render_artifact_and_contract", fake_render)
     with pytest.raises(RenderError):
         run_content("some content")
 
@@ -85,7 +92,11 @@ def test_postprocess_nonfatal(monkeypatch, ir_factory, node_factory):
     )
     monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
     monkeypatch.setattr(
-        "flo.core.render_dot_and_contract", lambda i, options=None: ("dot", None)
+        "flo.core.render_artifact_and_contract",
+        lambda i, options=None: (
+            RenderArtifact(kind="dot", content="dot", backend="graphviz"),
+            None,
+        ),
     )
 
     def bad_scc(ir):
@@ -116,7 +127,11 @@ def test_run_content_render_to_calls_graphviz_service(
     )
     monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
     monkeypatch.setattr(
-        "flo.core.render_dot_and_contract", lambda i, **kw: ("dot output", None)
+        "flo.core.render_artifact_and_contract",
+        lambda i, **kw: (
+            RenderArtifact(kind="dot", content="dot output", backend="graphviz"),
+            None,
+        ),
     )
     monkeypatch.setattr("flo.core.scc_condense", lambda i: i)
 
@@ -133,3 +148,128 @@ def test_run_content_render_to_calls_graphviz_service(
     assert rc == 0
     assert out == ""
     assert calls == [("dot output", "/tmp/out.png")]
+
+
+def test_run_content_returns_svg_artifact_content(
+    monkeypatch, ir_factory, node_factory
+):
+    monkeypatch.setattr(
+        "flo.core.parse_adapter",
+        lambda c, source_path=None: ir_factory(name="t", nodes=[node_factory("n")]),
+    )
+    monkeypatch.setattr(
+        "flo.core.compile_adapter",
+        lambda a: ir_factory(name="t", nodes=[node_factory("n")]),
+    )
+    monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
+    monkeypatch.setattr("flo.core.scc_condense", lambda i: i)
+    monkeypatch.setattr(
+        "flo.core.render_artifact_and_contract",
+        lambda i, options=None: (
+            RenderArtifact(kind="svg", content="<svg>ok</svg>", backend="svg"),
+            None,
+        ),
+    )
+
+    rc, out, err = run_content(
+        "some content",
+        options={"diagram": "spaghetti", "export": "svg", "render_backend": "svg"},
+    )
+    assert rc == 0
+    assert out == "<svg>ok</svg>"
+    assert err == ""
+
+
+def test_run_content_render_to_writes_svg_directly(
+    monkeypatch, ir_factory, node_factory, tmp_path
+):
+    monkeypatch.setattr(
+        "flo.core.parse_adapter",
+        lambda c, source_path=None: ir_factory(name="t", nodes=[node_factory("n")]),
+    )
+    monkeypatch.setattr(
+        "flo.core.compile_adapter",
+        lambda a: ir_factory(name="t", nodes=[node_factory("n")]),
+    )
+    monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
+    monkeypatch.setattr("flo.core.scc_condense", lambda i: i)
+    monkeypatch.setattr(
+        "flo.core.render_artifact_and_contract",
+        lambda i, options=None: (
+            RenderArtifact(kind="svg", content="<svg>ok</svg>", backend="svg"),
+            None,
+        ),
+    )
+
+    out_path = tmp_path / "out.svg"
+    rc, out, err = run_content(
+        "some content",
+        options={
+            "diagram": "spaghetti",
+            "export": "svg",
+            "render_backend": "svg",
+            "render_to": str(out_path),
+        },
+    )
+
+    assert rc == 0
+    assert out == ""
+    assert err == ""
+    assert out_path.read_text(encoding="utf-8") == "<svg>ok</svg>"
+
+
+def test_run_content_render_to_rejects_non_svg_target_for_svg_artifact(
+    monkeypatch, ir_factory, node_factory
+):
+    monkeypatch.setattr(
+        "flo.core.parse_adapter",
+        lambda c, source_path=None: ir_factory(name="t", nodes=[node_factory("n")]),
+    )
+    monkeypatch.setattr(
+        "flo.core.compile_adapter",
+        lambda a: ir_factory(name="t", nodes=[node_factory("n")]),
+    )
+    monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
+    monkeypatch.setattr("flo.core.scc_condense", lambda i: i)
+    monkeypatch.setattr(
+        "flo.core.render_artifact_and_contract",
+        lambda i, options=None: (
+            RenderArtifact(kind="svg", content="<svg>ok</svg>", backend="svg"),
+            None,
+        ),
+    )
+
+    with pytest.raises(RenderError, match=r"only \.svg output paths"):
+        run_content(
+            "some content",
+            options={
+                "diagram": "spaghetti",
+                "export": "svg",
+                "render_backend": "svg",
+                "render_to": "/tmp/out.png",
+            },
+        )
+
+
+def test_run_content_svg_export_rejects_graphviz_backend_override(
+    monkeypatch, ir_factory, node_factory
+):
+    monkeypatch.setattr(
+        "flo.core.parse_adapter",
+        lambda c, source_path=None: ir_factory(name="t", nodes=[node_factory("n")]),
+    )
+    monkeypatch.setattr(
+        "flo.core.compile_adapter",
+        lambda a: ir_factory(name="t", nodes=[node_factory("n")]),
+    )
+    monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
+
+    with pytest.raises(CLIError, match="SVG export currently requires"):
+        run_content(
+            "some content",
+            options={
+                "diagram": "spaghetti",
+                "export": "svg",
+                "render_backend": "graphviz",
+            },
+        )

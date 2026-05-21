@@ -5,8 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from ._autoformat_wrap import append_wrap_layout_hints, build_wrap_plan
-from ._graphviz_dot_edge_routing import _append_edges
-from ._graphviz_dot_common import (
+from ._graphviz_backend_common import (
     _append_clustered_node_passes,
     _build_nodes_by_id,
     _extract_nodes_and_edges,
@@ -14,6 +13,7 @@ from ._graphviz_dot_common import (
     _project_parent_only_subprocess_view,
     _subprocess_children_map,
 )
+from ._graphviz_backend_routing import _append_edges
 from .options import RenderOptions
 
 

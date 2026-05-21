@@ -39,6 +39,7 @@ def test_parse_args_with_flags(services, args, expected_command, expected_output
     "extra_args, expected_export",
     [
         ([], "dot"),
+        (["--export", "svg"], "svg"),
         (["--export", "json"], "json"),
         (["--export", "ingredients"], "ingredients"),
         (["--export", "movement"], "movement"),
@@ -57,6 +58,8 @@ def test_parse_args_render_options(services):
             "file.flo",
             "--diagram",
             "swimlane",
+            "--render-backend",
+            "graphviz",
             "--profile",
             "analysis",
             "--detail",
@@ -76,6 +79,7 @@ def test_parse_args_render_options(services):
     assert path == "file.flo"
     assert command == "run"
     assert options["diagram"] == "swimlane"
+    assert options["render_backend"] == "graphviz"
     assert options["profile"] == "analysis"
     assert options["detail"] == "verbose"
     assert options["orientation"] == "tb"
@@ -110,6 +114,17 @@ def test_parse_args_spaghetti_people_mode_option(services):
     assert path == "file.flo"
     assert command == "run"
     assert options["spaghetti_people_mode"] == "aggregate"
+
+
+def test_parse_args_render_backend_option(services):
+    path, command, options, _, _ = parse_args(
+        ["file.flo", "--diagram", "spaghetti", "--render-backend", "svg"],
+        services,
+    )
+    assert path == "file.flo"
+    assert command == "run"
+    assert options["diagram"] == "spaghetti"
+    assert options["render_backend"] == "svg"
 
 
 def test_parse_args_sppm_extended_options(services):

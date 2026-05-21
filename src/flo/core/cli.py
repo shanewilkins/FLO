@@ -150,6 +150,7 @@ def _build_render_opts(
     output: Optional[str],
     export_fmt: Optional[str],
     diagram: Optional[str],
+    render_backend: Optional[str],
     profile: Optional[str],
     detail: Optional[str],
     orientation: Optional[str],
@@ -184,6 +185,7 @@ def _build_render_opts(
         opts["export"] = export_fmt
     for key, value in (
         ("diagram", diagram),
+        ("render_backend", render_backend),
         ("profile", profile),
         ("detail", detail),
         ("orientation", orientation),
@@ -266,7 +268,7 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
 @click.option(
     "--export",
     "export_fmt",
-    type=click.Choice(["dot", "json", "ingredients", "movement"]),
+    type=click.Choice(["dot", "svg", "json", "ingredients", "movement"]),
     help="Export format",
 )
 @_apply_render_click_options(include_render_to=True)
@@ -277,6 +279,7 @@ def run_cmd(
     output: Optional[str],
     export_fmt: Optional[str],
     diagram: Optional[str],
+    render_backend: Optional[str],
     profile: Optional[str],
     detail: Optional[str],
     orientation: Optional[str],
@@ -312,6 +315,7 @@ def run_cmd(
         output=output,
         export_fmt=export_fmt or "dot",
         diagram=diagram,
+        render_backend=render_backend,
         profile=profile,
         detail=detail,
         orientation=orientation,
@@ -374,7 +378,7 @@ def validate_cmd(
 @click.option(
     "--export",
     "export_fmt",
-    type=click.Choice(["dot", "json", "ingredients", "movement"]),
+    type=click.Choice(["dot", "svg", "json", "ingredients", "movement"]),
     default="dot",
     show_default=True,
 )
@@ -387,6 +391,7 @@ def export_cmd(
     verbose: bool,
     output: Optional[str],
     diagram: Optional[str],
+    render_backend: Optional[str],
     profile: Optional[str],
     detail: Optional[str],
     orientation: Optional[str],
@@ -420,6 +425,7 @@ def export_cmd(
         output=output,
         export_fmt=export_fmt,
         diagram=diagram,
+        render_backend=render_backend,
         profile=profile,
         detail=detail,
         orientation=orientation,

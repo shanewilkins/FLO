@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ._graphviz_dot_common import _escape
+from ._graphviz_backend_common import _escape
 from ._sppm_render_data import SppmRenderEdge, SppmRenderNode
 from ._sppm_text import normalize_space
 

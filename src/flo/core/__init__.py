@@ -6,10 +6,14 @@ This module is the package-level implementation previously provided by
 
 from __future__ import annotations
 
+from dataclasses import replace
+from pathlib import Path
 from typing import TYPE_CHECKING, Tuple
 
 from flo.services.errors import (
+    CLIError,
     EXIT_SUCCESS,
+    EXIT_USAGE,
     ParseError,
     CompileError,
     ValidationError,
@@ -21,7 +25,7 @@ from flo.compiler import compile_adapter
 from flo.compiler.ir import validate_ir, IR
 from flo.compiler.ir import ensure_schema_aligned
 from flo.compiler.analysis import scc_condense
-from flo.render import render_dot_and_contract, RenderOptions
+from flo.render import RenderArtifact, render_artifact_and_contract, RenderOptions
 from flo.export import export_ir
 from flo.core._flo_config import merge_diagrams_toml_sppm_defaults
 from flo.core._option_validation import (
@@ -29,6 +33,7 @@ from flo.core._option_validation import (
     ensure_render_options_compatible_with_output,
 )
 from flo.core.render_intent import RenderIntentResolver
+from flo.services.io import write_output
 
 if TYPE_CHECKING:
     from flo.render._sppm_postprocess_contract import SppmSvgPostprocessContract
@@ -79,15 +84,20 @@ def run_content(
         view_name="default",
     )
 
-    render_options = RenderOptions.from_mapping(resolved_options)
+    render_options = _resolve_render_options_for_output(
+        resolved_options=resolved_options,
+        output_format=output_format,
+    )
 
-    dot, contract = _render_dot_with_postprocess(ir, render_options=render_options)
+    artifact, contract = _render_artifact_with_postprocess(
+        ir, render_options=render_options
+    )
     if render_to:
-        from flo.services.graphviz import render_dot_to_file
-
-        render_dot_to_file(dot, render_to, sppm_contract=contract)
+        _write_render_artifact(
+            artifact=artifact, render_to=render_to, contract=contract
+        )
         return EXIT_SUCCESS, "", ""
-    return EXIT_SUCCESS, dot, ""
+    return EXIT_SUCCESS, artifact.content, ""
 
 
 def _parse_compile_validate(content: str, source_path: str | None = None) -> IR:
@@ -123,15 +133,49 @@ def _resolve_output_format(command: str, options: dict | None) -> str:
         "json",
         "ingredients",
         "movement",
+        "svg",
     }:
         return str(output_format)
     return "dot"
 
 
-def _render_dot_with_postprocess(
-    ir: IR, render_options: RenderOptions
+def _resolve_render_options_for_output(
+    *, resolved_options: dict | None, output_format: str
+) -> RenderOptions:
+    render_options = RenderOptions.from_mapping(resolved_options)
+    explicit_backend = (resolved_options or {}).get("render_backend")
+
+    if output_format == "dot":
+        if explicit_backend not in {None, "", "graphviz"}:
+            raise CLIError(
+                "DOT export currently requires --render-backend graphviz or no --render-backend.",
+                code=EXIT_USAGE,
+            )
+        return replace(render_options, backend="graphviz")
+
+    if output_format == "svg":
+        if explicit_backend not in {None, "", "svg"}:
+            raise CLIError(
+                "SVG export currently requires --render-backend svg or no --render-backend.",
+                code=EXIT_USAGE,
+            )
+        return replace(render_options, backend="svg")
+
+    return render_options
+
+
+def render_dot_and_contract(
+    ir: IR, options: RenderOptions | dict | None = None
 ) -> tuple[str, SppmSvgPostprocessContract | None]:
-    """SCC-condense then render, returning (dot, sppm_contract)."""
+    """Legacy compatibility wrapper for callers still expecting DOT plus contract."""
+    artifact, contract = render_artifact_and_contract(ir, options=options)
+    return artifact.content, contract
+
+
+def _render_artifact_with_postprocess(
+    ir: IR, render_options: RenderOptions
+) -> tuple[RenderArtifact, SppmSvgPostprocessContract | None]:
+    """SCC-condense then render, returning (artifact, backend contract)."""
     processed = ir
 
     try:
@@ -140,11 +184,39 @@ def _render_dot_with_postprocess(
         pass
 
     try:
-        dot, contract = render_dot_and_contract(processed, options=render_options)
+        artifact, contract = render_artifact_and_contract(
+            processed, options=render_options
+        )
     except Exception as e:
         raise RenderError(str(e))
 
-    return dot, contract
+    return artifact, contract
+
+
+def _write_render_artifact(
+    *,
+    artifact: RenderArtifact,
+    render_to: str,
+    contract: SppmSvgPostprocessContract | None,
+) -> None:
+    kind = artifact.kind
+    content = artifact.content
+    if kind == "dot":
+        from flo.services.graphviz import render_dot_to_file
+
+        render_dot_to_file(content, render_to, sppm_contract=contract)
+        return
+    if kind == "svg":
+        if Path(render_to).suffix.lower() != ".svg":
+            raise RenderError(
+                "Direct SVG rendering currently supports only .svg output paths. "
+                "Use a .svg target or switch to the Graphviz backend for raster/PDF output."
+            )
+        write_rc, write_err = write_output(content, render_to)
+        if write_rc != 0:
+            raise RenderError(write_err)
+        return
+    raise RenderError(f"Unsupported render artifact kind: {kind or 'unknown'}")
 
 
 def run() -> Tuple[int, str, str]:

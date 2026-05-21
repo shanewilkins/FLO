@@ -15,7 +15,7 @@ from ._autoformat_wrap import WrapPlan
 from ._sppm_metadata_schema import (
     get_metadata_value_class,
 )
-from ._graphviz_dot_common import _escape
+from ._graphviz_backend_common import _escape
 from ._sppm_label_html import _sppm_html_label
 from ._sppm_render_data import SppmRenderNode
 from ._sppm_special_node_shapes import (

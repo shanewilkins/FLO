@@ -68,7 +68,7 @@ def validate_sppm_numeric_render_options(options: dict | None) -> None:
 def ensure_render_options_compatible_with_output(
     options: dict | None, output_format: str
 ) -> None:
-    """Raise ``CLIError`` if render-only flags are used with a non-DOT output format."""
+    """Raise ``CLIError`` if diagram-render flags are used with a non-render export."""
     if output_format == "dot":
         return
 
@@ -79,6 +79,6 @@ def ensure_render_options_compatible_with_output(
     if invalid:
         names = ", ".join(f"--{name}" for name in invalid)
         raise CLIError(
-            f"Render options {names} require DOT output. Use --export dot or remove those flags.",
+            f"Render options {names} require a diagram render output. Use --export dot, --export svg, or remove those flags.",
             code=EXIT_USAGE,
         )

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from ._graphviz_dot_common import (
+from ._graphviz_backend_common import (
     _project_parent_only_subprocess_view,
     _project_subprocess_visible_ids,
 )

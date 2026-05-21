@@ -1,4 +1,4 @@
-from flo.render.graphviz_dot import render_flowchart_dot, render_swimlane_dot
+from flo.render.graphviz_backend import render_flowchart_dot, render_swimlane_dot
 from flo.render import render_dot
 
 

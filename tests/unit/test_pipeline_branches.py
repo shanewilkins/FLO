@@ -110,7 +110,7 @@ def test_render_step_nonzero_passthrough_and_error_mapping(monkeypatch):
     assert step.run((5, object(), "err"), services=services) == (5, None, "err")
 
     monkeypatch.setattr(
-        "flo.pipeline.render_dot",
+        "flo.pipeline.render_artifact",
         lambda _: (_ for _ in ()).throw(RenderError("bad render")),
     )
     rc, payload, err = step.run((0, object(), None), services=services)
@@ -119,7 +119,8 @@ def test_render_step_nonzero_passthrough_and_error_mapping(monkeypatch):
     assert "bad render" in err
 
     monkeypatch.setattr(
-        "flo.pipeline.render_dot", lambda _: (_ for _ in ()).throw(Exception("boom"))
+        "flo.pipeline.render_artifact",
+        lambda _: (_ for _ in ()).throw(Exception("boom")),
     )
     rc, payload, err = step.run((0, object(), None), services=services)
     assert rc == 5

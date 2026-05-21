@@ -25,8 +25,14 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
     RenderOptionSpec(
         "diagram",
         "--diagram",
-        "Diagram type for DOT output",
+        "Diagram type for rendered diagram output",
         choices=("flowchart", "swimlane", "spaghetti", "sppm"),
+    ),
+    RenderOptionSpec(
+        "render_backend",
+        "--render-backend",
+        "Renderer backend for diagram artifacts",
+        choices=("graphviz", "svg"),
     ),
     RenderOptionSpec(
         "profile",
@@ -40,7 +46,7 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
     RenderOptionSpec(
         "orientation",
         "--orientation",
-        "Layout orientation for DOT output",
+        "Layout orientation for Graphviz-backed diagram output",
         choices=("lr", "tb"),
     ),
     RenderOptionSpec(
@@ -173,7 +179,7 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
     RenderOptionSpec(
         "render_to",
         "--render-to",
-        "Render DOT output to an image file via Graphviz",
+        "Write the rendered artifact to a file (Graphviz for DOT, direct write for SVG)",
         metavar="FILE",
     ),
 )
