@@ -56,3 +56,105 @@ class PlacementPlan:
     total_major: int
     total_cross: int
     orientation: OrientationMode
+
+
+@dataclass(frozen=True)
+class LayoutPoint:
+    """One routed or positioned point in final diagram geometry."""
+
+    x_px: float
+    y_px: float
+
+
+@dataclass(frozen=True)
+class LayoutBounds:
+    """Final positioned bounds for one diagram object."""
+
+    x_px: float
+    y_px: float
+    width_px: float
+    height_px: float
+
+
+@dataclass(frozen=True)
+class LayoutLaneFrame:
+    """Final frame assigned to one lane or band grouping."""
+
+    id: str
+    label: str
+    bounds: LayoutBounds
+    node_ids: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class RoutedEdgePath:
+    """Final routed geometry for one logical edge."""
+
+    edge: tuple[str, str]
+    points: tuple[LayoutPoint, ...]
+    label: str | None = None
+
+
+@dataclass(frozen=True)
+class LayoutResult:
+    """Backend-neutral final geometry emitted by a layout engine."""
+
+    orientation: OrientationMode
+    canvas_bounds: LayoutBounds
+    node_bounds: dict[str, LayoutBounds]
+    edge_paths: dict[tuple[str, str], RoutedEdgePath]
+    lanes: tuple[LayoutLaneFrame, ...] = ()
+
+    def bounds_for(self, node_id: str) -> LayoutBounds | None:
+        """Return final bounds for a node ID, if present."""
+        return self.node_bounds.get(node_id)
+
+    def path_for(self, source: str, target: str) -> RoutedEdgePath | None:
+        """Return final routed geometry for a logical edge, if present."""
+        return self.edge_paths.get((source, target))
+
+
+def serialize_layout_result(result: LayoutResult) -> str:
+    """Return a stable snapshot of final layout geometry."""
+    lines = [
+        "canvas"
+        f" x={_format_coord(result.canvas_bounds.x_px)}"
+        f" y={_format_coord(result.canvas_bounds.y_px)}"
+        f" w={_format_coord(result.canvas_bounds.width_px)}"
+        f" h={_format_coord(result.canvas_bounds.height_px)}",
+        f"orientation {result.orientation}",
+    ]
+    for lane in result.lanes:
+        lines.append(
+            "lane"
+            f" {lane.id} label={lane.label}"
+            f" x={_format_coord(lane.bounds.x_px)}"
+            f" y={_format_coord(lane.bounds.y_px)}"
+            f" w={_format_coord(lane.bounds.width_px)}"
+            f" h={_format_coord(lane.bounds.height_px)}"
+            f" nodes={','.join(lane.node_ids)}"
+        )
+    for node_id in sorted(result.node_bounds.keys()):
+        bounds = result.node_bounds[node_id]
+        lines.append(
+            "node"
+            f" {node_id}"
+            f" x={_format_coord(bounds.x_px)}"
+            f" y={_format_coord(bounds.y_px)}"
+            f" w={_format_coord(bounds.width_px)}"
+            f" h={_format_coord(bounds.height_px)}"
+        )
+    for edge in sorted(result.edge_paths.keys()):
+        path = result.edge_paths[edge]
+        source, target = edge
+        point_text = " -> ".join(
+            f"({_format_coord(point.x_px)},{_format_coord(point.y_px)})"
+            for point in path.points
+        )
+        label_suffix = f" label={path.label}" if path.label else ""
+        lines.append(f"edge {source}->{target}{label_suffix} points={point_text}")
+    return "\n".join(lines)
+
+
+def _format_coord(value: float) -> str:
+    return f"{value:g}"

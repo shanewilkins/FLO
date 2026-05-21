@@ -17,6 +17,7 @@ Current specs:
 
 - `core_language.md`
 - `cli_error_contract.md`
+- `process_map.md`
 - `flowchart.md`
 - `value_stream_map.md`
 - `swimlane.md`
@@ -26,6 +27,9 @@ Current specs:
 Preferred split:
 
 - Core language and canonical process semantics belong in `core_language.md`.
-- Diagram-type meaning belongs in one spec per renderer family.
+- Shared diagram-family semantics belong in a family spec such as
+	`process_map.md` when multiple variants inherit the same richer meaning.
+- Variant-specific diagram meaning belongs in one spec per concrete diagram
+	surface such as `flowchart.md`, `swimlane.md`, or `sppm.md`.
 - Implementation strategy belongs in `docs/design/`.
 

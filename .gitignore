@@ -5,6 +5,7 @@ __pycache__/
 venv/
 flo.egg-info/
 *.egg-info/
+node_modules/
 
 # Roadmap local data (generated exports, backups, logs, temp files)
 .roadmap/artifacts/

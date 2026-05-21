@@ -3,6 +3,37 @@ import pytest
 from flo.render import render_artifact, render_dot
 
 
+def test_render_artifact_can_select_direct_svg_flowchart_backend():
+    ir_like = {
+        "nodes": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "review", "kind": "decision", "name": "Approved?"},
+            {"id": "finish", "kind": "end", "name": "Done"},
+        ],
+        "edges": [
+            {"source": "start", "target": "review"},
+            {"source": "review", "target": "finish", "outcome": "yes"},
+        ],
+    }
+
+    artifact = render_artifact(
+        ir_like,
+        options={
+            "diagram": "flowchart",
+            "render_backend": "svg",
+        },
+    )
+
+    assert artifact.kind == "svg"
+    assert artifact.backend == "svg"
+    assert "<svg" in artifact.content
+    assert 'data-flo-diagram="flowchart"' in artifact.content
+    assert 'data-node-id="start"' in artifact.content
+    assert 'data-node-kind="decision"' in artifact.content
+    assert 'data-edge-source="review"' in artifact.content
+    assert ">yes<" in artifact.content
+
+
 def test_render_artifact_can_select_direct_svg_spaghetti_backend():
     ir_like = {
         "nodes": [

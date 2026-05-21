@@ -39,7 +39,22 @@ Current phase assessment:
 - Phase 1 is substantially complete for the initial boundary cut
 - Phase 2 has started through the direct-SVG spaghetti slice and first-class
   SVG export semantics
-- Phase 3 onward remain future work
+- Phase 3 has started through the first ELK-facing request contract and the
+  first backend-neutral final-geometry result contract in `layout_core`
+- the ELK foundation now includes a normalizer from ELK-style response payloads
+  into the backend-neutral `LayoutResult` contract, plus request builders for
+  both `swimlane` and `flowchart`
+- the ELK seam is now executable in tests through a request serializer and a
+  thin injected-engine adapter function, without committing the codebase to a
+  specific ELK runtime yet
+- the first diagram-specific ELK caller now exists as a swimlane adapter
+  entrypoint that owns `process -> request -> engine -> LayoutResult`
+- the next runtime slice adds a concrete `elkjs`-backed Node wrapper plus a
+  stable ELK engine error contract for unavailable runtime, subprocess failure,
+  timeout, and invalid payload/response cases
+- the first ELK-backed FLO-owned SVG flowchart slice now exists as a minimal
+  direct-SVG backend consuming `LayoutResult`
+- later Phase 3 ELK adapter work remains future work
 
 Current working interpretation:
 
@@ -48,6 +63,9 @@ Current working interpretation:
 - SVG is the canonical standalone graphics artifact
 - PDF remains the canonical composed publication artifact once Typst
   composition lands
+- `layout_core` now contains the start of the request/result seam needed for
+  ELK-backed graph families without forcing ELK response shapes directly into
+  renderer code
 
 ## Migration Principles
 
