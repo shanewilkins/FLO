@@ -6,7 +6,11 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flo.services._svg_utils import _svg_edge_groups, _svg_node_outer_bounds, _write_svg_tree
+from flo.services._svg_utils import (
+    _svg_edge_groups,
+    _svg_node_outer_bounds,
+    _write_svg_tree,
+)
 
 if TYPE_CHECKING:
     from flo.render._sppm_postprocess_contract import SppmSvgPostprocessContract
@@ -27,7 +31,9 @@ def postprocess_sppm_decision_outcome_labels_svg(
     edge_groups = _svg_edge_groups(root)
     updated = False
 
-    placements: list[tuple[ET.Element, str, tuple[float, float, float, float], str]] = []
+    placements: list[
+        tuple[ET.Element, str, tuple[float, float, float, float], str]
+    ] = []
     for edge in contract.decision_outcome_label_edges:
         decision_id = getattr(edge, "anchor_id", None)
         if not decision_id:
@@ -45,7 +51,9 @@ def postprocess_sppm_decision_outcome_labels_svg(
             continue
 
         expected_label = getattr(edge, "label_text", None)
-        label_text = _extract_decision_outcome_label_text(group=group, expected_label=expected_label)
+        label_text = _extract_decision_outcome_label_text(
+            group=group, expected_label=expected_label
+        )
         if label_text is None:
             continue
         placements.append((group, source_side, decision_bounds, label_text))
@@ -53,7 +61,10 @@ def postprocess_sppm_decision_outcome_labels_svg(
     if not placements:
         return
 
-    grouped: dict[tuple[str, str], list[tuple[ET.Element, str, tuple[float, float, float, float], str]]] = {}
+    grouped: dict[
+        tuple[str, str],
+        list[tuple[ET.Element, str, tuple[float, float, float, float], str]],
+    ] = {}
     for item in placements:
         _group, source_side, decision_bounds, _label = item
         decision_key = f"{decision_bounds[0]:.2f}:{decision_bounds[1]:.2f}:{decision_bounds[2]:.2f}:{decision_bounds[3]:.2f}"
@@ -89,11 +100,15 @@ def _find_edge_group_for_ids(
     best_source_side = "e"
     best_score = -1
     for title, group in edge_groups.items():
-        parsed = _parse_edge_title_for_ids(title=title, source_id=source_id, target_id=target_id)
+        parsed = _parse_edge_title_for_ids(
+            title=title, source_id=source_id, target_id=target_id
+        )
         if parsed is None:
             continue
         source_side, target_side = parsed
-        score = int(source_side in {"n", "s", "e", "w"}) + int(target_side in {"n", "s", "e", "w"})
+        score = int(source_side in {"n", "s", "e", "w"}) + int(
+            target_side in {"n", "s", "e", "w"}
+        )
         if score > best_score:
             best_group = group
             best_source_side = source_side
@@ -103,7 +118,9 @@ def _find_edge_group_for_ids(
     return best_group, best_source_side
 
 
-def _parse_edge_title_for_ids(*, title: str, source_id: str, target_id: str) -> tuple[str, str] | None:
+def _parse_edge_title_for_ids(
+    *, title: str, source_id: str, target_id: str
+) -> tuple[str, str] | None:
     if "->" not in title:
         return None
     left, right = title.split("->", 1)
@@ -127,7 +144,9 @@ def _endpoint_compass_side(endpoint: str) -> str:
     return "e"
 
 
-def _extract_decision_outcome_label_text(group: ET.Element, *, expected_label: str | None) -> str | None:
+def _extract_decision_outcome_label_text(
+    group: ET.Element, *, expected_label: str | None
+) -> str | None:
     if expected_label is not None:
         expected = expected_label.strip()
         if not expected:
@@ -180,8 +199,12 @@ def _reposition_svg_edge_text_label(
             continue
         if expected_label is None and " " in raw:
             continue
-        previous_x = float(text.attrib.get("x", "nan")) if text.attrib.get("x") else None
-        previous_y = float(text.attrib.get("y", "nan")) if text.attrib.get("y") else None
+        previous_x = (
+            float(text.attrib.get("x", "nan")) if text.attrib.get("x") else None
+        )
+        previous_y = (
+            float(text.attrib.get("y", "nan")) if text.attrib.get("y") else None
+        )
         text.attrib["x"] = f"{x:.2f}"
         text.attrib["y"] = f"{y:.2f}"
         if previous_x != x or previous_y != y:

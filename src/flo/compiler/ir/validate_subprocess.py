@@ -13,7 +13,9 @@ from flo.services.errors import ValidationError
 def validate_subprocess_metadata(obj: IR) -> None:
     """Validate subprocess hierarchy links and detail-map reference metadata."""
     nodes_by_id = {node.id: node for node in obj.nodes}
-    subprocess_ids = {node.id for node in obj.nodes if (node.type or "").lower() == "subprocess"}
+    subprocess_ids = {
+        node.id for node in obj.nodes if (node.type or "").lower() == "subprocess"
+    }
 
     for node in obj.nodes:
         parent_id = extract_subprocess_parent(node)

@@ -18,7 +18,10 @@ from ._sppm_metadata_schema import (
 from ._graphviz_dot_common import _escape
 from ._sppm_label_html import _sppm_html_label
 from ._sppm_render_data import SppmRenderNode
-from ._sppm_special_node_shapes import render_sppm_queue_triangle, render_sppm_subprocess_node
+from ._sppm_special_node_shapes import (
+    render_sppm_queue_triangle,
+    render_sppm_subprocess_node,
+)
 from ._sppm_themes import SppmNodeStyle, SppmTheme
 from ._sppm_text import format_text_field
 from .options import RenderOptions
@@ -50,13 +53,42 @@ def render_sppm_node(
         name = f"{step_numbering[node_id]}. {name}"
 
     if kind in ("start", "end"):
-        return [_render_sppm_start_end_node(node_id=node_id, name=name, theme=theme, wrap_plan=wrap_plan)]
+        return [
+            _render_sppm_start_end_node(
+                node_id=node_id, name=name, theme=theme, wrap_plan=wrap_plan
+            )
+        ]
     if kind == "decision":
-        return [_render_sppm_decision_node(node_id=node_id, name=name, options=options, theme=theme, wrap_plan=wrap_plan)]
+        return [
+            _render_sppm_decision_node(
+                node_id=node_id,
+                name=name,
+                options=options,
+                theme=theme,
+                wrap_plan=wrap_plan,
+            )
+        ]
     if kind == "queue":
-        return [render_sppm_queue_triangle(node=node, node_id=node_id, name=name, options=options, theme=theme, wrap_plan=wrap_plan)]
+        return [
+            render_sppm_queue_triangle(
+                node=node,
+                node_id=node_id,
+                name=name,
+                options=options,
+                theme=theme,
+                wrap_plan=wrap_plan,
+            )
+        ]
     if kind == "subprocess":
-        return [render_sppm_subprocess_node(node=node, node_id=node_id, name=name, options=options, wrap_plan=wrap_plan)]
+        return [
+            render_sppm_subprocess_node(
+                node=node,
+                node_id=node_id,
+                name=name,
+                options=options,
+                wrap_plan=wrap_plan,
+            )
+        ]
 
     return [
         _render_sppm_task_node(
@@ -71,7 +103,9 @@ def render_sppm_node(
     ]
 
 
-def _render_sppm_start_end_node(*, node_id: str, name: str, theme: SppmTheme, wrap_plan: WrapPlan) -> str:
+def _render_sppm_start_end_node(
+    *, node_id: str, name: str, theme: SppmTheme, wrap_plan: WrapPlan
+) -> str:
     style = theme.start_end
     attrs = [
         f'label="{_escape(name)}"',
@@ -145,7 +179,9 @@ def _render_sppm_task_node(
     return f'  "{_escape(node_id)}" [{", ".join(attrs)}];'
 
 
-def _resolve_sppm_value_style(*, metadata: dict[str, Any], theme: SppmTheme) -> SppmNodeStyle:
+def _resolve_sppm_value_style(
+    *, metadata: dict[str, Any], theme: SppmTheme
+) -> SppmNodeStyle:
     value_class_raw = get_metadata_value_class(metadata)
     try:
         value_class = ProcessValueClass(value_class_raw) if value_class_raw else None

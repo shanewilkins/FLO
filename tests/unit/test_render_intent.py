@@ -167,9 +167,7 @@ class TestRenderIntentResolverViewIntent:
             "defaults": {
                 "diagram": "topdown",
             },
-            "views": {
-                "other": {"diagram": "spaghetti"}
-            }
+            "views": {"other": {"diagram": "spaghetti"}},
         }
         intent = RenderIntentResolver.resolve(
             render_metadata=metadata,
@@ -192,7 +190,7 @@ class TestRenderIntentResolverViewIntent:
                         },
                         "header": {
                             "enabled": True,
-                        }
+                        },
                     }
                 }
             }
@@ -305,7 +303,7 @@ class TestRenderIntentResolverCliPrecedence:
                     "diagram": "spaghetti",
                     "sppm": {
                         "label_density": "teaching",
-                    }
+                    },
                 }
             }
         }
@@ -347,7 +345,7 @@ class TestRenderIntentResolverCliPrecedence:
                 "custom": {
                     "diagram": "spaghetti",
                 }
-            }
+            },
         }
         cli_overrides = {"diagram": "sppm"}
         intent = RenderIntentResolver.resolve(
@@ -374,7 +372,7 @@ class TestRenderIntentResolverCompletePrecedence:
                 "custom": {
                     "diagram": "spaghetti",  # view
                 }
-            }
+            },
         }
 
         # Hard default only (no view match, no CLI)
@@ -452,7 +450,7 @@ class TestRenderIntentResolverViewNameHandling:
                 "report": {
                     "diagram": "spaghetti",
                 }
-            }
+            },
         }
         intent = RenderIntentResolver.resolve(
             render_metadata=metadata,
@@ -472,7 +470,7 @@ class TestRenderIntentResolverViewNameHandling:
                 "other": {
                     "diagram": "spaghetti",
                 }
-            }
+            },
         }
         intent = RenderIntentResolver.resolve(
             render_metadata=metadata,
@@ -517,7 +515,7 @@ class TestRenderIntentResolverResolveViewMethod:
                     "diagram": "sppm",
                     "sppm": {
                         "label_density": "compact",
-                    }
+                    },
                 }
             }
         }
@@ -567,7 +565,7 @@ class TestRenderIntentResolverEdgeCases:
                 "custom": {
                     "diagram": None,  # null value
                 }
-            }
+            },
         }
         intent = RenderIntentResolver.resolve(
             render_metadata=metadata,

@@ -217,7 +217,9 @@ def materialize_publication_series(
     page_count = len(normalized_specs)
 
     for idx, spec in enumerate(normalized_specs, start=1):
-        page_id = _publication_page_id(series_id=series_id, page_key=spec.page_key, page_number=idx)
+        page_id = _publication_page_id(
+            series_id=series_id, page_key=spec.page_key, page_number=idx
+        )
         page_metadata = {
             **spec.metadata,
             "series_id": series_id,
@@ -234,8 +236,12 @@ def materialize_publication_series(
                 canvas=spec.canvas,
                 bands=build_publication_bands(
                     canvas=spec.canvas,
-                    header_content=_merge_band_context(spec.header_content, band_context),
-                    footer_content=_merge_band_context(spec.footer_content, band_context),
+                    header_content=_merge_band_context(
+                        spec.header_content, band_context
+                    ),
+                    footer_content=_merge_band_context(
+                        spec.footer_content, band_context
+                    ),
                 ),
                 metadata=page_metadata,
             )
@@ -265,7 +271,9 @@ def resolve_publication_page_format(name: str) -> PublicationPageFormat:
     preset = _PAGE_FORMAT_PRESETS.get(canonical)
     if preset is None:
         supported = ", ".join(sorted(_PAGE_FORMAT_PRESETS))
-        raise ValueError(f"Unsupported publication_page_format '{name}'. Supported formats: {supported}.")
+        raise ValueError(
+            f"Unsupported publication_page_format '{name}'. Supported formats: {supported}."
+        )
     return preset
 
 
@@ -279,7 +287,9 @@ def build_publication_canvas_for_format(
     """Build a page canvas from a shared named page-format preset."""
     preset = resolve_publication_page_format(page_format)
     return build_publication_canvas(
-        bounds=PublicationBounds(width_px=width_px_override or preset.width_px, height_px=preset.height_px),
+        bounds=PublicationBounds(
+            width_px=width_px_override or preset.width_px, height_px=preset.height_px
+        ),
         margins=preset.margins,
         header_height_px=header_height_px,
         footer_height_px=footer_height_px,
@@ -317,7 +327,9 @@ def evaluate_publication_fallback(
     )
 
 
-def build_publication_band_context(metadata: Mapping[str, Any]) -> tuple[tuple[str, str], ...]:
+def build_publication_band_context(
+    metadata: Mapping[str, Any],
+) -> tuple[tuple[str, str], ...]:
     """Build shared page-aware band context rows from publication metadata."""
     rows: list[tuple[str, str]] = []
     page_number = _positive_int(metadata.get("page_number"))
@@ -365,7 +377,7 @@ def _normalized_context_value(value: Any) -> str | None:
 def _positive_int(value: Any) -> int | None:
     try:
         parsed = int(value)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return None
     return parsed if parsed > 0 else None
 
@@ -443,7 +455,15 @@ def build_publication_bands(
     """Build shared band objects for populated top and bottom document regions."""
     bands: list[PublicationBand] = []
     if header_content is not None:
-        bands.append(PublicationBand(name="header", region=canvas.region("header"), content=header_content))
+        bands.append(
+            PublicationBand(
+                name="header", region=canvas.region("header"), content=header_content
+            )
+        )
     if footer_content is not None:
-        bands.append(PublicationBand(name="footer", region=canvas.region("footer"), content=footer_content))
+        bands.append(
+            PublicationBand(
+                name="footer", region=canvas.region("footer"), content=footer_content
+            )
+        )
     return tuple(bands)

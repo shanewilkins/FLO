@@ -42,16 +42,37 @@ def test_sppm_wrap_rework_edges_show_lighter_continuation_labels():
             {"id": "start", "kind": "start", "name": "Start"},
             {"id": "prep", "kind": "task", "name": "Prep", "metadata": {}},
             {"id": "decision", "kind": "decision", "name": "Approved?"},
-            {"id": "rework", "kind": "task", "name": "Rework", "metadata": {"value_class": "NVA"}},
-            {"id": "finish", "kind": "task", "name": "Finish", "metadata": {"value_class": "VA"}},
+            {
+                "id": "rework",
+                "kind": "task",
+                "name": "Rework",
+                "metadata": {"value_class": "NVA"},
+            },
+            {
+                "id": "finish",
+                "kind": "task",
+                "name": "Finish",
+                "metadata": {"value_class": "VA"},
+            },
             {"id": "end", "kind": "end", "name": "End"},
         ],
         "edges": [
             {"source": "start", "target": "prep"},
             {"source": "prep", "target": "decision"},
             {"source": "decision", "target": "finish", "outcome": "yes"},
-            {"source": "decision", "target": "rework", "outcome": "no", "edge_type": "rework", "rework": True},
-            {"source": "rework", "target": "finish", "edge_type": "rework", "rework": True},
+            {
+                "source": "decision",
+                "target": "rework",
+                "outcome": "no",
+                "edge_type": "rework",
+                "rework": True,
+            },
+            {
+                "source": "rework",
+                "target": "finish",
+                "edge_type": "rework",
+                "rework": True,
+            },
             {"source": "finish", "target": "end"},
         ],
     }
@@ -69,4 +90,4 @@ def test_sppm_wrap_rework_edges_show_lighter_continuation_labels():
     assert '"__sppm_rework_corridor_decision_rework" [shape=circle' in out
     assert 'label="P1-D"' in out
     assert 'color="#90A4AE"' in out
-    assert 'style=dashed' in out
+    assert "style=dashed" in out

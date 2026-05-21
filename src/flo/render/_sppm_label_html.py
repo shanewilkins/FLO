@@ -13,7 +13,12 @@ from ._sppm_metadata_schema import (
     get_metadata_wait_time_minutes,
     get_metadata_crossover_time,
 )
-from ._sppm_text import apply_density_filter, abbreviate_workers, format_text_field, normalize_space
+from ._sppm_text import (
+    apply_density_filter,
+    abbreviate_workers,
+    format_text_field,
+    normalize_space,
+)
 from ._sppm_themes import SppmNodeStyle
 from .options import RenderOptions
 
@@ -25,10 +30,15 @@ _SPPM_WORKERS_SOFT_WRAP = 36
 
 
 def _format_time_line(
-    value: Any, prefix: str, suffix: str, options: RenderOptions, *, require_positive: bool = False
+    value: Any,
+    prefix: str,
+    suffix: str,
+    options: RenderOptions,
+    *,
+    require_positive: bool = False,
 ) -> str:
     """Format a CT or WT time metric line; returns empty string when value is absent or invalid.
-    
+
     Args:
         value: Either SppmMetadataValue (for cycle/changeover times) or numeric (for wait_time).
     """
@@ -39,7 +49,11 @@ def _format_time_line(
         if require_positive and value <= 0:
             return ""
         # Format as int if it's a whole number, otherwise as float
-        value_str = str(int(value)) if isinstance(value, float) and value.is_integer() else str(value)
+        value_str = (
+            str(int(value))
+            if isinstance(value, float) and value.is_integer()
+            else str(value)
+        )
         return format_text_field(
             f"{prefix}: {value_str} min{suffix}",
             max_len=options.sppm_max_label_ctwt,
@@ -69,7 +83,9 @@ def _format_workers_line(workers: list[Any], options: RenderOptions) -> str:
         else ", ".join(str(w) for w in workers)
     )
     if options.sppm_max_label_workers is None:
-        return _soft_wrap_text(f"Workers: {workers_text}", width=_SPPM_WORKERS_SOFT_WRAP)
+        return _soft_wrap_text(
+            f"Workers: {workers_text}", width=_SPPM_WORKERS_SOFT_WRAP
+        )
     return format_text_field(
         f"Workers: {workers_text}",
         max_len=options.sppm_max_label_workers,
@@ -92,10 +108,22 @@ def _build_label_metric_lines(
     )
     ct_line = _format_time_line(get_metadata_cycle_time(metadata), "CT", "", options)
     wt_minutes = get_metadata_wait_time_minutes(metadata)
-    wt_line = _format_time_line(wt_minutes, "WT", " wait", options, require_positive=True)
-    co_line = _format_time_line(get_metadata_crossover_time(metadata), "CO", " crossover", options, require_positive=True)
+    wt_line = _format_time_line(
+        wt_minutes, "WT", " wait", options, require_positive=True
+    )
+    co_line = _format_time_line(
+        get_metadata_crossover_time(metadata),
+        "CO",
+        " crossover",
+        options,
+        require_positive=True,
+    )
     workers_line = _format_workers_line(workers, options)
-    notes_line = f"Note: {normalize_space(note)}" if note and getattr(options, "show_notes", False) else ""
+    notes_line = (
+        f"Note: {normalize_space(note)}"
+        if note and getattr(options, "show_notes", False)
+        else ""
+    )
     return description, ct_line, workers_line, wt_line, co_line, notes_line
 
 
@@ -125,8 +153,8 @@ def _sppm_html_label(
         )
     name_html = _html_escape_multiline(name_text, break_tag="<BR/>")
 
-    description, ct_line, workers_line, wt_line, co_line, notes_line = _build_label_metric_lines(
-        metadata, workers, note, options
+    description, ct_line, workers_line, wt_line, co_line, notes_line = (
+        _build_label_metric_lines(metadata, workers, note, options)
     )
 
     info_lines = apply_density_filter(
@@ -139,7 +167,9 @@ def _sppm_html_label(
         notes_line=notes_line,
     )
     if kind == "subprocess":
-        detail_map_ref = resolve_subprocess_detail_map_reference(node_id=node_id, metadata=metadata)
+        detail_map_ref = resolve_subprocess_detail_map_reference(
+            node_id=node_id, metadata=metadata
+        )
         info_lines = [
             "Subprocess",
             f"Detail map: {detail_map_ref}",
@@ -148,14 +178,18 @@ def _sppm_html_label(
 
     body_table = ""
     if info_lines:
-        joined = "<BR ALIGN=\"LEFT\"/>".join(
-            _html_escape_multiline(line, break_tag="<BR ALIGN=\"LEFT\"/>") for line in info_lines
-        ) + "<BR ALIGN=\"LEFT\"/>"
+        joined = (
+            '<BR ALIGN="LEFT"/>'.join(
+                _html_escape_multiline(line, break_tag='<BR ALIGN="LEFT"/>')
+                for line in info_lines
+            )
+            + '<BR ALIGN="LEFT"/>'
+        )
         body_table = (
             f'<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" BGCOLOR="white">'
             f'<TR><TD BGCOLOR="white" ALIGN="LEFT">'
             f'<FONT FACE="Helvetica" POINT-SIZE="9">{joined}</FONT>'
-            f'</TD></TR></TABLE>'
+            f"</TD></TR></TABLE>"
         )
     content_width = _estimate_task_node_width(name_text, info_lines)
     return _wrap_sppm_label_with_ports(
@@ -171,7 +205,9 @@ def _sppm_html_label(
 def _estimate_task_node_width(name_text: str, info_lines: list[str]) -> int:
     """Estimate TD width so the box is roughly square; capped at _SPPM_TASK_MAX_WIDTH."""
     name_line_count = name_text.count("\n") + 1
-    body_line_count = sum(line.count("\n") + 1 for line in info_lines) if info_lines else 0
+    body_line_count = (
+        sum(line.count("\n") + 1 for line in info_lines) if info_lines else 0
+    )
     header_pts = name_line_count * 23
     body_pts = body_line_count * 14 + (12 if body_line_count else 0)
     hr_pts = 1 if body_line_count else 0
@@ -203,8 +239,8 @@ def _wrap_sppm_label_with_ports(
         f'<TR><TD COLSPAN="3" BGCOLOR="{header_fill}" ALIGN="CENTER" PORT="boundary_in">'
         f'<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" BGCOLOR="{header_fill}">'
         f'<TR><TD ALIGN="CENTER"><FONT FACE="Helvetica" POINT-SIZE="11">'
-        f'<B>{name_html}</B></FONT></TD></TR>'
-        f'</TABLE></TD></TR>'
+        f"<B>{name_html}</B></FONT></TD></TR>"
+        f"</TABLE></TD></TR>"
     )
     hr = "<HR/>" if body_table else ""
     content_col = (
@@ -214,11 +250,11 @@ def _wrap_sppm_label_with_ports(
     )
     content_row = (
         f'<TR><TD WIDTH="8">{left_stack}</TD>'
-        f'{content_col}'
+        f"{content_col}"
         f'<TD WIDTH="8">{right_stack}</TD></TR>'
     )
     boundary_row = '<TR><TD></TD><TD PORT="boundary_out" HEIGHT="1"></TD><TD></TD></TR>'
-    return f'{table_prefix}{header_row}{hr}{content_row}{boundary_row}</TABLE>>'
+    return f"{table_prefix}{header_row}{hr}{content_row}{boundary_row}</TABLE>>"
 
 
 def _sppm_port_stack_html(*, role: str, count: int) -> str:
@@ -247,5 +283,7 @@ def _soft_wrap_text(text: str, *, width: int) -> str:
     """Wrap ``text`` at ``width`` characters without breaking words."""
     if not text or width < 2:
         return text
-    wrapped = textwrap.wrap(text, width=width, break_long_words=False, break_on_hyphens=False)
+    wrapped = textwrap.wrap(
+        text, width=width, break_long_words=False, break_on_hyphens=False
+    )
     return "\n".join(wrapped) if wrapped else text

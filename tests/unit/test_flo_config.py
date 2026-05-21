@@ -19,7 +19,9 @@ def test_merge_diagrams_toml_returns_original_when_file_missing(tmp_path, monkey
     assert out is not options
 
 
-def test_merge_diagrams_toml_prefers_source_dir_and_preserves_cli_overrides(tmp_path, monkeypatch):
+def test_merge_diagrams_toml_prefers_source_dir_and_preserves_cli_overrides(
+    tmp_path, monkeypatch
+):
     source_dir = tmp_path / "srcdir"
     source_dir.mkdir()
     model_path = source_dir / "demo.flo"
@@ -97,7 +99,9 @@ def test_merge_diagrams_toml_loads_custom_themes(tmp_path, monkeypatch):
     )
 
     monkeypatch.chdir(tmp_path)
-    out = merge_diagrams_toml_sppm_defaults({"source_path": str(model_path), "diagram": "sppm"})
+    out = merge_diagrams_toml_sppm_defaults(
+        {"source_path": str(model_path), "diagram": "sppm"}
+    )
 
     assert out["sppm_themes"]["sunrise"]["va"]["fill"] == "#FFF3B0"
     assert out["sppm_themes"]["sunrise"]["decision"]["border"] == "#B28704"
@@ -136,7 +140,9 @@ def test_merge_diagrams_toml_oserror_raises_clierror(tmp_path, monkeypatch):
     assert "permission denied" in str(exc.value)
 
 
-def test_resolve_diagrams_toml_path_handles_dash_source_and_resolve_error(tmp_path, monkeypatch):
+def test_resolve_diagrams_toml_path_handles_dash_source_and_resolve_error(
+    tmp_path, monkeypatch
+):
     cfg = tmp_path / "diagrams.toml"
     cfg.write_text("[sppm]\n", encoding="utf-8")
     monkeypatch.chdir(tmp_path)

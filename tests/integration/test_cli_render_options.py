@@ -9,7 +9,14 @@ def test_run_swimlane_diagram_emits_clusters():
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["run", "examples/reference/linear.flo", "--export", "dot", "--diagram", "swimlane"],
+        [
+            "run",
+            "examples/reference/linear.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "swimlane",
+        ],
     )
     assert result.exit_code == 0
     assert "subgraph cluster_sales" in result.output
@@ -43,13 +50,23 @@ def test_run_summary_detail_omits_outcome_edge_labels():
         ["--spaghetti-channel", "people"],
         ["--spaghetti-people-mode", "worker"],
         ["--sppm-label-density", "compact"],
-        pytest.param(["--export", "ingredients", "--diagram", "swimlane"], id="ingredients-rejects-diagram"),
-        pytest.param(["--export", "movement", "--diagram", "swimlane"], id="movement-rejects-diagram"),
+        pytest.param(
+            ["--export", "ingredients", "--diagram", "swimlane"],
+            id="ingredients-rejects-diagram",
+        ),
+        pytest.param(
+            ["--export", "movement", "--diagram", "swimlane"],
+            id="movement-rejects-diagram",
+        ),
     ],
 )
 def test_non_dot_export_rejects_dot_only_flags(extra_args: list[str]):
     export = extra_args[1] if extra_args[0] == "--export" else "json"
-    base_file = "examples/reference/chocolate_chip_cookies.flo" if export in ("ingredients", "movement") else "examples/reference/linear.flo"
+    base_file = (
+        "examples/reference/chocolate_chip_cookies.flo"
+        if export in ("ingredients", "movement")
+        else "examples/reference/linear.flo"
+    )
     args = ["run", base_file]
     if extra_args[0] != "--export":
         args += ["--export", "json"]
@@ -101,7 +118,6 @@ def test_run_show_notes_and_orientation(tmp_path):
     assert result.exit_code == 0
     assert "rankdir=TB;" in result.output
     assert "Note: Requires manager signoff" in result.output
-
 
 
 def test_run_subprocess_view_parent_only_hides_subnodes():
@@ -248,12 +264,18 @@ def test_run_sppm_feature_showcase_covers_publication_and_rework_semantics():
         assert token in result.output
 
 
-
 def test_run_spaghetti_diagram_emits_neato_layout():
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["run", "examples/reference/chocolate_chip_cookies.flo", "--export", "dot", "--diagram", "spaghetti"],
+        [
+            "run",
+            "examples/reference/chocolate_chip_cookies.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "spaghetti",
+        ],
     )
     assert result.exit_code == 0
     assert "layout=neato" in result.output
@@ -301,8 +323,10 @@ def test_run_spaghetti_people_worker_mode_labels_worker_traces():
         ],
     )
     assert result.exit_code == 0
-    assert "xlabel=\"P assistant_baker" in result.output or "xlabel=\"P lead_baker" in result.output
-
+    assert (
+        'xlabel="P assistant_baker' in result.output
+        or 'xlabel="P lead_baker' in result.output
+    )
 
 
 @pytest.mark.parametrize(
@@ -497,8 +521,14 @@ def test_run_spaghetti_location_kind_shapes_are_rendered(tmp_path):
         ["run", str(model), "--export", "dot", "--diagram", "spaghetti"],
     )
     assert result.exit_code == 0
-    assert '"pantry" [label="Pantry", shape=box, fillcolor=lemonchiffon, color=goldenrod4' in result.output
-    assert '"oven_station" [label="Oven Station", shape=hexagon, fillcolor=mistyrose, color=firebrick3' in result.output
+    assert (
+        '"pantry" [label="Pantry", shape=box, fillcolor=lemonchiffon, color=goldenrod4'
+        in result.output
+    )
+    assert (
+        '"oven_station" [label="Oven Station", shape=hexagon, fillcolor=mistyrose, color=firebrick3'
+        in result.output
+    )
 
 
 def test_run_layout_wrap_lr_on_reference_fixture():
@@ -582,48 +612,48 @@ def test_run_layout_wrap_off_is_unchanged_on_reference_fixture():
 
 def test_run_sppm_uses_diagrams_toml_defaults(tmp_path, monkeypatch):
     model = tmp_path / "washnfold_local.flo"
-    model.write_text((
-        "process:\n"
-        "  id: local\n"
-        "  name: Local\n"
-        "steps:\n"
-        "  - id: start\n"
-        "    kind: start\n"
-        "    name: Start\n"
-        "  - id: a\n"
-        "    kind: task\n"
-        "    name: A\n"
-        "  - id: b\n"
-        "    kind: task\n"
-        "    name: B\n"
-        "  - id: c\n"
-        "    kind: task\n"
-        "    name: C\n"
-        "  - id: d\n"
-        "    kind: task\n"
-        "    name: D\n"
-        "  - id: end\n"
-        "    kind: end\n"
-        "    name: End\n"
-        "edges:\n"
-        "  - source: start\n"
-        "    target: a\n"
-        "  - source: a\n"
-        "    target: b\n"
-        "  - source: b\n"
-        "    target: c\n"
-        "  - source: c\n"
-        "    target: d\n"
-        "  - source: d\n"
-        "    target: end\n"
-    ), encoding="utf-8")
+    model.write_text(
+        (
+            "process:\n"
+            "  id: local\n"
+            "  name: Local\n"
+            "steps:\n"
+            "  - id: start\n"
+            "    kind: start\n"
+            "    name: Start\n"
+            "  - id: a\n"
+            "    kind: task\n"
+            "    name: A\n"
+            "  - id: b\n"
+            "    kind: task\n"
+            "    name: B\n"
+            "  - id: c\n"
+            "    kind: task\n"
+            "    name: C\n"
+            "  - id: d\n"
+            "    kind: task\n"
+            "    name: D\n"
+            "  - id: end\n"
+            "    kind: end\n"
+            "    name: End\n"
+            "edges:\n"
+            "  - source: start\n"
+            "    target: a\n"
+            "  - source: a\n"
+            "    target: b\n"
+            "  - source: b\n"
+            "    target: c\n"
+            "  - source: c\n"
+            "    target: d\n"
+            "  - source: d\n"
+            "    target: end\n"
+        ),
+        encoding="utf-8",
+    )
 
     diagrams = tmp_path / "diagrams.toml"
     diagrams.write_text(
-        "[sppm]\n"
-        "output_profile = \"print\"\n"
-        "target_columns = 2\n"
-        "wrap_layout = \"auto\"\n",
+        '[sppm]\noutput_profile = "print"\ntarget_columns = 2\nwrap_layout = "auto"\n',
         encoding="utf-8",
     )
 
@@ -648,48 +678,48 @@ def test_run_sppm_uses_diagrams_toml_defaults(tmp_path, monkeypatch):
 
 def test_run_sppm_cli_overrides_diagrams_toml_defaults(tmp_path, monkeypatch):
     model = tmp_path / "washnfold_local.flo"
-    model.write_text((
-        "process:\n"
-        "  id: local\n"
-        "  name: Local\n"
-        "steps:\n"
-        "  - id: start\n"
-        "    kind: start\n"
-        "    name: Start\n"
-        "  - id: a\n"
-        "    kind: task\n"
-        "    name: A\n"
-        "  - id: b\n"
-        "    kind: task\n"
-        "    name: B\n"
-        "  - id: c\n"
-        "    kind: task\n"
-        "    name: C\n"
-        "  - id: d\n"
-        "    kind: task\n"
-        "    name: D\n"
-        "  - id: end\n"
-        "    kind: end\n"
-        "    name: End\n"
-        "edges:\n"
-        "  - source: start\n"
-        "    target: a\n"
-        "  - source: a\n"
-        "    target: b\n"
-        "  - source: b\n"
-        "    target: c\n"
-        "  - source: c\n"
-        "    target: d\n"
-        "  - source: d\n"
-        "    target: end\n"
-    ), encoding="utf-8")
+    model.write_text(
+        (
+            "process:\n"
+            "  id: local\n"
+            "  name: Local\n"
+            "steps:\n"
+            "  - id: start\n"
+            "    kind: start\n"
+            "    name: Start\n"
+            "  - id: a\n"
+            "    kind: task\n"
+            "    name: A\n"
+            "  - id: b\n"
+            "    kind: task\n"
+            "    name: B\n"
+            "  - id: c\n"
+            "    kind: task\n"
+            "    name: C\n"
+            "  - id: d\n"
+            "    kind: task\n"
+            "    name: D\n"
+            "  - id: end\n"
+            "    kind: end\n"
+            "    name: End\n"
+            "edges:\n"
+            "  - source: start\n"
+            "    target: a\n"
+            "  - source: a\n"
+            "    target: b\n"
+            "  - source: b\n"
+            "    target: c\n"
+            "  - source: c\n"
+            "    target: d\n"
+            "  - source: d\n"
+            "    target: end\n"
+        ),
+        encoding="utf-8",
+    )
 
     diagrams = tmp_path / "diagrams.toml"
     diagrams.write_text(
-        "[sppm]\n"
-        "output_profile = \"print\"\n"
-        "target_columns = 2\n"
-        "wrap_layout = \"auto\"\n",
+        '[sppm]\noutput_profile = "print"\ntarget_columns = 2\nwrap_layout = "auto"\n',
         encoding="utf-8",
     )
 

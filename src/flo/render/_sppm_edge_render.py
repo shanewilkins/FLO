@@ -39,10 +39,12 @@ def _render_sppm_edge(
     for anchor in route.anchors:
         lines.append(f'  "{anchor.anchor_id}" [{", ".join(anchor.attrs)}];')
     for segment in route.segments:
-        source_endpoint, target_endpoint, rendered_attrs = _materialize_sppm_segment(segment)
+        source_endpoint, target_endpoint, rendered_attrs = _materialize_sppm_segment(
+            segment
+        )
         lines.append(
-            f'  {source_endpoint} -> {target_endpoint} '
-            f'[{", ".join(_escape_sppm_route_attrs(rendered_attrs))}];'
+            f"  {source_endpoint} -> {target_endpoint} "
+            f"[{', '.join(_escape_sppm_route_attrs(rendered_attrs))}];"
         )
     return lines
 
@@ -111,7 +113,9 @@ def _render_sppm_secondary_line_constraints(
     - Align each rework target with its local rework source column.
     - Chain rework targets left-to-right so they form a coherent lower lane.
     """
-    rework_pairs, branch_anchor_pairs, return_anchor_pairs = _collect_rework_pairs(edges, routing_plan)
+    rework_pairs, branch_anchor_pairs, return_anchor_pairs = _collect_rework_pairs(
+        edges, routing_plan
+    )
 
     if not rework_pairs:
         return []

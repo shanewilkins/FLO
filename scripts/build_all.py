@@ -41,7 +41,9 @@ def _collect_included_files(files: list[Path]) -> set[Path]:
     for path in files:
         include_refs = _include_refs_from_file(path)
         for include_ref in include_refs:
-            include_path = _resolve_include_ref(current_path=path, include_ref=include_ref)
+            include_path = _resolve_include_ref(
+                current_path=path, include_ref=include_ref
+            )
             if include_path in file_set:
                 included.add(include_path)
 
@@ -70,7 +72,11 @@ def _extract_include_refs(document: dict[str, object]) -> list[str]:
         text = include_value.strip()
         return [text] if text else []
     if isinstance(include_value, list):
-        return [entry.strip() for entry in include_value if isinstance(entry, str) and entry.strip()]
+        return [
+            entry.strip()
+            for entry in include_value
+            if isinstance(entry, str) and entry.strip()
+        ]
     return []
 
 
@@ -81,7 +87,9 @@ def _resolve_include_ref(current_path: Path, include_ref: str) -> Path:
     return (current_path.parent / include_path).resolve()
 
 
-def _build_one(example_file: Path, examples_dir: Path, renders_dir: Path) -> tuple[bool, str]:
+def _build_one(
+    example_file: Path, examples_dir: Path, renders_dir: Path
+) -> tuple[bool, str]:
     from flo.adapters import parse_adapter
     from flo.compiler import compile_adapter
     from flo.compiler.ir import ensure_schema_aligned, validate_ir
@@ -91,7 +99,10 @@ def _build_one(example_file: Path, examples_dir: Path, renders_dir: Path) -> tup
 
     rel = example_file.relative_to(examples_dir)
     base_out = (renders_dir / rel).with_suffix("")
-    build_variants = [("", _render_options_for_example(example_file)), *_extra_render_variants_for_example(example_file)]
+    build_variants = [
+        ("", _render_options_for_example(example_file)),
+        *_extra_render_variants_for_example(example_file),
+    ]
 
     base_out.parent.mkdir(parents=True, exist_ok=True)
 
@@ -117,8 +128,12 @@ def _build_one(example_file: Path, examples_dir: Path, renders_dir: Path) -> tup
                 created.append(str(svg_out.relative_to(REPO_ROOT)))
 
         if _has_materials_or_equipment_collection(ir):
-            ingredients_out = base_out.with_name(f"{base_out.name}_ingredients").with_suffix(".md")
-            legacy_ingredients_out = base_out.with_name(f"{base_out.name}_ingredients").with_suffix(".txt")
+            ingredients_out = base_out.with_name(
+                f"{base_out.name}_ingredients"
+            ).with_suffix(".md")
+            legacy_ingredients_out = base_out.with_name(
+                f"{base_out.name}_ingredients"
+            ).with_suffix(".txt")
             ingredients = export_ir(ir, options={"export": "ingredients"})
             if not ingredients.endswith("\n"):
                 ingredients += "\n"
@@ -153,7 +168,9 @@ def main() -> int:
         return 2
 
     renders_dir.mkdir(parents=True, exist_ok=True)
-    files = _iter_example_files(examples_dir, include_invalid=bool(args.include_invalid))
+    files = _iter_example_files(
+        examples_dir, include_invalid=bool(args.include_invalid)
+    )
 
     if not files:
         print("No .flo files found under examples/")
@@ -198,7 +215,9 @@ def _render_options_for_example(example_file: Path) -> dict[str, str]:
     return {}
 
 
-def _extra_render_variants_for_example(example_file: Path) -> list[tuple[str, dict[str, str]]]:
+def _extra_render_variants_for_example(
+    example_file: Path,
+) -> list[tuple[str, dict[str, str]]]:
     if example_file.stem.lower() == "chocolate_chip_cookies":
         return [
             ("_topdown", {"diagram": "flowchart", "orientation": "tb"}),
@@ -223,7 +242,10 @@ def _has_materials_or_equipment_collection(ir: object) -> bool:
     process_metadata = getattr(ir, "process_metadata", None)
     if not isinstance(process_metadata, dict):
         return False
-    return process_metadata.get("materials") is not None or process_metadata.get("equipment") is not None
+    return (
+        process_metadata.get("materials") is not None
+        or process_metadata.get("equipment") is not None
+    )
 
 
 if __name__ == "__main__":

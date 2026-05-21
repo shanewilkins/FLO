@@ -9,4 +9,3 @@ instead of exposing CLI modules at package import time.
 from __future__ import annotations
 
 __all__: list[str] = []
-

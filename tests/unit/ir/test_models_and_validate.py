@@ -6,7 +6,10 @@ from flo.services.errors import ValidationError
 
 
 def test_validate_valid_ir(ir_factory, node_factory):
-    ir = ir_factory(name="test", nodes=[node_factory("start", type="start"), node_factory("end", type="end")])
+    ir = ir_factory(
+        name="test",
+        nodes=[node_factory("start", type="start"), node_factory("end", type="end")],
+    )
     ir.edges = [Edge(source="start", target="end")]
     # should not raise
     validate_ir(ir)

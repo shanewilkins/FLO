@@ -23,13 +23,19 @@ def test_parse_step_maps_domain_and_generic_errors(monkeypatch):
     step = ParseStep()
     services = SimpleNamespace(error_handler=lambda msg: None)
 
-    monkeypatch.setattr("flo.pipeline.parse_adapter", lambda _, source_path=None: (_ for _ in ()).throw(ParseError("bad parse")))
+    monkeypatch.setattr(
+        "flo.pipeline.parse_adapter",
+        lambda _, source_path=None: (_ for _ in ()).throw(ParseError("bad parse")),
+    )
     rc, payload, err = step.run((0, "content", None), services=services)
     assert rc == ParseError("x").code
     assert payload is None
     assert "bad parse" in err
 
-    monkeypatch.setattr("flo.pipeline.parse_adapter", lambda _, source_path=None: (_ for _ in ()).throw(Exception("boom")))
+    monkeypatch.setattr(
+        "flo.pipeline.parse_adapter",
+        lambda _, source_path=None: (_ for _ in ()).throw(Exception("boom")),
+    )
     rc, payload, err = step.run((0, "content", None), services=services)
     assert rc == 2
     assert payload is None
@@ -41,13 +47,19 @@ def test_compile_step_nonzero_passthrough_and_error_mapping(monkeypatch):
     services = SimpleNamespace(error_handler=lambda msg: None)
     assert step.run((3, object(), "err"), services=services) == (3, None, "err")
 
-    monkeypatch.setattr("flo.pipeline.compile_adapter", lambda _: (_ for _ in ()).throw(CompileError("bad compile")))
+    monkeypatch.setattr(
+        "flo.pipeline.compile_adapter",
+        lambda _: (_ for _ in ()).throw(CompileError("bad compile")),
+    )
     rc, payload, err = step.run((0, object(), None), services=services)
     assert rc == CompileError("x").code
     assert payload is None
     assert "bad compile" in err
 
-    monkeypatch.setattr("flo.pipeline.compile_adapter", lambda _: (_ for _ in ()).throw(Exception("boom")))
+    monkeypatch.setattr(
+        "flo.pipeline.compile_adapter",
+        lambda _: (_ for _ in ()).throw(Exception("boom")),
+    )
     rc, payload, err = step.run((0, object(), None), services=services)
     assert rc == 3
     assert payload is None
@@ -60,13 +72,18 @@ def test_validate_step_nonzero_passthrough_and_error_mapping(monkeypatch):
     ir = {"id": "ir"}
     assert step.run((4, ir, "err"), services=services) == (4, ir, "err")
 
-    monkeypatch.setattr("flo.pipeline.validate_ir", lambda _: (_ for _ in ()).throw(ValidationError("bad validate")))
+    monkeypatch.setattr(
+        "flo.pipeline.validate_ir",
+        lambda _: (_ for _ in ()).throw(ValidationError("bad validate")),
+    )
     rc, payload, err = step.run((0, object(), None), services=services)
     assert rc == ValidationError("x").code
     assert payload is None
     assert "bad validate" in err
 
-    monkeypatch.setattr("flo.pipeline.validate_ir", lambda _: (_ for _ in ()).throw(Exception("boom")))
+    monkeypatch.setattr(
+        "flo.pipeline.validate_ir", lambda _: (_ for _ in ()).throw(Exception("boom"))
+    )
     rc, payload, err = step.run((0, object(), None), services=services)
     assert rc == 4
     assert payload is None
@@ -78,7 +95,9 @@ def test_postprocess_step_nonzero_and_fallback(monkeypatch):
     ir = {"id": "ir"}
     assert step.run((7, ir, "err"), services=None) == (7, ir, "err")
 
-    monkeypatch.setattr("flo.pipeline.scc_condense", lambda _: (_ for _ in ()).throw(Exception("oops")))
+    monkeypatch.setattr(
+        "flo.pipeline.scc_condense", lambda _: (_ for _ in ()).throw(Exception("oops"))
+    )
     rc, payload, err = step.run((0, ir, None), services=None)
     assert rc == 0
     assert payload == ir
@@ -90,13 +109,18 @@ def test_render_step_nonzero_passthrough_and_error_mapping(monkeypatch):
     services = SimpleNamespace(error_handler=lambda msg: None)
     assert step.run((5, object(), "err"), services=services) == (5, None, "err")
 
-    monkeypatch.setattr("flo.pipeline.render_dot", lambda _: (_ for _ in ()).throw(RenderError("bad render")))
+    monkeypatch.setattr(
+        "flo.pipeline.render_dot",
+        lambda _: (_ for _ in ()).throw(RenderError("bad render")),
+    )
     rc, payload, err = step.run((0, object(), None), services=services)
     assert rc == RenderError("x").code
     assert payload is None
     assert "bad render" in err
 
-    monkeypatch.setattr("flo.pipeline.render_dot", lambda _: (_ for _ in ()).throw(Exception("boom")))
+    monkeypatch.setattr(
+        "flo.pipeline.render_dot", lambda _: (_ for _ in ()).throw(Exception("boom"))
+    )
     rc, payload, err = step.run((0, object(), None), services=services)
     assert rc == 5
     assert payload is None
@@ -107,7 +131,9 @@ def test_output_step_nonzero_passthrough_and_write_failure(monkeypatch):
     step = OutputStep(options={"output": "out.dot"})
     assert step.run((9, "dot", "err"), services=None) == (9, "dot", "err")
 
-    monkeypatch.setattr("flo.pipeline.write_output", lambda out, path: (5, "write failed"))
+    monkeypatch.setattr(
+        "flo.pipeline.write_output", lambda out, path: (5, "write failed")
+    )
     assert step.run((0, "dot", None), services=None) == (5, None, "write failed")
 
 

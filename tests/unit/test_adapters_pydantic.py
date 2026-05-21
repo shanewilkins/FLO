@@ -22,6 +22,7 @@ def test_adapters_models_pydantic_branch(monkeypatch):
     sys.modules["pydantic"] = fake_pyd
     try:
         import flo.adapters.models as models
+
         importlib.reload(models)
         AdapterModel = models.AdapterModel
         inst = AdapterModel.model_validate({"name": "n", "content": "c"})

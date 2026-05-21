@@ -34,9 +34,15 @@ def extract_process_header_context(process: Any) -> ProcessHeaderContext:
 def _extract_dict_header_context(process: dict[str, Any]) -> ProcessHeaderContext:
     process_dict = _as_string_key_dict(process.get("process"))
     metadata = _as_string_key_dict(process_dict.get("metadata"))
-    _set_metadata_if_present(metadata, PROCESS_METADATA_PROCESS_ID_KEY, process_dict.get("id"))
-    _set_metadata_if_present(metadata, PROCESS_METADATA_PROCESS_NAME_KEY, process_dict.get("name"))
-    title = _first_nonempty_text(process_dict.get("name"), process_dict.get("id"), process.get("name"))
+    _set_metadata_if_present(
+        metadata, PROCESS_METADATA_PROCESS_ID_KEY, process_dict.get("id")
+    )
+    _set_metadata_if_present(
+        metadata, PROCESS_METADATA_PROCESS_NAME_KEY, process_dict.get("name")
+    )
+    title = _first_nonempty_text(
+        process_dict.get("name"), process_dict.get("id"), process.get("name")
+    )
     return ProcessHeaderContext(title=normalize_space(title), metadata=metadata)
 
 
@@ -79,7 +85,9 @@ def _nonempty_text(value: Any) -> str:
 def build_process_header_rows(
     *,
     context: ProcessHeaderContext,
-    metadata_fields: tuple[tuple[str, str], ...] = DEFAULT_PROCESS_HEADER_METADATA_FIELDS,
+    metadata_fields: tuple[
+        tuple[str, str], ...
+    ] = DEFAULT_PROCESS_HEADER_METADATA_FIELDS,
     extra_rows: list[tuple[str, str]] | None = None,
 ) -> list[tuple[str, str]]:
     """Return display-ready header rows for a renderer-specific header band."""
@@ -92,5 +100,9 @@ def build_process_header_rows(
                 continue
             rows.append((label, normalized))
     if extra_rows:
-        rows.extend((label, normalize_space(value)) for label, value in extra_rows if value and normalize_space(value))
+        rows.extend(
+            (label, normalize_space(value))
+            for label, value in extra_rows
+            if value and normalize_space(value)
+        )
     return rows

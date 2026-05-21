@@ -22,7 +22,11 @@ def test_parsed_args_is_frozen():
 def test_parsed_args_asdict_for_backward_compat():
     args = ParsedArgs(path="test.flo", command="validate", options={"export": "json"})
     d = args.asdict()
-    assert d == {"path": "test.flo", "command": "validate", "options": {"export": "json"}}
+    assert d == {
+        "path": "test.flo",
+        "command": "validate",
+        "options": {"export": "json"},
+    }
 
 
 def test_parse_cli_args_with_none_returns_default():

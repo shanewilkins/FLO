@@ -5,7 +5,7 @@ def test_readstep_calls_read_input(monkeypatch):
     called = {}
 
     def fake_read_input(path):
-        called['path'] = path
+        called["path"] = path
         return 0, "fake-content", None
 
     monkeypatch.setattr("flo.pipeline.read_input", fake_read_input)

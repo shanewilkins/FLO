@@ -45,7 +45,6 @@ _SVG_OUTER_PADDING_PX = 6.0
 _SVG_NS = "http://www.w3.org/2000/svg"
 
 
-
 def render_dot_to_file(
     dot: str,
     output_path: str,
@@ -105,15 +104,27 @@ def render_dot_to_file(
         # Two-pass SPPM anchor pinning: re-render SVG with exact anchor positions
         # derived from pass-1 layout.  Only activates when SPPM return-loop anchors
         # are detected; otherwise the SVG written above is already final.
-        _postprocess_sppm_return_loop_edges_svg(dot=dot, output_path=svg_path, contract=sppm_contract)
-        _postprocess_sppm_branch_edges_svg(dot=dot, output_path=svg_path, contract=sppm_contract)
-        _postprocess_sppm_rework_labels_svg(dot=dot, output_path=svg_path, contract=sppm_contract)
-        postprocess_sppm_decision_outcome_labels_svg(output_path=svg_path, contract=sppm_contract)
-        _postprocess_wrapped_sppm_svg(dot=dot, output_path=svg_path, contract=sppm_contract)
+        _postprocess_sppm_return_loop_edges_svg(
+            dot=dot, output_path=svg_path, contract=sppm_contract
+        )
+        _postprocess_sppm_branch_edges_svg(
+            dot=dot, output_path=svg_path, contract=sppm_contract
+        )
+        _postprocess_sppm_rework_labels_svg(
+            dot=dot, output_path=svg_path, contract=sppm_contract
+        )
+        postprocess_sppm_decision_outcome_labels_svg(
+            output_path=svg_path, contract=sppm_contract
+        )
+        _postprocess_wrapped_sppm_svg(
+            dot=dot, output_path=svg_path, contract=sppm_contract
+        )
         _postprocess_queue_baseline_alignment_svg(output_path=svg_path)
         _postprocess_direct_midpoint_edges_svg(output_path=svg_path)
         _normalize_node_backing_fills_svg(output_path=svg_path)
-        _normalize_svg_outer_padding(output_path=svg_path, padding=_SVG_OUTER_PADDING_PX)
+        _normalize_svg_outer_padding(
+            output_path=svg_path, padding=_SVG_OUTER_PADDING_PX
+        )
 
 
 def _postprocess_sppm_return_loop_edges_svg(
@@ -259,7 +270,9 @@ def _postprocess_sppm_branch_edges_svg(
                 (target_x, target_y),
             ],
         )
-        _set_arrow_for_side(second_group, tip=(target_x, target_y), side=second_target_side)
+        _set_arrow_for_side(
+            second_group, tip=(target_x, target_y), side=second_target_side
+        )
         updated = True
 
     if updated:
@@ -365,11 +378,15 @@ def _find_rework_edge_group(
 ) -> tuple[ET.Element | None, str, str]:
     best: tuple[ET.Element | None, str, str, int] = (None, "e", "w", -1)
     for title, group in edge_groups.items():
-        parsed = _parse_edge_title_for_ids(title=title, source_id=source_id, target_id=target_id)
+        parsed = _parse_edge_title_for_ids(
+            title=title, source_id=source_id, target_id=target_id
+        )
         if parsed is None:
             continue
         source_side, target_side = parsed
-        score = int(source_side in {"n", "s", "e", "w"}) + int(target_side in {"n", "s", "e", "w"})
+        score = int(source_side in {"n", "s", "e", "w"}) + int(
+            target_side in {"n", "s", "e", "w"}
+        )
         if score > best[3]:
             best = (group, source_side, target_side, score)
             if score == 2:
@@ -378,7 +395,9 @@ def _find_rework_edge_group(
     return best[0], best[1], best[2]
 
 
-def _parse_edge_title_for_ids(*, title: str, source_id: str, target_id: str) -> tuple[str, str] | None:
+def _parse_edge_title_for_ids(
+    *, title: str, source_id: str, target_id: str
+) -> tuple[str, str] | None:
     if "->" not in title:
         return None
     left, right = title.split("->", 1)
@@ -402,7 +421,9 @@ def _endpoint_compass_side(endpoint: str) -> str:
     return "e"
 
 
-def _point_on_bounds(bounds: tuple[float, float, float, float], side: str) -> tuple[float, float]:
+def _point_on_bounds(
+    bounds: tuple[float, float, float, float], side: str
+) -> tuple[float, float]:
     left, top, right, bottom = bounds
     if side == "n":
         return ((left + right) / 2.0, top)
@@ -415,7 +436,9 @@ def _point_on_bounds(bounds: tuple[float, float, float, float], side: str) -> tu
     return ((left + right) / 2.0, (top + bottom) / 2.0)
 
 
-def _set_arrow_for_side(group: ET.Element, *, tip: tuple[float, float], side: str) -> None:
+def _set_arrow_for_side(
+    group: ET.Element, *, tip: tuple[float, float], side: str
+) -> None:
     if side == "w":
         _set_arrow_polygon_horizontal(group, tip=tip, direction=-1)
         return
@@ -428,7 +451,9 @@ def _set_arrow_for_side(group: ET.Element, *, tip: tuple[float, float], side: st
     _set_arrow_polygon(group, tip=tip, direction=-1)
 
 
-def _edge_path_start_end(group: ET.Element) -> tuple[tuple[float, float] | None, tuple[float, float] | None]:
+def _edge_path_start_end(
+    group: ET.Element,
+) -> tuple[tuple[float, float] | None, tuple[float, float] | None]:
     path = group.find("{*}path")
     if path is None:
         return None, None
@@ -440,7 +465,9 @@ def _edge_path_start_end(group: ET.Element) -> tuple[tuple[float, float] | None,
     return points[0], points[-1]
 
 
-def _svg_edge_label_bounds(group: ET.Element) -> tuple[float, float, float, float] | None:
+def _svg_edge_label_bounds(
+    group: ET.Element,
+) -> tuple[float, float, float, float] | None:
     polygons = _svg_edge_label_polygons(group)
     if not polygons:
         return None
@@ -498,6 +525,7 @@ def _reposition_svg_edge_label(group: ET.Element, *, left: float, top: float) ->
 
     return True
 
+
 def _postprocess_wrapped_sppm_svg(
     *,
     dot: str,
@@ -516,7 +544,7 @@ def _postprocess_wrapped_sppm_svg(
     # - only wrapped LR SPPM boundary transitions via __wrap_exit_lr_*;
     # - only SVG output (node bounds available from rendered geometry);
     # - no changes to non-SPPM or non-boundary edges.
-    
+
     # Use contract-based edge lookup if available; otherwise fall back to regex DOT scanning.
     if contract and contract.wrapped_boundary_edges:
         boundary_pairs: dict[str, tuple[str, str]] = {}
@@ -525,7 +553,7 @@ def _postprocess_wrapped_sppm_svg(
             boundary_pairs[anchor_id] = (edge.source_id, edge.target_id)
     else:
         boundary_pairs = _wrapped_sppm_boundary_pairs(dot)
-    
+
     if not boundary_pairs:
         return
 
@@ -543,7 +571,12 @@ def _postprocess_wrapped_sppm_svg(
         second_group = edge_groups.get(f"{anchor_id}->{target_id}:s")
         if second_group is None:
             second_group = edge_groups.get(f"{anchor_id}->{target_id}:n")
-        if source_bounds is None or target_bounds is None or first_group is None or second_group is None:
+        if (
+            source_bounds is None
+            or target_bounds is None
+            or first_group is None
+            or second_group is None
+        ):
             continue
 
         # Route policy: leave the source from the right edge at its vertical
@@ -607,7 +640,9 @@ def _normalize_svg_outer_padding(*, output_path: Path, padding: float) -> None:
     view_min_x = min_x - padding
     view_min_y = min_y - padding
 
-    root.attrib["viewBox"] = f"{view_min_x:.2f} {view_min_y:.2f} {width:.2f} {height:.2f}"
+    root.attrib["viewBox"] = (
+        f"{view_min_x:.2f} {view_min_y:.2f} {width:.2f} {height:.2f}"
+    )
     if "width" in root.attrib:
         root.attrib["width"] = _format_svg_length(root.attrib["width"], width)
     if "height" in root.attrib:

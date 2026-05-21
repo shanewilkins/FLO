@@ -63,7 +63,7 @@ def _xlabel_value(attrs: tuple[str, ...]) -> str | None:
             continue
         if not attr.endswith('"'):
             continue
-        value = attr[len('xlabel="'):-1].strip()
+        value = attr[len('xlabel="') : -1].strip()
         return value or None
     return None
 

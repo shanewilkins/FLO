@@ -12,7 +12,10 @@ from flo.schema.render_metadata import (
 )
 
 from ._autoformat_wrap import WrapPlan
-from ._continuation_labels import build_continuation_label_attrs, format_continuation_html_label
+from ._continuation_labels import (
+    build_continuation_label_attrs,
+    format_continuation_html_label,
+)
 from ._sppm_step_refs import format_sppm_step_reference
 
 
@@ -55,8 +58,12 @@ def build_sppm_continuation_anchor_tokens(
 
     source_page = source_chunk + 1
     target_page = target_chunk + 1
-    outgoing = f"P{target_page}-{_continuation_suffix(format_sppm_step_reference(target))}"
-    incoming = f"P{source_page}-{_continuation_suffix(format_sppm_step_reference(source))}"
+    outgoing = (
+        f"P{target_page}-{_continuation_suffix(format_sppm_step_reference(target))}"
+    )
+    incoming = (
+        f"P{source_page}-{_continuation_suffix(format_sppm_step_reference(source))}"
+    )
     return outgoing, incoming
 
 
@@ -97,7 +104,9 @@ def resolve_sppm_continuation_anchor_tokens(
     return outgoing, incoming
 
 
-def build_sppm_continuation_anchor_attrs(*, token: str, is_secondary: bool) -> tuple[str, ...]:
+def build_sppm_continuation_anchor_attrs(
+    *, token: str, is_secondary: bool
+) -> tuple[str, ...]:
     """Return DOT node attrs for a circular continuation anchor marker."""
     border = "#90A4AE" if is_secondary else "#455A64"
     fill = "#ECEFF1" if is_secondary else "#FFFFFF"

@@ -34,7 +34,9 @@ _DIMENSION_TO_PX: dict[str, float] = {
     "in": 96.0,
     "cm": 96.0 / 2.54,
 }
-_DIMENSION_RE = re.compile(r"^(?P<value>(?:\d+(?:\.\d+)?|\.\d+))\s*(?P<unit>px|in|cm)?$")
+_DIMENSION_RE = re.compile(
+    r"^(?P<value>(?:\d+(?:\.\d+)?|\.\d+))\s*(?P<unit>px|in|cm)?$"
+)
 
 _SPPM_PROFILE_DEFAULTS: dict[str, dict[str, Any]] = {
     "book": {
@@ -176,9 +178,13 @@ class RenderOptions:
             show_notes=_parse_bool(effective_options.get("show_notes", False)),
             subprocess_view=_parse_subprocess_view(effective_options),
             sppm_projection=_parse_sppm_projection(effective_options),
-            sppm_focus_subprocess=_parse_optional_string(effective_options.get("sppm_focus_subprocess")),
+            sppm_focus_subprocess=_parse_optional_string(
+                effective_options.get("sppm_focus_subprocess")
+            ),
             spaghetti_channel=_parse_spaghetti_channel(effective_options),
-            spaghetti_people_mode=_parse_spaghetti_people_mode(effective_options, profile=profile),
+            spaghetti_people_mode=_parse_spaghetti_people_mode(
+                effective_options, profile=profile
+            ),
             sppm_theme=_parse_sppm_theme(effective_options),
             sppm_themes=_parse_sppm_themes(effective_options),
             layout_wrap=_parse_layout_wrap(effective_options),
@@ -200,12 +206,24 @@ class RenderOptions:
             publication_page_format=_parse_publication_page_format(effective_options),
             layout_max_width=layout_max_width,
             layout_max_width_px=layout_max_width.to_px() if layout_max_width else None,
-            layout_target_columns=_parse_positive_int(effective_options.get("layout_target_columns")),
-            sppm_max_label_step_name=_parse_positive_int(effective_options.get("sppm_max_label_step_name")),
-            sppm_max_label_workers=_parse_positive_int(effective_options.get("sppm_max_label_workers")),
-            sppm_max_label_ctwt=_parse_positive_int(effective_options.get("sppm_max_label_ctwt")),
-            sppm_footer_metrics=_parse_footer_metrics(_footer_metric_source(effective_options)),
-            sppm_footer_notes=_parse_footer_notes(_footer_note_source(effective_options)),
+            layout_target_columns=_parse_positive_int(
+                effective_options.get("layout_target_columns")
+            ),
+            sppm_max_label_step_name=_parse_positive_int(
+                effective_options.get("sppm_max_label_step_name")
+            ),
+            sppm_max_label_workers=_parse_positive_int(
+                effective_options.get("sppm_max_label_workers")
+            ),
+            sppm_max_label_ctwt=_parse_positive_int(
+                effective_options.get("sppm_max_label_ctwt")
+            ),
+            sppm_footer_metrics=_parse_footer_metrics(
+                _footer_metric_source(effective_options)
+            ),
+            sppm_footer_notes=_parse_footer_notes(
+                _footer_note_source(effective_options)
+            ),
         )
 
 
@@ -266,7 +284,12 @@ def _parse_orientation(options: Mapping[str, Any]) -> Orientation:
 def _parse_subprocess_view(options: Mapping[str, Any]) -> SubprocessView:
     default = "parent_only" if _parse_diagram(options) == "sppm" else "expanded"
     subprocess_view_raw = _normalized_option(options, "subprocess_view", default)
-    if subprocess_view_raw in {"parent-only", "parent_only", "parents-only", "parents_only"}:
+    if subprocess_view_raw in {
+        "parent-only",
+        "parent_only",
+        "parents-only",
+        "parents_only",
+    }:
         return "parent_only"
     if subprocess_view_raw in {"child-map", "child_map", "child", "focused-child"}:
         return "child_map"
@@ -306,7 +329,9 @@ def _parse_spaghetti_channel(options: Mapping[str, Any]) -> SpaghettiChannel:
     return "both"
 
 
-def _parse_spaghetti_people_mode(options: Mapping[str, Any], profile: RenderProfile) -> SpaghettiPeopleMode:
+def _parse_spaghetti_people_mode(
+    options: Mapping[str, Any], profile: RenderProfile
+) -> SpaghettiPeopleMode:
     raw_value = options.get("spaghetti_people_mode")
     if raw_value is None:
         # Diagnostics/analysis favors per-worker traces by default.
@@ -401,7 +426,9 @@ def _parse_sppm_output_profile(options: Mapping[str, Any]) -> SppmOutputProfile:
     return "default"
 
 
-def _parse_publication_page_format(options: Mapping[str, Any]) -> PublicationPageFormatName | None:
+def _parse_publication_page_format(
+    options: Mapping[str, Any],
+) -> PublicationPageFormatName | None:
     raw = options.get("publication_page_format")
     if raw is None:
         return None
@@ -424,7 +451,7 @@ def _parse_positive_int(value: Any) -> int | None:
         return None
     try:
         parsed = int(value)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return None
     return parsed if parsed > 0 else None
 

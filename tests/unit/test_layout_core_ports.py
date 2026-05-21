@@ -17,7 +17,9 @@ def test_lr_ports_use_west_for_inputs_and_east_for_outputs_with_ordered_slots():
     edges = [("a", "d"), ("b", "d"), ("d", "a"), ("d", "c")]
     placement = build_placement_plan(nodes, edges, PlacementConstraints())
 
-    source_ports, target_ports = build_port_assignments(placement=placement, edges=edges)
+    source_ports, target_ports = build_port_assignments(
+        placement=placement, edges=edges
+    )
 
     assert source_ports[("d", "a")].side == "e"
     assert source_ports[("d", "c")].side == "e"
@@ -33,9 +35,13 @@ def test_lr_ports_use_west_for_inputs_and_east_for_outputs_with_ordered_slots():
 def test_tb_ports_use_north_for_inputs_and_south_for_outputs():
     nodes = [_node("a"), _node("b"), _node("c")]
     edges = [("a", "c"), ("b", "c")]
-    placement = build_placement_plan(nodes, edges, PlacementConstraints(orientation="tb"))
+    placement = build_placement_plan(
+        nodes, edges, PlacementConstraints(orientation="tb")
+    )
 
-    source_ports, target_ports = build_port_assignments(placement=placement, edges=edges)
+    source_ports, target_ports = build_port_assignments(
+        placement=placement, edges=edges
+    )
 
     assert source_ports[("a", "c")].side == "s"
     assert source_ports[("b", "c")].side == "s"

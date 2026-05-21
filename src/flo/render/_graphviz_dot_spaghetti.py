@@ -18,16 +18,24 @@ from .options import RenderOptions
 from ._callout_layout import build_edge_text_callout_attrs, resolve_callout_near_source
 
 
-def render_spaghetti_dot(process: Dict[str, Any] | Any, options: RenderOptions | None = None) -> str:
+def render_spaghetti_dot(
+    process: Dict[str, Any] | Any, options: RenderOptions | None = None
+) -> str:
     """Render a spaghetti-map style DOT graph from inferred movements."""
-    return _render_spaghetti_graph(process, options=options or RenderOptions(diagram="spaghetti"))
+    return _render_spaghetti_graph(
+        process, options=options or RenderOptions(diagram="spaghetti")
+    )
 
 
-def _render_spaghetti_graph(process: Dict[str, Any] | Any, options: RenderOptions) -> str:
+def _render_spaghetti_graph(
+    process: Dict[str, Any] | Any, options: RenderOptions
+) -> str:
     material_movements = infer_material_movements(process)
     people_movements = infer_people_movements(process)
     material_routes = aggregate_material_movements(material_movements)
-    people_routes = _spaghetti_people_routes(people_movements=people_movements, options=options)
+    people_routes = _spaghetti_people_routes(
+        people_movements=people_movements, options=options
+    )
     locations = extract_location_spatial_index(process)
     include_material, include_people = _spaghetti_channels(options)
 
@@ -42,12 +50,18 @@ def _render_spaghetti_graph(process: Dict[str, Any] | Any, options: RenderOption
     _append_spaghetti_location_nodes(
         lines=lines,
         locations=locations,
-        location_ids=_ordered_location_ids(locations=locations, routes=routes_for_locations),
+        location_ids=_ordered_location_ids(
+            locations=locations, routes=routes_for_locations
+        ),
     )
     if include_material:
-        _append_spaghetti_route_edges(lines=lines, routes=material_routes, options=options, channel="material")
+        _append_spaghetti_route_edges(
+            lines=lines, routes=material_routes, options=options, channel="material"
+        )
     if include_people:
-        _append_spaghetti_route_edges(lines=lines, routes=people_routes, options=options, channel="people")
+        _append_spaghetti_route_edges(
+            lines=lines, routes=people_routes, options=options, channel="people"
+        )
 
     lines.append("}")
     return "\n".join(lines)
@@ -213,7 +227,9 @@ def _rectangle_boundary_points(boundary: dict[str, Any]) -> list[tuple[float, fl
     return [(min_x, min_y), (max_x, min_y), (max_x, max_y), (min_x, max_y)]
 
 
-def _rectangle_bounds(boundary: dict[str, Any]) -> tuple[float, float, float, float] | None:
+def _rectangle_bounds(
+    boundary: dict[str, Any],
+) -> tuple[float, float, float, float] | None:
     min_max = _coerced_bounds(
         min_x=boundary.get("min_x"),
         min_y=boundary.get("min_y"),
@@ -243,7 +259,9 @@ def _rectangle_bounds(boundary: dict[str, Any]) -> tuple[float, float, float, fl
     return origin_x, origin_y, origin_x + width, origin_y + height
 
 
-def _coerced_bounds(min_x: Any, min_y: Any, max_x: Any, max_y: Any) -> tuple[float, float, float, float] | None:
+def _coerced_bounds(
+    min_x: Any, min_y: Any, max_x: Any, max_y: Any
+) -> tuple[float, float, float, float] | None:
     x0 = _as_number(min_x)
     y0 = _as_number(min_y)
     x1 = _as_number(max_x)
@@ -401,13 +419,17 @@ def _append_spaghetti_route_edges(
     channel: str,
 ) -> None:
     for route in routes:
-        edge_line = _spaghetti_route_edge_line(route=route, options=options, channel=channel)
+        edge_line = _spaghetti_route_edge_line(
+            route=route, options=options, channel=channel
+        )
         if edge_line is None:
             continue
         lines.append(edge_line)
 
 
-def _spaghetti_route_edge_line(route: dict[str, Any], options: RenderOptions, channel: str) -> str | None:
+def _spaghetti_route_edge_line(
+    route: dict[str, Any], options: RenderOptions, channel: str
+) -> str | None:
     source = str(route.get("from_location") or "")
     target = str(route.get("to_location") or "")
     if not source or not target:
@@ -426,9 +448,13 @@ def _spaghetti_route_edge_line(route: dict[str, Any], options: RenderOptions, ch
         edge_attrs.append(distance_label)
 
     if options.detail == "verbose":
-        entities_callout = _spaghetti_route_entities_callout_text(route=route, channel=channel)
+        entities_callout = _spaghetti_route_entities_callout_text(
+            route=route, channel=channel
+        )
         if entities_callout is not None:
-            near_source = resolve_callout_near_source(prefer_near_source=False, edge_attrs=edge_attrs)
+            near_source = resolve_callout_near_source(
+                prefer_near_source=False, edge_attrs=edge_attrs
+            )
             edge_attrs.extend(
                 build_edge_text_callout_attrs(
                     text=_escape(entities_callout),
@@ -450,16 +476,22 @@ def _spaghetti_distance_label(route: dict[str, Any]) -> str | None:
     return f'label="{float(value):.2f} {str(unit)}"'
 
 
-def _spaghetti_route_entities_callout_text(route: dict[str, Any], channel: str) -> str | None:
+def _spaghetti_route_entities_callout_text(
+    route: dict[str, Any], channel: str
+) -> str | None:
     entities_key = "items" if channel == "material" else "workers"
-    entities = route.get(entities_key) if isinstance(route.get(entities_key), list) else []
+    entities = (
+        route.get(entities_key) if isinstance(route.get(entities_key), list) else []
+    )
     if not entities:
         return None
     label_prefix = "items" if channel == "material" else "workers"
     return label_prefix + ": " + ", ".join(str(item) for item in entities)
 
 
-def _spaghetti_route_entities_taillabel(route: dict[str, Any], channel: str) -> str | None:
+def _spaghetti_route_entities_taillabel(
+    route: dict[str, Any], channel: str
+) -> str | None:
     text = _spaghetti_route_entities_callout_text(route, channel)
     if text is None:
         return None
@@ -482,13 +514,17 @@ def _spaghetti_people_mode(options: RenderOptions) -> str:
     return "aggregate"
 
 
-def _spaghetti_people_routes(people_movements: list[dict[str, Any]], options: RenderOptions) -> list[dict[str, Any]]:
+def _spaghetti_people_routes(
+    people_movements: list[dict[str, Any]], options: RenderOptions
+) -> list[dict[str, Any]]:
     if _spaghetti_people_mode(options) == "worker":
         return aggregate_people_movements_by_worker(people_movements)
     return aggregate_people_movements(people_movements)
 
 
-def _spaghetti_channel_xlabel(channel: str, route: dict[str, Any], count: int, options: RenderOptions) -> str:
+def _spaghetti_channel_xlabel(
+    channel: str, route: dict[str, Any], count: int, options: RenderOptions
+) -> str:
     if channel != "people":
         return f"M {count}x"
 
@@ -498,7 +534,9 @@ def _spaghetti_channel_xlabel(channel: str, route: dict[str, Any], count: int, o
     return f"P {count}x"
 
 
-def _spaghetti_channel_edge_attrs(channel: str, route: dict[str, Any], options: RenderOptions) -> list[str]:
+def _spaghetti_channel_edge_attrs(
+    channel: str, route: dict[str, Any], options: RenderOptions
+) -> list[str]:
     if channel != "people":
         return ["color=tomato4", "fontcolor=tomato4"]
 
@@ -542,7 +580,9 @@ def _stable_palette_index(text: str, size: int) -> int:
     return seed % max(1, size)
 
 
-def _ordered_location_ids(locations: dict[str, dict[str, Any]], routes: list[dict[str, Any]]) -> list[str]:
+def _ordered_location_ids(
+    locations: dict[str, dict[str, Any]], routes: list[dict[str, Any]]
+) -> list[str]:
     ordered: list[str] = []
     seen: set[str] = set()
 
@@ -563,5 +603,3 @@ def _ordered_location_ids(locations: dict[str, dict[str, Any]], routes: list[dic
 
 def _escape(text: str) -> str:
     return text.replace("\\", "\\\\").replace('"', '\\"')
-
-

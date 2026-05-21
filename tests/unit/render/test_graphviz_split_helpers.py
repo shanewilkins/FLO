@@ -22,7 +22,13 @@ def test_common_extract_nodes_edges_handles_none_unknown_and_dict_filtering():
             ],
         }
     )
-    assert nodes == [{"id": "child", "attrs": {"subprocess_parent": "parent"}, "subprocess_parent": "parent"}]
+    assert nodes == [
+        {
+            "id": "child",
+            "attrs": {"subprocess_parent": "parent"},
+            "subprocess_parent": "parent",
+        }
+    ]
     assert edges == [{"source": "a", "target": "b"}]
 
 
@@ -52,7 +58,12 @@ def test_common_node_label_render_queue_shape_and_cluster_id_fallback():
     assert "[task]" in label
     assert "lane:" not in label
 
-    assert common._render_node_line({"name": "Missing ID"}, indent="  ", options=RenderOptions()) == []
+    assert (
+        common._render_node_line(
+            {"name": "Missing ID"}, indent="  ", options=RenderOptions()
+        )
+        == []
+    )
     assert common._shape_for_kind("queue") == "box"
     assert common._safe_cluster_id("$$$") == "lane"
 
@@ -60,13 +71,22 @@ def test_common_node_label_render_queue_shape_and_cluster_id_fallback():
 def test_common_parent_only_view_and_edge_collapse_dedup_paths():
     nodes = [{"id": "a"}, {"id": "b"}]
     edges = [{"source": "a", "target": "b"}]
-    projected_nodes, projected_edges = common._project_parent_only_subprocess_view(nodes, edges)
+    projected_nodes, projected_edges = common._project_parent_only_subprocess_view(
+        nodes, edges
+    )
     assert projected_nodes is nodes
     assert projected_edges is edges
 
     collapsed_edges: list[dict[str, str]] = []
     seen_edges: set[tuple[str, str, str | None]] = set()
-    common._add_collapsed_edge(collapsed_edges, seen_edges, source="a", target="a", branch_label=None, semantic_edge=None)
+    common._add_collapsed_edge(
+        collapsed_edges,
+        seen_edges,
+        source="a",
+        target="a",
+        branch_label=None,
+        semantic_edge=None,
+    )
     common._add_collapsed_edge(
         collapsed_edges,
         seen_edges,
@@ -84,7 +104,13 @@ def test_common_parent_only_view_and_edge_collapse_dedup_paths():
         semantic_edge={"outcome": "yes", "rework": True, "metadata": {"rate": 0.12}},
     )
     assert collapsed_edges == [
-        {"source": "a", "target": "b", "outcome": "yes", "rework": True, "metadata": {"rate": 0.12}}
+        {
+            "source": "a",
+            "target": "b",
+            "outcome": "yes",
+            "rework": True,
+            "metadata": {"rate": 0.12},
+        }
     ]
 
 
@@ -242,30 +268,55 @@ def test_spaghetti_boundary_and_numeric_helpers_cover_guard_paths():
 
 
 def test_spaghetti_rectangle_and_kind_normalization_helpers():
-    assert spaghetti._rectangle_bounds({"min_x": 0, "min_y": 0, "max_x": 4, "max_y": 3}) == (0.0, 0.0, 4.0, 3.0)
-    assert spaghetti._rectangle_bounds({"left": 4, "bottom": 3, "right": 0, "top": 0}) == (0.0, 0.0, 4.0, 3.0)
-    assert spaghetti._rectangle_bounds({"x": 0, "y": 0, "width": 0, "height": 1}) is None
+    assert spaghetti._rectangle_bounds(
+        {"min_x": 0, "min_y": 0, "max_x": 4, "max_y": 3}
+    ) == (0.0, 0.0, 4.0, 3.0)
+    assert spaghetti._rectangle_bounds(
+        {"left": 4, "bottom": 3, "right": 0, "top": 0}
+    ) == (0.0, 0.0, 4.0, 3.0)
+    assert (
+        spaghetti._rectangle_bounds({"x": 0, "y": 0, "width": 0, "height": 1}) is None
+    )
 
-    assert spaghetti._normalize_location_kind_token("  transit--path  ") == "transit_path"
+    assert (
+        spaghetti._normalize_location_kind_token("  transit--path  ") == "transit_path"
+    )
     assert spaghetti._canonical_spaghetti_location_kind("   ") is None
     assert spaghetti._spaghetti_location_visual_attrs({"kind": "unknown_kind"}) == []
 
 
 def test_spaghetti_route_helpers_cover_missing_and_worker_fallbacks():
-    assert spaghetti._spaghetti_route_edge_line(
-        route={"to_location": "b"},
-        options=RenderOptions(diagram="spaghetti"),
-        channel="material",
-    ) is None
-    assert spaghetti._spaghetti_distance_label({"distance": {"value": "far", "unit": "m"}}) is None
-    assert spaghetti._spaghetti_route_entities_taillabel({"workers": []}, channel="people") is None
-    assert spaghetti._spaghetti_route_entities_callout_text({"workers": []}, channel="people") is None
+    assert (
+        spaghetti._spaghetti_route_edge_line(
+            route={"to_location": "b"},
+            options=RenderOptions(diagram="spaghetti"),
+            channel="material",
+        )
+        is None
+    )
+    assert (
+        spaghetti._spaghetti_distance_label({"distance": {"value": "far", "unit": "m"}})
+        is None
+    )
+    assert (
+        spaghetti._spaghetti_route_entities_taillabel({"workers": []}, channel="people")
+        is None
+    )
+    assert (
+        spaghetti._spaghetti_route_entities_callout_text(
+            {"workers": []}, channel="people"
+        )
+        is None
+    )
     assert spaghetti._spaghetti_primary_worker({"workers": ["   "]}) is None
 
-    assert spaghetti._spaghetti_route_entities_callout_text(
-        {"workers": ["assistant_baker"]},
-        channel="people",
-    ) == "workers: assistant_baker"
+    assert (
+        spaghetti._spaghetti_route_entities_callout_text(
+            {"workers": ["assistant_baker"]},
+            channel="people",
+        )
+        == "workers: assistant_baker"
+    )
 
     edge_attrs = spaghetti._spaghetti_channel_edge_attrs(
         channel="people",

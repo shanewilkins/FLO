@@ -55,9 +55,15 @@ def _build_explicit_edges(explicit_edges: list[Any]) -> list[Edge]:
                 id=str(edge.get("id")) if edge.get("id") is not None else None,
                 outcome=_normalize_outcome_value(edge.get("outcome")),
                 label=str(edge.get("label")) if edge.get("label") is not None else None,
-                edge_type=str(edge.get("edge_type")) if edge.get("edge_type") is not None else None,
-                rework=edge.get("rework") if isinstance(edge.get("rework"), bool) else None,
-                metadata=edge.get("metadata") if isinstance(edge.get("metadata"), dict) else None,
+                edge_type=str(edge.get("edge_type"))
+                if edge.get("edge_type") is not None
+                else None,
+                rework=edge.get("rework")
+                if isinstance(edge.get("rework"), bool)
+                else None,
+                metadata=edge.get("metadata")
+                if isinstance(edge.get("metadata"), dict)
+                else None,
             )
         )
     return edges
@@ -71,7 +77,9 @@ def _build_outcome_edges(nodes: list[Node]) -> list[Edge]:
         if not isinstance(outcomes, dict):
             continue
         for outcome, target in outcomes.items():
-            outcome_edge = _build_outcome_edge(source=node.id, outcome=outcome, target_spec=target)
+            outcome_edge = _build_outcome_edge(
+                source=node.id, outcome=outcome, target_spec=target
+            )
             if outcome_edge is not None:
                 edges.append(outcome_edge)
     return edges
@@ -88,16 +96,30 @@ def _build_outcome_edge(*, source: str, outcome: Any, target_spec: Any) -> Edge 
             source=source,
             target=str(target),
             outcome=_normalize_outcome_value(outcome),
-            id=str(target_spec.get("id")) if target_spec.get("id") is not None else None,
-            label=str(target_spec.get("label")) if target_spec.get("label") is not None else None,
-            edge_type=str(target_spec.get("edge_type")) if target_spec.get("edge_type") is not None else None,
-            rework=target_spec.get("rework") if isinstance(target_spec.get("rework"), bool) else None,
-            metadata=target_spec.get("metadata") if isinstance(target_spec.get("metadata"), dict) else None,
+            id=str(target_spec.get("id"))
+            if target_spec.get("id") is not None
+            else None,
+            label=str(target_spec.get("label"))
+            if target_spec.get("label") is not None
+            else None,
+            edge_type=str(target_spec.get("edge_type"))
+            if target_spec.get("edge_type") is not None
+            else None,
+            rework=target_spec.get("rework")
+            if isinstance(target_spec.get("rework"), bool)
+            else None,
+            metadata=target_spec.get("metadata")
+            if isinstance(target_spec.get("metadata"), dict)
+            else None,
         )
 
     if target_spec is None:
         return None
-    return Edge(source=source, target=str(target_spec), outcome=_normalize_outcome_value(outcome))
+    return Edge(
+        source=source,
+        target=str(target_spec),
+        outcome=_normalize_outcome_value(outcome),
+    )
 
 
 def _normalize_outcome_value(value: Any) -> str | None:

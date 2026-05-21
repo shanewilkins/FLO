@@ -220,7 +220,12 @@ def test_validate_ir_accepts_material_count_and_measure_shapes():
                 {
                     "id": "egg",
                     "name": "Egg",
-                    "quantity": {"kind": "count", "value": 2, "unit": "each", "qualifier": "large"},
+                    "quantity": {
+                        "kind": "count",
+                        "value": 2,
+                        "unit": "each",
+                        "qualifier": "large",
+                    },
                 },
                 {
                     "id": "flour",
@@ -433,7 +438,11 @@ def test_validate_ir_accepts_grouped_and_nested_materials():
                             {
                                 "id": "butter",
                                 "name": "Butter",
-                                "quantity": {"kind": "measure", "value": 100, "unit": "g"},
+                                "quantity": {
+                                    "kind": "measure",
+                                    "value": 100,
+                                    "unit": "g",
+                                },
                             }
                         ],
                     },
@@ -496,7 +505,11 @@ def test_validate_ir_accepts_node_time_metadata_units():
         name="x",
         nodes=[
             Node(id="start", type="start"),
-            Node(id="mix", type="task", attrs={"metadata": {"cycle_time": {"value": 15, "unit": "m"}}}),
+            Node(
+                id="mix",
+                type="task",
+                attrs={"metadata": {"cycle_time": {"value": 15, "unit": "m"}}},
+            ),
             Node(id="end", type="end"),
         ],
         edges=[
@@ -514,7 +527,11 @@ def test_validate_ir_rejects_invalid_node_time_unit():
         name="x",
         nodes=[
             Node(id="start", type="start"),
-            Node(id="mix", type="task", attrs={"metadata": {"cycle_time": {"value": 15, "unit": "weeks"}}}),
+            Node(
+                id="mix",
+                type="task",
+                attrs={"metadata": {"cycle_time": {"value": 15, "unit": "weeks"}}},
+            ),
             Node(id="end", type="end"),
         ],
         edges=[
@@ -646,7 +663,11 @@ def test_validate_ir_node_without_value_class_passes():
         name="x",
         nodes=[
             Node(id="start", type="start"),
-            Node(id="step", type="task", attrs={"metadata": {"cycle_time": {"value": 5, "unit": "min"}}}),
+            Node(
+                id="step",
+                type="task",
+                attrs={"metadata": {"cycle_time": {"value": 5, "unit": "min"}}},
+            ),
             Node(id="end", type="end"),
         ],
         edges=[
@@ -655,86 +676,3 @@ def test_validate_ir_node_without_value_class_passes():
         ],
     )
     validate_ir(ir)  # must not raise
-
-
-def test_validate_ir_accepts_valid_rework_edge_metadata():
-    ir = IR(
-        name="x",
-        nodes=[
-            Node(id="start", type="start"),
-            Node(id="gate", type="decision"),
-            Node(id="rework", type="task"),
-            Node(id="end", type="end"),
-        ],
-        edges=[
-            Edge(source="start", target="gate"),
-            Edge(source="gate", target="end", outcome="yes"),
-            Edge(
-                source="gate",
-                target="rework",
-                outcome="no",
-                edge_type="rework",
-                rework=True,
-                metadata={"rate": 0.08, "reason": "Missing approvals", "count": "3 per 40 cases"},
-            ),
-            Edge(source="rework", target="gate", edge_type="rework", rework=True),
-        ],
-    )
-
-    validate_ir(ir)
-
-
-def test_validate_ir_rejects_invalid_rework_rate():
-    ir = IR(
-        name="x",
-        nodes=[
-            Node(id="start", type="start"),
-            Node(id="gate", type="decision"),
-            Node(id="rework", type="task"),
-            Node(id="end", type="end"),
-        ],
-        edges=[
-            Edge(source="start", target="gate"),
-            Edge(source="gate", target="end", outcome="yes"),
-            Edge(
-                source="gate",
-                target="rework",
-                outcome="no",
-                edge_type="rework",
-                rework=True,
-                metadata={"rate": 1.5},
-            ),
-            Edge(source="rework", target="gate", edge_type="rework", rework=True),
-        ],
-    )
-
-    with pytest.raises(ValidationError, match="E1401"):
-        validate_ir(ir)
-
-
-def test_validate_ir_rejects_blank_rework_reason():
-    ir = IR(
-        name="x",
-        nodes=[
-            Node(id="start", type="start"),
-            Node(id="gate", type="decision"),
-            Node(id="rework", type="task"),
-            Node(id="end", type="end"),
-        ],
-        edges=[
-            Edge(source="start", target="gate"),
-            Edge(source="gate", target="end", outcome="yes"),
-            Edge(
-                source="gate",
-                target="rework",
-                outcome="no",
-                edge_type="rework",
-                rework=True,
-                metadata={"reason": "   "},
-            ),
-            Edge(source="rework", target="gate", edge_type="rework", rework=True),
-        ],
-    )
-
-    with pytest.raises(ValidationError, match="E1402"):
-        validate_ir(ir)

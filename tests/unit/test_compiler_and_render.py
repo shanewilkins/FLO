@@ -59,12 +59,25 @@ steps:
     ir = compile_adapter(adapter)
     validate_ir(ir)
 
-    rework_edge = next(edge for edge in ir.edges if edge.source == "decision" and edge.target == "rework")
+    rework_edge = next(
+        edge
+        for edge in ir.edges
+        if edge.source == "decision" and edge.target == "rework"
+    )
     assert rework_edge.outcome == "no"
     assert rework_edge.edge_type == "rework"
     assert rework_edge.rework is True
 
     dot = render_dot(ir)
-    assert '"__rework_corridor_decision_rework_1" [shape=point, width=0.01, height=0.01, label="", style=invis];' in dot
-    assert '"decision" -> "__rework_corridor_decision_rework_1" [tailport=e, constraint=false, weight=0, style=dashed, arrowhead=none];' in dot
-    assert '"__rework_corridor_decision_rework_1" -> "rework" [headport=w, constraint=false, minlen=3, weight=0, style=dashed, label="no"];' in dot
+    assert (
+        '"__rework_corridor_decision_rework_1" [shape=point, width=0.01, height=0.01, label="", style=invis];'
+        in dot
+    )
+    assert (
+        '"decision" -> "__rework_corridor_decision_rework_1" [tailport=e, constraint=false, weight=0, style=dashed, arrowhead=none];'
+        in dot
+    )
+    assert (
+        '"__rework_corridor_decision_rework_1" -> "rework" [headport=w, constraint=false, minlen=3, weight=0, style=dashed, label="no"];'
+        in dot
+    )

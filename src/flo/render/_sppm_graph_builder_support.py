@@ -17,7 +17,9 @@ from ._sppm_themes import SppmTheme
 from .options import RenderOptions
 
 
-def build_sppm_graph_preamble_lines(*, lines: list[str], rankdir: str, nodesep: float, ranksep: float) -> None:
+def build_sppm_graph_preamble_lines(
+    *, lines: list[str], rankdir: str, nodesep: float, ranksep: float
+) -> None:
     """Append the fixed graph preamble lines for an SPPM render."""
     lines.append(f"  rankdir={rankdir};")
     lines.append(
@@ -27,7 +29,9 @@ def build_sppm_graph_preamble_lines(*, lines: list[str], rankdir: str, nodesep: 
     lines.append("  edge [fontname=Helvetica];")
 
 
-def append_sppm_graph_layout_hints(*, lines: list[str], options: RenderOptions, plan: WrapPlan) -> None:
+def append_sppm_graph_layout_hints(
+    *, lines: list[str], options: RenderOptions, plan: WrapPlan
+) -> None:
     """Append optional wrap-related layout hints."""
     append_wrap_layout_hints(lines=lines, options=options, plan=plan)
 
@@ -75,7 +79,9 @@ def append_sppm_graph_edge_lines(
                 options=options,
                 step_numbering=step_numbering,
                 wrap_plan=wrap_plan,
-                route=routing_plan.route_for(str(edge.get("source") or ""), str(edge.get("target") or "")),
+                route=routing_plan.route_for(
+                    str(edge.get("source") or ""), str(edge.get("target") or "")
+                ),
             )
         )
 
@@ -88,7 +94,9 @@ def append_sppm_graph_constraint_lines(
 ) -> None:
     """Append the invisible spine and secondary-line constraints."""
     lines.extend(_render_sppm_spine_constraints(edges=edges, routing_plan=routing_plan))
-    lines.extend(_render_sppm_secondary_line_constraints(edges=edges, routing_plan=routing_plan))
+    lines.extend(
+        _render_sppm_secondary_line_constraints(edges=edges, routing_plan=routing_plan)
+    )
 
 
 def append_sppm_graph_footer_lines(
@@ -99,4 +107,6 @@ def append_sppm_graph_footer_lines(
     edges: list[dict[str, Any]],
 ) -> None:
     """Append the publication-backed footer band lines."""
-    lines.extend(render_sppm_footer_band(publication=publication, nodes=nodes, edges=edges))
+    lines.extend(
+        render_sppm_footer_band(publication=publication, nodes=nodes, edges=edges)
+    )

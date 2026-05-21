@@ -102,6 +102,8 @@ def _legacy_edges_from_node_attrs(ir: IR) -> list[dict[str, Any]]:
         if not isinstance(targets, list):
             continue
         for target in targets:
-            edges_out.append({"id": f"e_{edge_idx}", "source": node.id, "target": str(target)})
+            edges_out.append(
+                {"id": f"e_{edge_idx}", "source": node.id, "target": str(target)}
+            )
             edge_idx += 1
     return edges_out

@@ -19,13 +19,17 @@ if TYPE_CHECKING:
 __all__ = ["render_sppm_dot", "_render_sppm_graph"]
 
 
-def render_sppm_dot(process: IR | dict[str, Any], options: RenderOptions | None = None) -> str:
+def render_sppm_dot(
+    process: IR | dict[str, Any], options: RenderOptions | None = None
+) -> str:
     """Render a Standard Process Performance Map (SPPM) as Graphviz DOT."""
     render_options = options or RenderOptions()
     dot, _contract = _render_sppm_graph(process, options=render_options)
     return dot
 
 
-def _render_sppm_graph(process: IR | dict[str, Any], options: RenderOptions) -> tuple[str, SppmSvgPostprocessContract]:
+def _render_sppm_graph(
+    process: IR | dict[str, Any], options: RenderOptions
+) -> tuple[str, SppmSvgPostprocessContract]:
     """Return SPPM DOT plus the SVG postprocess contract."""
     return build_sppm_graph(process, options=options)

@@ -25,10 +25,18 @@ def test_export_ir_ingredients_mode_outputs_header_and_items():
         edges=[],
         process_metadata={
             "materials": [
-                {"id": "flour", "name": "Flour", "quantity": {"kind": "measure", "value": 250, "unit": "g"}},
+                {
+                    "id": "flour",
+                    "name": "Flour",
+                    "quantity": {"kind": "measure", "value": 250, "unit": "g"},
+                },
             ],
             "equipment": [
-                {"id": "oven", "name": "Oven", "quantity": {"kind": "count", "value": 1, "unit": "each"}},
+                {
+                    "id": "oven",
+                    "name": "Oven",
+                    "quantity": {"kind": "count", "value": 1, "unit": "each"},
+                },
             ],
         },
     )
@@ -87,8 +95,16 @@ def test_export_ir_movement_mode_outputs_inferred_route_summary():
         ],
         process_metadata={
             "locations": [
-                {"id": "pantry", "name": "Pantry", "metadata": {"spatial": {"x": 0.0, "y": 0.0, "unit": "m"}}},
-                {"id": "prep_bench", "name": "Prep Bench", "metadata": {"spatial": {"x": 3.0, "y": 4.0, "unit": "m"}}},
+                {
+                    "id": "pantry",
+                    "name": "Pantry",
+                    "metadata": {"spatial": {"x": 0.0, "y": 0.0, "unit": "m"}},
+                },
+                {
+                    "id": "prep_bench",
+                    "name": "Prep Bench",
+                    "metadata": {"spatial": {"x": 3.0, "y": 4.0, "unit": "m"}},
+                },
             ]
         },
     )

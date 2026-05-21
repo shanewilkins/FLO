@@ -44,7 +44,9 @@ def build_edge_text_callout_attrs(
     return (f'xlabel="{text}"',)
 
 
-def resolve_callout_near_source(*, prefer_near_source: bool, edge_attrs: tuple[str, ...] | list[str]) -> bool:
+def resolve_callout_near_source(
+    *, prefer_near_source: bool, edge_attrs: tuple[str, ...] | list[str]
+) -> bool:
     """Return whether a callout should be placed near source to reduce overlap.
 
     If the edge already has center label attrs (`xlabel=`), prefer source-side

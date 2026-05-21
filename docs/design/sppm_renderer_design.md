@@ -1,5 +1,7 @@
 # SPPM Renderer Design
 
+Status: accepted renderer design note
+
 ## Why This Exists
 
 The original SPPM DOT renderer started as a pragmatic single-file implementation.

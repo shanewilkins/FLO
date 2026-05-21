@@ -4,6 +4,7 @@ The real compiler will convert adapter models into the canonical
 FlowProcess IR (instances of `flo.ir.models.FlowProcess`). This stub
 is a placeholder that will be implemented as part of v0.1.
 """
+
 from typing import Any, Dict
 
 from ._adapter_normalization import (
@@ -30,7 +31,12 @@ def compile_adapter(adapter_model: Dict[str, Any]) -> IR:
 
     if not isinstance(source_nodes, list):
         fallback_node = Node(id="n1", type="task", attrs={"name": name})
-        return IR(name=name, nodes=[fallback_node], edges=[], process_metadata=process_metadata)
+        return IR(
+            name=name,
+            nodes=[fallback_node],
+            edges=[],
+            process_metadata=process_metadata,
+        )
 
     flat_source_nodes = flatten_source_nodes(source_nodes)
     nodes = build_nodes_from_flat_source(flat_source_nodes)

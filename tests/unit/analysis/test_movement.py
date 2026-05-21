@@ -7,14 +7,19 @@ from flo.compiler.analysis import (
 from flo.compiler.ir.models import Edge, IR
 
 
-def test_infer_people_movements_requires_shared_workers_and_location_change(node_factory):
+def test_infer_people_movements_requires_shared_workers_and_location_change(
+    node_factory,
+):
     ir = IR(
         name="people",
         nodes=[
             node_factory(
                 "gather",
                 type="task",
-                attrs={"location": "pantry", "workers": ["lead_baker", "assistant_baker"]},
+                attrs={
+                    "location": "pantry",
+                    "workers": ["lead_baker", "assistant_baker"],
+                },
             ),
             node_factory(
                 "mix",
@@ -44,8 +49,16 @@ def test_infer_people_movements_requires_shared_workers_and_location_change(node
 def test_aggregate_people_movements_merges_worker_sets_by_route():
     routes = aggregate_people_movements(
         [
-            {"from_location": "pantry", "to_location": "prep_bench", "workers": ["assistant_baker"]},
-            {"from_location": "pantry", "to_location": "prep_bench", "workers": ["lead_baker"]},
+            {
+                "from_location": "pantry",
+                "to_location": "prep_bench",
+                "workers": ["assistant_baker"],
+            },
+            {
+                "from_location": "pantry",
+                "to_location": "prep_bench",
+                "workers": ["lead_baker"],
+            },
         ]
     )
 
@@ -59,8 +72,16 @@ def test_aggregate_people_movements_merges_worker_sets_by_route():
 def test_aggregate_people_movements_by_worker_splits_routes_per_worker():
     routes = aggregate_people_movements_by_worker(
         [
-            {"from_location": "pantry", "to_location": "prep_bench", "workers": ["assistant_baker", "lead_baker"]},
-            {"from_location": "pantry", "to_location": "prep_bench", "workers": ["assistant_baker"]},
+            {
+                "from_location": "pantry",
+                "to_location": "prep_bench",
+                "workers": ["assistant_baker", "lead_baker"],
+            },
+            {
+                "from_location": "pantry",
+                "to_location": "prep_bench",
+                "workers": ["assistant_baker"],
+            },
         ]
     )
 

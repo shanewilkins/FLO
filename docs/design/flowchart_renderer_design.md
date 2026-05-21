@@ -1,5 +1,7 @@
 # Flowchart Renderer Design
 
+Status: accepted renderer design note
+
 ## Why This Exists
 
 Flowchart diagrams provide a simple, control-flow-focused visualization of a

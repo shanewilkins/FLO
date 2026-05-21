@@ -9,7 +9,12 @@ def test_sppm_default_top_level_collapses_subprocess_children():
         "nodes": [
             {"id": "start", "kind": "start", "name": "Start"},
             {"id": "prep", "kind": "subprocess", "name": "Prep"},
-            {"id": "gather", "kind": "task", "name": "Gather", "subprocess_parent": "prep"},
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "subprocess_parent": "prep",
+            },
             {"id": "end", "kind": "end", "name": "End"},
         ],
         "edges": [
@@ -31,7 +36,12 @@ def test_sppm_parent_only_hides_subprocess_children_and_collapses_path():
         "nodes": [
             {"id": "start", "kind": "start", "name": "Start"},
             {"id": "prep", "kind": "subprocess", "name": "Prep"},
-            {"id": "gather", "kind": "task", "name": "Gather", "subprocess_parent": "prep"},
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "subprocess_parent": "prep",
+            },
             {"id": "mix", "kind": "task", "name": "Mix", "subprocess_parent": "prep"},
             {"id": "end", "kind": "end", "name": "End"},
         ],
@@ -42,7 +52,9 @@ def test_sppm_parent_only_hides_subprocess_children_and_collapses_path():
             {"source": "mix", "target": "end"},
         ],
     }
-    out = render_dot(ir_like, options={"diagram": "sppm", "subprocess_view": "parent-only"})
+    out = render_dot(
+        ir_like, options={"diagram": "sppm", "subprocess_view": "parent-only"}
+    )
     assert '"gather"' not in out
     assert '"mix"' not in out
     assert '"prep"' in out
@@ -56,7 +68,12 @@ def test_sppm_child_map_focuses_one_subprocess_with_entry_and_exit_context():
         "nodes": [
             {"id": "start", "kind": "start", "name": "Start"},
             {"id": "prep", "kind": "subprocess", "name": "Prep"},
-            {"id": "gather", "kind": "task", "name": "Gather", "subprocess_parent": "prep"},
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "subprocess_parent": "prep",
+            },
             {"id": "mix", "kind": "task", "name": "Mix", "subprocess_parent": "prep"},
             {"id": "end", "kind": "end", "name": "End"},
         ],
@@ -184,7 +201,10 @@ def test_sppm_subprocess_nodes_include_marker_and_detail_map_reference():
         "edges": [],
     }
     out = render_dot(ir_like, options={"diagram": "sppm"})
-    assert '"prep" [label="Prep\\nSubprocess\\nDetail map: SP-01", shape=ellipse, style="filled,dotted"' in out
+    assert (
+        '"prep" [label="Prep\\nSubprocess\\nDetail map: SP-01", shape=ellipse, style="filled,dotted"'
+        in out
+    )
     assert "Subprocess" in out
     assert "Detail map: SP-01" in out
 
@@ -220,7 +240,9 @@ def test_sppm_renders_process_title_and_header_metadata():
         ],
         "edges": [{"source": "start", "target": "end"}],
     }
-    out = render_dot(ir_like, options={"diagram": "sppm", "sppm_output_profile": "print"})
+    out = render_dot(
+        ir_like, options={"diagram": "sppm", "sppm_output_profile": "print"}
+    )
     assert "Wash n' Fold" in out
     assert "Process:" in out
     assert "wash_n_fold" in out
@@ -253,13 +275,19 @@ def test_sppm_header_coexists_with_queue_rework_and_notes_in_default_output():
                 "kind": "task",
                 "name": "Do Work",
                 "note": "Requires manager signoff",
-                "metadata": {"value_class": "VA", "cycle_time": {"value": 4, "unit": "min"}},
+                "metadata": {
+                    "value_class": "VA",
+                    "cycle_time": {"value": 4, "unit": "min"},
+                },
             },
             {
                 "id": "rework",
                 "kind": "task",
                 "name": "Fix Input",
-                "metadata": {"value_class": "RNVA", "cycle_time": {"value": 3, "unit": "min"}},
+                "metadata": {
+                    "value_class": "RNVA",
+                    "cycle_time": {"value": 3, "unit": "min"},
+                },
             },
             {"id": "end", "kind": "end", "name": "End"},
         ],
@@ -275,7 +303,12 @@ def test_sppm_header_coexists_with_queue_rework_and_notes_in_default_output():
                 "rework": True,
                 "metadata": {"rate": 0.12, "reason": "Missing details"},
             },
-            {"source": "rework", "target": "queue", "edge_type": "rework", "rework": True},
+            {
+                "source": "rework",
+                "target": "queue",
+                "edge_type": "rework",
+                "rework": True,
+            },
             {"source": "work", "target": "end"},
         ],
     }

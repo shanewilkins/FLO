@@ -67,7 +67,9 @@ def build_corridor_plan(
     if not lanes:
         return _empty_corridor_plan()
 
-    lane_lookup = {(lane.line_from, lane.line_to, lane.channel_index): lane.id for lane in lanes}
+    lane_lookup = {
+        (lane.line_from, lane.line_to, lane.channel_index): lane.id for lane in lanes
+    }
     candidate_edges = sorted(edges if edges is not None else placement.boundary_edges)
     edge_pair_path, pair_edges = _collect_edge_pair_paths(
         candidate_edges=candidate_edges,
@@ -110,7 +112,10 @@ def _collect_edge_pair_paths(
     *,
     candidate_edges: list[tuple[str, str]],
     node_line_index: dict[str, int],
-) -> tuple[dict[tuple[str, str], tuple[tuple[int, int], ...]], dict[tuple[int, int], list[tuple[str, str]]]]:
+) -> tuple[
+    dict[tuple[str, str], tuple[tuple[int, int], ...]],
+    dict[tuple[int, int], list[tuple[str, str]]],
+]:
     edge_pair_path: dict[tuple[str, str], tuple[tuple[int, int], ...]] = {}
     pair_edges: dict[tuple[int, int], list[tuple[str, str]]] = {}
     for edge in candidate_edges:
@@ -119,7 +124,9 @@ def _collect_edge_pair_paths(
         dst_line = node_line_index.get(target)
         if src_line is None or dst_line is None or src_line == dst_line:
             continue
-        pair_path = tuple(_adjacent_pairs_in_traversal_order(src_line=src_line, dst_line=dst_line))
+        pair_path = tuple(
+            _adjacent_pairs_in_traversal_order(src_line=src_line, dst_line=dst_line)
+        )
         if not pair_path:
             continue
         edge_pair_path[edge] = pair_path
@@ -134,9 +141,13 @@ def _assign_pair_channels(
     lane_lookup: dict[tuple[int, int, int], str],
     lane_ids: set[str],
     channel_count: int,
-) -> tuple[dict[tuple[tuple[int, int], tuple[str, str]], int], dict[str, list[tuple[str, str]]]]:
+) -> tuple[
+    dict[tuple[tuple[int, int], tuple[str, str]], int], dict[str, list[tuple[str, str]]]
+]:
     pair_assignment: dict[tuple[tuple[int, int], tuple[str, str]], int] = {}
-    lane_occupancy_lists: dict[str, list[tuple[str, str]]] = {lane_id: [] for lane_id in lane_ids}
+    lane_occupancy_lists: dict[str, list[tuple[str, str]]] = {
+        lane_id: [] for lane_id in lane_ids
+    }
     for pair, traversing_edges in sorted(pair_edges.items()):
         for idx, edge in enumerate(sorted(traversing_edges)):
             channel_idx = idx % channel_count
@@ -229,7 +240,9 @@ def _build_lanes(*, placement: PlacementPlan, channel_count: int) -> list[Corrid
     return lanes
 
 
-def _adjacent_pairs_in_traversal_order(*, src_line: int, dst_line: int) -> list[tuple[int, int]]:
+def _adjacent_pairs_in_traversal_order(
+    *, src_line: int, dst_line: int
+) -> list[tuple[int, int]]:
     if src_line < dst_line:
         return [(line_idx, line_idx + 1) for line_idx in range(src_line, dst_line)]
     if src_line > dst_line:

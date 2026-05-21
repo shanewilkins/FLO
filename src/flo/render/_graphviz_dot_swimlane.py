@@ -19,7 +19,9 @@ from ._graphviz_dot_common import (
 from .options import RenderOptions
 
 
-def render_swimlane_dot(process: dict[str, Any] | Any, options: RenderOptions | None = None) -> str:
+def render_swimlane_dot(
+    process: dict[str, Any] | Any, options: RenderOptions | None = None
+) -> str:
     """Render a swimlane-style DOT graph.
 
     Swimlane mode groups nodes by lane in cluster subgraphs.
@@ -28,7 +30,9 @@ def render_swimlane_dot(process: dict[str, Any] | Any, options: RenderOptions | 
     return _render_swimlane_graph(process, options=render_options)
 
 
-def _render_swimlane_graph(process: dict[str, Any] | Any, options: RenderOptions) -> str:
+def _render_swimlane_graph(
+    process: dict[str, Any] | Any, options: RenderOptions
+) -> str:
     nodes, edges = _extract_nodes_and_edges(process)
     if options.subprocess_view == "parent_only":
         nodes, edges = _project_parent_only_subprocess_view(nodes, edges)
@@ -44,7 +48,9 @@ def _render_swimlane_graph(process: dict[str, Any] | Any, options: RenderOptions
     lines: list[str] = ["digraph {"]
     lines.append(f"  rankdir={rankdir};")
     splines = "ortho" if wrap_plan.active else "true"
-    lines.append(f"  graph [compound=true, newrank=true, nodesep=0.7, ranksep=0.9, splines={splines}];")
+    lines.append(
+        f"  graph [compound=true, newrank=true, nodesep=0.7, ranksep=0.9, splines={splines}];"
+    )
     lines.append("  node [fontname=Helvetica];")
     lines.append("  edge [fontname=Helvetica];")
 
@@ -73,7 +79,9 @@ def _resolve_rankdir(*, options: RenderOptions, wrap_active: bool) -> str:
     return "TB" if options.orientation == "lr" else "LR"
 
 
-def _append_swimlane_nodes(lines: list[str], nodes: list[dict[str, Any]], options: RenderOptions) -> None:
+def _append_swimlane_nodes(
+    lines: list[str], nodes: list[dict[str, Any]], options: RenderOptions
+) -> None:
     lane_groups, unlaned_nodes = _partition_nodes_by_lane(nodes)
     nodes_by_id: dict[str, dict[str, Any]] = {}
     for node in nodes:
@@ -83,7 +91,10 @@ def _append_swimlane_nodes(lines: list[str], nodes: list[dict[str, Any]], option
 
     children_by_parent = _subprocess_children_map(nodes, nodes_by_id)
 
-    lane_specs = [(lane_name, lane_nodes, _safe_cluster_id(lane_name)) for lane_name, lane_nodes in lane_groups.items()]
+    lane_specs = [
+        (lane_name, lane_nodes, _safe_cluster_id(lane_name))
+        for lane_name, lane_nodes in lane_groups.items()
+    ]
     if unlaned_nodes:
         lane_specs.append(("unassigned", unlaned_nodes, "unassigned"))
 
@@ -104,8 +115,12 @@ def _append_swimlane_nodes(lines: list[str], nodes: list[dict[str, Any]], option
         lines.append(f'    fillcolor="{_lane_fillcolor(lane_index)}";')
         lines.append("    labelloc=t;")
         lines.append("    labeljust=l;")
-        lines.append(f'    "{left_anchor}" [label="", shape=point, width=0.01, height=0.01, style=invis];')
-        lines.append(f'    "{right_anchor}" [label="", shape=point, width=0.01, height=0.01, style=invis];')
+        lines.append(
+            f'    "{left_anchor}" [label="", shape=point, width=0.01, height=0.01, style=invis];'
+        )
+        lines.append(
+            f'    "{right_anchor}" [label="", shape=point, width=0.01, height=0.01, style=invis];'
+        )
 
         _append_swimlane_lane_nodes(
             lines=lines,
@@ -114,7 +129,11 @@ def _append_swimlane_nodes(lines: list[str], nodes: list[dict[str, Any]], option
             options=options,
         )
 
-        lane_node_ids = [str(node.get("id") or "") for node in lane_nodes if str(node.get("id") or "")]
+        lane_node_ids = [
+            str(node.get("id") or "")
+            for node in lane_nodes
+            if str(node.get("id") or "")
+        ]
 
         _append_lane_spine(
             lines=lines,
@@ -146,7 +165,9 @@ def _append_swimlane_lane_nodes(
     )
 
 
-def _partition_nodes_by_lane(nodes: list[dict[str, Any]]) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]]]:
+def _partition_nodes_by_lane(
+    nodes: list[dict[str, Any]],
+) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]]]:
     lane_groups: dict[str, list[dict[str, Any]]] = {}
     unlaned_nodes: list[dict[str, Any]] = []
 
@@ -166,7 +187,9 @@ def _lane_fillcolor(index: int) -> str:
     return palette[index % len(palette)]
 
 
-def _append_lane_boundary_subgraphs(lines: list[str], left_nodes: list[str], right_nodes: list[str]) -> None:
+def _append_lane_boundary_subgraphs(
+    lines: list[str], left_nodes: list[str], right_nodes: list[str]
+) -> None:
     if left_nodes:
         lines.append("  subgraph lane_left_boundary {")
         lines.append("    rank=same;")
@@ -182,7 +205,9 @@ def _append_lane_boundary_subgraphs(lines: list[str], left_nodes: list[str], rig
         lines.append("  }")
 
 
-def _append_lane_boundary_guides(lines: list[str], left_nodes: list[str], right_nodes: list[str]) -> None:
+def _append_lane_boundary_guides(
+    lines: list[str], left_nodes: list[str], right_nodes: list[str]
+) -> None:
     for boundary_nodes in (left_nodes, right_nodes):
         for source, target in zip(boundary_nodes, boundary_nodes[1:]):
             lines.append(
@@ -196,7 +221,11 @@ def _append_lane_spine(
     right_anchor: str,
     lane_node_ids: list[str],
 ) -> None:
-    chain: list[str] = [left_anchor, *[_escape(node_id) for node_id in lane_node_ids], right_anchor]
+    chain: list[str] = [
+        left_anchor,
+        *[_escape(node_id) for node_id in lane_node_ids],
+        right_anchor,
+    ]
     if len(chain) < 2:
         return
 

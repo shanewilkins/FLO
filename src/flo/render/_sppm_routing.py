@@ -90,7 +90,9 @@ def build_sppm_routing_plan(
     boundary_lanes = _build_boundary_lane_map(wrap_plan=wrap_plan)
     edge_pairs_list = edge_pairs(edges)
     placement = placement_for_routing(nodes=nodes, options=options, wrap_plan=wrap_plan)
-    corridor_plan = build_corridor_metadata(placement=placement, edge_pairs=edge_pairs_list)
+    corridor_plan = build_corridor_metadata(
+        placement=placement, edge_pairs=edge_pairs_list
+    )
     route_plan = build_core_route_plan(
         placement=placement,
         edge_pairs=edge_pairs_list,
@@ -99,7 +101,9 @@ def build_sppm_routing_plan(
     node_kinds_by_id = node_kinds(nodes)
     nodes_by_id = {str(n.get("id") or ""): n for n in nodes}
     port_policy = _build_sppm_port_policy(edges=edges, node_kinds=node_kinds_by_id)
-    branch_metadata_by_rework_target = collect_rework_branch_metadata(edges=edges, node_kinds=node_kinds_by_id)
+    branch_metadata_by_rework_target = collect_rework_branch_metadata(
+        edges=edges, node_kinds=node_kinds_by_id
+    )
     rework_return_sources = collect_rework_return_sources(
         edges=edges,
         step_numbering=step_numbering,
@@ -191,7 +195,9 @@ def _build_sppm_edge_route(
     is_boundary = wrap_plan.active and (source, target) in wrap_plan.boundary_edges
     if is_boundary and not is_rework:
         edge_attrs.extend(["minlen=2", "penwidth=1.2"])
-    _append_non_rework_branch_label(edge_attrs=edge_attrs, edge=edge, is_rework=is_rework, options=options)
+    _append_non_rework_branch_label(
+        edge_attrs=edge_attrs, edge=edge, is_rework=is_rework, options=options
+    )
     resolved_ports = _resolved_ports(
         core_route=core_route,
         options=options,
@@ -201,7 +207,11 @@ def _build_sppm_edge_route(
     )
 
     if is_rework:
-        is_branch_out = source_kind == "decision" or edge.get("outcome") is not None or edge.get("label") is not None
+        is_branch_out = (
+            source_kind == "decision"
+            or edge.get("outcome") is not None
+            or edge.get("label") is not None
+        )
         return _build_rework_route(
             edge=edge,
             source=source,
@@ -387,7 +397,9 @@ def _build_boundary_corridor_route(
     boundary_anchor_base = sppm_boundary_anchor_id(source=source, target=target)
 
     if options.orientation == "lr" and chunk_idx is not None:
-        exit_anchor_id = wrap_chunk_exit_anchor_id(orientation="lr", chunk_idx=chunk_idx)
+        exit_anchor_id = wrap_chunk_exit_anchor_id(
+            orientation="lr", chunk_idx=chunk_idx
+        )
         if outgoing_token is not None and incoming_token is not None:
             return _build_lr_boundary_corridor_with_continuations(
                 source=source,
@@ -464,7 +476,13 @@ def _build_rework_route(
         core_route=core_route,
         port_policy=port_policy,
     )
-    route_attrs = ["constraint=false", "minlen=3", "weight=0", "style=dashed", *edge_attrs]
+    route_attrs = [
+        "constraint=false",
+        "minlen=3",
+        "weight=0",
+        "style=dashed",
+        *edge_attrs,
+    ]
     branch_label = edge.get("outcome") or edge.get("label")
     outgoing_token, incoming_token = resolve_sppm_continuation_anchor_tokens(
         edge=edge,
@@ -480,7 +498,9 @@ def _build_rework_route(
         else build_sppm_rework_data_box_attrs(
             edge.get("metadata"),
             is_branch_out=is_branch_out,
-            edge_attrs=(f'xlabel="{branch_label}"',) if branch_label is not None else (),
+            edge_attrs=(f'xlabel="{branch_label}"',)
+            if branch_label is not None
+            else (),
         )
     )
     anchor = SppmRouteAnchor(
@@ -515,8 +535,12 @@ def _build_rework_route(
         corridor_nodes=(),
         anchors=(anchor,),
         segments=(
-            SppmRouteSegment(source_id=source, target_id=anchor_id, attrs=first_segment_attrs),
-            SppmRouteSegment(source_id=anchor_id, target_id=target, attrs=tuple(second_segment_attrs)),
+            SppmRouteSegment(
+                source_id=source, target_id=anchor_id, attrs=first_segment_attrs
+            ),
+            SppmRouteSegment(
+                source_id=anchor_id, target_id=target, attrs=tuple(second_segment_attrs)
+            ),
         ),
     )
 
@@ -528,9 +552,13 @@ def _build_rework_anchor_attrs(
     outgoing_token: str | None,
 ) -> tuple[str, ...]:
     if is_boundary and incoming_token is not None:
-        return build_sppm_continuation_anchor_attrs(token=incoming_token, is_secondary=True)
+        return build_sppm_continuation_anchor_attrs(
+            token=incoming_token, is_secondary=True
+        )
     if is_boundary and outgoing_token is not None:
-        return build_sppm_continuation_anchor_attrs(token=outgoing_token, is_secondary=True)
+        return build_sppm_continuation_anchor_attrs(
+            token=outgoing_token, is_secondary=True
+        )
     return ("shape=point", "width=0.01", "height=0.01", 'label=""', "style=invis")
 
 
@@ -576,5 +604,3 @@ def _build_rework_second_segment_attrs(
     if branch_label is not None:
         attrs.append(f'xlabel="{str(branch_label)}"')
     return tuple(attrs)
-
-

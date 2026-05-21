@@ -21,10 +21,18 @@ def test_sppm_header_is_rendered_from_publication_plan():
         },
         "nodes": [
             {"id": "start", "kind": "start", "name": "Start"},
-            {"id": "fold", "kind": "task", "name": "Fold", "metadata": {"value_class": "VA"}},
+            {
+                "id": "fold",
+                "kind": "task",
+                "name": "Fold",
+                "metadata": {"value_class": "VA"},
+            },
             {"id": "end", "kind": "end", "name": "End"},
         ],
-        "edges": [{"source": "start", "target": "fold"}, {"source": "fold", "target": "end"}],
+        "edges": [
+            {"source": "start", "target": "fold"},
+            {"source": "fold", "target": "end"},
+        ],
     }
 
     out = render_dot(
@@ -106,7 +114,7 @@ def test_sppm_footer_band_renders_metrics_and_render_time_inputs():
 
 def test_sppm_footer_band_preserves_waiting_vs_crossover_metric_distinction():
     """Verify footer metrics can display queue time and setup time as distinct entries.
-    
+
     The distinction between waiting time (queue/resource scheduling) and
     crossover time (setup/SMED) is critical for diagnostic clarity. The
     footer should preserve this separation so users can see both metrics
@@ -202,17 +210,23 @@ def test_sppm_bands_render_shared_page_context_rows_when_present():
                 page_key="p1",
                 canvas=canvas,
                 header_content=PublicationBandContent(title="Ops Review"),
-                footer_content=PublicationBandContent(rows=(("Queue", "7 min"),), notes=("Draft for review",)),
+                footer_content=PublicationBandContent(
+                    rows=(("Queue", "7 min"),), notes=("Draft for review",)
+                ),
             ),
             PublicationPageSpec(
                 page_key="p2",
                 canvas=canvas,
                 header_content=PublicationBandContent(title="Ops Review"),
-                footer_content=PublicationBandContent(rows=(("Queue", "7 min"),), notes=("Draft for review",)),
+                footer_content=PublicationBandContent(
+                    rows=(("Queue", "7 min"),), notes=("Draft for review",)
+                ),
             ),
         ),
     )
-    publication = PublicationPlan(title="Ops Review", primary_series_id="main", series=(series,))
+    publication = PublicationPlan(
+        title="Ops Review", primary_series_id="main", series=(series,)
+    )
 
     header = build_sppm_header(publication=publication)
     footer_lines = render_sppm_footer_band(
@@ -233,7 +247,7 @@ def test_sppm_bands_render_shared_page_context_rows_when_present():
 
 def test_sppm_footer_auto_aggregates_node_wait_times_in_publication():
     """Verify footer auto-aggregates waiting times when building from process with nodes.
-    
+
     When a process contains nodes with wait_time metadata, the publication
     footer should display the aggregated total waiting time. This shows the
     cumulative queue delays in the process.
@@ -247,14 +261,26 @@ def test_sppm_footer_auto_aggregates_node_wait_times_in_publication():
         "metadata": {},
     }
     nodes = [
-        {"id": "receive", "kind": "task", "name": "Receive", "metadata": {"wait_time": {"value": 4, "unit": "min"}}},
-        {"id": "pick", "kind": "task", "name": "Pick", "metadata": {"wait_time": {"value": 6, "unit": "min"}}},
+        {
+            "id": "receive",
+            "kind": "task",
+            "name": "Receive",
+            "metadata": {"wait_time": {"value": 4, "unit": "min"}},
+        },
+        {
+            "id": "pick",
+            "kind": "task",
+            "name": "Pick",
+            "metadata": {"wait_time": {"value": 6, "unit": "min"}},
+        },
         {"id": "pack", "kind": "task", "name": "Pack", "metadata": {}},
     ]
     context = extract_process_header_context(process)
     options = RenderOptions()
 
-    footer_content = _build_sppm_footer_content(context=context, options=options, nodes=nodes)
+    footer_content = _build_sppm_footer_content(
+        context=context, options=options, nodes=nodes
+    )
 
     assert footer_content is not None
     rows_dict = {label: value for label, value in footer_content.rows}
@@ -263,7 +289,7 @@ def test_sppm_footer_auto_aggregates_node_wait_times_in_publication():
 
 def test_sppm_footer_auto_aggregates_node_changeover_times_in_publication():
     """Verify footer auto-aggregates changeover times when building from process with nodes.
-    
+
     When a process contains nodes with changeover_time or crossover_time metadata,
     the publication footer should display the aggregated total changeover time.
     This shows the cumulative setup delays in the process.
@@ -277,14 +303,26 @@ def test_sppm_footer_auto_aggregates_node_changeover_times_in_publication():
         "metadata": {},
     }
     nodes = [
-        {"id": "setup", "kind": "task", "name": "Setup", "metadata": {"crossover_time": {"value": 5, "unit": "min"}}},
-        {"id": "run", "kind": "task", "name": "Run", "metadata": {"changeover_time": {"value": 3, "unit": "min"}}},
+        {
+            "id": "setup",
+            "kind": "task",
+            "name": "Setup",
+            "metadata": {"crossover_time": {"value": 5, "unit": "min"}},
+        },
+        {
+            "id": "run",
+            "kind": "task",
+            "name": "Run",
+            "metadata": {"changeover_time": {"value": 3, "unit": "min"}},
+        },
         {"id": "inspect", "kind": "task", "name": "Inspect", "metadata": {}},
     ]
     context = extract_process_header_context(process)
     options = RenderOptions()
 
-    footer_content = _build_sppm_footer_content(context=context, options=options, nodes=nodes)
+    footer_content = _build_sppm_footer_content(
+        context=context, options=options, nodes=nodes
+    )
 
     assert footer_content is not None
     rows_dict = {label: value for label, value in footer_content.rows}
@@ -293,7 +331,7 @@ def test_sppm_footer_auto_aggregates_node_changeover_times_in_publication():
 
 def test_sppm_footer_preserves_explicit_metrics_over_auto_aggregation():
     """Verify explicit footer metrics override auto-aggregated node values.
-    
+
     If a process specifies explicit footer metrics via options, they should
     be preferred over auto-aggregated metrics from nodes. This allows users
     to override the automatic calculation if needed.
@@ -307,15 +345,88 @@ def test_sppm_footer_preserves_explicit_metrics_over_auto_aggregation():
         "metadata": {},
     }
     nodes = [
-        {"id": "step1", "kind": "task", "name": "Step 1", "metadata": {"wait_time": {"value": 10, "unit": "min"}}},
+        {
+            "id": "step1",
+            "kind": "task",
+            "name": "Step 1",
+            "metadata": {"wait_time": {"value": 10, "unit": "min"}},
+        },
     ]
     context = extract_process_header_context(process)
     options = RenderOptions(sppm_footer_metrics=(("Custom Metric", "100 min"),))
 
-    footer_content = _build_sppm_footer_content(context=context, options=options, nodes=nodes)
+    footer_content = _build_sppm_footer_content(
+        context=context, options=options, nodes=nodes
+    )
 
     assert footer_content is not None
     rows_dict = {label: value for label, value in footer_content.rows}
     # Both auto-aggregated and explicit metrics should be present
     assert "Waiting Time" in rows_dict
     assert "Custom Metric" in rows_dict
+
+
+def test_sppm_footer_auto_aggregates_waiting_time_from_nodes():
+    """Verify footer auto-aggregates total waiting time from all nodes."""
+    process = {
+        "process": {
+            "id": "checkout",
+            "name": "Checkout Process",
+            "metadata": {},
+        },
+        "nodes": [
+            {
+                "id": "scan",
+                "kind": "task",
+                "name": "Scan",
+                "metadata": {"wait_time": {"value": 5, "unit": "min"}},
+            },
+            {
+                "id": "pay",
+                "kind": "task",
+                "name": "Pay",
+                "metadata": {"wait_time": {"value": 3, "unit": "min"}},
+            },
+            {"id": "bag", "kind": "task", "name": "Bag", "metadata": {}},
+        ],
+        "edges": [
+            {"source": "scan", "target": "pay"},
+            {"source": "pay", "target": "bag"},
+        ],
+    }
+
+    out = render_dot(process, options={"diagram": "sppm"})
+    assert "Waiting Time" in out or "8 min" in out
+
+
+def test_sppm_footer_auto_aggregates_changeover_time_from_nodes():
+    """Verify footer auto-aggregates total changeover time from all nodes."""
+    process = {
+        "process": {
+            "id": "manufacturing",
+            "name": "Manufacturing Line",
+            "metadata": {},
+        },
+        "nodes": [
+            {
+                "id": "cut",
+                "kind": "task",
+                "name": "Cut",
+                "metadata": {"crossover_time": {"value": 10, "unit": "min"}},
+            },
+            {
+                "id": "assemble",
+                "kind": "task",
+                "name": "Assemble",
+                "metadata": {"changeover_time": {"value": 8, "unit": "min"}},
+            },
+            {"id": "test", "kind": "task", "name": "Test", "metadata": {}},
+        ],
+        "edges": [
+            {"source": "cut", "target": "assemble"},
+            {"source": "assemble", "target": "test"},
+        ],
+    }
+
+    out = render_dot(process, options={"diagram": "sppm"})
+    assert "Changeover Time" in out or "18 min" in out

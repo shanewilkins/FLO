@@ -4,7 +4,11 @@ import logging
 import sys
 import types
 
-from flo.services.logging import _add_otel_trace_info, _add_service_name, configure_logging
+from flo.services.logging import (
+    _add_otel_trace_info,
+    _add_service_name,
+    configure_logging,
+)
 
 
 def test_add_service_name_processor_sets_and_preserves_service():

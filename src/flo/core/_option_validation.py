@@ -16,14 +16,19 @@ from flo.services.errors import CLIError, EXIT_USAGE
 def validate_sppm_numeric_render_options(options: dict | None) -> None:
     """Raise ``CLIError`` if any SPPM numeric option is invalid."""
     opts = options or {}
-    if "layout_max_width_px" in opts and parse_dimension(opts.get("layout_max_width_px")) is None:
+    if (
+        "layout_max_width_px" in opts
+        and parse_dimension(opts.get("layout_max_width_px")) is None
+    ):
         raise CLIError(
             "Invalid value for --layout-max-width-px: expected a positive dimension using px, in, or cm.",
             code=EXIT_USAGE,
         )
     if "publication_page_format" in opts:
         try:
-            resolve_publication_page_format(str(opts.get("publication_page_format") or ""))
+            resolve_publication_page_format(
+                str(opts.get("publication_page_format") or "")
+            )
         except ValueError as exc:
             raise CLIError(str(exc), code=EXIT_USAGE) from exc
 
@@ -49,7 +54,7 @@ def validate_sppm_numeric_render_options(options: dict | None) -> None:
             continue
         try:
             parsed = int(raw_value)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             parsed = 0
 
         if parsed <= 0:
@@ -60,13 +65,17 @@ def validate_sppm_numeric_render_options(options: dict | None) -> None:
             )
 
 
-def ensure_render_options_compatible_with_output(options: dict | None, output_format: str) -> None:
+def ensure_render_options_compatible_with_output(
+    options: dict | None, output_format: str
+) -> None:
     """Raise ``CLIError`` if render-only flags are used with a non-DOT output format."""
     if output_format == "dot":
         return
 
     opts = options or {}
-    invalid = [flag for flag in render_option_keys(include_render_to=True) if flag in opts]
+    invalid = [
+        flag for flag in render_option_keys(include_render_to=True) if flag in opts
+    ]
     if invalid:
         names = ", ".join(f"--{name}" for name in invalid)
         raise CLIError(

@@ -1,4 +1,5 @@
 """CLI entry points for the FLO tool."""
+
 from __future__ import annotations
 
 import sys
@@ -40,12 +41,15 @@ def _get_flo_version() -> str:  # pragma: no cover - importlib optional
     """Return the installed FLO version or 'unknown' when not resolvable."""
     try:
         import importlib.metadata as _meta
+
         return _meta.version("flo")
     except Exception:
         return "unknown"
 
 
-def _execute_span_body(root_span: Any, path: str | None, command: str, options: dict, services: Any) -> int:
+def _execute_span_body(
+    root_span: Any, path: str | None, command: str, options: dict, services: Any
+) -> int:
     """Run the FLO pipeline within an existing trace span.
 
     Returns an integer exit code.
@@ -60,9 +64,14 @@ def _execute_span_body(root_span: Any, path: str | None, command: str, options: 
     if rc != 0:
         record_span_error(root_span, err or "")
         _emit_error(
-            services, err,
-            error_kind="io", error_stage="read_input",
-            exit_code=rc, internal=False, command=command, path=effective_path,
+            services,
+            err,
+            error_kind="io",
+            error_stage="read_input",
+            exit_code=rc,
+            internal=False,
+            command=command,
+            path=effective_path,
         )
         return rc
 
@@ -75,12 +84,18 @@ def _execute_span_body(root_span: Any, path: str | None, command: str, options: 
     except Exception as exc:
         mapped_rc, msg, internal = map_exception_to_rc(exc)
         record_span_error(root_span, msg or "")
-        display_msg = f"Unexpected error: {msg or 'internal error'}" if internal else msg
+        display_msg = (
+            f"Unexpected error: {msg or 'internal error'}" if internal else msg
+        )
         _emit_error(
-            services, display_msg,
+            services,
+            display_msg,
             error_kind="internal" if internal else "domain",
             error_stage="run_content",
-            exit_code=mapped_rc, internal=internal, command=command, path=effective_path,
+            exit_code=mapped_rc,
+            internal=internal,
+            command=command,
+            path=effective_path,
         )
         return mapped_rc
 
@@ -89,16 +104,23 @@ def _execute_span_body(root_span: Any, path: str | None, command: str, options: 
         if write_rc != 0:
             record_span_error(root_span, write_err or "")
             _emit_error(
-                services, write_err,
-                error_kind="io", error_stage="write_output",
-                exit_code=write_rc, internal=False, command=command, path=effective_path,
+                services,
+                write_err,
+                error_kind="io",
+                error_stage="write_output",
+                exit_code=write_rc,
+                internal=False,
+                command=command,
+                path=effective_path,
             )
             return write_rc
 
     return rc
 
 
-def _execute(path: str | None, command: str, options: dict) -> int:  # pragma: no cover - integration
+def _execute(
+    path: str | None, command: str, options: dict
+) -> int:  # pragma: no cover - integration
     """Read input, run core pipeline, and write output.
 
     Returns an integer exit code.
@@ -206,7 +228,9 @@ def _apply_render_click_options(*, include_render_to: bool) -> Any:
     """Apply shared render click options from the canonical option schema."""
 
     def _decorator(func: Any) -> Any:
-        for spec in reversed(iter_render_option_specs(include_render_to=include_render_to)):
+        for spec in reversed(
+            iter_render_option_specs(include_render_to=include_render_to)
+        ):
             kwargs: dict[str, Any] = {"help": spec.help_text}
             if spec.is_flag:
                 kwargs["is_flag"] = True
@@ -227,6 +251,7 @@ def _apply_render_click_options(*, include_render_to: bool) -> Any:
 # Click command group
 # ---------------------------------------------------------------------------
 
+
 @click.group()
 def cli() -> None:  # pragma: no cover - thin CLI layer
     """Click command group for the FLO CLI."""
@@ -238,7 +263,12 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
 @click.option("--validate", is_flag=True, help="Only validate file")
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.option("-o", "--output", help="Write output to file")
-@click.option("--export", "export_fmt", type=click.Choice(["dot", "json", "ingredients", "movement"]), help="Export format")
+@click.option(
+    "--export",
+    "export_fmt",
+    type=click.Choice(["dot", "json", "ingredients", "movement"]),
+    help="Export format",
+)
 @_apply_render_click_options(include_render_to=True)
 def run_cmd(
     path: Optional[str],
@@ -318,16 +348,22 @@ def run_cmd(
 @click.argument("path", required=False)
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.option("-o", "--output", help="Write output to file")
-def compile_cmd(path: Optional[str], verbose: bool, output: Optional[str]) -> None:  # pragma: no cover - integration
+def compile_cmd(
+    path: Optional[str], verbose: bool, output: Optional[str]
+) -> None:  # pragma: no cover - integration
     """Compile FLO input and emit a schema-shaped JSON export of the model."""
-    rc = _execute(path, "compile", {"verbose": verbose, "output": output, "export": "json"})
+    rc = _execute(
+        path, "compile", {"verbose": verbose, "output": output, "export": "json"}
+    )
     raise SystemExit(rc)
 
 
 @cli.command("validate")
 @click.argument("path", required=False)
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
-def validate_cmd(path: Optional[str], verbose: bool) -> None:  # pragma: no cover - integration
+def validate_cmd(
+    path: Optional[str], verbose: bool
+) -> None:  # pragma: no cover - integration
     """Validate FLO input and return non-zero on parse/compile/validation errors."""
     rc = _execute(path, "validate", {"verbose": verbose})
     raise SystemExit(rc)
@@ -335,7 +371,13 @@ def validate_cmd(path: Optional[str], verbose: bool) -> None:  # pragma: no cove
 
 @cli.command("export")
 @click.argument("path", required=False)
-@click.option("--export", "export_fmt", type=click.Choice(["dot", "json", "ingredients", "movement"]), default="dot", show_default=True)
+@click.option(
+    "--export",
+    "export_fmt",
+    type=click.Choice(["dot", "json", "ingredients", "movement"]),
+    default="dot",
+    show_default=True,
+)
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.option("-o", "--output", help="Write output to file")
 @_apply_render_click_options(include_render_to=False)
@@ -414,6 +456,7 @@ def export_cmd(
 # Argparse-based entry (for `flo <path>` without explicit subcommand)
 # ---------------------------------------------------------------------------
 
+
 def console_main(argv: list | None = None) -> int:
     """Thin console entry that wires services, IO, and core runners.
 
@@ -434,6 +477,7 @@ def console_main(argv: list | None = None) -> int:
     except Exception as exc:
         rc, msg, internal = map_exception_to_rc(exc)
         from flo.services import get_services
+
         services = get_services(verbose=False)
         if internal:
             _emit_error(

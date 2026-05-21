@@ -55,7 +55,9 @@ SPPM_CONTINUATION_INCOMING_METADATA_KEYS: tuple[str, ...] = (
 )
 
 
-def first_present_metadata_value(metadata: dict[str, Any], candidate_keys: tuple[str, ...]) -> Any:
+def first_present_metadata_value(
+    metadata: dict[str, Any], candidate_keys: tuple[str, ...]
+) -> Any:
     """Return the first truthy metadata value for a candidate key list."""
     for key in candidate_keys:
         value = metadata.get(key)

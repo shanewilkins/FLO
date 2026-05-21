@@ -23,7 +23,9 @@ def test_mark_optional_branches():
 
     # telemetry: optional opentelemetry branches
     telemetry = os.path.join(base, "services", "telemetry.py")
-    telemetry_lines = [30, 39, 67, 77, 78, 88] + list(range(94, 105)) + [115] + list(range(121, 135))
+    telemetry_lines = (
+        [30, 39, 67, 77, 78, 88] + list(range(94, 105)) + [115] + list(range(121, 135))
+    )
     _mark_lines(telemetry, telemetry_lines)
 
     # main: remaining small uncovered lines

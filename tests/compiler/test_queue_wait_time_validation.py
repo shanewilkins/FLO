@@ -4,6 +4,7 @@ Enforces:
   - wait_time ONLY on queue nodes
   - cycle_time and crossover_time ONLY on task nodes
 """
+
 from __future__ import annotations
 
 import pytest
@@ -24,11 +25,7 @@ class TestQueueWaitTimeSemantics:
                 Node(
                     id="queue1",
                     type="queue",
-                    attrs={
-                        "metadata": {
-                            "wait_time": {"value": 5, "unit": "min"}
-                        }
-                    },
+                    attrs={"metadata": {"wait_time": {"value": 5, "unit": "min"}}},
                 ),
                 Node(id="end", type="end"),
             ],
@@ -49,11 +46,7 @@ class TestQueueWaitTimeSemantics:
                 Node(
                     id="task1",
                     type="task",
-                    attrs={
-                        "metadata": {
-                            "cycle_time": {"value": 10, "unit": "min"}
-                        }
-                    },
+                    attrs={"metadata": {"cycle_time": {"value": 10, "unit": "min"}}},
                 ),
                 Node(id="end", type="end"),
             ],
@@ -74,11 +67,7 @@ class TestQueueWaitTimeSemantics:
                 Node(
                     id="task1",
                     type="task",
-                    attrs={
-                        "metadata": {
-                            "crossover_time": {"value": 2, "unit": "min"}
-                        }
-                    },
+                    attrs={"metadata": {"crossover_time": {"value": 2, "unit": "min"}}},
                 ),
                 Node(id="end", type="end"),
             ],
@@ -125,11 +114,7 @@ class TestQueueWaitTimeSemantics:
                 Node(
                     id="sys_task",
                     type="system_task",
-                    attrs={
-                        "metadata": {
-                            "cycle_time": {"value": 5, "unit": "min"}
-                        }
-                    },
+                    attrs={"metadata": {"cycle_time": {"value": 5, "unit": "min"}}},
                 ),
                 Node(id="end", type="end"),
             ],
@@ -150,11 +135,7 @@ class TestQueueWaitTimeSemantics:
                 Node(
                     id="subprocess",
                     type="subprocess",
-                    attrs={
-                        "metadata": {
-                            "cycle_time": {"value": 15, "unit": "min"}
-                        }
-                    },
+                    attrs={"metadata": {"cycle_time": {"value": 15, "unit": "min"}}},
                 ),
                 Node(id="end", type="end"),
             ],
@@ -175,11 +156,7 @@ class TestQueueWaitTimeSemantics:
                 Node(
                     id="task1",
                     type="task",
-                    attrs={
-                        "metadata": {
-                            "wait_time": {"value": 5, "unit": "min"}
-                        }
-                    },
+                    attrs={"metadata": {"wait_time": {"value": 5, "unit": "min"}}},
                 ),
                 Node(id="end", type="end"),
             ],
@@ -202,11 +179,7 @@ class TestQueueWaitTimeSemantics:
                 Node(
                     id="sys_task",
                     type="system_task",
-                    attrs={
-                        "metadata": {
-                            "wait_time": {"value": 3, "unit": "min"}
-                        }
-                    },
+                    attrs={"metadata": {"wait_time": {"value": 3, "unit": "min"}}},
                 ),
                 Node(id="end", type="end"),
             ],
@@ -228,11 +201,7 @@ class TestQueueWaitTimeSemantics:
                 Node(
                     id="subprocess",
                     type="subprocess",
-                    attrs={
-                        "metadata": {
-                            "wait_time": {"value": 7, "unit": "min"}
-                        }
-                    },
+                    attrs={"metadata": {"wait_time": {"value": 7, "unit": "min"}}},
                 ),
                 Node(id="end", type="end"),
             ],
@@ -254,11 +223,7 @@ class TestQueueWaitTimeSemantics:
                 Node(
                     id="queue1",
                     type="queue",
-                    attrs={
-                        "metadata": {
-                            "cycle_time": {"value": 10, "unit": "min"}
-                        }
-                    },
+                    attrs={"metadata": {"cycle_time": {"value": 10, "unit": "min"}}},
                 ),
                 Node(id="end", type="end"),
             ],
@@ -281,11 +246,7 @@ class TestQueueWaitTimeSemantics:
                 Node(
                     id="queue1",
                     type="queue",
-                    attrs={
-                        "metadata": {
-                            "crossover_time": {"value": 2, "unit": "min"}
-                        }
-                    },
+                    attrs={"metadata": {"crossover_time": {"value": 2, "unit": "min"}}},
                 ),
                 Node(id="end", type="end"),
             ],
@@ -307,11 +268,7 @@ class TestQueueWaitTimeSemantics:
                 Node(
                     id="queue1",
                     type="queue",
-                    attrs={
-                        "metadata": {
-                            "transfer_time": {"value": 1, "unit": "min"}
-                        }
-                    },
+                    attrs={"metadata": {"transfer_time": {"value": 1, "unit": "min"}}},
                 ),
                 Node(id="end", type="end"),
             ],
@@ -334,9 +291,7 @@ class TestQueueWaitTimeSemantics:
                     id="queue1",
                     type="queue",
                     attrs={
-                        "metadata": {
-                            "changeover_time": {"value": 3, "unit": "min"}
-                        }
+                        "metadata": {"changeover_time": {"value": 3, "unit": "min"}}
                     },
                 ),
                 Node(id="end", type="end"),
@@ -359,11 +314,7 @@ class TestQueueWaitTimeSemantics:
                 Node(
                     id="queue1",
                     type="queue",
-                    attrs={
-                        "metadata": {
-                            "wait_time": {"value": 5, "unit": "min"}
-                        }
-                    },
+                    attrs={"metadata": {"wait_time": {"value": 5, "unit": "min"}}},
                 ),
                 Node(
                     id="task1",
@@ -395,38 +346,22 @@ class TestQueueWaitTimeSemantics:
                 Node(
                     id="queue1",
                     type="queue",
-                    attrs={
-                        "metadata": {
-                            "wait_time": {"value": 5, "unit": "min"}
-                        }
-                    },
+                    attrs={"metadata": {"wait_time": {"value": 5, "unit": "min"}}},
                 ),
                 Node(
                     id="task1",
                     type="task",
-                    attrs={
-                        "metadata": {
-                            "cycle_time": {"value": 10, "unit": "min"}
-                        }
-                    },
+                    attrs={"metadata": {"cycle_time": {"value": 10, "unit": "min"}}},
                 ),
                 Node(
                     id="queue2",
                     type="queue",
-                    attrs={
-                        "metadata": {
-                            "wait_time": {"value": 3, "unit": "min"}
-                        }
-                    },
+                    attrs={"metadata": {"wait_time": {"value": 3, "unit": "min"}}},
                 ),
                 Node(
                     id="task2",
                     type="task",
-                    attrs={
-                        "metadata": {
-                            "cycle_time": {"value": 15, "unit": "min"}
-                        }
-                    },
+                    attrs={"metadata": {"cycle_time": {"value": 15, "unit": "min"}}},
                 ),
                 Node(id="end", type="end"),
             ],
@@ -450,11 +385,7 @@ class TestQueueWaitTimeSemantics:
                 Node(
                     id="problematic_task",
                     type="task",
-                    attrs={
-                        "metadata": {
-                            "wait_time": {"value": 5, "unit": "min"}
-                        }
-                    },
+                    attrs={"metadata": {"wait_time": {"value": 5, "unit": "min"}}},
                 ),
                 Node(id="end", type="end"),
             ],
@@ -478,11 +409,7 @@ class TestQueueWaitTimeSemantics:
                 Node(
                     id="problematic_queue",
                     type="queue",
-                    attrs={
-                        "metadata": {
-                            "cycle_time": {"value": 10, "unit": "min"}
-                        }
-                    },
+                    attrs={"metadata": {"cycle_time": {"value": 10, "unit": "min"}}},
                 ),
                 Node(id="end", type="end"),
             ],

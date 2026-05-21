@@ -14,7 +14,9 @@ from pathlib import Path
 _SVG_NS = "http://www.w3.org/2000/svg"
 
 
-def _svg_node_outer_bounds(root: ET.Element) -> dict[str, tuple[float, float, float, float]]:
+def _svg_node_outer_bounds(
+    root: ET.Element,
+) -> dict[str, tuple[float, float, float, float]]:
     """Return bounds from visible outer node borders when available."""
     bounds: dict[str, tuple[float, float, float, float]] = {}
     for group in root.iter():
@@ -36,7 +38,9 @@ def _svg_node_outer_bounds(root: ET.Element) -> dict[str, tuple[float, float, fl
     return bounds
 
 
-def _svg_group_points(group: ET.Element, *, border_only: bool) -> list[tuple[float, float]]:
+def _svg_group_points(
+    group: ET.Element, *, border_only: bool
+) -> list[tuple[float, float]]:
     points: list[tuple[float, float]] = []
     points.extend(_svg_polygon_points(group, border_only=border_only))
     points.extend(_svg_path_points(group, border_only=border_only))
@@ -44,7 +48,9 @@ def _svg_group_points(group: ET.Element, *, border_only: bool) -> list[tuple[flo
     return points
 
 
-def _svg_polygon_points(group: ET.Element, *, border_only: bool) -> list[tuple[float, float]]:
+def _svg_polygon_points(
+    group: ET.Element, *, border_only: bool
+) -> list[tuple[float, float]]:
     points: list[tuple[float, float]] = []
     for polygon in group.findall("{*}polygon"):
         if border_only:
@@ -55,7 +61,9 @@ def _svg_polygon_points(group: ET.Element, *, border_only: bool) -> list[tuple[f
     return points
 
 
-def _svg_path_points(group: ET.Element, *, border_only: bool) -> list[tuple[float, float]]:
+def _svg_path_points(
+    group: ET.Element, *, border_only: bool
+) -> list[tuple[float, float]]:
     points: list[tuple[float, float]] = []
     for path in group.findall("{*}path"):
         if border_only:
@@ -66,7 +74,9 @@ def _svg_path_points(group: ET.Element, *, border_only: bool) -> list[tuple[floa
     return points
 
 
-def _svg_ellipse_points(group: ET.Element, *, border_only: bool) -> list[tuple[float, float]]:
+def _svg_ellipse_points(
+    group: ET.Element, *, border_only: bool
+) -> list[tuple[float, float]]:
     points: list[tuple[float, float]] = []
     for ellipse in group.findall("{*}ellipse"):
         if border_only:
@@ -139,7 +149,9 @@ def _svg_content_points(root: ET.Element) -> list[tuple[float, float]]:
     return points
 
 
-def _set_svg_background_rect(root: ET.Element, *, x: float, y: float, width: float, height: float) -> None:
+def _set_svg_background_rect(
+    root: ET.Element, *, x: float, y: float, width: float, height: float
+) -> None:
     bg_tag = f"{{{_SVG_NS}}}rect"
     parent = root
 
@@ -191,7 +203,9 @@ def _svg_graph_translation(root: ET.Element) -> tuple[float, float]:
 
 def _parse_svg_translate(transform: str) -> tuple[float, float]:
     rotate_match = re.search(r"rotate\(\s*(-?\d+(?:\.\d+)?)", transform)
-    if rotate_match and not math.isclose(float(rotate_match.group(1)), 0.0, abs_tol=1e-9):
+    if rotate_match and not math.isclose(
+        float(rotate_match.group(1)), 0.0, abs_tol=1e-9
+    ):
         return (0.0, 0.0)
 
     match = re.search(
@@ -218,7 +232,9 @@ def _set_edge_path(group: ET.Element, points: list[tuple[float, float]]) -> None
     path.attrib["d"] = "M " + " L ".join(f"{x:.2f},{y:.2f}" for x, y in points)
 
 
-def _set_arrow_polygon(group: ET.Element, *, tip: tuple[float, float], direction: int = -1) -> None:
+def _set_arrow_polygon(
+    group: ET.Element, *, tip: tuple[float, float], direction: int = -1
+) -> None:
     """Set a vertical arrowhead polygon on an edge group.
 
     ``direction`` controls which side of the tip the base is placed on:
@@ -239,7 +255,9 @@ def _set_arrow_polygon(group: ET.Element, *, tip: tuple[float, float], direction
     )
 
 
-def _set_arrow_polygon_horizontal(group: ET.Element, *, tip: tuple[float, float], direction: int) -> None:
+def _set_arrow_polygon_horizontal(
+    group: ET.Element, *, tip: tuple[float, float], direction: int
+) -> None:
     polygon = group.find("{*}polygon")
     if polygon is None:
         return
@@ -261,7 +279,7 @@ def _parse_svg_points(points_text: str) -> list[tuple[float, float]]:
 
 
 def _parse_svg_path_points(path_text: str) -> list[tuple[float, float]]:
-    values = [float(value) for value in re.findall(r'-?\d+(?:\.\d+)?', path_text)]
+    values = [float(value) for value in re.findall(r"-?\d+(?:\.\d+)?", path_text)]
     return [(values[idx], values[idx + 1]) for idx in range(0, len(values) - 1, 2)]
 
 
@@ -269,4 +287,3 @@ def _write_svg_tree(tree: ET.ElementTree[ET.Element], output_path: Path) -> None
     """Write SVG while preserving an unprefixed default SVG namespace."""
     ET.register_namespace("", _SVG_NS)
     tree.write(output_path, encoding="utf-8", xml_declaration=True)
-

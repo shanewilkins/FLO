@@ -46,7 +46,9 @@ def test_shared_renderer_core_does_not_import_sppm_modules() -> None:
         if sppm_imports:
             offenders.append(f"{file_path.name}: {', '.join(sorted(sppm_imports))}")
 
-    assert not offenders, "Shared renderer core imports SPPM modules: " + "; ".join(offenders)
+    assert not offenders, "Shared renderer core imports SPPM modules: " + "; ".join(
+        offenders
+    )
 
 
 def test_shared_continuation_labels_are_consumed_by_sppm_and_non_sppm_paths() -> None:

@@ -8,8 +8,16 @@ from typing import Any
 def ir_to_materials_text(ir: Any) -> str:
     """Render a formatted materials and equipment list from process metadata."""
     process_metadata = getattr(ir, "process_metadata", None)
-    materials = process_metadata.get("materials") if isinstance(process_metadata, dict) else None
-    equipment = process_metadata.get("equipment") if isinstance(process_metadata, dict) else None
+    materials = (
+        process_metadata.get("materials")
+        if isinstance(process_metadata, dict)
+        else None
+    )
+    equipment = (
+        process_metadata.get("equipment")
+        if isinstance(process_metadata, dict)
+        else None
+    )
 
     lines: list[str] = ["Materials and Equipment"]
     if materials is None and equipment is None:
@@ -38,7 +46,9 @@ def _append_section(lines: list[str], title: str, collection: Any) -> None:
         lines.append("  - none")
 
 
-def _append_collection(lines: list[str], label: str | None, collection: Any, level: int) -> None:
+def _append_collection(
+    lines: list[str], label: str | None, collection: Any, level: int
+) -> None:
     indent = "  " * level
 
     if isinstance(collection, list):
@@ -53,7 +63,9 @@ def _append_collection(lines: list[str], label: str | None, collection: Any, lev
     if not isinstance(collection, dict):
         return
 
-    group_label = collection.get("name") if isinstance(collection.get("name"), str) else label
+    group_label = (
+        collection.get("name") if isinstance(collection.get("name"), str) else label
+    )
     if group_label:
         lines.append(f"{indent}- {group_label}")
         level += 1
@@ -62,7 +74,9 @@ def _append_collection(lines: list[str], label: str | None, collection: Any, lev
         if key == "name":
             continue
         child_label = None if key in {"items", "entries"} else str(key)
-        _append_collection(lines=lines, label=child_label, collection=value, level=level)
+        _append_collection(
+            lines=lines, label=child_label, collection=value, level=level
+        )
 
 
 def _format_resource_item(item: dict[str, Any]) -> str:
@@ -92,7 +106,11 @@ def _format_quantity(item: dict[str, Any]) -> str:
     legacy_unit = item.get("unit")
     legacy_qualifier = item.get("qualifier")
     if isinstance(legacy_value, (int, float)) and not isinstance(legacy_value, bool):
-        base = f"{legacy_value} {legacy_unit}".strip() if legacy_unit else str(legacy_value)
+        base = (
+            f"{legacy_value} {legacy_unit}".strip()
+            if legacy_unit
+            else str(legacy_value)
+        )
         if legacy_qualifier:
             return f"{base} ({legacy_qualifier})"
         return base

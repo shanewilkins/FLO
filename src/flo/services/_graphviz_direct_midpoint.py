@@ -200,7 +200,10 @@ def _queue_baseline_candidates(
             continue
         left, right = title.split("->", 1)
 
-        if _endpoint_matches_node_id(right, queue_id) and _endpoint_compass_side(right) == "w":
+        if (
+            _endpoint_matches_node_id(right, queue_id)
+            and _endpoint_compass_side(right) == "w"
+        ):
             other_id = left.split(":", 1)[0]
             other_y = _adjacent_baseline_y(
                 other_id=other_id,
@@ -211,7 +214,10 @@ def _queue_baseline_candidates(
             if other_y is not None:
                 ys.append(other_y)
 
-        if _endpoint_matches_node_id(left, queue_id) and _endpoint_compass_side(left) == "e":
+        if (
+            _endpoint_matches_node_id(left, queue_id)
+            and _endpoint_compass_side(left) == "e"
+        ):
             other_id = right.split(":", 1)[0]
             other_y = _adjacent_baseline_y(
                 other_id=other_id,
@@ -289,7 +295,9 @@ def _svg_node_groups(root: ET.Element) -> dict[str, ET.Element]:
     return groups
 
 
-def _triangle_side_midpoint(*, group: ET.Element | None, side: str) -> tuple[float, float] | None:
+def _triangle_side_midpoint(
+    *, group: ET.Element | None, side: str
+) -> tuple[float, float] | None:
     if group is None or side not in {"e", "w"}:
         return None
 
@@ -302,7 +310,9 @@ def _triangle_side_midpoint(*, group: ET.Element | None, side: str) -> tuple[flo
     return ((apex[0] + base_right[0]) / 2.0, (apex[1] + base_right[1]) / 2.0)
 
 
-def _node_queue_triangle_vertices(group: ET.Element) -> tuple[tuple[float, float], tuple[float, float], tuple[float, float]] | None:
+def _node_queue_triangle_vertices(
+    group: ET.Element,
+) -> tuple[tuple[float, float], tuple[float, float], tuple[float, float]] | None:
     points: list[tuple[float, float]] = []
     for polygon in group.findall("{*}polygon"):
         fill = (polygon.attrib.get("fill", "") or "").strip().lower()
@@ -333,7 +343,9 @@ def _node_queue_triangle_vertices(group: ET.Element) -> tuple[tuple[float, float
     base_i, base_j, _ = max(edges, key=lambda item: item[2])
     base_a = unique[base_i]
     base_b = unique[base_j]
-    apex = next(point for idx, point in enumerate(unique) if idx not in {base_i, base_j})
+    apex = next(
+        point for idx, point in enumerate(unique) if idx not in {base_i, base_j}
+    )
 
     if base_a[0] <= base_b[0]:
         base_left, base_right = base_a, base_b
@@ -352,7 +364,9 @@ def _polygon_points(points_text: str) -> list[tuple[float, float]]:
     return points
 
 
-def _unique_polygon_vertices(points: list[tuple[float, float]]) -> list[tuple[float, float]]:
+def _unique_polygon_vertices(
+    points: list[tuple[float, float]],
+) -> list[tuple[float, float]]:
     unique: list[tuple[float, float]] = []
     for point in points:
         if not unique or point != unique[-1]:
@@ -375,7 +389,9 @@ def _endpoint_compass_side(endpoint: str) -> str:
     return "e"
 
 
-def _point_on_bounds(bounds: tuple[float, float, float, float], side: str) -> tuple[float, float]:
+def _point_on_bounds(
+    bounds: tuple[float, float, float, float], side: str
+) -> tuple[float, float]:
     left, top, right, bottom = bounds
     if side == "n":
         return ((left + right) / 2.0, top)
@@ -388,7 +404,9 @@ def _point_on_bounds(bounds: tuple[float, float, float, float], side: str) -> tu
     return ((left + right) / 2.0, (top + bottom) / 2.0)
 
 
-def _edge_path_start_end(group: ET.Element) -> tuple[tuple[float, float] | None, tuple[float, float] | None]:
+def _edge_path_start_end(
+    group: ET.Element,
+) -> tuple[tuple[float, float] | None, tuple[float, float] | None]:
     path = group.find("{*}path")
     if path is None:
         return None, None

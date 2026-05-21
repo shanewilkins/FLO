@@ -78,8 +78,13 @@ def test_apply_density_filter_for_teaching_compact_and_full():
 
 def test_wrap_text_strategies_cover_hard_balanced_and_word_wrap():
     assert _wrap_text("abcdef", width=3, strategy="hard") == "abc\ndef"
-    assert _wrap_text("alpha beta gamma", width=11, strategy="balanced") == "alpha\nbeta gamma"
-    assert _wrap_text("alpha-beta-gamma", width=6, strategy="word") == "alpha-beta-gamma"
+    assert (
+        _wrap_text("alpha beta gamma", width=11, strategy="balanced")
+        == "alpha\nbeta gamma"
+    )
+    assert (
+        _wrap_text("alpha-beta-gamma", width=6, strategy="word") == "alpha-beta-gamma"
+    )
     assert _wrap_text("singleword", width=20, strategy="balanced") == "singleword"
 
 

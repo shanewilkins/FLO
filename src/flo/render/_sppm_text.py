@@ -7,9 +7,12 @@ from typing import Iterable
 
 from ._text import normalize_space
 
+
 def abbreviate_workers(workers: Iterable[str], max_items: int = 3) -> str:
     """Return a compact worker list for dense labels."""
-    cleaned = [normalize_space(str(worker)) for worker in workers if str(worker).strip()]
+    cleaned = [
+        normalize_space(str(worker)) for worker in workers if str(worker).strip()
+    ]
     if not cleaned:
         return ""
 
@@ -55,14 +58,22 @@ def apply_density_filter(
         return [line for line in [key_metric, notes_line] if line]
 
     if density == "compact":
-        condensed_metric = " | ".join(line for line in [ct_line, wt_line, co_line] if line)
+        condensed_metric = " | ".join(
+            line for line in [ct_line, wt_line, co_line] if line
+        )
         return [line for line in [condensed_metric, workers_line, notes_line] if line]
 
-    return [line for line in [description, workers_line, ct_line, wt_line, co_line, notes_line] if line]
+    return [
+        line
+        for line in [description, workers_line, ct_line, wt_line, co_line, notes_line]
+        if line
+    ]
 
 
 def _initials(name: str) -> str:
-    tokens = [token for token in normalize_space(name).replace("_", " ").split(" ") if token]
+    tokens = [
+        token for token in normalize_space(name).replace("_", " ").split(" ") if token
+    ]
     if not tokens:
         return ""
     if len(tokens) == 1:
@@ -88,7 +99,14 @@ def _wrap_text(text: str, *, width: int | None, strategy: str) -> str:
         if len(left) <= width and len(right) <= width:
             return f"{left}\n{right}"
 
-    return "\n".join(textwrap.wrap(text, width=width, break_long_words=False, break_on_hyphens=False)) or text
+    return (
+        "\n".join(
+            textwrap.wrap(
+                text, width=width, break_long_words=False, break_on_hyphens=False
+            )
+        )
+        or text
+    )
 
 
 def _enforce_max_length(text: str, *, max_len: int | None, policy: str) -> str:

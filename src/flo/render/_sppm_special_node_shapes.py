@@ -14,7 +14,9 @@ from ._sppm_themes import SppmTheme
 from .options import RenderOptions
 
 _SPPM_QUEUE_TRIANGLE_WIDTH = 2.1  # inches
-_SPPM_QUEUE_TRIANGLE_HEIGHT = 3.0  # inches; almost as tall as rendered decision diamonds
+_SPPM_QUEUE_TRIANGLE_HEIGHT = (
+    3.0  # inches; almost as tall as rendered decision diamonds
+)
 _SPPM_QUEUE_NAME_MAX_LEN = 14
 
 
@@ -79,7 +81,9 @@ def render_sppm_subprocess_node(
 ) -> str:
     """Render subprocesses as dotted oval containers with detail-map metadata below."""
     metadata: dict[str, Any] = node.get("metadata") or {}
-    detail_map_ref = resolve_subprocess_detail_map_reference(node_id=node_id, metadata=metadata)
+    detail_map_ref = resolve_subprocess_detail_map_reference(
+        node_id=node_id, metadata=metadata
+    )
     name_label = format_text_field(
         normalize_space(name),
         max_len=options.sppm_max_label_step_name,

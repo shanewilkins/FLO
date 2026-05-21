@@ -49,7 +49,11 @@ def test_console_main_maps_unexpected_error_from_execute(monkeypatch):
         "flo.core._cli_contract.parse_cli_args",
         lambda argv: ParsedArgs(path="input.flo", command="run", options={}),
     )
-    monkeypatch.setattr(cli_mod, "_execute", lambda path, command, options: (_ for _ in ()).throw(RuntimeError("boom")))
+    monkeypatch.setattr(
+        cli_mod,
+        "_execute",
+        lambda path, command, options: (_ for _ in ()).throw(RuntimeError("boom")),
+    )
 
     rc = cli_mod.console_main(["input.flo"])
     assert rc == EXIT_INTERNAL_ERROR

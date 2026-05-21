@@ -1,5 +1,7 @@
 # Spaghetti Renderer Design
 
+Status: accepted renderer design note
+
 ## Why This Exists
 
 Spaghetti diagrams visualize material and people movement paths through a process,

@@ -35,8 +35,12 @@ def build_port_assignments(
     target_side = _ingress_side(placement.orientation)
     node_order = _node_order_index(placement)
 
-    outgoing = _group_outgoing_edges(edges=edges, node_line_index=placement.node_line_index)
-    incoming = _group_incoming_edges(edges=edges, node_line_index=placement.node_line_index)
+    outgoing = _group_outgoing_edges(
+        edges=edges, node_line_index=placement.node_line_index
+    )
+    incoming = _group_incoming_edges(
+        edges=edges, node_line_index=placement.node_line_index
+    )
 
     source_ports = _assign_ports(
         grouped_edges=outgoing,
@@ -106,9 +110,16 @@ def _assign_ports(
 ) -> dict[tuple[str, str], PortSpec]:
     assignments: dict[tuple[str, str], PortSpec] = {}
     for node_id, node_edges in grouped_edges.items():
-        sorted_edges = sorted(node_edges, key=lambda edge: _edge_sort_key(edge=edge, role=role, order_index=order_index))
+        sorted_edges = sorted(
+            node_edges,
+            key=lambda edge: _edge_sort_key(
+                edge=edge, role=role, order_index=order_index
+            ),
+        )
         for slot_index, edge in enumerate(sorted_edges):
-            assignments[edge] = PortSpec(node_id=node_id, side=side, slot_index=slot_index, role=role)
+            assignments[edge] = PortSpec(
+                node_id=node_id, side=side, slot_index=slot_index, role=role
+            )
     return assignments
 
 

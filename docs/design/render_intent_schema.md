@@ -1,5 +1,7 @@
 # Render Intent Schema (design)
 
+Status: draft
+
 Purpose
 -------
 

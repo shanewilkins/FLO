@@ -48,7 +48,9 @@ def test_resolve_publication_page_format_supports_named_presets():
 
 
 def test_build_publication_canvas_for_format_uses_named_preset_geometry():
-    canvas = build_publication_canvas_for_format(page_format="letter", header_height_px=96, footer_height_px=72)
+    canvas = build_publication_canvas_for_format(
+        page_format="letter", header_height_px=96, footer_height_px=72
+    )
 
     assert canvas.bounds.width_px == 816
     assert canvas.bounds.height_px == 1056
@@ -148,7 +150,11 @@ def _build_print_publication_plan():
             }
         },
         options=RenderOptions.from_mapping(
-            {"diagram": "sppm", "sppm_output_profile": "print", "subprocess_view": "parent_only"}
+            {
+                "diagram": "sppm",
+                "sppm_output_profile": "print",
+                "subprocess_view": "parent_only",
+            }
         ),
         nodes=[
             {"id": "start", "kind": "start", "name": "Start"},
@@ -160,11 +166,16 @@ def _build_print_publication_plan():
             },
             {"id": "end", "kind": "end", "name": "End"},
         ],
-        edges=[{"source": "start", "target": "prep"}, {"source": "prep", "target": "end"}],
+        edges=[
+            {"source": "start", "target": "prep"},
+            {"source": "prep", "target": "end"},
+        ],
     )
 
 
-def _inline_budget_process() -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]]]:
+def _inline_budget_process() -> tuple[
+    dict[str, Any], list[dict[str, Any]], list[dict[str, Any]]
+]:
     process = {"process": {"id": "demo", "name": "Demo Process"}}
     nodes = [
         {"id": "start", "kind": "start", "name": "Start"},
@@ -228,7 +239,10 @@ def test_materialize_publication_series_builds_stable_multi_page_ids_and_metadat
     assert series.pages[0].page_number == 1
     assert series.pages[0].metadata["page_count"] == 2
     assert series.pages[0].metadata["section"] == "alpha"
-    assert series.pages[0].band("header").content.context_rows == (("Page", "1/2"), ("Series", "main"))
+    assert series.pages[0].band("header").content.context_rows == (
+        ("Page", "1/2"),
+        ("Series", "main"),
+    )
     assert series.pages[1].page_id == "main-p2"
     assert series.pages[1].page_number == 2
     assert series.pages[1].metadata["page_id"] == "main-p2"
@@ -266,8 +280,12 @@ def test_build_sppm_publication_plan_applies_footer_label_limits():
             "id": "wash_n_fold",
             "name": "Wash n' Fold",
             "metadata": {
-                "footer_metrics": {"Longest Metric Label": "Extremely verbose metric value"},
-                "footer_notes": ["Long footer note for publication readability validation"],
+                "footer_metrics": {
+                    "Longest Metric Label": "Extremely verbose metric value"
+                },
+                "footer_notes": [
+                    "Long footer note for publication readability validation"
+                ],
             },
         }
     }
@@ -297,7 +315,9 @@ def test_build_sppm_publication_plan_records_page_format_metadata():
 
     plan = build_sppm_publication_plan(
         process=process,
-        options=RenderOptions.from_mapping({"diagram": "sppm", "publication_page_format": "letter"}),
+        options=RenderOptions.from_mapping(
+            {"diagram": "sppm", "publication_page_format": "letter"}
+        ),
         nodes=[{"id": "start", "kind": "start", "name": "Start"}],
         edges=[],
     )
@@ -319,7 +339,9 @@ def test_build_sppm_publication_plan_records_non_strict_readability_warning():
             "layout_target_columns": 3,
         }
     )
-    projected_nodes, projected_edges, projection = project_sppm_subprocess_view(nodes, edges, options=options)
+    projected_nodes, projected_edges, projection = project_sppm_subprocess_view(
+        nodes, edges, options=options
+    )
 
     plan = build_sppm_publication_plan(
         process=process,
@@ -333,7 +355,10 @@ def test_build_sppm_publication_plan_records_non_strict_readability_warning():
     assert diagnostics[0]["severity"] == "warning"
     assert diagnostics[0]["fallback_reason"] == "inline-budget-exceeded"
     header_rows = plan.primary_series().pages[0].band("header").content.rows
-    assert any(label == "Readability Warning" and "inline budget exceeded" in value for label, value in header_rows)
+    assert any(
+        label == "Readability Warning" and "inline budget exceeded" in value
+        for label, value in header_rows
+    )
 
 
 def test_build_sppm_publication_plan_raises_on_strict_publication_fallback():
@@ -349,7 +374,9 @@ def test_build_sppm_publication_plan_raises_on_strict_publication_fallback():
             "layout_target_columns": 3,
         }
     )
-    projected_nodes, projected_edges, projection = project_sppm_subprocess_view(nodes, edges, options=options)
+    projected_nodes, projected_edges, projection = project_sppm_subprocess_view(
+        nodes, edges, options=options
+    )
 
     with pytest.raises(RenderError, match="fell back to 'child_map'"):
         build_sppm_publication_plan(

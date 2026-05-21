@@ -16,7 +16,9 @@ SUBPROCESS_DETAIL_MAP_REFERENCE_KEYS: tuple[str, ...] = (
 )
 
 
-def iter_subprocess_detail_map_reference_values(metadata: dict[str, Any]) -> list[tuple[str, str]]:
+def iter_subprocess_detail_map_reference_values(
+    metadata: dict[str, Any],
+) -> list[tuple[str, str]]:
     """Return present subprocess detail-map reference fields as normalized strings."""
     values: list[tuple[str, str]] = []
     for key in SUBPROCESS_DETAIL_MAP_REFERENCE_KEYS:
@@ -28,7 +30,9 @@ def iter_subprocess_detail_map_reference_values(metadata: dict[str, Any]) -> lis
     return values
 
 
-def resolve_subprocess_detail_map_reference(*, node_id: str, metadata: dict[str, Any]) -> str:
+def resolve_subprocess_detail_map_reference(
+    *, node_id: str, metadata: dict[str, Any]
+) -> str:
     """Return the visible detail-map reference label for one subprocess node."""
     for _key, value in iter_subprocess_detail_map_reference_values(metadata):
         if value:

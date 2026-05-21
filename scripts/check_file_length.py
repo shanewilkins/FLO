@@ -42,7 +42,9 @@ def _gather_python_files(argv: Sequence[str]) -> list[pathlib.Path]:
     return files
 
 
-def _check_lengths(files: Sequence[pathlib.Path], warn_lines: int, fail_lines: int) -> int:
+def _check_lengths(
+    files: Sequence[pathlib.Path], warn_lines: int, fail_lines: int
+) -> int:
     warnings: list[tuple[pathlib.Path, int]] = []
     failures: list[tuple[pathlib.Path, int]] = []
 

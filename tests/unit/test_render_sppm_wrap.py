@@ -45,11 +45,14 @@ def _assert_wrapped_lr_layout_structure(out: str) -> None:
     assert "subgraph cluster_wrap_" not in out
     assert "// Overflow policy: planner=placement, wrap=auto, fit=fit-preferred" in out
     assert '"a":e -> "b":w [];' in out
-    assert '"__wrap_exit_lr_0" [shape=point, width=0.01, label="", style=invis, height=0.01];' in out
+    assert (
+        '"__wrap_exit_lr_0" [shape=point, width=0.01, label="", style=invis, height=0.01];'
+        in out
+    )
     assert 'group="__wrap_exit_column"' not in out
     assert '"b":"out_0":e -> "__wrap_exit_lr_0" [' in out
-    assert 'arrowhead=none' in out
-    assert 'constraint=false' in out
+    assert "arrowhead=none" in out
+    assert "constraint=false" in out
 
 
 def _assert_wrapped_lr_boundary_labels(out: str) -> None:

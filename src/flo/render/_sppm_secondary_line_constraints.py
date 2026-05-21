@@ -8,7 +8,9 @@ from ._graphviz_dot_common import _escape
 from ._sppm_routing import SppmRoutingPlan
 
 
-def _rework_target_ids(edges: list[dict[str, Any]], routing_plan: SppmRoutingPlan) -> set[str]:
+def _rework_target_ids(
+    edges: list[dict[str, Any]], routing_plan: SppmRoutingPlan
+) -> set[str]:
     """Return the set of node IDs that are targets of any rework edge."""
     result: set[str] = set()
     for edge in edges:
@@ -83,7 +85,9 @@ def _collect_rework_pairs(
     return rework_pairs, branch_anchor_pairs, return_anchor_pairs
 
 
-def _render_sppm_secondary_rank_subgraphs(rework_pairs: list[tuple[str, str]]) -> list[str]:
+def _render_sppm_secondary_rank_subgraphs(
+    rework_pairs: list[tuple[str, str]],
+) -> list[str]:
     """Render the rank-same subgraphs that align rework branches."""
     lines: list[str] = []
     for idx, (source, target) in enumerate(rework_pairs):
@@ -95,7 +99,9 @@ def _render_sppm_secondary_rank_subgraphs(rework_pairs: list[tuple[str, str]]) -
     return lines
 
 
-def _render_sppm_secondary_alignment_edges(rework_pairs: list[tuple[str, str]]) -> list[str]:
+def _render_sppm_secondary_alignment_edges(
+    rework_pairs: list[tuple[str, str]],
+) -> list[str]:
     """Render the invisible edges that attract rework nodes toward their branches."""
     lines: list[str] = []
     for source, target in rework_pairs:
@@ -105,7 +111,9 @@ def _render_sppm_secondary_alignment_edges(rework_pairs: list[tuple[str, str]]) 
     return lines
 
 
-def _render_sppm_secondary_ordering_edges(rework_pairs: list[tuple[str, str]]) -> list[str]:
+def _render_sppm_secondary_ordering_edges(
+    rework_pairs: list[tuple[str, str]],
+) -> list[str]:
     """Render the invisible edges that keep rework nodes ordered."""
     lines: list[str] = []
     ordered_targets = [target for _, target in rework_pairs]
@@ -116,7 +124,9 @@ def _render_sppm_secondary_ordering_edges(rework_pairs: list[tuple[str, str]]) -
     return lines
 
 
-def _render_sppm_secondary_branch_track(branch_anchor_pairs: list[tuple[str, str]]) -> list[str]:
+def _render_sppm_secondary_branch_track(
+    branch_anchor_pairs: list[tuple[str, str]],
+) -> list[str]:
     """Render the branch-out track that keeps branch anchors aligned."""
     lines: list[str] = []
     for idx, (target, anchor_id) in enumerate(branch_anchor_pairs):
@@ -136,7 +146,9 @@ def _render_sppm_secondary_branch_track(branch_anchor_pairs: list[tuple[str, str
     return lines
 
 
-def _render_sppm_secondary_return_track(return_anchor_pairs: list[tuple[str, str]]) -> list[str]:
+def _render_sppm_secondary_return_track(
+    return_anchor_pairs: list[tuple[str, str]],
+) -> list[str]:
     """Render the return-loop track that keeps anchors beside return sources."""
     lines: list[str] = []
     for idx, (source, anchor_id) in enumerate(return_anchor_pairs):

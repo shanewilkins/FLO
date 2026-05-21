@@ -38,8 +38,12 @@ def build_sppm_publication_plan(
     title = normalize_space(context.title)
     show_header = options.sppm_show_header
     show_footer = options.sppm_show_footer
-    projection_context = projection or SppmProjectionContext(requested_mode="top_level", effective_mode="top_level")
-    diagnostics = _publication_diagnostics(projection=projection_context, options=options)
+    projection_context = projection or SppmProjectionContext(
+        requested_mode="top_level", effective_mode="top_level"
+    )
+    diagnostics = _publication_diagnostics(
+        projection=projection_context, options=options
+    )
     _raise_for_publication_errors(diagnostics)
     header_rows: list[tuple[str, str]] = []
     if show_header:
@@ -51,7 +55,11 @@ def build_sppm_publication_plan(
             projection=projection_context,
             diagnostics=diagnostics,
         )
-    footer_content = _build_sppm_footer_content(context=context, options=options, nodes=nodes) if show_footer else None
+    footer_content = (
+        _build_sppm_footer_content(context=context, options=options, nodes=nodes)
+        if show_footer
+        else None
+    )
     canvas = _build_sppm_publication_canvas(
         title=title,
         footer_content=footer_content,
@@ -66,7 +74,11 @@ def build_sppm_publication_plan(
             PublicationPageSpec(
                 page_key="p1",
                 canvas=canvas,
-                header_content=PublicationBandContent(title=title, rows=tuple(header_rows)) if (show_header and title) else None,
+                header_content=PublicationBandContent(
+                    title=title, rows=tuple(header_rows)
+                )
+                if (show_header and title)
+                else None,
                 footer_content=footer_content,
                 metadata={
                     "diagram": "sppm",
@@ -107,4 +119,3 @@ def build_sppm_publication_plan(
             "page_format": options.publication_page_format,
         },
     )
-

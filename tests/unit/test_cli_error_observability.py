@@ -19,7 +19,10 @@ def test_execute_emits_domain_error_event_fields(monkeypatch):
 
     monkeypatch.setattr("flo.services.get_services", lambda verbose=False: services)
     monkeypatch.setattr("flo.services.io.read_input", lambda path: (0, "content", ""))
-    monkeypatch.setattr("flo.core.run_content", lambda *_args, **_kwargs: (_ for _ in ()).throw(CLIError("bad flags", code=3)))
+    monkeypatch.setattr(
+        "flo.core.run_content",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(CLIError("bad flags", code=3)),
+    )
 
     rc = cli_mod._execute("input.flo", "run", {})
 
@@ -48,7 +51,10 @@ def test_execute_emits_internal_error_event_fields(monkeypatch):
 
     monkeypatch.setattr("flo.services.get_services", lambda verbose=False: services)
     monkeypatch.setattr("flo.services.io.read_input", lambda path: (0, "content", ""))
-    monkeypatch.setattr("flo.core.run_content", lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("boom")))
+    monkeypatch.setattr(
+        "flo.core.run_content",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("boom")),
+    )
 
     rc = cli_mod._execute("input.flo", "run", {})
 

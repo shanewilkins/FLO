@@ -176,7 +176,9 @@ class RenderIntentResolver:
         return {}
 
     @classmethod
-    def _extract_cli_intent(cls, cli_overrides: Optional[dict[str, Any]]) -> dict[str, Any]:
+    def _extract_cli_intent(
+        cls, cli_overrides: Optional[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Extract intent from CLI arguments, mapping UI names to intent keys."""
         if not cli_overrides or not isinstance(cli_overrides, dict):
             return {}
@@ -189,7 +191,9 @@ class RenderIntentResolver:
 
         # Publication config
         if "publication_page_format" in cli_overrides:
-            intent["publication_page_format"] = cli_overrides.get("publication_page_format")
+            intent["publication_page_format"] = cli_overrides.get(
+                "publication_page_format"
+            )
         if "layout_max_width_px" in cli_overrides:
             intent["layout_max_width"] = cli_overrides.get("layout_max_width_px")
 

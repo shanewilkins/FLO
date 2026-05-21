@@ -108,7 +108,11 @@ def test_validate_ir_accepts_subprocess_detail_map_reference_and_valid_parent_ch
         name="x",
         nodes=[
             Node(id="start", type="start"),
-            Node(id="prep", type="subprocess", attrs={"metadata": {"detail_map_ref": "SP-01"}}),
+            Node(
+                id="prep",
+                type="subprocess",
+                attrs={"metadata": {"detail_map_ref": "SP-01"}},
+            ),
             Node(id="mix", type="task", attrs={"subprocess_parent": "prep"}),
             Node(id="end", type="end"),
         ],

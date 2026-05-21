@@ -9,7 +9,13 @@ from .models import (
 )
 from .placement import build_placement_plan
 from .ports import PortSpec, build_port_assignments
-from .routing import EdgeRoute, RouteConflict, RoutePlan, build_route_plan, serialize_route_plan
+from .routing import (
+    EdgeRoute,
+    RouteConflict,
+    RoutePlan,
+    build_route_plan,
+    serialize_route_plan,
+)
 
 __all__ = [
     "CorridorLane",

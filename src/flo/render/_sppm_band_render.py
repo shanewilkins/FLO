@@ -42,7 +42,9 @@ def build_sppm_header(*, publication: Any) -> str:
     )
 
 
-def render_sppm_footer_band(*, publication: Any, nodes: list[SppmRenderNode], edges: list[SppmRenderEdge]) -> list[str]:
+def render_sppm_footer_band(
+    *, publication: Any, nodes: list[SppmRenderNode], edges: list[SppmRenderEdge]
+) -> list[str]:
     """Return DOT lines for the optional footer band and its anchor edges."""
     primary_page = publication.primary_series().pages[0]
     footer_band = primary_page.band("footer")
@@ -61,16 +63,20 @@ def render_sppm_footer_band(*, publication: Any, nodes: list[SppmRenderNode], ed
         "  }",
     ]
     for source_id in _footer_anchor_sources(nodes=nodes, edges=edges):
-        lines.append(f'  "{_escape(source_id)}" -> "{footer_id}" [style=invis, weight=2, minlen=1];')
+        lines.append(
+            f'  "{_escape(source_id)}" -> "{footer_id}" [style=invis, weight=2, minlen=1];'
+        )
     return lines
 
 
-def _build_sppm_footer_label(rows: tuple[tuple[str, str], ...], notes: tuple[str, ...]) -> str:
+def _build_sppm_footer_label(
+    rows: tuple[tuple[str, str], ...], notes: tuple[str, ...]
+) -> str:
     table_rows = "".join(
         f'<TR><TD ALIGN="LEFT"><FONT FACE="Helvetica" POINT-SIZE="9"><B>{_escape(label)}:</B> {_escape(value)}</FONT></TD></TR>'
         for label, value in rows
     )
-    note_lines = "<BR ALIGN=\"LEFT\"/>".join(_escape(note) for note in notes)
+    note_lines = '<BR ALIGN="LEFT"/>'.join(_escape(note) for note in notes)
     notes_row = ""
     if note_lines:
         notes_row = f'<TR><TD ALIGN="LEFT"><FONT FACE="Helvetica" POINT-SIZE="9">{note_lines}</FONT></TD></TR>'
@@ -82,7 +88,9 @@ def _build_sppm_footer_label(rows: tuple[tuple[str, str], ...], notes: tuple[str
     )
 
 
-def _footer_anchor_sources(*, nodes: list[SppmRenderNode], edges: list[SppmRenderEdge]) -> list[str]:
+def _footer_anchor_sources(
+    *, nodes: list[SppmRenderNode], edges: list[SppmRenderEdge]
+) -> list[str]:
     candidates = _footer_end_nodes(nodes)
     if candidates:
         return candidates
@@ -96,12 +104,22 @@ def _footer_anchor_sources(*, nodes: list[SppmRenderNode], edges: list[SppmRende
 
 
 def _footer_end_nodes(nodes: list[SppmRenderNode]) -> list[str]:
-    return [node_id for node_id in (_node_id(node) for node in nodes) if node_id and _node_kind(nodes, node_id) == "end"]
+    return [
+        node_id
+        for node_id in (_node_id(node) for node in nodes)
+        if node_id and _node_kind(nodes, node_id) == "end"
+    ]
 
 
-def _footer_terminal_nodes(*, nodes: list[SppmRenderNode], edges: list[SppmRenderEdge]) -> list[str]:
+def _footer_terminal_nodes(
+    *, nodes: list[SppmRenderNode], edges: list[SppmRenderEdge]
+) -> list[str]:
     outgoing = _edge_source_ids(edges)
-    return [node_id for node_id in (_node_id(node) for node in nodes) if node_id and node_id not in outgoing]
+    return [
+        node_id
+        for node_id in (_node_id(node) for node in nodes)
+        if node_id and node_id not in outgoing
+    ]
 
 
 def _footer_fallback_node_id(nodes: list[SppmRenderNode]) -> str:

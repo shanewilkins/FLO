@@ -50,7 +50,9 @@ def build_sppm_graph(
 ) -> tuple[str, SppmSvgPostprocessContract]:
     """Return DOT and postprocess contract for an SPPM render request."""
     nodes, edges = extract_sppm_nodes_edges(process)
-    nodes, edges, projection = project_sppm_subprocess_view(nodes, edges, options=options)
+    nodes, edges, projection = project_sppm_subprocess_view(
+        nodes, edges, options=options
+    )
 
     publication = build_sppm_publication_plan(
         process=process,
@@ -61,7 +63,9 @@ def build_sppm_graph(
     )
     header = build_sppm_header(publication=publication)
 
-    nodes_by_id: dict[str, SppmRenderNode] = {str(node.get("id", "")): node for node in nodes if node.get("id")}
+    nodes_by_id: dict[str, SppmRenderNode] = {
+        str(node.get("id", "")): node for node in nodes if node.get("id")
+    }
     step_numbering = build_step_numbering(nodes)
     wrap_plan = build_wrap_plan(nodes, options, planner="placement")
     routing_plan = build_sppm_routing_plan(
@@ -77,12 +81,16 @@ def build_sppm_graph(
 
     lines: list[str] = ["digraph {"]
     rankdir = _resolve_rankdir(options=options, wrap_active=wrap_plan.active)
-    nodesep, ranksep = _sppm_graph_spacing(options=options, wrap_active=wrap_plan.active)
-    build_sppm_graph_preamble_lines(lines=lines, rankdir=rankdir, nodesep=nodesep, ranksep=ranksep)
+    nodesep, ranksep = _sppm_graph_spacing(
+        options=options, wrap_active=wrap_plan.active
+    )
+    build_sppm_graph_preamble_lines(
+        lines=lines, rankdir=rankdir, nodesep=nodesep, ranksep=ranksep
+    )
 
     if header:
         lines.append("  labelloc=t;")
-        lines.append('  labeljust=l;')
+        lines.append("  labeljust=l;")
         lines.append(f"  label={header};")
 
     append_sppm_graph_layout_hints(lines=lines, options=options, plan=wrap_plan)
@@ -104,8 +112,12 @@ def build_sppm_graph(
         wrap_plan=wrap_plan,
         routing_plan=routing_plan,
     )
-    append_sppm_graph_constraint_lines(lines=lines, edges=edges, routing_plan=routing_plan)
-    append_sppm_graph_footer_lines(lines=lines, publication=publication, nodes=nodes, edges=edges)
+    append_sppm_graph_constraint_lines(
+        lines=lines, edges=edges, routing_plan=routing_plan
+    )
+    append_sppm_graph_footer_lines(
+        lines=lines, publication=publication, nodes=nodes, edges=edges
+    )
     lines.append("}")
     return "\n".join(lines), contract
 
@@ -116,7 +128,9 @@ def _resolve_rankdir(*, options: RenderOptions, wrap_active: bool) -> str:
     return "TB" if options.orientation == "lr" else "LR"
 
 
-def _sppm_graph_spacing(*, options: RenderOptions, wrap_active: bool) -> tuple[float, float]:
+def _sppm_graph_spacing(
+    *, options: RenderOptions, wrap_active: bool
+) -> tuple[float, float]:
     if not wrap_active:
         if options.layout_spacing == "compact":
             return 0.75, 1.0

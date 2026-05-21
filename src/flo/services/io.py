@@ -3,6 +3,7 @@
 This module provides `read_input` and `write_output` and is the
 canonical location for IO code in the services layer.
 """
+
 from __future__ import annotations
 
 import sys

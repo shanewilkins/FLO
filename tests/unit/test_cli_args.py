@@ -19,7 +19,11 @@ def test_parse_args_none_returns_defaults(services):
 @pytest.mark.parametrize(
     "args, expected_command, expected_output",
     [
-        (["/tmp/input.flo", "-v", "-o", "out.txt", "--validate"], "validate", "out.txt"),
+        (
+            ["/tmp/input.flo", "-v", "-o", "out.txt", "--validate"],
+            "validate",
+            "out.txt",
+        ),
         (["file.flo"], "run", None),
     ],
 )
@@ -82,21 +86,27 @@ def test_parse_args_render_options(services):
 
 
 def test_parse_args_spaghetti_diagram_option(services):
-    path, command, options, _, _ = parse_args(["file.flo", "--diagram", "spaghetti"], services)
+    path, command, options, _, _ = parse_args(
+        ["file.flo", "--diagram", "spaghetti"], services
+    )
     assert path == "file.flo"
     assert command == "run"
     assert options["diagram"] == "spaghetti"
 
 
 def test_parse_args_spaghetti_channel_option(services):
-    path, command, options, _, _ = parse_args(["file.flo", "--spaghetti-channel", "material"], services)
+    path, command, options, _, _ = parse_args(
+        ["file.flo", "--spaghetti-channel", "material"], services
+    )
     assert path == "file.flo"
     assert command == "run"
     assert options["spaghetti_channel"] == "material"
 
 
 def test_parse_args_spaghetti_people_mode_option(services):
-    path, command, options, _, _ = parse_args(["file.flo", "--spaghetti-people-mode", "aggregate"], services)
+    path, command, options, _, _ = parse_args(
+        ["file.flo", "--spaghetti-people-mode", "aggregate"], services
+    )
     assert path == "file.flo"
     assert command == "run"
     assert options["spaghetti_people_mode"] == "aggregate"
@@ -167,14 +177,18 @@ def test_parse_args_sppm_projection_options(services):
 
 
 def test_parse_args_accepts_custom_sppm_theme_name(services):
-    path, command, options, _, _ = parse_args(["file.flo", "--diagram", "sppm", "--sppm-theme", "sunrise"], services)
+    path, command, options, _, _ = parse_args(
+        ["file.flo", "--diagram", "sppm", "--sppm-theme", "sunrise"], services
+    )
 
     assert path == "file.flo"
     assert command == "run"
     assert options["sppm_theme"] == "sunrise"
 
 
-def _assert_expected_options(options: dict[str, object], expected: dict[str, object]) -> None:
+def _assert_expected_options(
+    options: dict[str, object], expected: dict[str, object]
+) -> None:
     for key, value in expected.items():
         assert options[key] == value
 

@@ -48,7 +48,9 @@ def build_route_plan(
     edges: list[tuple[str, str]],
 ) -> RoutePlan:
     """Build a deterministic route plan from shared core plans."""
-    source_ports, target_ports = build_port_assignments(placement=placement, edges=edges)
+    source_ports, target_ports = build_port_assignments(
+        placement=placement, edges=edges
+    )
     routes: dict[tuple[str, str], EdgeRoute] = {}
     for edge in sorted(edges):
         source_port = source_ports.get(edge)
@@ -84,8 +86,12 @@ def serialize_route_plan(plan: RoutePlan) -> str:
             f"  target {route.target_port.node_id}:{route.target_port.side}[{route.target_port.slot_index}]"
         )
     for conflict in plan.conflicts:
-        edge_list = ", ".join(f"{source}->{target}" for source, target in conflict.edges)
-        lines.append(f"conflict {conflict.lane_id} policy={conflict.policy} edges={edge_list}")
+        edge_list = ", ".join(
+            f"{source}->{target}" for source, target in conflict.edges
+        )
+        lines.append(
+            f"conflict {conflict.lane_id} policy={conflict.policy} edges={edge_list}"
+        )
     return "\n".join(lines)
 
 
@@ -94,5 +100,7 @@ def _conflicts_from_corridor(corridor: CorridorPlan) -> tuple[RouteConflict, ...
     for lane_id, edges in sorted(corridor.lane_occupancy.items()):
         if len(edges) <= 1:
             continue
-        conflicts.append(RouteConflict(lane_id=lane_id, edges=edges, policy="share-lane-stacked"))
+        conflicts.append(
+            RouteConflict(lane_id=lane_id, edges=edges, policy="share-lane-stacked")
+        )
     return tuple(conflicts)

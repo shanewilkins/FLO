@@ -87,7 +87,9 @@ def edge_pairs(edges: list[dict[str, Any]]) -> list[tuple[str, str]]:
     return pairs
 
 
-def build_corridor_metadata(*, placement: PlacementPlan, edge_pairs: list[tuple[str, str]]) -> CorridorPlan:
+def build_corridor_metadata(
+    *, placement: PlacementPlan, edge_pairs: list[tuple[str, str]]
+) -> CorridorPlan:
     """Build corridor metadata, using empty metadata for single-line layouts."""
     if len(placement.lines) <= 1:
         return CorridorPlan(
@@ -107,7 +109,9 @@ def build_core_route_plan(
     corridor_plan: CorridorPlan,
 ) -> RoutePlan:
     """Build core route plan from placement and corridor metadata."""
-    return build_route_plan(placement=placement, corridor=corridor_plan, edges=edge_pairs)
+    return build_route_plan(
+        placement=placement, corridor=corridor_plan, edges=edge_pairs
+    )
 
 
 def placement_for_routing(
@@ -120,7 +124,11 @@ def placement_for_routing(
     if wrap_plan.placement_plan is not None:
         return wrap_plan.placement_plan
 
-    line_node_ids = wrap_plan.chunks if wrap_plan.active and wrap_plan.chunks else [ordered_node_ids(nodes)]
+    line_node_ids = (
+        wrap_plan.chunks
+        if wrap_plan.active and wrap_plan.chunks
+        else [ordered_node_ids(nodes)]
+    )
     lines: list[LinePlacement] = []
     node_line_index: dict[str, int] = {}
     for line_index, node_ids in enumerate(line_node_ids):
@@ -166,7 +174,9 @@ def node_kinds(nodes: list[dict[str, Any]]) -> dict[str, str]:
         node_id = str(node.get("id") or "")
         if not node_id:
             continue
-        kinds[node_id] = str(node.get("kind") or node.get("type") or "task").strip().lower()
+        kinds[node_id] = (
+            str(node.get("kind") or node.get("type") or "task").strip().lower()
+        )
     return kinds
 
 
@@ -182,7 +192,9 @@ def collect_rework_branch_metadata(
         target = str(edge.get("target") or "")
         if not source or not target:
             continue
-        if not is_explicit_rework_branch_out(edge=edge, source_kind=node_kinds.get(source, "task")):
+        if not is_explicit_rework_branch_out(
+            edge=edge, source_kind=node_kinds.get(source, "task")
+        ):
             continue
         raw = edge.get("metadata")
         if isinstance(raw, dict) and raw:
@@ -206,9 +218,13 @@ def collect_rework_return_sources(
             continue
         if source not in branch_metadata_by_rework_target:
             continue
-        if not is_sppm_rework_edge(edge=edge, step_numbering=step_numbering, source=source, target=target):
+        if not is_sppm_rework_edge(
+            edge=edge, step_numbering=step_numbering, source=source, target=target
+        ):
             continue
-        if is_explicit_rework_branch_out(edge=edge, source_kind=node_kinds.get(source, "task")):
+        if is_explicit_rework_branch_out(
+            edge=edge, source_kind=node_kinds.get(source, "task")
+        ):
             continue
         sources.add(source)
     return sources
@@ -226,7 +242,9 @@ def edge_with_rework_metadata_policy(
 ) -> dict[str, Any]:
     """Return edge copy with merged/suppressed rework databox metadata policy applied."""
     effective = dict(edge)
-    if not is_sppm_rework_edge(edge=edge, step_numbering=step_numbering, source=source, target=target):
+    if not is_sppm_rework_edge(
+        edge=edge, step_numbering=step_numbering, source=source, target=target
+    ):
         return effective
 
     source_kind = node_kinds.get(source, "task")
@@ -248,9 +266,16 @@ def edge_with_rework_metadata_policy(
 
 def is_explicit_rework_branch_out(*, edge: dict[str, Any], source_kind: str) -> bool:
     """Return True when edge explicitly represents outbound rework from a decision context."""
-    if str(edge.get("edge_type") or "").strip().lower() != "rework" and edge.get("rework") is not True:
+    if (
+        str(edge.get("edge_type") or "").strip().lower() != "rework"
+        and edge.get("rework") is not True
+    ):
         return False
-    return source_kind == "decision" or edge.get("outcome") is not None or edge.get("label") is not None
+    return (
+        source_kind == "decision"
+        or edge.get("outcome") is not None
+        or edge.get("label") is not None
+    )
 
 
 def resolve_lane_id(
@@ -458,17 +483,25 @@ def _build_boundary_continuation_anchors(
     return (
         SppmRouteAnchor(
             anchor_id=outgoing_anchor_id,
-            attrs=build_sppm_continuation_anchor_attrs(token=outgoing_token, is_secondary=False),
+            attrs=build_sppm_continuation_anchor_attrs(
+                token=outgoing_token, is_secondary=False
+            ),
         ),
         SppmRouteAnchor(
             anchor_id=incoming_anchor_id,
-            attrs=build_sppm_continuation_anchor_attrs(token=incoming_token, is_secondary=False),
+            attrs=build_sppm_continuation_anchor_attrs(
+                token=incoming_token, is_secondary=False
+            ),
         ),
     )
 
 
-def _build_route_segment(*, source_id: str, target_id: str, attrs: list[str]) -> SppmRouteSegment:
-    return SppmRouteSegment(source_id=source_id, target_id=target_id, attrs=tuple(attrs))
+def _build_route_segment(
+    *, source_id: str, target_id: str, attrs: list[str]
+) -> SppmRouteSegment:
+    return SppmRouteSegment(
+        source_id=source_id, target_id=target_id, attrs=tuple(attrs)
+    )
 
 
 __all__ = [
@@ -554,7 +587,9 @@ def _build_non_rework_direct_route(
     resolved_ports: tuple[str, str] | None,
 ) -> SppmEdgeRoute:
     """Build the direct non-rework route when no continuation anchors are needed."""
-    segment_attrs = tuple((list(resolved_ports) if resolved_ports is not None else []) + edge_attrs)
+    segment_attrs = tuple(
+        (list(resolved_ports) if resolved_ports is not None else []) + edge_attrs
+    )
     return SppmEdgeRoute(
         source=source,
         target=target,
@@ -564,5 +599,7 @@ def _build_non_rework_direct_route(
         lane_id=None,
         corridor_nodes=(),
         anchors=(),
-        segments=(SppmRouteSegment(source_id=source, target_id=target, attrs=segment_attrs),),
+        segments=(
+            SppmRouteSegment(source_id=source, target_id=target, attrs=segment_attrs),
+        ),
     )

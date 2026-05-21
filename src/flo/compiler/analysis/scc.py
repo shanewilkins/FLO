@@ -1,4 +1,5 @@
 """SCC condensation utilities moved under compiler.analysis."""
+
 from __future__ import annotations
 
 from typing import List, Dict, Any, Tuple
@@ -61,7 +62,9 @@ def _tarjan_scc(adj: Dict[str, List[str]]) -> List[List[str]]:
     return sccs
 
 
-def _build_condensed_nodes(sccs: List[List[str]], id_to_node: Dict[str, Node]) -> Tuple[List[Node], Dict[str, str]]:
+def _build_condensed_nodes(
+    sccs: List[List[str]], id_to_node: Dict[str, Node]
+) -> Tuple[List[Node], Dict[str, str]]:
     new_nodes: List[Node] = []
     scc_map: Dict[str, str] = {}
     for i, comp in enumerate(sccs):
@@ -79,7 +82,9 @@ def _build_condensed_nodes(sccs: List[List[str]], id_to_node: Dict[str, Node]) -
     return new_nodes, scc_map
 
 
-def _rebuild_edges(new_nodes: List[Node], adj: Dict[str, List[str]], scc_map: Dict[str, str]) -> None:
+def _rebuild_edges(
+    new_nodes: List[Node], adj: Dict[str, List[str]], scc_map: Dict[str, str]
+) -> None:
     for node in new_nodes:
         if node.attrs and node.attrs.get("members"):
             outs: List[str] = []
@@ -117,5 +122,7 @@ def condense_scc(process: Any) -> IR:
     Raises NotImplementedError for unsupported input types.
     """
     if not isinstance(process, IR):
-        raise NotImplementedError("SCC condensation not implemented for this input type")
+        raise NotImplementedError(
+            "SCC condensation not implemented for this input type"
+        )
     return scc_condense(process)

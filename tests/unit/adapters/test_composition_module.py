@@ -10,25 +10,39 @@ import flo.adapters.composition as composition
 def test_normalize_include_entries_supports_empty_string_string_and_list():
     assert composition._normalize_include_entries({}) == []
     assert composition._normalize_include_entries({"include": "   "}) == []
-    assert composition._normalize_include_entries({"include": "  part.yaml  "}) == ["part.yaml"]
-    assert composition._normalize_include_entries({"includes": [" a.yaml ", "b.yaml"]}) == ["a.yaml", "b.yaml"]
+    assert composition._normalize_include_entries({"include": "  part.yaml  "}) == [
+        "part.yaml"
+    ]
+    assert composition._normalize_include_entries(
+        {"includes": [" a.yaml ", "b.yaml"]}
+    ) == ["a.yaml", "b.yaml"]
 
 
 def test_normalize_include_entries_rejects_invalid_shapes():
-    with pytest.raises(ValueError, match="include/includes must be a string or list of strings"):
+    with pytest.raises(
+        ValueError, match="include/includes must be a string or list of strings"
+    ):
         composition._normalize_include_entries({"includes": 42})
 
-    with pytest.raises(ValueError, match=r"includes\[1\] must be a non-empty string path"):
+    with pytest.raises(
+        ValueError, match=r"includes\[1\] must be a non-empty string path"
+    ):
         composition._normalize_include_entries({"includes": ["ok.yaml", ""]})
 
 
-def test_resolve_include_path_supports_absolute_and_cwd_relative(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_resolve_include_path_supports_absolute_and_cwd_relative(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     absolute_target = tmp_path / "abs.yaml"
-    resolved_abs = composition._resolve_include_path(str(absolute_target), current_path=tmp_path / "root.flo")
+    resolved_abs = composition._resolve_include_path(
+        str(absolute_target), current_path=tmp_path / "root.flo"
+    )
     assert resolved_abs == absolute_target.resolve()
 
     monkeypatch.chdir(tmp_path)
-    resolved_rel = composition._resolve_include_path("parts/flow.yaml", current_path=None)
+    resolved_rel = composition._resolve_include_path(
+        "parts/flow.yaml", current_path=None
+    )
     assert resolved_rel == (tmp_path / "parts" / "flow.yaml").resolve()
 
 
@@ -49,8 +63,13 @@ def test_load_include_mapping_rejects_cycle_missing_and_non_mapping(tmp_path: Pa
 
 
 def test_merge_list_values_covers_none_and_validation_errors():
-    assert composition._merge_list_values("steps", base_value=[{"id": "a"}], incoming_value=None) == [{"id": "a"}]
-    assert composition._merge_list_values("steps", base_value="bad", incoming_value=None) == []
+    assert composition._merge_list_values(
+        "steps", base_value=[{"id": "a"}], incoming_value=None
+    ) == [{"id": "a"}]
+    assert (
+        composition._merge_list_values("steps", base_value="bad", incoming_value=None)
+        == []
+    )
 
     with pytest.raises(ValueError, match="steps must be a list"):
         composition._merge_list_values("steps", base_value=[], incoming_value="bad")
@@ -60,8 +79,12 @@ def test_merge_list_values_covers_none_and_validation_errors():
 
 
 def test_merge_resource_values_covers_list_dict_and_type_mismatch():
-    assert composition._merge_resource_values("materials", base_value=None, incoming_value=[{"id": "a"}]) == [{"id": "a"}]
-    assert composition._merge_resource_values("materials", base_value=[{"id": "a"}], incoming_value=None) == [{"id": "a"}]
+    assert composition._merge_resource_values(
+        "materials", base_value=None, incoming_value=[{"id": "a"}]
+    ) == [{"id": "a"}]
+    assert composition._merge_resource_values(
+        "materials", base_value=[{"id": "a"}], incoming_value=None
+    ) == [{"id": "a"}]
 
     merged_lists = composition._merge_resource_values(
         "materials",
@@ -87,7 +110,9 @@ def test_merge_resource_values_covers_list_dict_and_type_mismatch():
     assert merged_dicts["extra"] == [{"id": "c"}]
 
     with pytest.raises(ValueError, match="materials include merge type mismatch"):
-        composition._merge_resource_values("materials", base_value={}, incoming_value=[])
+        composition._merge_resource_values(
+            "materials", base_value={}, incoming_value=[]
+        )
 
 
 def test_merge_process_covers_none_metadata_merge_and_type_error():

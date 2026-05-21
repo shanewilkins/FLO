@@ -25,7 +25,9 @@ def make_dummy_trace():
         # record provider for assertions
         tel._provider = p
 
-    return types.SimpleNamespace(get_tracer=get_tracer, set_tracer_provider=set_tracer_provider)
+    return types.SimpleNamespace(
+        get_tracer=get_tracer, set_tracer_provider=set_tracer_provider
+    )
 
 
 class DummyProvider:
@@ -58,7 +60,9 @@ def test_init_telemetry_with_otel(monkeypatch):
     monkeypatch.setattr(tel, "Resource", types.SimpleNamespace(create=lambda d: d))
     monkeypatch.setattr(tel, "SDKTracerProvider", DummyProvider)
     monkeypatch.setattr(tel, "ConsoleSpanExporter", lambda: object())
-    monkeypatch.setattr(tel, "SimpleSpanProcessor", lambda exporter: DummySpanProcessor())
+    monkeypatch.setattr(
+        tel, "SimpleSpanProcessor", lambda exporter: DummySpanProcessor()
+    )
 
     # ensure provider cleared
     monkeypatch.setattr(tel, "_provider", None)

@@ -32,7 +32,9 @@ from ._sppm_text import format_text_field, normalize_space
 from .options import RenderOptions
 
 _DEFAULT_SPPM_PUBLICATION_WIDTH_PX = 1200
-_DEFAULT_SPPM_PUBLICATION_MARGINS = PublicationMargins(top_px=48, right_px=48, bottom_px=48, left_px=48)
+_DEFAULT_SPPM_PUBLICATION_MARGINS = PublicationMargins(
+    top_px=48, right_px=48, bottom_px=48, left_px=48
+)
 _SPPM_HEADER_BAND_HEIGHT_PX = 96
 
 
@@ -48,7 +50,10 @@ def _build_sppm_header_rows(
     extra_rows: list[tuple[str, str]] = []
     if options.sppm_output_profile != "default":
         extra_rows.append(("Profile", options.sppm_output_profile))
-    if projection.effective_mode == "top_level" and options.subprocess_view == "parent_only":
+    if (
+        projection.effective_mode == "top_level"
+        and options.subprocess_view == "parent_only"
+    ):
         extra_rows.append(("Subprocess View", "parent-only"))
     if projection.effective_mode != "top_level":
         extra_rows.append(("Projection", projection.effective_mode.replace("_", "-")))
@@ -61,7 +66,9 @@ def _build_sppm_header_rows(
     if projection.exit_context:
         extra_rows.append(("Exit Context", ", ".join(projection.exit_context)))
     if projection.fallback_reason:
-        extra_rows.append(("Projection Fallback", projection.fallback_reason.replace("-", " ")))
+        extra_rows.append(
+            ("Projection Fallback", projection.fallback_reason.replace("-", " "))
+        )
     for diagnostic in diagnostics:
         if diagnostic.severity == "warning":
             extra_rows.append(("Readability Warning", diagnostic.message))
@@ -69,8 +76,12 @@ def _build_sppm_header_rows(
     extra_rows.append(("Edges", str(len(edges))))
     extra_rows = [
         (
-            _format_sppm_publication_text(label, options=options, max_len=options.sppm_max_label_step_name),
-            _format_sppm_publication_text(value, options=options, max_len=options.sppm_max_label_step_name),
+            _format_sppm_publication_text(
+                label, options=options, max_len=options.sppm_max_label_step_name
+            ),
+            _format_sppm_publication_text(
+                value, options=options, max_len=options.sppm_max_label_step_name
+            ),
         )
         for label, value in extra_rows
     ]
@@ -95,7 +106,9 @@ def _build_sppm_child_slots(
             continue
         metadata = node.get("metadata")
         metadata_dict = metadata if isinstance(metadata, dict) else {}
-        detail_map_ref = resolve_subprocess_detail_map_reference(node_id=node_id, metadata=metadata_dict)
+        detail_map_ref = resolve_subprocess_detail_map_reference(
+            node_id=node_id, metadata=metadata_dict
+        )
         slots.append(
             PublicationArtifactSlot(
                 slot_id=f"child:{node_id}",
@@ -109,17 +122,24 @@ def _build_sppm_child_slots(
     return slots
 
 
-def _build_sppm_footer_content(*, context: Any, options: RenderOptions, nodes: list[dict[str, Any]] | None = None) -> PublicationBandContent | None:
+def _build_sppm_footer_content(
+    *, context: Any, options: RenderOptions, nodes: list[dict[str, Any]] | None = None
+) -> PublicationBandContent | None:
     metric_rows = [
         *_footer_metric_rows_from_metadata(context.metadata, options=options),
         *_footer_metric_rows_from_node_aggregation(nodes=nodes or [], options=options),
-        *[_footer_metric_row(label=label, value=value, options=options) for label, value in options.sppm_footer_metrics],
+        *[
+            _footer_metric_row(label=label, value=value, options=options)
+            for label, value in options.sppm_footer_metrics
+        ],
     ]
     metric_rows = [row for row in metric_rows if row is not None]
     notes = [
         *_footer_notes_from_metadata(context.metadata, options=options),
         *[
-            _format_sppm_publication_text(note, options=options, max_len=options.sppm_max_label_step_name)
+            _format_sppm_publication_text(
+                note, options=options, max_len=options.sppm_max_label_step_name
+            )
             for note in options.sppm_footer_notes
             if normalize_space(note)
         ],
@@ -136,27 +156,27 @@ def _footer_metric_rows_from_node_aggregation(
     options: RenderOptions,
 ) -> list[tuple[str, str]]:
     """Auto-aggregate wait time and crossover time metrics from process nodes.
-    
+
     Collects WT and CO values from all nodes and sums them for footer display.
     This helps visualize total process delays in a diagnostic way.
     """
     rows: list[tuple[str, str]] = []
     total_wt: float = 0.0
     total_co: float = 0.0
-    
+
     for node in nodes:
         metadata = node.get("metadata") or {}
         if not isinstance(metadata, dict):
             continue
-        
+
         wt_minutes = get_metadata_wait_time_minutes(metadata)
         if wt_minutes and wt_minutes > 0:
             total_wt += wt_minutes
-        
+
         co_value = get_metadata_crossover_time(metadata)
         if co_value is not None and co_value.numeric_value > 0:
             total_co += co_value.numeric_value
-    
+
     if total_wt > 0:
         wt_row = _footer_metric_row(
             label="Waiting Time",
@@ -165,7 +185,7 @@ def _footer_metric_rows_from_node_aggregation(
         )
         if wt_row is not None:
             rows.append(wt_row)
-    
+
     if total_co > 0:
         co_row = _footer_metric_row(
             label="Changeover Time",
@@ -174,12 +194,16 @@ def _footer_metric_rows_from_node_aggregation(
         )
         if co_row is not None:
             rows.append(co_row)
-    
+
     return rows
 
 
-def _footer_metric_rows_from_metadata(metadata: dict[str, Any], *, options: RenderOptions) -> list[tuple[str, str]]:
-    raw_metrics = first_present_metadata_value(metadata, SPPM_FOOTER_METRIC_METADATA_KEYS)
+def _footer_metric_rows_from_metadata(
+    metadata: dict[str, Any], *, options: RenderOptions
+) -> list[tuple[str, str]]:
+    raw_metrics = first_present_metadata_value(
+        metadata, SPPM_FOOTER_METRIC_METADATA_KEYS
+    )
     if isinstance(raw_metrics, dict):
         return _footer_metric_rows_from_mapping(raw_metrics, options=options)
     if isinstance(raw_metrics, (list, tuple)):
@@ -187,7 +211,9 @@ def _footer_metric_rows_from_metadata(metadata: dict[str, Any], *, options: Rend
     return []
 
 
-def _footer_metric_rows_from_mapping(raw_metrics: dict[Any, Any], *, options: RenderOptions) -> list[tuple[str, str]]:
+def _footer_metric_rows_from_mapping(
+    raw_metrics: dict[Any, Any], *, options: RenderOptions
+) -> list[tuple[str, str]]:
     rows: list[tuple[str, str]] = []
     for label, value in raw_metrics.items():
         row = _footer_metric_row(label=label, value=value, options=options)
@@ -209,37 +235,55 @@ def _footer_metric_rows_from_sequence(
     return rows
 
 
-def _footer_metric_row_from_item(item: Any, *, options: RenderOptions) -> tuple[str, str] | None:
+def _footer_metric_row_from_item(
+    item: Any, *, options: RenderOptions
+) -> tuple[str, str] | None:
     if isinstance(item, dict):
-        return _footer_metric_row(label=item.get("label"), value=item.get("value"), options=options)
+        return _footer_metric_row(
+            label=item.get("label"), value=item.get("value"), options=options
+        )
     if isinstance(item, (list, tuple)) and len(item) == 2:
         return _footer_metric_row(label=item[0], value=item[1], options=options)
     return None
 
 
-def _footer_metric_row(*, label: Any, value: Any, options: RenderOptions) -> tuple[str, str] | None:
-    label_text = _format_sppm_publication_text(label, options=options, max_len=options.sppm_max_label_step_name)
-    value_text = _format_sppm_publication_text(value, options=options, max_len=options.sppm_max_label_ctwt)
+def _footer_metric_row(
+    *, label: Any, value: Any, options: RenderOptions
+) -> tuple[str, str] | None:
+    label_text = _format_sppm_publication_text(
+        label, options=options, max_len=options.sppm_max_label_step_name
+    )
+    value_text = _format_sppm_publication_text(
+        value, options=options, max_len=options.sppm_max_label_ctwt
+    )
     if not label_text or not value_text:
         return None
     return (label_text, value_text)
 
 
-def _footer_notes_from_metadata(metadata: dict[str, Any], *, options: RenderOptions) -> list[str]:
+def _footer_notes_from_metadata(
+    metadata: dict[str, Any], *, options: RenderOptions
+) -> list[str]:
     raw_notes = first_present_metadata_value(metadata, SPPM_FOOTER_NOTES_METADATA_KEYS)
     if isinstance(raw_notes, str):
-        note = _format_sppm_publication_text(raw_notes, options=options, max_len=options.sppm_max_label_step_name)
+        note = _format_sppm_publication_text(
+            raw_notes, options=options, max_len=options.sppm_max_label_step_name
+        )
         return [note] if note else []
     if isinstance(raw_notes, (list, tuple)):
         return [
-            _format_sppm_publication_text(note, options=options, max_len=options.sppm_max_label_step_name)
+            _format_sppm_publication_text(
+                note, options=options, max_len=options.sppm_max_label_step_name
+            )
             for note in raw_notes
             if normalize_space(str(note))
         ]
     return []
 
 
-def _format_sppm_publication_text(value: Any, *, options: RenderOptions, max_len: int | None) -> str:
+def _format_sppm_publication_text(
+    value: Any, *, options: RenderOptions, max_len: int | None
+) -> str:
     text = normalize_space(str(value or ""))
     if not text:
         return ""
@@ -269,7 +313,9 @@ def _build_sppm_publication_canvas(
             width_px_override=options.layout_max_width_px,
         )
     return build_publication_canvas(
-        bounds=PublicationBounds(width_px=options.layout_max_width_px or _DEFAULT_SPPM_PUBLICATION_WIDTH_PX),
+        bounds=PublicationBounds(
+            width_px=options.layout_max_width_px or _DEFAULT_SPPM_PUBLICATION_WIDTH_PX
+        ),
         margins=_DEFAULT_SPPM_PUBLICATION_MARGINS,
         header_height_px=header_height_px,
         footer_height_px=footer_height_px,
@@ -289,13 +335,21 @@ def _publication_diagnostics(
     )
 
 
-def _raise_for_publication_errors(diagnostics: tuple[PublicationDiagnostic, ...]) -> None:
-    errors = [diagnostic.message for diagnostic in diagnostics if diagnostic.severity == "error"]
+def _raise_for_publication_errors(
+    diagnostics: tuple[PublicationDiagnostic, ...],
+) -> None:
+    errors = [
+        diagnostic.message
+        for diagnostic in diagnostics
+        if diagnostic.severity == "error"
+    ]
     if errors:
         raise RenderError("; ".join(errors))
 
 
-def _serialize_diagnostics(diagnostics: tuple[PublicationDiagnostic, ...]) -> tuple[dict[str, Any], ...]:
+def _serialize_diagnostics(
+    diagnostics: tuple[PublicationDiagnostic, ...],
+) -> tuple[dict[str, Any], ...]:
     return tuple(
         {
             "code": diagnostic.code,

@@ -2,6 +2,10 @@
 
 This manual explains how to write FLO models, validate them, and generate outputs for visualization and automation.
 
+Normative language semantics and CLI contracts live under `docs/specs/`.
+This manual is user-facing guidance and examples; when it summarizes a rule,
+the spec remains authoritative.
+
 ## 1) What FLO Is
 
 FLO is a domain-specific, declarative language for modeling business processes.
@@ -881,6 +885,8 @@ flo run examples/reference/linear.flo -o -
 
 ## 8) Exit Codes
 
+This section summarizes the normative CLI contract in `docs/specs/cli_error_contract.md`.
+
 - `0`: success
 - `1`: usage/argument error
 - `2`: parse error
@@ -891,6 +897,8 @@ flo run examples/reference/linear.flo -o -
 
 ## 9) Validation Rules (v0.1)
 
+This section summarizes the normative rules in `docs/specs/core_language.md`.
+
 Current semantic constraints include:
 - Exactly one `start` node
 - At least one `end` node
@@ -900,6 +908,8 @@ Current semantic constraints include:
 - Every node reachable from `start`
 - Every node can reach at least one `end`
 - Every `decision` has at least two outgoing transitions
+- `wait_time` is only valid on `queue` nodes
+- Queue nodes must not carry active work or setup-time fields such as `cycle_time` or `crossover_time`
 
 ## 10) Diagrams and Rendering
 
@@ -978,7 +988,7 @@ Problem: SVG not generated
 
 Useful project references:
 - `README.md`
-- `docs/CLI_Error_Contract.md`
+- `docs/specs/cli_error_contract.md`
 - `docs/specs/core_language.md`
 - `docs/design/IR.md`
 - `schema/flo_ir.json`

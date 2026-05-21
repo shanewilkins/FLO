@@ -46,7 +46,7 @@ steps:
 def test_parse_error_class_surfaces_nonzero_and_message():
     runner = CliRunner()
     # Invalid YAML should bubble into ParseError handling.
-    invalid_yaml = "spec_version: \"0.1\"\nprocess:\n\tbad: true\n"
+    invalid_yaml = 'spec_version: "0.1"\nprocess:\n\tbad: true\n'
     result = runner.invoke(cli, ["validate", "-"], input=invalid_yaml)
     assert result.exit_code != 0
     assert "found character '\\t'" in result.output or "while scanning" in result.output

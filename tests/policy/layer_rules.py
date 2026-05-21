@@ -4,6 +4,7 @@ This file defines which paths belong to which logical layer and the
 allowed import directions between layers. It is intentionally small
 so the mappings are easy to update as the architecture evolves.
 """
+
 from __future__ import annotations
 
 from typing import Dict, List, Set

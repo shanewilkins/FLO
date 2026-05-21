@@ -1,4 +1,10 @@
-Canonical FLO Process Model (CPM) – v0.1
+Canonical FLO Process Model (CPM) - historical background
+
+Status: historical background note
+
+This note is retained as background context only. Normative semantics live in
+`docs/specs/core_language.md` and authoritative structural contracts live in
+`schema/flo_ir.json`.
 
 Purpose: Provide a stable intermediate representation (IR) for FLO that
 separates the DSL surface syntax from analysis, visualization, and

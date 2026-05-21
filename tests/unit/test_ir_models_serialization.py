@@ -52,7 +52,7 @@ def test_ir_edge_optional_fields_roundtrip(tmp_path: Path):
     p = tmp_path / "edges.json"
     text = ir.to_json(path=p)
     assert p.exists()
-    assert "\"edges\"" in text
+    assert '"edges"' in text
 
 
 def test_ir_from_dict_defaults_for_missing_fields():
@@ -72,7 +72,9 @@ def test_ir_from_dict_preserves_edge_type_and_rework():
     data = {
         "name": "demo",
         "nodes": [{"id": "n1", "type": "task"}],
-        "edges": [{"source": "n1", "target": "n2", "edge_type": "rework", "rework": True}],
+        "edges": [
+            {"source": "n1", "target": "n2", "edge_type": "rework", "rework": True}
+        ],
     }
     ir = IR.from_dict(data)
     assert ir.edges[0].edge_type == "rework"

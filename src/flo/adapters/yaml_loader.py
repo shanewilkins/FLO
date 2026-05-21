@@ -3,6 +3,7 @@
 Parses YAML content and returns an `AdapterModel` instance when
 Pydantic is available, otherwise returns a simple fallback model.
 """
+
 from __future__ import annotations
 
 import yaml
@@ -20,7 +21,9 @@ def load_adapter_from_yaml(content: str) -> AdapterModel:
     """
     data = yaml.safe_load(content)
     if not isinstance(data, dict):
-        raise ValueError("YAML content must be a mapping with keys 'name' and 'content'")
+        raise ValueError(
+            "YAML content must be a mapping with keys 'name' and 'content'"
+        )
 
     # Both the Pydantic model and our fallback implement `model_validate`.
     return AdapterModel.model_validate(data)

@@ -36,7 +36,9 @@ def _step_error(e: Exception, services: Any, default_rc: int) -> tuple[int, None
 class Step(Protocol):
     """Protocol for pipeline steps."""
 
-    def run(self, previous: Any, services: Any) -> Any:  # pragma: no cover - exercised by unit tests
+    def run(
+        self, previous: Any, services: Any
+    ) -> Any:  # pragma: no cover - exercised by unit tests
         """Execute the step and return a pipeline state tuple or compatible rc object."""
         ...
 
@@ -145,7 +147,9 @@ class OutputStep:
         rc, out, err = previous
         if rc != 0:
             return rc, out, err
-        write_rc, write_err = write_output(out, self.options.get("output") if self.options else None)
+        write_rc, write_err = write_output(
+            out, self.options.get("output") if self.options else None
+        )
         if write_rc != 0:
             return write_rc, None, write_err
         return 0, None, None

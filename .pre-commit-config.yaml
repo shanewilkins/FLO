@@ -1,6 +1,12 @@
 repos:
   - repo: local
     hooks:
+      - id: ruff-format
+        name: ruff format (via uv)
+        entry: uv run ruff format .
+        language: system
+        types: [python]
+        pass_filenames: false
       - id: ruff-check
         name: ruff (via uv)
         entry: uv run ruff check .
@@ -28,7 +34,7 @@ repos:
         files: "\\.py$"
       - id: radon-complexity
         name: radon complexity
-        entry: python scripts/check_complexity.py
+        entry: uv run python scripts/check_complexity.py
         language: system
         pass_filenames: true
         files: "\\.py$"
@@ -49,6 +55,12 @@ repos:
         entry: uv run lint-imports
         language: system
         pass_filenames: false
+      - id: docs-governance-check
+        name: docs governance (via uv)
+        entry: uv run python scripts/check_docs_governance.py
+        language: system
+        pass_filenames: true
+        files: "^(docs/|examples/|schema/|README\\.md|src/flo/services/errors\\.py)"
       - id: pytest-check
         name: pytest (via uv)
         entry: uv run pytest -q

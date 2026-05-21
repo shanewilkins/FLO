@@ -1,5 +1,10 @@
 # Typed Metadata (design)
 
+Status: draft
+
+This note provides human guidance only. The authoritative typed metadata
+contracts live in `schema/flo_types.json`.
+
 Purpose
 -------
 

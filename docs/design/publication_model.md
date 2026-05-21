@@ -1,5 +1,7 @@
 # Publication Model
 
+Status: accepted shared model note
+
 The shared publication model sits above canonical IR and below renderer-specific output such as DOT, SVG, or later PDF views.
 
 The initial contract is intentionally small:
@@ -59,3 +61,10 @@ The first live adopter is SPPM.
 This issue does not implement full pagination, footer rendering, or hierarchical child-map output.
 
 Those later slices should build on this model rather than adding new renderer-specific layout structures.
+
+## Related design documents
+
+- `docs/design/artifact_taxonomy.md`
+- `docs/design/adr_render_stack_elk_svg_typst.md`
+- `docs/design/render_platform_target_architecture.md`
+- `docs/design/render_platform_migration_plan.md`

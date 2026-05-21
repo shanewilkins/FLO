@@ -46,7 +46,9 @@ def _add_service_name(name: Optional[str]):
     return _processor
 
 
-def configure_logging(level: int = logging.INFO, service_name: Optional[str] = None) -> None:
+def configure_logging(
+    level: int = logging.INFO, service_name: Optional[str] = None
+) -> None:
     """Configure structlog + stdlib logging for CLI usage.
 
     Idempotent and safe to call multiple times; uses a simple, readable

@@ -11,7 +11,9 @@ _RESOURCE_KEYS = ("materials", "equipment", "locations", "workers")
 _LIST_KEYS = ("steps", "transitions", "edges", "lanes")
 
 
-def resolve_includes(document: dict[str, Any], source_path: str | None = None) -> dict[str, Any]:
+def resolve_includes(
+    document: dict[str, Any], source_path: str | None = None
+) -> dict[str, Any]:
     """Resolve include directives and return a composed mapping.
 
     Include syntax:
@@ -20,7 +22,9 @@ def resolve_includes(document: dict[str, Any], source_path: str | None = None) -
       - relative/or/absolute/path.yaml
     """
     root_path = Path(source_path).resolve() if source_path else None
-    return _compose_document(document=document, current_path=root_path, include_stack=[])
+    return _compose_document(
+        document=document, current_path=root_path, include_stack=[]
+    )
 
 
 def _compose_document(
@@ -32,8 +36,12 @@ def _compose_document(
     composed: dict[str, Any] = {}
 
     for include_ref in include_paths:
-        include_path = _resolve_include_path(include_ref=include_ref, current_path=current_path)
-        include_doc = _load_include_mapping(include_path=include_path, include_stack=include_stack)
+        include_path = _resolve_include_path(
+            include_ref=include_ref, current_path=current_path
+        )
+        include_doc = _load_include_mapping(
+            include_path=include_path, include_stack=include_stack
+        )
         nested = _compose_document(
             document=include_doc,
             current_path=include_path,
@@ -82,7 +90,9 @@ def _resolve_include_path(include_ref: str, current_path: Path | None) -> Path:
     return (base_dir / raw).resolve()
 
 
-def _load_include_mapping(include_path: Path, include_stack: list[Path]) -> dict[str, Any]:
+def _load_include_mapping(
+    include_path: Path, include_stack: list[Path]
+) -> dict[str, Any]:
     if include_path in include_stack:
         chain = " -> ".join(str(path) for path in [*include_stack, include_path])
         raise ValueError(f"include cycle detected: {chain}")
@@ -93,7 +103,9 @@ def _load_include_mapping(include_path: Path, include_stack: list[Path]) -> dict
     try:
         content = include_path.read_text(encoding="utf-8")
     except OSError as exc:
-        raise ValueError(f"unable to read include file '{include_path}': {exc}") from exc
+        raise ValueError(
+            f"unable to read include file '{include_path}': {exc}"
+        ) from exc
 
     parsed = yaml.safe_load(content)
     if not isinstance(parsed, dict):
@@ -107,15 +119,21 @@ def _merge_documents(base: dict[str, Any], incoming: dict[str, Any]) -> dict[str
 
     for key, value in incoming.items():
         if key in _LIST_KEYS:
-            merged[key] = _merge_list_values(key=key, base_value=merged.get(key), incoming_value=value)
+            merged[key] = _merge_list_values(
+                key=key, base_value=merged.get(key), incoming_value=value
+            )
             continue
 
         if key in _RESOURCE_KEYS:
-            merged[key] = _merge_resource_values(key=key, base_value=merged.get(key), incoming_value=value)
+            merged[key] = _merge_resource_values(
+                key=key, base_value=merged.get(key), incoming_value=value
+            )
             continue
 
         if key == "process":
-            merged[key] = _merge_process(base_value=merged.get(key), incoming_value=value)
+            merged[key] = _merge_process(
+                base_value=merged.get(key), incoming_value=value
+            )
             continue
 
         if key == "spec_version":
@@ -168,7 +186,9 @@ def _merge_resource_values(key: str, base_value: Any, incoming_value: Any) -> An
                 merged[child_key] = child_value
         return merged
 
-    raise ValueError(f"{key} include merge type mismatch: expected list/list or dict/dict")
+    raise ValueError(
+        f"{key} include merge type mismatch: expected list/list or dict/dict"
+    )
 
 
 def _merge_process(base_value: Any, incoming_value: Any) -> Any:
@@ -181,7 +201,11 @@ def _merge_process(base_value: Any, incoming_value: Any) -> Any:
 
     merged = dict(base_value)
     for key, value in incoming_value.items():
-        if key == "metadata" and isinstance(merged.get("metadata"), dict) and isinstance(value, dict):
+        if (
+            key == "metadata"
+            and isinstance(merged.get("metadata"), dict)
+            and isinstance(value, dict)
+        ):
             merged["metadata"] = {**merged["metadata"], **value}
             continue
         merged[key] = value
@@ -207,5 +231,7 @@ def _ensure_unique_id_list(document: dict[str, Any], key: str) -> None:
             continue
         item_id_text = str(item_id)
         if item_id_text in seen:
-            raise ValueError(f"duplicate {key[:-1]} id '{item_id_text}' detected at {key}[{idx}]")
+            raise ValueError(
+                f"duplicate {key[:-1]} id '{item_id_text}' detected at {key}[{idx}]"
+            )
         seen.add(item_id_text)

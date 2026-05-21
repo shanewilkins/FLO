@@ -23,7 +23,9 @@ def resolve_process_name(adapter: dict[str, Any]) -> str:
     """Resolve display/process name from adapter payload."""
     process_raw = adapter.get("process")
     process: dict[str, Any] = process_raw if isinstance(process_raw, dict) else {}
-    return str(process.get("id") or process.get("name") or adapter.get("name") or "unnamed")
+    return str(
+        process.get("id") or process.get("name") or adapter.get("name") or "unnamed"
+    )
 
 
 def resolve_process_metadata(adapter: dict[str, Any]) -> dict[str, Any] | None:
@@ -32,7 +34,9 @@ def resolve_process_metadata(adapter: dict[str, Any]) -> dict[str, Any] | None:
     process: dict[str, Any] = process_raw if isinstance(process_raw, dict) else {}
 
     metadata_raw = process.get("metadata")
-    metadata: dict[str, Any] = dict(metadata_raw) if isinstance(metadata_raw, dict) else {}
+    metadata: dict[str, Any] = (
+        dict(metadata_raw) if isinstance(metadata_raw, dict) else {}
+    )
 
     process_id = process.get("id")
     if isinstance(process_id, str) and process_id.strip():
@@ -80,7 +84,9 @@ def flatten_source_nodes(
 
         if isinstance(nested_nodes, list):
             next_parent = str(node_id) if node_id is not None else None
-            flattened.extend(flatten_source_nodes(nested_nodes, parent_subprocess=next_parent))
+            flattened.extend(
+                flatten_source_nodes(nested_nodes, parent_subprocess=next_parent)
+            )
 
     return flattened
 

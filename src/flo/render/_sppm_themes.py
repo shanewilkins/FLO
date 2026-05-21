@@ -75,7 +75,9 @@ def resolve_sppm_theme(name: str | None) -> SppmTheme:
     return resolve_sppm_theme_with_custom(name=name, custom_themes=None)
 
 
-def resolve_sppm_theme_with_custom(name: str | None, custom_themes: Mapping[str, SppmTheme] | None) -> SppmTheme:
+def resolve_sppm_theme_with_custom(
+    name: str | None, custom_themes: Mapping[str, SppmTheme] | None
+) -> SppmTheme:
     """Return a built-in or custom theme, falling back to default when missing."""
     registry: dict[str, SppmTheme] = dict(SPPM_THEMES)
     if custom_themes:
@@ -120,7 +122,9 @@ def _parse_theme_definition(value: Any) -> SppmTheme | None:
     )
 
 
-def _parse_style_definition(theme_value: Mapping[str, Any], style_name: str) -> SppmNodeStyle | None:
+def _parse_style_definition(
+    theme_value: Mapping[str, Any], style_name: str
+) -> SppmNodeStyle | None:
     nested = theme_value.get(style_name)
     if isinstance(nested, Mapping):
         return _parse_node_style(nested)
@@ -128,7 +132,9 @@ def _parse_style_definition(theme_value: Mapping[str, Any], style_name: str) -> 
     fill_key = f"{style_name}_fill"
     border_key = f"{style_name}_border"
     if fill_key in theme_value or border_key in theme_value:
-        return _parse_node_style({"fill": theme_value.get(fill_key), "border": theme_value.get(border_key)})
+        return _parse_node_style(
+            {"fill": theme_value.get(fill_key), "border": theme_value.get(border_key)}
+        )
     return None
 
 

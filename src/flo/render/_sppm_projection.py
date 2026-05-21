@@ -5,7 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from ._graphviz_dot_common import _project_parent_only_subprocess_view, _project_subprocess_visible_ids
+from ._graphviz_dot_common import (
+    _project_parent_only_subprocess_view,
+    _project_subprocess_visible_ids,
+)
 from .options import RenderOptions
 
 
@@ -34,13 +37,27 @@ def project_sppm_subprocess_view(
     nodes_by_id = _nodes_by_id(nodes)
 
     if requested_mode == "child_map":
-        return _project_child_map(nodes, edges, nodes_by_id=nodes_by_id, focus_id=focus_id, requested_mode=requested_mode)
+        return _project_child_map(
+            nodes,
+            edges,
+            nodes_by_id=nodes_by_id,
+            focus_id=focus_id,
+            requested_mode=requested_mode,
+        )
     if requested_mode == "inline":
-        return _project_inline(nodes, edges, nodes_by_id=nodes_by_id, focus_id=focus_id, options=options)
-    projected_nodes, projected_edges = _project_parent_only_subprocess_view(nodes, edges)
-    return projected_nodes, projected_edges, SppmProjectionContext(
-        requested_mode=requested_mode,
-        effective_mode="top_level",
+        return _project_inline(
+            nodes, edges, nodes_by_id=nodes_by_id, focus_id=focus_id, options=options
+        )
+    projected_nodes, projected_edges = _project_parent_only_subprocess_view(
+        nodes, edges
+    )
+    return (
+        projected_nodes,
+        projected_edges,
+        SppmProjectionContext(
+            requested_mode=requested_mode,
+            effective_mode="top_level",
+        ),
     )
 
 
@@ -53,11 +70,17 @@ def _project_child_map(
     requested_mode: str,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], SppmProjectionContext]:
     if not _is_subprocess_node(focus_id, nodes_by_id):
-        projected_nodes, projected_edges = _project_parent_only_subprocess_view(nodes, edges)
-        return projected_nodes, projected_edges, SppmProjectionContext(
-            requested_mode=requested_mode,
-            effective_mode="top_level",
-            fallback_reason="missing-focus-subprocess",
+        projected_nodes, projected_edges = _project_parent_only_subprocess_view(
+            nodes, edges
+        )
+        return (
+            projected_nodes,
+            projected_edges,
+            SppmProjectionContext(
+                requested_mode=requested_mode,
+                effective_mode="top_level",
+                fallback_reason="missing-focus-subprocess",
+            ),
         )
     assert focus_id is not None
 
@@ -66,16 +89,22 @@ def _project_child_map(
     entry_ids = _incoming_neighbor_ids(subtree_ids, edges)
     exit_ids = _outgoing_neighbor_ids(subtree_ids, edges)
     visible_ids = subtree_ids | entry_ids | exit_ids
-    projected_nodes, projected_edges = _project_subprocess_visible_ids(nodes, edges, visible_ids=visible_ids)
+    projected_nodes, projected_edges = _project_subprocess_visible_ids(
+        nodes, edges, visible_ids=visible_ids
+    )
 
     parent_subprocess = _subprocess_parent(nodes_by_id.get(focus_id, {}))
-    return projected_nodes, projected_edges, SppmProjectionContext(
-        requested_mode=requested_mode,
-        effective_mode="child_map",
-        focus_subprocess=focus_id,
-        parent_subprocess=parent_subprocess,
-        entry_context=tuple(sorted(entry_ids)),
-        exit_context=tuple(sorted(exit_ids)),
+    return (
+        projected_nodes,
+        projected_edges,
+        SppmProjectionContext(
+            requested_mode=requested_mode,
+            effective_mode="child_map",
+            focus_subprocess=focus_id,
+            parent_subprocess=parent_subprocess,
+            entry_context=tuple(sorted(entry_ids)),
+            exit_context=tuple(sorted(exit_ids)),
+        ),
     )
 
 
@@ -88,11 +117,17 @@ def _project_inline(
     options: RenderOptions,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], SppmProjectionContext]:
     if not _is_subprocess_node(focus_id, nodes_by_id):
-        projected_nodes, projected_edges = _project_parent_only_subprocess_view(nodes, edges)
-        return projected_nodes, projected_edges, SppmProjectionContext(
-            requested_mode="inline",
-            effective_mode="top_level",
-            fallback_reason="missing-focus-subprocess",
+        projected_nodes, projected_edges = _project_parent_only_subprocess_view(
+            nodes, edges
+        )
+        return (
+            projected_nodes,
+            projected_edges,
+            SppmProjectionContext(
+                requested_mode="inline",
+                effective_mode="top_level",
+                fallback_reason="missing-focus-subprocess",
+            ),
         )
     assert focus_id is not None
 
@@ -105,24 +140,38 @@ def _project_inline(
             focus_id=focus_id,
             requested_mode="inline",
         )
-        return projected_nodes, projected_edges, SppmProjectionContext(
-            requested_mode="inline",
-            effective_mode=context.effective_mode,
-            focus_subprocess=context.focus_subprocess,
-            parent_subprocess=context.parent_subprocess,
-            entry_context=context.entry_context,
-            exit_context=context.exit_context,
-            fallback_reason="inline-budget-exceeded",
+        return (
+            projected_nodes,
+            projected_edges,
+            SppmProjectionContext(
+                requested_mode="inline",
+                effective_mode=context.effective_mode,
+                focus_subprocess=context.focus_subprocess,
+                parent_subprocess=context.parent_subprocess,
+                entry_context=context.entry_context,
+                exit_context=context.exit_context,
+                fallback_reason="inline-budget-exceeded",
+            ),
         )
 
-    top_level_ids = {node_id for node_id, node in nodes_by_id.items() if _subprocess_parent(node) is None}
+    top_level_ids = {
+        node_id
+        for node_id, node in nodes_by_id.items()
+        if _subprocess_parent(node) is None
+    }
     visible_ids = top_level_ids | descendant_ids
-    projected_nodes, projected_edges = _project_subprocess_visible_ids(nodes, edges, visible_ids=visible_ids)
-    return projected_nodes, projected_edges, SppmProjectionContext(
-        requested_mode="inline",
-        effective_mode="inline",
-        focus_subprocess=focus_id,
-        parent_subprocess=_subprocess_parent(nodes_by_id.get(focus_id, {})),
+    projected_nodes, projected_edges = _project_subprocess_visible_ids(
+        nodes, edges, visible_ids=visible_ids
+    )
+    return (
+        projected_nodes,
+        projected_edges,
+        SppmProjectionContext(
+            requested_mode="inline",
+            effective_mode="inline",
+            focus_subprocess=focus_id,
+            parent_subprocess=_subprocess_parent(nodes_by_id.get(focus_id, {})),
+        ),
     )
 
 
@@ -137,7 +186,9 @@ def _nodes_by_id(nodes: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return {str(node.get("id") or ""): node for node in nodes if node.get("id")}
 
 
-def _descendant_ids(focus_id: str, *, nodes_by_id: dict[str, dict[str, Any]]) -> set[str]:
+def _descendant_ids(
+    focus_id: str, *, nodes_by_id: dict[str, dict[str, Any]]
+) -> set[str]:
     descendants: set[str] = set()
     pending = [focus_id]
     while pending:
@@ -152,7 +203,9 @@ def _descendant_ids(focus_id: str, *, nodes_by_id: dict[str, dict[str, Any]]) ->
     return descendants
 
 
-def _incoming_neighbor_ids(visible_ids: set[str], edges: list[dict[str, Any]]) -> set[str]:
+def _incoming_neighbor_ids(
+    visible_ids: set[str], edges: list[dict[str, Any]]
+) -> set[str]:
     return {
         source
         for edge in edges
@@ -162,7 +215,9 @@ def _incoming_neighbor_ids(visible_ids: set[str], edges: list[dict[str, Any]]) -
     }
 
 
-def _outgoing_neighbor_ids(visible_ids: set[str], edges: list[dict[str, Any]]) -> set[str]:
+def _outgoing_neighbor_ids(
+    visible_ids: set[str], edges: list[dict[str, Any]]
+) -> set[str]:
     return {
         str(edge.get("target") or "")
         for edge in edges
@@ -172,7 +227,9 @@ def _outgoing_neighbor_ids(visible_ids: set[str], edges: list[dict[str, Any]]) -
     }
 
 
-def _is_subprocess_node(focus_id: str | None, nodes_by_id: dict[str, dict[str, Any]]) -> bool:
+def _is_subprocess_node(
+    focus_id: str | None, nodes_by_id: dict[str, dict[str, Any]]
+) -> bool:
     if focus_id is None:
         return False
     node = nodes_by_id.get(focus_id)

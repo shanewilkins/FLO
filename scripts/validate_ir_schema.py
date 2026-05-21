@@ -3,6 +3,7 @@
 Run this script from the repository root. It requires `jsonschema` to be
 installed in the environment (CI will install it).
 """
+
 from pathlib import Path
 import sys
 

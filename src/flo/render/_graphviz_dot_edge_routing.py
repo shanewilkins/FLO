@@ -60,7 +60,12 @@ def _append_single_edge(
     source_id = str(source)
     target_id = str(target)
 
-    if _is_rework_edge(edge=edge, source=source_id, target=target_id, node_sequence_index=node_sequence_index):
+    if _is_rework_edge(
+        edge=edge,
+        source=source_id,
+        target=target_id,
+        node_sequence_index=node_sequence_index,
+    ):
         _append_rework_corridor_edge(
             lines=lines,
             edge=edge,
@@ -105,8 +110,7 @@ def _append_single_edge(
         node_sequence_index=node_sequence_index,
     )
     lines.append(
-        f'  "{_escape(source_id)}" -> "{_escape(target_id)}" '
-        f'[{", ".join(edge_attrs)}];'
+        f'  "{_escape(source_id)}" -> "{_escape(target_id)}" [{", ".join(edge_attrs)}];'
     )
 
 
@@ -159,12 +163,10 @@ def _append_boundary_corridor_edge(
     second_segment_attrs.extend(incoming_label_attrs)
 
     lines.append(
-        f'  "{_escape(source)}" -> "{anchor_id}" '
-        f'[{", ".join(first_segment_attrs)}];'
+        f'  "{_escape(source)}" -> "{anchor_id}" [{", ".join(first_segment_attrs)}];'
     )
     lines.append(
-        f'  "{anchor_id}" -> "{_escape(target)}" '
-        f'[{", ".join(second_segment_attrs)}];'
+        f'  "{anchor_id}" -> "{_escape(target)}" [{", ".join(second_segment_attrs)}];'
     )
 
 
@@ -217,12 +219,10 @@ def _append_rework_corridor_edge(
     second_segment_attrs.extend(incoming_label_attrs)
 
     lines.append(
-        f'  "{_escape(source)}" -> "{anchor_id}" '
-        f'[{", ".join(first_segment_attrs)}];'
+        f'  "{_escape(source)}" -> "{anchor_id}" [{", ".join(first_segment_attrs)}];'
     )
     lines.append(
-        f'  "{anchor_id}" -> "{_escape(target)}" '
-        f'[{", ".join(second_segment_attrs)}];'
+        f'  "{anchor_id}" -> "{_escape(target)}" [{", ".join(second_segment_attrs)}];'
     )
 
 
@@ -231,7 +231,11 @@ def _without_edge_label(edge_attrs: list[str]) -> list[str]:
 
 
 def _without_boundary_span_attrs(edge_attrs: list[str]) -> list[str]:
-    return [attr for attr in edge_attrs if not attr.startswith("minlen=") and not attr.startswith("penwidth=")]
+    return [
+        attr
+        for attr in edge_attrs
+        if not attr.startswith("minlen=") and not attr.startswith("penwidth=")
+    ]
 
 
 def _append_unique_attr(attrs: list[str], value: str) -> None:
@@ -273,13 +277,13 @@ def _resolve_effective_rankdir(*, options: RenderOptions, wrap_active: bool) -> 
 def _rework_anchor_id(*, source: str, target: str, edge_index: int) -> str:
     source_part = _safe_edge_id_part(source)
     target_part = _safe_edge_id_part(target)
-    return f'__rework_corridor_{source_part}_{target_part}_{edge_index}'
+    return f"__rework_corridor_{source_part}_{target_part}_{edge_index}"
 
 
 def _boundary_anchor_id(*, source: str, target: str, edge_index: int) -> str:
     source_part = _safe_edge_id_part(source)
     target_part = _safe_edge_id_part(target)
-    return f'__boundary_corridor_{source_part}_{target_part}_{edge_index}'
+    return f"__boundary_corridor_{source_part}_{target_part}_{edge_index}"
 
 
 def _safe_edge_id_part(value: str) -> str:

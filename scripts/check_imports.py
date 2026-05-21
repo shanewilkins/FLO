@@ -5,6 +5,7 @@ This is a lightweight alternative to import-linter when exact config
 formats are not available. It scans `src/flo` and fails if forbidden
 imports are found according to rules defined below.
 """
+
 import ast
 import pathlib
 from typing import Dict, Iterable, List
@@ -64,7 +65,9 @@ def check_forbidden(module: str, imported: str, path: pathlib.Path) -> List[str]
         if module == prefix or module.startswith(prefix + "."):
             for forbidden in forbidden_list:
                 if imported == forbidden or imported.startswith(forbidden + "."):
-                    errs.append(f"{path}: module '{module}' imports forbidden '{imported}' (rule for '{prefix}')")
+                    errs.append(
+                        f"{path}: module '{module}' imports forbidden '{imported}' (rule for '{prefix}')"
+                    )
     return errs
 
 
@@ -88,4 +91,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

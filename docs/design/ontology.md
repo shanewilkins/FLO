@@ -1,5 +1,7 @@
 # FLO Ontology — v0.0 draft
 
+Status: historical background note
+
 Purpose
 -------
 

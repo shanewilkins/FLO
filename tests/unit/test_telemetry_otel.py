@@ -66,16 +66,25 @@ def test_init_telemetry_with_fake_otel(monkeypatch):
     sys.modules["opentelemetry"] = types.ModuleType("opentelemetry")
     sys.modules["opentelemetry"].trace = fake_trace
     sys.modules["opentelemetry.sdk"] = types.ModuleType("opentelemetry.sdk")
-    sys.modules["opentelemetry.sdk.resources"] = types.ModuleType("opentelemetry.sdk.resources")
+    sys.modules["opentelemetry.sdk.resources"] = types.ModuleType(
+        "opentelemetry.sdk.resources"
+    )
     sys.modules["opentelemetry.sdk.resources"].Resource = Resource
     sys.modules["opentelemetry.sdk.trace"] = types.ModuleType("opentelemetry.sdk.trace")
     sys.modules["opentelemetry.sdk.trace"].TracerProvider = TracerProvider
-    sys.modules["opentelemetry.sdk.trace.export"] = types.ModuleType("opentelemetry.sdk.trace.export")
-    sys.modules["opentelemetry.sdk.trace.export"].SimpleSpanProcessor = SimpleSpanProcessor
-    sys.modules["opentelemetry.sdk.trace.export"].ConsoleSpanExporter = ConsoleSpanExporter
+    sys.modules["opentelemetry.sdk.trace.export"] = types.ModuleType(
+        "opentelemetry.sdk.trace.export"
+    )
+    sys.modules[
+        "opentelemetry.sdk.trace.export"
+    ].SimpleSpanProcessor = SimpleSpanProcessor
+    sys.modules[
+        "opentelemetry.sdk.trace.export"
+    ].ConsoleSpanExporter = ConsoleSpanExporter
 
     # Reload telemetry module to pick up fake opentelemetry
     import flo.services.telemetry as tel
+
     importlib.reload(tel)
 
     t = tel.init_telemetry(service_name="flo-test", console_export=True)

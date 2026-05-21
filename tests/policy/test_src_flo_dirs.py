@@ -4,6 +4,7 @@ This test fails if unexpected directories appear directly under
 `src/flo/`. The approved physical directories correspond to our
 conceptual layers (compiler may include `ir/` and `analysis/`).
 """
+
 from __future__ import annotations
 
 from pathlib import Path

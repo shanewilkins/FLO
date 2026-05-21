@@ -16,6 +16,7 @@ refactor notes belong in `docs/design/`.
 Current specs:
 
 - `core_language.md`
+- `cli_error_contract.md`
 - `flowchart.md`
 - `value_stream_map.md`
 - `swimlane.md`

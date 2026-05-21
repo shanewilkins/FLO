@@ -46,12 +46,12 @@ def test_single_node_lr():
     assert len(plan.lines) == 1
     line = plan.lines[0]
     assert line.node_ids == ("a",)
-    assert line.node_major_offsets == (20,)   # margin=20
+    assert line.node_major_offsets == (20,)  # margin=20
     assert line.node_cross_offsets == (20,)
     assert line.major_size == 100
     assert line.cross_size == 40
-    assert plan.total_major == 140             # margin + 100 + margin
-    assert plan.total_cross == 80             # margin + 40 + margin
+    assert plan.total_major == 140  # margin + 100 + margin
+    assert plan.total_cross == 80  # margin + 40 + margin
 
 
 def test_two_nodes_same_line_lr():
@@ -61,8 +61,8 @@ def test_two_nodes_same_line_lr():
     assert line.node_ids == ("a", "b")
     # a at margin=20, b at 20+100+10=130
     assert line.node_major_offsets == (20, 130)
-    assert line.major_size == 190             # 100 + 10 + 80
-    assert plan.total_major == 230            # 20 + 190 + 20
+    assert line.major_size == 190  # 100 + 10 + 80
+    assert plan.total_major == 230  # 20 + 190 + 20
 
 
 def test_three_nodes_no_wrap_share_one_line():
@@ -105,7 +105,9 @@ def test_wrap_cross_offsets_accumulate_correctly():
     # Line 1 cross starts at 10 + 50 + 40 = 100
     assert line1.cross_offset == 100
     assert line1.cross_size == 30
-    assert plan.total_cross == 100 + 30 + 10  # last.cross_offset + last.cross_size + margin
+    assert (
+        plan.total_cross == 100 + 30 + 10
+    )  # last.cross_offset + last.cross_size + margin
 
 
 # ---------------------------------------------------------------------------
@@ -120,7 +122,7 @@ def test_tb_single_line_no_limit():
     line = plan.lines[0]
     # major = height; cross = width
     assert line.major_size == 40 + 20 + 60  # default gap_major=20
-    assert line.cross_size == 80            # max width
+    assert line.cross_size == 80  # max width
 
 
 def test_tb_wrap_splits_into_columns():
@@ -187,7 +189,7 @@ def test_node_line_index_correct_after_wrap():
 
 def test_plan_is_deterministic_across_calls():
     nodes = [_node(f"n{i}", w=60 + i * 10, h=30 + i * 5) for i in range(6)]
-    edges = [(f"n{i}", f"n{i+1}") for i in range(5)]
+    edges = [(f"n{i}", f"n{i + 1}") for i in range(5)]
     constraints = PlacementConstraints(max_width_px=300, gap_major=15, gap_minor=30)
     plan1 = build_placement_plan(nodes, edges, constraints)
     plan2 = build_placement_plan(nodes, edges, constraints)
@@ -254,7 +256,7 @@ def test_align_line_center_shorter_node_centered():
     plan = build_placement_plan(nodes, [], constraints)
     line = plan.lines[0]
     # cross_size = 80; short has delta=40, shift = 40//2 = 20
-    assert line.node_cross_offsets[0] == 10       # tall: no shift
+    assert line.node_cross_offsets[0] == 10  # tall: no shift
     assert line.node_cross_offsets[1] == 10 + 20  # short: shifted by 20
 
 
@@ -264,5 +266,5 @@ def test_align_line_end_shorter_node_bottom_aligned():
     plan = build_placement_plan(nodes, [], constraints)
     line = plan.lines[0]
     # shift for short = 80 - 40 = 40
-    assert line.node_cross_offsets[0] == 10       # tall
+    assert line.node_cross_offsets[0] == 10  # tall
     assert line.node_cross_offsets[1] == 10 + 40  # short

@@ -3,6 +3,7 @@
 OpenTelemetry is optional; when not available a no-op `Telemetry` is
 returned so callers can always call `shutdown()` safely.
 """
+
 from __future__ import annotations
 
 from contextlib import contextmanager
@@ -15,6 +16,7 @@ try:
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider as SDKTracerProvider
     from opentelemetry.sdk.trace.export import SimpleSpanProcessor, ConsoleSpanExporter
+
     OTEL_AVAILABLE = True
 except Exception:  # pragma: no cover - optional dependency
     trace = None  # type: ignore
@@ -49,7 +51,6 @@ class _NoOpSpan:
     def add_event(self, name: str, attributes: Any = None, **_: Any) -> None:  # noqa: ARG002
         """No-op event adder."""
         return None
-    
 
 
 class _NoOpTracer:
@@ -73,7 +74,9 @@ class Telemetry:
     shutdown: Callable[[], None]
 
 
-def init_telemetry(service_name: str = "flo", *, console_export: bool = True) -> Telemetry:
+def init_telemetry(
+    service_name: str = "flo", *, console_export: bool = True
+) -> Telemetry:
     """Initialize a minimal OpenTelemetry tracer for the CLI.
 
     Returns a `Telemetry` object with a `tracer` and a `shutdown()` function
@@ -91,7 +94,11 @@ def init_telemetry(service_name: str = "flo", *, console_export: bool = True) ->
         resource = Resource.create({"service.name": service_name})
         provider = SDKTracerProvider(resource=resource)
 
-        if console_export and ConsoleSpanExporter is not None and SimpleSpanProcessor is not None:
+        if (
+            console_export
+            and ConsoleSpanExporter is not None
+            and SimpleSpanProcessor is not None
+        ):
             try:
                 exporter = ConsoleSpanExporter()
                 provider.add_span_processor(SimpleSpanProcessor(exporter))
@@ -120,7 +127,9 @@ def init_telemetry(service_name: str = "flo", *, console_export: bool = True) ->
                 pass
 
             # Best-effort: attempt to shut down attached span processors
-            span_processors = getattr(_provider, "span_processors", None) or getattr(_provider, "_active_span_processors", None)
+            span_processors = getattr(_provider, "span_processors", None) or getattr(
+                _provider, "_active_span_processors", None
+            )
             if span_processors:
                 for sp in list(span_processors):
                     try:
@@ -153,7 +162,9 @@ def shutdown() -> None:
             shutdown_fn()
             return
     except Exception:
-        span_processors = getattr(_provider, "span_processors", None) or getattr(_provider, "_active_span_processors", None)
+        span_processors = getattr(_provider, "span_processors", None) or getattr(
+            _provider, "_active_span_processors", None
+        )
         if span_processors:
             for sp in list(span_processors):
                 try:
@@ -174,6 +185,7 @@ def record_span_error(span: Any, message: str = "") -> None:
     """
     try:
         from opentelemetry.trace import StatusCode  # type: ignore[import]
+
         set_status = getattr(span, "set_status", None)
         if callable(set_status):
             set_status(StatusCode.ERROR, message)

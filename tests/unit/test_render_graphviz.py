@@ -60,7 +60,12 @@ def test_flowchart_emits_subprocess_clusters_for_parent_links():
         "nodes": [
             {"id": "start", "kind": "start", "name": "Start"},
             {"id": "prep", "kind": "subprocess", "name": "Prep"},
-            {"id": "gather", "kind": "task", "name": "Gather", "subprocess_parent": "prep"},
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "subprocess_parent": "prep",
+            },
             {"id": "mix", "kind": "task", "name": "Mix", "subprocess_parent": "prep"},
             {"id": "end", "kind": "end", "name": "End"},
         ],
@@ -75,14 +80,22 @@ def test_flowchart_emits_subprocess_clusters_for_parent_links():
     out = render_dot(ir_like, options={"diagram": "flowchart"})
     assert "subgraph cluster_subprocess_prep" in out
     assert 'label="Prep";' in out
-    assert '"prep" [label="Prep", shape=component, style="rounded,filled", fillcolor="lightsteelblue1", color=steelblue4, penwidth=1.4];' in out
+    assert (
+        '"prep" [label="Prep", shape=component, style="rounded,filled", fillcolor="lightsteelblue1", color=steelblue4, penwidth=1.4];'
+        in out
+    )
 
 
 def test_flowchart_subprocess_view_expanded_keeps_children_visible():
     ir_like = {
         "nodes": [
             {"id": "prep", "kind": "subprocess", "name": "Prep"},
-            {"id": "gather", "kind": "task", "name": "Gather", "subprocess_parent": "prep"},
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "subprocess_parent": "prep",
+            },
             {"id": "mix", "kind": "task", "name": "Mix", "subprocess_parent": "prep"},
             {"id": "end", "kind": "end", "name": "End"},
         ],
@@ -93,7 +106,9 @@ def test_flowchart_subprocess_view_expanded_keeps_children_visible():
         ],
     }
 
-    out = render_dot(ir_like, options={"diagram": "flowchart", "subprocess_view": "expanded"})
+    out = render_dot(
+        ir_like, options={"diagram": "flowchart", "subprocess_view": "expanded"}
+    )
     assert "subgraph cluster_subprocess_prep" in out
     assert '"gather" [label="Gather", shape=box];' in out
     assert '"mix" [label="Mix", shape=box];' in out
@@ -104,7 +119,12 @@ def test_flowchart_subprocess_view_parent_only_hides_children_and_collapses_path
         "nodes": [
             {"id": "start", "kind": "start", "name": "Start"},
             {"id": "prep", "kind": "subprocess", "name": "Prep"},
-            {"id": "gather", "kind": "task", "name": "Gather", "subprocess_parent": "prep"},
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "subprocess_parent": "prep",
+            },
             {"id": "mix", "kind": "task", "name": "Mix", "subprocess_parent": "prep"},
             {"id": "end", "kind": "end", "name": "End"},
         ],
@@ -116,7 +136,9 @@ def test_flowchart_subprocess_view_parent_only_hides_children_and_collapses_path
         ],
     }
 
-    out = render_dot(ir_like, options={"diagram": "flowchart", "subprocess_view": "parent-only"})
+    out = render_dot(
+        ir_like, options={"diagram": "flowchart", "subprocess_view": "parent-only"}
+    )
     assert "subgraph cluster_subprocess_prep" not in out
     assert '"gather" [label="Gather", shape=box];' not in out
     assert '"mix" [label="Mix", shape=box];' not in out
@@ -128,8 +150,18 @@ def test_flowchart_parent_only_collapses_nested_subprocess_depth():
         "nodes": [
             {"id": "start", "kind": "start", "name": "Start"},
             {"id": "outer", "kind": "subprocess", "name": "Outer"},
-            {"id": "inner", "kind": "subprocess", "name": "Inner", "subprocess_parent": "outer"},
-            {"id": "task", "kind": "task", "name": "Task", "subprocess_parent": "inner"},
+            {
+                "id": "inner",
+                "kind": "subprocess",
+                "name": "Inner",
+                "subprocess_parent": "outer",
+            },
+            {
+                "id": "task",
+                "kind": "task",
+                "name": "Task",
+                "subprocess_parent": "inner",
+            },
             {"id": "end", "kind": "end", "name": "End"},
         ],
         "edges": [
@@ -140,7 +172,9 @@ def test_flowchart_parent_only_collapses_nested_subprocess_depth():
         ],
     }
 
-    out = render_dot(ir_like, options={"diagram": "flowchart", "subprocess_view": "parent-only"})
+    out = render_dot(
+        ir_like, options={"diagram": "flowchart", "subprocess_view": "parent-only"}
+    )
     assert '"inner" [label="Inner", shape=component' not in out
     assert '"task" [label="Task", shape=box];' not in out
     assert '"outer" -> "end" [];' in out
@@ -150,8 +184,18 @@ def test_flowchart_expanded_supports_nested_subprocess_depth():
     ir_like = {
         "nodes": [
             {"id": "outer", "kind": "subprocess", "name": "Outer"},
-            {"id": "inner", "kind": "subprocess", "name": "Inner", "subprocess_parent": "outer"},
-            {"id": "task", "kind": "task", "name": "Task", "subprocess_parent": "inner"},
+            {
+                "id": "inner",
+                "kind": "subprocess",
+                "name": "Inner",
+                "subprocess_parent": "outer",
+            },
+            {
+                "id": "task",
+                "kind": "task",
+                "name": "Task",
+                "subprocess_parent": "inner",
+            },
             {"id": "end", "kind": "end", "name": "End"},
         ],
         "edges": [
@@ -161,7 +205,9 @@ def test_flowchart_expanded_supports_nested_subprocess_depth():
         ],
     }
 
-    out = render_dot(ir_like, options={"diagram": "flowchart", "subprocess_view": "expanded"})
+    out = render_dot(
+        ir_like, options={"diagram": "flowchart", "subprocess_view": "expanded"}
+    )
     assert "subgraph cluster_subprocess_outer" in out
     assert "subgraph cluster_subprocess_inner" in out
     assert '"inner" [label="Inner", shape=component' in out
@@ -172,7 +218,12 @@ def test_subprocess_parent_from_attrs_is_supported_for_flowchart_clusters():
     ir_like = {
         "nodes": [
             {"id": "prep", "kind": "subprocess", "name": "Prep"},
-            {"id": "gather", "kind": "task", "name": "Gather", "attrs": {"subprocess_parent": "prep"}},
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "attrs": {"subprocess_parent": "prep"},
+            },
         ],
         "edges": [{"source": "prep", "target": "gather"}],
     }
@@ -195,8 +246,14 @@ def test_swimlane_emits_lane_boundary_anchors():
     assert "subgraph lane_right_boundary" in out
     assert "__lane_sales_left" in out
     assert "__lane_ops_right" in out
-    assert '"__lane_sales_left" -> "__lane_ops_left" [style=invis, weight=200, minlen=1];' in out
-    assert '"__lane_sales_right" -> "__lane_ops_right" [style=invis, weight=200, minlen=1];' in out
+    assert (
+        '"__lane_sales_left" -> "__lane_ops_left" [style=invis, weight=200, minlen=1];'
+        in out
+    )
+    assert (
+        '"__lane_sales_right" -> "__lane_ops_right" [style=invis, weight=200, minlen=1];'
+        in out
+    )
 
 
 def test_swimlane_emits_lane_local_subprocess_cluster():
@@ -204,8 +261,20 @@ def test_swimlane_emits_lane_local_subprocess_cluster():
         "nodes": [
             {"id": "start", "kind": "start", "name": "Start", "lane": "ops"},
             {"id": "prep", "kind": "subprocess", "name": "Prep", "lane": "ops"},
-            {"id": "gather", "kind": "task", "name": "Gather", "lane": "ops", "subprocess_parent": "prep"},
-            {"id": "mix", "kind": "task", "name": "Mix", "lane": "ops", "subprocess_parent": "prep"},
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "lane": "ops",
+                "subprocess_parent": "prep",
+            },
+            {
+                "id": "mix",
+                "kind": "task",
+                "name": "Mix",
+                "lane": "ops",
+                "subprocess_parent": "prep",
+            },
             {"id": "end", "kind": "end", "name": "End", "lane": "ops"},
         ],
         "edges": [
@@ -219,15 +288,30 @@ def test_swimlane_emits_lane_local_subprocess_cluster():
     out = render_dot(ir_like, options={"diagram": "swimlane"})
     assert "subgraph cluster_ops" in out
     assert "subgraph cluster_subprocess_prep" in out
-    assert '"prep" [label="Prep", shape=component, style="rounded,filled", fillcolor="lightsteelblue1", color=steelblue4, penwidth=1.4];' in out
+    assert (
+        '"prep" [label="Prep", shape=component, style="rounded,filled", fillcolor="lightsteelblue1", color=steelblue4, penwidth=1.4];'
+        in out
+    )
 
 
 def test_swimlane_parent_only_hides_subprocess_children():
     ir_like = {
         "nodes": [
             {"id": "prep", "kind": "subprocess", "name": "Prep", "lane": "ops"},
-            {"id": "gather", "kind": "task", "name": "Gather", "lane": "ops", "subprocess_parent": "prep"},
-            {"id": "mix", "kind": "task", "name": "Mix", "lane": "ops", "subprocess_parent": "prep"},
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "lane": "ops",
+                "subprocess_parent": "prep",
+            },
+            {
+                "id": "mix",
+                "kind": "task",
+                "name": "Mix",
+                "lane": "ops",
+                "subprocess_parent": "prep",
+            },
             {"id": "end", "kind": "end", "name": "End", "lane": "ops"},
         ],
         "edges": [
@@ -237,7 +321,9 @@ def test_swimlane_parent_only_hides_subprocess_children():
         ],
     }
 
-    out = render_dot(ir_like, options={"diagram": "swimlane", "subprocess_view": "parent-only"})
+    out = render_dot(
+        ir_like, options={"diagram": "swimlane", "subprocess_view": "parent-only"}
+    )
     assert "subgraph cluster_ops" in out
     assert "subgraph cluster_subprocess_prep" not in out
     assert '"gather" [label="Gather", shape=box];' not in out
@@ -249,7 +335,13 @@ def test_swimlane_does_not_cross_lane_subprocess_cluster():
     ir_like = {
         "nodes": [
             {"id": "prep", "kind": "subprocess", "name": "Prep", "lane": "ops"},
-            {"id": "gather", "kind": "task", "name": "Gather", "lane": "sales", "subprocess_parent": "prep"},
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "lane": "sales",
+                "subprocess_parent": "prep",
+            },
         ],
         "edges": [{"source": "prep", "target": "gather"}],
     }
@@ -270,7 +362,7 @@ def test_summary_detail_omits_edge_labels():
         "edges": [{"source": "d", "target": "a", "outcome": "yes"}],
     }
     out = render_dot(ir_like, options={"detail": "summary"})
-    assert "label=\"yes\"" not in out
+    assert 'label="yes"' not in out
 
 
 def test_verbose_analysis_detail_includes_kind_and_lane():
@@ -341,9 +433,18 @@ def test_backward_edge_uses_graphviz_defaults():
         ],
     }
     out = render_dot(ir_like)
-    assert '"__rework_corridor_approve_collect_1" [shape=point, width=0.01, height=0.01, label="", style=invis];' in out
-    assert '"approve" -> "__rework_corridor_approve_collect_1" [tailport=e, constraint=false, weight=0, style=dashed, arrowhead=none];' in out
-    assert '"__rework_corridor_approve_collect_1" -> "collect" [headport=w, constraint=false, minlen=3, weight=0, style=dashed, label="no"];' in out
+    assert (
+        '"__rework_corridor_approve_collect_1" [shape=point, width=0.01, height=0.01, label="", style=invis];'
+        in out
+    )
+    assert (
+        '"approve" -> "__rework_corridor_approve_collect_1" [tailport=e, constraint=false, weight=0, style=dashed, arrowhead=none];'
+        in out
+    )
+    assert (
+        '"__rework_corridor_approve_collect_1" -> "collect" [headport=w, constraint=false, minlen=3, weight=0, style=dashed, label="no"];'
+        in out
+    )
 
 
 def test_backward_non_decision_edge_uses_graphviz_defaults():
@@ -358,9 +459,18 @@ def test_backward_non_decision_edge_uses_graphviz_defaults():
         ],
     }
     out = render_dot(ir_like)
-    assert '"__rework_corridor_b_a_1" [shape=point, width=0.01, height=0.01, label="", style=invis];' in out
-    assert '"b" -> "__rework_corridor_b_a_1" [tailport=e, constraint=false, weight=0, style=dashed, arrowhead=none];' in out
-    assert '"__rework_corridor_b_a_1" -> "a" [headport=w, constraint=false, minlen=3, weight=0, style=dashed, label="retry"];' in out
+    assert (
+        '"__rework_corridor_b_a_1" [shape=point, width=0.01, height=0.01, label="", style=invis];'
+        in out
+    )
+    assert (
+        '"b" -> "__rework_corridor_b_a_1" [tailport=e, constraint=false, weight=0, style=dashed, arrowhead=none];'
+        in out
+    )
+    assert (
+        '"__rework_corridor_b_a_1" -> "a" [headport=w, constraint=false, minlen=3, weight=0, style=dashed, label="retry"];'
+        in out
+    )
 
 
 def test_explicit_rework_edge_uses_shared_routing_hints():
@@ -376,15 +486,30 @@ def test_explicit_rework_edge_uses_shared_routing_hints():
             {"source": "start", "target": "review"},
             {"source": "review", "target": "decision"},
             {"source": "decision", "target": "end", "outcome": "yes"},
-            {"source": "decision", "target": "rework", "outcome": "no", "edge_type": "rework", "rework": True},
+            {
+                "source": "decision",
+                "target": "rework",
+                "outcome": "no",
+                "edge_type": "rework",
+                "rework": True,
+            },
             {"source": "rework", "target": "review"},
         ],
     }
 
     out = render_dot(ir_like)
-    assert '"__rework_corridor_decision_rework_3" [shape=point, width=0.01, height=0.01, label="", style=invis];' in out
-    assert '"decision" -> "__rework_corridor_decision_rework_3" [tailport=e, constraint=false, weight=0, style=dashed, arrowhead=none];' in out
-    assert '"__rework_corridor_decision_rework_3" -> "rework" [headport=w, constraint=false, minlen=3, weight=0, style=dashed, label="no"];' in out
+    assert (
+        '"__rework_corridor_decision_rework_3" [shape=point, width=0.01, height=0.01, label="", style=invis];'
+        in out
+    )
+    assert (
+        '"decision" -> "__rework_corridor_decision_rework_3" [tailport=e, constraint=false, weight=0, style=dashed, arrowhead=none];'
+        in out
+    )
+    assert (
+        '"__rework_corridor_decision_rework_3" -> "rework" [headport=w, constraint=false, minlen=3, weight=0, style=dashed, label="no"];'
+        in out
+    )
 
 
 def test_flowchart_layout_wrap_uses_shared_autoformat_hints():
@@ -408,7 +533,12 @@ def test_flowchart_layout_wrap_uses_shared_autoformat_hints():
 
     out = render_dot(
         ir_like,
-        options={"diagram": "flowchart", "orientation": "lr", "layout_wrap": "auto", "layout_target_columns": 2},
+        options={
+            "diagram": "flowchart",
+            "orientation": "lr",
+            "layout_wrap": "auto",
+            "layout_target_columns": 2,
+        },
     )
 
     assert "// Autoformat wrapped layout: orientation=lr" in out
@@ -416,9 +546,18 @@ def test_flowchart_layout_wrap_uses_shared_autoformat_hints():
     assert "rankdir=TB;" in out
     assert "subgraph wrap_rank_lr_0" in out
     assert "splines=ortho" in out
-    assert '"__boundary_corridor_a_b_1" [shape=point, width=0.01, height=0.01, label="", style=invis];' in out
-    assert '"a" -> "__boundary_corridor_a_b_1" [tailport=s, constraint=false, weight=0, arrowhead=none, headlabel=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#455A64" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#455A64"><B>Continue to p2 [b]</B></FONT></TD></TR></TABLE>>];' in out
-    assert '"__boundary_corridor_a_b_1" -> "b" [headport=n, minlen=2, penwidth=1.2, taillabel=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#455A64" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#455A64"><B>Continued from p1 [a]</B></FONT></TD></TR></TABLE>>];' in out
+    assert (
+        '"__boundary_corridor_a_b_1" [shape=point, width=0.01, height=0.01, label="", style=invis];'
+        in out
+    )
+    assert (
+        '"a" -> "__boundary_corridor_a_b_1" [tailport=s, constraint=false, weight=0, arrowhead=none, headlabel=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#455A64" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#455A64"><B>Continue to p2 [b]</B></FONT></TD></TR></TABLE>>];'
+        in out
+    )
+    assert (
+        '"__boundary_corridor_a_b_1" -> "b" [headport=n, minlen=2, penwidth=1.2, taillabel=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#455A64" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#455A64"><B>Continued from p1 [a]</B></FONT></TD></TR></TABLE>>];'
+        in out
+    )
 
 
 def test_swimlane_layout_wrap_uses_shared_autoformat_hints():
@@ -440,7 +579,12 @@ def test_swimlane_layout_wrap_uses_shared_autoformat_hints():
 
     out = render_dot(
         ir_like,
-        options={"diagram": "swimlane", "orientation": "tb", "layout_wrap": "auto", "layout_target_columns": 2},
+        options={
+            "diagram": "swimlane",
+            "orientation": "tb",
+            "layout_wrap": "auto",
+            "layout_target_columns": 2,
+        },
     )
 
     assert "// Autoformat wrapped layout: orientation=tb" in out
@@ -449,15 +593,29 @@ def test_swimlane_layout_wrap_uses_shared_autoformat_hints():
     assert "subgraph wrap_rank_tb_0" in out
     assert "subgraph cluster_sales" in out
     assert "subgraph cluster_ops" in out
-    assert '"__boundary_corridor_a_b_1" [shape=point, width=0.01, height=0.01, label="", style=invis];' in out
-    assert '"a" -> "__boundary_corridor_a_b_1" [tailport=e, constraint=false, weight=0, arrowhead=none, headlabel=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#455A64" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#455A64"><B>Continue to p2 [b]</B></FONT></TD></TR></TABLE>>];' in out
-    assert '"__boundary_corridor_a_b_1" -> "b" [headport=w, constraint=false, minlen=2, penwidth=1.2, taillabel=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#455A64" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#455A64"><B>Continued from p1 [a]</B></FONT></TD></TR></TABLE>>];' in out
+    assert (
+        '"__boundary_corridor_a_b_1" [shape=point, width=0.01, height=0.01, label="", style=invis];'
+        in out
+    )
+    assert (
+        '"a" -> "__boundary_corridor_a_b_1" [tailport=e, constraint=false, weight=0, arrowhead=none, headlabel=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#455A64" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#455A64"><B>Continue to p2 [b]</B></FONT></TD></TR></TABLE>>];'
+        in out
+    )
+    assert (
+        '"__boundary_corridor_a_b_1" -> "b" [headport=w, constraint=false, minlen=2, penwidth=1.2, taillabel=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#455A64" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#455A64"><B>Continued from p1 [a]</B></FONT></TD></TR></TABLE>>];'
+        in out
+    )
 
 
 def test_node_note_hidden_by_default():
     ir_like = {
         "nodes": [
-            {"id": "task_1", "kind": "task", "name": "Work", "note": "Requires manager signoff"},
+            {
+                "id": "task_1",
+                "kind": "task",
+                "name": "Work",
+                "note": "Requires manager signoff",
+            },
         ],
         "edges": [],
     }
@@ -468,7 +626,12 @@ def test_node_note_hidden_by_default():
 def test_node_note_shown_when_enabled():
     ir_like = {
         "nodes": [
-            {"id": "task_1", "kind": "task", "name": "Work", "note": "Requires manager signoff"},
+            {
+                "id": "task_1",
+                "kind": "task",
+                "name": "Work",
+                "note": "Requires manager signoff",
+            },
         ],
         "edges": [],
     }
@@ -486,205 +649,3 @@ def test_orientation_tb_sets_rankdir_tb():
     }
     out = render_dot(ir_like, options={"orientation": "tb"})
     assert "rankdir=TB;" in out
-
-
-def test_spaghetti_renders_material_and_people_channels_by_default():
-    ir_like = {
-        "nodes": [
-            {
-                "id": "gather",
-                "kind": "task",
-                "name": "Gather",
-                "location": "pantry",
-                "outputs": ["flour"],
-                "workers": ["assistant_baker"],
-            },
-            {
-                "id": "mix",
-                "kind": "task",
-                "name": "Mix",
-                "location": "prep_bench",
-                "inputs": ["flour"],
-                "workers": ["assistant_baker"],
-            },
-        ],
-        "edges": [{"source": "gather", "target": "mix"}],
-        "process": {
-            "metadata": {
-                "locations": [
-                    {"id": "pantry", "name": "Pantry", "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}}},
-                    {"id": "prep_bench", "name": "Prep Bench", "metadata": {"spatial": {"x": 3, "y": 4, "unit": "m"}}},
-                ]
-            }
-        },
-    }
-
-    out = render_dot(ir_like, options={"diagram": "spaghetti", "detail": "verbose"})
-    assert "layout=neato" in out
-    assert "color=tomato4" in out
-    assert "color=royalblue4" in out
-    assert 'xlabel="M 1x"' in out
-    assert 'xlabel="P 1x"' in out
-    assert 'taillabel="items: flour"' in out
-    assert 'taillabel="workers: assistant_baker"' in out
-    assert 'labeldistance="0.7"' in out
-    assert 'labelangle="20"' in out
-
-
-def test_spaghetti_people_channel_filters_material_routes():
-    ir_like = {
-        "nodes": [
-            {
-                "id": "a",
-                "kind": "task",
-                "name": "A",
-                "location": "pantry",
-                "outputs": ["flour"],
-                "workers": ["assistant_baker"],
-            },
-            {
-                "id": "b",
-                "kind": "task",
-                "name": "B",
-                "location": "prep_bench",
-                "inputs": ["flour"],
-                "workers": ["assistant_baker"],
-            },
-        ],
-        "edges": [{"source": "a", "target": "b"}],
-        "process": {
-            "metadata": {
-                "locations": [
-                    {"id": "pantry", "name": "Pantry"},
-                    {"id": "prep_bench", "name": "Prep Bench"},
-                ]
-            }
-        },
-    }
-
-    out = render_dot(ir_like, options={"diagram": "spaghetti", "spaghetti_channel": "people"})
-    assert "color=royalblue4" in out
-    assert "style=dashed" in out
-    assert "color=tomato4" not in out
-
-
-def test_spaghetti_people_worker_mode_emits_per_worker_traces():
-    ir_like = {
-        "nodes": [
-            {
-                "id": "a",
-                "kind": "task",
-                "name": "A",
-                "location": "pantry",
-                "workers": ["lead_baker", "assistant_baker"],
-            },
-            {
-                "id": "b",
-                "kind": "task",
-                "name": "B",
-                "location": "prep_bench",
-                "workers": ["lead_baker", "assistant_baker"],
-            },
-        ],
-        "edges": [{"source": "a", "target": "b"}],
-        "process": {
-            "metadata": {
-                "locations": [
-                    {"id": "pantry", "name": "Pantry"},
-                    {"id": "prep_bench", "name": "Prep Bench"},
-                ]
-            }
-        },
-    }
-
-    out = render_dot(
-        ir_like,
-        options={
-            "diagram": "spaghetti",
-            "spaghetti_channel": "people",
-            "spaghetti_people_mode": "worker",
-            "profile": "analysis",
-        },
-    )
-    assert 'xlabel="P lead_baker 1x"' in out
-    assert 'xlabel="P assistant_baker 1x"' in out
-
-
-def test_spaghetti_people_aggregate_mode_omits_worker_names_from_xlabels():
-    ir_like = {
-        "nodes": [
-            {
-                "id": "a",
-                "kind": "task",
-                "name": "A",
-                "location": "pantry",
-                "workers": ["lead_baker", "assistant_baker"],
-            },
-            {
-                "id": "b",
-                "kind": "task",
-                "name": "B",
-                "location": "prep_bench",
-                "workers": ["lead_baker", "assistant_baker"],
-            },
-        ],
-        "edges": [{"source": "a", "target": "b"}],
-        "process": {
-            "metadata": {
-                "locations": [
-                    {"id": "pantry", "name": "Pantry"},
-                    {"id": "prep_bench", "name": "Prep Bench"},
-                ]
-            }
-        },
-    }
-
-    out = render_dot(
-        ir_like,
-        options={
-            "diagram": "spaghetti",
-            "spaghetti_channel": "people",
-            "spaghetti_people_mode": "aggregate",
-        },
-    )
-    assert 'xlabel="P 1x"' in out
-    assert 'xlabel="P lead_baker 1x"' not in out
-    assert 'xlabel="P assistant_baker 1x"' not in out
-
-
-def test_spaghetti_people_analysis_profile_defaults_to_worker_mode():
-    ir_like = {
-        "nodes": [
-            {
-                "id": "a",
-                "kind": "task",
-                "name": "A",
-                "location": "pantry",
-                "workers": ["lead_baker"],
-            },
-            {
-                "id": "b",
-                "kind": "task",
-                "name": "B",
-                "location": "prep_bench",
-                "workers": ["lead_baker"],
-            },
-        ],
-        "edges": [{"source": "a", "target": "b"}],
-        "process": {
-            "metadata": {
-                "locations": [
-                    {"id": "pantry", "name": "Pantry"},
-                    {"id": "prep_bench", "name": "Prep Bench"},
-                ]
-            }
-        },
-    }
-
-    out = render_dot(ir_like, options={"diagram": "spaghetti", "spaghetti_channel": "people", "profile": "analysis"})
-    assert 'xlabel="P lead_baker 1x"' in out
-
-
-def test_spaghetti_renders_rectangle_boundary_overlay():
-    pass
-

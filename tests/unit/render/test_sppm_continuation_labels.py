@@ -36,17 +36,25 @@ def test_build_sppm_continuation_label_attrs_uses_step_refs_and_page_numbers():
         is_secondary=False,
     )
 
-    assert outgoing == ('headlabel=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#455A64" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#455A64"><B>Continue to p2 [c]</B></FONT></TD></TR></TABLE>>',)
-    assert incoming == ('taillabel=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#455A64" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#455A64"><B>Continued from p1 [b]</B></FONT></TD></TR></TABLE>>',)
+    assert outgoing == (
+        'headlabel=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#455A64" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#455A64"><B>Continue to p2 [c]</B></FONT></TD></TR></TABLE>>',
+    )
+    assert incoming == (
+        'taillabel=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#455A64" BGCOLOR="#FFFFFF"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="10" COLOR="#455A64"><B>Continued from p1 [b]</B></FONT></TD></TR></TABLE>>',
+    )
 
 
 def test_format_sppm_continuation_html_label_uses_lighter_secondary_emphasis():
-    primary = format_sppm_continuation_html_label(text="Continue to p2 [c]", is_secondary=False)
-    secondary = format_sppm_continuation_html_label(text="Continue to p2 [rework]", is_secondary=True)
+    primary = format_sppm_continuation_html_label(
+        text="Continue to p2 [c]", is_secondary=False
+    )
+    secondary = format_sppm_continuation_html_label(
+        text="Continue to p2 [rework]", is_secondary=True
+    )
 
-    assert '<B>Continue to p2 [c]</B>' in primary
+    assert "<B>Continue to p2 [c]</B>" in primary
     assert 'COLOR="#455A64"' in primary
-    assert '<B>' not in secondary
+    assert "<B>" not in secondary
     assert 'COLOR="#90A4AE"' in secondary
 
 

@@ -2,7 +2,10 @@
 
 from flo.render import render_dot
 from flo.render._autoformat_wrap import build_wrap_plan
-from flo.render._sppm_routing import build_sppm_routing_plan, serialize_sppm_routing_plan
+from flo.render._sppm_routing import (
+    build_sppm_routing_plan,
+    serialize_sppm_routing_plan,
+)
 from flo.render.options import RenderOptions
 
 
@@ -18,15 +21,30 @@ def test_sppm_rework_edge_uses_corridor_anchor_and_lr_ports():
         "edges": [
             {"source": "start", "target": "review"},
             {"source": "review", "target": "decision"},
-            {"source": "decision", "target": "rework", "outcome": "no", "edge_type": "rework", "rework": True},
+            {
+                "source": "decision",
+                "target": "rework",
+                "outcome": "no",
+                "edge_type": "rework",
+                "rework": True,
+            },
             {"source": "rework", "target": "end"},
         ],
     }
 
     out = render_dot(ir_like, options={"diagram": "sppm"})
-    assert '"__sppm_rework_corridor_decision_rework" [shape=point, width=0.01, height=0.01, label="", style=invis];' in out
-    assert '"decision":s -> "__sppm_rework_corridor_decision_rework" [constraint=false, style=dashed, weight=0, arrowhead=none];' in out
-    assert '"__sppm_rework_corridor_decision_rework" -> "rework":n [constraint=false, minlen=3, weight=0, style=dashed, xlabel="no"];' in out
+    assert (
+        '"__sppm_rework_corridor_decision_rework" [shape=point, width=0.01, height=0.01, label="", style=invis];'
+        in out
+    )
+    assert (
+        '"decision":s -> "__sppm_rework_corridor_decision_rework" [constraint=false, style=dashed, weight=0, arrowhead=none];'
+        in out
+    )
+    assert (
+        '"__sppm_rework_corridor_decision_rework" -> "rework":n [constraint=false, minlen=3, weight=0, style=dashed, xlabel="no"];'
+        in out
+    )
 
 
 def test_sppm_rework_edge_uses_tb_ports_when_rankdir_tb():
@@ -41,14 +59,26 @@ def test_sppm_rework_edge_uses_tb_ports_when_rankdir_tb():
         "edges": [
             {"source": "start", "target": "review"},
             {"source": "review", "target": "decision"},
-            {"source": "decision", "target": "rework", "outcome": "no", "edge_type": "rework", "rework": True},
+            {
+                "source": "decision",
+                "target": "rework",
+                "outcome": "no",
+                "edge_type": "rework",
+                "rework": True,
+            },
             {"source": "rework", "target": "end"},
         ],
     }
 
     out = render_dot(ir_like, options={"diagram": "sppm", "orientation": "tb"})
-    assert '"decision":e -> "__sppm_rework_corridor_decision_rework" [constraint=false, style=dashed, weight=0, arrowhead=none];' in out
-    assert '"__sppm_rework_corridor_decision_rework" -> "rework":w [constraint=false, minlen=3, weight=0, style=dashed, xlabel="no"];' in out
+    assert (
+        '"decision":e -> "__sppm_rework_corridor_decision_rework" [constraint=false, style=dashed, weight=0, arrowhead=none];'
+        in out
+    )
+    assert (
+        '"__sppm_rework_corridor_decision_rework" -> "rework":w [constraint=false, minlen=3, weight=0, style=dashed, xlabel="no"];'
+        in out
+    )
 
 
 def test_sppm_rework_return_edge_uses_lr_west_to_west_ports():
@@ -70,14 +100,25 @@ def test_sppm_rework_return_edge_uses_lr_west_to_west_ports():
                 "edge_type": "rework",
                 "rework": True,
             },
-            {"source": "rework", "target": "review", "edge_type": "rework", "rework": True},
+            {
+                "source": "rework",
+                "target": "review",
+                "edge_type": "rework",
+                "rework": True,
+            },
             {"source": "decision", "target": "end", "outcome": "yes"},
         ],
     }
 
     out = render_dot(ir_like, options={"diagram": "sppm"})
-    assert '"rework":w -> "__sppm_rework_corridor_rework_review" [constraint=false, style=dashed, weight=0, arrowhead=none];' in out
-    assert '"__sppm_rework_corridor_rework_review" -> "review":w [constraint=false, minlen=3, weight=0, style=dashed];' in out
+    assert (
+        '"rework":w -> "__sppm_rework_corridor_rework_review" [constraint=false, style=dashed, weight=0, arrowhead=none];'
+        in out
+    )
+    assert (
+        '"__sppm_rework_corridor_rework_review" -> "review":w [constraint=false, minlen=3, weight=0, style=dashed];'
+        in out
+    )
 
 
 def test_sppm_routing_plan_marks_wrap_boundary_edges_with_ports_and_boundary_attrs():
@@ -94,7 +135,9 @@ def test_sppm_routing_plan_marks_wrap_boundary_edges_with_ports_and_boundary_att
         {"source": "b", "target": "c"},
         {"source": "c", "target": "end"},
     ]
-    options = RenderOptions(diagram="sppm", orientation="lr", layout_wrap="auto", layout_target_columns=2)
+    options = RenderOptions(
+        diagram="sppm", orientation="lr", layout_wrap="auto", layout_target_columns=2
+    )
     wrap_plan = build_wrap_plan(nodes, options, planner="chunked")
 
     routing_plan = build_sppm_routing_plan(
@@ -115,9 +158,17 @@ def test_sppm_routing_plan_marks_wrap_boundary_edges_with_ports_and_boundary_att
         key=lambda edge: edge.source_id,
     )
     assert [edge.source_id for edge in contract_edges] == ["a", "c"]
-    assert [edge.anchor_id for edge in contract_edges] == ["__wrap_exit_lr_0", "__wrap_exit_lr_1"]
+    assert [edge.anchor_id for edge in contract_edges] == [
+        "__wrap_exit_lr_0",
+        "__wrap_exit_lr_1",
+    ]
     _assert_lr_boundary_route(route)
-    assert set(routing_plan.route_plan.routes.keys()) == {("start", "a"), ("a", "b"), ("b", "c"), ("c", "end")}
+    assert set(routing_plan.route_plan.routes.keys()) == {
+        ("start", "a"),
+        ("a", "b"),
+        ("b", "c"),
+        ("c", "end"),
+    }
 
 
 def test_sppm_routing_plan_splits_rework_edges_into_anchor_segments():
@@ -126,7 +177,13 @@ def test_sppm_routing_plan_splits_rework_edges_into_anchor_segments():
         {"id": "rework", "kind": "task", "name": "Rework", "metadata": {}},
     ]
     edges = [
-        {"source": "decision", "target": "rework", "outcome": "no", "edge_type": "rework", "rework": True},
+        {
+            "source": "decision",
+            "target": "rework",
+            "outcome": "no",
+            "edge_type": "rework",
+            "rework": True,
+        },
     ]
     options = RenderOptions(diagram="sppm")
 
@@ -158,9 +215,9 @@ def test_sppm_routing_plan_splits_rework_edges_into_anchor_segments():
         'xlabel="no"',
     )
     contract = routing_plan.svg_postprocess_contract
-    assert [(edge.source_id, edge.target_id) for edge in contract.rework_branch_edges] == [
-        ("decision", "rework")
-    ]
+    assert [
+        (edge.source_id, edge.target_id) for edge in contract.rework_branch_edges
+    ] == [("decision", "rework")]
     assert contract.rework_return_edges == ()
     assert ("decision", "rework") in routing_plan.route_plan.routes
 
@@ -203,9 +260,16 @@ def test_sppm_routing_plan_uses_explicit_continuation_anchor_metadata_for_non_bo
     assert route.anchors[1].anchor_id == "__sppm_boundary_corridor_a_b_in"
     assert route.anchors[0].attrs[-1] == 'label="P2-EXT"'
     assert route.anchors[1].attrs[-1] == 'label="P1-A"'
-    assert route.segments[0].attrs == ("tailport=e", "arrowhead=none", "constraint=false", "weight=0")
+    assert route.segments[0].attrs == (
+        "tailport=e",
+        "arrowhead=none",
+        "constraint=false",
+        "weight=0",
+    )
     assert route.segments[2].attrs == ("headport=w",)
-    assert serialize_sppm_routing_plan(routing_plan_one) == serialize_sppm_routing_plan(routing_plan_two)
+    assert serialize_sppm_routing_plan(routing_plan_one) == serialize_sppm_routing_plan(
+        routing_plan_two
+    )
 
 
 def test_sppm_routing_plan_classifies_rework_return_contract_edges_separately():
@@ -215,7 +279,13 @@ def test_sppm_routing_plan_classifies_rework_return_contract_edges_separately():
         {"id": "review", "kind": "task", "name": "Review", "metadata": {}},
     ]
     edges = [
-        {"source": "decision", "target": "rework", "outcome": "no", "edge_type": "rework", "rework": True},
+        {
+            "source": "decision",
+            "target": "rework",
+            "outcome": "no",
+            "edge_type": "rework",
+            "rework": True,
+        },
         {"source": "rework", "target": "review", "edge_type": "rework", "rework": True},
     ]
     options = RenderOptions(diagram="sppm")
@@ -229,12 +299,12 @@ def test_sppm_routing_plan_classifies_rework_return_contract_edges_separately():
     )
 
     contract = routing_plan.svg_postprocess_contract
-    assert [(edge.source_id, edge.target_id) for edge in contract.rework_branch_edges] == [
-        ("decision", "rework")
-    ]
-    assert [(edge.source_id, edge.target_id) for edge in contract.rework_return_edges] == [
-        ("rework", "review")
-    ]
+    assert [
+        (edge.source_id, edge.target_id) for edge in contract.rework_branch_edges
+    ] == [("decision", "rework")]
+    assert [
+        (edge.source_id, edge.target_id) for edge in contract.rework_return_edges
+    ] == [("rework", "review")]
 
 
 def test_sppm_routing_plan_collects_decision_outcome_label_contract_edges():
@@ -245,7 +315,13 @@ def test_sppm_routing_plan_collects_decision_outcome_label_contract_edges():
     ]
     edges = [
         {"source": "decision", "target": "approve", "outcome": "yes"},
-        {"source": "decision", "target": "rework", "outcome": "no", "edge_type": "rework", "rework": True},
+        {
+            "source": "decision",
+            "target": "rework",
+            "outcome": "no",
+            "edge_type": "rework",
+            "rework": True,
+        },
     ]
     options = RenderOptions(diagram="sppm")
 
@@ -259,7 +335,10 @@ def test_sppm_routing_plan_collects_decision_outcome_label_contract_edges():
 
     contract = routing_plan.svg_postprocess_contract
     assert len(contract.decision_outcome_label_edges) == 2
-    pairs = {(edge.source_id, edge.target_id) for edge in contract.decision_outcome_label_edges}
+    pairs = {
+        (edge.source_id, edge.target_id)
+        for edge in contract.decision_outcome_label_edges
+    }
     assert ("decision", "approve") in pairs
     assert ("__sppm_rework_corridor_decision_rework", "rework") in pairs
 
@@ -277,7 +356,12 @@ def _assert_lr_boundary_route_layout(route) -> None:
     assert route.anchors[1].anchor_id == "__sppm_boundary_corridor_a_b_in"
     assert route.anchors[1].attrs[-1] == 'label="P1-A"'
     assert route.segments[0].target_id == "__wrap_exit_lr_0"
-    assert route.segments[0].attrs == ('tailport="out_0:e"', "arrowhead=none", "constraint=false", "weight=0")
+    assert route.segments[0].attrs == (
+        'tailport="out_0:e"',
+        "arrowhead=none",
+        "constraint=false",
+        "weight=0",
+    )
 
 
 def _assert_lr_boundary_route_links(route) -> None:
@@ -288,7 +372,11 @@ def _assert_lr_boundary_route_links(route) -> None:
     assert route.segments[2].target_id == "__sppm_boundary_corridor_a_b_in"
     assert route.segments[2].attrs == ("arrowhead=none", "constraint=false", "weight=0")
     assert route.segments[3].source_id == "__sppm_boundary_corridor_a_b_in"
-    assert route.segments[3].attrs == ('headport="boundary_in:s"', "minlen=2", "penwidth=1.2")
+    assert route.segments[3].attrs == (
+        'headport="boundary_in:s"',
+        "minlen=2",
+        "penwidth=1.2",
+    )
 
 
 def test_sppm_routing_plan_uses_tb_ports_for_wrapped_tb_layout():
@@ -299,7 +387,9 @@ def test_sppm_routing_plan_uses_tb_ports_for_wrapped_tb_layout():
         {"id": "c", "kind": "task", "name": "C", "metadata": {}},
     ]
     edges = [{"source": "a", "target": "b"}, {"source": "b", "target": "c"}]
-    options = RenderOptions(diagram="sppm", orientation="tb", layout_wrap="auto", layout_target_columns=2)
+    options = RenderOptions(
+        diagram="sppm", orientation="tb", layout_wrap="auto", layout_target_columns=2
+    )
     wrap_plan = build_wrap_plan(nodes, options, planner="chunked")
 
     routing_plan = build_sppm_routing_plan(
@@ -330,7 +420,9 @@ def test_sppm_routing_plan_snapshot_wrap_boundary_and_direct_segments():
         {"source": "b", "target": "c"},
         {"source": "c", "target": "end"},
     ]
-    options = RenderOptions(diagram="sppm", orientation="lr", layout_wrap="auto", layout_target_columns=2)
+    options = RenderOptions(
+        diagram="sppm", orientation="lr", layout_wrap="auto", layout_target_columns=2
+    )
     wrap_plan = build_wrap_plan(nodes, options, planner="chunked")
 
     routing_plan = build_sppm_routing_plan(
@@ -349,8 +441,8 @@ def test_sppm_routing_plan_snapshot_wrap_boundary_and_direct_segments():
             '  anchor __sppm_boundary_corridor_a_b_out [shape=circle, width=0.58, height=0.58, fixedsize=true, style=filled, fillcolor="#FFFFFF", color="#455A64", penwidth=1.2, fontname=Helvetica, fontsize=9, label="P2-B"]',
             '  anchor __sppm_boundary_corridor_a_b_in [shape=circle, width=0.58, height=0.58, fixedsize=true, style=filled, fillcolor="#FFFFFF", color="#455A64", penwidth=1.2, fontname=Helvetica, fontsize=9, label="P1-A"]',
             '  segment a->__wrap_exit_lr_0 [tailport="out_0:e", arrowhead=none, constraint=false, weight=0]',
-            '  segment __wrap_exit_lr_0->__sppm_boundary_corridor_a_b_out [arrowhead=none, constraint=false, weight=0]',
-            '  segment __sppm_boundary_corridor_a_b_out->__sppm_boundary_corridor_a_b_in [arrowhead=none, constraint=false, weight=0]',
+            "  segment __wrap_exit_lr_0->__sppm_boundary_corridor_a_b_out [arrowhead=none, constraint=false, weight=0]",
+            "  segment __sppm_boundary_corridor_a_b_out->__sppm_boundary_corridor_a_b_in [arrowhead=none, constraint=false, weight=0]",
             '  segment __sppm_boundary_corridor_a_b_in->b [headport="boundary_in:s", minlen=2, penwidth=1.2]',
             "edge b->c kind=direct boundary=False rework=False",
             "  segment b->c [tailport=e, headport=w]",
@@ -359,9 +451,9 @@ def test_sppm_routing_plan_snapshot_wrap_boundary_and_direct_segments():
             '  anchor __sppm_boundary_corridor_c_end_out [shape=circle, width=0.58, height=0.58, fixedsize=true, style=filled, fillcolor="#FFFFFF", color="#455A64", penwidth=1.2, fontname=Helvetica, fontsize=9, label="P3-E"]',
             '  anchor __sppm_boundary_corridor_c_end_in [shape=circle, width=0.58, height=0.58, fixedsize=true, style=filled, fillcolor="#FFFFFF", color="#455A64", penwidth=1.2, fontname=Helvetica, fontsize=9, label="P2-C"]',
             '  segment c->__wrap_exit_lr_1 [tailport="out_0:e", arrowhead=none, constraint=false, weight=0]',
-            '  segment __wrap_exit_lr_1->__sppm_boundary_corridor_c_end_out [arrowhead=none, constraint=false, weight=0]',
-            '  segment __sppm_boundary_corridor_c_end_out->__sppm_boundary_corridor_c_end_in [arrowhead=none, constraint=false, weight=0]',
-            '  segment __sppm_boundary_corridor_c_end_in->end [headport=n, minlen=2, penwidth=1.2]',
+            "  segment __wrap_exit_lr_1->__sppm_boundary_corridor_c_end_out [arrowhead=none, constraint=false, weight=0]",
+            "  segment __sppm_boundary_corridor_c_end_out->__sppm_boundary_corridor_c_end_in [arrowhead=none, constraint=false, weight=0]",
+            "  segment __sppm_boundary_corridor_c_end_in->end [headport=n, minlen=2, penwidth=1.2]",
             "edge start->a kind=direct boundary=False rework=False",
             "  segment start->a [tailport=e, headport=w]",
         ]
@@ -374,7 +466,12 @@ def _assert_tb_boundary_route(route) -> None:
     assert route.anchors[0].attrs[-1] == 'label="P2-B"'
     assert route.anchors[1].anchor_id == "__sppm_boundary_corridor_a_b_in"
     assert route.anchors[1].attrs[-1] == 'label="P1-A"'
-    assert route.segments[0].attrs == ("tailport=s", "arrowhead=none", "constraint=false", "weight=0")
+    assert route.segments[0].attrs == (
+        "tailport=s",
+        "arrowhead=none",
+        "constraint=false",
+        "weight=0",
+    )
     assert route.segments[1].source_id == "__sppm_boundary_corridor_a_b_out"
     assert route.segments[1].target_id == "__sppm_boundary_corridor_a_b_in"
     assert route.segments[1].attrs == ("arrowhead=none", "constraint=false", "weight=0")
@@ -390,7 +487,13 @@ def test_sppm_routing_plan_snapshot_rework_includes_anchor_segments():
         {"id": "done", "kind": "task", "name": "Done", "metadata": {}},
     ]
     edges = [
-        {"source": "decision", "target": "rework", "outcome": "no", "edge_type": "rework", "rework": True},
+        {
+            "source": "decision",
+            "target": "rework",
+            "outcome": "no",
+            "edge_type": "rework",
+            "rework": True,
+        },
         {"source": "rework", "target": "done"},
     ]
     options = RenderOptions(diagram="sppm")
@@ -407,9 +510,9 @@ def test_sppm_routing_plan_snapshot_rework_includes_anchor_segments():
     expected = "\n".join(
         [
             "edge decision->rework kind=rework boundary=False rework=True",
-            "  anchor __sppm_rework_corridor_decision_rework [shape=point, width=0.01, height=0.01, label=\"\", style=invis]",
+            '  anchor __sppm_rework_corridor_decision_rework [shape=point, width=0.01, height=0.01, label="", style=invis]',
             "  segment decision->__sppm_rework_corridor_decision_rework [tailport=s, constraint=false, style=dashed, weight=0, arrowhead=none]",
-                "  segment __sppm_rework_corridor_decision_rework->rework [headport=n, constraint=false, minlen=3, weight=0, style=dashed, xlabel=\"no\"]",
+            '  segment __sppm_rework_corridor_decision_rework->rework [headport=n, constraint=false, minlen=3, weight=0, style=dashed, xlabel="no"]',
             "edge rework->done kind=direct boundary=False rework=False",
             "  segment rework->done [tailport=e, headport=w]",
         ]
@@ -433,7 +536,9 @@ def test_sppm_routing_plan_includes_corridor_plan_for_placement_wrap():
         {"source": "c", "target": "d"},
         {"source": "d", "target": "end"},
     ]
-    options = RenderOptions(diagram="sppm", orientation="lr", layout_wrap="auto", layout_target_columns=2)
+    options = RenderOptions(
+        diagram="sppm", orientation="lr", layout_wrap="auto", layout_target_columns=2
+    )
     wrap_plan = build_wrap_plan(nodes, options, planner="placement")
 
     routing_plan = build_sppm_routing_plan(
@@ -454,10 +559,13 @@ def test_sppm_routing_plan_includes_corridor_plan_for_placement_wrap():
         if line_index.get(str(edge["source"])) != line_index.get(str(edge["target"]))
     }
     assert set(routing_plan.corridor_plan.edge_lane_hops.keys()) == expected_cross_line
-    assert set(routing_plan.route_plan.routes.keys()) == {(
-        str(edge["source"]),
-        str(edge["target"]),
-    ) for edge in edges}
+    assert set(routing_plan.route_plan.routes.keys()) == {
+        (
+            str(edge["source"]),
+            str(edge["target"]),
+        )
+        for edge in edges
+    }
     for lane_hops in routing_plan.corridor_plan.edge_lane_hops.values():
         assert lane_hops
         for lane_id in lane_hops:

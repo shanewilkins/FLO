@@ -4,6 +4,7 @@
 Exits with non-zero when any function/class has complexity > threshold.
 Designed to be run from pre-commit or CI.
 """
+
 from __future__ import annotations
 
 import sys

@@ -24,7 +24,10 @@ def test_sppm_va_node_gets_green_fill():
                 "id": "wash",
                 "kind": "task",
                 "name": "Wash",
-                "metadata": {"value_class": "VA", "cycle_time": {"value": 30, "unit": "min"}},
+                "metadata": {
+                    "value_class": "VA",
+                    "cycle_time": {"value": 30, "unit": "min"},
+                },
             }
         ],
         "edges": [],
@@ -75,7 +78,10 @@ def test_sppm_cycle_time_included_in_node_label():
                 "id": "dry",
                 "kind": "task",
                 "name": "Dry",
-                "metadata": {"value_class": "VA", "cycle_time": {"value": 45, "unit": "min"}},
+                "metadata": {
+                    "value_class": "VA",
+                    "cycle_time": {"value": 45, "unit": "min"},
+                },
             }
         ],
         "edges": [],
@@ -92,7 +98,10 @@ def test_sppm_workers_included_in_task_label():
                 "kind": "task",
                 "name": "Fold",
                 "workers": ["Staff"],
-                "metadata": {"value_class": "VA", "cycle_time": {"value": 15, "unit": "min"}},
+                "metadata": {
+                    "value_class": "VA",
+                    "cycle_time": {"value": 15, "unit": "min"},
+                },
             }
         ],
         "edges": [],
@@ -111,7 +120,7 @@ def test_sppm_start_end_use_rounded_rect():
     }
     out = render_dot(ir_like, options={"diagram": "sppm"})
     # Both start and end should use rounded rectangle (shape=rect, style rounded)
-    assert out.count('shape=rect') == 2
+    assert out.count("shape=rect") == 2
     assert out.count('style="rounded,filled"') == 2
 
 
@@ -142,7 +151,11 @@ def test_sppm_decision_name_uses_truncation_policy_for_long_text():
     ir_like = {
         "nodes": [
             {"id": "start", "kind": "start", "name": "Start"},
-            {"id": "decision", "kind": "decision", "name": "Approve customer escalation path now?"},
+            {
+                "id": "decision",
+                "kind": "decision",
+                "name": "Approve customer escalation path now?",
+            },
             {"id": "end", "kind": "end", "name": "End"},
         ],
         "edges": [
@@ -189,7 +202,11 @@ def test_sppm_decision_outcome_labels_follow_truncation_policy():
         ],
         "edges": [
             {"source": "start", "target": "decision"},
-            {"source": "decision", "target": "end", "outcome": "Route to manual quality gate"},
+            {
+                "source": "decision",
+                "target": "end",
+                "outcome": "Route to manual quality gate",
+            },
         ],
     }
     out = render_dot(
@@ -207,7 +224,12 @@ def test_sppm_decision_outcome_labels_follow_truncation_policy():
 def test_sppm_task_cards_have_minimum_content_width():
     ir_like = {
         "nodes": [
-            {"id": "task", "kind": "task", "name": "A", "metadata": {"value_class": "VA"}},
+            {
+                "id": "task",
+                "kind": "task",
+                "name": "A",
+                "metadata": {"value_class": "VA"},
+            },
         ],
         "edges": [],
     }
@@ -218,7 +240,7 @@ def test_sppm_task_cards_have_minimum_content_width():
 
 def test_sppm_wait_time_shown_in_node_info_box():
     """Verify queue delay (wait_time) renders in node labels.
-    
+
     Wait time represents queue/idle delays (e.g., waiting for a resource to
     be available). This is distinct from changeover time, which is setup/
     reconfiguration within a step.
@@ -258,7 +280,7 @@ def test_sppm_zero_wait_time_omitted_from_info_box():
 
 def test_sppm_changeover_time_shown_in_node_info_box():
     """Verify setup/changeover time renders in node labels as a distinct metric.
-    
+
     Changeover time represents setup/reconfiguration delays (e.g., equipment
     changeover, oven preheat). This is distinct from wait time, which is queue
     delays. Both are non-value-adding, but require different improvement approaches:
@@ -283,7 +305,7 @@ def test_sppm_changeover_time_shown_in_node_info_box():
 
 def test_sppm_crossover_time_precedence_prefers_canonical_field_over_legacy_alias():
     """Verify that canonical field names take precedence in metadata extraction.
-    
+
     When both crossover_time and changeover_time (legacy alias) are present,
     the canonical crossover_time field is preferred. This ensures clean
     backward compatibility while directing new code to the standard field.
@@ -343,9 +365,17 @@ def test_sppm_workers_omitted_from_start_end_labels():
 
 def test_sppm_default_theme_is_used_when_no_theme_specified():
     from flo.render._sppm_themes import SPPM_THEMES
+
     default = SPPM_THEMES["default"]
     ir_like = {
-        "nodes": [{"id": "step", "kind": "task", "name": "Step", "metadata": {"value_class": "VA"}}],
+        "nodes": [
+            {
+                "id": "step",
+                "kind": "task",
+                "name": "Step",
+                "metadata": {"value_class": "VA"},
+            }
+        ],
         "edges": [],
     }
     out = render_dot(ir_like, options={"diagram": "sppm"})
@@ -355,19 +385,38 @@ def test_sppm_default_theme_is_used_when_no_theme_specified():
 
 def test_sppm_monochrome_theme_produces_different_colors_than_default():
     ir_like = {
-        "nodes": [{"id": "step", "kind": "task", "name": "Step", "metadata": {"value_class": "VA"}}],
+        "nodes": [
+            {
+                "id": "step",
+                "kind": "task",
+                "name": "Step",
+                "metadata": {"value_class": "VA"},
+            }
+        ],
         "edges": [],
     }
-    out_default = render_dot(ir_like, options={"diagram": "sppm", "sppm_theme": "default"})
-    out_mono = render_dot(ir_like, options={"diagram": "sppm", "sppm_theme": "monochrome"})
+    out_default = render_dot(
+        ir_like, options={"diagram": "sppm", "sppm_theme": "default"}
+    )
+    out_mono = render_dot(
+        ir_like, options={"diagram": "sppm", "sppm_theme": "monochrome"}
+    )
     assert out_default != out_mono
 
 
 def test_sppm_print_theme_resolves_correctly():
     from flo.render._sppm_themes import SPPM_THEMES
+
     print_theme = SPPM_THEMES["print"]
     ir_like = {
-        "nodes": [{"id": "step", "kind": "task", "name": "Step", "metadata": {"value_class": "NVA"}}],
+        "nodes": [
+            {
+                "id": "step",
+                "kind": "task",
+                "name": "Step",
+                "metadata": {"value_class": "NVA"},
+            }
+        ],
         "edges": [],
     }
     out = render_dot(ir_like, options={"diagram": "sppm", "sppm_theme": "print"})
@@ -377,7 +426,14 @@ def test_sppm_print_theme_resolves_correctly():
 
 def test_sppm_custom_theme_from_config_is_resolved():
     ir_like = {
-        "nodes": [{"id": "step", "kind": "task", "name": "Step", "metadata": {"value_class": "VA"}}],
+        "nodes": [
+            {
+                "id": "step",
+                "kind": "task",
+                "name": "Step",
+                "metadata": {"value_class": "VA"},
+            }
+        ],
         "edges": [],
     }
     out = render_dot(
@@ -404,6 +460,7 @@ def test_sppm_custom_theme_from_config_is_resolved():
 
 def test_sppm_unknown_theme_name_falls_back_to_default():
     from flo.render._sppm_themes import resolve_sppm_theme, SPPM_THEMES
+
     theme = resolve_sppm_theme("nonexistent")
     assert theme == SPPM_THEMES["default"]
 
@@ -425,7 +482,9 @@ def test_sppm_compact_density_omits_description():
         ],
         "edges": [],
     }
-    out = render_dot(ir_like, options={"diagram": "sppm", "sppm_label_density": "compact"})
+    out = render_dot(
+        ir_like, options={"diagram": "sppm", "sppm_label_density": "compact"}
+    )
     assert "Combine all dry ingredients" not in out
     assert "CT: 12 min | WT: 3 min wait" in out
 
@@ -447,7 +506,9 @@ def test_sppm_teaching_density_keeps_key_metric_only():
         ],
         "edges": [],
     }
-    out = render_dot(ir_like, options={"diagram": "sppm", "sppm_label_density": "teaching"})
+    out = render_dot(
+        ir_like, options={"diagram": "sppm", "sppm_label_density": "teaching"}
+    )
     assert "CT: 45 min" in out
     assert "WT: 9 min wait" not in out
     assert "Workers:" not in out
@@ -470,7 +531,9 @@ def test_sppm_compact_density_includes_changeover_time():
         ],
         "edges": [],
     }
-    out = render_dot(ir_like, options={"diagram": "sppm", "sppm_label_density": "compact"})
+    out = render_dot(
+        ir_like, options={"diagram": "sppm", "sppm_label_density": "compact"}
+    )
     assert "CT: 12 min | WT: 3 min wait | CO: 6 min crossover" in out
 
 
@@ -512,10 +575,10 @@ def test_sppm_edge_step_numbering_adds_xlabels():
             {"source": "b", "target": "end"},
         ],
     }
-    out = render_dot(ir_like, options={"diagram": "sppm", "sppm_step_numbering": "edge"})
+    out = render_dot(
+        ir_like, options={"diagram": "sppm", "sppm_step_numbering": "edge"}
+    )
     assert 'xlabel="1->2"' in out
-
-
 
 
 def test_layout_spacing_compact_reduces_graph_spacing():
@@ -536,8 +599,26 @@ def test_layout_spacing_compact_reduces_graph_spacing():
             {"source": "d", "target": "end"},
         ],
     }
-    out_standard = render_dot(wrapped_ir, options={"diagram": "sppm", "orientation": "lr", "layout_wrap": "auto", "layout_target_columns": 3, "layout_spacing": "standard"})
-    out_compact = render_dot(wrapped_ir, options={"diagram": "sppm", "orientation": "lr", "layout_wrap": "auto", "layout_target_columns": 3, "layout_spacing": "compact"})
+    out_standard = render_dot(
+        wrapped_ir,
+        options={
+            "diagram": "sppm",
+            "orientation": "lr",
+            "layout_wrap": "auto",
+            "layout_target_columns": 3,
+            "layout_spacing": "standard",
+        },
+    )
+    out_compact = render_dot(
+        wrapped_ir,
+        options={
+            "diagram": "sppm",
+            "orientation": "lr",
+            "layout_wrap": "auto",
+            "layout_target_columns": 3,
+            "layout_spacing": "compact",
+        },
+    )
     assert "nodesep=0.4, ranksep=0.35" in out_standard
     assert "nodesep=0.35, ranksep=0.3" in out_compact
 
@@ -554,8 +635,14 @@ def test_layout_spacing_compact_reduces_graph_spacing():
             {"source": "b", "target": "end"},
         ],
     }
-    out_standard = render_dot(unwrapped_ir, options={"diagram": "sppm", "layout_wrap": "off", "layout_spacing": "standard"})
-    out_compact = render_dot(unwrapped_ir, options={"diagram": "sppm", "layout_wrap": "off", "layout_spacing": "compact"})
+    out_standard = render_dot(
+        unwrapped_ir,
+        options={"diagram": "sppm", "layout_wrap": "off", "layout_spacing": "standard"},
+    )
+    out_compact = render_dot(
+        unwrapped_ir,
+        options={"diagram": "sppm", "layout_wrap": "off", "layout_spacing": "compact"},
+    )
     assert "nodesep=0.9, ranksep=1.2" in out_standard
     assert "nodesep=0.75, ranksep=1.0" in out_compact
 
@@ -578,8 +665,12 @@ def test_sppm_node_numbering_is_deterministic_with_branching():
         ],
     }
 
-    out_one = render_dot(ir_like, options={"diagram": "sppm", "sppm_step_numbering": "node"})
-    out_two = render_dot(ir_like, options={"diagram": "sppm", "sppm_step_numbering": "node"})
+    out_one = render_dot(
+        ir_like, options={"diagram": "sppm", "sppm_step_numbering": "node"}
+    )
+    out_two = render_dot(
+        ir_like, options={"diagram": "sppm", "sppm_step_numbering": "node"}
+    )
 
     assert out_one == out_two
     assert "1. A" in out_one
@@ -600,8 +691,19 @@ def test_sppm_emits_secondary_line_constraints_for_rework_targets():
             {"source": "start", "target": "intake"},
             {"source": "intake", "target": "decision"},
             {"source": "decision", "target": "end", "outcome": "yes"},
-            {"source": "decision", "target": "rework", "outcome": "no", "edge_type": "rework", "rework": True},
-            {"source": "rework", "target": "intake", "edge_type": "rework", "rework": True},
+            {
+                "source": "decision",
+                "target": "rework",
+                "outcome": "no",
+                "edge_type": "rework",
+                "rework": True,
+            },
+            {
+                "source": "rework",
+                "target": "intake",
+                "edge_type": "rework",
+                "rework": True,
+            },
         ],
     }
 
@@ -617,7 +719,7 @@ def test_sppm_emits_secondary_line_constraints_for_rework_targets():
 
 def test_sppm_edge_callout_with_target_changeover_time():
     """Verify edge callouts render changeover time from target node.
-    
+
     When step numbering is enabled and a target node has changeover time,
     the CO value appears as an edge callout. This helps diagnose setup-related
     delays separately from queue delays.
@@ -634,62 +736,8 @@ def test_sppm_edge_callout_with_target_changeover_time():
         ],
         "edges": [{"source": "a", "target": "b"}],
     }
-    out = render_dot(ir_like, options={"diagram": "sppm", "sppm_step_numbering": "edge"})
+    out = render_dot(
+        ir_like, options={"diagram": "sppm", "sppm_step_numbering": "edge"}
+    )
     # Edge should have step numbering and CO callout
     assert 'xlabel="1->2"' in out or "CO: 7 min" in out
-
-
-def test_sppm_footer_auto_aggregates_waiting_time_from_nodes():
-    """Verify footer auto-aggregates total waiting time from all nodes.
-    
-    When rendering SPPM publication with nodes containing wait_time metadata,
-    the footer should display the aggregated total. This helps readers see
-    total queue delays in the process.
-    """
-    process = {
-        "process": {
-            "id": "checkout",
-            "name": "Checkout Process",
-            "metadata": {},
-        },
-        "nodes": [
-            {"id": "scan", "kind": "task", "name": "Scan", "metadata": {"wait_time": {"value": 5, "unit": "min"}}},
-            {"id": "pay", "kind": "task", "name": "Pay", "metadata": {"wait_time": {"value": 3, "unit": "min"}}},
-            {"id": "bag", "kind": "task", "name": "Bag", "metadata": {}},
-        ],
-        "edges": [
-            {"source": "scan", "target": "pay"},
-            {"source": "pay", "target": "bag"},
-        ],
-    }
-
-    out = render_dot(process, options={"diagram": "sppm"})
-    assert "Waiting Time" in out or "8 min" in out
-
-
-def test_sppm_footer_auto_aggregates_changeover_time_from_nodes():
-    """Verify footer auto-aggregates total changeover time from all nodes.
-    
-    When rendering SPPM publication with nodes containing crossover_time metadata,
-    the footer should display the aggregated total. This helps readers see
-    total setup delays in the process.
-    """
-    process = {
-        "process": {
-            "id": "manufacturing",
-            "name": "Manufacturing Line",
-            "metadata": {},
-        },
-        "nodes": [
-            {"id": "cut", "kind": "task", "name": "Cut", "metadata": {"crossover_time": {"value": 10, "unit": "min"}}},
-            {"id": "assemble", "kind": "task", "name": "Assemble", "metadata": {"changeover_time": {"value": 8, "unit": "min"}}},
-            {"id": "test", "kind": "task", "name": "Test", "metadata": {}},
-        ],
-        "edges": [
-            {"source": "cut", "target": "assemble"},
-            {"source": "assemble", "target": "test"},
-        ],
-    }
-
-    out = render_dot(process, options={"diagram": "sppm"})
-    assert "Changeover Time" in out or "18 min" in out

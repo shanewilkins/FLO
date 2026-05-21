@@ -14,16 +14,37 @@ def test_run_sppm_wrap_outputs_continuation_labels(tmp_path):
             {"id": "start", "kind": "start", "name": "Start"},
             {"id": "prep", "kind": "task", "name": "Prep"},
             {"id": "decision", "kind": "decision", "name": "Approved?"},
-            {"id": "rework", "kind": "task", "name": "Rework", "metadata": {"value_class": "NVA"}},
-            {"id": "finish", "kind": "task", "name": "Finish", "metadata": {"value_class": "VA"}},
+            {
+                "id": "rework",
+                "kind": "task",
+                "name": "Rework",
+                "metadata": {"value_class": "NVA"},
+            },
+            {
+                "id": "finish",
+                "kind": "task",
+                "name": "Finish",
+                "metadata": {"value_class": "VA"},
+            },
             {"id": "end", "kind": "end", "name": "End"},
         ],
         "transitions": [
             {"source": "start", "target": "prep"},
             {"source": "prep", "target": "decision"},
             {"source": "decision", "target": "finish", "outcome": "yes"},
-            {"source": "decision", "target": "rework", "outcome": "no", "edge_type": "rework", "rework": True},
-            {"source": "rework", "target": "finish", "edge_type": "rework", "rework": True},
+            {
+                "source": "decision",
+                "target": "rework",
+                "outcome": "no",
+                "edge_type": "rework",
+                "rework": True,
+            },
+            {
+                "source": "rework",
+                "target": "finish",
+                "edge_type": "rework",
+                "rework": True,
+            },
             {"source": "finish", "target": "end"},
         ],
     }
@@ -51,7 +72,9 @@ def test_run_sppm_wrap_outputs_continuation_labels(tmp_path):
     assert 'label="P1-D"' in result.output
 
 
-def test_run_sppm_explicit_continuation_anchor_metadata_outputs_deterministic_tokens(tmp_path):
+def test_run_sppm_explicit_continuation_anchor_metadata_outputs_deterministic_tokens(
+    tmp_path,
+):
     model = tmp_path / "continuations_explicit.flo"
     payload = {
         "spec_version": "0.1",
@@ -197,7 +220,9 @@ def test_wrapped_showcase_svg_preserves_explicit_continuation_override_tokens(tm
     assert "P1-SVC" in svg_text
 
 
-def test_sppm_decision_outcome_label_positions_are_stable_across_repeated_svg_renders(tmp_path):
+def test_sppm_decision_outcome_label_positions_are_stable_across_repeated_svg_renders(
+    tmp_path,
+):
     model = tmp_path / "decision_labels_stable.flo"
     payload = {
         "spec_version": "0.1",
@@ -212,7 +237,13 @@ def test_sppm_decision_outcome_label_positions_are_stable_across_repeated_svg_re
         "transitions": [
             {"source": "start", "target": "decision"},
             {"source": "decision", "target": "approve", "outcome": "yes"},
-            {"source": "decision", "target": "rework", "outcome": "no", "edge_type": "rework", "rework": True},
+            {
+                "source": "decision",
+                "target": "rework",
+                "outcome": "no",
+                "edge_type": "rework",
+                "rework": True,
+            },
             {"source": "approve", "target": "end"},
             {"source": "rework", "target": "end"},
         ],

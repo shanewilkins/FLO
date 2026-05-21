@@ -62,23 +62,34 @@ def _sppm_rework_ports(
     return (source_port, target_port)
 
 
-def _build_sppm_port_policy(*, edges: list[dict[str, Any]], node_kinds: dict[str, str]) -> SppmPortPolicy:
+def _build_sppm_port_policy(
+    *, edges: list[dict[str, Any]], node_kinds: dict[str, str]
+) -> SppmPortPolicy:
     secondary_line_targets: set[str] = set()
     for edge in edges:
         source = str(edge.get("source") or "")
         target = str(edge.get("target") or "")
         if not source or not target:
             continue
-        if not _edge_is_explicit_branch_out(edge=edge, source_kind=node_kinds.get(source, "task")):
+        if not _edge_is_explicit_branch_out(
+            edge=edge, source_kind=node_kinds.get(source, "task")
+        ):
             continue
         secondary_line_targets.add(target)
     return SppmPortPolicy(secondary_line_targets=frozenset(secondary_line_targets))
 
 
 def _edge_is_explicit_branch_out(*, edge: dict[str, Any], source_kind: str) -> bool:
-    if str(edge.get("edge_type") or "").strip().lower() != "rework" and edge.get("rework") is not True:
+    if (
+        str(edge.get("edge_type") or "").strip().lower() != "rework"
+        and edge.get("rework") is not True
+    ):
         return False
-    return source_kind == "decision" or edge.get("outcome") is not None or edge.get("label") is not None
+    return (
+        source_kind == "decision"
+        or edge.get("outcome") is not None
+        or edge.get("label") is not None
+    )
 
 
 def _preferred_tailport(
@@ -116,7 +127,11 @@ def _preferred_headport(
             side=fallback_side,
             kind=kind,
         )
-    if core_route is not None and _supports_named_ports(kind) and fallback_side in {"w", "e"}:
+    if (
+        core_route is not None
+        and _supports_named_ports(kind)
+        and fallback_side in {"w", "e"}
+    ):
         return _graphviz_headport_for_side(
             slot_index=core_route.target_port.slot_index,
             side=fallback_side,

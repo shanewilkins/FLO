@@ -134,7 +134,7 @@ Downstream projects depend on FLO IR.
 - Policy authority: `docs/policy/authoritative_artifacts.md`
 - Diagram and artifact specs: `docs/specs/`
 - Core semantic spec: `docs/specs/core_language.md`
-- Historical semantic design note: `docs/design/IR.md`
+- Historical semantic background note: `docs/design/IR.md`
 - User-facing summary: `README.md`
 
 Hierarchy policy and update workflow are defined in
@@ -144,6 +144,8 @@ Hierarchy policy and update workflow are defined in
 
 ## Current Semantic Constraints (v0.1)
 
+This is a summary only. Normative semantics live in `docs/specs/core_language.md`.
+
 - Exactly one `start` node.
 - At least one `end` node.
 - All edge endpoints must resolve to declared node IDs.
@@ -152,6 +154,7 @@ Hierarchy policy and update workflow are defined in
 - Every node must be reachable from `start`.
 - Every node must be able to reach at least one `end` node.
 - `decision` nodes must have at least two outgoing transitions.
+- `wait_time` is valid only on `queue` nodes.
 
 ------------------------------------------------------------------------
 

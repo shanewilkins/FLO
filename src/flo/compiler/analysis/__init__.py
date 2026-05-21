@@ -1,4 +1,5 @@
 """Analysis package nested under the compiler layer."""
+
 from .scc import scc_condense
 from .movement import (
     infer_material_movements,

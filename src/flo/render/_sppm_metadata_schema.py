@@ -36,12 +36,15 @@ class SppmMetadataValue:
         """Return numeric value, defaulting to 0 if invalid."""
         try:
             return float(self.value) if self.value is not None else 0.0
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             return 0.0
 
 
 def get_metadata_field(
-    metadata: dict[str, Any] | None, field_name: str, *, expected_type: type | None = None
+    metadata: dict[str, Any] | None,
+    field_name: str,
+    *,
+    expected_type: type | None = None,
 ) -> Any:
     """Safely extract a metadata field by name with optional type checking.
 
@@ -79,14 +82,13 @@ def _parse_time_spec(time_spec: Any) -> SppmMetadataValue | None:
     return SppmMetadataValue(value=value, unit=unit)
 
 
-
 def get_metadata_wait_time_minutes(metadata: dict[str, Any] | None) -> Any:
     """Extract wait_time (queue delay) from metadata, defaulting to 0.
-    
+
     Wait time represents queue/idle delay caused by unavailability of the next
     resource or step. This is distinct from changeover/setup time, which is
     reconfiguration time within a step itself.
-    
+
     Returns the raw numeric value (int or float) to preserve formatting,
     or 0 if absent/invalid.
     """
@@ -100,13 +102,18 @@ def get_metadata_wait_time_minutes(metadata: dict[str, Any] | None) -> Any:
         return value
     return 0
 
-def get_metadata_cycle_time(metadata: dict[str, Any] | None) -> SppmMetadataValue | None:
+
+def get_metadata_cycle_time(
+    metadata: dict[str, Any] | None,
+) -> SppmMetadataValue | None:
     """Extract cycle_time from metadata as SppmMetadataValue, or None if absent."""
     time_spec = get_metadata_field(metadata, "cycle_time", expected_type=dict)
     return _parse_time_spec(time_spec)
 
 
-def get_metadata_crossover_time(metadata: dict[str, Any] | None) -> SppmMetadataValue | None:
+def get_metadata_crossover_time(
+    metadata: dict[str, Any] | None,
+) -> SppmMetadataValue | None:
     """Extract changeover/setup time using canonical precedence.
 
     Changeover time represents setup/reconfiguration time required to transition
@@ -131,9 +138,11 @@ def get_metadata_crossover_time(metadata: dict[str, Any] | None) -> SppmMetadata
     return None
 
 
-def get_metadata_changeover_time(metadata: dict[str, Any] | None) -> SppmMetadataValue | None:
+def get_metadata_changeover_time(
+    metadata: dict[str, Any] | None,
+) -> SppmMetadataValue | None:
     """Backward-compatible alias for crossover/transfer/changeover time extraction.
-    
+
     This function delegates to get_metadata_crossover_time() for compatibility.
     Prefer get_metadata_crossover_time() in new code.
     """

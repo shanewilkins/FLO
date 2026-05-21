@@ -1,6 +1,10 @@
 # Wait Time vs Changeover Time Semantics
 
-This note defines the modeling semantics FLO enforces for waiting and setup time.
+Status: accepted design rationale note
+
+Normative timing-placement rules now live in `docs/specs/core_language.md`.
+
+This note explains the rationale behind FLO's waiting and setup-time rules.
 
 ## Purpose
 
@@ -19,10 +23,12 @@ Why this structure is intentional:
 - Diagnostics stay correct: queue metrics are analyzed separately from setup metrics.
 - Pedagogy improves: learners must ask "queue problem or setup problem?" before choosing countermeasures.
 
-Compiler-enforced constraints:
+Normative rule summary:
 
 - `metadata.wait_time` is valid only on `queue` nodes.
 - `metadata.cycle_time`, `metadata.crossover_time` (and aliases `transfer_time`/`changeover_time`) belong on work nodes (`task`, `system_task`, `subprocess`).
+
+The authoritative rule lives in `docs/specs/core_language.md`.
 
 ## Modeling Pattern
 

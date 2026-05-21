@@ -12,6 +12,26 @@ This model is the semantic foundation for validation, visualization, analysis,
 and downstream integrations. Renderers, exporters, and CLI commands operate on
 this shared meaning rather than inventing alternate process semantics.
 
+## Source document conventions
+
+The FLO source format uses a small set of top-level conventions before content
+is compiled into the canonical process model.
+
+1. Version declaration
+   - A FLO source document must declare `spec_version`.
+   - The current supported language version is `"0.1"`.
+
+2. Composed source documents
+   - FLO source documents may include other source files via top-level include
+     directives.
+   - `includes` is the canonical list form.
+   - `include` is a supported single-value alias.
+
+3. Include resolution
+   - Include paths are resolved relative to the current source file.
+   - Include cycles are invalid.
+   - Duplicate step identifiers introduced by composition are invalid.
+
 ## Core entities
 
 The canonical FLO process model includes the following entity families:
@@ -42,10 +62,47 @@ The current MVP node vocabulary is:
 - `end`
 - `task`
 - `system_task`
+- `queue`
+- `wait`
 - `decision`
+- `subprocess`
 
 Other node families may be added later, but this set defines the current
 normative baseline.
+
+Current node-family intent:
+
+- `queue` represents explicit waiting or buffering before work begins.
+- `wait` represents an explicit hold state without implying active work.
+- `subprocess` represents a collapsible child-process boundary in the source
+   model and may be projected differently by renderers.
+
+## Timing semantics
+
+FLO distinguishes waiting and active setup or work time because they represent
+different process facts and should not be collapsed into one metric.
+
+Normative timing-placement rules:
+
+1. Queue delay belongs on queue nodes
+   - `metadata.wait_time` is valid only on `queue` nodes.
+
+2. Active work and setup time belong on work nodes
+   - `metadata.cycle_time`, `metadata.crossover_time`, and alias fields such as
+     `transfer_time` or `changeover_time` belong on work nodes such as `task`,
+     `system_task`, and `subprocess`.
+
+3. Queue nodes are delay-only nodes
+    - Queue nodes must not carry active work or setup-time fields such as
+       `cycle_time`, `crossover_time`, `transfer_time`, or `changeover_time`.
+
+4. Authors should model waiting structurally
+   - If a process includes substantial waiting before work begins, authors
+     should represent that waiting with an explicit `queue` node rather than
+     attaching `wait_time` directly to the downstream work step.
+
+These rules preserve the semantic distinction between queueing delay and
+changeover or processing time.
 
 ## Normative semantic rules
 
@@ -82,6 +139,12 @@ An implementation of FLO must enforce these minimum semantic rules:
    - Cycles are permitted in the process graph; they are not invalid solely
      because they are cyclic.
 
+11. Queue metadata validation
+    - If `metadata.buffer_capacity` is present on a queue node, it must be an
+       integer greater than or equal to `1`.
+    - `metadata.queue_policy` is optional under the current v0.1 implementation
+       and may be used by downstream analysis or future queueing models.
+
 ## Serialization relationship
 
 The canonical process model is conceptually prior to any single serialization.
@@ -112,5 +175,9 @@ FLO core language semantics do not by themselves define:
 - Structural serialization authority belongs in `schema/flo_ir.json`.
 - Diagram-specific normative meaning belongs in the other files under
   `docs/specs/`.
-- The historical design note in `docs/design/IR.md` is explanatory and may
-  provide additional context, but this file is the normative semantic source.
+- The CLI/interface contract lives in `docs/specs/cli_error_contract.md`.
+- Timing rationale and modeling background are further explained in
+   `docs/design/wait-time-vs-changeover-time-semantics.md`, but this file owns
+   the normative rule.
+- The historical design note in `docs/design/IR.md` is explanatory background
+   only; this file is the normative semantic source.

@@ -1,6 +1,6 @@
 # FLO v0.1 Architecture Note (Syntax, Semantics, and Boundaries)
 
-Status: draft for v0.1 freeze
+Status: completed v0.1 baseline with May 2026 governance update
 
 ## 0) Ratified Decisions (March 2026)
 
@@ -17,6 +17,9 @@ The following decisions are approved and treated as baseline direction:
 - v0.1 lane defaulting: lane kind may default to `default` when omitted.
 - Metadata governance: keep v0.1 metadata minimal and defer broader taxonomy to v0.2.
 - Queues are first-class in v0.1 via an explicit `queue` node kind (descriptive semantics only, non-executable).
+- Render-platform evolution after the v0.1 semantic freeze is tracked in dedicated
+   design documents; backend choice and publication composition are not part of
+   the core v0.1 language freeze.
 
 ## 1) Purpose
 
@@ -240,32 +243,38 @@ FLO v0.1 supports multiple diagram types, each with distinct visual conventions
 and use cases. Specification documents exist for each renderer to guide
 implementation and reduce ambiguity for contributors:
 
-- **Flowchart** (`docs/design/flowchart_renderer_design.md`)
-  Simple control-flow visualization. Baseline renderer for process topology.
-  
-- **Swimlane** (`docs/design/swimlane_renderer_design.md`)
-  Lane-based organization by role/system. Groups nodes by `lane` field to show
-  cross-functional process flow.
-  
-- **Spaghetti** (`docs/design/spaghetti_renderer_design.md`)
-  Movement-path visualization for lean analysis (material and people flows).
-  Infers flows from process model and renders as spatial diagram.
-  
-- **SPPM** (`docs/design/sppm_renderer_design.md`)
-  Production scheduling and process metrics. Includes publication bands,
-  footer metrics, and SPPM-specific visual semantics.
+- Normative diagram meaning lives in `docs/specs/`.
+- Renderer implementation strategy lives in `docs/design/`.
+
+Normative renderer specs:
+
+- **Flowchart** (`docs/specs/flowchart.md`)
+- **Swimlane** (`docs/specs/swimlane.md`)
+- **Spaghetti** (`docs/specs/spaghetti_map.md`)
+- **SPPM** (`docs/specs/sppm.md`)
+
+Explanatory renderer design notes:
+
+- `docs/design/flowchart_renderer_design.md`
+- `docs/design/swimlane_renderer_design.md`
+- `docs/design/spaghetti_renderer_design.md`
+- `docs/design/sppm_renderer_design.md`
 
 All renderers share:
 
 - Canonical IR as input (dict-compatible).
-- Graphviz DOT as output (except future backends).
+- Normative behavior defined by specs rather than renderer implementation notes.
+- Current implementations include DOT projections for several diagram families,
+   but backend choice is not part of the v0.1 semantic freeze.
 - Shared edge routing infrastructure (boundary corridors, rework semantics).
 - Subprocess projection and clustering (parent-only view support).
 
 Renderer-specific concerns are isolated in dedicated modules to prevent
 SPPM-specific or swimlane-specific semantics from leaking into shared code.
 See `docs/design/renderer_architecture_boundaries.md` for shared-core vs.
-renderer-specific module placement rules.
+renderer-specific module placement rules. See `docs/design/README.md` for the
+design-vs-spec authority boundary and `docs/design/render_platform_target_architecture.md`
+for post-v0.1 backend evolution.
 
 ## 13) v0.1 Metadata Recommendations (Minimal)
 

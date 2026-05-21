@@ -1,5 +1,7 @@
 # Swimlane Renderer Design
 
+Status: accepted renderer design note
+
 ## Why This Exists
 
 Swimlane diagrams organize process steps into horizontal or vertical lanes,

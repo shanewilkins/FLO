@@ -1,6 +1,220 @@
 from flo.render import render_dot
 
 
+def test_spaghetti_renders_material_and_people_channels_by_default():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "location": "pantry",
+                "outputs": ["flour"],
+                "workers": ["assistant_baker"],
+            },
+            {
+                "id": "mix",
+                "kind": "task",
+                "name": "Mix",
+                "location": "prep_bench",
+                "inputs": ["flour"],
+                "workers": ["assistant_baker"],
+            },
+        ],
+        "edges": [{"source": "gather", "target": "mix"}],
+        "process": {
+            "metadata": {
+                "locations": [
+                    {
+                        "id": "pantry",
+                        "name": "Pantry",
+                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                    },
+                    {
+                        "id": "prep_bench",
+                        "name": "Prep Bench",
+                        "metadata": {"spatial": {"x": 3, "y": 4, "unit": "m"}},
+                    },
+                ]
+            }
+        },
+    }
+
+    out = render_dot(ir_like, options={"diagram": "spaghetti", "detail": "verbose"})
+    assert "layout=neato" in out
+    assert "color=tomato4" in out
+    assert "color=royalblue4" in out
+    assert 'xlabel="M 1x"' in out
+    assert 'xlabel="P 1x"' in out
+    assert 'taillabel="items: flour"' in out
+    assert 'taillabel="workers: assistant_baker"' in out
+    assert 'labeldistance="0.7"' in out
+    assert 'labelangle="20"' in out
+
+
+def test_spaghetti_people_channel_filters_material_routes():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "a",
+                "kind": "task",
+                "name": "A",
+                "location": "pantry",
+                "outputs": ["flour"],
+                "workers": ["assistant_baker"],
+            },
+            {
+                "id": "b",
+                "kind": "task",
+                "name": "B",
+                "location": "prep_bench",
+                "inputs": ["flour"],
+                "workers": ["assistant_baker"],
+            },
+        ],
+        "edges": [{"source": "a", "target": "b"}],
+        "process": {
+            "metadata": {
+                "locations": [
+                    {"id": "pantry", "name": "Pantry"},
+                    {"id": "prep_bench", "name": "Prep Bench"},
+                ]
+            }
+        },
+    }
+
+    out = render_dot(
+        ir_like, options={"diagram": "spaghetti", "spaghetti_channel": "people"}
+    )
+    assert "color=royalblue4" in out
+    assert "style=dashed" in out
+    assert "color=tomato4" not in out
+
+
+def test_spaghetti_people_worker_mode_emits_per_worker_traces():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "a",
+                "kind": "task",
+                "name": "A",
+                "location": "pantry",
+                "workers": ["lead_baker", "assistant_baker"],
+            },
+            {
+                "id": "b",
+                "kind": "task",
+                "name": "B",
+                "location": "prep_bench",
+                "workers": ["lead_baker", "assistant_baker"],
+            },
+        ],
+        "edges": [{"source": "a", "target": "b"}],
+        "process": {
+            "metadata": {
+                "locations": [
+                    {"id": "pantry", "name": "Pantry"},
+                    {"id": "prep_bench", "name": "Prep Bench"},
+                ]
+            }
+        },
+    }
+
+    out = render_dot(
+        ir_like,
+        options={
+            "diagram": "spaghetti",
+            "spaghetti_channel": "people",
+            "spaghetti_people_mode": "worker",
+            "profile": "analysis",
+        },
+    )
+    assert 'xlabel="P lead_baker 1x"' in out
+    assert 'xlabel="P assistant_baker 1x"' in out
+
+
+def test_spaghetti_people_aggregate_mode_omits_worker_names_from_xlabels():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "a",
+                "kind": "task",
+                "name": "A",
+                "location": "pantry",
+                "workers": ["lead_baker", "assistant_baker"],
+            },
+            {
+                "id": "b",
+                "kind": "task",
+                "name": "B",
+                "location": "prep_bench",
+                "workers": ["lead_baker", "assistant_baker"],
+            },
+        ],
+        "edges": [{"source": "a", "target": "b"}],
+        "process": {
+            "metadata": {
+                "locations": [
+                    {"id": "pantry", "name": "Pantry"},
+                    {"id": "prep_bench", "name": "Prep Bench"},
+                ]
+            }
+        },
+    }
+
+    out = render_dot(
+        ir_like,
+        options={
+            "diagram": "spaghetti",
+            "spaghetti_channel": "people",
+            "spaghetti_people_mode": "aggregate",
+        },
+    )
+    assert 'xlabel="P 1x"' in out
+    assert 'xlabel="P lead_baker 1x"' not in out
+    assert 'xlabel="P assistant_baker 1x"' not in out
+
+
+def test_spaghetti_people_analysis_profile_defaults_to_worker_mode():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "a",
+                "kind": "task",
+                "name": "A",
+                "location": "pantry",
+                "workers": ["lead_baker"],
+            },
+            {
+                "id": "b",
+                "kind": "task",
+                "name": "B",
+                "location": "prep_bench",
+                "workers": ["lead_baker"],
+            },
+        ],
+        "edges": [{"source": "a", "target": "b"}],
+        "process": {
+            "metadata": {
+                "locations": [
+                    {"id": "pantry", "name": "Pantry"},
+                    {"id": "prep_bench", "name": "Prep Bench"},
+                ]
+            }
+        },
+    }
+
+    out = render_dot(
+        ir_like,
+        options={
+            "diagram": "spaghetti",
+            "spaghetti_channel": "people",
+            "profile": "analysis",
+        },
+    )
+    assert 'xlabel="P lead_baker 1x"' in out
+
+
 def test_spaghetti_renders_rectangle_boundary_overlay():
     ir_like = {
         "nodes": [
@@ -119,12 +333,30 @@ def test_spaghetti_location_kind_styles_apply_generic_semantic_shapes():
     }
 
     out = render_dot(ir_like, options={"diagram": "spaghetti"})
-    assert '"pantry" [label="Pantry", shape=box, fillcolor=lemonchiffon, color=goldenrod4' in out
-    assert '"prep_bench" [label="Prep Bench", shape=ellipse, fillcolor=aliceblue, color=steelblue4' in out
-    assert '"oven_station" [label="Oven", shape=hexagon, fillcolor=mistyrose, color=firebrick3' in out
-    assert '"cool_rack" [label="Cooling Rack", shape=trapezium, fillcolor=honeydew, color=seagreen4' in out
-    assert '"sink" [label="Sink", shape=octagon, fillcolor=azure, color=deepskyblue4' in out
-    assert '"hallway" [label="Hallway", shape=diamond, fillcolor=mintcream, color=slategray4' in out
+    assert (
+        '"pantry" [label="Pantry", shape=box, fillcolor=lemonchiffon, color=goldenrod4'
+        in out
+    )
+    assert (
+        '"prep_bench" [label="Prep Bench", shape=ellipse, fillcolor=aliceblue, color=steelblue4'
+        in out
+    )
+    assert (
+        '"oven_station" [label="Oven", shape=hexagon, fillcolor=mistyrose, color=firebrick3'
+        in out
+    )
+    assert (
+        '"cool_rack" [label="Cooling Rack", shape=trapezium, fillcolor=honeydew, color=seagreen4'
+        in out
+    )
+    assert (
+        '"sink" [label="Sink", shape=octagon, fillcolor=azure, color=deepskyblue4'
+        in out
+    )
+    assert (
+        '"hallway" [label="Hallway", shape=diamond, fillcolor=mintcream, color=slategray4'
+        in out
+    )
 
 
 def test_spaghetti_legacy_location_kind_aliases_remain_supported():
@@ -136,7 +368,11 @@ def test_spaghetti_legacy_location_kind_aliases_remain_supported():
                 "locations": [
                     {"id": "legacy_prep", "name": "Legacy Prep", "kind": "prep"},
                     {"id": "legacy_heat", "name": "Legacy Heat", "kind": "heat"},
-                    {"id": "legacy_cooling", "name": "Legacy Cooling", "kind": "cooling"},
+                    {
+                        "id": "legacy_cooling",
+                        "name": "Legacy Cooling",
+                        "kind": "cooling",
+                    },
                     {"id": "legacy_wash", "name": "Legacy Wash", "kind": "wash"},
                 ]
             }
@@ -144,10 +380,22 @@ def test_spaghetti_legacy_location_kind_aliases_remain_supported():
     }
 
     out = render_dot(ir_like, options={"diagram": "spaghetti"})
-    assert '"legacy_prep" [label="Legacy Prep", shape=ellipse, fillcolor=aliceblue, color=steelblue4' in out
-    assert '"legacy_heat" [label="Legacy Heat", shape=hexagon, fillcolor=mistyrose, color=firebrick3' in out
-    assert '"legacy_cooling" [label="Legacy Cooling", shape=trapezium, fillcolor=honeydew, color=seagreen4' in out
-    assert '"legacy_wash" [label="Legacy Wash", shape=octagon, fillcolor=azure, color=deepskyblue4' in out
+    assert (
+        '"legacy_prep" [label="Legacy Prep", shape=ellipse, fillcolor=aliceblue, color=steelblue4'
+        in out
+    )
+    assert (
+        '"legacy_heat" [label="Legacy Heat", shape=hexagon, fillcolor=mistyrose, color=firebrick3'
+        in out
+    )
+    assert (
+        '"legacy_cooling" [label="Legacy Cooling", shape=trapezium, fillcolor=honeydew, color=seagreen4'
+        in out
+    )
+    assert (
+        '"legacy_wash" [label="Legacy Wash", shape=octagon, fillcolor=azure, color=deepskyblue4'
+        in out
+    )
 
 
 def test_spaghetti_unknown_location_kind_falls_back_to_default_style():

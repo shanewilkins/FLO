@@ -42,7 +42,9 @@ def infer_people_movements(process: Any) -> list[dict[str, Any]]:
     )
 
 
-def aggregate_material_movements(movements: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def aggregate_material_movements(
+    movements: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     """Aggregate inferred movements by route + item set."""
     return _aggregate_movements(
         movements=movements,
@@ -60,7 +62,9 @@ def aggregate_people_movements(movements: list[dict[str, Any]]) -> list[dict[str
     )
 
 
-def aggregate_people_movements_by_worker(movements: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def aggregate_people_movements_by_worker(
+    movements: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     """Aggregate inferred people movements by route and individual worker."""
     worker_movements: list[dict[str, Any]] = []
     for movement in movements:
@@ -99,7 +103,11 @@ def _infer_movements(
         target_attrs = nodes_by_id.get(target, {})
         source_location = _as_text(source_attrs.get("location"))
         target_location = _as_text(target_attrs.get("location"))
-        if not source_location or not target_location or source_location == target_location:
+        if (
+            not source_location
+            or not target_location
+            or source_location == target_location
+        ):
             continue
 
         source_entities = _as_text_list(source_attrs.get(source_field))
@@ -183,7 +191,9 @@ def _aggregate_movements(
 
         bucket["count"] += 1
         if not key_by_entities:
-            _merge_bucket_entities(bucket, movement=movement, entities_field=entities_field)
+            _merge_bucket_entities(
+                bucket, movement=movement, entities_field=entities_field
+            )
 
     return sorted(buckets.values(), key=_movement_bucket_sort_key)
 
@@ -197,7 +207,9 @@ def _movement_bucket_key(
     target = str(movement.get("to_location") or "")
     if not source or not target:
         return None
-    entities = _sorted_text_values(movement.get(entities_field) if key_by_entities else [])
+    entities = _sorted_text_values(
+        movement.get(entities_field) if key_by_entities else []
+    )
     return source, target, entities
 
 
@@ -228,14 +240,19 @@ def _movement_bucket_sort_key(item: dict[str, Any]) -> tuple[int, str, str]:
     )
 
 
-def _merge_bucket_entities(bucket: dict[str, Any], movement: dict[str, Any], entities_field: str) -> None:
+def _merge_bucket_entities(
+    bucket: dict[str, Any], movement: dict[str, Any], entities_field: str
+) -> None:
     merged_values = _sorted_text_values(
-        list(bucket.get(entities_field) or []) + list(movement.get(entities_field) or [])
+        list(bucket.get(entities_field) or [])
+        + list(movement.get(entities_field) or [])
     )
     bucket[entities_field] = list(merged_values)
 
 
-def _shared_text_values(source_values: list[str], target_values: list[str]) -> list[str]:
+def _shared_text_values(
+    source_values: list[str], target_values: list[str]
+) -> list[str]:
     target_set = set(target_values)
     shared: list[str] = []
     for value in source_values:
@@ -251,7 +268,11 @@ def _sorted_text_values(values: Any) -> tuple[str, ...]:
 def extract_location_spatial_index(process: Any) -> dict[str, dict[str, Any]]:
     """Return location_id -> {name, kind, x, y, unit} from process metadata locations."""
     process_metadata = _extract_process_metadata(process)
-    collection = process_metadata.get("locations") if isinstance(process_metadata, dict) else None
+    collection = (
+        process_metadata.get("locations")
+        if isinstance(process_metadata, dict)
+        else None
+    )
 
     index: dict[str, dict[str, Any]] = {}
     for item in _iter_resource_items(collection):

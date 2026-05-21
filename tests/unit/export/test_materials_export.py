@@ -33,7 +33,11 @@ def test_materials_export_renders_nested_groups_and_entries_without_items_label(
                 "dry": {
                     "name": "Dry Goods",
                     "items": [
-                        {"id": "flour", "name": "Flour", "quantity": {"kind": "measure", "value": 250, "unit": "g"}},
+                        {
+                            "id": "flour",
+                            "name": "Flour",
+                            "quantity": {"kind": "measure", "value": 250, "unit": "g"},
+                        },
                     ],
                 },
                 "tools": [{"id": "bowl", "name": "Bowl"}],
@@ -53,16 +57,45 @@ def test_materials_export_renders_nested_groups_and_entries_without_items_label(
 
 
 def test_materials_quantity_formatter_covers_dict_and_legacy_shapes():
-    assert materials_export._format_quantity({"quantity": {"kind": "count", "value": 2, "unit": "each", "qualifier": "large"}}) == "2 each (large)"
-    assert materials_export._format_quantity({"quantity": {"kind": "measure", "value": 1.5, "unit": "kg"}}) == "1.5 kg"
-    assert materials_export._format_quantity({"quantity": {"kind": "count", "value": None, "unit": "each"}}) == ""
+    assert (
+        materials_export._format_quantity(
+            {
+                "quantity": {
+                    "kind": "count",
+                    "value": 2,
+                    "unit": "each",
+                    "qualifier": "large",
+                }
+            }
+        )
+        == "2 each (large)"
+    )
+    assert (
+        materials_export._format_quantity(
+            {"quantity": {"kind": "measure", "value": 1.5, "unit": "kg"}}
+        )
+        == "1.5 kg"
+    )
+    assert (
+        materials_export._format_quantity(
+            {"quantity": {"kind": "count", "value": None, "unit": "each"}}
+        )
+        == ""
+    )
 
-    assert materials_export._format_quantity({"quantity": 3, "unit": "each", "qualifier": "large"}) == "3 each (large)"
+    assert (
+        materials_export._format_quantity(
+            {"quantity": 3, "unit": "each", "qualifier": "large"}
+        )
+        == "3 each (large)"
+    )
     assert materials_export._format_quantity({"quantity": True, "unit": "each"}) == ""
 
 
 def test_materials_and_ingredients_aliases_return_same_output():
-    ir = SimpleNamespace(process_metadata={"materials": [{"id": "flour", "name": "Flour"}]})
+    ir = SimpleNamespace(
+        process_metadata={"materials": [{"id": "flour", "name": "Flour"}]}
+    )
 
     materials_out = materials_export.ir_to_materials_text(ir)
     ingredients_out = materials_export.ir_to_ingredients_text(ir)

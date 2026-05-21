@@ -17,7 +17,9 @@ from ._graphviz_dot_common import (
 from .options import RenderOptions
 
 
-def render_flowchart_dot(process: dict[str, Any] | Any, options: RenderOptions | None = None) -> str:
+def render_flowchart_dot(
+    process: dict[str, Any] | Any, options: RenderOptions | None = None
+) -> str:
     """Render a simple flowchart DOT representation.
 
     Supports canonical IR objects and dict-based shapes.
@@ -26,7 +28,9 @@ def render_flowchart_dot(process: dict[str, Any] | Any, options: RenderOptions |
     return _render_flowchart_graph(process, options=render_options)
 
 
-def _render_flowchart_graph(process: dict[str, Any] | Any, options: RenderOptions) -> str:
+def _render_flowchart_graph(
+    process: dict[str, Any] | Any, options: RenderOptions
+) -> str:
     nodes, edges = _extract_nodes_and_edges(process)
     if options.subprocess_view == "parent_only":
         nodes, edges = _project_parent_only_subprocess_view(nodes, edges)
@@ -42,7 +46,9 @@ def _render_flowchart_graph(process: dict[str, Any] | Any, options: RenderOption
     lines: list[str] = ["digraph {"]
     lines.append(f"  rankdir={rankdir};")
     splines = "ortho" if wrap_plan.active else "true"
-    lines.append(f"  graph [compound=true, newrank=true, nodesep=0.7, ranksep=0.9, splines={splines}];")
+    lines.append(
+        f"  graph [compound=true, newrank=true, nodesep=0.7, ranksep=0.9, splines={splines}];"
+    )
     lines.append("  node [fontname=Helvetica];")
     lines.append("  edge [fontname=Helvetica];")
 
@@ -71,7 +77,9 @@ def _resolve_rankdir(*, options: RenderOptions, wrap_active: bool) -> str:
     return "TB" if options.orientation == "lr" else "LR"
 
 
-def _append_flowchart_nodes(lines: list[str], nodes: list[dict[str, Any]], options: RenderOptions) -> None:
+def _append_flowchart_nodes(
+    lines: list[str], nodes: list[dict[str, Any]], options: RenderOptions
+) -> None:
     nodes_by_id = _build_nodes_by_id(nodes)
     children_by_parent = _subprocess_children_map(nodes, nodes_by_id)
     _append_clustered_node_passes(

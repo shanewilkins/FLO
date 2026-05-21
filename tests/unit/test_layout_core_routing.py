@@ -17,13 +17,18 @@ def _node(nid: str, w: int = 100, h: int = 40) -> NodeMeasure:
 def test_route_plan_assigns_side_slots_and_lane_hops():
     nodes = [_node("a"), _node("b"), _node("c"), _node("d"), _node("e")]
     edges = [("a", "c"), ("b", "d"), ("a", "e"), ("e", "b")]
-    constraints = PlacementConstraints(max_width_px=250, gap_major=20, gap_minor=40, margin=10)
+    constraints = PlacementConstraints(
+        max_width_px=250, gap_major=20, gap_minor=40, margin=10
+    )
     placement = build_placement_plan(nodes, edges, constraints)
     corridor = build_corridor_plan(placement=placement, lane_channels=2, edges=edges)
 
     plan = build_route_plan(placement=placement, corridor=corridor, edges=edges)
 
-    assert plan.route_for("a", "e").lane_hops == ("corridor_lane_0_1", "corridor_lane_1_0")
+    assert plan.route_for("a", "e").lane_hops == (
+        "corridor_lane_0_1",
+        "corridor_lane_1_0",
+    )
     assert plan.route_for("a", "e").source_port.side == "e"
     assert plan.route_for("a", "e").target_port.side == "w"
     assert plan.route_for("a", "e").source_port.slot_index == 1
@@ -33,7 +38,9 @@ def test_route_plan_assigns_side_slots_and_lane_hops():
 def test_route_plan_reports_shared_lane_conflicts_deterministically():
     nodes = [_node("a"), _node("b"), _node("c"), _node("d"), _node("e")]
     edges = [("a", "c"), ("b", "d"), ("a", "e"), ("e", "b")]
-    constraints = PlacementConstraints(max_width_px=250, gap_major=20, gap_minor=40, margin=10)
+    constraints = PlacementConstraints(
+        max_width_px=250, gap_major=20, gap_minor=40, margin=10
+    )
     placement = build_placement_plan(nodes, edges, constraints)
     corridor = build_corridor_plan(placement=placement, lane_channels=2, edges=edges)
 
@@ -54,11 +61,15 @@ def test_route_plan_reports_shared_lane_conflicts_deterministically():
 def test_route_plan_snapshot_is_stable():
     nodes = [_node("a"), _node("b"), _node("c"), _node("d"), _node("e")]
     edges = [("a", "c"), ("b", "d"), ("a", "e"), ("e", "b")]
-    constraints = PlacementConstraints(max_width_px=250, gap_major=20, gap_minor=40, margin=10)
+    constraints = PlacementConstraints(
+        max_width_px=250, gap_major=20, gap_minor=40, margin=10
+    )
     placement = build_placement_plan(nodes, edges, constraints)
     corridor = build_corridor_plan(placement=placement, lane_channels=2, edges=edges)
 
-    snapshot = serialize_route_plan(build_route_plan(placement=placement, corridor=corridor, edges=edges))
+    snapshot = serialize_route_plan(
+        build_route_plan(placement=placement, corridor=corridor, edges=edges)
+    )
     expected = "\n".join(
         [
             "edge a->c boundary=True",

@@ -68,10 +68,14 @@ def port_counts_by_node(routing_plan: Any) -> dict[str, dict[str, int]]:
     return dict(counts)
 
 
-def _extract_sppm_from_ir(process: Any) -> tuple[list[SppmRenderNode], list[SppmRenderEdge]]:
+def _extract_sppm_from_ir(
+    process: Any,
+) -> tuple[list[SppmRenderNode], list[SppmRenderEdge]]:
     nodes: list[SppmRenderNode] = []
     for node in getattr(process, "nodes", []) or []:
-        attrs: dict[str, Any] = (getattr(node, "attrs", None) or {}) if hasattr(node, "attrs") else {}
+        attrs: dict[str, Any] = (
+            (getattr(node, "attrs", None) or {}) if hasattr(node, "attrs") else {}
+        )
         raw_metadata = attrs.get("metadata") if isinstance(attrs, dict) else None
         raw_workers = attrs.get("workers") if isinstance(attrs, dict) else None
         nodes.append(
@@ -82,7 +86,9 @@ def _extract_sppm_from_ir(process: Any) -> tuple[list[SppmRenderNode], list[Sppm
                 "note": attrs.get("note") if isinstance(attrs, dict) else None,
                 "metadata": raw_metadata if isinstance(raw_metadata, dict) else {},
                 "workers": raw_workers if isinstance(raw_workers, list) else [],
-                "subprocess_parent": attrs.get("subprocess_parent") if isinstance(attrs, dict) else None,
+                "subprocess_parent": attrs.get("subprocess_parent")
+                if isinstance(attrs, dict)
+                else None,
             }
         )
 
@@ -133,7 +139,9 @@ def _extract_sppm_from_dict(
                 "note": node.get("note"),
                 "metadata": metadata,
                 "workers": _get_node_attr(node, "workers", expected_type=list) or [],
-                "subprocess_parent": _get_node_attr(node, "subprocess_parent", expected_type=str),
+                "subprocess_parent": _get_node_attr(
+                    node, "subprocess_parent", expected_type=str
+                ),
             }
         )
 

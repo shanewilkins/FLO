@@ -7,6 +7,7 @@ from typing import Any
 from . import _graphviz_dot_edge_routing
 from .options import RenderOptions
 
+
 def _project_parent_only_subprocess_view(
     nodes: list[dict[str, Any]],
     edges: list[dict[str, Any]],
@@ -64,7 +65,9 @@ def _partition_subprocess_view_nodes(
     return hidden_ids, visible_ids, visible_nodes
 
 
-def _index_outgoing_edges(edges: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+def _index_outgoing_edges(
+    edges: list[dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
     outgoing: dict[str, list[dict[str, Any]]] = {}
     for edge in edges:
         source = str(edge.get("source") or "")
@@ -103,7 +106,11 @@ def _collapse_parent_only_edges(
             if target not in hidden_ids:
                 continue
 
-            for nested_target, next_label, semantic_edge in _visible_targets_through_hidden(
+            for (
+                nested_target,
+                next_label,
+                semantic_edge,
+            ) in _visible_targets_through_hidden(
                 start_hidden=target,
                 initial_label=branch_label,
                 initial_edge=edge,
@@ -161,7 +168,9 @@ def _visible_targets_through_hidden(
     outgoing: dict[str, list[dict[str, Any]]],
 ) -> list[tuple[str, str | None, dict[str, Any] | None]]:
     targets: list[tuple[str, str | None, dict[str, Any] | None]] = []
-    pending: list[tuple[str, str | None, dict[str, Any] | None]] = [(start_hidden, initial_label, initial_edge)]
+    pending: list[tuple[str, str | None, dict[str, Any] | None]] = [
+        (start_hidden, initial_label, initial_edge)
+    ]
     visited_hidden: set[tuple[str, str | None]] = set()
 
     while pending:
@@ -198,7 +207,6 @@ def _edge_branch_label(edge: dict[str, Any]) -> str | None:
         return text or None
 
     return None
-
 
 
 def _build_nodes_by_id(nodes: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -275,7 +283,9 @@ def _append_clustered_node_pass(
         )
 
 
-def _has_visible_parent(node: dict[str, Any], nodes_by_id: dict[str, dict[str, Any]]) -> bool:
+def _has_visible_parent(
+    node: dict[str, Any], nodes_by_id: dict[str, dict[str, Any]]
+) -> bool:
     parent_id = _subprocess_parent(node)
     return bool(parent_id and parent_id in nodes_by_id)
 
@@ -318,7 +328,11 @@ def _append_node_or_subprocess_cluster(
 
     active_stack.add(node_id)
 
-    child_ids = [child_id for child_id in children_by_parent.get(node_id, []) if child_id in nodes_by_id]
+    child_ids = [
+        child_id
+        for child_id in children_by_parent.get(node_id, [])
+        if child_id in nodes_by_id
+    ]
     kind = str(node.get("kind") or node.get("type") or "task").strip().lower()
     has_subprocess_children = kind == "subprocess" and bool(child_ids)
 
@@ -373,7 +387,9 @@ def _subprocess_parent(node: dict[str, Any]) -> str | None:
     return parent_id or None
 
 
-def _extract_nodes_and_edges(process: Any) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _extract_nodes_and_edges(
+    process: Any,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if process is None:
         return [], []
 
@@ -400,14 +416,18 @@ def _is_cross_lane_edge(source: str, target: str, node_lanes: dict[str, str]) ->
     return _graphviz_dot_edge_routing._is_cross_lane_edge(source, target, node_lanes)
 
 
-def _extract_from_ir_object(process: Any) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _extract_from_ir_object(
+    process: Any,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     nodes = []
     for node in getattr(process, "nodes", []) or []:
         attrs = getattr(node, "attrs", {}) or {}
         name = attrs.get("name") if isinstance(attrs, dict) else None
         lane = attrs.get("lane") if isinstance(attrs, dict) else None
         note = attrs.get("note") if isinstance(attrs, dict) else None
-        subprocess_parent = attrs.get("subprocess_parent") if isinstance(attrs, dict) else None
+        subprocess_parent = (
+            attrs.get("subprocess_parent") if isinstance(attrs, dict) else None
+        )
         nodes.append(
             {
                 "id": getattr(node, "id", ""),
@@ -434,7 +454,9 @@ def _extract_from_ir_object(process: Any) -> tuple[list[dict[str, Any]], list[di
     return nodes, edges
 
 
-def _extract_from_dict(process: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _extract_from_dict(
+    process: dict[str, Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     nodes_raw = process.get("nodes") or []
     edges_raw = process.get("edges") or []
     nodes: list[dict[str, Any]] = []
@@ -469,7 +491,9 @@ def _shape_for_kind(kind: str) -> str:
     return "box"
 
 
-def _node_label(node_id: str, name: str, kind: str, lane: str, note: str, options: RenderOptions) -> str:
+def _node_label(
+    node_id: str, name: str, kind: str, lane: str, note: str, options: RenderOptions
+) -> str:
     if options.detail == "summary":
         base = name or node_id
         return _with_note(base, note, options)
@@ -478,7 +502,9 @@ def _node_label(node_id: str, name: str, kind: str, lane: str, note: str, option
         base = name or node_id
         if options.profile == "analysis":
             if lane:
-                return _with_note(f"{base}\\n{node_id}\\n[{kind}|lane:{lane}]", note, options)
+                return _with_note(
+                    f"{base}\\n{node_id}\\n[{kind}|lane:{lane}]", note, options
+                )
             return _with_note(f"{base}\\n{node_id}\\n[{kind}]", note, options)
         return _with_note(f"{base}\\n{node_id}", note, options)
 
@@ -486,7 +512,9 @@ def _node_label(node_id: str, name: str, kind: str, lane: str, note: str, option
     return _with_note(name or node_id, note, options)
 
 
-def _render_node_line(node: dict[str, Any], indent: str, options: RenderOptions) -> list[str]:
+def _render_node_line(
+    node: dict[str, Any], indent: str, options: RenderOptions
+) -> list[str]:
     node_id = str(node.get("id", ""))
     if not node_id:
         return []
@@ -494,7 +522,14 @@ def _render_node_line(node: dict[str, Any], indent: str, options: RenderOptions)
     lane = str(node.get("lane") or "")
     note = str(node.get("note") or "")
     label_name = str(node.get("name") or node_id)
-    label = _node_label(node_id=node_id, name=label_name, kind=kind, lane=lane, note=note, options=options)
+    label = _node_label(
+        node_id=node_id,
+        name=label_name,
+        kind=kind,
+        lane=lane,
+        note=note,
+        options=options,
+    )
     shape = _shape_for_kind(kind)
     node_attrs = [f'label="{_escape(label)}"', f"shape={shape}"]
     if (kind or "").strip().lower() == "subprocess":

@@ -48,7 +48,9 @@ def test_init_telemetry_with_console_processor_and_provider_shutdown(monkeypatch
 
     monkeypatch.setattr(telemetry_mod, "OTEL_AVAILABLE", True)
     monkeypatch.setattr(telemetry_mod, "trace", fake_trace)
-    monkeypatch.setattr(telemetry_mod, "Resource", SimpleNamespace(create=lambda d: object()))
+    monkeypatch.setattr(
+        telemetry_mod, "Resource", SimpleNamespace(create=lambda d: object())
+    )
     monkeypatch.setattr(telemetry_mod, "SDKTracerProvider", FakeProvider)
     monkeypatch.setattr(telemetry_mod, "SimpleSpanProcessor", FakeSimpleSpanProcessor)
     monkeypatch.setattr(telemetry_mod, "ConsoleSpanExporter", FakeConsoleSpanExporter)
@@ -66,7 +68,9 @@ def test_init_telemetry_with_console_processor_and_provider_shutdown(monkeypatch
     assert getattr(telemetry_mod, "_provider") is None
 
 
-def test_shutdown_falls_back_to_span_processors_when_provider_shutdown_raises(monkeypatch):
+def test_shutdown_falls_back_to_span_processors_when_provider_shutdown_raises(
+    monkeypatch,
+):
     # Create provider whose shutdown raises, but has span_processors
     class BadProvider:
         def __init__(self):
@@ -112,7 +116,9 @@ def test_get_tracer_returns_noop_when_otel_missing(monkeypatch):
         pass
 
 
-def test_console_main_handles_clierror_and_telemetry_shutdown_is_suppressed(monkeypatch):
+def test_console_main_handles_clierror_and_telemetry_shutdown_is_suppressed(
+    monkeypatch,
+):
     # Import here to get the console_main function
     from flo.core.cli import console_main
     from flo.services.errors import CLIError
@@ -122,17 +128,22 @@ def test_console_main_handles_clierror_and_telemetry_shutdown_is_suppressed(monk
     services.logger = None
     services.error_handler = Mock()
     # telemetry.shutdown will raise to ensure console_main swallows it
-    services.telemetry = SimpleNamespace(shutdown=Mock(side_effect=RuntimeError("shutdown fail")))
+    services.telemetry = SimpleNamespace(
+        shutdown=Mock(side_effect=RuntimeError("shutdown fail"))
+    )
 
     # Monkeypatch get_services to return our services (console_main imports this)
     import importlib as _il
+
     services_mod = _il.import_module("flo.services")
     monkeypatch.setattr(services_mod, "get_services", lambda verbose=False: services)
 
     # Monkeypatch parse_args (imported inside console_main)
     cli_args_mod = _il.import_module("flo.core.cli_args")
+
     def fake_parse_args(argv, s):
         return ("-", "run", {}, services, None)
+
     monkeypatch.setattr(cli_args_mod, "parse_args", fake_parse_args)
 
     # read_input / run_content / write_output come from flo.io and flo.core
@@ -143,6 +154,7 @@ def test_console_main_handles_clierror_and_telemetry_shutdown_is_suppressed(monk
     # run_content will raise a CLIError on first subtest and later return ok
     def raise_cli(argv, command=None, options=None):
         raise CLIError("oh no", code=3)
+
     monkeypatch.setattr(core_mod, "run_content", raise_cli)
 
     # write_output shouldn't be called in this error path; stub it anyway
@@ -153,7 +165,11 @@ def test_console_main_handles_clierror_and_telemetry_shutdown_is_suppressed(monk
     services.error_handler.assert_called()
 
     # Now test normal flow where telemetry.shutdown raises but is swallowed
-    monkeypatch.setattr(core_mod, "run_content", lambda content, command=None, options=None: (0, "out", ""))
+    monkeypatch.setattr(
+        core_mod,
+        "run_content",
+        lambda content, command=None, options=None: (0, "out", ""),
+    )
     monkeypatch.setattr(io_mod, "write_output", lambda out, path: (0, ""))
 
     # telemetry.shutdown still raises; console_main should return rc without raising

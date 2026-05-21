@@ -57,11 +57,17 @@ def _append_movement_section(
         source = str(route.get("from_location") or "unknown")
         target = str(route.get("to_location") or "unknown")
         count = int(route.get("count") or 0)
-        entities = route.get(entities_field) if isinstance(route.get(entities_field), list) else []
+        entities = (
+            route.get(entities_field)
+            if isinstance(route.get(entities_field), list)
+            else []
+        )
 
         detail_parts = [f"count={count}"]
         if entities:
-            detail_parts.append(f"{entities_field}=" + ", ".join(str(item) for item in entities))
+            detail_parts.append(
+                f"{entities_field}=" + ", ".join(str(item) for item in entities)
+            )
 
         distance = route.get("distance")
         if isinstance(distance, dict):

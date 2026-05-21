@@ -13,7 +13,7 @@ from flo.core.cli import cli
 
 def test_sppm_render_shows_waiting_time_in_node_label():
     """Verify SPPM renders wait_time (queue delays) in node labels.
-    
+
     Students need to see queue delays explicitly so they can diagnose resource
     scheduling problems and apply pull/kanban solutions. Queue nodes and tasks
     both render their wait_time metadata.
@@ -21,7 +21,14 @@ def test_sppm_render_shows_waiting_time_in_node_label():
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["run", "examples/reference/bakery_setup_vs_queue.flo", "--export", "dot", "--diagram", "sppm"],
+        [
+            "run",
+            "examples/reference/bakery_setup_vs_queue.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+        ],
     )
     assert result.exit_code == 0
     # Task nodes show wait times in their labels
@@ -32,14 +39,21 @@ def test_sppm_render_shows_waiting_time_in_node_label():
 
 def test_sppm_render_shows_changeover_time_in_node_label():
     """Verify SPPM renders changeover_time (setup delays) in node labels.
-    
+
     Students need to see setup delays explicitly so they can diagnose process
     design problems and apply SMED/5S solutions.
     """
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["run", "examples/reference/bakery_setup_vs_queue.flo", "--export", "dot", "--diagram", "sppm"],
+        [
+            "run",
+            "examples/reference/bakery_setup_vs_queue.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+        ],
     )
     assert result.exit_code == 0
     # Oven setup step shows changeover time
@@ -48,14 +62,21 @@ def test_sppm_render_shows_changeover_time_in_node_label():
 
 def test_sppm_footer_aggregates_waiting_time_from_process():
     """Verify SPPM publication footer shows total waiting time.
-    
+
     Footer should aggregate all queue delays (WT) across the process so users
     can see the total waste due to queueing and understand its magnitude.
     """
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["run", "examples/reference/bakery_setup_vs_queue.flo", "--export", "dot", "--diagram", "sppm"],
+        [
+            "run",
+            "examples/reference/bakery_setup_vs_queue.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+        ],
     )
     assert result.exit_code == 0
     # Footer should show aggregated waiting time (total = 245 min)
@@ -66,7 +87,7 @@ def test_sppm_footer_aggregates_waiting_time_from_process():
 
 def test_sppm_footer_aggregates_changeover_time_from_process():
     """Verify SPPM publication footer shows total changeover time.
-    
+
     Footer should aggregate all setup delays (CO) across the process so users
     can see the total waste due to setup and understand the scope for
     improvement via SMED.
@@ -74,7 +95,14 @@ def test_sppm_footer_aggregates_changeover_time_from_process():
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["run", "examples/reference/bakery_setup_vs_queue.flo", "--export", "dot", "--diagram", "sppm"],
+        [
+            "run",
+            "examples/reference/bakery_setup_vs_queue.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+        ],
     )
     assert result.exit_code == 0
     # Footer should show aggregated changeover time (total = 30 min from oven_setup)
@@ -84,7 +112,7 @@ def test_sppm_footer_aggregates_changeover_time_from_process():
 
 def test_sppm_edge_callout_shows_target_changeover_time():
     """Verify edge callouts render CO from target nodes with step numbering.
-    
+
     When step numbering is enabled, edges leading to tasks with changeover time
     should show the CO value, helping students trace setup delays through the flow.
     """
@@ -112,7 +140,7 @@ def test_sppm_edge_callout_shows_target_changeover_time():
 
 def test_waiting_time_and_changeover_time_are_distinct_in_output():
     """Verify WT and CO appear as distinct labels in SPPM output.
-    
+
     The pedagogical principle requires that WT and CO be visually and
     semantically distinct so students don't confuse queue delays (requiring
     pull/kanban) with setup delays (requiring SMED/5S).
@@ -120,20 +148,27 @@ def test_waiting_time_and_changeover_time_are_distinct_in_output():
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["run", "examples/reference/bakery_setup_vs_queue.flo", "--export", "dot", "--diagram", "sppm"],
+        [
+            "run",
+            "examples/reference/bakery_setup_vs_queue.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+        ],
     )
     assert result.exit_code == 0
     output = result.output
     # Both metrics should appear with clear labels
     # WT shows as "WT:" in node labels
     assert "WT:" in output or "wait" in output
-    # CO shows as "CO:" in node labels  
+    # CO shows as "CO:" in node labels
     assert "CO:" in output or "crossover" in output
 
 
 def test_sppm_compact_density_includes_both_wait_and_changeover():
     """Verify compact label density preserves both WT and CO distinction.
-    
+
     Even in compact mode (space-constrained), the pedagogical distinction
     between WT and CO must remain clear.
     """
@@ -164,7 +199,14 @@ def test_cli_example_renders_without_error():
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["run", "examples/reference/bakery_setup_vs_queue.flo", "--export", "dot", "--diagram", "sppm"],
+        [
+            "run",
+            "examples/reference/bakery_setup_vs_queue.flo",
+            "--export",
+            "dot",
+            "--diagram",
+            "sppm",
+        ],
     )
     assert result.exit_code == 0, f"CLI failed with: {result.output}"
     assert "digraph" in result.output

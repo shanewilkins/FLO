@@ -5,14 +5,22 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-from flo.services._graphviz_decision_labels import postprocess_sppm_decision_outcome_labels_svg
+from flo.services._graphviz_decision_labels import (
+    postprocess_sppm_decision_outcome_labels_svg,
+)
 
 
-def test_postprocess_sppm_decision_outcome_labels_svg_applies_deterministic_offsets(tmp_path: Path):
+def test_postprocess_sppm_decision_outcome_labels_svg_applies_deterministic_offsets(
+    tmp_path: Path,
+):
     contract = SimpleNamespace(
         decision_outcome_label_edges=[
-            SimpleNamespace(source_id="decision", target_id="approve", anchor_id="decision"),
-            SimpleNamespace(source_id="decision", target_id="rework", anchor_id="decision"),
+            SimpleNamespace(
+                source_id="decision", target_id="approve", anchor_id="decision"
+            ),
+            SimpleNamespace(
+                source_id="decision", target_id="rework", anchor_id="decision"
+            ),
         ]
     )
     svg_path = tmp_path / "decision_labels.svg"
@@ -27,18 +35,32 @@ def test_postprocess_sppm_decision_outcome_labels_svg_applies_deterministic_offs
         encoding="utf-8",
     )
 
-    postprocess_sppm_decision_outcome_labels_svg(output_path=svg_path, contract=contract)
+    postprocess_sppm_decision_outcome_labels_svg(
+        output_path=svg_path, contract=contract
+    )
     svg = svg_path.read_text(encoding="utf-8")
 
     assert '<text x="274.00" y="120.00">no</text>' in svg
     assert '<text x="274.00" y="132.00">yes</text>' in svg
 
 
-def test_postprocess_sppm_decision_outcome_labels_svg_places_south_exit_labels_with_stable_tiebreak(tmp_path: Path):
+def test_postprocess_sppm_decision_outcome_labels_svg_places_south_exit_labels_with_stable_tiebreak(
+    tmp_path: Path,
+):
     contract = SimpleNamespace(
         decision_outcome_label_edges=[
-            SimpleNamespace(source_id="decision", target_id="__anchor_a", anchor_id="decision", label_text="yes"),
-            SimpleNamespace(source_id="decision", target_id="__anchor_b", anchor_id="decision", label_text="no"),
+            SimpleNamespace(
+                source_id="decision",
+                target_id="__anchor_a",
+                anchor_id="decision",
+                label_text="yes",
+            ),
+            SimpleNamespace(
+                source_id="decision",
+                target_id="__anchor_b",
+                anchor_id="decision",
+                label_text="no",
+            ),
         ]
     )
     svg_path = tmp_path / "decision_labels_south.svg"
@@ -53,18 +75,32 @@ def test_postprocess_sppm_decision_outcome_labels_svg_places_south_exit_labels_w
         encoding="utf-8",
     )
 
-    postprocess_sppm_decision_outcome_labels_svg(output_path=svg_path, contract=contract)
+    postprocess_sppm_decision_outcome_labels_svg(
+        output_path=svg_path, contract=contract
+    )
     svg = svg_path.read_text(encoding="utf-8")
 
     assert '<text x="240.00" y="154.00">no</text>' in svg
     assert '<text x="254.00" y="154.00">yes</text>' in svg
 
 
-def test_postprocess_sppm_decision_outcome_labels_svg_places_west_exit_labels_with_stable_tiebreak(tmp_path: Path):
+def test_postprocess_sppm_decision_outcome_labels_svg_places_west_exit_labels_with_stable_tiebreak(
+    tmp_path: Path,
+):
     contract = SimpleNamespace(
         decision_outcome_label_edges=[
-            SimpleNamespace(source_id="decision", target_id="__anchor_a", anchor_id="decision", label_text="yes"),
-            SimpleNamespace(source_id="decision", target_id="__anchor_b", anchor_id="decision", label_text="no"),
+            SimpleNamespace(
+                source_id="decision",
+                target_id="__anchor_a",
+                anchor_id="decision",
+                label_text="yes",
+            ),
+            SimpleNamespace(
+                source_id="decision",
+                target_id="__anchor_b",
+                anchor_id="decision",
+                label_text="no",
+            ),
         ]
     )
     svg_path = tmp_path / "decision_labels_west.svg"
@@ -79,18 +115,32 @@ def test_postprocess_sppm_decision_outcome_labels_svg_places_west_exit_labels_wi
         encoding="utf-8",
     )
 
-    postprocess_sppm_decision_outcome_labels_svg(output_path=svg_path, contract=contract)
+    postprocess_sppm_decision_outcome_labels_svg(
+        output_path=svg_path, contract=contract
+    )
     svg = svg_path.read_text(encoding="utf-8")
 
     assert '<text x="186.00" y="120.00">no</text>' in svg
     assert '<text x="186.00" y="132.00">yes</text>' in svg
 
 
-def test_postprocess_sppm_decision_outcome_labels_svg_places_north_exit_labels_with_stable_tiebreak(tmp_path: Path):
+def test_postprocess_sppm_decision_outcome_labels_svg_places_north_exit_labels_with_stable_tiebreak(
+    tmp_path: Path,
+):
     contract = SimpleNamespace(
         decision_outcome_label_edges=[
-            SimpleNamespace(source_id="decision", target_id="__anchor_a", anchor_id="decision", label_text="yes"),
-            SimpleNamespace(source_id="decision", target_id="__anchor_b", anchor_id="decision", label_text="no"),
+            SimpleNamespace(
+                source_id="decision",
+                target_id="__anchor_a",
+                anchor_id="decision",
+                label_text="yes",
+            ),
+            SimpleNamespace(
+                source_id="decision",
+                target_id="__anchor_b",
+                anchor_id="decision",
+                label_text="no",
+            ),
         ]
     )
     svg_path = tmp_path / "decision_labels_north.svg"
@@ -105,17 +155,26 @@ def test_postprocess_sppm_decision_outcome_labels_svg_places_north_exit_labels_w
         encoding="utf-8",
     )
 
-    postprocess_sppm_decision_outcome_labels_svg(output_path=svg_path, contract=contract)
+    postprocess_sppm_decision_outcome_labels_svg(
+        output_path=svg_path, contract=contract
+    )
     svg = svg_path.read_text(encoding="utf-8")
 
     assert '<text x="240.00" y="90.00">no</text>' in svg
     assert '<text x="254.00" y="90.00">yes</text>' in svg
 
 
-def test_postprocess_sppm_decision_outcome_labels_svg_does_not_move_non_decision_labels(tmp_path: Path):
+def test_postprocess_sppm_decision_outcome_labels_svg_does_not_move_non_decision_labels(
+    tmp_path: Path,
+):
     contract = SimpleNamespace(
         decision_outcome_label_edges=[
-            SimpleNamespace(source_id="decision", target_id="approve", anchor_id="decision", label_text="yes"),
+            SimpleNamespace(
+                source_id="decision",
+                target_id="approve",
+                anchor_id="decision",
+                label_text="yes",
+            ),
         ]
     )
     svg_path = tmp_path / "decision_labels_no_bleed.svg"
@@ -130,7 +189,9 @@ def test_postprocess_sppm_decision_outcome_labels_svg_does_not_move_non_decision
         encoding="utf-8",
     )
 
-    postprocess_sppm_decision_outcome_labels_svg(output_path=svg_path, contract=contract)
+    postprocess_sppm_decision_outcome_labels_svg(
+        output_path=svg_path, contract=contract
+    )
     svg = svg_path.read_text(encoding="utf-8")
 
     assert '<text x="274.00" y="120.00">yes</text>' in svg

@@ -77,7 +77,13 @@ class IR:
         """Construct an `IR` from a dict representation."""
         nodes = []
         for nd in data.get("nodes", []):
-            nodes.append(Node(id=nd.get("id", ""), type=nd.get("type", ""), attrs=nd.get("attrs", {})))
+            nodes.append(
+                Node(
+                    id=nd.get("id", ""),
+                    type=nd.get("type", ""),
+                    attrs=nd.get("attrs", {}),
+                )
+            )
         edges = []
         for ed in data.get("edges", []):
             edges.append(
@@ -96,7 +102,12 @@ class IR:
         if not isinstance(process_metadata, dict):
             process_metadata = None
 
-        return cls(name=data.get("name", ""), nodes=nodes, edges=edges, process_metadata=process_metadata)
+        return cls(
+            name=data.get("name", ""),
+            nodes=nodes,
+            edges=edges,
+            process_metadata=process_metadata,
+        )
 
     def to_json(self, path: Path | str | None = None) -> str:
         """Serialize the IR to JSON and optionally write to `path`."""

@@ -36,8 +36,18 @@ def merge_diagrams_toml_sppm_defaults(options: dict | None) -> dict:
     resolved: dict[str, object] = dict(opts)
     config_options = _flatten_sppm_config_options(sppm_section)
 
-    profile_name = str(opts.get("sppm_output_profile") or config_options.get("sppm_output_profile") or "default").strip().lower()
-    preset_options = _extract_sppm_preset_options(sppm_section=sppm_section, profile_name=profile_name)
+    profile_name = (
+        str(
+            opts.get("sppm_output_profile")
+            or config_options.get("sppm_output_profile")
+            or "default"
+        )
+        .strip()
+        .lower()
+    )
+    preset_options = _extract_sppm_preset_options(
+        sppm_section=sppm_section, profile_name=profile_name
+    )
 
     for key, value in preset_options.items():
         if key not in resolved:
@@ -109,7 +119,9 @@ def _flatten_sppm_config_options(sppm_section: dict) -> dict[str, object]:
     return mapped
 
 
-def _extract_sppm_preset_options(sppm_section: dict, profile_name: str) -> dict[str, object]:
+def _extract_sppm_preset_options(
+    sppm_section: dict, profile_name: str
+) -> dict[str, object]:
     presets = sppm_section.get("presets")
     if not isinstance(presets, dict):
         return {}

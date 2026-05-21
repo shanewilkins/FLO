@@ -73,4 +73,6 @@ label policy.
 ## References
 
 - `docs/design/sppm_renderer_design.md`
+- `docs/design/adr_render_stack_elk_svg_typst.md`
+- `docs/design/render_platform_target_architecture.md`
 - `.roadmap/issues/renderer-platform-completeness/d4183d06-renderer-architecture-boundary-shared-core-vs-sppm-specific-vs-swimlane-specific.md`

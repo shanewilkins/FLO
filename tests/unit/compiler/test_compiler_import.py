@@ -223,7 +223,9 @@ def test_compile_promotes_grouped_materials_to_process_metadata():
     assert ir.process_metadata["materials"]["dry"]["items"][0]["id"] == "flour"
     assert ir.process_metadata["materials"]["wet"]["name"] == "Wet Ingredients"
     assert ir.process_metadata["materials"]["wet"]["dairy"]["name"] == "Dairy"
-    assert ir.process_metadata["materials"]["wet"]["dairy"]["items"][0]["id"] == "butter"
+    assert (
+        ir.process_metadata["materials"]["wet"]["dairy"]["items"][0]["id"] == "butter"
+    )
 
 
 def test_compile_flattens_subprocess_subnodes():

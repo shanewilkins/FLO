@@ -1,4 +1,5 @@
 """Validation helpers for the FLO IR types (now under compiler.ir)."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -18,6 +19,7 @@ _SPATIAL_UNITS = {"mm", "cm", "m", "in", "ft"}
 
 try:
     import jsonschema  # type: ignore
+
     _JSONSCHEMA_AVAILABLE = True
 except Exception:  # pragma: no cover - optional
     jsonschema = None  # type: ignore
@@ -65,10 +67,14 @@ def _validate_edge_resolution(obj: IR, ids: list[str]) -> None:
     known_ids = set(ids)
     for edge in obj.edges:
         if edge.source not in known_ids or edge.target not in known_ids:
-            raise ValidationError(f"E1004: edge endpoint unresolved: {edge.source} -> {edge.target}")
+            raise ValidationError(
+                f"E1004: edge endpoint unresolved: {edge.source} -> {edge.target}"
+            )
 
 
-def _build_edge_degree_maps(obj: IR, ids: list[str]) -> tuple[dict[str, int], dict[str, int]]:
+def _build_edge_degree_maps(
+    obj: IR, ids: list[str]
+) -> tuple[dict[str, int], dict[str, int]]:
     known_ids = set(ids)
     incoming_counts: dict[str, int] = {node_id: 0 for node_id in known_ids}
     outgoing_counts: dict[str, int] = {node_id: 0 for node_id in known_ids}
@@ -90,7 +96,9 @@ def _validate_decision_nodes(obj: IR, outgoing_counts: dict[str, int]) -> None:
             )
 
 
-def _validate_queue_nodes(obj: IR, incoming_counts: dict[str, int], outgoing_counts: dict[str, int]) -> None:
+def _validate_queue_nodes(
+    obj: IR, incoming_counts: dict[str, int], outgoing_counts: dict[str, int]
+) -> None:
     for node in obj.nodes:
         if (node.type or "").lower() != "queue":
             continue
@@ -110,7 +118,7 @@ def _validate_queue_nodes(obj: IR, incoming_counts: dict[str, int], outgoing_cou
 
 def _validate_queue_wait_time_semantics(obj: IR) -> None:
     """Enforce queue/task semantic constraint: wait_time only on queue nodes.
-    
+
     - Queue nodes (kind: queue) may have wait_time (queue delays).
     - Task nodes (task, system_task, subprocess) must NOT have wait_time.
     - Task nodes may have cycle_time and crossover_time (work duration and setup).
@@ -119,7 +127,7 @@ def _validate_queue_wait_time_semantics(obj: IR) -> None:
     for node in obj.nodes:
         node_type = (node.type or "").lower()
         metadata = _extract_node_metadata(node)
-        
+
         if node_type == "queue":
             # Queue nodes: reject cycle_time and crossover_time
             if "cycle_time" in metadata:
@@ -128,7 +136,11 @@ def _validate_queue_wait_time_semantics(obj: IR) -> None:
                     f"Queues represent delays only; use wait_time. "
                     f"Cycle time belongs on task nodes."
                 )
-            if "crossover_time" in metadata or "transfer_time" in metadata or "changeover_time" in metadata:
+            if (
+                "crossover_time" in metadata
+                or "transfer_time" in metadata
+                or "changeover_time" in metadata
+            ):
                 raise ValidationError(
                     f"E1502: queue node '{node.id}' has crossover/transfer/changeover_time metadata. "
                     f"Queues represent delays only; use wait_time. "
@@ -165,13 +177,19 @@ def _validate_node_connectivity(
 
 def _validate_global_reachability(obj: IR) -> None:
     node_ids = [node.id for node in obj.nodes]
-    adjacency, reverse_adjacency = _build_adjacency_maps(node_ids=node_ids, edges=obj.edges)
+    adjacency, reverse_adjacency = _build_adjacency_maps(
+        node_ids=node_ids, edges=obj.edges
+    )
     start_nodes = _collect_node_ids_by_type(obj=obj, node_type="start")
     end_nodes = _collect_node_ids_by_type(obj=obj, node_type="end")
 
     _ensure_end_nodes_present(end_nodes=end_nodes)
-    _ensure_all_nodes_reachable_from_start(obj=obj, start_nodes=start_nodes, adjacency=adjacency)
-    _ensure_all_nodes_can_reach_end(obj=obj, end_nodes=end_nodes, reverse_adjacency=reverse_adjacency)
+    _ensure_all_nodes_reachable_from_start(
+        obj=obj, start_nodes=start_nodes, adjacency=adjacency
+    )
+    _ensure_all_nodes_can_reach_end(
+        obj=obj, end_nodes=end_nodes, reverse_adjacency=reverse_adjacency
+    )
 
 
 def _build_adjacency_maps(
@@ -259,9 +277,7 @@ def _validate_node_io_lists(obj: IR) -> None:
                 continue
 
             if not isinstance(value, list):
-                raise ValidationError(
-                    f"E1310: node '{node.id}' {field} must be a list"
-                )
+                raise ValidationError(f"E1310: node '{node.id}' {field} must be a list")
 
             for index, item in enumerate(value):
                 if not isinstance(item, str) or not item.strip():
@@ -288,7 +304,11 @@ def _is_node_time_metadata_key(key: Any) -> bool:
         # Existing second-based scalar keys remain supported.
         return False
 
-    return normalized in {"time", "duration"} or normalized.endswith("_time") or normalized.endswith("_duration")
+    return (
+        normalized in {"time", "duration"}
+        or normalized.endswith("_time")
+        or normalized.endswith("_duration")
+    )
 
 
 def _validate_node_time_metadata_value(node_id: str, key: str, value: Any) -> None:
@@ -300,10 +320,12 @@ def _validate_node_time_metadata_value(node_id: str, key: str, value: Any) -> No
         )
 
     duration_value = value.get("value")
-    if not isinstance(duration_value, (int, float)) or isinstance(duration_value, bool) or float(duration_value) < 0:
-        raise ValidationError(
-            f"E1302: {path}.value must be a number >= 0"
-        )
+    if (
+        not isinstance(duration_value, (int, float))
+        or isinstance(duration_value, bool)
+        or float(duration_value) < 0
+    ):
+        raise ValidationError(f"E1302: {path}.value must be a number >= 0")
 
     unit = value.get("unit")
     if not isinstance(unit, str) or unit.strip().lower() not in _TIME_UNITS:
@@ -321,23 +343,35 @@ def _validate_process_resources(obj: IR) -> None:
         resources = process_metadata.get(resource_key)
         if resources is None:
             continue
-        _validate_resource_collection(resource_key=resource_key, collection=resources, path=resource_key)
+        _validate_resource_collection(
+            resource_key=resource_key, collection=resources, path=resource_key
+        )
 
 
-def _validate_resource_collection(resource_key: str, collection: Any, path: str) -> None:
+def _validate_resource_collection(
+    resource_key: str, collection: Any, path: str
+) -> None:
     if isinstance(collection, list):
         for index, resource in enumerate(collection):
-            _validate_resource_item(resource_key=resource_key, path=f"{path}[{index}]", resource=resource)
+            _validate_resource_item(
+                resource_key=resource_key, path=f"{path}[{index}]", resource=resource
+            )
         return
 
     if isinstance(collection, dict):
         group_label = collection.get("name")
-        if "name" in collection and (not isinstance(group_label, str) or not group_label.strip()):
+        if "name" in collection and (
+            not isinstance(group_label, str) or not group_label.strip()
+        ):
             raise ValidationError(
                 f"E1201: process metadata '{path}.name' must be a non-empty string"
             )
 
-        child_items = [(group_name, nested_collection) for group_name, nested_collection in collection.items() if group_name != "name"]
+        child_items = [
+            (group_name, nested_collection)
+            for group_name, nested_collection in collection.items()
+            if group_name != "name"
+        ]
         if not child_items:
             raise ValidationError(
                 f"E1201: process metadata '{path}' grouped objects must include at least one nested collection"
@@ -362,15 +396,11 @@ def _validate_resource_collection(resource_key: str, collection: Any, path: str)
 
 def _validate_resource_item(resource_key: str, path: str, resource: Any) -> None:
     if not isinstance(resource, dict):
-        raise ValidationError(
-            f"E1202: {path} must be an object"
-        )
+        raise ValidationError(f"E1202: {path} must be an object")
 
     resource_id = resource.get("id")
     if resource_id is not None and not isinstance(resource_id, str):
-        raise ValidationError(
-            f"E1203: {path}.id must be a string"
-        )
+        raise ValidationError(f"E1203: {path}.id must be a string")
 
     if resource_key == "locations":
         _validate_location_spatial(path=path, resource=resource)
@@ -379,9 +409,7 @@ def _validate_resource_item(resource_key: str, path: str, resource: Any) -> None
     if quantity is None:
         return
     if not isinstance(quantity, dict):
-        raise ValidationError(
-            f"E1204: {path}.quantity must be an object"
-        )
+        raise ValidationError(f"E1204: {path}.quantity must be an object")
 
     _validate_resource_quantity(path=path, quantity=quantity)
 
@@ -392,9 +420,7 @@ def _validate_location_spatial(path: str, resource: dict[str, Any]) -> None:
         return
 
     if not isinstance(spatial, dict):
-        raise ValidationError(
-            f"E1214: {path}.metadata.spatial must be an object"
-        )
+        raise ValidationError(f"E1214: {path}.metadata.spatial must be an object")
 
     x = spatial.get("x")
     y = spatial.get("y")
@@ -404,7 +430,9 @@ def _validate_location_spatial(path: str, resource: dict[str, Any]) -> None:
         )
 
     unit = spatial.get("unit")
-    if unit is not None and (not isinstance(unit, str) or unit.strip().lower() not in _SPATIAL_UNITS):
+    if unit is not None and (
+        not isinstance(unit, str) or unit.strip().lower() not in _SPATIAL_UNITS
+    ):
         raise ValidationError(
             f"E1216: {path}.metadata.spatial.unit must be one of {sorted(_SPATIAL_UNITS)}"
         )
@@ -451,21 +479,25 @@ def _validate_count_quantity(path: str, quantity: dict[str, Any]) -> None:
         )
 
     unit = quantity.get("unit")
-    if unit is not None and (not isinstance(unit, str) or unit.strip().lower() != "each"):
+    if unit is not None and (
+        not isinstance(unit, str) or unit.strip().lower() != "each"
+    ):
         raise ValidationError(
             f"E1207: {path}.quantity.unit must be 'each' for kind=count"
         )
 
     qualifier = quantity.get("qualifier")
     if qualifier is not None and not isinstance(qualifier, str):
-        raise ValidationError(
-            f"E1208: {path}.quantity.qualifier must be a string"
-        )
+        raise ValidationError(f"E1208: {path}.quantity.qualifier must be a string")
 
 
 def _validate_measure_quantity(path: str, quantity: dict[str, Any]) -> None:
     value = quantity.get("value")
-    if not isinstance(value, (int, float)) or isinstance(value, bool) or float(value) <= 0:
+    if (
+        not isinstance(value, (int, float))
+        or isinstance(value, bool)
+        or float(value) <= 0
+    ):
         raise ValidationError(
             f"E1209: {path}.quantity.value must be a number > 0 for kind=measure"
         )
@@ -485,15 +517,26 @@ def _validate_measure_quantity(path: str, quantity: dict[str, Any]) -> None:
     if canonical_value is None:
         return
 
-    _validate_canonical_quantity(path=path, canonical_value=canonical_value, canonical_unit=canonical_unit)
+    _validate_canonical_quantity(
+        path=path, canonical_value=canonical_value, canonical_unit=canonical_unit
+    )
 
 
-def _validate_canonical_quantity(path: str, canonical_value: Any, canonical_unit: Any) -> None:
-    if not isinstance(canonical_value, (int, float)) or isinstance(canonical_value, bool) or float(canonical_value) <= 0:
+def _validate_canonical_quantity(
+    path: str, canonical_value: Any, canonical_unit: Any
+) -> None:
+    if (
+        not isinstance(canonical_value, (int, float))
+        or isinstance(canonical_value, bool)
+        or float(canonical_value) <= 0
+    ):
         raise ValidationError(
             f"E1212: {path}.quantity.canonical_value must be a number > 0"
         )
-    if not isinstance(canonical_unit, str) or canonical_unit.strip().lower() not in _MEASURE_UNITS:
+    if (
+        not isinstance(canonical_unit, str)
+        or canonical_unit.strip().lower() not in _MEASURE_UNITS
+    ):
         raise ValidationError(
             f"E1213: {path}.quantity.canonical_unit must be one of {sorted(_MEASURE_UNITS)}"
         )
@@ -518,7 +561,10 @@ def _validate_edge_metadata(obj: IR) -> None:
         metadata = getattr(edge, "metadata", None)
         if not isinstance(metadata, dict) or not metadata:
             continue
-        if bool(getattr(edge, "rework", None)) or str(getattr(edge, "edge_type", "") or "").lower() == "rework":
+        if (
+            bool(getattr(edge, "rework", None))
+            or str(getattr(edge, "edge_type", "") or "").lower() == "rework"
+        ):
             _validate_rework_edge_metadata(edge=edge, metadata=metadata)
 
 
@@ -527,7 +573,11 @@ def _validate_rework_edge_metadata(*, edge: Any, metadata: dict[str, Any]) -> No
 
     rate = metadata.get("rate")
     if rate is not None:
-        if not isinstance(rate, (int, float)) or isinstance(rate, bool) or not (0 <= float(rate) <= 1):
+        if (
+            not isinstance(rate, (int, float))
+            or isinstance(rate, bool)
+            or not (0 <= float(rate) <= 1)
+        ):
             raise ValidationError(
                 f"E1401: {edge_path} metadata.rate must be a number between 0 and 1"
             )
@@ -543,7 +593,11 @@ def _validate_rework_edge_metadata(*, edge: Any, metadata: dict[str, Any]) -> No
 
     count = metadata.get("count")
     if count is not None:
-        is_valid_number = isinstance(count, (int, float)) and not isinstance(count, bool) and float(count) > 0
+        is_valid_number = (
+            isinstance(count, (int, float))
+            and not isinstance(count, bool)
+            and float(count) > 0
+        )
         is_valid_text = isinstance(count, str) and bool(count.strip())
         if not (is_valid_number or is_valid_text):
             raise ValidationError(

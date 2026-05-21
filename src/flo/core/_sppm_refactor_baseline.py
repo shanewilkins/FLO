@@ -35,9 +35,7 @@ _RENDER_SHARED_CORE_FILES: tuple[str, ...] = (
     "src/flo/render/_process_header.py",
     "src/flo/render/_publication.py",
 )
-_RENDER_SHARED_CORE_DIRS: tuple[str, ...] = (
-    "src/flo/render/layout_core",
-)
+_RENDER_SHARED_CORE_DIRS: tuple[str, ...] = ("src/flo/render/layout_core",)
 _LAYER_PATHS: dict[str, tuple[str, ...]] = {
     "services": ("src/flo/services/", "src/flo/io/"),
     "adapters": ("src/flo/adapters/",),
@@ -108,9 +106,13 @@ class BaselineReport:
     dry_violations: tuple[DryViolation, ...]
 
 
-def collect_sppm_refactor_baseline(files: Sequence[str | Path] | None = None) -> BaselineReport:
+def collect_sppm_refactor_baseline(
+    files: Sequence[str | Path] | None = None,
+) -> BaselineReport:
     """Collect structural, boundary, and DRY baselines for the requested files."""
-    resolved_files = [Path(raw) for raw in (files or DEFAULT_SPPM_REFACTOR_BASELINE_FILES)]
+    resolved_files = [
+        Path(raw) for raw in (files or DEFAULT_SPPM_REFACTOR_BASELINE_FILES)
+    ]
     file_stats = tuple(collect_file_baseline(path) for path in resolved_files)
     return BaselineReport(
         files=file_stats,
@@ -129,7 +131,11 @@ def collect_file_baseline(path: Path) -> FileBaseline:
     long_lines_gt_100 = sum(1 for line in lines if len(line) > 100)
 
     tree = ast.parse(text)
-    functions = [node for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))]
+    functions = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    ]
     function_stats: list[FunctionBaseline] = []
     for fn in functions:
         end_lineno = getattr(fn, "end_lineno", fn.lineno)
@@ -143,7 +149,9 @@ def collect_file_baseline(path: Path) -> FileBaseline:
             )
         )
 
-    longest_function = max(function_stats, key=lambda item: item.span_lines, default=None)
+    longest_function = max(
+        function_stats, key=lambda item: item.span_lines, default=None
+    )
     complexity_findings = _collect_complexity_findings(path)
     return FileBaseline(
         path=path,
@@ -189,7 +197,9 @@ def format_sppm_refactor_baseline_report(report: BaselineReport) -> str:
     """Format the baseline measurements as a markdown report."""
     lines: list[str] = []
     stats = report.files
-    lines.append("| File | Lines | Max line | >100 chars | Functions | Longest function | Complexity |")
+    lines.append(
+        "| File | Lines | Max line | >100 chars | Functions | Longest function | Complexity |"
+    )
     lines.append("| --- | ---: | ---: | ---: | ---: | --- | --- |")
     for item in stats:
         longest = _format_longest_function(item.longest_function)
@@ -212,7 +222,14 @@ def _collect_layer_violations(files: Sequence[Path]) -> tuple[ImportViolation, .
         violations.extend(_collect_renderer_boundary_violations(path))
     for path in files:
         violations.extend(_collect_architecture_layer_violations(path))
-    violations.sort(key=lambda item: (item.path.as_posix(), item.lineno, item.imported_module, item.rule))
+    violations.sort(
+        key=lambda item: (
+            item.path.as_posix(),
+            item.lineno,
+            item.imported_module,
+            item.rule,
+        )
+    )
     return tuple(violations)
 
 
@@ -220,7 +237,11 @@ def _iter_render_shared_core_paths() -> tuple[Path, ...]:
     paths = [Path(raw) for raw in _RENDER_SHARED_CORE_FILES]
     for raw_dir in _RENDER_SHARED_CORE_DIRS:
         paths.extend(sorted(Path(raw_dir).rglob("*.py")))
-    return tuple(_normalize_repo_path(path) for path in paths if _normalize_repo_path(path).exists())
+    return tuple(
+        _normalize_repo_path(path)
+        for path in paths
+        if _normalize_repo_path(path).exists()
+    )
 
 
 def _collect_renderer_boundary_violations(path: Path) -> list[ImportViolation]:
@@ -361,12 +382,21 @@ def _collect_dry_violations(files: Sequence[Path]) -> tuple[DryViolation, ...]:
                 span_lines=max(span for _path, _name, span in sorted_items),
             )
         )
-    dry_violations.sort(key=lambda item: (-item.span_lines, tuple(path.as_posix() for path in item.files)))
+    dry_violations.sort(
+        key=lambda item: (
+            -item.span_lines,
+            tuple(path.as_posix() for path in item.files),
+        )
+    )
     return tuple(dry_violations)
 
 
-def _normalized_function_fingerprint(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str:
-    normalized = _NormalizeFunctionClone().visit(ast.fix_missing_locations(ast.Module(body=[node], type_ignores=[])))
+def _normalized_function_fingerprint(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> str:
+    normalized = _NormalizeFunctionClone().visit(
+        ast.fix_missing_locations(ast.Module(body=[node], type_ignores=[]))
+    )
     return ast.dump(normalized, include_attributes=False)
 
 
@@ -381,11 +411,15 @@ class _NormalizeFunctionClone(ast.NodeTransformer):
         return ast.copy_location(ast.Name(id="NAME", ctx=node.ctx), node)
 
     def visit_arg(self, node: ast.arg) -> ast.arg:
-        return ast.copy_location(ast.arg(arg="ARG", annotation=None, type_comment=None), node)
+        return ast.copy_location(
+            ast.arg(arg="ARG", annotation=None, type_comment=None), node
+        )
 
     def visit_Attribute(self, node: ast.Attribute) -> ast.Attribute:
         value = self.visit(node.value)
-        return ast.copy_location(ast.Attribute(value=value, attr="ATTR", ctx=node.ctx), node)
+        return ast.copy_location(
+            ast.Attribute(value=value, attr="ATTR", ctx=node.ctx), node
+        )
 
     def visit_Constant(self, node: ast.Constant) -> ast.Constant:
         value = node.value
@@ -397,7 +431,9 @@ class _NormalizeFunctionClone(ast.NodeTransformer):
             value = 0
         return ast.copy_location(ast.Constant(value=value), node)
 
-    def _normalize_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> ast.FunctionDef | ast.AsyncFunctionDef:
+    def _normalize_function(
+        self, node: ast.FunctionDef | ast.AsyncFunctionDef
+    ) -> ast.FunctionDef | ast.AsyncFunctionDef:
         clone = cast(ast.FunctionDef | ast.AsyncFunctionDef, self.generic_visit(node))
         clone.name = "FUNCTION"
         clone.decorator_list = []
@@ -418,7 +454,9 @@ def _format_layer_violations(violations: Sequence[ImportViolation]) -> list[str]
 
 def _format_dry_violations(violations: Sequence[DryViolation]) -> list[str]:
     if not violations:
-        return ["- No normalized cross-file clone groups detected in the tracked SPPM modules."]
+        return [
+            "- No normalized cross-file clone groups detected in the tracked SPPM modules."
+        ]
     lines = ["| Files | Functions | Max span |", "| --- | --- | ---: |"]
     for item in violations:
         file_text = ", ".join(_workspace_relative_path(path) for path in item.files)
