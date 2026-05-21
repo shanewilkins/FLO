@@ -19,6 +19,145 @@ to the accepted target stack:
 - move contracts before moving all implementations
 - treat publication composition as a separate concern from layout
 
+## Immediate Execution Plan: Boundary-Freeze Day
+
+This is the recommended battle plan for the next implementation session now
+that the design direction is locked.
+
+### Goal
+
+Make the codebase structurally ready for the refactor without trying to land
+ELK, FLO SVG, Typst composition, and package reorganization all at once.
+
+### Priority Order
+
+1. normalize all project automation and developer commands through `uv`
+2. introduce backend-neutral render contracts in code
+3. separate render intent from backend execution
+4. isolate Graphviz behind an explicit legacy adapter boundary
+5. stand up one narrow FLO-owned SVG path
+6. preserve publication composition as a separate lane rather than extending
+   DOT-driven behavior further
+
+### Concrete Work For Today
+
+#### 1. Finish toolchain normalization
+
+Outcome:
+
+- hooks, scripts, and routine developer commands resolve through `uv`
+- no important workflow depends on ambient interpreter selection
+
+Work:
+
+- replace remaining bare `python` or tool invocations in repo automation with
+  `uv run ...`
+- update any stale developer-facing command examples that still imply ambient
+  interpreter selection
+
+#### 2. Freeze the backend-neutral contracts
+
+Outcome:
+
+- future ELK, Graphviz, and SVG work hang off the same internal seams
+
+Work:
+
+- define small render-platform contracts such as `DiagramDocument`,
+  `LayoutRequest`, `LayoutResult`, and `GraphicAsset`
+- keep these contracts intentionally narrow and backend-neutral
+- avoid encoding DOT or Graphviz assumptions into the contract names or fields
+
+#### 3. Split intent from execution
+
+Outcome:
+
+- orchestration can choose a diagram family and rendering path without sharing
+  backend-specific details across the stack
+
+Work:
+
+- move high-level render selection into a backend-neutral orchestration layer
+- move DOT-specific lowering behind a Graphviz adapter boundary
+- stop letting shared render assembly functions decide both semantics and DOT
+  syntax in the same step
+
+#### 4. Stand up a first non-Graphviz slice
+
+Outcome:
+
+- the new architecture is proven by one executable path rather than only by
+  scaffolding
+
+Work:
+
+- implement one narrow direct-SVG path
+- prefer spaghetti as the first slice because it depends more on explicit
+  spatial semantics than on graph layout
+
+#### 5. Hold the line on publication scope
+
+Outcome:
+
+- page composition stays a separate concern while diagram rendering contracts
+  stabilize
+
+Work:
+
+- keep publication planning distinct from standalone graphic generation
+- avoid adding new DOT-era pagination or page-furniture logic to shared render
+  code
+
+### Stop Line For The Day
+
+Today is successful if all of the following are true:
+
+- `uv run pre-commit run --all-files` passes
+- backend-neutral render contracts exist in code
+- Graphviz is behind an adapter seam rather than serving as the organizing
+  abstraction for new work
+- one narrow SVG-backed path exists
+- no newly introduced shared code depends on Graphviz-specific concepts
+
+## Backend Selection Guidance
+
+FLO does not need a broad plugin-style backend registry yet.
+
+### Recommended near-term approach
+
+Use an explicit in-repo backend selection layer with a small, closed mapping.
+
+That means:
+
+- diagram families choose from a small number of known backends
+- orchestration code calls a backend-neutral adapter interface
+- per-family defaults stay explicit in code rather than being dynamically
+  discovered
+
+This is enough for the migration period and keeps control flow legible.
+
+### Why not introduce a full registry now
+
+A true backend registry becomes valuable when FLO has several active backends,
+runtime-pluggable selection, or an external extension story.
+
+Those are not today’s problems.
+
+Today’s risk is not "insufficient indirection". Today’s risk is letting shared
+render code stay Graphviz-shaped while pretending a registry solved the design.
+
+### What to build now instead
+
+Build a small backend selector or factory with explicit choices such as:
+
+- Graphviz legacy adapter
+- direct SVG adapter for migrated diagram families
+- later, an ELK-backed layout adapter feeding the SVG renderer
+
+If the number of backends or selection rules grows materially, that selector
+can later be promoted into a formal registry without changing the core
+contracts.
+
 ## Phase 0: Freeze The New Boundaries
 
 Outcome:
