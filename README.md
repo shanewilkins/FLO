@@ -131,11 +131,14 @@ Downstream projects depend on FLO IR.
 ## Source of Truth Hierarchy
 
 - Structural contract SSOT: `schema/flo_ir.json`
-- Semantic SSOT: `docs/design/IR.md`
+- Policy authority: `docs/policy/authoritative_artifacts.md`
+- Diagram and artifact specs: `docs/specs/`
+- Core semantic spec: `docs/specs/core_language.md`
+- Historical semantic design note: `docs/design/IR.md`
 - User-facing summary: `README.md`
 
 Hierarchy policy and update workflow are defined in
-`docs/design/SSOT_Hierarchy.md`.
+`docs/policy/authoritative_artifacts.md`.
 
 ------------------------------------------------------------------------
 

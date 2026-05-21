@@ -88,8 +88,9 @@ Validation rules (initial)
 - Every node must be able to reach at least one `end` node.
 - No implicit node creation; all nodes and lanes must be declared.
 
-Authoritative semantics live in `docs/design/IR.md` and hierarchy policy is
-defined in `docs/design/SSOT_Hierarchy.md`.
+Authoritative core semantics now live in `docs/specs/core_language.md` and
+hierarchy policy is defined in `docs/policy/authoritative_artifacts.md`.
+This design note remains useful background context for the IR shape.
 
 JSON Schema (sketch)
 --------------------

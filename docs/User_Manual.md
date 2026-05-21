@@ -979,6 +979,7 @@ Problem: SVG not generated
 Useful project references:
 - `README.md`
 - `docs/CLI_Error_Contract.md`
+- `docs/specs/core_language.md`
 - `docs/design/IR.md`
 - `schema/flo_ir.json`
 - `examples/README.md`
