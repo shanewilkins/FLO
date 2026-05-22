@@ -222,61 +222,56 @@ def _render_intent_overrides(
         return getattr(resolved_intent, field) != getattr(baseline_intent, field)
 
     overrides: dict[str, Any] = {}
-
-    if changed("diagram") and resolved_intent.diagram is not None:
-        overrides["diagram"] = resolved_intent.diagram
-
-    if (
-        changed("publication_page_format")
-        and resolved_intent.publication_page_format is not None
-    ):
-        overrides["publication_page_format"] = resolved_intent.publication_page_format
-
-    if changed("publication_header_enabled") and (
-        resolved_intent.publication_header_enabled is not None
-    ):
-        overrides["sppm_no_header"] = not bool(
-            resolved_intent.publication_header_enabled
-        )
-
-    if changed("publication_footer_enabled") and (
-        resolved_intent.publication_footer_enabled is not None
-    ):
-        overrides["sppm_no_footer"] = not bool(
-            resolved_intent.publication_footer_enabled
-        )
-
-    if changed("layout_wrap") and resolved_intent.layout_wrap is not None:
-        overrides["layout_wrap"] = resolved_intent.layout_wrap
-
-    if changed("layout_max_width") and resolved_intent.layout_max_width is not None:
-        overrides["layout_max_width_px"] = resolved_intent.layout_max_width
-
-    if (
-        changed("layout_target_columns")
-        and resolved_intent.layout_target_columns is not None
-    ):
-        overrides["layout_target_columns"] = resolved_intent.layout_target_columns
-
-    if changed("sppm_label_density") and resolved_intent.sppm_label_density is not None:
-        overrides["sppm_label_density"] = resolved_intent.sppm_label_density
-
-    if (
-        changed("sppm_node_numbering")
-        and resolved_intent.sppm_node_numbering is not None
-    ):
-        overrides["sppm_step_numbering"] = resolved_intent.sppm_node_numbering
-
-    if changed("spaghetti_channel") and resolved_intent.spaghetti_channel is not None:
-        overrides["spaghetti_channel"] = resolved_intent.spaghetti_channel
-
-    if (
-        changed("spaghetti_people_mode")
-        and resolved_intent.spaghetti_people_mode is not None
-    ):
-        overrides["spaghetti_people_mode"] = resolved_intent.spaghetti_people_mode
-
+    _collect_changed_value_overrides(
+        overrides=overrides,
+        resolved_intent=resolved_intent,
+        changed=changed,
+    )
+    _collect_changed_inverted_boolean_overrides(
+        overrides=overrides,
+        resolved_intent=resolved_intent,
+        changed=changed,
+    )
     return overrides
+
+
+def _collect_changed_value_overrides(
+    *,
+    overrides: dict[str, Any],
+    resolved_intent: Any,
+    changed: Any,
+) -> None:
+    mappings = (
+        ("diagram", "diagram"),
+        ("publication_page_format", "publication_page_format"),
+        ("layout_wrap", "layout_wrap"),
+        ("layout_max_width", "layout_max_width_px"),
+        ("layout_target_columns", "layout_target_columns"),
+        ("sppm_label_density", "sppm_label_density"),
+        ("sppm_node_numbering", "sppm_step_numbering"),
+        ("spaghetti_channel", "spaghetti_channel"),
+        ("spaghetti_people_mode", "spaghetti_people_mode"),
+    )
+    for intent_field, option_field in mappings:
+        value = getattr(resolved_intent, intent_field)
+        if changed(intent_field) and value is not None:
+            overrides[option_field] = value
+
+
+def _collect_changed_inverted_boolean_overrides(
+    *,
+    overrides: dict[str, Any],
+    resolved_intent: Any,
+    changed: Any,
+) -> None:
+    mappings = (
+        ("publication_header_enabled", "sppm_no_header"),
+        ("publication_footer_enabled", "sppm_no_footer"),
+    )
+    for intent_field, option_field in mappings:
+        value = getattr(resolved_intent, intent_field)
+        if changed(intent_field) and value is not None:
+            overrides[option_field] = not bool(value)
 
 
 def render_dot_and_contract(
