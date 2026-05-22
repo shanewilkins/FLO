@@ -37,7 +37,7 @@ def render_flowchart_svg_artifact(
             f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:.0f}" '
             f'height="{height:.0f}" viewBox="0 0 {width:.0f} {height:.0f}" '
             'data-flo-artifact-kind="svg" data-flo-backend="svg" '
-            'data-flo-diagram="flowchart">'
+            'data-flo-diagram="flowchart" data-flo-layout-engine="elk">'
         ),
         "<defs>",
         '<marker id="flo-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">',

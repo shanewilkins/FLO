@@ -95,6 +95,9 @@ class RoutedEdgePath:
     edge: tuple[str, str]
     points: tuple[LayoutPoint, ...]
     label: str | None = None
+    label_point: LayoutPoint | None = None
+    source_port_side: str | None = None
+    target_port_side: str | None = None
     is_rework: bool = False
     rework_variant: SppmReworkVariant | None = None
     callout_lines: tuple[str, ...] = ()

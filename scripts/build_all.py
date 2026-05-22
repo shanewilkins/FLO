@@ -253,16 +253,6 @@ def _direct_svg_variants_for_example(
     example_file: Path,
 ) -> list[tuple[str, dict[str, str]]]:
     name = example_file.stem.lower()
-    if name == "sppm_feature_showcase":
-        return [
-            (
-                "_elk",
-                {
-                    "diagram": "sppm",
-                    "render_backend": "svg",
-                },
-            )
-        ]
     if name == "linear":
         return [
             (

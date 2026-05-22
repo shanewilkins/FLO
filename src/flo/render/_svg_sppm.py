@@ -16,7 +16,6 @@ from ._svg_sppm_edges import _label_placement
 from ._svg_sppm_edges import _lane_header_avoid_bounds
 from ._svg_sppm_nodes import _node_svg
 from ._svg_sppm_rows import _display_canvas_bounds
-from ._svg_sppm_rows import _enforce_sppm_row_alignment
 from .layout_core import build_sppm_elk_layout_request, execute_elk_layout
 from .layout_core.elk_runtime import run_elkjs_layout
 from .layout_core.models import LayoutBounds
@@ -39,11 +38,8 @@ def render_sppm_svg_artifact(
     """Render a minimal standalone SVG for SPPM diagrams using ELK layout."""
     request = build_sppm_elk_layout_request(process, options=options)
     result = execute_elk_layout(request, engine=run_elkjs_layout)
-    display_node_bounds, display_edge_paths = _enforce_sppm_row_alignment(
-        node_bounds=result.node_bounds,
-        edge_paths=result.edge_paths,
-        lanes=result.lanes,
-    )
+    display_node_bounds = result.node_bounds
+    display_edge_paths = result.edge_paths
     display_canvas_bounds = _display_canvas_bounds(
         base_canvas=result.canvas_bounds,
         node_bounds=display_node_bounds,
@@ -64,7 +60,7 @@ def render_sppm_svg_artifact(
             f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:.0f}" '
             f'height="{height:.0f}" viewBox="0 0 {width:.0f} {height:.0f}" '
             'data-flo-artifact-kind="svg" data-flo-backend="svg" '
-            'data-flo-diagram="sppm">'
+            'data-flo-diagram="sppm" data-flo-layout-engine="elk">'
         ),
         "<defs>",
         '<marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">',

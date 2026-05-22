@@ -15,7 +15,7 @@ build_svg() {
   local input="$REPO_ROOT/$input_rel"
   local output="$REPO_ROOT/$output_rel"
 
-  uv run flo run "$input" --export svg --render-backend svg --render-to "$output" "$@"
+  uv run flo run "$input" --export svg --render-to "$output" "$@"
   echo "Built: $output_rel"
 }
 
@@ -40,7 +40,6 @@ build_svg "examples/reference/linear.flo" "renders/reference/linear.svg" --diagr
 build_svg "examples/reference/linear.flo" "renders/reference/linear_elk_flowchart.svg" --diagram flowchart --render-backend svg
 build_svg "examples/reference/rework_loop.flo" "renders/reference/rework_loop.svg" --diagram sppm --orientation lr
 build_svg "examples/reference/sppm_feature_showcase.flo" "renders/reference/sppm_feature_showcase.svg" --diagram sppm --orientation lr
-build_svg "examples/reference/sppm_feature_showcase.flo" "renders/reference/sppm_feature_showcase_elk.svg" --diagram sppm --render-backend svg
 build_svg "examples/reference/sppm_feature_showcase_wrapped.flo" "renders/reference/sppm_feature_showcase_wrapped.svg" --diagram sppm --orientation lr --layout-wrap auto --layout-target-columns 3 --publication-page-format letter
 build_svg "examples/reference/sppm_long_label_stress.flo" "renders/reference/sppm_long_label_stress.svg" --diagram sppm --orientation lr
 # TODO: Re-enable once direct SVG backend supports swimlane rendering.

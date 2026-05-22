@@ -201,7 +201,7 @@ def test_build_sppm_elk_layout_request_preserves_explicit_lane_structure_when_pr
     assert [node.lane_id for node in request.nodes] == ["front", "front"]
 
 
-def test_build_sppm_elk_layout_request_adds_synthetic_rows_for_rework_loops():
+def test_build_sppm_elk_layout_request_flattens_synthetic_rows_into_partitions():
     request = build_sppm_elk_layout_request(
         {
             "nodes": [
@@ -233,12 +233,16 @@ def test_build_sppm_elk_layout_request_adds_synthetic_rows_for_rework_loops():
         options=RenderOptions(diagram="sppm", orientation="lr"),
     )
 
-    assert [lane.id for lane in request.lanes] == [
-        "__sppm_row_mainline",
-        "__sppm_row_rework",
-    ]
-    assert request.lanes[0].node_ids == ("start", "review", "decision", "finish")
-    assert request.lanes[1].node_ids == ("rework_queue", "rework_task")
+    assert request.lanes == ()
+    node_by_id = {node.id: node for node in request.nodes}
+    assert (
+        node_by_id["decision"].partition_index
+        == node_by_id["rework_queue"].partition_index
+    )
+    assert (
+        node_by_id["rework_task"].partition_index
+        < node_by_id["rework_queue"].partition_index
+    )
 
 
 def test_build_sppm_elk_layout_request_measures_richer_node_content_for_elk():
@@ -416,17 +420,16 @@ def test_serialize_sppm_elk_layout_request_activates_partitioning_and_preserves_
     )
     assert payload["layoutOptions"]["elk.layered.feedbackEdges"] == "true"
     assert payload["layoutOptions"]["elk.edgeRouting"] == "ORTHOGONAL"
-    assert payload["layoutOptions"]["elk.spacing.nodeNode"] == "56"
+    assert payload["layoutOptions"]["elk.spacing.nodeNode"] == "96"
     assert (
-        payload["layoutOptions"]["elk.layered.spacing.nodeNodeBetweenLayers"] == "120"
+        payload["layoutOptions"]["elk.layered.spacing.nodeNodeBetweenLayers"] == "104"
     )
     assert (
         payload["layoutOptions"]["elk.layered.nodePlacement.strategy"]
         == "BRANDES_KOEPF"
     )
     assert (
-        payload["layoutOptions"]["elk.layered.nodePlacement.bk.fixedAlignment"]
-        == "BALANCED"
+        payload["layoutOptions"]["elk.layered.nodePlacement.bk.fixedAlignment"] == "TOP"
     )
     assert (
         payload["layoutOptions"]["elk.layered.nodePlacement.favorStraightEdges"]
@@ -526,3 +529,127 @@ def test_serialize_sppm_elk_layout_request_emits_cardinal_ports_and_port_attache
     edge = payload["edges"][0]
     assert edge["sources"] == ["triage__port_south"]
     assert edge["targets"] == ["rework_queue__port_north"]
+
+
+def test_serialize_sppm_return_rework_edge_targets_south_port():
+    request = build_sppm_elk_layout_request(
+        {
+            "nodes": [
+                {"id": "rework", "kind": "task", "name": "Rework"},
+                {"id": "decision", "kind": "decision", "name": "Approved?"},
+            ],
+            "edges": [
+                {
+                    "source": "rework",
+                    "target": "decision",
+                    "edge_type": "rework",
+                    "rework": True,
+                }
+            ],
+        },
+        options=RenderOptions(diagram="sppm", orientation="lr"),
+    )
+
+    payload = serialize_elk_layout_request(request)
+
+    assert payload["edges"][0]["sources"] == ["rework__port_north"]
+    assert payload["edges"][0]["targets"] == ["decision__port_south"]
+
+
+def test_build_sppm_synthetic_rows_set_rework_chain_ports_for_right_to_left_flow():
+    request = build_sppm_elk_layout_request(
+        {
+            "nodes": [
+                {"id": "start", "kind": "start", "name": "Start"},
+                {"id": "decision", "kind": "decision", "name": "Ready?"},
+                {"id": "rework_queue", "kind": "queue", "name": "Rework Queue"},
+                {"id": "rework_task", "kind": "task", "name": "Fix"},
+                {"id": "finish", "kind": "end", "name": "Finish"},
+            ],
+            "edges": [
+                {"source": "start", "target": "decision"},
+                {"source": "decision", "target": "finish", "outcome": "yes"},
+                {
+                    "source": "decision",
+                    "target": "rework_queue",
+                    "outcome": "no",
+                    "edge_type": "rework",
+                },
+                {"source": "rework_queue", "target": "rework_task"},
+                {
+                    "source": "rework_task",
+                    "target": "decision",
+                    "edge_type": "rework",
+                    "rework": True,
+                },
+            ],
+        },
+        options=RenderOptions(diagram="sppm", orientation="lr"),
+    )
+
+    edge_by_pair = {(edge.source_id, edge.target_id): edge for edge in request.edges}
+
+    assert edge_by_pair[("rework_queue", "rework_task")].source_port_side == "WEST"
+    assert edge_by_pair[("rework_queue", "rework_task")].target_port_side == "EAST"
+
+
+def test_build_sppm_synthetic_rows_align_rework_partition_with_branch_decision():
+    request = build_sppm_elk_layout_request(
+        {
+            "nodes": [
+                {"id": "start", "kind": "start", "name": "Start"},
+                {"id": "review", "kind": "task", "name": "Review"},
+                {"id": "decision", "kind": "decision", "name": "Ready?"},
+                {"id": "rework_queue", "kind": "queue", "name": "Rework Queue"},
+                {"id": "rework_task", "kind": "task", "name": "Fix"},
+                {"id": "finish", "kind": "end", "name": "Finish"},
+            ],
+            "edges": [
+                {"source": "start", "target": "review"},
+                {"source": "review", "target": "decision"},
+                {"source": "decision", "target": "finish", "outcome": "yes"},
+                {
+                    "source": "decision",
+                    "target": "rework_queue",
+                    "outcome": "no",
+                    "edge_type": "rework",
+                },
+                {"source": "rework_queue", "target": "rework_task"},
+                {
+                    "source": "rework_task",
+                    "target": "decision",
+                    "edge_type": "rework",
+                    "rework": True,
+                },
+            ],
+        },
+        options=RenderOptions(diagram="sppm", orientation="lr"),
+    )
+
+    node_by_id = {node.id: node for node in request.nodes}
+    assert (
+        node_by_id["decision"].partition_index
+        == node_by_id["rework_queue"].partition_index
+    )
+    assert (
+        node_by_id["rework_task"].partition_index
+        < node_by_id["rework_queue"].partition_index
+    )
+
+
+def test_serialize_sppm_with_explicit_lanes_keeps_hierarchy_handling_enabled():
+    request = build_sppm_elk_layout_request(
+        {
+            "lanes": [{"id": "front", "name": "Front"}],
+            "nodes": [
+                {"id": "start", "kind": "start", "name": "Start", "lane": "front"},
+                {"id": "finish", "kind": "end", "name": "Finish", "lane": "front"},
+            ],
+            "edges": [{"source": "start", "target": "finish"}],
+        },
+        options=RenderOptions(diagram="sppm", orientation="lr"),
+    )
+
+    payload = serialize_elk_layout_request(request)
+
+    assert payload["layoutOptions"]["elk.hierarchyHandling"] == "INCLUDE_CHILDREN"

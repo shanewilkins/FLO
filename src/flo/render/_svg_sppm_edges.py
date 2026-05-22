@@ -7,6 +7,11 @@ from html import escape
 from typing import Any
 
 from ._svg_sppm_nodes import _text_lines_svg
+from ._svg_sppm_edge_segments import (
+    _candidate_segment_indexes,
+    _first_rightward_horizontal_segment_index,
+    _longest_segment_index,
+)
 from .layout_core.models import LayoutBounds, LayoutPoint
 
 _LANE_HEADER_AVOID_HEIGHT_PX = 34.0
@@ -30,24 +35,7 @@ def _edge_svg(
     avoid_bounds: tuple[Any, ...] = (),
     canvas_bounds: Any | None = None,
 ) -> tuple[list[str], tuple[LayoutBounds, ...]]:
-    points = _prefer_vertical_branch_drop(
-        edge_path.points,
-        rework_variant=str(edge_path.rework_variant or ""),
-        source_bounds=source_bounds,
-        target_bounds=target_bounds,
-    )
-    points = _clip_edge_points_to_node_bounds(
-        points,
-        source_bounds=source_bounds,
-        source_kind=source_kind,
-        target_bounds=target_bounds,
-        target_kind=target_kind,
-    )
-    points = _normalize_rework_edge_points(
-        points,
-        is_rework=bool(edge_path.is_rework),
-        rework_variant=str(edge_path.rework_variant or ""),
-    )
+    points = edge_path.points
     if len(points) < 2:
         return [], ()
     polyline = " ".join(f"{point.x_px:.1f},{point.y_px:.1f}" for point in points)
@@ -65,16 +53,26 @@ def _edge_svg(
     ]
     if edge_path.label:
         label_width = max(28.0, float(len(edge_path.label) * 7.0))
-        placement = _label_placement(
-            points,
-            avoid_near_source=bool(
-                edge_path.callout_lines and edge_path.callout_near_source
-            ),
-            avoid_bounds=avoid_bounds,
-            box_width=label_width,
-            box_height=18.0,
-            canvas_bounds=canvas_bounds,
-        )
+        label_point = getattr(edge_path, "label_point", None)
+        if label_point is not None:
+            placement = _clamp_placement_to_canvas(
+                _LabelPlacement(x=float(label_point.x_px), y=float(label_point.y_px)),
+                box_width=label_width,
+                box_height=18.0,
+                canvas_bounds=canvas_bounds,
+            )
+        else:
+            placement = _label_placement(
+                points,
+                avoid_near_source=bool(
+                    edge_path.callout_lines and edge_path.callout_near_source
+                ),
+                prefer_near_source=source_kind.lower() == "decision",
+                avoid_bounds=avoid_bounds,
+                box_width=label_width,
+                box_height=18.0,
+                canvas_bounds=canvas_bounds,
+            )
         label_text = escape(edge_path.label)
         parts.append(
             f'<rect x="{placement.x - (label_width / 2.0):.1f}" y="{placement.y - 12.0:.1f}" width="{label_width:.1f}" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />'
@@ -124,14 +122,22 @@ def _label_placement(
     points: Any,
     *,
     avoid_near_source: bool = False,
+    prefer_near_source: bool = False,
     avoid_bounds: tuple[Any, ...] = (),
     box_width: float = 28.0,
     box_height: float = 18.0,
     canvas_bounds: Any | None = None,
 ) -> _LabelPlacement:
+    preferred_index = (
+        _first_rightward_horizontal_segment_index(points)
+        if prefer_near_source
+        else None
+    )
     segment_indexes = _candidate_segment_indexes(
         points,
         avoid_near_source=avoid_near_source,
+        prefer_near_source=prefer_near_source,
+        preferred_index=preferred_index,
     )
     best_index = _longest_segment_index(points, segment_indexes=segment_indexes)
     if best_index is None:
@@ -148,11 +154,19 @@ def _label_placement(
     mid_x = (best_start.x_px + best_end.x_px) / 2.0
     mid_y = (best_start.y_px + best_end.y_px) / 2.0
     if abs(dx) >= abs(dy):
-        placement = _LabelPlacement(x=mid_x, y=mid_y - 8.0)
+        y_offset = -4.0 if prefer_near_source else -8.0
+        placement = _LabelPlacement(x=mid_x, y=mid_y + y_offset)
     else:
         offset = 14.0 if dx >= 0 else -14.0
         anchor = "start" if dx >= 0 else "end"
         placement = _LabelPlacement(x=mid_x + offset, y=mid_y - 2.0, anchor=anchor)
+    if prefer_near_source:
+        return _clamp_placement_to_canvas(
+            placement,
+            box_width=box_width,
+            box_height=box_height,
+            canvas_bounds=canvas_bounds,
+        )
     return _avoid_bounds_overlap(
         placement,
         box_width=box_width,
@@ -162,29 +176,6 @@ def _label_placement(
         segment_dy=dy,
         canvas_bounds=canvas_bounds,
     )
-
-
-def _candidate_segment_indexes(points: Any, *, avoid_near_source: bool) -> range:
-    segment_count = max(0, len(points) - 1)
-    if not avoid_near_source or segment_count <= 2:
-        return range(segment_count)
-    return range(2, segment_count)
-
-
-def _longest_segment_index(points: Any, *, segment_indexes: Any) -> int | None:
-    best_index: int | None = None
-    best_length = -1.0
-    for index in segment_indexes:
-        start = points[index]
-        end = points[index + 1]
-        dx = float(end.x_px - start.x_px)
-        dy = float(end.y_px - start.y_px)
-        length = abs(dx) + abs(dy)
-        if length <= best_length:
-            continue
-        best_length = length
-        best_index = index
-    return best_index
 
 
 def _edge_callout_svg(
@@ -477,59 +468,18 @@ def _edge_variant_attr(rework_variant: str) -> str:
     return f' data-edge-rework-variant="{escape(rework_variant)}"'
 
 
-def _prefer_vertical_branch_drop(
-    points: tuple[LayoutPoint, ...],
-    *,
-    rework_variant: str,
-    source_bounds: LayoutBounds | None,
-    target_bounds: LayoutBounds | None,
-) -> tuple[LayoutPoint, ...]:
-    if rework_variant != "branch":
-        return points
-    if source_bounds is None or target_bounds is None:
-        return points
-    source_center_x = source_bounds.x_px + (source_bounds.width_px / 2.0)
-    source_center_y = source_bounds.y_px + (source_bounds.height_px / 2.0)
-    target_center_y = target_bounds.y_px + (target_bounds.height_px / 2.0)
-    if target_center_y <= source_center_y:
-        return points
-    return (
-        LayoutPoint(x_px=source_center_x, y_px=source_center_y),
-        LayoutPoint(x_px=source_center_x, y_px=target_center_y),
+def _has_explicit_attachment_ports(edge_path: Any) -> bool:
+    return bool(
+        getattr(edge_path, "source_port_side", None)
+        and getattr(edge_path, "target_port_side", None)
     )
 
 
 def _normalize_rework_edge_points(
     points: tuple[LayoutPoint, ...], *, is_rework: bool, rework_variant: str
 ) -> tuple[LayoutPoint, ...]:
-    if not is_rework or len(points) < 2:
-        return points
-
-    start = points[0]
-    end = points[-1]
-    if abs(start.x_px - end.x_px) < 1e-6 or abs(start.y_px - end.y_px) < 1e-6:
-        return (start, end)
-
-    if rework_variant == "return":
-        return _dedupe_points(
-            (
-                start,
-                LayoutPoint(x_px=end.x_px, y_px=start.y_px),
-                end,
-            )
-        )
-
-    if rework_variant == "branch":
-        elbow_y = (start.y_px + end.y_px) / 2.0
-        return _dedupe_points(
-            (
-                start,
-                LayoutPoint(x_px=start.x_px, y_px=elbow_y),
-                LayoutPoint(x_px=end.x_px, y_px=elbow_y),
-                end,
-            )
-        )
-
+    _ = is_rework
+    _ = rework_variant
     return points
 
 
@@ -589,17 +539,29 @@ def _shape_edge_point(
 
     normalized_kind = str(kind or "task").lower()
     if normalized_kind == "decision":
-        return _diamond_edge_point(bounds=bounds, dx=dx, dy=dy)
+        return _diamond_edge_point(bounds=bounds, dx=dx, dy=dy, cardinalize=True)
+    if normalized_kind in {"start", "end"}:
+        return _rounded_rect_edge_point(
+            bounds=bounds,
+            dx=dx,
+            dy=dy,
+            radius_px=18.0,
+            cardinalize=True,
+        )
     if normalized_kind == "subprocess":
         return _ellipse_edge_point(bounds=bounds, dx=dx, dy=dy)
     if normalized_kind == "queue":
-        return _queue_triangle_edge_point(bounds=bounds, dx=dx, dy=dy)
-    return _rect_edge_point(bounds=bounds, dx=dx, dy=dy)
+        return _queue_triangle_edge_point(bounds=bounds, dx=dx, dy=dy, cardinalize=True)
+    return _rect_edge_point(bounds=bounds, dx=dx, dy=dy, cardinalize=True)
 
 
-def _rect_edge_point(*, bounds: LayoutBounds, dx: float, dy: float) -> LayoutPoint:
+def _rect_edge_point(
+    *, bounds: LayoutBounds, dx: float, dy: float, cardinalize: bool = False
+) -> LayoutPoint:
     cx = float(bounds.x_px + (bounds.width_px / 2.0))
     cy = float(bounds.y_px + (bounds.height_px / 2.0))
+    if cardinalize:
+        dx, dy = _cardinal_direction(dx=dx, dy=dy)
     half_w = max(0.5, float(bounds.width_px) / 2.0)
     half_h = max(0.5, float(bounds.height_px) / 2.0)
     tx = float("inf") if dx == 0.0 else abs(half_w / dx)
@@ -608,9 +570,13 @@ def _rect_edge_point(*, bounds: LayoutBounds, dx: float, dy: float) -> LayoutPoi
     return LayoutPoint(x_px=cx + (dx * t), y_px=cy + (dy * t))
 
 
-def _diamond_edge_point(*, bounds: LayoutBounds, dx: float, dy: float) -> LayoutPoint:
+def _diamond_edge_point(
+    *, bounds: LayoutBounds, dx: float, dy: float, cardinalize: bool = False
+) -> LayoutPoint:
     cx = float(bounds.x_px + (bounds.width_px / 2.0))
     cy = float(bounds.y_px + (bounds.height_px / 2.0))
+    if cardinalize:
+        dx, dy = _cardinal_direction(dx=dx, dy=dy)
     half_w = max(0.5, float(bounds.width_px) / 2.0)
     half_h = max(0.5, float(bounds.height_px) / 2.0)
     scale = (abs(dx) / half_w) + (abs(dy) / half_h)
@@ -633,10 +599,12 @@ def _ellipse_edge_point(*, bounds: LayoutBounds, dx: float, dy: float) -> Layout
 
 
 def _queue_triangle_edge_point(
-    *, bounds: LayoutBounds, dx: float, dy: float
+    *, bounds: LayoutBounds, dx: float, dy: float, cardinalize: bool = False
 ) -> LayoutPoint:
     cx = float(bounds.x_px + (bounds.width_px / 2.0))
     cy = float(bounds.y_px + (bounds.height_px / 2.0))
+    if cardinalize:
+        dx, dy = _cardinal_direction(dx=dx, dy=dy)
     triangle = (
         LayoutPoint(
             x_px=float(bounds.x_px), y_px=float(bounds.y_px + bounds.height_px)
@@ -670,6 +638,61 @@ def _queue_triangle_edge_point(
         return _rect_edge_point(bounds=bounds, dx=dx, dy=dy)
     _, point = min(intersections, key=lambda item: item[0])
     return point
+
+
+def _rounded_rect_edge_point(
+    *,
+    bounds: LayoutBounds,
+    dx: float,
+    dy: float,
+    radius_px: float,
+    cardinalize: bool = False,
+) -> LayoutPoint:
+    cx = float(bounds.x_px + (bounds.width_px / 2.0))
+    cy = float(bounds.y_px + (bounds.height_px / 2.0))
+    half_w = max(0.5, float(bounds.width_px) / 2.0)
+    half_h = max(0.5, float(bounds.height_px) / 2.0)
+    corner_radius = max(0.0, min(float(radius_px), half_w, half_h))
+    if cardinalize:
+        dx, dy = _cardinal_direction(dx=dx, dy=dy)
+    if dx == 0.0 and dy == 0.0:
+        return LayoutPoint(x_px=cx, y_px=cy)
+
+    axis_eps = 1e-9
+    if abs(dx) < axis_eps:
+        y = cy + (half_h if dy > 0.0 else -half_h)
+        return LayoutPoint(x_px=cx, y_px=y)
+    if abs(dy) < axis_eps:
+        x = cx + (half_w if dx > 0.0 else -half_w)
+        return LayoutPoint(x_px=x, y_px=cy)
+
+    inner_half_w = half_w - corner_radius
+    inner_half_h = half_h - corner_radius
+
+    tx = float("inf") if dx == 0.0 else abs(inner_half_w / dx)
+    ty = float("inf") if dy == 0.0 else abs(inner_half_h / dy)
+    t_inner = min(tx, ty)
+    inner_x = cx + (dx * t_inner)
+    inner_y = cy + (dy * t_inner)
+
+    corner_cx = cx + (inner_half_w if dx > 0.0 else -inner_half_w)
+    corner_cy = cy + (inner_half_h if dy > 0.0 else -inner_half_h)
+    radial_x = inner_x - corner_cx
+    radial_y = inner_y - corner_cy
+    radial_len = (radial_x * radial_x + radial_y * radial_y) ** 0.5
+    if radial_len <= axis_eps:
+        return LayoutPoint(x_px=inner_x, y_px=inner_y)
+    scale = corner_radius / radial_len
+    return LayoutPoint(
+        x_px=corner_cx + (radial_x * scale),
+        y_px=corner_cy + (radial_y * scale),
+    )
+
+
+def _cardinal_direction(*, dx: float, dy: float) -> tuple[float, float]:
+    if abs(dx) >= abs(dy):
+        return (1.0 if dx >= 0.0 else -1.0), 0.0
+    return 0.0, (1.0 if dy >= 0.0 else -1.0)
 
 
 def _ray_segment_intersection(

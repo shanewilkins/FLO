@@ -82,6 +82,7 @@ def _node_svg(
             x=x,
             y=y,
             width=width,
+            height=height,
         )
     )
     parts.append("</g>")
@@ -113,7 +114,7 @@ def _append_node_shape_svg(
         parts.append(
             f'<polygon points="{x:.1f},{y + height:.1f} {x + width:.1f},{y + height:.1f} {cx:.1f},{y:.1f}" fill="{appearance.fill}" stroke="{appearance.border}" stroke-width="2" />'
         )
-        return y + height - 28.0 - ((_line_count(title_lines) - 1) * 7.0), None
+        return y + height - 18.0 - ((_line_count(title_lines) - 1) * 8.0), None
     if kind == "subprocess":
         cx = x + (width / 2.0)
         cy = y + (height / 2.0)
@@ -138,8 +139,9 @@ def _append_node_shape_svg(
         f'<rect x="{x:.1f}" y="{y:.1f}" width="{width:.1f}" height="{height:.1f}" rx="12" fill="white" stroke="{appearance.border}" stroke-width="2" />'
     )
     header_height = max(28.0, 18.0 + (_line_count(title_lines) * 16.0))
+    header_radius = min(12.0, width / 2.0, header_height)
     parts.append(
-        f'<rect x="{x:.1f}" y="{y:.1f}" width="{width:.1f}" height="{header_height:.1f}" rx="12" fill="{appearance.fill}" stroke="none" />'
+        f'<path data-node-header="top-rounded" d="{_top_rounded_header_path(x=x, y=y, width=width, height=header_height, radius=header_radius)}" fill="{appearance.fill}" stroke="none" />'
     )
     if info_lines:
         parts.append(
@@ -171,13 +173,19 @@ def _node_info_lines_svg(
     x: float,
     y: float,
     width: float,
+    height: float,
 ) -> list[str]:
     if not info_lines:
         return []
     if kind == "queue":
+        info_line_count = _line_count(info_lines)
+        info_start_y = max(
+            y + 20.0,
+            (y + (height * 0.42)) - ((info_line_count - 1) * 6.5),
+        )
         return _text_lines_svg(
             x=x + (width / 2.0),
-            y=label_start_y + (_line_count(title_lines) * 14.0) + 8.0,
+            y=info_start_y,
             lines=info_lines,
             size_px=11,
             weight="400",
@@ -251,3 +259,20 @@ def _line_count(lines: tuple[str, ...]) -> int:
     for line in lines:
         count += len([segment for segment in line.split("\n") if segment])
     return count or 1
+
+
+def _top_rounded_header_path(
+    *, x: float, y: float, width: float, height: float, radius: float
+) -> str:
+    r = max(0.0, min(radius, width / 2.0, height))
+    right = x + width
+    bottom = y + height
+    return (
+        f"M {x + r:.1f} {y:.1f} "
+        f"L {right - r:.1f} {y:.1f} "
+        f"Q {right:.1f} {y:.1f} {right:.1f} {y + r:.1f} "
+        f"L {right:.1f} {bottom:.1f} "
+        f"L {x:.1f} {bottom:.1f} "
+        f"L {x:.1f} {y + r:.1f} "
+        f"Q {x:.1f} {y:.1f} {x + r:.1f} {y:.1f} Z"
+    )

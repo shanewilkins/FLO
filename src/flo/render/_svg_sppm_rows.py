@@ -30,6 +30,11 @@ def _enforce_sppm_row_alignment(
         rework_ids=rework_ids,
         shifts=shifts,
     )
+    _enforce_mainline_min_horizontal_gap(
+        node_bounds=node_bounds,
+        mainline_ids=mainline_ids,
+        shifts=shifts,
+    )
     _clamp_shifted_nodes_between_terminals(node_bounds=node_bounds, shifts=shifts)
 
     transformed_nodes = _apply_node_shifts(node_bounds=node_bounds, shifts=shifts)
@@ -310,6 +315,31 @@ def _apply_edge_shifts(
             points=_orthogonalize_points(translated_points),
         )
     return transformed_edges
+
+
+def _enforce_mainline_min_horizontal_gap(
+    *,
+    node_bounds: dict[str, LayoutBounds],
+    mainline_ids: set[str],
+    shifts: dict[str, tuple[float, float]],
+) -> None:
+    ordered_mainline = sorted(
+        mainline_ids, key=lambda node_id: node_bounds[node_id].x_px
+    )
+    if len(ordered_mainline) < 2:
+        return
+
+    min_gap_px = 56.0
+    propagated_dx = 0.0
+    for prev_id, current_id in zip(ordered_mainline, ordered_mainline[1:]):
+        prev_dx, _ = shifts.get(prev_id, (0.0, 0.0))
+        current_dx, current_dy = shifts.get(current_id, (0.0, 0.0))
+        prev_right = node_bounds[prev_id].x_px + prev_dx + node_bounds[prev_id].width_px
+        current_left = node_bounds[current_id].x_px + current_dx + propagated_dx
+        deficit = (prev_right + min_gap_px) - current_left
+        if deficit > 0.0:
+            propagated_dx += deficit
+        shifts[current_id] = (current_dx + propagated_dx, current_dy)
 
 
 def _translate_edge_points(

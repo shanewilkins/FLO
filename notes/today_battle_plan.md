@@ -122,6 +122,40 @@ Done Criteria:
 Notes:
 - _
 
+## Item 3.5: ELK-First SPPM Showcase Polish + Build Verification
+
+Status: In Progress
+Score: 1/2
+
+Goal:
+- Improve SPPM feature-showcase readability using ELK intent first, while keeping post-process behavior minimal.
+
+In Scope:
+- ELK spacing and port-direction tuning for clearer node separation and route attachment
+- Decision edge-label placement alignment for immediate visual association with outgoing lines
+- SPPM node presentation polish (task headers, queue content zoning) without adding geometry-heavy post-process policy
+- Rebuild and verify reference showcase artifacts after each tuning step
+
+Out Of Scope:
+- Graphviz routing/geometry policy changes
+- Typst backend implementation work
+
+Done Criteria:
+- SPPM showcase rebuilt from current ELK/SVG pipeline and verified up to date
+- Targeted regressions added or updated for spacing/anchors/label placement behavior
+- Full test and coverage gates remain green after polish changes
+
+Notes:
+- Prioritized ELK-owned layout semantics (spacing, port sides, edge intent) over post-layout geometry rewrites.
+- Updated decision/queue/start-end anchor behavior and label placement with regression coverage.
+- Rebuilt renders/reference/sppm_feature_showcase.svg and renders/reference/sppm_feature_showcase_elk.svg repeatedly to verify deltas.
+- Confirmed full suite and coverage gate pass after polish iterations.
+- Remaining to complete Item 3.5:
+	- Migrate edge-route shape normalization decisions out of SVG post-processing and into ELK request/response intent.
+	- Reduce or remove endpoint clipping heuristics where explicit ELK SPPM ports already define attachment semantics.
+	- Replace decision-label fallback heuristics with ELK-derived edge-label geometry (or a strict ELK-aligned rule) to avoid drift.
+	- Re-verify showcase diffs after migration so visual changes come from ELK communication, not post-process geometry rewrites.
+
 ## Item 4: Post-Processing Hardening
 
 Status: Not Started
@@ -174,8 +208,9 @@ Notes:
 2. Item 1.5: 75 min
 3. Item 2: 60 min
 4. Item 3: 90 min
-5. Item 4: 45 min
-6. Item 5: 15 min
+5. Item 3.5: 75 min
+6. Item 4: 45 min
+7. Item 5: 15 min
 
 ## Live Scoreboard
 
@@ -183,7 +218,8 @@ Notes:
 - Item 1.5 Capability Matrix + Variant Validator: 2/2
 - Item 2 Layout To Canvas Contract: 2/2
 - Item 3 Typst Vertical Slice: 0/2
+- Item 3.5 ELK-First SPPM Showcase Polish + Build Verification: 1/2
 - Item 4 Post-Processing Hardening: 0/2
 - Item 5 Migration Readiness Gate: 0/2
 
-Total: 6/12
+Total: 7/14

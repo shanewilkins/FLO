@@ -324,8 +324,8 @@ def _elk_edge(
             source_port_side = "SOUTH"
             target_port_side = "NORTH"
         elif rework_variant == "return":
-            source_port_side = "WEST"
-            target_port_side = "EAST"
+            source_port_side = "NORTH"
+            target_port_side = "SOUTH"
         elif direction == "DOWN":
             source_port_side = "SOUTH"
             target_port_side = "NORTH"

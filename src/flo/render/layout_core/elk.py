@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any, Callable
 
 from .elk_contracts import (
@@ -22,6 +23,17 @@ from .elk_support import (
     project_parent_only_subprocess_view,
     serialize_edge,
     serialize_node,
+)
+from .elk_sppm_helpers import (
+    _node_kind_map,
+    _preserves_lane_structure,
+    _root_layout_options,
+    _sppm_apply_secondary_row_edge_ports,
+    _sppm_branch_anchor_helpers,
+    _sppm_lane_direction,
+    _sppm_partition_indexes_for_synthetic_rows,
+    _sppm_port_id,
+    _sppm_synthetic_row_lanes,
 )
 from .models import (
     LayoutBounds,
@@ -77,16 +89,34 @@ def build_sppm_elk_layout_request(
         diagram="sppm",
         direction=_elk_direction(render_options),
     )
+    sppm_nodes = ordered_sppm_nodes(nodes, options=render_options)
     if _preserves_lane_structure(process, nodes):
         lanes = lane_specs(process=process, nodes=nodes)
+        partition_overrides: dict[str, int] = {}
     else:
-        lanes = _sppm_synthetic_row_lanes(nodes=nodes, edges=edge_specs)
+        synthetic_rows = _sppm_synthetic_row_lanes(nodes=nodes, edges=edge_specs)
+        lanes = ()
+        partition_overrides = _sppm_partition_indexes_for_synthetic_rows(
+            node_ids=[node.id for node in sppm_nodes],
+            lanes=synthetic_rows,
+            edges=edge_specs,
+        )
+        edge_specs = _sppm_apply_secondary_row_edge_ports(
+            edges=edge_specs,
+            synthetic_rows=synthetic_rows,
+        )
 
     return ElkLayoutRequest(
         diagram="sppm",
         direction=_elk_direction(render_options),
         lanes=lanes,
-        nodes=ordered_sppm_nodes(nodes, options=render_options),
+        nodes=tuple(
+            replace(
+                node,
+                partition_index=partition_overrides.get(node.id, node.partition_index),
+            )
+            for node in sppm_nodes
+        ),
         edges=edge_specs,
     )
 
@@ -148,9 +178,10 @@ def normalize_elk_layout_result(
     )
 
     edge_paths: dict[tuple[str, str], RoutedEdgePath] = {}
-    edge_labels, edge_callouts, edge_rework, edge_tokens = _edge_metadata_maps(
-        request=request
+    edge_labels, edge_callouts, edge_rework, edge_tokens, edge_ports = (
+        _edge_metadata_maps(request=request)
     )
+    allowed_edges = {(edge.source_id, edge.target_id) for edge in request.edges}
     port_owner = _port_owner_map(request=request)
     _collect_edge_geometry(
         graph=payload,
@@ -159,6 +190,8 @@ def normalize_elk_layout_result(
         edge_callouts=edge_callouts,
         edge_rework=edge_rework,
         edge_tokens=edge_tokens,
+        edge_ports=edge_ports,
+        allowed_edges=allowed_edges,
         port_owner=port_owner,
         edge_paths=edge_paths,
     )
@@ -182,6 +215,7 @@ def _edge_metadata_maps(
     dict[tuple[str, str], tuple[tuple[str, ...], bool]],
     dict[tuple[str, str], tuple[bool, str | None]],
     dict[tuple[str, str], tuple[str | None, str | None]],
+    dict[tuple[str, str], tuple[str | None, str | None]],
 ]:
     edge_labels = {
         (edge.source_id, edge.target_id): edge.label for edge in request.edges
@@ -201,7 +235,12 @@ def _edge_metadata_maps(
         for edge in request.edges
         if edge.outgoing_token is not None or edge.incoming_token is not None
     }
-    return edge_labels, edge_callouts, edge_rework, edge_tokens
+    edge_ports = {
+        (edge.source_id, edge.target_id): (edge.source_port_side, edge.target_port_side)
+        for edge in request.edges
+        if edge.source_port_side is not None or edge.target_port_side is not None
+    }
+    return edge_labels, edge_callouts, edge_rework, edge_tokens, edge_ports
 
 
 def _port_owner_map(*, request: ElkLayoutRequest) -> dict[str, str]:
@@ -218,11 +257,29 @@ def serialize_elk_layout_request(request: ElkLayoutRequest) -> dict[str, Any]:
     children: list[dict[str, Any]] = []
 
     for lane_index, lane in enumerate(request.lanes):
+        lane_layout_options: dict[str, str] = {
+            "elk.partitioning.partition": str(lane_index)
+        }
+        if request.diagram == "sppm":
+            lane_layout_options.update(
+                {
+                    "elk.algorithm": "layered",
+                    "elk.direction": _sppm_lane_direction(
+                        lane_id=lane.id,
+                        root_direction=request.direction,
+                    ),
+                    "elk.edgeRouting": "ORTHOGONAL",
+                    "elk.spacing.nodeNode": "96",
+                    "elk.layered.spacing.nodeNodeBetweenLayers": "104",
+                    "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+                    "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+                }
+            )
         children.append(
             {
                 "id": lane.id,
                 "labels": [{"text": lane.label}],
-                "layoutOptions": {"elk.partitioning.partition": str(lane_index)},
+                "layoutOptions": lane_layout_options,
                 "children": [
                     serialize_node(node_by_id[node_id], diagram=request.diagram)
                     for node_id in lane.node_ids
@@ -242,13 +299,20 @@ def serialize_elk_layout_request(request: ElkLayoutRequest) -> dict[str, Any]:
             continue
         children.append(serialize_node(node, diagram=request.diagram))
 
+    helper_nodes: list[dict[str, Any]] = []
+    helper_edges: list[dict[str, Any]] = []
+    if request.diagram == "sppm" and not request.lanes:
+        helper_nodes, helper_edges = _sppm_branch_anchor_helpers(request=request)
+        children.extend(helper_nodes)
+
     return {
         "id": f"flo:{request.diagram}",
         "layoutOptions": _root_layout_options(request),
         "children": children,
         "edges": [
             serialize_edge(edge, diagram=request.diagram) for edge in request.edges
-        ],
+        ]
+        + helper_edges,
     }
 
 
@@ -322,6 +386,8 @@ def _collect_edge_geometry(
     edge_callouts: dict[tuple[str, str], tuple[tuple[str, ...], bool]],
     edge_rework: dict[tuple[str, str], tuple[bool, Any]],
     edge_tokens: dict[tuple[str, str], tuple[str | None, str | None]],
+    edge_ports: dict[tuple[str, str], tuple[str | None, str | None]],
+    allowed_edges: set[tuple[str, str]],
     port_owner: dict[str, str],
     edge_paths: dict[tuple[str, str], RoutedEdgePath],
 ) -> None:
@@ -335,12 +401,23 @@ def _collect_edge_geometry(
         if len(points) < 2:
             continue
         key = (source_id, target_id)
+        if key not in allowed_edges:
+            continue
         callout_lines, callout_near_source = edge_callouts.get(key, ((), False))
         is_rework, rework_variant = edge_rework.get(key, (False, None))
         outgoing_token, incoming_token = edge_tokens.get(key, (None, None))
+        source_port_side, target_port_side = edge_ports.get(key, (None, None))
+        label, label_point = _edge_path_label(
+            raw_edge,
+            fallback=edge_labels.get(key),
+            parent_origin=parent_origin,
+        )
         edge_paths[key] = RoutedEdgePath(
             edge=key,
-            label=_edge_path_label(raw_edge, fallback=edge_labels.get(key)),
+            label=label,
+            label_point=label_point,
+            source_port_side=source_port_side,
+            target_port_side=target_port_side,
             points=points,
             is_rework=is_rework,
             callout_lines=callout_lines,
@@ -361,6 +438,8 @@ def _collect_edge_geometry(
                 edge_callouts=edge_callouts,
                 edge_rework=edge_rework,
                 edge_tokens=edge_tokens,
+                edge_ports=edge_ports,
+                allowed_edges=allowed_edges,
                 port_owner=port_owner,
                 edge_paths=edge_paths,
             )
@@ -380,10 +459,6 @@ def _edge_endpoints(
     source_id = port_owner.get(source_raw, source_raw)
     target_id = port_owner.get(target_raw, target_raw)
     return source_id, target_id
-
-
-def _sppm_port_id(node_id: str, side: str) -> str:
-    return f"{node_id}__port_{side.lower()}"
 
 
 def _edge_points(
@@ -428,7 +503,12 @@ def _raw_point(raw_point: Any, *, parent_origin: LayoutPoint) -> LayoutPoint | N
     )
 
 
-def _edge_path_label(raw_edge: dict[str, Any], *, fallback: str | None) -> str | None:
+def _edge_path_label(
+    raw_edge: dict[str, Any],
+    *,
+    fallback: str | None,
+    parent_origin: LayoutPoint,
+) -> tuple[str | None, LayoutPoint | None]:
     raw_labels = raw_edge.get("labels")
     if isinstance(raw_labels, list):
         for raw_label in raw_labels:
@@ -436,159 +516,29 @@ def _edge_path_label(raw_edge: dict[str, Any], *, fallback: str | None) -> str |
                 continue
             text = str(raw_label.get("text") or "").strip()
             if text:
-                return text
-    return fallback
+                return text, _raw_label_point(raw_label, parent_origin=parent_origin)
+    return fallback, None
+
+
+def _raw_label_point(
+    raw_label: dict[str, Any], *, parent_origin: LayoutPoint
+) -> LayoutPoint | None:
+    raw_x = raw_label.get("x")
+    raw_y = raw_label.get("y")
+    if not isinstance(raw_x, (int, float)) or not isinstance(raw_y, (int, float)):
+        return None
+    raw_width = raw_label.get("width")
+    raw_height = raw_label.get("height")
+    width = float(raw_width) if isinstance(raw_width, (int, float)) else 0.0
+    height = float(raw_height) if isinstance(raw_height, (int, float)) else 0.0
+    return LayoutPoint(
+        x_px=parent_origin.x_px + float(raw_x) + (width / 2.0),
+        y_px=parent_origin.y_px + float(raw_y) + (height / 2.0),
+    )
 
 
 def _float_value(raw_value: Any) -> float:
     return float(raw_value) if isinstance(raw_value, (int, float)) else 0.0
-
-
-def _root_layout_options(request: ElkLayoutRequest) -> dict[str, str]:
-    options = {"elk.algorithm": "layered", "elk.direction": request.direction}
-    if request.diagram == "sppm":
-        options["elk.layered.considerModelOrder.strategy"] = "NODES_AND_EDGES"
-        options["elk.layered.crossingMinimization.forceNodeModelOrder"] = "true"
-        options["elk.layered.feedbackEdges"] = "true"
-        options["elk.edgeRouting"] = "ORTHOGONAL"
-        options["elk.spacing.nodeNode"] = "56"
-        options["elk.layered.spacing.nodeNodeBetweenLayers"] = "120"
-        options["elk.layered.nodePlacement.strategy"] = "BRANDES_KOEPF"
-        options["elk.layered.nodePlacement.bk.fixedAlignment"] = "BALANCED"
-        options["elk.layered.nodePlacement.favorStraightEdges"] = "true"
-        options["elk.partitioning.activate"] = "true"
-    if request.lanes:
-        options["elk.hierarchyHandling"] = "INCLUDE_CHILDREN"
-    return options
-
-
-def _preserves_lane_structure(
-    process: dict[str, Any] | Any, nodes: list[dict[str, Any]]
-) -> bool:
-    if any(str(node.get("lane") or "").strip() for node in nodes):
-        return True
-    if not isinstance(process, dict):
-        return False
-    raw_lanes = process.get("lanes")
-    if isinstance(raw_lanes, list) and raw_lanes:
-        return True
-    process_block = process.get("process")
-    if not isinstance(process_block, dict):
-        return False
-    nested_lanes = process_block.get("lanes")
-    return isinstance(nested_lanes, list) and bool(nested_lanes)
-
-
-def _node_kind_map(nodes: list[dict[str, Any]]) -> dict[str, str]:
-    return {
-        str(node.get("id") or ""): str(
-            node.get("kind") or node.get("type") or "task"
-        ).lower()
-        for node in nodes
-        if str(node.get("id") or "")
-    }
-
-
-def _sppm_synthetic_row_lanes(
-    *,
-    nodes: list[dict[str, Any]],
-    edges: tuple[ElkLayoutEdge, ...],
-) -> tuple[ElkLayoutLane, ...]:
-    node_ids = [
-        str(node.get("id") or "") for node in nodes if str(node.get("id") or "")
-    ]
-    if not node_ids:
-        return ()
-
-    branch_targets, return_sources = _sppm_rework_endpoints(edges=edges)
-    if not branch_targets:
-        return ()
-
-    adjacency = _sppm_non_rework_adjacency(node_ids=node_ids, edges=edges)
-    rework_node_ids = _sppm_rework_reachable_nodes(
-        node_ids=node_ids,
-        branch_targets=branch_targets,
-        return_sources=return_sources,
-        adjacency=adjacency,
-    )
-
-    if not rework_node_ids:
-        return ()
-
-    mainline_ids = tuple(
-        node_id for node_id in node_ids if node_id not in rework_node_ids
-    )
-    rework_ids = tuple(node_id for node_id in node_ids if node_id in rework_node_ids)
-    if not mainline_ids or not rework_ids:
-        return ()
-
-    return _sppm_synthetic_lane_pair(mainline_ids=mainline_ids, rework_ids=rework_ids)
-
-
-def _sppm_rework_endpoints(
-    *, edges: tuple[ElkLayoutEdge, ...]
-) -> tuple[set[str], set[str]]:
-    branch_targets = {
-        edge.target_id for edge in edges if edge.rework_variant == "branch"
-    }
-    return_sources = {
-        edge.source_id for edge in edges if edge.rework_variant == "return"
-    }
-    return branch_targets, return_sources
-
-
-def _sppm_non_rework_adjacency(
-    *,
-    node_ids: list[str],
-    edges: tuple[ElkLayoutEdge, ...],
-) -> dict[str, list[str]]:
-    adjacency: dict[str, list[str]] = {node_id: [] for node_id in node_ids}
-    for edge in edges:
-        if edge.is_rework or edge.source_id not in adjacency:
-            continue
-        adjacency[edge.source_id].append(edge.target_id)
-    return adjacency
-
-
-def _sppm_rework_reachable_nodes(
-    *,
-    node_ids: list[str],
-    branch_targets: set[str],
-    return_sources: set[str],
-    adjacency: dict[str, list[str]],
-) -> set[str]:
-    rework_node_ids: set[str] = set()
-    frontier = [target_id for target_id in node_ids if target_id in branch_targets]
-    while frontier:
-        current = frontier.pop()
-        if current in rework_node_ids:
-            continue
-        rework_node_ids.add(current)
-        if current in return_sources:
-            continue
-        for next_id in adjacency.get(current, []):
-            if next_id not in rework_node_ids:
-                frontier.append(next_id)
-    return rework_node_ids
-
-
-def _sppm_synthetic_lane_pair(
-    *,
-    mainline_ids: tuple[str, ...],
-    rework_ids: tuple[str, ...],
-) -> tuple[ElkLayoutLane, ...]:
-    return (
-        ElkLayoutLane(
-            id="__sppm_row_mainline",
-            label="Mainline",
-            node_ids=mainline_ids,
-        ),
-        ElkLayoutLane(
-            id="__sppm_row_rework",
-            label="Rework",
-            node_ids=rework_ids,
-        ),
-    )
 
 
 __all__ = [

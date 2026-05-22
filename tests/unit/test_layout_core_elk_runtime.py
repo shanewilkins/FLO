@@ -64,6 +64,8 @@ def test_normalize_elk_layout_result_preserves_rework_edge_semantics():
     assert edge_path is not None
     assert edge_path.is_rework is True
     assert edge_path.rework_variant == "branch"
+    assert edge_path.source_port_side == "SOUTH"
+    assert edge_path.target_port_side == "NORTH"
 
 
 def test_build_sppm_elk_layout_request_distinguishes_rework_return_edges():
@@ -440,6 +442,64 @@ def test_normalize_elk_layout_result_builds_flowchart_geometry():
             "edge start->finish label=done points=(140,80) -> (180,80) -> (220,80)",
         ]
     )
+
+
+def test_normalize_elk_layout_result_captures_edge_label_point_from_elk_geometry():
+    request = build_flowchart_elk_layout_request(
+        {
+            "nodes": [
+                {"id": "start", "kind": "start", "name": "Start"},
+                {"id": "finish", "kind": "end", "name": "Finish"},
+            ],
+            "edges": [
+                {"source": "start", "target": "finish", "outcome": "done"},
+            ],
+        },
+        options=RenderOptions(diagram="flowchart", orientation="lr"),
+    )
+
+    result = normalize_elk_layout_result(
+        {
+            "id": "root",
+            "width": 360,
+            "height": 160,
+            "children": [
+                {"id": "start", "x": 20, "y": 54, "width": 120, "height": 52},
+                {"id": "finish", "x": 220, "y": 54, "width": 120, "height": 52},
+            ],
+            "edges": [
+                {
+                    "id": "e0:start->finish",
+                    "sources": ["start"],
+                    "targets": ["finish"],
+                    "labels": [
+                        {
+                            "text": "done",
+                            "x": 170,
+                            "y": 64,
+                            "width": 20,
+                            "height": 10,
+                        }
+                    ],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 140, "y": 80},
+                            "bendPoints": [{"x": 180, "y": 80}],
+                            "endPoint": {"x": 220, "y": 80},
+                        }
+                    ],
+                }
+            ],
+        },
+        request=request,
+    )
+
+    edge_path = result.path_for("start", "finish")
+    assert edge_path is not None
+    assert edge_path.label == "done"
+    assert edge_path.label_point is not None
+    assert edge_path.label_point.x_px == 180.0
+    assert edge_path.label_point.y_px == 69.0
 
 
 def test_normalize_elk_layout_result_preserves_swimlane_frames_and_nested_offsets():
