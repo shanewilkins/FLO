@@ -9,12 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from flo.compiler.ir.enums import ProcessValueClass
-
 from ._autoformat_wrap import WrapPlan
-from ._sppm_metadata_schema import (
-    get_metadata_value_class,
-)
 from ._graphviz_backend_common import _escape
 from ._sppm_label_html import _sppm_html_label
 from ._sppm_node_appearance import resolve_sppm_value_style

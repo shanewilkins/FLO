@@ -148,29 +148,10 @@ def normalize_elk_layout_result(
     )
 
     edge_paths: dict[tuple[str, str], RoutedEdgePath] = {}
-    edge_labels = {
-        (edge.source_id, edge.target_id): edge.label for edge in request.edges
-    }
-    edge_callouts = {
-        (edge.source_id, edge.target_id): (edge.callout_lines, edge.callout_near_source)
-        for edge in request.edges
-        if edge.callout_lines
-    }
-    edge_rework = {
-        (edge.source_id, edge.target_id): (edge.is_rework, edge.rework_variant)
-        for edge in request.edges
-        if edge.is_rework or edge.rework_variant is not None
-    }
-    edge_tokens = {
-        (edge.source_id, edge.target_id): (edge.outgoing_token, edge.incoming_token)
-        for edge in request.edges
-        if edge.outgoing_token is not None or edge.incoming_token is not None
-    }
-    port_owner = {
-        _sppm_port_id(node.id, side): node.id
-        for node in request.nodes
-        for side in ("NORTH", "EAST", "SOUTH", "WEST")
-    }
+    edge_labels, edge_callouts, edge_rework, edge_tokens = _edge_metadata_maps(
+        request=request
+    )
+    port_owner = _port_owner_map(request=request)
     _collect_edge_geometry(
         graph=payload,
         parent_origin=LayoutPoint(x_px=root_bounds.x_px, y_px=root_bounds.y_px),
@@ -191,6 +172,44 @@ def normalize_elk_layout_result(
             lane_frames[lane_id] for lane_id in lane_order if lane_id in lane_frames
         ),
     )
+
+
+def _edge_metadata_maps(
+    *,
+    request: ElkLayoutRequest,
+) -> tuple[
+    dict[tuple[str, str], str | None],
+    dict[tuple[str, str], tuple[tuple[str, ...], bool]],
+    dict[tuple[str, str], tuple[bool, str | None]],
+    dict[tuple[str, str], tuple[str | None, str | None]],
+]:
+    edge_labels = {
+        (edge.source_id, edge.target_id): edge.label for edge in request.edges
+    }
+    edge_callouts = {
+        (edge.source_id, edge.target_id): (edge.callout_lines, edge.callout_near_source)
+        for edge in request.edges
+        if edge.callout_lines
+    }
+    edge_rework = {
+        (edge.source_id, edge.target_id): (edge.is_rework, edge.rework_variant)
+        for edge in request.edges
+        if edge.is_rework or edge.rework_variant is not None
+    }
+    edge_tokens = {
+        (edge.source_id, edge.target_id): (edge.outgoing_token, edge.incoming_token)
+        for edge in request.edges
+        if edge.outgoing_token is not None or edge.incoming_token is not None
+    }
+    return edge_labels, edge_callouts, edge_rework, edge_tokens
+
+
+def _port_owner_map(*, request: ElkLayoutRequest) -> dict[str, str]:
+    return {
+        _sppm_port_id(node.id, side): node.id
+        for node in request.nodes
+        for side in ("NORTH", "EAST", "SOUTH", "WEST")
+    }
 
 
 def serialize_elk_layout_request(request: ElkLayoutRequest) -> dict[str, Any]:
@@ -481,23 +500,63 @@ def _sppm_synthetic_row_lanes(
     if not node_ids:
         return ()
 
+    branch_targets, return_sources = _sppm_rework_endpoints(edges=edges)
+    if not branch_targets:
+        return ()
+
+    adjacency = _sppm_non_rework_adjacency(node_ids=node_ids, edges=edges)
+    rework_node_ids = _sppm_rework_reachable_nodes(
+        node_ids=node_ids,
+        branch_targets=branch_targets,
+        return_sources=return_sources,
+        adjacency=adjacency,
+    )
+
+    if not rework_node_ids:
+        return ()
+
+    mainline_ids = tuple(
+        node_id for node_id in node_ids if node_id not in rework_node_ids
+    )
+    rework_ids = tuple(node_id for node_id in node_ids if node_id in rework_node_ids)
+    if not mainline_ids or not rework_ids:
+        return ()
+
+    return _sppm_synthetic_lane_pair(mainline_ids=mainline_ids, rework_ids=rework_ids)
+
+
+def _sppm_rework_endpoints(
+    *, edges: tuple[ElkLayoutEdge, ...]
+) -> tuple[set[str], set[str]]:
     branch_targets = {
         edge.target_id for edge in edges if edge.rework_variant == "branch"
     }
     return_sources = {
         edge.source_id for edge in edges if edge.rework_variant == "return"
     }
-    if not branch_targets:
-        return ()
+    return branch_targets, return_sources
 
+
+def _sppm_non_rework_adjacency(
+    *,
+    node_ids: list[str],
+    edges: tuple[ElkLayoutEdge, ...],
+) -> dict[str, list[str]]:
     adjacency: dict[str, list[str]] = {node_id: [] for node_id in node_ids}
     for edge in edges:
-        if edge.is_rework:
-            continue
-        if edge.source_id not in adjacency:
+        if edge.is_rework or edge.source_id not in adjacency:
             continue
         adjacency[edge.source_id].append(edge.target_id)
+    return adjacency
 
+
+def _sppm_rework_reachable_nodes(
+    *,
+    node_ids: list[str],
+    branch_targets: set[str],
+    return_sources: set[str],
+    adjacency: dict[str, list[str]],
+) -> set[str]:
     rework_node_ids: set[str] = set()
     frontier = [target_id for target_id in node_ids if target_id in branch_targets]
     while frontier:
@@ -510,17 +569,14 @@ def _sppm_synthetic_row_lanes(
         for next_id in adjacency.get(current, []):
             if next_id not in rework_node_ids:
                 frontier.append(next_id)
+    return rework_node_ids
 
-    if not rework_node_ids:
-        return ()
 
-    mainline_ids = tuple(
-        node_id for node_id in node_ids if node_id not in rework_node_ids
-    )
-    rework_ids = tuple(node_id for node_id in node_ids if node_id in rework_node_ids)
-    if not mainline_ids or not rework_ids:
-        return ()
-
+def _sppm_synthetic_lane_pair(
+    *,
+    mainline_ids: tuple[str, ...],
+    rework_ids: tuple[str, ...],
+) -> tuple[ElkLayoutLane, ...]:
     return (
         ElkLayoutLane(
             id="__sppm_row_mainline",

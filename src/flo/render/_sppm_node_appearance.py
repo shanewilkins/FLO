@@ -14,6 +14,8 @@ from .options import RenderOptions
 
 @dataclass(frozen=True)
 class SppmNodeAppearance:
+    """Backend-neutral visual tokens used when rendering an SPPM node."""
+
     fill: str
     border: str
     title_fill: str = "#0f172a"
