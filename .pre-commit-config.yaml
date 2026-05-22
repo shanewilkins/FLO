@@ -63,7 +63,7 @@ repos:
         files: "^(docs/|examples/|schema/|README\\.md|src/flo/services/errors\\.py)"
       - id: pytest-check
         name: pytest (via uv)
-        entry: uv run pytest -q
+        entry: uv run pytest --cov=src/flo --cov-report=term-missing --cov-fail-under=90
         language: system
         types: [python]
         pass_filenames: false

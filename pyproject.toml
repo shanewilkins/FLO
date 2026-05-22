@@ -96,4 +96,5 @@ forbidden = ["flo.core"]
 [tool.coverage.report]
 omit = [
     "src/flo/main.py",
+    "src/flo/core/_sppm_refactor_baseline.py",
 ]
