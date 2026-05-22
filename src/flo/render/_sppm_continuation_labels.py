@@ -5,17 +5,12 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from flo.schema.render_metadata import (
-    SPPM_CONTINUATION_INCOMING_METADATA_KEYS,
-    SPPM_CONTINUATION_OUTGOING_METADATA_KEYS,
-    first_present_metadata_value,
-)
-
 from ._autoformat_wrap import WrapPlan
 from ._continuation_labels import (
     build_continuation_label_attrs,
     format_continuation_html_label,
 )
+from ._sppm_continuation_tokens import resolve_explicit_sppm_continuation_tokens
 from ._sppm_step_refs import format_sppm_step_reference
 
 
@@ -75,14 +70,7 @@ def resolve_sppm_continuation_anchor_tokens(
     wrap_plan: WrapPlan,
 ) -> tuple[str | None, str | None]:
     """Return continuation tokens using explicit metadata aliases with wrap fallback."""
-    metadata_obj = edge.get("metadata")
-    metadata: dict[str, Any] = metadata_obj if isinstance(metadata_obj, dict) else {}
-    outgoing = _normalize_continuation_token(
-        first_present_metadata_value(metadata, SPPM_CONTINUATION_OUTGOING_METADATA_KEYS)
-    )
-    incoming = _normalize_continuation_token(
-        first_present_metadata_value(metadata, SPPM_CONTINUATION_INCOMING_METADATA_KEYS)
-    )
+    outgoing, incoming = resolve_explicit_sppm_continuation_tokens(edge)
 
     if outgoing is None or incoming is None:
         derived_outgoing, derived_incoming = build_sppm_continuation_anchor_tokens(

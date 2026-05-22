@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
+from flo.render._sppm_rework_semantics import SppmReworkVariant
+
 AlignMode = Literal["start", "center", "end"]
 OrientationMode = Literal["lr", "tb"]
 
@@ -93,6 +95,12 @@ class RoutedEdgePath:
     edge: tuple[str, str]
     points: tuple[LayoutPoint, ...]
     label: str | None = None
+    is_rework: bool = False
+    rework_variant: SppmReworkVariant | None = None
+    callout_lines: tuple[str, ...] = ()
+    callout_near_source: bool = False
+    outgoing_token: str | None = None
+    incoming_token: str | None = None
 
 
 @dataclass(frozen=True)

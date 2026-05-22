@@ -52,6 +52,38 @@ An SPPM in FLO must satisfy the following characteristics:
      SPPM in publication workflows, but those surfaces are not the core
      defining semantic difference between SPPM and other process-map variants.
 
+7. Rectangular-grid centroid alignment
+   - Node shape centroids must align to intersections of a rectangular layout
+     grid.
+   - The layout engine should be configured to produce this alignment directly,
+     not inferred from renderer-side geometry mutation.
+
+8. Mainline and rework row semantics
+   - The primary path from start to stop must flow left-to-right on one
+     dominant mainline row.
+   - Rework paths must be rendered on a secondary row below the mainline,
+     flowing right-to-left for return movement back toward the mainline.
+
+9. Start/end horizontal boundary contract
+   - No node may be placed to the left of the start node centroid.
+   - No node may be placed to the right of the stop/end node centroid.
+
+10. Orthogonal edge routing
+  SPPM connectors must route as orthogonal polylines (horizontal/vertical
+  segments), with arrowheads preserving directed process flow.
+
+11. Port-based connector attachment
+  Connectors must originate and terminate at explicit node ports. Each node
+  must expose top, right, bottom, and left ports positioned at the midpoint of
+  the corresponding boundary edge. Connector attachment should prefer
+  semantically appropriate sides (for example, mainline left-to-right flow
+  uses right-to-left attachments, and rework branch/return attachments use
+  vertical or right-to-left pairings as applicable).
+
+12. Minimum spacing contract
+  Layout must enforce non-trivial minimum horizontal and vertical separation
+  between node boundaries to preserve readability under dense annotations.
+
 ## Non-goals
 
 An SPPM is not:

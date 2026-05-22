@@ -17,12 +17,13 @@ from ._sppm_metadata_schema import (
 )
 from ._graphviz_backend_common import _escape
 from ._sppm_label_html import _sppm_html_label
+from ._sppm_node_appearance import resolve_sppm_value_style
 from ._sppm_render_data import SppmRenderNode
 from ._sppm_special_node_shapes import (
     render_sppm_queue_triangle,
     render_sppm_subprocess_node,
 )
-from ._sppm_themes import SppmNodeStyle, SppmTheme
+from ._sppm_themes import SppmTheme
 from ._sppm_text import format_text_field
 from .options import RenderOptions
 
@@ -162,7 +163,8 @@ def _render_sppm_task_node(
     metadata: dict[str, Any] = node.get("metadata") or {}
     workers: list[Any] = node.get("workers") or []
     note = str(node.get("note") or "")
-    style = _resolve_sppm_value_style(metadata=metadata, theme=theme)
+    _ = theme
+    style = resolve_sppm_value_style(metadata=metadata, options=options)
     html_label = _sppm_html_label(
         node_id=node_id,
         kind=str(node.get("kind") or node.get("type") or "task").lower(),
@@ -177,17 +179,6 @@ def _render_sppm_task_node(
     attrs = ["shape=none", "margin=0", f"label={html_label}"]
     _append_chunk_group(attrs=attrs, node_id=node_id, wrap_plan=wrap_plan)
     return f'  "{_escape(node_id)}" [{", ".join(attrs)}];'
-
-
-def _resolve_sppm_value_style(
-    *, metadata: dict[str, Any], theme: SppmTheme
-) -> SppmNodeStyle:
-    value_class_raw = get_metadata_value_class(metadata)
-    try:
-        value_class = ProcessValueClass(value_class_raw) if value_class_raw else None
-    except ValueError:
-        value_class = None
-    return theme.style_for(value_class.value if value_class else None)
 
 
 def _append_chunk_group(*, attrs: list[str], node_id: str, wrap_plan: WrapPlan) -> None:

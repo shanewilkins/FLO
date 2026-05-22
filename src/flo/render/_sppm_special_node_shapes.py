@@ -5,11 +5,10 @@ from __future__ import annotations
 from html import escape as html_escape
 from typing import Any
 
-from flo.schema.subprocess_refs import resolve_subprocess_detail_map_reference
-
 from ._autoformat_wrap import WrapPlan
 from ._graphviz_backend_common import _escape
-from ._sppm_text import format_text_field, normalize_space
+from ._sppm_node_appearance import resolve_sppm_node_appearance
+from ._sppm_node_content import build_sppm_node_content
 from ._sppm_themes import SppmTheme
 from .options import RenderOptions
 
@@ -31,26 +30,28 @@ def render_sppm_queue_triangle(
 ) -> str:
     """Render a queue marker as an upright fixed-size triangle with a metadata box below."""
     _ = theme
-    queue_border = "#E65100"
-    queue_label_bg = "#FFB74D"
-    wait_time_min = _get_wait_time_minutes(node)
-    queue_max_len = _SPPM_QUEUE_NAME_MAX_LEN
-    if options.sppm_max_label_step_name is not None:
-        queue_max_len = min(queue_max_len, options.sppm_max_label_step_name)
-    queue_name = format_text_field(
-        normalize_space(name),
-        max_len=queue_max_len,
-        wrap_strategy=options.sppm_wrap_strategy,
-        truncation_policy=options.sppm_truncation_policy,
-        html_break="\n",
+    metadata: dict[str, Any] = node.get("metadata") or {}
+    content = build_sppm_node_content(
+        node_id=node_id,
+        kind="queue",
+        name=name,
+        metadata=metadata,
+        workers=[],
+        note="",
+        options=options,
     )
-    label_lines = [queue_name if queue_name else "Q"]
-    if wait_time_min > 0:
-        label_lines.append(f"WT: {wait_time_min:g} min")
-    queue_label_html = "<BR/>".join(html_escape(line) for line in label_lines)
+    appearance = resolve_sppm_node_appearance(
+        kind="queue",
+        metadata=metadata,
+        options=options,
+    )
+    label_lines = [line for line in content.title.split("\n") if line] + list(
+        content.info_lines
+    )
+    queue_label_html = "<BR/>".join(html_escape(line) for line in label_lines if line)
     queue_label = (
-        f'<<TABLE BORDER="1" COLOR="{queue_border}" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">'
-        f'<TR><TD BGCOLOR="{queue_label_bg}" COLOR="#000000">{queue_label_html}</TD></TR></TABLE>>'
+        f'<<TABLE BORDER="1" COLOR="{appearance.border}" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">'
+        f'<TR><TD BGCOLOR="{appearance.fill}" COLOR="#000000">{queue_label_html}</TD></TR></TABLE>>'
     )
 
     attrs = [
@@ -61,7 +62,7 @@ def render_sppm_queue_triangle(
         f"height={_SPPM_QUEUE_TRIANGLE_HEIGHT}",
         "fixedsize=true",
         'style="solid"',
-        f'color="{queue_border}"',
+        f'color="{appearance.border}"',
         'fontcolor="#000000"',
         "penwidth=1.5",
         "fontsize=13",
@@ -81,23 +82,31 @@ def render_sppm_subprocess_node(
 ) -> str:
     """Render subprocesses as dotted oval containers with detail-map metadata below."""
     metadata: dict[str, Any] = node.get("metadata") or {}
-    detail_map_ref = resolve_subprocess_detail_map_reference(
-        node_id=node_id, metadata=metadata
+    content = build_sppm_node_content(
+        node_id=node_id,
+        kind="subprocess",
+        name=name,
+        metadata=metadata,
+        workers=[],
+        note="",
+        options=options,
     )
-    name_label = format_text_field(
-        normalize_space(name),
-        max_len=options.sppm_max_label_step_name,
-        wrap_strategy=options.sppm_wrap_strategy,
-        truncation_policy=options.sppm_truncation_policy,
-        html_break="\\n",
+    appearance = resolve_sppm_node_appearance(
+        kind="subprocess",
+        metadata=metadata,
+        options=options,
     )
-    subprocess_label = f"{name_label}\\nSubprocess\\nDetail map: {detail_map_ref}"
+    subprocess_lines = [line for line in content.title.split("\n") if line] + list(
+        content.info_lines
+    )
+    subprocess_label = "\\n".join(subprocess_lines)
+    style_parts = ["filled", "dotted"]
     attrs = [
         f'label="{_escape(subprocess_label)}"',
         "shape=ellipse",
-        'style="filled,dotted"',
-        'fillcolor="#F8FAFC"',
-        'color="#607D8B"',
+        f'style="{",".join(style_parts)}"',
+        f'fillcolor="{appearance.fill}"',
+        f'color="{appearance.border}"',
         "penwidth=1.8",
         "fontsize=11",
         "fontname=Helvetica",
@@ -110,13 +119,3 @@ def _append_chunk_group(*, attrs: list[str], node_id: str, wrap_plan: WrapPlan) 
     display_idx = wrap_plan.node_display_index.get(node_id)
     if wrap_plan.active and display_idx is not None:
         attrs.append(f'group="sppm_col_{display_idx}"')
-
-
-def _get_wait_time_minutes(node: dict[str, Any]) -> float:
-    metadata = node.get("metadata")
-    raw = metadata.get("wait_time") if isinstance(metadata, dict) else None
-    if isinstance(raw, dict):
-        value = raw.get("value")
-        if isinstance(value, (int, float)):
-            return float(value)
-    return 0.0

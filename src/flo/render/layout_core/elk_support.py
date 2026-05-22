@@ -4,6 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
+from flo.render._sppm_continuation_tokens import (
+    resolve_explicit_sppm_continuation_tokens,
+)
+from flo.render._sppm_node_content import measure_sppm_node
+from flo.render._sppm_rework_content import build_sppm_rework_metadata_lines
+from flo.render._sppm_rework_semantics import resolve_sppm_rework_variant
+from flo.render.options import RenderOptions
+
 from .elk_contracts import ElkLayoutEdge, ElkLayoutLane, ElkLayoutNode
 
 _DEFAULT_NODE_WIDTH_PX = 140
@@ -40,26 +48,57 @@ def lane_specs(
 
 def ordered_nodes(nodes: list[dict[str, Any]]) -> tuple[ElkLayoutNode, ...]:
     """Convert process nodes into ordered ELK nodes with lane membership."""
-    return tuple(_elk_node(node) for node in nodes if str(node.get("id") or ""))
+    return tuple(
+        _elk_node(node, partition_index=index)
+        for index, node in enumerate(nodes)
+        if str(node.get("id") or "")
+    )
+
+
+def ordered_sppm_nodes(
+    nodes: list[dict[str, Any]], *, options: RenderOptions
+) -> tuple[ElkLayoutNode, ...]:
+    """Convert SPPM nodes into ELK nodes with richer measured dimensions."""
+    return tuple(
+        _elk_node(node, options=options, diagram="sppm", partition_index=index)
+        for index, node in enumerate(nodes)
+        if str(node.get("id") or "")
+    )
 
 
 def ordered_flowchart_nodes(nodes: list[dict[str, Any]]) -> tuple[ElkLayoutNode, ...]:
     """Convert process nodes into flowchart ELK nodes without lane assignment."""
     return tuple(
-        _elk_node({**node, "lane": None}) for node in nodes if str(node.get("id") or "")
+        _elk_node({**node, "lane": None}, partition_index=index)
+        for index, node in enumerate(nodes)
+        if str(node.get("id") or "")
     )
 
 
-def ordered_edges(edges: list[dict[str, Any]]) -> tuple[ElkLayoutEdge, ...]:
+def ordered_edges(
+    edges: list[dict[str, Any]],
+    *,
+    node_kinds: dict[str, str] | None = None,
+    diagram: str | None = None,
+    direction: str | None = None,
+) -> tuple[ElkLayoutEdge, ...]:
     """Convert process edges into ordered ELK edges."""
     return tuple(
-        _elk_edge(edge=edge, index=index)
+        _elk_edge(
+            edge=edge,
+            index=index,
+            node_kinds=node_kinds or {},
+            diagram=diagram,
+            direction=direction,
+        )
         for index, edge in enumerate(edges)
         if str(edge.get("source") or "") and str(edge.get("target") or "")
     )
 
 
-def serialize_node(node: ElkLayoutNode) -> dict[str, Any]:
+def serialize_node(
+    node: ElkLayoutNode, *, diagram: str | None = None
+) -> dict[str, Any]:
     """Serialize one ELK node contract into the payload shape ELK expects."""
     out: dict[str, Any] = {
         "id": node.id,
@@ -67,17 +106,37 @@ def serialize_node(node: ElkLayoutNode) -> dict[str, Any]:
         "height": node.height_px,
         "labels": [{"text": node.label}],
     }
+    layout_options: dict[str, str] = {}
     if node.kind:
-        out["layoutOptions"] = {"flo.node.kind": node.kind}
+        layout_options["flo.node.kind"] = node.kind
+    if node.kind == "start":
+        layout_options["elk.layered.layering.layerConstraint"] = "FIRST"
+    elif node.kind == "end":
+        layout_options["elk.layered.layering.layerConstraint"] = "LAST"
+    if diagram == "sppm":
+        layout_options["elk.portConstraints"] = "FIXED_ORDER"
+    if node.partition_index is not None:
+        layout_options["elk.partitioning.partition"] = str(node.partition_index)
+    if layout_options:
+        out["layoutOptions"] = layout_options
+    if diagram == "sppm":
+        out["ports"] = _sppm_cardinal_ports(node.id)
     return out
 
 
-def serialize_edge(edge: ElkLayoutEdge) -> dict[str, Any]:
+def serialize_edge(
+    edge: ElkLayoutEdge, *, diagram: str | None = None
+) -> dict[str, Any]:
     """Serialize one ELK edge contract into the payload shape ELK expects."""
+    source_endpoint = edge.source_id
+    target_endpoint = edge.target_id
+    if diagram == "sppm":
+        source_endpoint = _port_id(edge.source_id, edge.source_port_side or "EAST")
+        target_endpoint = _port_id(edge.target_id, edge.target_port_side or "WEST")
     out: dict[str, Any] = {
         "id": edge.id,
-        "sources": [edge.source_id],
-        "targets": [edge.target_id],
+        "sources": [source_endpoint],
+        "targets": [target_endpoint],
     }
     if edge.label:
         out["labels"] = [{"text": edge.label}]
@@ -206,27 +265,107 @@ def _declared_lane_labels(process: dict[str, Any] | Any) -> dict[str, str]:
     return lane_labels
 
 
-def _elk_node(node: dict[str, Any]) -> ElkLayoutNode:
+def _elk_node(
+    node: dict[str, Any],
+    *,
+    options: RenderOptions | None = None,
+    diagram: str | None = None,
+    partition_index: int | None = None,
+) -> ElkLayoutNode:
     node_id = str(node.get("id") or "")
+    width_px = _DEFAULT_NODE_WIDTH_PX
+    height_px = _DEFAULT_NODE_HEIGHT_PX
+    if diagram == "sppm" and options is not None:
+        measure = measure_sppm_node(
+            node_id=node_id,
+            kind=str(node.get("kind") or ""),
+            name=str(node.get("name") or node_id),
+            metadata=node.get("metadata") or {},
+            workers=node.get("workers") or [],
+            note=str(node.get("note") or ""),
+            options=options,
+        )
+        width_px = measure.width_px
+        height_px = measure.height_px
     return ElkLayoutNode(
         id=node_id,
         label=str(node.get("name") or node_id),
         kind=str(node.get("kind") or ""),
-        width_px=_DEFAULT_NODE_WIDTH_PX,
-        height_px=_DEFAULT_NODE_HEIGHT_PX,
+        width_px=width_px,
+        height_px=height_px,
         lane_id=_lane_id(node),
+        partition_index=partition_index,
     )
 
 
-def _elk_edge(*, edge: dict[str, Any], index: int) -> ElkLayoutEdge:
+def _elk_edge(
+    *,
+    edge: dict[str, Any],
+    index: int,
+    node_kinds: dict[str, str],
+    diagram: str | None = None,
+    direction: str | None = None,
+) -> ElkLayoutEdge:
     source_id = str(edge.get("source") or "")
     target_id = str(edge.get("target") or "")
+    label = edge_label(edge)
+    source_kind = str(node_kinds.get(source_id) or "task")
+    rework_variant = resolve_sppm_rework_variant(edge, source_kind=source_kind)
+    outgoing_token, incoming_token = resolve_explicit_sppm_continuation_tokens(edge)
+    callout_lines = (
+        build_sppm_rework_metadata_lines(edge.get("metadata"))
+        if rework_variant is not None
+        else ()
+    )
+    source_port_side: str | None = None
+    target_port_side: str | None = None
+    if diagram == "sppm":
+        if rework_variant == "branch":
+            source_port_side = "SOUTH"
+            target_port_side = "NORTH"
+        elif rework_variant == "return":
+            source_port_side = "WEST"
+            target_port_side = "EAST"
+        elif direction == "DOWN":
+            source_port_side = "SOUTH"
+            target_port_side = "NORTH"
+        else:
+            source_port_side = "EAST"
+            target_port_side = "WEST"
     return ElkLayoutEdge(
         id=f"e{index}:{source_id}->{target_id}",
         source_id=source_id,
         target_id=target_id,
-        label=edge_label(edge),
+        label=label,
+        is_rework=rework_variant is not None,
+        rework_variant=rework_variant,
+        callout_lines=callout_lines,
+        callout_near_source=bool(callout_lines and label),
+        outgoing_token=outgoing_token,
+        incoming_token=incoming_token,
+        source_port_side=source_port_side,
+        target_port_side=target_port_side,
     )
+
+
+def _port_id(node_id: str, side: str) -> str:
+    return f"{node_id}__port_{side.lower()}"
+
+
+def _sppm_cardinal_ports(node_id: str) -> list[dict[str, Any]]:
+    sides = ("NORTH", "EAST", "SOUTH", "WEST")
+    return [
+        {
+            "id": _port_id(node_id, side),
+            "width": 0,
+            "height": 0,
+            "layoutOptions": {
+                "elk.port.side": side,
+                "elk.port.index": str(index),
+            },
+        }
+        for index, side in enumerate(sides)
+    ]
 
 
 def _lane_id(node: dict[str, Any]) -> str | None:
@@ -240,18 +379,27 @@ def _extract_from_ir_object(
     nodes = []
     for node in getattr(process, "nodes", []) or []:
         attrs = getattr(node, "attrs", {}) or {}
-        nodes.append(
-            {
-                "id": getattr(node, "id", ""),
-                "kind": getattr(node, "type", "task"),
-                "name": attrs.get("name") if isinstance(attrs, dict) else None,
-                "lane": attrs.get("lane") if isinstance(attrs, dict) else None,
-                "note": attrs.get("note") if isinstance(attrs, dict) else None,
-                "subprocess_parent": attrs.get("subprocess_parent")
-                if isinstance(attrs, dict)
-                else None,
-            }
-        )
+        node_entry = {
+            "id": getattr(node, "id", ""),
+            "kind": getattr(node, "type", "task"),
+        }
+        if isinstance(attrs, dict):
+            for key in (
+                "name",
+                "lane",
+                "note",
+                "subprocess_parent",
+                "location",
+                "metadata",
+            ):
+                value = attrs.get(key)
+                if value is not None:
+                    node_entry[key] = value
+            for list_key in ("workers", "equipment", "inputs", "outputs"):
+                value = attrs.get(list_key)
+                if isinstance(value, list):
+                    node_entry[list_key] = value
+        nodes.append(node_entry)
 
     edges = []
     for edge in getattr(process, "edges", []) or []:
@@ -263,6 +411,7 @@ def _extract_from_ir_object(
                 "label": getattr(edge, "label", None),
                 "edge_type": getattr(edge, "edge_type", None),
                 "rework": getattr(edge, "rework", None),
+                "metadata": getattr(edge, "metadata", None),
             }
         )
     return nodes, edges

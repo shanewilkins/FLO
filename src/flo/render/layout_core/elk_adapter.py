@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from typing import Any, Callable, Protocol
 
-from .elk import build_swimlane_elk_layout_request, execute_elk_layout
+from .elk import (
+    build_sppm_elk_layout_request,
+    build_swimlane_elk_layout_request,
+    execute_elk_layout,
+)
 from .elk_runtime import run_elkjs_layout
 from .models import LayoutResult
 from flo.render.options import RenderOptions
@@ -30,4 +34,19 @@ def layout_swimlane_with_elk(
         raise ValueError("Swimlane ELK adapter requires diagram='swimlane'.")
 
     request = build_swimlane_elk_layout_request(process, options=render_options)
+    return execute_elk_layout(request, engine=engine or run_elkjs_layout)
+
+
+def layout_sppm_with_elk(
+    process: dict[str, Any] | Any,
+    *,
+    engine: ElkEngine | Callable[[dict[str, Any]], dict[str, Any]] | None = None,
+    options: RenderOptions | None = None,
+) -> LayoutResult:
+    """Build, execute, and normalize an SPPM ELK layout pass."""
+    render_options = options or RenderOptions(diagram="sppm")
+    if render_options.diagram != "sppm":
+        raise ValueError("SPPM ELK adapter requires diagram='sppm'.")
+
+    request = build_sppm_elk_layout_request(process, options=render_options)
     return execute_elk_layout(request, engine=engine or run_elkjs_layout)

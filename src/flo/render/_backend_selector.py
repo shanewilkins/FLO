@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Callable
 from ._artifact import RenderArtifact
 from ._graphviz_dot_sppm import _render_sppm_graph
 from ._svg_flowchart import render_flowchart_svg_artifact
+from ._svg_sppm import render_sppm_svg_artifact
 from ._svg_spaghetti import render_spaghetti_svg_artifact
 from .graphviz_backend import (
     render_flowchart_dot,
@@ -38,6 +39,8 @@ def _select_artifact_renderer(render_options: RenderOptions) -> _ArtifactRendere
         return render_flowchart_svg_artifact
     if backend == "svg" and diagram == "spaghetti":
         return render_spaghetti_svg_artifact
+    if backend == "svg" and diagram == "sppm":
+        return render_sppm_svg_artifact
     if backend == "graphviz":
         return _graphviz_artifact_renderer
 

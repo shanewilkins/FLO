@@ -2,6 +2,7 @@ from flo.render._autoformat_wrap import OverflowPolicy, WrapPlan
 from flo.render._sppm_continuation_labels import (
     build_sppm_continuation_label_attrs,
     format_sppm_continuation_html_label,
+    resolve_explicit_sppm_continuation_tokens,
     resolve_sppm_continuation_anchor_tokens,
 )
 
@@ -124,3 +125,12 @@ def test_resolve_sppm_continuation_anchor_tokens_falls_back_to_wrap_tokens():
 
     assert outgoing == "P2-C"
     assert incoming == "P1-B"
+
+
+def test_resolve_explicit_sppm_continuation_tokens_mirrors_single_sided_metadata():
+    outgoing, incoming = resolve_explicit_sppm_continuation_tokens(
+        {"metadata": {"continuation_to": "P2-OPS"}}
+    )
+
+    assert outgoing == "P2-OPS"
+    assert incoming == "P2-OPS"

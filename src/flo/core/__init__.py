@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Tuple
 
 from flo.services.errors import (
@@ -97,7 +98,15 @@ def run_content(
             artifact=artifact, render_to=render_to, contract=contract
         )
         return EXIT_SUCCESS, "", ""
-    return EXIT_SUCCESS, artifact.content, ""
+    return (
+        EXIT_SUCCESS,
+        _render_artifact_for_stdout(
+            artifact=artifact,
+            output_format=output_format,
+            contract=contract,
+        ),
+        "",
+    )
 
 
 def _parse_compile_validate(content: str, source_path: str | None = None) -> IR:
@@ -217,6 +226,28 @@ def _write_render_artifact(
             raise RenderError(write_err)
         return
     raise RenderError(f"Unsupported render artifact kind: {kind or 'unknown'}")
+
+
+def _render_artifact_for_stdout(
+    *,
+    artifact: RenderArtifact,
+    output_format: str,
+    contract: SppmSvgPostprocessContract | None,
+) -> str:
+    """Materialize the requested stdout format from a backend-neutral artifact."""
+    if artifact.kind == "svg" or output_format != "svg":
+        return artifact.content
+    if artifact.kind != "dot":
+        raise RenderError(
+            f"Unsupported render artifact kind: {artifact.kind or 'unknown'}"
+        )
+
+    from flo.services.graphviz import render_dot_to_file
+
+    with TemporaryDirectory(prefix="flo-svg-stdout-") as temp_dir:
+        svg_path = Path(temp_dir) / "stdout.svg"
+        render_dot_to_file(artifact.content, str(svg_path), sppm_contract=contract)
+        return svg_path.read_text(encoding="utf-8")
 
 
 def run() -> Tuple[int, str, str]:

@@ -122,6 +122,54 @@ def test_run_flowchart_svg_export_emits_svg(tmp_path):
     assert ">yes<" in result.output
 
 
+def test_run_sppm_svg_export_emits_svg(tmp_path):
+    model = tmp_path / "sppm_svg.flo"
+    payload = {
+        "spec_version": "0.1",
+        "process": {"id": "sppm_svg_demo", "name": "SPPM SVG Demo"},
+        "steps": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {
+                "id": "intake",
+                "kind": "task",
+                "name": "Intake",
+                "workers": ["Coordinator"],
+                "metadata": {
+                    "value_class": "RNVA",
+                    "cycle_time": {"value": 4, "unit": "min"},
+                    "description": "Capture request details and context.",
+                },
+            },
+            {"id": "finish", "kind": "end", "name": "Done"},
+        ],
+        "edges": [
+            {"source": "start", "target": "intake"},
+            {"source": "intake", "target": "finish"},
+        ],
+    }
+    model.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            str(model),
+            "--export",
+            "svg",
+            "--diagram",
+            "sppm",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "<svg" in result.output
+    assert "SPPM SVG Demo" in result.output
+    assert "Coordinator" in result.output
+    assert "CT: 4 min" in result.output
+    assert 'data-node-port-rail="in"' in result.output
+
+
 def test_run_svg_export_rejects_graphviz_backend_override(tmp_path):
     model = _write_spaghetti_svg_model(tmp_path)
 
