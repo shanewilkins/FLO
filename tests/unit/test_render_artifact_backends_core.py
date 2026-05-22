@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from flo.render import render_artifact, render_artifact_and_contract, render_dot
@@ -7,7 +9,8 @@ from flo.render._svg_sppm import (
     _label_placement,
     _lane_header_avoid_bounds,
 )
-from flo.render.layout_core.models import LayoutBounds, LayoutLaneFrame
+from flo.render._svg_sppm_edges import _normalize_rework_edge_points
+from flo.render.layout_core.models import LayoutBounds, LayoutLaneFrame, LayoutPoint
 
 
 def test_render_artifact_can_select_direct_svg_flowchart_backend():
@@ -371,6 +374,126 @@ def test_render_artifact_direct_svg_sppm_styles_rework_return_edges_differently(
     assert 'data-edge-rework-variant="return"' in artifact.content
     assert 'stroke="#c2410c"' in artifact.content
     assert 'stroke-dasharray="4 6"' in artifact.content
+
+
+def test_render_artifact_direct_svg_sppm_branch_polyline_is_orthogonal():
+    ir_like = {
+        "nodes": [
+            {"id": "decision", "kind": "decision", "name": "Approved?"},
+            {"id": "rework", "kind": "task", "name": "Rework"},
+        ],
+        "edges": [
+            {
+                "source": "decision",
+                "target": "rework",
+                "outcome": "no",
+                "edge_type": "rework",
+                "rework": True,
+            }
+        ],
+    }
+
+    artifact = render_artifact(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "render_backend": "svg",
+        },
+    )
+
+    match = re.search(
+        r'data-edge-rework-variant="branch"[^>]*>\s*<polyline points="([^"]+)"',
+        artifact.content,
+    )
+    assert match is not None
+    points = [
+        tuple(float(part) for part in token.split(",", 1))
+        for token in match.group(1).split()
+    ]
+    assert len(points) >= 2
+    for (x0, y0), (x1, y1) in zip(points, points[1:]):
+        assert abs(x1 - x0) < 1e-6 or abs(y1 - y0) < 1e-6
+
+
+def test_render_artifact_direct_svg_sppm_return_polyline_is_orthogonal():
+    ir_like = {
+        "nodes": [
+            {"id": "decision", "kind": "decision", "name": "Approved?"},
+            {"id": "rework", "kind": "task", "name": "Rework"},
+            {"id": "done", "kind": "task", "name": "Done"},
+        ],
+        "edges": [
+            {
+                "source": "decision",
+                "target": "rework",
+                "outcome": "no",
+                "edge_type": "rework",
+                "rework": True,
+            },
+            {
+                "source": "rework",
+                "target": "done",
+                "edge_type": "rework",
+                "rework": True,
+            },
+        ],
+    }
+
+    artifact = render_artifact(
+        ir_like,
+        options={
+            "diagram": "sppm",
+            "render_backend": "svg",
+        },
+    )
+
+    match = re.search(
+        r'data-edge-rework-variant="return"[^>]*>\s*<polyline points="([^"]+)"',
+        artifact.content,
+    )
+    assert match is not None
+    points = [
+        tuple(float(part) for part in token.split(",", 1))
+        for token in match.group(1).split()
+    ]
+    assert len(points) >= 3
+    for (x0, y0), (x1, y1) in zip(points, points[1:]):
+        assert abs(x1 - x0) < 1e-6 or abs(y1 - y0) < 1e-6
+
+
+def test_direct_svg_rework_branch_normalization_keeps_horizontal_final_leg() -> None:
+    points = (
+        LayoutPoint(x_px=260.0, y_px=120.0),
+        LayoutPoint(x_px=90.0, y_px=60.0),
+    )
+
+    normalized = _normalize_rework_edge_points(
+        points,
+        is_rework=True,
+        rework_variant="branch",
+    )
+
+    assert len(normalized) == 4
+    assert normalized[1].y_px == pytest.approx(normalized[2].y_px)
+    assert normalized[1].x_px != pytest.approx(normalized[2].x_px)
+    assert normalized[2].x_px == pytest.approx(normalized[3].x_px)
+
+
+def test_direct_svg_rework_return_normalization_is_horizontal_then_vertical() -> None:
+    points = (
+        LayoutPoint(x_px=1170.37, y_px=-270.0),
+        LayoutPoint(x_px=985.71, y_px=-519.89),
+    )
+
+    normalized = _normalize_rework_edge_points(
+        points,
+        is_rework=True,
+        rework_variant="return",
+    )
+
+    assert len(normalized) == 3
+    assert normalized[0].y_px == pytest.approx(normalized[1].y_px)
+    assert normalized[1].x_px == pytest.approx(normalized[2].x_px)
 
 
 def test_svg_sppm_edge_placement_avoids_source_callout_label_crowding():

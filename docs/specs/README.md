@@ -23,6 +23,7 @@ Current specs:
 - `swimlane.md`
 - `sppm.md`
 - `spaghetti_map.md`
+- `render_capabilities.md`
 
 Preferred split:
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Any, Tuple
 
 from flo.services.errors import (
     CLIError,
@@ -33,6 +33,7 @@ from flo.core._option_validation import (
     validate_sppm_numeric_render_options,
     ensure_render_options_compatible_with_output,
 )
+from flo.core._capability_validation import ensure_render_projection_supported
 from flo.core.render_intent import RenderIntentResolver
 from flo.services.io import write_output
 
@@ -77,18 +78,16 @@ def run_content(
     render_metadata = None
     if isinstance(ir, IR) and isinstance(ir.process_metadata, dict):
         render_metadata = ir.process_metadata.get("render")
-    # TODO: integrate resolved view_intent into RenderOptions.from_mapping() (issue 5e6b7d3a)
-    _view_intent = RenderIntentResolver.resolve(
+    resolved_options = _merge_view_intent_options(
         render_metadata=render_metadata,
-        cli_overrides=resolved_options,
-        profile="default",
-        view_name="default",
+        options=resolved_options,
     )
 
     render_options = _resolve_render_options_for_output(
         resolved_options=resolved_options,
         output_format=output_format,
     )
+    ensure_render_projection_supported(render_options)
 
     artifact, contract = _render_artifact_with_postprocess(
         ir, render_options=render_options
@@ -171,6 +170,113 @@ def _resolve_render_options_for_output(
         return replace(render_options, backend="svg")
 
     return render_options
+
+
+def _merge_view_intent_options(
+    *, render_metadata: Any, options: dict | None
+) -> dict[str, Any]:
+    """Merge source render intent into CLI options without changing legacy defaults.
+
+    We only apply values introduced by source render metadata. Resolver profile/hard
+    defaults are intentionally ignored here so no-metadata behavior remains
+    compatible with existing RenderOptions defaults.
+    """
+    merged: dict[str, Any] = dict(options or {})
+    if not isinstance(render_metadata, dict):
+        return merged
+
+    profile_raw = merged.get("profile")
+    profile = str(profile_raw).strip().lower() if profile_raw is not None else "default"
+    view_raw = merged.get("view")
+    view_name = str(view_raw).strip() if view_raw is not None else "default"
+
+    resolved_intent = RenderIntentResolver.resolve(
+        render_metadata=render_metadata,
+        cli_overrides=merged,
+        profile=profile or "default",
+        view_name=view_name or "default",
+    )
+    baseline_intent = RenderIntentResolver.resolve(
+        render_metadata=None,
+        cli_overrides=merged,
+        profile=profile or "default",
+        view_name=view_name or "default",
+    )
+
+    intent_overrides = _render_intent_overrides(
+        resolved_intent=resolved_intent,
+        baseline_intent=baseline_intent,
+    )
+    merged.update(intent_overrides)
+    return merged
+
+
+def _render_intent_overrides(
+    *,
+    resolved_intent: Any,
+    baseline_intent: Any,
+) -> dict[str, Any]:
+    """Translate metadata-contributed intent deltas into RenderOptions input keys."""
+
+    def changed(field: str) -> bool:
+        return getattr(resolved_intent, field) != getattr(baseline_intent, field)
+
+    overrides: dict[str, Any] = {}
+
+    if changed("diagram") and resolved_intent.diagram is not None:
+        overrides["diagram"] = resolved_intent.diagram
+
+    if (
+        changed("publication_page_format")
+        and resolved_intent.publication_page_format is not None
+    ):
+        overrides["publication_page_format"] = resolved_intent.publication_page_format
+
+    if changed("publication_header_enabled") and (
+        resolved_intent.publication_header_enabled is not None
+    ):
+        overrides["sppm_no_header"] = not bool(
+            resolved_intent.publication_header_enabled
+        )
+
+    if changed("publication_footer_enabled") and (
+        resolved_intent.publication_footer_enabled is not None
+    ):
+        overrides["sppm_no_footer"] = not bool(
+            resolved_intent.publication_footer_enabled
+        )
+
+    if changed("layout_wrap") and resolved_intent.layout_wrap is not None:
+        overrides["layout_wrap"] = resolved_intent.layout_wrap
+
+    if changed("layout_max_width") and resolved_intent.layout_max_width is not None:
+        overrides["layout_max_width_px"] = resolved_intent.layout_max_width
+
+    if (
+        changed("layout_target_columns")
+        and resolved_intent.layout_target_columns is not None
+    ):
+        overrides["layout_target_columns"] = resolved_intent.layout_target_columns
+
+    if changed("sppm_label_density") and resolved_intent.sppm_label_density is not None:
+        overrides["sppm_label_density"] = resolved_intent.sppm_label_density
+
+    if (
+        changed("sppm_node_numbering")
+        and resolved_intent.sppm_node_numbering is not None
+    ):
+        overrides["sppm_step_numbering"] = resolved_intent.sppm_node_numbering
+
+    if changed("spaghetti_channel") and resolved_intent.spaghetti_channel is not None:
+        overrides["spaghetti_channel"] = resolved_intent.spaghetti_channel
+
+    if (
+        changed("spaghetti_people_mode")
+        and resolved_intent.spaghetti_people_mode is not None
+    ):
+        overrides["spaghetti_people_mode"] = resolved_intent.spaghetti_people_mode
+
+    return overrides
 
 
 def render_dot_and_contract(

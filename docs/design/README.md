@@ -75,6 +75,9 @@ The render-platform material is intentionally split across three documents.
 - `render_platform_migration_plan.md`
   - the phased path from the current implementation to the target architecture
 
+- `layout_canvas_boundary_contract.md`
+  - one-page layout-to-canvas handoff contract and ELK/SVG ownership boundary
+
 This split is deliberate. Keep the ADR short and decision-focused, keep the
 target architecture focused on the steady state, and keep implementation phases
 in the migration plan instead of duplicating them across all three files.

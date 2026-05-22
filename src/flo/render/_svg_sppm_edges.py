@@ -43,6 +43,11 @@ def _edge_svg(
         target_bounds=target_bounds,
         target_kind=target_kind,
     )
+    points = _normalize_rework_edge_points(
+        points,
+        is_rework=bool(edge_path.is_rework),
+        rework_variant=str(edge_path.rework_variant or ""),
+    )
     if len(points) < 2:
         return [], ()
     polyline = " ".join(f"{point.x_px:.1f},{point.y_px:.1f}" for point in points)
@@ -492,6 +497,53 @@ def _prefer_vertical_branch_drop(
         LayoutPoint(x_px=source_center_x, y_px=source_center_y),
         LayoutPoint(x_px=source_center_x, y_px=target_center_y),
     )
+
+
+def _normalize_rework_edge_points(
+    points: tuple[LayoutPoint, ...], *, is_rework: bool, rework_variant: str
+) -> tuple[LayoutPoint, ...]:
+    if not is_rework or len(points) < 2:
+        return points
+
+    start = points[0]
+    end = points[-1]
+    if abs(start.x_px - end.x_px) < 1e-6 or abs(start.y_px - end.y_px) < 1e-6:
+        return (start, end)
+
+    if rework_variant == "return":
+        return _dedupe_points(
+            (
+                start,
+                LayoutPoint(x_px=end.x_px, y_px=start.y_px),
+                end,
+            )
+        )
+
+    if rework_variant == "branch":
+        elbow_y = (start.y_px + end.y_px) / 2.0
+        return _dedupe_points(
+            (
+                start,
+                LayoutPoint(x_px=start.x_px, y_px=elbow_y),
+                LayoutPoint(x_px=end.x_px, y_px=elbow_y),
+                end,
+            )
+        )
+
+    return points
+
+
+def _dedupe_points(points: tuple[LayoutPoint, ...]) -> tuple[LayoutPoint, ...]:
+    deduped: list[LayoutPoint] = []
+    for point in points:
+        if (
+            deduped
+            and abs(deduped[-1].x_px - point.x_px) < 1e-6
+            and abs(deduped[-1].y_px - point.y_px) < 1e-6
+        ):
+            continue
+        deduped.append(point)
+    return tuple(deduped)
 
 
 def _is_synthetic_sppm_lane(lane_id: str) -> bool:

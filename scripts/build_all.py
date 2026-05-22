@@ -94,7 +94,7 @@ def _build_one(
     from flo.compiler import compile_adapter
     from flo.compiler.ir import ensure_schema_aligned, validate_ir
     from flo.export import export_ir
-    from flo.render import render_dot_and_contract
+    from flo.render import render_artifact, render_dot_and_contract
     from flo.services.graphviz import render_dot_to_file
 
     rel = example_file.relative_to(examples_dir)
@@ -103,6 +103,7 @@ def _build_one(
         ("", _render_options_for_example(example_file)),
         *_extra_render_variants_for_example(example_file),
     ]
+    direct_svg_variants = _direct_svg_variants_for_example(example_file)
 
     base_out.parent.mkdir(parents=True, exist_ok=True)
 
@@ -126,6 +127,16 @@ def _build_one(
             if has_dot:
                 render_dot_to_file(dot, str(svg_out), sppm_contract=contract)
                 created.append(str(svg_out.relative_to(REPO_ROOT)))
+
+        for suffix, render_options in direct_svg_variants:
+            svg_out = base_out.with_name(f"{base_out.name}{suffix}").with_suffix(".svg")
+            artifact = render_artifact(ir, options=render_options)
+            if artifact.kind != "svg":
+                raise ValueError(
+                    f"direct SVG variant '{suffix}' did not return svg artifact"
+                )
+            svg_out.write_text(artifact.content, encoding="utf-8")
+            created.append(str(svg_out.relative_to(REPO_ROOT)))
 
         if _has_materials_or_equipment_collection(ir):
             ingredients_out = base_out.with_name(
@@ -234,6 +245,33 @@ def _extra_render_variants_for_example(
                     "layout_max_width_px": "800",
                 },
             ),
+        ]
+    return []
+
+
+def _direct_svg_variants_for_example(
+    example_file: Path,
+) -> list[tuple[str, dict[str, str]]]:
+    name = example_file.stem.lower()
+    if name == "sppm_feature_showcase":
+        return [
+            (
+                "_elk",
+                {
+                    "diagram": "sppm",
+                    "render_backend": "svg",
+                },
+            )
+        ]
+    if name == "linear":
+        return [
+            (
+                "_elk_flowchart",
+                {
+                    "diagram": "flowchart",
+                    "render_backend": "svg",
+                },
+            )
         ]
     return []
 

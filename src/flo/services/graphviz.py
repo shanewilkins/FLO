@@ -93,23 +93,15 @@ def render_dot_to_file(
             + (f": {stderr}" if stderr else "")
         )
 
-    # SVG gets a small FLO-owned postprocess layer:
+    # SVG gets a small FLO-owned postprocess compatibility layer:
     # 1) normalize wrapped SPPM boundary doglegs where Graphviz can drift;
     # 2) normalize outer SVG padding so borders are small and even.
+    # Rework branch/return path geometry is owned by ELK/SVG direct rendering.
     # Future work: extend similar canvas normalization to non-SVG formats.
     if fmt == "svg":
         svg_path = Path(output_path)
         if not svg_path.exists():
             return
-        # Two-pass SPPM anchor pinning: re-render SVG with exact anchor positions
-        # derived from pass-1 layout.  Only activates when SPPM return-loop anchors
-        # are detected; otherwise the SVG written above is already final.
-        _postprocess_sppm_return_loop_edges_svg(
-            dot=dot, output_path=svg_path, contract=sppm_contract
-        )
-        _postprocess_sppm_branch_edges_svg(
-            dot=dot, output_path=svg_path, contract=sppm_contract
-        )
         _postprocess_sppm_rework_labels_svg(
             dot=dot, output_path=svg_path, contract=sppm_contract
         )
@@ -133,87 +125,13 @@ def _postprocess_sppm_return_loop_edges_svg(
     output_path: Path,
     contract: SppmSvgPostprocessContract | None = None,
 ) -> None:
-    """Rewrite SPPM return-loop edge paths to exact L-shapes.
+    """Legacy compatibility hook.
 
-    Graphviz routes return-loop corridor edges with an extra dogleg because it
-    places the invisible anchor node at an intermediate Y between the rework
-    node and its target.  After Graphviz produces the SVG (with correct node
-    positions and sizes), we read the rendered node bounds and rewrite just the
-    two return-loop path segments to a clean L-shape: one horizontal segment
-    from the source's left edge to the target's center X, then one vertical
-    segment down into the target's south port.
-
-    Scope:
-    - Only ``__sppm_rework_corridor_*`` return-loop edges (tailport=w source,
-      headport=s target).
-    - Only SVG output.
+    Rework return-loop geometry normalization is owned by the direct ELK/SVG
+    backend and should not be duplicated in Graphviz postprocessing.
     """
-    specs = _collect_return_anchor_specs(dot=dot, contract=contract)
-    if not specs:
-        return
-
-    tree = ET.parse(output_path)
-    root = tree.getroot()
-    node_bounds = _svg_node_outer_bounds(root)
-    edge_groups = _svg_edge_groups(root)
-    updated = False
-
-    for source_id, anchor_id, target_id in specs:
-        first_group, first_source_side, _first_target_side = _find_rework_edge_group(
-            edge_groups=edge_groups,
-            source_id=source_id,
-            target_id=anchor_id,
-        )
-        second_group, _second_source_side, second_target_side = _find_rework_edge_group(
-            edge_groups=edge_groups,
-            source_id=anchor_id,
-            target_id=target_id,
-        )
-        if first_group is None or second_group is None:
-            continue
-
-        source_bounds = node_bounds.get(source_id)
-        target_bounds = node_bounds.get(target_id)
-        if source_bounds is None:
-            continue
-
-        _ = first_source_side
-        # Return-loop policy: always exit the rework node from west face.
-        source_point = _point_on_bounds(source_bounds, "w")
-        if target_bounds is not None:
-            # Return-loop policy: always rejoin main line at target south face.
-            target_point = _point_on_bounds(target_bounds, "s")
-        else:
-            _start, fallback_end = _edge_path_start_end(second_group)
-            if fallback_end is None:
-                continue
-            target_point = fallback_end
-        source_x, source_y = source_point
-        target_x, target_y = target_point
-        # Compute the corner: X of target, Y of source midpoint.
-        corner_x = target_x
-        corner_y = source_y
-
-        _set_edge_path(
-            first_group,
-            [
-                (source_x, source_y),
-                (corner_x, corner_y),
-            ],
-        )
-        _set_edge_path(
-            second_group,
-            [
-                (corner_x, corner_y),
-                (target_x, target_y),
-            ],
-        )
-        # Arrowhead should point into the target's south face.
-        _set_arrow_polygon(second_group, tip=(target_x, target_y), direction=1)
-        updated = True
-
-    if updated:
-        _write_svg_tree(tree, output_path)
+    _ = (dot, output_path, contract)
+    return
 
 
 def _postprocess_sppm_branch_edges_svg(
@@ -222,61 +140,13 @@ def _postprocess_sppm_branch_edges_svg(
     output_path: Path,
     contract: SppmSvgPostprocessContract | None = None,
 ) -> None:
-    specs = _collect_branch_anchor_specs(dot=dot, contract=contract)
-    if not specs:
-        return
+    """Legacy compatibility hook.
 
-    tree = ET.parse(output_path)
-    root = tree.getroot()
-    node_bounds = _svg_node_outer_bounds(root)
-    edge_groups = _svg_edge_groups(root)
-    updated = False
-
-    for source_id, anchor_id, target_id in specs:
-        first_group, first_source_side, _first_target_side = _find_rework_edge_group(
-            edge_groups=edge_groups,
-            source_id=source_id,
-            target_id=anchor_id,
-        )
-        second_group, _second_source_side, second_target_side = _find_rework_edge_group(
-            edge_groups=edge_groups,
-            source_id=anchor_id,
-            target_id=target_id,
-        )
-        if first_group is None or second_group is None:
-            continue
-
-        source_bounds = node_bounds.get(source_id)
-        target_bounds = node_bounds.get(target_id)
-        if source_bounds is None or target_bounds is None:
-            continue
-
-        source_x, source_y = _point_on_bounds(source_bounds, first_source_side)
-        target_x, target_y = _point_on_bounds(target_bounds, second_target_side)
-        # Corner: midpoint Y between source bottom and target top.
-        corner_y = (source_y + target_y) / 2.0
-
-        _set_edge_path(
-            first_group,
-            [
-                (source_x, source_y),
-                (source_x, corner_y),
-            ],
-        )
-        _set_edge_path(
-            second_group,
-            [
-                (source_x, corner_y),
-                (target_x, target_y),
-            ],
-        )
-        _set_arrow_for_side(
-            second_group, tip=(target_x, target_y), side=second_target_side
-        )
-        updated = True
-
-    if updated:
-        _write_svg_tree(tree, output_path)
+    Rework branch geometry normalization is owned by the direct ELK/SVG
+    backend and should not be duplicated in Graphviz postprocessing.
+    """
+    _ = (dot, output_path, contract)
+    return
 
 
 def _postprocess_sppm_rework_labels_svg(
@@ -545,23 +415,35 @@ def _postprocess_wrapped_sppm_svg(
     # - only SVG output (node bounds available from rendered geometry);
     # - no changes to non-SPPM or non-boundary edges.
 
+    tree = ET.parse(output_path)
+    root = tree.getroot()
+
+    node_bounds = _svg_node_bounds(root)
+    edge_groups = _svg_edge_groups(root)
+
     # Use contract-based edge lookup if available; otherwise fall back to regex DOT scanning.
+    boundary_pairs: dict[str, tuple[str, str]]
     if contract and contract.wrapped_boundary_edges:
-        boundary_pairs: dict[str, tuple[str, str]] = {}
-        for idx, edge in enumerate(contract.wrapped_boundary_edges):
-            anchor_id = getattr(edge, "anchor_id", None) or f"__wrap_exit_lr_{idx}"
-            boundary_pairs[anchor_id] = (edge.source_id, edge.target_id)
+        boundary_pairs = {}
+        for edge in contract.wrapped_boundary_edges:
+            source_id = edge.source_id
+            target_id = edge.target_id
+            anchor_id = getattr(edge, "anchor_id", None)
+            if not anchor_id:
+                anchor_id = _find_wrap_exit_anchor_id(
+                    edge_groups=edge_groups,
+                    source_id=source_id,
+                    target_id=target_id,
+                )
+            if not anchor_id:
+                continue
+            boundary_pairs[anchor_id] = (source_id, target_id)
     else:
         boundary_pairs = _wrapped_sppm_boundary_pairs(dot)
 
     if not boundary_pairs:
         return
 
-    tree = ET.parse(output_path)
-    root = tree.getroot()
-
-    node_bounds = _svg_node_bounds(root)
-    edge_groups = _svg_edge_groups(root)
     updated = False
 
     for anchor_id, (source_id, target_id) in boundary_pairs.items():
@@ -612,6 +494,28 @@ def _postprocess_wrapped_sppm_svg(
 
     if updated:
         _write_svg_tree(tree, output_path)
+
+
+def _find_wrap_exit_anchor_id(
+    *,
+    edge_groups: dict[str, ET.Element],
+    source_id: str,
+    target_id: str,
+) -> str | None:
+    for title in edge_groups.keys():
+        match = re.fullmatch(
+            rf"{re.escape(source_id)}:e->(?P<anchor>__wrap_exit_lr_\d+)",
+            title,
+        )
+        if not match:
+            continue
+        anchor_id = match.group("anchor")
+        if (
+            f"{anchor_id}->{target_id}:s" in edge_groups
+            or f"{anchor_id}->{target_id}:n" in edge_groups
+        ):
+            return anchor_id
+    return None
 
 
 def _normalize_svg_outer_padding(*, output_path: Path, padding: float) -> None:

@@ -70,6 +70,15 @@ Current mappings:
 Semantic validation uses stable diagnostic-style prefixes in messages (for
 example `E1003`, `E1101`) so failures are easier to script against and triage.
 
+## Projection capability diagnostics
+
+Unsupported diagram/backend projection requests are usage errors and must:
+
+- return exit code `1` (`EXIT_USAGE`)
+- include requested diagram and backend
+- include supported backends for the requested diagram
+- fail early before renderer dispatch
+
 ## Relationship to other documents
 
 - Core language semantics live in `docs/specs/core_language.md`.

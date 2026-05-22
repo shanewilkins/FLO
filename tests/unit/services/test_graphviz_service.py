@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
+from typing import cast
+
+from flo.render._sppm_postprocess_contract import SppmSvgPostprocessContract
 
 from flo.services.graphviz import (
     _normalize_node_backing_fills_svg,
     _normalize_svg_outer_padding,
-    _postprocess_sppm_branch_edges_svg,
     _postprocess_queue_baseline_alignment_svg,
-    _postprocess_sppm_return_loop_edges_svg,
     _postprocess_direct_midpoint_edges_svg,
     _postprocess_wrapped_sppm_svg,
 )
@@ -297,318 +298,6 @@ def test_normalize_svg_outer_padding_ignores_graph_background_bounds(tmp_path: P
     assert 'style="background:#ffffff;"' in svg
 
 
-def test_postprocess_sppm_return_loop_edges_svg_rewrites_two_leg_geometry(
-    tmp_path: Path,
-):
-    contract = SimpleNamespace(
-        rework_return_edges=[
-            SimpleNamespace(
-                source_id="review",
-                target_id="approve",
-                anchor_id="__sppm_rework_corridor_review",
-            )
-        ]
-    )
-    dot = "\n".join(
-        [
-            "digraph {",
-            '  "review":w -> "__sppm_rework_corridor_review" [arrowhead=none, constraint=false];',
-            '  "__sppm_rework_corridor_review" -> "approve":s [constraint=false];',
-            "}",
-        ]
-    )
-    svg_path = tmp_path / "return.svg"
-    svg_path.write_text(
-        """<?xml version="1.0" encoding="UTF-8"?>
-    <svg xmlns="http://www.w3.org/2000/svg">
-        <g class="node"><title>review</title><polygon points="200,100 260,100 260,140 200,140" /></g>
-        <g class="node"><title>approve</title><polygon points="80,40 140,40 140,90 80,90" /></g>
-        <g class="edge"><title>review:w-&gt;__sppm_rework_corridor_review</title><path d="M 0,0 L 1,1" /></g>
-        <g class="edge"><title>__sppm_rework_corridor_review-&gt;approve:s</title><path d="M 0,0 L 1,1" /><polygon points="0,0 1,1 2,2 0,0" /></g>
-    </svg>
-    """,
-        encoding="utf-8",
-    )
-
-    _postprocess_sppm_return_loop_edges_svg(
-        dot=dot, output_path=svg_path, contract=contract
-    )
-    svg = svg_path.read_text(encoding="utf-8")
-
-    assert 'd="M 200.00,120.00 L 110.00,120.00"' in svg
-    assert 'd="M 110.00,120.00 L 110.00,90.00"' in svg
-    assert 'points="110.00,90.00 106.00,98.00 114.00,98.00 110.00,90.00"' in svg
-
-
-def test_postprocess_sppm_return_loop_edges_svg_without_contract_is_noop(
-    tmp_path: Path,
-):
-    dot = "\n".join(
-        [
-            "digraph {",
-            '  "review":w -> "__sppm_rework_corridor_review" [arrowhead=none, constraint=false];',
-            '  "__sppm_rework_corridor_review" -> "approve":s [constraint=false];',
-            "}",
-        ]
-    )
-    svg_path = tmp_path / "return_no_contract.svg"
-    svg_path.write_text(
-        """<?xml version="1.0" encoding="UTF-8"?>
-    <svg xmlns="http://www.w3.org/2000/svg">
-        <g class="node"><title>review</title><polygon points="200,100 260,100 260,140 200,140" /></g>
-        <g class="node"><title>approve</title><polygon points="80,40 140,40 140,90 80,90" /></g>
-        <g class="edge"><title>review:w-&gt;__sppm_rework_corridor_review</title><path d="M 0,0 L 1,1" /></g>
-        <g class="edge"><title>__sppm_rework_corridor_review-&gt;approve:s</title><path d="M 0,0 L 1,1" /><polygon points="0,0 1,1 2,2 0,0" /></g>
-    </svg>
-    """,
-        encoding="utf-8",
-    )
-
-    _postprocess_sppm_return_loop_edges_svg(dot=dot, output_path=svg_path)
-    svg = svg_path.read_text(encoding="utf-8")
-
-    assert 'd="M 0,0 L 1,1"' in svg
-
-
-def test_postprocess_sppm_return_loop_edges_svg_supports_contract(tmp_path: Path):
-    contract = SimpleNamespace(
-        rework_return_edges=[
-            SimpleNamespace(
-                source_id="review",
-                target_id="approve",
-                anchor_id="__sppm_rework_corridor_review",
-            )
-        ]
-    )
-    svg_path = tmp_path / "return_contract.svg"
-    svg_path.write_text(
-        """<?xml version="1.0" encoding="UTF-8"?>
-    <svg xmlns="http://www.w3.org/2000/svg">
-        <g class="node"><title>review</title><polygon points="200,100 260,100 260,140 200,140" /></g>
-        <g class="node"><title>approve</title><polygon points="80,40 140,40 140,90 80,90" /></g>
-        <g class="edge"><title>review:w-&gt;__sppm_rework_corridor_review</title><path d="M 0,0 L 1,1" /></g>
-        <g class="edge"><title>__sppm_rework_corridor_review-&gt;approve:s</title><path d="M 0,0 L 1,1" /><polygon points="0,0 1,1 2,2 0,0" /></g>
-    </svg>
-    """,
-        encoding="utf-8",
-    )
-
-    _postprocess_sppm_return_loop_edges_svg(
-        dot="digraph {}", output_path=svg_path, contract=contract
-    )
-    svg = svg_path.read_text(encoding="utf-8")
-
-    assert 'd="M 200.00,120.00 L 110.00,120.00"' in svg
-    assert 'd="M 110.00,120.00 L 110.00,90.00"' in svg
-    assert 'points="110.00,90.00 106.00,98.00 114.00,98.00 110.00,90.00"' in svg
-
-
-def test_postprocess_sppm_branch_edges_svg_rewrites_two_leg_geometry(tmp_path: Path):
-    contract = SimpleNamespace(
-        rework_branch_edges=[
-            SimpleNamespace(
-                source_id="decision",
-                target_id="rework",
-                anchor_id="__sppm_rework_corridor_decision",
-            )
-        ]
-    )
-    dot = "\n".join(
-        [
-            "digraph {",
-            '  "decision":s -> "__sppm_rework_corridor_decision" [arrowhead=none, constraint=false];',
-            '  "__sppm_rework_corridor_decision" -> "rework":n [constraint=false];',
-            "}",
-        ]
-    )
-    svg_path = tmp_path / "branch.svg"
-    svg_path.write_text(
-        """<?xml version="1.0" encoding="UTF-8"?>
-    <svg xmlns="http://www.w3.org/2000/svg">
-        <g class="node"><title>decision</title><polygon points="200,100 260,100 260,140 200,140" /></g>
-        <g class="node"><title>rework</title><polygon points="120,20 180,20 180,60 120,60" /></g>
-        <g class="edge"><title>decision:s-&gt;__sppm_rework_corridor_decision</title><path d="M 0,0 L 1,1" /></g>
-        <g class="edge"><title>__sppm_rework_corridor_decision-&gt;rework:n</title><path d="M 0,0 L 1,1" /><polygon points="0,0 1,1 2,2 0,0" /></g>
-    </svg>
-    """,
-        encoding="utf-8",
-    )
-
-    _postprocess_sppm_branch_edges_svg(dot=dot, output_path=svg_path, contract=contract)
-    svg = svg_path.read_text(encoding="utf-8")
-
-    assert 'd="M 230.00,140.00 L 230.00,80.00"' in svg
-    assert 'd="M 230.00,80.00 L 150.00,20.00"' in svg
-    assert 'points="150.00,20.00 146.00,12.00 154.00,12.00 150.00,20.00"' in svg
-
-
-def test_postprocess_sppm_branch_edges_svg_without_contract_is_noop(tmp_path: Path):
-    dot = "\n".join(
-        [
-            "digraph {",
-            '  "decision":s -> "__sppm_rework_corridor_decision" [arrowhead=none, constraint=false];',
-            '  "__sppm_rework_corridor_decision" -> "rework":n [constraint=false];',
-            "}",
-        ]
-    )
-    svg_path = tmp_path / "branch_no_contract.svg"
-    svg_path.write_text(
-        """<?xml version="1.0" encoding="UTF-8"?>
-    <svg xmlns="http://www.w3.org/2000/svg">
-        <g class="node"><title>decision</title><polygon points="200,100 260,100 260,140 200,140" /></g>
-        <g class="node"><title>rework</title><polygon points="120,20 180,20 180,60 120,60" /></g>
-        <g class="edge"><title>decision:s-&gt;__sppm_rework_corridor_decision</title><path d="M 0,0 L 1,1" /></g>
-        <g class="edge"><title>__sppm_rework_corridor_decision-&gt;rework:n</title><path d="M 0,0 L 1,1" /><polygon points="0,0 1,1 2,2 0,0" /></g>
-    </svg>
-    """,
-        encoding="utf-8",
-    )
-
-    _postprocess_sppm_branch_edges_svg(dot=dot, output_path=svg_path)
-    svg = svg_path.read_text(encoding="utf-8")
-
-    assert 'd="M 0,0 L 1,1"' in svg
-
-
-def test_postprocess_sppm_branch_edges_svg_supports_contract(tmp_path: Path):
-    contract = SimpleNamespace(
-        rework_branch_edges=[
-            SimpleNamespace(
-                source_id="decision",
-                target_id="rework",
-                anchor_id="__sppm_rework_corridor_decision",
-            )
-        ]
-    )
-    svg_path = tmp_path / "branch_contract.svg"
-    svg_path.write_text(
-        """<?xml version="1.0" encoding="UTF-8"?>
-    <svg xmlns="http://www.w3.org/2000/svg">
-        <g class="node"><title>decision</title><polygon points="200,100 260,100 260,140 200,140" /></g>
-        <g class="node"><title>rework</title><polygon points="120,20 180,20 180,60 120,60" /></g>
-        <g class="edge"><title>decision:s-&gt;__sppm_rework_corridor_decision</title><path d="M 0,0 L 1,1" /></g>
-        <g class="edge"><title>__sppm_rework_corridor_decision-&gt;rework:n</title><path d="M 0,0 L 1,1" /><polygon points="0,0 1,1 2,2 0,0" /></g>
-    </svg>
-    """,
-        encoding="utf-8",
-    )
-
-    _postprocess_sppm_branch_edges_svg(
-        dot="digraph {}", output_path=svg_path, contract=contract
-    )
-    svg = svg_path.read_text(encoding="utf-8")
-
-    assert 'd="M 230.00,140.00 L 230.00,80.00"' in svg
-    assert 'd="M 230.00,80.00 L 150.00,20.00"' in svg
-    assert 'points="150.00,20.00 146.00,12.00 154.00,12.00 150.00,20.00"' in svg
-
-
-def test_postprocess_sppm_return_loop_edges_svg_uses_west_face_for_west_port_target(
-    tmp_path: Path,
-):
-    contract = SimpleNamespace(
-        rework_return_edges=[
-            SimpleNamespace(
-                source_id="rework",
-                target_id="review",
-                anchor_id="__sppm_rework_corridor_rework_review",
-            )
-        ]
-    )
-    svg_path = tmp_path / "return_west_port.svg"
-    svg_path.write_text(
-        """<?xml version="1.0" encoding="UTF-8"?>
-    <svg xmlns="http://www.w3.org/2000/svg">
-        <g class="node"><title>rework</title><polygon points="300,100 360,100 360,140 300,140" /></g>
-        <g class="node"><title>review</title><polygon points="120,40 220,40 220,90 120,90" /></g>
-        <g class="edge"><title>rework:w-&gt;__sppm_rework_corridor_rework_review</title><path d="M 0,0 L 1,1" /></g>
-        <g class="edge"><title>__sppm_rework_corridor_rework_review-&gt;review:w</title><path d="M 0,0 L 1,1" /><polygon points="0,0 1,1 2,2 0,0" /></g>
-    </svg>
-    """,
-        encoding="utf-8",
-    )
-
-    _postprocess_sppm_return_loop_edges_svg(
-        dot="digraph {}", output_path=svg_path, contract=contract
-    )
-    svg = svg_path.read_text(encoding="utf-8")
-
-    # Policy: return loops enter target at south face (bottom center).
-    assert 'd="M 300.00,120.00 L 170.00,120.00"' in svg
-    assert 'd="M 170.00,120.00 L 170.00,90.00"' in svg
-    assert 'points="170.00,90.00 166.00,98.00 174.00,98.00 170.00,90.00"' in svg
-
-
-def test_postprocess_sppm_return_loop_edges_svg_uses_west_face_for_port_qualified_source(
-    tmp_path: Path,
-):
-    contract = SimpleNamespace(
-        rework_return_edges=[
-            SimpleNamespace(
-                source_id="rework_quality",
-                target_id="process",
-                anchor_id="__sppm_rework_corridor_rework_quality_process",
-            )
-        ]
-    )
-    svg_path = tmp_path / "return_port_qualified_source.svg"
-    svg_path.write_text(
-        """<?xml version="1.0" encoding="UTF-8"?>
-    <svg xmlns="http://www.w3.org/2000/svg">
-        <g class="node"><title>rework_quality</title><polygon points="1170.37,-310.00 1335.12,-310.00 1335.12,-230.00 1170.37,-230.00" /></g>
-        <g class="node"><title>process</title><polygon points="907.04,-582.11 1064.38,-582.11 1064.38,-519.89 907.04,-519.89" /></g>
-        <g class="edge"><title>rework_quality:rework_out:w-&gt;__sppm_rework_corridor_rework_quality_process</title><path d="M 0,0 L 1,1" /></g>
-        <g class="edge"><title>__sppm_rework_corridor_rework_quality_process-&gt;process:w</title><path d="M 0,0 L 1,1" /><polygon points="0,0 1,1 2,2 0,0" /></g>
-    </svg>
-    """,
-        encoding="utf-8",
-    )
-
-    _postprocess_sppm_return_loop_edges_svg(
-        dot="digraph {}", output_path=svg_path, contract=contract
-    )
-    svg = svg_path.read_text(encoding="utf-8")
-
-    # Source exits west; target enters south at bottom center.
-    assert 'd="M 1170.37,-270.00 L 985.71,-270.00"' in svg
-    assert 'd="M 985.71,-270.00 L 985.71,-519.89"' in svg
-    assert 'points="985.71,-519.89 981.71,-511.89 989.71,-511.89 985.71,-519.89"' in svg
-
-
-def test_postprocess_sppm_return_loop_edges_svg_rewrites_source_when_target_bounds_missing(
-    tmp_path: Path,
-):
-    contract = SimpleNamespace(
-        rework_return_edges=[
-            SimpleNamespace(
-                source_id="rework_quality",
-                target_id="process",
-                anchor_id="__sppm_rework_corridor_rework_quality_process",
-            )
-        ]
-    )
-    svg_path = tmp_path / "return_missing_target_bounds.svg"
-    # target node 'process' intentionally absent from node groups
-    svg_path.write_text(
-        """<?xml version="1.0" encoding="UTF-8"?>
-    <svg xmlns="http://www.w3.org/2000/svg">
-        <g class="node"><title>rework_quality</title><polygon points="1170.37,-310.00 1335.12,-310.00 1335.12,-230.00 1170.37,-230.00" /></g>
-        <g class="edge"><title>rework_quality:w-&gt;__sppm_rework_corridor_rework_quality_process</title><path d="M1253.11,-270C1253.11,-270 1253.11,-369.02 1253.11,-378.3" /></g>
-        <g class="edge"><title>__sppm_rework_corridor_rework_quality_process-&gt;process:w</title><path d="M1251.98,-379.33C1236.34,-379.33 986.11,-379.33 986.11,-379.33 986.11,-379.33 986.11,-539.49 986.11,-539.49" /><polygon points="0,0 1,1 2,2 0,0" /></g>
-    </svg>
-    """,
-        encoding="utf-8",
-    )
-
-    _postprocess_sppm_return_loop_edges_svg(
-        dot="digraph {}", output_path=svg_path, contract=contract
-    )
-    svg = svg_path.read_text(encoding="utf-8")
-
-    # Source should still snap to west face x=1170.37 even without target bounds.
-    assert 'd="M 1170.37,-270.00 L 986.11,-270.00"' in svg
-
-
 def test_postprocess_wrapped_sppm_svg_supports_contract_and_north_port_fallback(
     tmp_path: Path,
 ):
@@ -629,7 +318,9 @@ def test_postprocess_wrapped_sppm_svg_supports_contract_and_north_port_fallback(
     )
 
     _postprocess_wrapped_sppm_svg(
-        dot="digraph {}", output_path=svg_path, contract=contract
+        dot="digraph {}",
+        output_path=svg_path,
+        contract=cast(SppmSvgPostprocessContract, contract),
     )
     svg = svg_path.read_text(encoding="utf-8")
 
@@ -670,7 +361,9 @@ def test_postprocess_wrapped_sppm_svg_contract_rewrites_multiple_anchors(
     )
 
     _postprocess_wrapped_sppm_svg(
-        dot="digraph {}", output_path=svg_path, contract=contract
+        dot="digraph {}",
+        output_path=svg_path,
+        contract=cast(SppmSvgPostprocessContract, contract),
     )
     svg = svg_path.read_text(encoding="utf-8")
 
@@ -678,6 +371,38 @@ def test_postprocess_wrapped_sppm_svg_contract_rewrites_multiple_anchors(
     assert 'd="M 119.00,129.25 L 119.00,141.25"' in svg
     assert 'd="M 405.12,175.88 L 417.12,175.88 L 417.12,7.00 L 129.00,7.00"' in svg
     assert 'd="M 129.00,7.00 L 129.00,19.00"' in svg
+
+
+def test_postprocess_wrapped_sppm_svg_contract_resolves_missing_anchor_from_svg_titles(
+    tmp_path: Path,
+):
+    contract = SimpleNamespace(
+        wrapped_boundary_edges=[
+            SimpleNamespace(source_id="sort_tag", target_id="wash", anchor_id=None)
+        ]
+    )
+    svg_path = tmp_path / "wrapped_contract_missing_anchor.svg"
+    svg_path.write_text(
+        """<?xml version="1.0" encoding="UTF-8"?>
+    <svg xmlns="http://www.w3.org/2000/svg">
+      <g class="node"><title>sort_tag</title><polygon points="300,260 380,260 380,330 300,330" /></g>
+      <g class="node"><title>wash</title><polygon points="80,140 160,140 160,210 80,210" /></g>
+      <g class="edge"><title>sort_tag:e-&gt;__wrap_exit_lr_7</title><path d="M 0,0 L 1,1" /></g>
+      <g class="edge"><title>__wrap_exit_lr_7-&gt;wash:n</title><path d="M 0,0 L 1,1" /><polygon points="0,0 1,1 2,2 0,0" /></g>
+    </svg>
+    """,
+        encoding="utf-8",
+    )
+
+    _postprocess_wrapped_sppm_svg(
+        dot="digraph {}",
+        output_path=svg_path,
+        contract=cast(SppmSvgPostprocessContract, contract),
+    )
+    svg = svg_path.read_text(encoding="utf-8")
+
+    assert 'd="M 380.00,295.00 L 392.00,295.00 L 392.00,128.00 L 120.00,128.00"' in svg
+    assert 'd="M 120.00,128.00 L 120.00,140.00"' in svg
 
 
 def test_normalize_svg_outer_padding_no_content_points_is_noop(tmp_path: Path):

@@ -79,3 +79,15 @@ an implementation design note.
 
 If a future contributor asks, "What is the FLO process model?", the normative
 answer should also live in `docs/specs/`.
+
+## Render capability authority
+
+Projection capability (diagram x backend support) uses a dual-authority model:
+
+1. Runtime machine-readable authority:
+   - `src/flo/render/capability_matrix.py`
+2. Normative human-readable specification:
+   - `docs/specs/render_capabilities.md`
+
+When these drift, implementation should be updated together with the spec in
+the same change.

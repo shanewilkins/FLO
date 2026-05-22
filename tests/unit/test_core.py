@@ -1,6 +1,7 @@
 import pytest
 
 from flo.core import run_content, run
+from flo.compiler.ir.models import IR
 from flo.render import RenderArtifact
 from flo.services.errors import (
     CLIError,
@@ -273,3 +274,144 @@ def test_run_content_svg_export_rejects_graphviz_backend_override(
                 "render_backend": "graphviz",
             },
         )
+
+
+def test_run_content_svg_export_rejects_unsupported_swimlane_svg_projection(
+    monkeypatch, ir_factory, node_factory
+):
+    monkeypatch.setattr(
+        "flo.core.parse_adapter",
+        lambda c, source_path=None: ir_factory(name="t", nodes=[node_factory("n")]),
+    )
+    monkeypatch.setattr(
+        "flo.core.compile_adapter",
+        lambda a: ir_factory(name="t", nodes=[node_factory("n")]),
+    )
+    monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
+
+    with pytest.raises(CLIError, match="Unsupported projection"):
+        run_content(
+            "some content",
+            options={
+                "diagram": "swimlane",
+                "export": "svg",
+                "render_backend": "svg",
+            },
+        )
+
+
+def test_run_content_applies_render_metadata_defaults_to_render_options(
+    monkeypatch, node_factory
+):
+    ir = IR(
+        name="t",
+        nodes=[node_factory("n")],
+        process_metadata={
+            "render": {
+                "defaults": {
+                    "diagram": "spaghetti",
+                    "layout": {"wrap": "auto", "target_columns": 4},
+                    "spaghetti": {"channel": "people"},
+                }
+            }
+        },
+    )
+
+    monkeypatch.setattr("flo.core.parse_adapter", lambda c, source_path=None: ir)
+    monkeypatch.setattr("flo.core.compile_adapter", lambda a: ir)
+    monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
+    monkeypatch.setattr("flo.core.scc_condense", lambda i: i)
+
+    captured = {}
+
+    def fake_render(i, options=None):
+        captured["options"] = options
+        return RenderArtifact(kind="dot", content="dot", backend="graphviz"), None
+
+    monkeypatch.setattr("flo.core.render_artifact_and_contract", fake_render)
+
+    rc, out, err = run_content("some content")
+    assert rc == 0
+    assert out == "dot"
+    assert err == ""
+
+    render_options = captured["options"]
+    assert render_options.diagram == "spaghetti"
+    assert render_options.layout_wrap == "auto"
+    assert render_options.layout_target_columns == 4
+    assert render_options.spaghetti_channel == "people"
+
+
+def test_run_content_cli_options_override_render_metadata_defaults(
+    monkeypatch, node_factory
+):
+    ir = IR(
+        name="t",
+        nodes=[node_factory("n")],
+        process_metadata={
+            "render": {
+                "defaults": {
+                    "diagram": "spaghetti",
+                    "layout": {"wrap": "auto"},
+                    "spaghetti": {"channel": "people"},
+                }
+            }
+        },
+    )
+
+    monkeypatch.setattr("flo.core.parse_adapter", lambda c, source_path=None: ir)
+    monkeypatch.setattr("flo.core.compile_adapter", lambda a: ir)
+    monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
+    monkeypatch.setattr("flo.core.scc_condense", lambda i: i)
+
+    captured = {}
+
+    def fake_render(i, options=None):
+        captured["options"] = options
+        return RenderArtifact(kind="dot", content="dot", backend="graphviz"), None
+
+    monkeypatch.setattr("flo.core.render_artifact_and_contract", fake_render)
+
+    rc, out, err = run_content(
+        "some content",
+        options={
+            "diagram": "flowchart",
+            "layout_wrap": "off",
+            "spaghetti_channel": "material",
+        },
+    )
+    assert rc == 0
+    assert out == "dot"
+    assert err == ""
+
+    render_options = captured["options"]
+    assert render_options.diagram == "flowchart"
+    assert render_options.layout_wrap == "off"
+    assert render_options.spaghetti_channel == "material"
+
+
+def test_run_content_without_render_metadata_keeps_legacy_default_diagram(
+    monkeypatch, node_factory
+):
+    ir = IR(name="t", nodes=[node_factory("n")], process_metadata=None)
+
+    monkeypatch.setattr("flo.core.parse_adapter", lambda c, source_path=None: ir)
+    monkeypatch.setattr("flo.core.compile_adapter", lambda a: ir)
+    monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
+    monkeypatch.setattr("flo.core.scc_condense", lambda i: i)
+
+    captured = {}
+
+    def fake_render(i, options=None):
+        captured["options"] = options
+        return RenderArtifact(kind="dot", content="dot", backend="graphviz"), None
+
+    monkeypatch.setattr("flo.core.render_artifact_and_contract", fake_render)
+
+    rc, out, err = run_content("some content")
+    assert rc == 0
+    assert out == "dot"
+    assert err == ""
+
+    render_options = captured["options"]
+    assert render_options.diagram == "flowchart"
