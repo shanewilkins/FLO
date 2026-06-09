@@ -114,7 +114,7 @@ def serialize_node(
     elif node.kind == "end":
         layout_options["elk.layered.layering.layerConstraint"] = "LAST"
     if diagram == "sppm":
-        layout_options["elk.portConstraints"] = "FIXED_ORDER"
+        layout_options["elk.portConstraints"] = "FIXED_SIDE"
     if node.partition_index is not None:
         layout_options["elk.partitioning.partition"] = str(node.partition_index)
     if layout_options:

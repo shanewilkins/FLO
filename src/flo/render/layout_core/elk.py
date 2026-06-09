@@ -27,12 +27,13 @@ from .elk_support import (
 from .elk_sppm_helpers import (
     _node_kind_map,
     _preserves_lane_structure,
+    _sppm_branch_anchor_helpers,
     _root_layout_options,
     _sppm_apply_secondary_row_edge_ports,
-    _sppm_branch_anchor_helpers,
     _sppm_lane_direction,
     _sppm_partition_indexes_for_synthetic_rows,
     _sppm_port_id,
+    _sppm_spacing_layout_options,
     _sppm_synthetic_row_lanes,
 )
 from .models import (
@@ -104,6 +105,7 @@ def build_sppm_elk_layout_request(
         edge_specs = _sppm_apply_secondary_row_edge_ports(
             edges=edge_specs,
             synthetic_rows=synthetic_rows,
+            root_direction=_elk_direction(render_options),
         )
 
     return ElkLayoutRequest(
@@ -255,6 +257,11 @@ def serialize_elk_layout_request(request: ElkLayoutRequest) -> dict[str, Any]:
     """Lower a FLO-owned ELK request into an ELK-shaped payload."""
     node_by_id = {node.id: node for node in request.nodes}
     children: list[dict[str, Any]] = []
+    helper_nodes: list[dict[str, Any]] = []
+    helper_edges: list[dict[str, Any]] = []
+
+    if request.diagram == "sppm":
+        helper_nodes, helper_edges = _sppm_branch_anchor_helpers(request=request)
 
     for lane_index, lane in enumerate(request.lanes):
         lane_layout_options: dict[str, str] = {
@@ -269,8 +276,7 @@ def serialize_elk_layout_request(request: ElkLayoutRequest) -> dict[str, Any]:
                         root_direction=request.direction,
                     ),
                     "elk.edgeRouting": "ORTHOGONAL",
-                    "elk.spacing.nodeNode": "96",
-                    "elk.layered.spacing.nodeNodeBetweenLayers": "104",
+                    **_sppm_spacing_layout_options(),
                     "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
                     "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
                 }
@@ -299,20 +305,20 @@ def serialize_elk_layout_request(request: ElkLayoutRequest) -> dict[str, Any]:
             continue
         children.append(serialize_node(node, diagram=request.diagram))
 
-    helper_nodes: list[dict[str, Any]] = []
-    helper_edges: list[dict[str, Any]] = []
-    if request.diagram == "sppm" and not request.lanes:
-        helper_nodes, helper_edges = _sppm_branch_anchor_helpers(request=request)
+    if helper_nodes:
         children.extend(helper_nodes)
+
+    serialized_edges = [
+        serialize_edge(edge, diagram=request.diagram) for edge in request.edges
+    ]
+    if helper_edges:
+        serialized_edges.extend(helper_edges)
 
     return {
         "id": f"flo:{request.diagram}",
         "layoutOptions": _root_layout_options(request),
         "children": children,
-        "edges": [
-            serialize_edge(edge, diagram=request.diagram) for edge in request.edges
-        ]
-        + helper_edges,
+        "edges": serialized_edges,
     }
 
 

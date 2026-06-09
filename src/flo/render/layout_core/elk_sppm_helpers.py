@@ -7,6 +7,16 @@ from typing import Any
 
 from .elk_contracts import ElkLayoutEdge, ElkLayoutLane, ElkLayoutRequest
 
+_SPPM_NODE_SPACING_PX = "160"
+_SPPM_LAYER_SPACING_PX = "56"
+
+
+def _sppm_spacing_layout_options() -> dict[str, str]:
+    return {
+        "elk.spacing.nodeNode": _SPPM_NODE_SPACING_PX,
+        "elk.layered.spacing.nodeNodeBetweenLayers": _SPPM_LAYER_SPACING_PX,
+    }
+
 
 def _sppm_port_id(node_id: str, side: str) -> str:
     return f"{node_id}__port_{side.lower()}"
@@ -19,8 +29,7 @@ def _root_layout_options(request: ElkLayoutRequest) -> dict[str, str]:
         options["elk.layered.crossingMinimization.forceNodeModelOrder"] = "true"
         options["elk.layered.feedbackEdges"] = "true"
         options["elk.edgeRouting"] = "ORTHOGONAL"
-        options["elk.spacing.nodeNode"] = "96"
-        options["elk.layered.spacing.nodeNodeBetweenLayers"] = "104"
+        options.update(_sppm_spacing_layout_options())
         options["elk.layered.nodePlacement.strategy"] = "BRANDES_KOEPF"
         options["elk.layered.nodePlacement.bk.fixedAlignment"] = "TOP"
         options["elk.layered.nodePlacement.favorStraightEdges"] = "true"
@@ -321,11 +330,13 @@ def _sppm_partition_indexes_for_synthetic_rows(
     claimed: set[str] = set()
     for source_id, chain in chains_by_branch:
         start = main_index.get(source_id, 0)
-        for offset, node_id in enumerate(chain):
+        for node_id in chain:
             if node_id in claimed:
                 continue
             claimed.add(node_id)
-            partition_map[node_id] = max(0, start - offset)
+            # Keep each rework chain on the branch source partition so ELK
+            # does not over-stretch queue/task spacing within secondary rows.
+            partition_map[node_id] = start
 
     for node_id in rework_lane.node_ids:
         if node_id not in partition_map:
@@ -363,6 +374,8 @@ def _walk_rework_chain(
 
 
 def _sppm_lane_direction(*, lane_id: str, root_direction: str) -> str:
+    # Rework rows should flow opposite the mainline to express return-to-previous
+    # semantics when synthetic rows are represented as explicit lane containers.
     if lane_id == "__sppm_row_rework" and root_direction == "RIGHT":
         return "LEFT"
     return root_direction
@@ -372,6 +385,7 @@ def _sppm_apply_secondary_row_edge_ports(
     *,
     edges: tuple[ElkLayoutEdge, ...],
     synthetic_rows: tuple[ElkLayoutLane, ...],
+    root_direction: str,
 ) -> tuple[ElkLayoutEdge, ...]:
     rework_lane = next(
         (lane for lane in synthetic_rows if lane.id == "__sppm_row_rework"),
@@ -382,6 +396,8 @@ def _sppm_apply_secondary_row_edge_ports(
 
     rework_ids = set(rework_lane.node_ids)
     adjusted: list[ElkLayoutEdge] = []
+    direct_source_port = "NORTH" if root_direction == "DOWN" else "WEST"
+    direct_target_port = "SOUTH" if root_direction == "DOWN" else "EAST"
     for edge in edges:
         if (
             edge.source_id in rework_ids
@@ -389,7 +405,11 @@ def _sppm_apply_secondary_row_edge_ports(
             and not edge.is_rework
         ):
             adjusted.append(
-                replace(edge, source_port_side="WEST", target_port_side="EAST")
+                replace(
+                    edge,
+                    source_port_side=direct_source_port,
+                    target_port_side=direct_target_port,
+                )
             )
             continue
         adjusted.append(edge)

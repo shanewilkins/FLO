@@ -12,6 +12,47 @@ from flo.render.layout_core import (
 from flo.render.options import RenderOptions
 
 
+def _collect_nodes_with_ports(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    all_nodes: dict[str, dict[str, Any]] = {}
+    for child in payload["children"]:
+        child_id = child.get("id")
+        if isinstance(child_id, str) and "ports" in child:
+            all_nodes[child_id] = child
+        nested_children = child.get("children")
+        if not isinstance(nested_children, list):
+            continue
+        for nested in nested_children:
+            if not isinstance(nested, dict):
+                continue
+            nested_id = nested.get("id")
+            if isinstance(nested_id, str):
+                all_nodes[nested_id] = nested
+    return all_nodes
+
+
+def _assert_has_cardinal_ports(node_payload: dict[str, Any]) -> None:
+    assert {
+        port["layoutOptions"]["elk.port.side"] for port in node_payload["ports"]
+    } == {"NORTH", "EAST", "SOUTH", "WEST"}
+
+
+def _sppm_helper_nodes(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    return [
+        child
+        for child in payload["children"]
+        if isinstance(child, dict)
+        and str(child.get("id", "")).startswith("__sppm_branch_anchor_")
+    ]
+
+
+def _sppm_helper_edges(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    return [
+        edge
+        for edge in payload["edges"]
+        if str(edge.get("id", "")).startswith("__sppm_helper_")
+    ]
+
+
 def test_build_swimlane_elk_layout_request_preserves_lane_order_and_edges():
     process = {
         "lanes": [
@@ -241,7 +282,7 @@ def test_build_sppm_elk_layout_request_flattens_synthetic_rows_into_partitions()
     )
     assert (
         node_by_id["rework_task"].partition_index
-        < node_by_id["rework_queue"].partition_index
+        == node_by_id["rework_queue"].partition_index
     )
 
 
@@ -420,10 +461,8 @@ def test_serialize_sppm_elk_layout_request_activates_partitioning_and_preserves_
     )
     assert payload["layoutOptions"]["elk.layered.feedbackEdges"] == "true"
     assert payload["layoutOptions"]["elk.edgeRouting"] == "ORTHOGONAL"
-    assert payload["layoutOptions"]["elk.spacing.nodeNode"] == "96"
-    assert (
-        payload["layoutOptions"]["elk.layered.spacing.nodeNodeBetweenLayers"] == "104"
-    )
+    assert payload["layoutOptions"]["elk.spacing.nodeNode"] == "160"
+    assert payload["layoutOptions"]["elk.layered.spacing.nodeNodeBetweenLayers"] == "56"
     assert (
         payload["layoutOptions"]["elk.layered.nodePlacement.strategy"]
         == "BRANDES_KOEPF"
@@ -496,39 +535,26 @@ def test_serialize_sppm_elk_layout_request_emits_cardinal_ports_and_port_attache
     )
 
     payload = serialize_elk_layout_request(request)
-    all_nodes: dict[str, dict[str, Any]] = {}
-    for child in payload["children"]:
-        child_id = child.get("id")
-        if isinstance(child_id, str) and "ports" in child:
-            all_nodes[child_id] = child
-        nested_children = child.get("children")
-        if isinstance(nested_children, list):
-            for nested in nested_children:
-                if not isinstance(nested, dict):
-                    continue
-                nested_id = nested.get("id")
-                if isinstance(nested_id, str):
-                    all_nodes[nested_id] = nested
-
-    triage_ports = all_nodes["triage"]["ports"]
-    rework_ports = all_nodes["rework_queue"]["ports"]
-    assert {port["layoutOptions"]["elk.port.side"] for port in triage_ports} == {
-        "NORTH",
-        "EAST",
-        "SOUTH",
-        "WEST",
-    }
-    assert {port["layoutOptions"]["elk.port.side"] for port in rework_ports} == {
-        "NORTH",
-        "EAST",
-        "SOUTH",
-        "WEST",
-    }
-    assert all_nodes["triage"]["layoutOptions"]["elk.portConstraints"] == "FIXED_ORDER"
+    all_nodes = _collect_nodes_with_ports(payload)
+    _assert_has_cardinal_ports(all_nodes["triage"])
+    _assert_has_cardinal_ports(all_nodes["rework_queue"])
+    assert all_nodes["triage"]["layoutOptions"]["elk.portConstraints"] == "FIXED_SIDE"
 
     edge = payload["edges"][0]
     assert edge["sources"] == ["triage__port_south"]
     assert edge["targets"] == ["rework_queue__port_north"]
+
+    helper_nodes = _sppm_helper_nodes(payload)
+    assert len(helper_nodes) == 1
+    helper_node_id = str(helper_nodes[0]["id"])
+    assert helper_nodes[0]["layoutOptions"]["elk.partitioning.partition"] == "0"
+
+    helper_edges = _sppm_helper_edges(payload)
+    assert len(helper_edges) == 2
+    assert helper_edges[0]["sources"] == ["triage__port_south"]
+    assert helper_edges[0]["targets"] == [helper_node_id]
+    assert helper_edges[1]["sources"] == [helper_node_id]
+    assert helper_edges[1]["targets"] == ["rework_queue__port_north"]
 
 
 def test_serialize_sppm_return_rework_edge_targets_south_port():
@@ -633,7 +659,7 @@ def test_build_sppm_synthetic_rows_align_rework_partition_with_branch_decision()
     )
     assert (
         node_by_id["rework_task"].partition_index
-        < node_by_id["rework_queue"].partition_index
+        == node_by_id["rework_queue"].partition_index
     )
 
 
