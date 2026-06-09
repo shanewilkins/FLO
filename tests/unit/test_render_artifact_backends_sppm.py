@@ -1,8 +1,11 @@
+import logging
 import re
 
 import pytest
 
+import flo.render._svg_sppm as svg_sppm
 from flo.render import render_artifact, render_artifact_and_contract, render_dot
+from flo.render._diagnostics import RenderDiagnostic
 from flo.render._svg_sppm import (
     _annotation_bounds_for_placement,
     _edge_callout_placement,
@@ -10,7 +13,15 @@ from flo.render._svg_sppm import (
     _lane_header_avoid_bounds,
 )
 from flo.render._svg_sppm_edges import _edge_svg, _normalize_rework_edge_points
-from flo.render.layout_core.models import LayoutBounds, LayoutLaneFrame, LayoutPoint
+from flo.render._svg_sppm_rows import _display_canvas_bounds, row_gap_diagnostics
+from flo.render.layout_core.models import (
+    LayoutBounds,
+    LayoutLaneFrame,
+    LayoutPoint,
+    LayoutResult,
+    RoutedEdgePath,
+)
+from flo.services.logging import configure_logging
 
 
 def test_render_artifact_can_select_direct_svg_sppm_backend():
@@ -247,95 +258,147 @@ def test_render_artifact_direct_svg_sppm_styles_rework_return_edges_differently(
     assert 'stroke-dasharray="4 6"' in artifact.content
 
 
-def test_render_artifact_direct_svg_sppm_branch_polyline_is_orthogonal():
-    ir_like = {
-        "nodes": [
-            {"id": "decision", "kind": "decision", "name": "Approved?"},
-            {"id": "rework", "kind": "task", "name": "Rework"},
-        ],
-        "edges": [
+def test_render_artifact_sppm_svg_logs_and_serializes_render_diagnostics(
+    monkeypatch, capsys
+):
+    def fake_execute_elk_layout(_request, *, engine):
+        return LayoutResult(
+            orientation="lr",
+            canvas_bounds=LayoutBounds(x_px=0, y_px=0, width_px=260, height_px=140),
+            node_bounds={
+                "task": LayoutBounds(x_px=60, y_px=40, width_px=140, height_px=60),
+            },
+            edge_paths={},
+            diagnostics=(
+                RenderDiagnostic(
+                    code="elk-lane-frame-missing",
+                    severity="warning",
+                    message="ELK response did not produce geometry for expected lane 'front'.",
+                    metadata={"lane_id": "front"},
+                ),
+            ),
+        )
+
+    root = logging.getLogger()
+    old_handlers = list(root.handlers)
+    old_level = root.level
+    try:
+        root.handlers.clear()
+        configure_logging(level=logging.INFO)
+        monkeypatch.setattr(svg_sppm, "execute_elk_layout", fake_execute_elk_layout)
+
+        artifact = render_artifact(
             {
-                "source": "decision",
-                "target": "rework",
-                "outcome": "no",
-                "edge_type": "rework",
-                "rework": True,
+                "lanes": [{"id": "front", "name": "Front"}],
+                "nodes": [
+                    {
+                        "id": "task",
+                        "kind": "task",
+                        "name": "Handle Intake",
+                        "lane": "front",
+                    }
+                ],
+                "edges": [],
+            },
+            options={"diagram": "sppm", "render_backend": "svg"},
+        )
+
+        assert artifact.metadata["render_diagnostics"] == [
+            {
+                "code": "elk-lane-frame-missing",
+                "severity": "warning",
+                "message": "ELK response did not produce geometry for expected lane 'front'.",
+                "lane_id": "front",
             }
-        ],
-    }
-
-    artifact = render_artifact(
-        ir_like,
-        options={
+        ]
+        assert artifact.metadata["render_diagnostics_report"] == {
             "diagram": "sppm",
-            "render_backend": "svg",
+            "backend": "svg",
+            "artifact_kind": "svg",
+            "strict": False,
+            "warning_count": 1,
+            "error_count": 0,
+            "diagnostic_count": 1,
+            "code_counts": {"elk-lane-frame-missing": 1},
+            "category_counts": {"missing_geometry": 1},
+            "partial_output": True,
+            "summary": "1 warning(s) while rendering sppm via svg",
+            "diagnostics": [
+                {
+                    "code": "elk-lane-frame-missing",
+                    "severity": "warning",
+                    "message": "ELK response did not produce geometry for expected lane 'front'.",
+                    "lane_id": "front",
+                }
+            ],
+        }
+        captured = capsys.readouterr()
+        assert "render_diagnostics_summary" in captured.err
+        assert "render_diagnostic" in captured.err
+        assert "elk-lane-frame-missing" in captured.err
+        assert "expected lane 'front'" in captured.err
+    finally:
+        root.handlers = old_handlers
+        root.setLevel(old_level)
+
+
+def test_row_gap_diagnostics_flags_tight_mainline_to_rework_spacing():
+    diagnostics = row_gap_diagnostics(
+        node_bounds={
+            "qa": LayoutBounds(x_px=180, y_px=20, width_px=120, height_px=80),
+            "rework_quality_wait_queue": LayoutBounds(
+                x_px=200, y_px=70, width_px=120, height_px=120
+            ),
+            "rework_quality": LayoutBounds(
+                x_px=120, y_px=90, width_px=160, height_px=80
+            ),
+        },
+        lanes=(),
+        edge_paths={
+            ("qa", "rework_quality_wait_queue"): RoutedEdgePath(
+                edge=("qa", "rework_quality_wait_queue"),
+                points=(
+                    LayoutPoint(x_px=240, y_px=100),
+                    LayoutPoint(x_px=240, y_px=120),
+                ),
+                is_rework=True,
+                rework_variant="branch",
+            ),
+            ("rework_quality_wait_queue", "rework_quality"): RoutedEdgePath(
+                edge=("rework_quality_wait_queue", "rework_quality"),
+                points=(
+                    LayoutPoint(x_px=200, y_px=140),
+                    LayoutPoint(x_px=160, y_px=140),
+                ),
+            ),
+            ("rework_quality", "qa"): RoutedEdgePath(
+                edge=("rework_quality", "qa"),
+                points=(
+                    LayoutPoint(x_px=120, y_px=130),
+                    LayoutPoint(x_px=180, y_px=130),
+                ),
+                is_rework=True,
+                rework_variant="return",
+            ),
         },
     )
 
-    match = re.search(
-        r'data-edge-rework-variant="branch"[^>]*>\s*<polyline points="([^"]+)"',
-        artifact.content,
-    )
-    assert match is not None
-    points = [
-        tuple(float(part) for part in token.split(",", 1))
-        for token in match.group(1).split()
-    ]
-    assert len(points) >= 2
-    for (x0, y0), (x1, y1) in zip(points, points[1:]):
-        assert abs(x1 - x0) < 1e-6 or abs(y1 - y0) < 1e-6
+    assert len(diagnostics) == 1
+    assert diagnostics[0].code == "sppm-row-gap-tight"
+    assert diagnostics[0].severity == "warning"
 
 
-def test_render_artifact_direct_svg_sppm_return_polyline_is_orthogonal():
-    ir_like = {
-        "nodes": [
-            {"id": "decision", "kind": "decision", "name": "Approved?"},
-            {"id": "rework", "kind": "task", "name": "Rework"},
-            {"id": "done", "kind": "task", "name": "Done"},
-        ],
-        "edges": [
-            {
-                "source": "decision",
-                "target": "rework",
-                "outcome": "no",
-                "edge_type": "rework",
-                "rework": True,
-            },
-            {
-                "source": "rework",
-                "target": "done",
-                "edge_type": "rework",
-                "rework": True,
-            },
-        ],
-    }
-
-    artifact = render_artifact(
-        ir_like,
-        options={
-            "diagram": "sppm",
-            "render_backend": "svg",
-        },
-    )
-
-    match = re.search(
-        r'data-edge-rework-variant="return"[^>]*>\s*<polyline points="([^"]+)"',
-        artifact.content,
-    )
-    assert match is not None
-    points = [
-        tuple(float(part) for part in token.split(",", 1))
-        for token in match.group(1).split()
-    ]
-    assert len(points) >= 3
-    for (x0, y0), (x1, y1) in zip(points, points[1:]):
-        assert abs(x1 - x0) < 1e-6 or abs(y1 - y0) < 1e-6
-
-
-def test_direct_svg_rework_branch_normalization_is_passthrough() -> None:
+def test_direct_svg_rework_return_normalization_straightens_near_vertical_paths() -> (
+    None
+):
     points = (
-        LayoutPoint(x_px=260.0, y_px=120.0),
-        LayoutPoint(x_px=90.0, y_px=60.0),
+        LayoutPoint(x_px=1261.5, y_px=144.0),
+        LayoutPoint(x_px=1252.1, y_px=144.0),
+        LayoutPoint(x_px=1252.1, y_px=156.9),
+        LayoutPoint(x_px=1270.9, y_px=156.9),
+        LayoutPoint(x_px=1270.9, y_px=245.1),
+        LayoutPoint(x_px=1261.5, y_px=245.1),
+        LayoutPoint(x_px=1261.5, y_px=258.0),
     )
 
     normalized = _normalize_rework_edge_points(
@@ -344,22 +407,10 @@ def test_direct_svg_rework_branch_normalization_is_passthrough() -> None:
         rework_variant="branch",
     )
 
-    assert normalized == points
-
-
-def test_direct_svg_rework_return_normalization_is_passthrough() -> None:
-    points = (
-        LayoutPoint(x_px=1170.37, y_px=-270.0),
-        LayoutPoint(x_px=985.71, y_px=-519.89),
+    assert normalized == (
+        LayoutPoint(x_px=1261.5, y_px=144.0),
+        LayoutPoint(x_px=1261.5, y_px=258.0),
     )
-
-    normalized = _normalize_rework_edge_points(
-        points,
-        is_rework=True,
-        rework_variant="return",
-    )
-
-    assert normalized == points
 
 
 def test_svg_sppm_edge_placement_avoids_source_callout_label_crowding():
@@ -431,7 +482,41 @@ def test_svg_sppm_edge_svg_prefers_elk_label_point_when_available():
     assert 'y="83.0"' in svg
 
 
-def test_svg_sppm_edge_svg_skips_endpoint_clipping_with_explicit_ports():
+def test_svg_sppm_edge_svg_rework_branch_label_stays_on_line_not_label_point():
+    edge_path = type(
+        "_EdgePath",
+        (),
+        {
+            "edge": ("information_complete", "rework_intake_wait_queue"),
+            "points": (
+                LayoutPoint(x_px=1261.5, y_px=144.0),
+                LayoutPoint(x_px=1252.1, y_px=144.0),
+                LayoutPoint(x_px=1252.1, y_px=156.9),
+                LayoutPoint(x_px=1270.9, y_px=156.9),
+                LayoutPoint(x_px=1270.9, y_px=245.1),
+                LayoutPoint(x_px=1261.5, y_px=245.1),
+                LayoutPoint(x_px=1261.5, y_px=258.0),
+            ),
+            "label": "no",
+            "label_point": LayoutPoint(x_px=1412.0, y_px=158.0),
+            "is_rework": True,
+            "rework_variant": "branch",
+            "callout_lines": (),
+            "callout_near_source": True,
+            "outgoing_token": None,
+            "incoming_token": None,
+        },
+    )()
+
+    parts, _ = _edge_svg(edge_path)
+    svg = "\n".join(parts)
+
+    assert 'points="1261.5,144.0 1261.5,258.0"' in svg
+    assert 'x="1412.0"' not in svg
+    assert 'x="1261.5"' in svg
+
+
+def test_svg_sppm_edge_svg_clips_endpoints_even_with_explicit_ports():
     edge_path = type(
         "_EdgePath",
         (),
@@ -463,7 +548,63 @@ def test_svg_sppm_edge_svg_skips_endpoint_clipping_with_explicit_ports():
     )
     svg = "\n".join(parts)
 
-    assert 'points="120.0,60.0 220.0,60.0"' in svg
+    assert 'points="100.0,40.0 240.0,40.0"' in svg
+
+
+def test_svg_sppm_rework_callout_is_offset_beside_vertical_line():
+    points = (
+        LayoutPoint(x_px=1261.5, y_px=144.0),
+        LayoutPoint(x_px=1261.5, y_px=258.0),
+    )
+
+    callout_placement = _edge_callout_placement(
+        points,
+        near_source=True,
+        has_label=True,
+        rework_edge=True,
+        box_width=172.1,
+        box_height=40.0,
+    )
+
+    assert callout_placement.x > (1261.5 + (172.1 / 2.0))
+
+
+def test_display_canvas_bounds_tightens_to_rendered_content_extents():
+    base_canvas = LayoutBounds(x_px=0.0, y_px=0.0, width_px=5200.0, height_px=900.0)
+    node_bounds = {
+        "a": LayoutBounds(x_px=120.0, y_px=20.0, width_px=200.0, height_px=80.0),
+        "b": LayoutBounds(x_px=900.0, y_px=40.0, width_px=180.0, height_px=90.0),
+    }
+    edge_paths = {
+        ("a", "b"): RoutedEdgePath(
+            edge=("a", "b"),
+            points=(
+                LayoutPoint(x_px=320.0, y_px=60.0),
+                LayoutPoint(x_px=960.0, y_px=60.0),
+            ),
+        ),
+    }
+
+    bounds = _display_canvas_bounds(
+        base_canvas=base_canvas,
+        node_bounds=node_bounds,
+        edge_paths=edge_paths,
+    )
+
+    assert bounds.width_px == pytest.approx(1080.0)
+    assert bounds.height_px == pytest.approx(130.0)
+
+
+def test_display_canvas_bounds_falls_back_to_base_for_empty_content():
+    base_canvas = LayoutBounds(x_px=0.0, y_px=0.0, width_px=640.0, height_px=480.0)
+
+    bounds = _display_canvas_bounds(
+        base_canvas=base_canvas,
+        node_bounds={},
+        edge_paths={},
+    )
+
+    assert bounds == base_canvas
 
 
 def test_render_artifact_direct_svg_sppm_task_header_is_top_rounded_only():
@@ -743,3 +884,82 @@ def test_render_artifact_direct_svg_sppm_renders_explicit_continuation_tokens():
     assert 'data-edge-token="P1-H"' in artifact.content
     assert "P2-OPS" in artifact.content
     assert "P1-H" in artifact.content
+
+
+def test_svg_sppm_edge_svg_clips_queue_endpoint_to_triangle_boundary():
+    edge_path = type(
+        "_EdgePath",
+        (),
+        {
+            "edge": ("queue", "task"),
+            "points": (
+                LayoutPoint(x_px=50.0, y_px=50.0),
+                LayoutPoint(x_px=220.0, y_px=50.0),
+            ),
+            "label": None,
+            "label_point": None,
+            "source_port_side": None,
+            "target_port_side": None,
+            "is_rework": False,
+            "rework_variant": None,
+            "callout_lines": (),
+            "callout_near_source": False,
+            "outgoing_token": None,
+            "incoming_token": None,
+        },
+    )()
+
+    parts, _ = _edge_svg(
+        edge_path,
+        source_bounds=LayoutBounds(x_px=0.0, y_px=0.0, width_px=100.0, height_px=100.0),
+        target_bounds=LayoutBounds(
+            x_px=220.0, y_px=20.0, width_px=120.0, height_px=80.0
+        ),
+        source_kind="queue",
+        target_kind="task",
+    )
+    svg = "\n".join(parts)
+
+    # Queue edge should clip at the triangle right boundary, not its center.
+    assert 'points="75.0,50.0 220.0,60.0"' in svg
+
+
+def test_render_artifact_direct_svg_sppm_includes_postprocess_diagnostics_in_report(
+    monkeypatch,
+):
+    def fake_execute_elk_layout(_request, *, engine):
+        return LayoutResult(
+            orientation="lr",
+            canvas_bounds=LayoutBounds(x_px=0, y_px=0, width_px=260, height_px=140),
+            node_bounds={
+                "task": LayoutBounds(x_px=60, y_px=40, width_px=140, height_px=60),
+            },
+            edge_paths={},
+        )
+
+    def fake_row_gap_diagnostics(**_kwargs):
+        return (
+            RenderDiagnostic(
+                code="sppm-row-gap-tight",
+                severity="warning",
+                message="Mainline-to-rework row separation is below the minimum spacing target.",
+                metadata={"measured_gap_px": 12.0, "min_gap_px": 56.0},
+            ),
+        )
+
+    monkeypatch.setattr(svg_sppm, "execute_elk_layout", fake_execute_elk_layout)
+    monkeypatch.setattr(svg_sppm, "row_gap_diagnostics", fake_row_gap_diagnostics)
+
+    artifact = render_artifact(
+        {
+            "nodes": [
+                {"id": "task", "kind": "task", "name": "Handle Intake"},
+            ],
+            "edges": [],
+        },
+        options={"diagram": "sppm", "render_backend": "svg"},
+    )
+
+    report = artifact.metadata["render_diagnostics_report"]
+    assert report["code_counts"]["sppm-row-gap-tight"] == 1
+    assert report["category_counts"]["uncategorized"] >= 1

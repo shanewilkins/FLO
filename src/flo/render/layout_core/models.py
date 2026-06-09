@@ -5,6 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
+from flo.render._diagnostics import (
+    RenderDiagnostic,
+    RenderDiagnosticsReport,
+    build_render_diagnostics_report,
+)
 from flo.render._sppm_rework_semantics import SppmReworkVariant
 
 AlignMode = Literal["start", "center", "end"]
@@ -115,6 +120,7 @@ class LayoutResult:
     node_bounds: dict[str, LayoutBounds]
     edge_paths: dict[tuple[str, str], RoutedEdgePath]
     lanes: tuple[LayoutLaneFrame, ...] = ()
+    diagnostics: tuple[RenderDiagnostic, ...] = ()
 
     def bounds_for(self, node_id: str) -> LayoutBounds | None:
         """Return final bounds for a node ID, if present."""
@@ -123,6 +129,23 @@ class LayoutResult:
     def path_for(self, source: str, target: str) -> RoutedEdgePath | None:
         """Return final routed geometry for a logical edge, if present."""
         return self.edge_paths.get((source, target))
+
+    def diagnostics_report(
+        self,
+        *,
+        diagram: str,
+        backend: str,
+        artifact_kind: str,
+        strict: bool = False,
+    ) -> RenderDiagnosticsReport:
+        """Build an operation-level diagnostics report for this layout result."""
+        return build_render_diagnostics_report(
+            self.diagnostics,
+            diagram=diagram,
+            backend=backend,
+            artifact_kind=artifact_kind,
+            strict=strict,
+        )
 
 
 def serialize_layout_result(result: LayoutResult) -> str:

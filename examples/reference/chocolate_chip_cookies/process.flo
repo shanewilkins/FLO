@@ -200,7 +200,7 @@ steps:
   - id: preheat
     name: Preheat Oven
     kind: task
-    lane: bake
+    lane: oven
     location: oven_station
     workers:
       - assistant_baker
@@ -214,7 +214,7 @@ steps:
   - id: bake
     name: Bake
     kind: task
-    lane: bake
+    lane: oven
     location: oven_station
     workers:
       - lead_baker

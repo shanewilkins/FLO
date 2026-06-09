@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any
 
 from flo.adapters import parse_adapter
+import pytest
 from flo.render._sppm_node_content import build_sppm_node_content
 from flo.render.layout_core import (
     build_flowchart_elk_layout_request,
@@ -10,6 +11,7 @@ from flo.render.layout_core import (
     serialize_elk_layout_request,
 )
 from flo.render.options import RenderOptions
+from flo.services.errors import RenderError
 
 
 def _collect_nodes_with_ports(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -242,7 +244,25 @@ def test_build_sppm_elk_layout_request_preserves_explicit_lane_structure_when_pr
     assert [node.lane_id for node in request.nodes] == ["front", "front"]
 
 
-def test_build_sppm_elk_layout_request_flattens_synthetic_rows_into_partitions():
+def test_build_sppm_elk_layout_request_rejects_lane_node_namespace_collisions():
+    with pytest.raises(RenderError, match="namespace collision"):
+        build_sppm_elk_layout_request(
+            {
+                "lanes": [{"id": "bake", "name": "Bake"}],
+                "nodes": [
+                    {"id": "bake", "kind": "task", "name": "Bake", "lane": "bake"},
+                    {"id": "finish", "kind": "end", "name": "Done", "lane": "bake"},
+                ],
+                "edges": [{"source": "bake", "target": "finish"}],
+            },
+            options=RenderOptions(diagram="sppm", orientation="lr"),
+        )
+
+
+def test_build_sppm_elk_layout_request_flattens_synthetic_rows_into_partitions(
+    monkeypatch,
+):
+    monkeypatch.setenv("FLO_SPPM_PARTITION_MODE", "branch_aligned")
     request = build_sppm_elk_layout_request(
         {
             "nodes": [
@@ -515,7 +535,10 @@ def test_serialize_sppm_elk_layout_request_sets_start_end_layer_constraints():
     )
 
 
-def test_serialize_sppm_elk_layout_request_emits_cardinal_ports_and_port_attached_edges():
+def test_serialize_sppm_elk_layout_request_emits_cardinal_ports_and_port_attached_edges(
+    monkeypatch,
+):
+    monkeypatch.setenv("FLO_SPPM_HELPER_ANCHORS", "always")
     request = build_sppm_elk_layout_request(
         {
             "nodes": [
@@ -538,7 +561,7 @@ def test_serialize_sppm_elk_layout_request_emits_cardinal_ports_and_port_attache
     all_nodes = _collect_nodes_with_ports(payload)
     _assert_has_cardinal_ports(all_nodes["triage"])
     _assert_has_cardinal_ports(all_nodes["rework_queue"])
-    assert all_nodes["triage"]["layoutOptions"]["elk.portConstraints"] == "FIXED_SIDE"
+    assert all_nodes["triage"]["layoutOptions"]["elk.portConstraints"] == "FIXED_ORDER"
 
     edge = payload["edges"][0]
     assert edge["sources"] == ["triage__port_south"]
@@ -619,7 +642,10 @@ def test_build_sppm_synthetic_rows_set_rework_chain_ports_for_right_to_left_flow
     assert edge_by_pair[("rework_queue", "rework_task")].target_port_side == "EAST"
 
 
-def test_build_sppm_synthetic_rows_align_rework_partition_with_branch_decision():
+def test_build_sppm_synthetic_rows_align_rework_partition_with_branch_decision(
+    monkeypatch,
+):
+    monkeypatch.setenv("FLO_SPPM_PARTITION_MODE", "branch_aligned")
     request = build_sppm_elk_layout_request(
         {
             "nodes": [
@@ -660,6 +686,56 @@ def test_build_sppm_synthetic_rows_align_rework_partition_with_branch_decision()
     assert (
         node_by_id["rework_task"].partition_index
         == node_by_id["rework_queue"].partition_index
+    )
+
+
+def test_build_sppm_synthetic_rows_anchor_return_source_to_reintegration_target(
+    monkeypatch,
+):
+    monkeypatch.setenv("FLO_SPPM_PARTITION_MODE", "chain_progressive")
+    request = build_sppm_elk_layout_request(
+        {
+            "nodes": [
+                {"id": "start", "kind": "start", "name": "Start"},
+                {"id": "review", "kind": "task", "name": "Review"},
+                {"id": "qa", "kind": "decision", "name": "QA Pass?"},
+                {
+                    "id": "rework_queue",
+                    "kind": "queue",
+                    "name": "Rework Queue",
+                },
+                {"id": "rework_task", "kind": "task", "name": "Rework"},
+                {"id": "finish", "kind": "end", "name": "Finish"},
+            ],
+            "edges": [
+                {"source": "start", "target": "review"},
+                {"source": "review", "target": "qa"},
+                {"source": "qa", "target": "finish", "outcome": "yes"},
+                {
+                    "source": "qa",
+                    "target": "rework_queue",
+                    "outcome": "no",
+                    "edge_type": "rework",
+                },
+                {"source": "rework_queue", "target": "rework_task"},
+                {
+                    "source": "rework_task",
+                    "target": "review",
+                    "edge_type": "rework",
+                    "rework": True,
+                },
+            ],
+        },
+        options=RenderOptions(diagram="sppm", orientation="lr"),
+    )
+
+    node_by_id = {node.id: node for node in request.nodes}
+    assert (
+        node_by_id["rework_queue"].partition_index == node_by_id["qa"].partition_index
+    )
+    assert (
+        node_by_id["rework_task"].partition_index
+        == node_by_id["review"].partition_index
     )
 
 

@@ -1,5 +1,7 @@
 """Renderer-agnostic placement core for FLO diagram layout."""
 
+from flo.render._diagnostics import RenderDiagnostic
+
 from .corridors import CorridorAnchor, CorridorLane, CorridorPlan, build_corridor_plan
 from .elk_adapter import ElkEngine, layout_sppm_with_elk, layout_swimlane_with_elk
 from .elk_errors import (
@@ -68,6 +70,7 @@ __all__ = [
     "LayoutLaneFrame",
     "RoutedEdgePath",
     "LayoutResult",
+    "RenderDiagnostic",
     "RouteConflict",
     "RoutePlan",
     "NodeMeasure",

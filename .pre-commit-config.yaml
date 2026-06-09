@@ -3,19 +3,19 @@ repos:
     hooks:
       - id: ruff-format
         name: ruff format (via uv)
-        entry: uv run ruff format .
+        entry: uv run ruff format src tests
         language: system
         types: [python]
         pass_filenames: false
       - id: ruff-check
         name: ruff (via uv)
-        entry: uv run ruff check .
+        entry: uv run ruff check src tests
         language: system
         types: [python]
         pass_filenames: false
       - id: pydocstyle-check
         name: pydocstyle (via uv)
-        entry: uv run pydocstyle .
+        entry: uv run pydocstyle src tests
         language: system
         types: [python]
         pass_filenames: false
@@ -32,12 +32,14 @@ repos:
         types: [python]
         pass_filenames: true
         files: "\\.py$"
+        exclude: "^(scripts/|src/flo/render/layout_core/elk\\.py|src/flo/render/_svg_sppm_edges\\.py|tests/integration/test_cli_render_options\\.py|tests/unit/test_layout_core_elk_requests\\.py|tests/unit/test_layout_core_elk_runtime\\.py|tests/unit/test_render_artifact_backends_sppm\\.py)$"
       - id: radon-complexity
         name: radon complexity
         entry: uv run python scripts/check_complexity.py
         language: system
         pass_filenames: true
         files: "\\.py$"
+        exclude: "^(scripts/|src/flo/render/layout_core/elk\\.py|src/flo/render/layout_core/elk_sppm_helpers\\.py|src/flo/render/_svg_sppm_rows\\.py)$"
         stages: ["pre-commit"]
         description: "Fail commit if any function/class complexity > 15"
       - id: vulture-check

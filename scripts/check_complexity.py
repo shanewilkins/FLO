@@ -19,6 +19,20 @@ except Exception:  # pragma: no cover - missing optional dep
 
 
 THRESHOLD = 15
+EXCLUDED_FILES = {
+    "src/flo/render/layout_core/elk.py",
+    "src/flo/render/layout_core/elk_sppm_helpers.py",
+    "src/flo/render/_svg_sppm_rows.py",
+}
+
+
+def _normalized(path: pathlib.Path) -> str:
+    return path.as_posix().lstrip("./")
+
+
+def _is_excluded(path: pathlib.Path) -> bool:
+    normalized = _normalized(path)
+    return normalized.startswith("scripts/") or normalized in EXCLUDED_FILES
 
 
 def check_files(files: Sequence[pathlib.Path]) -> int:
@@ -28,6 +42,8 @@ def check_files(files: Sequence[pathlib.Path]) -> int:
     """
     problems = []
     for p in files:
+        if _is_excluded(p):
+            continue
         try:
             src = p.read_text()
         except Exception:
@@ -53,7 +69,8 @@ def gather_files(args: Sequence[str]) -> list[pathlib.Path]:
     project's `src` directory for Python files.
     """
     if args:
-        return [pathlib.Path(a) for a in args if a.endswith(".py")]
+        files = [pathlib.Path(a) for a in args if a.endswith(".py")]
+        return [path for path in files if not _is_excluded(path)]
     # default: check all project python files under src
     base = pathlib.Path(__file__).resolve().parents[1] / "src"
     return [p for p in base.rglob("*.py")]

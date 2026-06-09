@@ -5,7 +5,10 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Any
 
+from ._diagnostics import RenderDiagnostic
 from .layout_core.models import LayoutBounds, LayoutPoint
+
+_MIN_MAINLINE_REWORK_GAP_PX = 56.0
 
 
 def _enforce_sppm_row_alignment(
@@ -14,7 +17,11 @@ def _enforce_sppm_row_alignment(
     edge_paths: dict[tuple[str, str], Any],
     lanes: tuple[Any, ...],
 ) -> tuple[dict[str, LayoutBounds], dict[tuple[str, str], Any]]:
-    mainline_ids, rework_ids = _sppm_row_ids(lanes=lanes, node_bounds=node_bounds)
+    mainline_ids, rework_ids = _sppm_row_ids(
+        lanes=lanes,
+        node_bounds=node_bounds,
+        edge_paths=edge_paths,
+    )
     if not mainline_ids or not rework_ids:
         return dict(node_bounds), _orthogonalized_edges(edge_paths=edge_paths)
 
@@ -48,8 +55,8 @@ def _display_canvas_bounds(
     node_bounds: dict[str, LayoutBounds],
     edge_paths: dict[tuple[str, str], Any],
 ) -> LayoutBounds:
-    max_x = base_canvas.x_px + base_canvas.width_px
-    max_y = base_canvas.y_px + base_canvas.height_px
+    max_x = float("-inf")
+    max_y = float("-inf")
     for bounds in node_bounds.values():
         max_x = max(max_x, bounds.x_px + bounds.width_px)
         max_y = max(max_y, bounds.y_px + bounds.height_px)
@@ -57,6 +64,10 @@ def _display_canvas_bounds(
         for point in edge_path.points:
             max_x = max(max_x, point.x_px)
             max_y = max(max_y, point.y_px)
+    if max_x == float("-inf") or max_y == float("-inf"):
+        return base_canvas
+    max_x = max(max_x, base_canvas.x_px)
+    max_y = max(max_y, base_canvas.y_px)
     return LayoutBounds(
         x_px=base_canvas.x_px,
         y_px=base_canvas.y_px,
@@ -69,6 +80,7 @@ def _sppm_row_ids(
     *,
     lanes: tuple[Any, ...],
     node_bounds: dict[str, LayoutBounds],
+    edge_paths: dict[tuple[str, str], Any],
 ) -> tuple[set[str], set[str]]:
     mainline_ids: set[str] = set()
     rework_ids: set[str] = set()
@@ -83,7 +95,101 @@ def _sppm_row_ids(
             mainline_ids.update(lane_node_ids)
         elif lane_id == "__sppm_row_rework":
             rework_ids.update(lane_node_ids)
-    return mainline_ids, rework_ids
+    if mainline_ids and rework_ids:
+        return mainline_ids, rework_ids
+
+    return _infer_row_ids_from_rework_edges(
+        node_bounds=node_bounds,
+        edge_paths=edge_paths,
+    )
+
+
+def _infer_row_ids_from_rework_edges(
+    *,
+    node_bounds: dict[str, LayoutBounds],
+    edge_paths: dict[tuple[str, str], Any],
+) -> tuple[set[str], set[str]]:
+    node_ids = set(node_bounds)
+    branch_targets = {
+        target_id
+        for (_source_id, target_id), edge_path in edge_paths.items()
+        if str(getattr(edge_path, "rework_variant", "") or "") == "branch"
+        and target_id in node_ids
+    }
+    return_sources = {
+        source_id
+        for (source_id, _target_id), edge_path in edge_paths.items()
+        if str(getattr(edge_path, "rework_variant", "") or "") == "return"
+        and source_id in node_ids
+    }
+    if not branch_targets:
+        return set(), set()
+
+    adjacency: dict[str, list[str]] = {node_id: [] for node_id in node_ids}
+    for (source_id, target_id), edge_path in edge_paths.items():
+        if (
+            source_id not in node_ids
+            or target_id not in node_ids
+            or bool(getattr(edge_path, "is_rework", False))
+        ):
+            continue
+        adjacency[source_id].append(target_id)
+
+    rework_node_ids: set[str] = set()
+    frontier = list(branch_targets)
+    while frontier:
+        current = frontier.pop()
+        if current in rework_node_ids:
+            continue
+        rework_node_ids.add(current)
+        if current in return_sources:
+            continue
+        for next_id in adjacency.get(current, []):
+            if next_id not in rework_node_ids:
+                frontier.append(next_id)
+
+    if not rework_node_ids:
+        return set(), set()
+    return node_ids - rework_node_ids, rework_node_ids
+
+
+def row_gap_diagnostics(
+    *,
+    node_bounds: dict[str, LayoutBounds],
+    lanes: tuple[Any, ...],
+    edge_paths: dict[tuple[str, str], Any],
+) -> tuple[RenderDiagnostic, ...]:
+    """Report a warning when mainline and rework rows are packed too tightly."""
+    mainline_ids, rework_ids = _sppm_row_ids(
+        lanes=lanes,
+        node_bounds=node_bounds,
+        edge_paths=edge_paths,
+    )
+    if not mainline_ids or not rework_ids:
+        return ()
+
+    mainline_bottom = max(
+        node_bounds[node_id].y_px + node_bounds[node_id].height_px
+        for node_id in mainline_ids
+    )
+    rework_top = min(node_bounds[node_id].y_px for node_id in rework_ids)
+    measured_gap_px = rework_top - mainline_bottom
+    if measured_gap_px >= _MIN_MAINLINE_REWORK_GAP_PX:
+        return ()
+
+    return (
+        RenderDiagnostic(
+            code="sppm-row-gap-tight",
+            severity="warning",
+            message=(
+                "Mainline-to-rework row separation is below the minimum spacing target."
+            ),
+            metadata={
+                "measured_gap_px": round(measured_gap_px, 2),
+                "min_gap_px": _MIN_MAINLINE_REWORK_GAP_PX,
+            },
+        ),
+    )
 
 
 def _orthogonalized_edges(
@@ -143,16 +249,17 @@ def _align_rework_clusters(
         rework_ids=rework_ids,
     )
     visited_rework_ids: set[str] = set()
-    rework_spacing = max(
-        220.0,
-        max(node_bounds[node_id].width_px for node_id in rework_ids) + 56.0,
-    )
     sorted_pairs = sorted(
         branch_pairs,
         key=lambda pair: (
             node_bounds[pair[0]].x_px + (node_bounds[pair[0]].width_px / 2.0)
         ),
     )
+    return_target_by_source = {
+        source_id: target_id
+        for (source_id, target_id), edge_path in edge_paths.items()
+        if str(edge_path.rework_variant or "") == "return" and target_id in mainline_ids
+    }
     for source_id, target_id in sorted_pairs:
         if target_id in visited_rework_ids:
             continue
@@ -168,10 +275,38 @@ def _align_rework_clusters(
         source_center_x = node_bounds[source_id].x_px + (
             node_bounds[source_id].width_px / 2.0
         )
+        tail_node_id = next(
+            (
+                node_id
+                for node_id in reversed(ordered_cluster)
+                if node_id in return_target_by_source
+            ),
+            None,
+        )
+        tail_target_center_x = (
+            node_bounds[return_target_by_source[tail_node_id]].x_px
+            + (node_bounds[return_target_by_source[tail_node_id]].width_px / 2.0)
+            if tail_node_id is not None
+            else None
+        )
         for index, node_id in enumerate(ordered_cluster):
             bounds = node_bounds[node_id]
             current_center_x = bounds.x_px + (bounds.width_px / 2.0)
-            target_center_x = source_center_x - (index * rework_spacing)
+            if tail_target_center_x is not None and len(ordered_cluster) > 1:
+                ratio = index / float(len(ordered_cluster) - 1)
+                target_center_x = (
+                    source_center_x * (1.0 - ratio) + tail_target_center_x * ratio
+                )
+            elif index == 0:
+                # Keep branch targets directly under the branch source.
+                target_center_x = source_center_x
+            elif tail_target_center_x is not None and node_id == tail_node_id:
+                # Keep return sources directly under reintegration targets.
+                target_center_x = tail_target_center_x
+            else:
+                # Avoid aggressive horizontal spreading in postprocess when anchor
+                # intent is incomplete; preserve ELK-native horizontal placement.
+                target_center_x = current_center_x
             _, dy = shifts.get(node_id, (0.0, 0.0))
             shifts[node_id] = (target_center_x - current_center_x, dy)
         visited_rework_ids.update(cluster)
@@ -310,9 +445,15 @@ def _apply_edge_shifts(
             source_shift=source_shift,
             target_shift=target_shift,
         )
+        shifted_label_point = edge_path.label_point
+        if shifted_label_point is not None:
+            lx = shifted_label_point.x_px + ((source_shift[0] + target_shift[0]) / 2.0)
+            ly = shifted_label_point.y_px + ((source_shift[1] + target_shift[1]) / 2.0)
+            shifted_label_point = LayoutPoint(x_px=lx, y_px=ly)
         transformed_edges[edge_key] = replace(
             edge_path,
             points=_orthogonalize_points(translated_points),
+            label_point=shifted_label_point,
         )
     return transformed_edges
 

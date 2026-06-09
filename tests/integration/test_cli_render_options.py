@@ -60,7 +60,7 @@ def test_run_summary_detail_omits_outcome_edge_labels():
         ),
     ],
 )
-def test_non_dot_export_rejects_dot_only_flags(extra_args: list[str]):
+def test_non_dot_export_rejects_dot_only_flags(extra_args: list[str], caplog):
     export = extra_args[1] if extra_args[0] == "--export" else "json"
     base_file = (
         "examples/reference/chocolate_chip_cookies.flo"
@@ -74,7 +74,10 @@ def test_non_dot_export_rejects_dot_only_flags(extra_args: list[str]):
     runner = CliRunner()
     result = runner.invoke(cli, args)
     assert result.exit_code == 1
-    assert "require a diagram render output" in result.output
+    assert "require a diagram render output" in result.output or any(
+        "require a diagram render output" in record.getMessage()
+        for record in caplog.records
+    )
 
 
 def test_run_show_notes_and_orientation(tmp_path):
@@ -338,7 +341,7 @@ def test_run_spaghetti_people_worker_mode_labels_worker_traces():
         "--sppm-max-label-ctwt",
     ],
 )
-def test_run_sppm_rejects_non_positive_numeric_render_options(flag: str):
+def test_run_sppm_rejects_non_positive_numeric_render_options(flag: str, caplog):
     runner = CliRunner()
     result = runner.invoke(
         cli,
@@ -354,11 +357,14 @@ def test_run_sppm_rejects_non_positive_numeric_render_options(flag: str):
         ],
     )
     assert result.exit_code == 1
-    assert "expected a positive integer" in result.output
+    assert "expected a positive integer" in result.output or any(
+        "expected a positive integer" in record.getMessage()
+        for record in caplog.records
+    )
 
 
 @pytest.mark.parametrize("value", ["0", "12pt", "wide"])
-def test_run_sppm_rejects_invalid_layout_max_width_dimension(value: str):
+def test_run_sppm_rejects_invalid_layout_max_width_dimension(value: str, caplog):
     runner = CliRunner()
     result = runner.invoke(
         cli,
@@ -374,7 +380,10 @@ def test_run_sppm_rejects_invalid_layout_max_width_dimension(value: str):
         ],
     )
     assert result.exit_code == 1
-    assert "expected a positive dimension using px, in, or cm" in result.output
+    assert "expected a positive dimension using px, in, or cm" in result.output or any(
+        "expected a positive dimension using px, in, or cm" in record.getMessage()
+        for record in caplog.records
+    )
 
 
 def test_run_sppm_accepts_layout_max_width_dimension_units():

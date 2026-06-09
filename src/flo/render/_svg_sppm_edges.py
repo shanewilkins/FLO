@@ -35,11 +35,23 @@ def _edge_svg(
     avoid_bounds: tuple[Any, ...] = (),
     canvas_bounds: Any | None = None,
 ) -> tuple[list[str], tuple[LayoutBounds, ...]]:
-    points = edge_path.points
+    rework_edge = bool(edge_path.is_rework)
+    points = _normalize_rework_edge_points(
+        edge_path.points,
+        is_rework=rework_edge,
+        rework_variant=str(edge_path.rework_variant or ""),
+    )
+    points = _clip_edge_points_to_node_bounds(
+        points,
+        source_bounds=source_bounds,
+        source_kind=source_kind,
+        target_bounds=target_bounds,
+        target_kind=target_kind,
+    )
     if len(points) < 2:
         return [], ()
     polyline = " ".join(f"{point.x_px:.1f},{point.y_px:.1f}" for point in points)
-    edge_kind = "rework" if bool(edge_path.is_rework) else "direct"
+    edge_kind = "rework" if rework_edge else "direct"
     rework_variant = str(edge_path.rework_variant or "")
     stroke, dash_pattern, stroke_width = _edge_stroke(edge_path)
     dash_attrs = f' stroke-dasharray="{dash_pattern}"' if dash_pattern else ""
@@ -54,7 +66,15 @@ def _edge_svg(
     if edge_path.label:
         label_width = max(28.0, float(len(edge_path.label) * 7.0))
         label_point = getattr(edge_path, "label_point", None)
-        if label_point is not None:
+        if rework_edge:
+            placement = _rework_label_placement(points, rework_variant=rework_variant)
+            placement = _clamp_placement_to_canvas(
+                placement,
+                box_width=label_width,
+                box_height=18.0,
+                canvas_bounds=canvas_bounds,
+            )
+        elif label_point is not None:
             placement = _clamp_placement_to_canvas(
                 _LabelPlacement(x=float(label_point.x_px), y=float(label_point.y_px)),
                 box_width=label_width,
@@ -93,6 +113,7 @@ def _edge_svg(
             lines=edge_path.callout_lines,
             near_source=bool(edge_path.callout_near_source),
             has_label=bool(edge_path.label),
+            rework_edge=rework_edge,
             avoid_bounds=avoid_bounds + tuple(annotation_bounds),
             canvas_bounds=canvas_bounds,
         )
@@ -184,6 +205,7 @@ def _edge_callout_svg(
     lines: tuple[str, ...],
     near_source: bool,
     has_label: bool,
+    rework_edge: bool,
     avoid_bounds: tuple[Any, ...] = (),
     canvas_bounds: Any | None = None,
 ) -> tuple[list[str], tuple[LayoutBounds, ...]]:
@@ -194,6 +216,7 @@ def _edge_callout_svg(
         points,
         near_source=near_source,
         has_label=has_label,
+        rework_edge=rework_edge,
         avoid_bounds=avoid_bounds,
         box_width=width,
         box_height=height,
@@ -230,6 +253,7 @@ def _edge_callout_placement(
     *,
     near_source: bool,
     has_label: bool,
+    rework_edge: bool = False,
     avoid_bounds: tuple[Any, ...] = (),
     box_width: float = 88.0,
     box_height: float = 40.0,
@@ -251,6 +275,9 @@ def _edge_callout_placement(
         placement = _LabelPlacement(x=mid_x, y=mid_y - vertical_offset)
     else:
         offset = 18.0 if dx >= 0 else -18.0
+        if rework_edge:
+            # Keep rework metadata callouts off the line body.
+            offset = (box_width / 2.0) + 22.0
         anchor = "start" if dx >= 0 else "end"
         y_offset = -16.0 if has_label else -10.0
         placement = _LabelPlacement(x=mid_x + offset, y=mid_y + y_offset, anchor=anchor)
@@ -478,9 +505,44 @@ def _has_explicit_attachment_ports(edge_path: Any) -> bool:
 def _normalize_rework_edge_points(
     points: tuple[LayoutPoint, ...], *, is_rework: bool, rework_variant: str
 ) -> tuple[LayoutPoint, ...]:
-    _ = is_rework
-    _ = rework_variant
-    return points
+    if not is_rework:
+        return points
+    normalized_variant = str(rework_variant or "")
+    if normalized_variant not in {"branch", "return"}:
+        return points
+    deduped = _dedupe_points(points)
+    if len(deduped) < 3:
+        return deduped
+    start = deduped[0]
+    end = deduped[-1]
+    if abs(start.x_px - end.x_px) <= 24.0 or abs(start.y_px - end.y_px) <= 24.0:
+        return (start, end)
+    return deduped
+
+
+def _rework_label_placement(
+    points: tuple[LayoutPoint, ...], *, rework_variant: str
+) -> _LabelPlacement:
+    first = next(iter(points), None)
+    if first is None:
+        return _LabelPlacement(x=0.0, y=0.0)
+    if len(points) < 2:
+        return _LabelPlacement(x=float(first.x_px), y=float(first.y_px))
+    source = points[0]
+    target = points[-1]
+    dx = float(target.x_px - source.x_px)
+    dy = float(target.y_px - source.y_px)
+    if abs(dx) >= abs(dy):
+        ratio = 0.14 if rework_variant == "branch" else 0.5
+        return _LabelPlacement(
+            x=source.x_px + (dx * ratio),
+            y=source.y_px + (dy * ratio) - 1.0,
+        )
+    ratio = 0.14 if rework_variant == "branch" else 0.5
+    return _LabelPlacement(
+        x=source.x_px + (dx * ratio),
+        y=source.y_px + (dy * ratio),
+    )
 
 
 def _dedupe_points(points: tuple[LayoutPoint, ...]) -> tuple[LayoutPoint, ...]:

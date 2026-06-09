@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Protocol
 
+from flo.render._diagnostics import log_render_diagnostics
 from .elk import (
     build_sppm_elk_layout_request,
     build_swimlane_elk_layout_request,
@@ -34,7 +35,12 @@ def layout_swimlane_with_elk(
         raise ValueError("Swimlane ELK adapter requires diagram='swimlane'.")
 
     request = build_swimlane_elk_layout_request(process, options=render_options)
-    return execute_elk_layout(request, engine=engine or run_elkjs_layout)
+    return _execute_and_log_layout(
+        request,
+        diagram="swimlane",
+        strict=render_options.layout_fit == "fit-strict",
+        engine=engine or run_elkjs_layout,
+    )
 
 
 def layout_sppm_with_elk(
@@ -49,4 +55,27 @@ def layout_sppm_with_elk(
         raise ValueError("SPPM ELK adapter requires diagram='sppm'.")
 
     request = build_sppm_elk_layout_request(process, options=render_options)
-    return execute_elk_layout(request, engine=engine or run_elkjs_layout)
+    return _execute_and_log_layout(
+        request,
+        diagram="sppm",
+        strict=render_options.layout_fit == "fit-strict",
+        engine=engine or run_elkjs_layout,
+    )
+
+
+def _execute_and_log_layout(
+    request: Any,
+    *,
+    diagram: str,
+    strict: bool,
+    engine: ElkEngine | Callable[[dict[str, Any]], dict[str, Any]],
+) -> LayoutResult:
+    result = execute_elk_layout(request, engine=engine)
+    diagnostics_report = result.diagnostics_report(
+        diagram=diagram,
+        backend="elk",
+        artifact_kind="layout_result",
+        strict=strict,
+    )
+    log_render_diagnostics(diagnostics_report)
+    return result

@@ -59,3 +59,4 @@ class ElkLayoutRequest:
     lanes: tuple[ElkLayoutLane, ...]
     nodes: tuple[ElkLayoutNode, ...]
     edges: tuple[ElkLayoutEdge, ...]
+    strict_diagnostics: bool = False

@@ -7,6 +7,11 @@ from html import escape
 from typing import Any
 
 from ._artifact import RenderArtifact
+from ._diagnostics import (
+    log_render_diagnostics,
+    serialize_render_diagnostics,
+    serialize_render_diagnostics_report,
+)
 from .layout_core import build_flowchart_elk_layout_request, execute_elk_layout
 from .layout_core.elk_runtime import run_elkjs_layout
 from .options import RenderOptions
@@ -27,6 +32,13 @@ def render_flowchart_svg_artifact(
     """Render a minimal standalone SVG for flowcharts using ELK layout."""
     request = build_flowchart_elk_layout_request(process, options=options)
     result = execute_elk_layout(request, engine=run_elkjs_layout)
+    diagnostics_report = result.diagnostics_report(
+        diagram="flowchart",
+        backend="svg",
+        artifact_kind="svg",
+        strict=options.layout_fit == "fit-strict",
+    )
+    log_render_diagnostics(diagnostics_report)
     node_by_id = {node.id: node for node in request.nodes}
 
     width = max(1.0, result.canvas_bounds.width_px + (_PADDING * 2.0))
@@ -71,7 +83,20 @@ def render_flowchart_svg_artifact(
 
     parts.append("</g>")
     parts.append("</svg>")
-    return RenderArtifact(kind="svg", content="\n".join(parts), backend="svg"), None
+    return (
+        RenderArtifact(
+            kind="svg",
+            content="\n".join(parts),
+            backend="svg",
+            metadata={
+                "render_diagnostics": serialize_render_diagnostics(result.diagnostics),
+                "render_diagnostics_report": serialize_render_diagnostics_report(
+                    diagnostics_report
+                ),
+            },
+        ),
+        None,
+    )
 
 
 def _node_svg(

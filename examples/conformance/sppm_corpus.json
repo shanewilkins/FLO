@@ -1,0 +1,77 @@
+{
+  "cases": [
+    {
+      "id": "linear_lr",
+      "input": "examples/reference/linear.flo",
+      "options": {
+        "orientation": "lr"
+      }
+    },
+    {
+      "id": "linear_tb",
+      "input": "examples/reference/linear.flo",
+      "options": {
+        "orientation": "tb"
+      }
+    },
+    {
+      "id": "rework_loop_lr",
+      "input": "examples/reference/rework_loop.flo",
+      "options": {
+        "orientation": "lr"
+      }
+    },
+    {
+      "id": "rework_loop_tb",
+      "input": "examples/reference/rework_loop.flo",
+      "options": {
+        "orientation": "tb"
+      }
+    },
+    {
+      "id": "sppm_feature_showcase_lr",
+      "input": "examples/reference/sppm_feature_showcase.flo",
+      "options": {
+        "orientation": "lr"
+      }
+    },
+    {
+      "id": "sppm_feature_showcase_wrapped_lr",
+      "input": "examples/reference/sppm_feature_showcase_wrapped.flo",
+      "options": {
+        "orientation": "lr",
+        "layout_wrap": "auto",
+        "layout_target_columns": 3,
+        "publication_page_format": "letter"
+      }
+    },
+    {
+      "id": "sppm_long_label_stress_lr",
+      "input": "examples/reference/sppm_long_label_stress.flo",
+      "options": {
+        "orientation": "lr"
+      }
+    },
+    {
+      "id": "washnfold_lr",
+      "input": "examples/reference/washnfold.flo",
+      "options": {
+        "orientation": "lr"
+      }
+    },
+    {
+      "id": "bakery_setup_vs_queue_lr",
+      "input": "examples/reference/bakery_setup_vs_queue.flo",
+      "options": {
+        "orientation": "lr"
+      }
+    },
+    {
+      "id": "cookies_process_lr",
+      "input": "examples/reference/chocolate_chip_cookies/process.flo",
+      "options": {
+        "orientation": "lr"
+      }
+    }
+  ]
+}

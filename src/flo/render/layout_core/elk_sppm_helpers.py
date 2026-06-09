@@ -6,15 +6,14 @@ from dataclasses import replace
 from typing import Any
 
 from .elk_contracts import ElkLayoutEdge, ElkLayoutLane, ElkLayoutRequest
-
-_SPPM_NODE_SPACING_PX = "160"
-_SPPM_LAYER_SPACING_PX = "56"
+from .sppm_strategy import current_sppm_layout_strategy, sppm_spacing_values
 
 
 def _sppm_spacing_layout_options() -> dict[str, str]:
+    node_spacing, layer_spacing = sppm_spacing_values()
     return {
-        "elk.spacing.nodeNode": _SPPM_NODE_SPACING_PX,
-        "elk.layered.spacing.nodeNodeBetweenLayers": _SPPM_LAYER_SPACING_PX,
+        "elk.spacing.nodeNode": node_spacing,
+        "elk.layered.spacing.nodeNodeBetweenLayers": layer_spacing,
     }
 
 
@@ -321,6 +320,11 @@ def _sppm_partition_indexes_for_synthetic_rows(
     main_index = {node_id: idx for idx, node_id in enumerate(mainline_lane.node_ids)}
     partition_map = dict(main_index)
     rework_set = set(rework_lane.node_ids)
+    return_target_by_source = {
+        edge.source_id: edge.target_id
+        for edge in edges
+        if edge.rework_variant == "return"
+    }
 
     chains_by_branch = _rework_chains_by_branch(
         node_ids=node_ids,
@@ -330,13 +334,41 @@ def _sppm_partition_indexes_for_synthetic_rows(
     claimed: set[str] = set()
     for source_id, chain in chains_by_branch:
         start = main_index.get(source_id, 0)
-        for node_id in chain:
+        end_node_id = next(
+            (
+                node_id
+                for node_id in reversed(chain)
+                if node_id in return_target_by_source
+            ),
+            None,
+        )
+        end = (
+            main_index.get(return_target_by_source[end_node_id], start)
+            if end_node_id is not None
+            else None
+        )
+        strategy = current_sppm_layout_strategy()
+        for offset, node_id in enumerate(chain):
             if node_id in claimed:
                 continue
             claimed.add(node_id)
-            # Keep each rework chain on the branch source partition so ELK
-            # does not over-stretch queue/task spacing within secondary rows.
-            partition_map[node_id] = start
+            if strategy.partition_mode == "chain_progressive":
+                if end is not None and len(chain) > 1:
+                    ratio = offset / float(len(chain) - 1)
+                    partition_map[node_id] = max(
+                        0,
+                        int(round((start * (1.0 - ratio)) + (end * ratio))),
+                    )
+                else:
+                    partition_map[node_id] = max(0, start - offset)
+                continue
+
+            # branch_aligned keeps branch targets anchored under the branch source,
+            # but still anchors the return source at its reintegration target.
+            if end is not None and node_id == end_node_id:
+                partition_map[node_id] = max(0, end)
+            else:
+                partition_map[node_id] = start
 
     for node_id in rework_lane.node_ids:
         if node_id not in partition_map:

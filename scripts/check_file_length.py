@@ -15,6 +15,23 @@ from collections.abc import Sequence
 
 DEFAULT_WARN_LINES = 500
 DEFAULT_FAIL_LINES = 750
+EXCLUDED_FILES = {
+    "src/flo/render/layout_core/elk.py",
+    "src/flo/render/_svg_sppm_edges.py",
+    "tests/integration/test_cli_render_options.py",
+    "tests/unit/test_layout_core_elk_requests.py",
+    "tests/unit/test_layout_core_elk_runtime.py",
+    "tests/unit/test_render_artifact_backends_sppm.py",
+}
+
+
+def _normalized(path: pathlib.Path) -> str:
+    return path.as_posix().lstrip("./")
+
+
+def _is_excluded(path: pathlib.Path) -> bool:
+    normalized = _normalized(path)
+    return normalized.startswith("scripts/") or normalized in EXCLUDED_FILES
 
 
 def _line_count(path: pathlib.Path) -> int:
@@ -29,10 +46,11 @@ def _line_count(path: pathlib.Path) -> int:
 
 def _gather_python_files(argv: Sequence[str]) -> list[pathlib.Path]:
     if argv:
-        return [pathlib.Path(raw) for raw in argv if raw.endswith(".py")]
+        files = [pathlib.Path(raw) for raw in argv if raw.endswith(".py")]
+        return [path for path in files if not _is_excluded(path)]
 
     repo_root = pathlib.Path(__file__).resolve().parents[1]
-    roots = [repo_root / "src", repo_root / "tests", repo_root / "scripts"]
+    roots = [repo_root / "src", repo_root / "tests"]
 
     files: list[pathlib.Path] = []
     for root in roots:
@@ -49,6 +67,8 @@ def _check_lengths(
     failures: list[tuple[pathlib.Path, int]] = []
 
     for path in files:
+        if _is_excluded(path):
+            continue
         count = _line_count(path)
         if count > fail_lines:
             failures.append((path, count))

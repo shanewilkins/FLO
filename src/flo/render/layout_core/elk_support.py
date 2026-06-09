@@ -13,6 +13,7 @@ from flo.render._sppm_rework_semantics import resolve_sppm_rework_variant
 from flo.render.options import RenderOptions
 
 from .elk_contracts import ElkLayoutEdge, ElkLayoutLane, ElkLayoutNode
+from .sppm_strategy import sppm_port_constraints_value
 
 _DEFAULT_NODE_WIDTH_PX = 140
 _DEFAULT_NODE_HEIGHT_PX = 52
@@ -114,7 +115,7 @@ def serialize_node(
     elif node.kind == "end":
         layout_options["elk.layered.layering.layerConstraint"] = "LAST"
     if diagram == "sppm":
-        layout_options["elk.portConstraints"] = "FIXED_SIDE"
+        layout_options["elk.portConstraints"] = sppm_port_constraints_value()
     if node.partition_index is not None:
         layout_options["elk.partitioning.partition"] = str(node.partition_index)
     if layout_options:

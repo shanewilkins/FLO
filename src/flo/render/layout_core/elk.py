@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import statistics
 from typing import Any, Callable
 
+from flo.render._diagnostics import RenderDiagnostic, RenderDiagnosticSeverity
 from .elk_contracts import (
     ElkDirection,
     ElkLayoutEdge,
@@ -13,6 +15,7 @@ from .elk_contracts import (
     ElkLayoutRequest,
 )
 from .elk_errors import ElkEngineProtocolError
+from .elk_validation import validate_elk_request_namespaces
 from .elk_support import (
     extract_nodes_and_edges,
     lane_specs,
@@ -36,6 +39,7 @@ from .elk_sppm_helpers import (
     _sppm_spacing_layout_options,
     _sppm_synthetic_row_lanes,
 )
+from .sppm_strategy import should_emit_sppm_branch_anchors
 from .models import (
     LayoutBounds,
     LayoutLaneFrame,
@@ -44,6 +48,7 @@ from .models import (
     RoutedEdgePath,
 )
 from flo.render.options import RenderOptions
+from flo.services.errors import RenderError
 
 
 def build_swimlane_elk_layout_request(
@@ -58,7 +63,7 @@ def build_swimlane_elk_layout_request(
     if render_options.subprocess_view == "parent_only":
         nodes, edges = project_parent_only_subprocess_view(nodes, edges)
 
-    return ElkLayoutRequest(
+    request = ElkLayoutRequest(
         diagram="swimlane",
         direction=_elk_direction(render_options),
         lanes=lane_specs(process=process, nodes=nodes),
@@ -69,7 +74,10 @@ def build_swimlane_elk_layout_request(
             diagram="swimlane",
             direction=_elk_direction(render_options),
         ),
+        strict_diagnostics=render_options.layout_fit == "fit-strict",
     )
+    validate_elk_request_namespaces(request)
+    return request
 
 
 def build_sppm_elk_layout_request(
@@ -108,7 +116,7 @@ def build_sppm_elk_layout_request(
             root_direction=_elk_direction(render_options),
         )
 
-    return ElkLayoutRequest(
+    request = ElkLayoutRequest(
         diagram="sppm",
         direction=_elk_direction(render_options),
         lanes=lanes,
@@ -120,7 +128,10 @@ def build_sppm_elk_layout_request(
             for node in sppm_nodes
         ),
         edges=edge_specs,
+        strict_diagnostics=render_options.layout_fit == "fit-strict",
     )
+    validate_elk_request_namespaces(request)
+    return request
 
 
 def build_flowchart_elk_layout_request(
@@ -135,7 +146,7 @@ def build_flowchart_elk_layout_request(
     if render_options.subprocess_view == "parent_only":
         nodes, edges = project_parent_only_subprocess_view(nodes, edges)
 
-    return ElkLayoutRequest(
+    request = ElkLayoutRequest(
         diagram="flowchart",
         direction=_elk_direction(render_options),
         lanes=(),
@@ -146,7 +157,10 @@ def build_flowchart_elk_layout_request(
             diagram="flowchart",
             direction=_elk_direction(render_options),
         ),
+        strict_diagnostics=render_options.layout_fit == "fit-strict",
     )
+    validate_elk_request_namespaces(request)
+    return request
 
 
 def normalize_elk_layout_result(
@@ -165,9 +179,17 @@ def normalize_elk_layout_result(
     lane_order = [lane.id for lane in request.lanes]
     lane_labels = {lane.id: lane.label for lane in request.lanes}
     lane_members = {lane.id: lane.node_ids for lane in request.lanes}
+    strict = request.strict_diagnostics
 
     node_bounds: dict[str, LayoutBounds] = {}
     lane_frames: dict[str, LayoutLaneFrame] = {}
+    diagnostics: list[RenderDiagnostic] = []
+    container_origins: dict[str, LayoutPoint] = {
+        str(payload.get("id") or ""): LayoutPoint(
+            x_px=root_bounds.x_px,
+            y_px=root_bounds.y_px,
+        )
+    }
     _collect_child_geometry(
         graph=payload,
         parent_origin=LayoutPoint(x_px=root_bounds.x_px, y_px=root_bounds.y_px),
@@ -177,6 +199,9 @@ def normalize_elk_layout_result(
         lane_members=lane_members,
         node_bounds=node_bounds,
         lane_frames=lane_frames,
+        container_origins=container_origins,
+        diagnostics=diagnostics,
+        strict=strict,
     )
 
     edge_paths: dict[tuple[str, str], RoutedEdgePath] = {}
@@ -195,8 +220,31 @@ def normalize_elk_layout_result(
         edge_ports=edge_ports,
         allowed_edges=allowed_edges,
         port_owner=port_owner,
+        container_origins=container_origins,
         edge_paths=edge_paths,
+        diagnostics=diagnostics,
+        strict=strict,
     )
+    _finalize_layout_diagnostics(
+        request=request,
+        lane_order=lane_order,
+        lane_frames=lane_frames,
+        edge_paths=edge_paths,
+        allowed_edges=allowed_edges,
+        diagnostics=diagnostics,
+        strict=strict,
+    )
+    if request.diagram == "sppm":
+        _balance_sppm_queue_task_gaps(
+            request=request,
+            node_bounds=node_bounds,
+            edge_paths=edge_paths,
+        )
+        _normalize_sppm_mainline_horizontal_spacing(
+            request=request,
+            node_bounds=node_bounds,
+            edge_paths=edge_paths,
+        )
 
     return LayoutResult(
         orientation="tb" if request.direction == "DOWN" else "lr",
@@ -206,7 +254,266 @@ def normalize_elk_layout_result(
         lanes=tuple(
             lane_frames[lane_id] for lane_id in lane_order if lane_id in lane_frames
         ),
+        diagnostics=tuple(diagnostics),
     )
+
+
+def _balance_sppm_queue_task_gaps(
+    *,
+    request: ElkLayoutRequest,
+    node_bounds: dict[str, LayoutBounds],
+    edge_paths: dict[tuple[str, str], RoutedEdgePath],
+) -> None:
+    node_ids = set(node_bounds)
+    mainline_ids, _rework_ids = _infer_sppm_row_ids_from_request(
+        request=request,
+        node_ids=node_ids,
+    )
+    if len(mainline_ids) < 3:
+        return
+
+    node_kind_by_id = {node.id: str(node.kind or "").lower() for node in request.nodes}
+    direct_edges = {
+        (edge.source_id, edge.target_id) for edge in request.edges if not edge.is_rework
+    }
+
+    incoming_by_target: dict[str, list[str]] = {node_id: [] for node_id in mainline_ids}
+    outgoing_by_source: dict[str, list[str]] = {node_id: [] for node_id in mainline_ids}
+    for source_id, target_id in direct_edges:
+        if source_id not in mainline_ids or target_id not in mainline_ids:
+            continue
+        incoming_by_target[target_id].append(source_id)
+        outgoing_by_source[source_id].append(target_id)
+
+    shifts: dict[str, tuple[float, float]] = {}
+
+    def _is_queue(node_id: str) -> bool:
+        kind = str(node_kind_by_id.get(node_id, "")).lower()
+        return kind == "queue" if kind else ("queue" in node_id.lower())
+
+    for queue_id in sorted(mainline_ids, key=lambda node_id: node_bounds[node_id].x_px):
+        if not _is_queue(queue_id):
+            continue
+        incoming = incoming_by_target.get(queue_id, [])
+        outgoing = outgoing_by_source.get(queue_id, [])
+        if len(incoming) != 1 or len(outgoing) != 1:
+            continue
+
+        upstream_id = incoming[0]
+        downstream_id = outgoing[0]
+        if not _is_queue(upstream_id) or _is_queue(downstream_id):
+            continue
+        if upstream_id not in node_bounds or downstream_id not in node_bounds:
+            continue
+
+        upstream_right = (
+            node_bounds[upstream_id].x_px + node_bounds[upstream_id].width_px
+        )
+        queue_left = node_bounds[queue_id].x_px
+        queue_width = node_bounds[queue_id].width_px
+        downstream_left = node_bounds[downstream_id].x_px
+
+        gap_left = queue_left - upstream_right
+        gap_right = downstream_left - (queue_left + queue_width)
+        if gap_left <= 0.0 or gap_right <= 0.0:
+            continue
+        if gap_right <= (gap_left * 1.6):
+            continue
+
+        target_queue_left = (downstream_left + upstream_right - queue_width) / 2.0
+        min_gap_px = 56.0
+        target_queue_left = max(target_queue_left, upstream_right + min_gap_px)
+        target_queue_left = min(
+            target_queue_left,
+            downstream_left - queue_width - min_gap_px,
+        )
+        if target_queue_left <= upstream_right:
+            continue
+        if target_queue_left + queue_width >= downstream_left:
+            continue
+
+        shifts[queue_id] = (target_queue_left - queue_left, 0.0)
+
+    if not shifts:
+        return
+
+    _apply_layout_shifts(
+        node_bounds=node_bounds,
+        edge_paths=edge_paths,
+        shifts=shifts,
+    )
+
+
+def _normalize_sppm_mainline_horizontal_spacing(
+    *,
+    request: ElkLayoutRequest,
+    node_bounds: dict[str, LayoutBounds],
+    edge_paths: dict[tuple[str, str], RoutedEdgePath],
+) -> None:
+    mainline_ids, _rework_ids = _infer_sppm_row_ids_from_request(
+        request=request,
+        node_ids=set(node_bounds),
+    )
+    ordered = sorted(mainline_ids, key=lambda node_id: node_bounds[node_id].x_px)
+    if len(ordered) < 3:
+        return
+
+    gaps: list[float] = []
+    for left_id, right_id in zip(ordered, ordered[1:]):
+        left_bounds = node_bounds[left_id]
+        right_bounds = node_bounds[right_id]
+        gap = right_bounds.x_px - (left_bounds.x_px + left_bounds.width_px)
+        if gap > 0.0:
+            gaps.append(gap)
+    if len(gaps) < 2:
+        return
+
+    target_gap = max(56.0, float(statistics.median(gaps)))
+    if max(gaps) <= (target_gap * 1.25) and min(gaps) >= (target_gap * 0.75):
+        return
+
+    shifts: dict[str, tuple[float, float]] = {}
+    propagated_dx = 0.0
+    for left_id, right_id in zip(ordered, ordered[1:]):
+        left_dx = shifts.get(left_id, (0.0, 0.0))[0]
+        right_dx, right_dy = shifts.get(right_id, (0.0, 0.0))
+        left_right = node_bounds[left_id].x_px + left_dx + node_bounds[left_id].width_px
+        right_left = node_bounds[right_id].x_px + right_dx + propagated_dx
+        propagated_dx += (left_right + target_gap) - right_left
+        shifts[right_id] = (right_dx + propagated_dx, right_dy)
+
+    _apply_layout_shifts(
+        node_bounds=node_bounds,
+        edge_paths=edge_paths,
+        shifts=shifts,
+    )
+
+
+def _apply_layout_shifts(
+    *,
+    node_bounds: dict[str, LayoutBounds],
+    edge_paths: dict[tuple[str, str], RoutedEdgePath],
+    shifts: dict[str, tuple[float, float]],
+) -> None:
+    if not shifts:
+        return
+
+    for node_id, (dx, dy) in shifts.items():
+        bounds = node_bounds[node_id]
+        node_bounds[node_id] = LayoutBounds(
+            x_px=bounds.x_px + dx,
+            y_px=bounds.y_px + dy,
+            width_px=bounds.width_px,
+            height_px=bounds.height_px,
+        )
+
+    for edge_key, edge_path in tuple(edge_paths.items()):
+        source_id, target_id = edge_key
+        source_shift = shifts.get(source_id, (0.0, 0.0))
+        target_shift = shifts.get(target_id, (0.0, 0.0))
+        if source_shift == (0.0, 0.0) and target_shift == (0.0, 0.0):
+            continue
+        shifted_label_point = edge_path.label_point
+        if shifted_label_point is not None:
+            lx = shifted_label_point.x_px + ((source_shift[0] + target_shift[0]) / 2.0)
+            ly = shifted_label_point.y_px + ((source_shift[1] + target_shift[1]) / 2.0)
+            shifted_label_point = LayoutPoint(x_px=lx, y_px=ly)
+        edge_paths[edge_key] = replace(
+            edge_path,
+            points=_translate_edge_points(
+                edge_path.points,
+                source_shift=source_shift,
+                target_shift=target_shift,
+            ),
+            label_point=shifted_label_point,
+        )
+
+
+def _infer_sppm_row_ids_from_request(
+    *,
+    request: ElkLayoutRequest,
+    node_ids: set[str],
+) -> tuple[set[str], set[str]]:
+    branch_targets = {
+        edge.target_id
+        for edge in request.edges
+        if str(edge.rework_variant or "") == "branch" and edge.target_id in node_ids
+    }
+    return_sources = {
+        edge.source_id
+        for edge in request.edges
+        if str(edge.rework_variant or "") == "return" and edge.source_id in node_ids
+    }
+    if not branch_targets:
+        return set(), set()
+
+    adjacency: dict[str, list[str]] = {node_id: [] for node_id in node_ids}
+    for edge in request.edges:
+        if (
+            edge.is_rework
+            or edge.source_id not in adjacency
+            or edge.target_id not in node_ids
+        ):
+            continue
+        adjacency[edge.source_id].append(edge.target_id)
+
+    rework_node_ids: set[str] = set()
+    frontier = list(branch_targets)
+    while frontier:
+        current = frontier.pop()
+        if current in rework_node_ids:
+            continue
+        rework_node_ids.add(current)
+        if current in return_sources:
+            continue
+        for next_id in adjacency.get(current, []):
+            if next_id not in rework_node_ids:
+                frontier.append(next_id)
+
+    if not rework_node_ids:
+        return set(), set()
+    return node_ids - rework_node_ids, rework_node_ids
+
+
+def _translate_edge_points(
+    points: tuple[LayoutPoint, ...],
+    *,
+    source_shift: tuple[float, float],
+    target_shift: tuple[float, float],
+) -> tuple[LayoutPoint, ...]:
+    if not points:
+        return points
+    sx, sy = source_shift
+    tx, ty = target_shift
+    if abs(sx - tx) < 1e-9 and abs(sy - ty) < 1e-9:
+        return tuple(
+            LayoutPoint(x_px=point.x_px + sx, y_px=point.y_px + sy) for point in points
+        )
+
+    distances = [0.0]
+    total = 0.0
+    for index in range(len(points) - 1):
+        p0 = points[index]
+        p1 = points[index + 1]
+        seg_len = ((p1.x_px - p0.x_px) ** 2 + (p1.y_px - p0.y_px) ** 2) ** 0.5
+        total += seg_len
+        distances.append(total)
+
+    if total <= 1e-9:
+        mid_x = (sx + tx) / 2.0
+        mid_y = (sy + ty) / 2.0
+        return tuple(
+            LayoutPoint(x_px=point.x_px + mid_x, y_px=point.y_px + mid_y)
+            for point in points
+        )
+
+    translated: list[LayoutPoint] = []
+    for point, distance in zip(points, distances):
+        ratio = distance / total
+        dx = (sx * (1.0 - ratio)) + (tx * ratio)
+        dy = (sy * (1.0 - ratio)) + (ty * ratio)
+        translated.append(LayoutPoint(x_px=point.x_px + dx, y_px=point.y_px + dy))
+    return tuple(translated)
 
 
 def _edge_metadata_maps(
@@ -260,7 +567,9 @@ def serialize_elk_layout_request(request: ElkLayoutRequest) -> dict[str, Any]:
     helper_nodes: list[dict[str, Any]] = []
     helper_edges: list[dict[str, Any]] = []
 
-    if request.diagram == "sppm":
+    if request.diagram == "sppm" and should_emit_sppm_branch_anchors(
+        has_lanes=bool(request.lanes)
+    ):
         helper_nodes, helper_edges = _sppm_branch_anchor_helpers(request=request)
 
     for lane_index, lane in enumerate(request.lanes):
@@ -331,7 +640,15 @@ def execute_elk_layout(
     response = engine(serialize_elk_layout_request(request))
     if not isinstance(response, dict):
         raise ElkEngineProtocolError("ELK engine must return a dictionary payload.")
-    return normalize_elk_layout_result(response, request=request)
+    result = normalize_elk_layout_result(response, request=request)
+    errors = [
+        diagnostic.message
+        for diagnostic in result.diagnostics
+        if diagnostic.severity == "error"
+    ]
+    if errors:
+        raise RenderError("; ".join(errors))
+    return result
 
 
 def _elk_direction(options: RenderOptions) -> ElkDirection:
@@ -348,6 +665,9 @@ def _collect_child_geometry(
     lane_members: dict[str, tuple[str, ...]],
     node_bounds: dict[str, LayoutBounds],
     lane_frames: dict[str, LayoutLaneFrame],
+    container_origins: dict[str, LayoutPoint],
+    diagnostics: list[RenderDiagnostic],
+    strict: bool,
 ) -> None:
     for child in graph.get("children") or []:
         if not isinstance(child, dict):
@@ -363,9 +683,14 @@ def _collect_child_geometry(
             width_px=_float_value(child.get("width")),
             height_px=_float_value(child.get("height")),
         )
+        if child_id:
+            container_origins[child_id] = child_origin
         if child_id in node_ids:
             node_bounds[child_id] = child_bounds
-        if child_id in lane_ids:
+        if child_id in lane_ids and _looks_like_lane_container(
+            child,
+            member_ids=lane_members.get(child_id, ()),
+        ):
             lane_frames[child_id] = LayoutLaneFrame(
                 id=child_id,
                 label=lane_labels.get(child_id, child_id),
@@ -381,7 +706,24 @@ def _collect_child_geometry(
             lane_members=lane_members,
             node_bounds=node_bounds,
             lane_frames=lane_frames,
+            container_origins=container_origins,
+            diagnostics=diagnostics,
+            strict=strict,
         )
+
+
+def _looks_like_lane_container(
+    child: dict[str, Any], *, member_ids: tuple[str, ...]
+) -> bool:
+    raw_children = child.get("children")
+    if not isinstance(raw_children, list):
+        return False
+    child_ids = {
+        str(raw_child.get("id") or "")
+        for raw_child in raw_children
+        if isinstance(raw_child, dict)
+    }
+    return bool(child_ids.intersection(member_ids))
 
 
 def _collect_edge_geometry(
@@ -395,19 +737,59 @@ def _collect_edge_geometry(
     edge_ports: dict[tuple[str, str], tuple[str | None, str | None]],
     allowed_edges: set[tuple[str, str]],
     port_owner: dict[str, str],
+    container_origins: dict[str, LayoutPoint],
     edge_paths: dict[tuple[str, str], RoutedEdgePath],
+    diagnostics: list[RenderDiagnostic],
+    strict: bool,
 ) -> None:
     for raw_edge in graph.get("edges") or []:
         if not isinstance(raw_edge, dict):
             continue
         source_id, target_id = _edge_endpoints(raw_edge, port_owner=port_owner)
         if not source_id or not target_id:
+            _append_diagnostic(
+                diagnostics,
+                code="elk-edge-endpoints-missing",
+                severity=_recovery_severity(strict),
+                message="ELK response contained an edge with unresolved endpoints.",
+                edge_id=str(raw_edge.get("id") or ""),
+            )
             continue
-        points = _edge_points(raw_edge, parent_origin=parent_origin)
+        edge_origin = _edge_origin(
+            raw_edge,
+            default_origin=parent_origin,
+            container_origins=container_origins,
+            diagnostics=diagnostics,
+            strict=strict,
+        )
+        points = _edge_points(raw_edge, parent_origin=edge_origin)
         if len(points) < 2:
+            _append_diagnostic(
+                diagnostics,
+                code="elk-edge-geometry-missing",
+                severity=_recovery_severity(strict),
+                message=(
+                    f"ELK response did not provide usable geometry for edge '{str(raw_edge.get('id') or '')}'."
+                ),
+                edge_id=str(raw_edge.get("id") or ""),
+                source_id=source_id,
+                target_id=target_id,
+            )
             continue
         key = (source_id, target_id)
         if key not in allowed_edges:
+            if not str(raw_edge.get("id") or "").startswith("__sppm_helper_"):
+                _append_diagnostic(
+                    diagnostics,
+                    code="elk-edge-unexpected",
+                    severity=_recovery_severity(strict),
+                    message=(
+                        f"ELK response contained unexpected edge '{source_id}->{target_id}' not present in the FLO request."
+                    ),
+                    edge_id=str(raw_edge.get("id") or ""),
+                    source_id=source_id,
+                    target_id=target_id,
+                )
             continue
         callout_lines, callout_near_source = edge_callouts.get(key, ((), False))
         is_rework, rework_variant = edge_rework.get(key, (False, None))
@@ -416,7 +798,7 @@ def _collect_edge_geometry(
         label, label_point = _edge_path_label(
             raw_edge,
             fallback=edge_labels.get(key),
-            parent_origin=parent_origin,
+            parent_origin=edge_origin,
         )
         edge_paths[key] = RoutedEdgePath(
             edge=key,
@@ -447,8 +829,93 @@ def _collect_edge_geometry(
                 edge_ports=edge_ports,
                 allowed_edges=allowed_edges,
                 port_owner=port_owner,
+                container_origins=container_origins,
                 edge_paths=edge_paths,
+                diagnostics=diagnostics,
+                strict=strict,
             )
+
+
+def _edge_origin(
+    raw_edge: dict[str, Any],
+    *,
+    default_origin: LayoutPoint,
+    container_origins: dict[str, LayoutPoint],
+    diagnostics: list[RenderDiagnostic],
+    strict: bool,
+) -> LayoutPoint:
+    container_id = str(raw_edge.get("container") or "")
+    if container_id:
+        origin = container_origins.get(container_id)
+        if origin is not None:
+            return origin
+        _append_diagnostic(
+            diagnostics,
+            code="elk-edge-container-unknown",
+            severity=_recovery_severity(strict),
+            message=(
+                f"ELK response referenced unknown edge container '{container_id}' for edge '{str(raw_edge.get('id') or '')}'."
+            ),
+            edge_id=str(raw_edge.get("id") or ""),
+            container_id=container_id,
+        )
+        return default_origin
+    return default_origin
+
+
+def _finalize_layout_diagnostics(
+    *,
+    request: ElkLayoutRequest,
+    lane_order: list[str],
+    lane_frames: dict[str, LayoutLaneFrame],
+    edge_paths: dict[tuple[str, str], RoutedEdgePath],
+    allowed_edges: set[tuple[str, str]],
+    diagnostics: list[RenderDiagnostic],
+    strict: bool,
+) -> None:
+    missing_lanes = [lane_id for lane_id in lane_order if lane_id not in lane_frames]
+    for lane_id in missing_lanes:
+        _append_diagnostic(
+            diagnostics,
+            code="elk-lane-frame-missing",
+            severity=_recovery_severity(strict),
+            message=f"ELK response did not produce geometry for expected lane '{lane_id}'.",
+            lane_id=lane_id,
+        )
+    missing_edges = sorted(allowed_edges.difference(edge_paths.keys()))
+    for source_id, target_id in missing_edges:
+        _append_diagnostic(
+            diagnostics,
+            code="elk-edge-missing",
+            severity=_recovery_severity(strict),
+            message=f"ELK response did not normalize requested edge '{source_id}->{target_id}'.",
+            source_id=source_id,
+            target_id=target_id,
+        )
+
+
+def _recovery_severity(strict: bool) -> RenderDiagnosticSeverity:
+    return "error" if strict else "warning"
+
+
+def _append_diagnostic(
+    diagnostics: list[RenderDiagnostic],
+    *,
+    code: str,
+    severity: RenderDiagnosticSeverity,
+    message: str,
+    **metadata: Any,
+) -> None:
+    diagnostics.append(
+        RenderDiagnostic(
+            code=code,
+            severity=severity,
+            message=message,
+            metadata={
+                key: value for key, value in metadata.items() if value not in {None, ""}
+            },
+        )
+    )
 
 
 def _edge_endpoints(

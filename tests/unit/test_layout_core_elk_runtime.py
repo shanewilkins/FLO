@@ -1,15 +1,27 @@
+import logging
+
+import pytest
+
+import flo.render.layout_core.elk_adapter as elk_adapter
+from flo.render._diagnostics import RenderDiagnostic
 from flo.render.layout_core import (
     build_flowchart_elk_layout_request,
     build_sppm_elk_layout_request,
     build_swimlane_elk_layout_request,
     execute_elk_layout,
+    LayoutBounds,
+    LayoutPoint,
+    LayoutResult,
     layout_sppm_with_elk,
     layout_swimlane_with_elk,
     normalize_elk_layout_result,
+    RoutedEdgePath,
     serialize_elk_layout_request,
     serialize_layout_result,
 )
 from flo.render.options import RenderOptions
+from flo.services.logging import configure_logging
+from flo.services.errors import RenderError
 
 
 def test_normalize_elk_layout_result_preserves_rework_edge_semantics():
@@ -66,6 +78,361 @@ def test_normalize_elk_layout_result_preserves_rework_edge_semantics():
     assert edge_path.rework_variant == "branch"
     assert edge_path.source_port_side == "SOUTH"
     assert edge_path.target_port_side == "NORTH"
+
+
+def test_normalize_elk_layout_result_balances_mainline_queue_to_task_gaps():
+    request = build_sppm_elk_layout_request(
+        {
+            "nodes": [
+                {"id": "start", "kind": "start", "name": "Start"},
+                {"id": "process_queue", "kind": "queue", "name": "Process Queue"},
+                {
+                    "id": "assess_scope_wait_queue",
+                    "kind": "queue",
+                    "name": "Assess Scope Queue",
+                },
+                {
+                    "id": "assess_scope",
+                    "kind": "task",
+                    "name": "Assess Service Scope",
+                },
+                {
+                    "id": "rework_quality_wait_queue",
+                    "kind": "queue",
+                    "name": "Rework Quality Queue",
+                },
+                {"id": "rework_quality", "kind": "task", "name": "Rework Quality"},
+                {"id": "finish", "kind": "end", "name": "Finish"},
+            ],
+            "edges": [
+                {"source": "start", "target": "process_queue"},
+                {"source": "process_queue", "target": "assess_scope_wait_queue"},
+                {"source": "assess_scope_wait_queue", "target": "assess_scope"},
+                {"source": "assess_scope", "target": "finish", "outcome": "pass"},
+                {
+                    "source": "assess_scope",
+                    "target": "rework_quality_wait_queue",
+                    "outcome": "fail",
+                    "edge_type": "rework",
+                },
+                {"source": "rework_quality_wait_queue", "target": "rework_quality"},
+                {
+                    "source": "rework_quality",
+                    "target": "assess_scope",
+                    "edge_type": "rework",
+                },
+            ],
+        },
+        options=RenderOptions(diagram="sppm", orientation="lr"),
+    )
+
+    result = normalize_elk_layout_result(
+        {
+            "id": "root",
+            "width": 5200,
+            "height": 480,
+            "children": [
+                {"id": "start", "x": 40.0, "y": 40.0, "width": 80.0, "height": 80.0},
+                {
+                    "id": "process_queue",
+                    "x": 1713.0,
+                    "y": 12.0,
+                    "width": 189.0,
+                    "height": 150.0,
+                },
+                {
+                    "id": "assess_scope_wait_queue",
+                    "x": 1958.0,
+                    "y": 12.0,
+                    "width": 214.0,
+                    "height": 150.0,
+                },
+                {
+                    "id": "assess_scope",
+                    "x": 2564.0,
+                    "y": 12.0,
+                    "width": 310.0,
+                    "height": 150.0,
+                },
+                {
+                    "id": "rework_quality_wait_queue",
+                    "x": 3400.0,
+                    "y": 220.0,
+                    "width": 220.0,
+                    "height": 150.0,
+                },
+                {
+                    "id": "rework_quality",
+                    "x": 2870.0,
+                    "y": 220.0,
+                    "width": 220.0,
+                    "height": 150.0,
+                },
+                {"id": "finish", "x": 4700.0, "y": 40.0, "width": 90.0, "height": 80.0},
+            ],
+            "edges": [
+                {
+                    "id": "e0:start->process_queue",
+                    "sources": ["start__port_east"],
+                    "targets": ["process_queue__port_west"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 120.0, "y": 80.0},
+                            "endPoint": {"x": 1713.0, "y": 87.0},
+                        }
+                    ],
+                },
+                {
+                    "id": "e1:process_queue->assess_scope_wait_queue",
+                    "sources": ["process_queue__port_east"],
+                    "targets": ["assess_scope_wait_queue__port_west"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 1902.0, "y": 87.0},
+                            "endPoint": {"x": 2011.5, "y": 87.0},
+                        }
+                    ],
+                },
+                {
+                    "id": "e2:assess_scope_wait_queue->assess_scope",
+                    "sources": ["assess_scope_wait_queue__port_east"],
+                    "targets": ["assess_scope__port_west"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 2118.5, "y": 87.0},
+                            "endPoint": {"x": 2564.0, "y": 87.0},
+                        }
+                    ],
+                },
+                {
+                    "id": "e3:assess_scope->finish",
+                    "sources": ["assess_scope__port_east"],
+                    "targets": ["finish__port_west"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 2874.0, "y": 87.0},
+                            "endPoint": {"x": 4700.0, "y": 80.0},
+                        }
+                    ],
+                },
+                {
+                    "id": "e4:assess_scope->rework_quality_wait_queue",
+                    "sources": ["assess_scope__port_south"],
+                    "targets": ["rework_quality_wait_queue__port_north"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 2719.0, "y": 162.0},
+                            "endPoint": {"x": 3510.0, "y": 220.0},
+                        }
+                    ],
+                },
+                {
+                    "id": "e5:rework_quality_wait_queue->rework_quality",
+                    "sources": ["rework_quality_wait_queue__port_west"],
+                    "targets": ["rework_quality__port_east"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 3400.0, "y": 295.0},
+                            "endPoint": {"x": 3090.0, "y": 295.0},
+                        }
+                    ],
+                },
+                {
+                    "id": "e6:rework_quality->assess_scope",
+                    "sources": ["rework_quality__port_north"],
+                    "targets": ["assess_scope__port_south"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 2980.0, "y": 220.0},
+                            "endPoint": {"x": 2719.0, "y": 162.0},
+                        }
+                    ],
+                },
+            ],
+        },
+        request=request,
+    )
+
+    process_bounds = result.node_bounds["process_queue"]
+    wait_queue_bounds = result.node_bounds["assess_scope_wait_queue"]
+    task_bounds = result.node_bounds["assess_scope"]
+
+    gap_left = wait_queue_bounds.x_px - (process_bounds.x_px + process_bounds.width_px)
+    gap_right = task_bounds.x_px - (wait_queue_bounds.x_px + wait_queue_bounds.width_px)
+
+    assert gap_left > 0.0
+    assert gap_right > 0.0
+    assert abs(gap_left - gap_right) <= 1.0
+
+
+def test_normalize_elk_layout_result_equalizes_mainline_horizontal_gaps():
+    request = build_sppm_elk_layout_request(
+        {
+            "nodes": [
+                {"id": "start", "kind": "start", "name": "Start"},
+                {"id": "q1", "kind": "queue", "name": "Queue 1"},
+                {"id": "t1", "kind": "task", "name": "Task 1"},
+                {"id": "q2", "kind": "queue", "name": "Queue 2"},
+                {"id": "t2", "kind": "task", "name": "Task 2"},
+                {"id": "rw_q", "kind": "queue", "name": "Rework Queue"},
+                {"id": "rw_t", "kind": "task", "name": "Rework Task"},
+                {"id": "finish", "kind": "end", "name": "Finish"},
+            ],
+            "edges": [
+                {"source": "start", "target": "q1"},
+                {"source": "q1", "target": "t1"},
+                {"source": "t1", "target": "q2"},
+                {"source": "q2", "target": "t2"},
+                {"source": "t2", "target": "finish", "outcome": "pass"},
+                {
+                    "source": "t2",
+                    "target": "rw_q",
+                    "outcome": "fail",
+                    "edge_type": "rework",
+                },
+                {"source": "rw_q", "target": "rw_t"},
+                {
+                    "source": "rw_t",
+                    "target": "t2",
+                    "edge_type": "rework",
+                },
+            ],
+        },
+        options=RenderOptions(diagram="sppm", orientation="lr"),
+    )
+
+    result = normalize_elk_layout_result(
+        {
+            "id": "root",
+            "width": 5200,
+            "height": 480,
+            "children": [
+                {"id": "start", "x": 40.0, "y": 40.0, "width": 80.0, "height": 80.0},
+                {"id": "q1", "x": 500.0, "y": 12.0, "width": 180.0, "height": 150.0},
+                {"id": "t1", "x": 720.0, "y": 12.0, "width": 300.0, "height": 150.0},
+                {"id": "q2", "x": 1500.0, "y": 12.0, "width": 200.0, "height": 150.0},
+                {"id": "t2", "x": 1760.0, "y": 12.0, "width": 320.0, "height": 150.0},
+                {
+                    "id": "rw_q",
+                    "x": 2400.0,
+                    "y": 220.0,
+                    "width": 220.0,
+                    "height": 150.0,
+                },
+                {
+                    "id": "rw_t",
+                    "x": 2100.0,
+                    "y": 220.0,
+                    "width": 220.0,
+                    "height": 150.0,
+                },
+                {"id": "finish", "x": 2500.0, "y": 40.0, "width": 90.0, "height": 80.0},
+            ],
+            "edges": [
+                {
+                    "id": "e0:start->q1",
+                    "sources": ["start__port_east"],
+                    "targets": ["q1__port_west"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 120.0, "y": 80.0},
+                            "endPoint": {"x": 500.0, "y": 87.0},
+                        }
+                    ],
+                },
+                {
+                    "id": "e1:q1->t1",
+                    "sources": ["q1__port_east"],
+                    "targets": ["t1__port_west"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 680.0, "y": 87.0},
+                            "endPoint": {"x": 720.0, "y": 87.0},
+                        }
+                    ],
+                },
+                {
+                    "id": "e2:t1->q2",
+                    "sources": ["t1__port_east"],
+                    "targets": ["q2__port_west"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 1020.0, "y": 87.0},
+                            "endPoint": {"x": 1500.0, "y": 87.0},
+                        }
+                    ],
+                },
+                {
+                    "id": "e3:q2->t2",
+                    "sources": ["q2__port_east"],
+                    "targets": ["t2__port_west"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 1700.0, "y": 87.0},
+                            "endPoint": {"x": 1760.0, "y": 87.0},
+                        }
+                    ],
+                },
+                {
+                    "id": "e4:t2->finish",
+                    "sources": ["t2__port_east"],
+                    "targets": ["finish__port_west"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 2080.0, "y": 87.0},
+                            "endPoint": {"x": 2500.0, "y": 80.0},
+                        }
+                    ],
+                },
+                {
+                    "id": "e5:t2->rw_q",
+                    "sources": ["t2__port_south"],
+                    "targets": ["rw_q__port_north"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 1920.0, "y": 162.0},
+                            "endPoint": {"x": 2510.0, "y": 220.0},
+                        }
+                    ],
+                },
+                {
+                    "id": "e6:rw_q->rw_t",
+                    "sources": ["rw_q__port_west"],
+                    "targets": ["rw_t__port_east"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 2400.0, "y": 295.0},
+                            "endPoint": {"x": 2320.0, "y": 295.0},
+                        }
+                    ],
+                },
+                {
+                    "id": "e7:rw_t->t2",
+                    "sources": ["rw_t__port_north"],
+                    "targets": ["t2__port_south"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 2210.0, "y": 220.0},
+                            "endPoint": {"x": 1920.0, "y": 162.0},
+                        }
+                    ],
+                },
+            ],
+        },
+        request=request,
+    )
+
+    ordered_ids = sorted(
+        ["start", "q1", "t1", "q2", "t2", "finish"],
+        key=lambda node_id: result.node_bounds[node_id].x_px,
+    )
+    gaps = []
+    for left_id, right_id in zip(ordered_ids, ordered_ids[1:]):
+        left = result.node_bounds[left_id]
+        right = result.node_bounds[right_id]
+        gaps.append(right.x_px - (left.x_px + left.width_px))
+
+    assert max(gaps) - min(gaps) <= 1.0
 
 
 def test_build_sppm_elk_layout_request_distinguishes_rework_return_edges():
@@ -199,6 +566,68 @@ def test_execute_elk_layout_round_trips_through_injected_engine():
             "edge start->finish label=done points=(140,80) -> (180,80) -> (220,80)",
         ]
     )
+
+
+def test_normalize_elk_layout_result_reports_missing_expected_edge_diagnostic():
+    request = build_flowchart_elk_layout_request(
+        {
+            "nodes": [
+                {"id": "start", "kind": "start", "name": "Start"},
+                {"id": "finish", "kind": "end", "name": "Finish"},
+            ],
+            "edges": [{"source": "start", "target": "finish"}],
+        },
+        options=RenderOptions(diagram="flowchart", orientation="lr"),
+    )
+
+    result = normalize_elk_layout_result(
+        {
+            "id": "root",
+            "width": 360,
+            "height": 160,
+            "children": [
+                {"id": "start", "x": 20, "y": 54, "width": 120, "height": 52},
+                {"id": "finish", "x": 220, "y": 54, "width": 120, "height": 52},
+            ],
+            "edges": [],
+        },
+        request=request,
+    )
+
+    assert any(
+        diagnostic.code == "elk-edge-missing" for diagnostic in result.diagnostics
+    )
+    assert all(diagnostic.severity == "warning" for diagnostic in result.diagnostics)
+
+
+def test_execute_elk_layout_raises_render_error_for_strict_diagnostics():
+    request = build_flowchart_elk_layout_request(
+        {
+            "nodes": [
+                {"id": "start", "kind": "start", "name": "Start"},
+                {"id": "finish", "kind": "end", "name": "Finish"},
+            ],
+            "edges": [{"source": "start", "target": "finish"}],
+        },
+        options=RenderOptions(
+            diagram="flowchart", orientation="lr", layout_fit="fit-strict"
+        ),
+    )
+
+    def fake_engine(_payload: dict[str, object]) -> dict[str, object]:
+        return {
+            "id": "flo:flowchart",
+            "width": 360,
+            "height": 160,
+            "children": [
+                {"id": "start", "x": 20, "y": 54, "width": 120, "height": 52},
+                {"id": "finish", "x": 220, "y": 54, "width": 120, "height": 52},
+            ],
+            "edges": [],
+        }
+
+    with pytest.raises(RenderError, match="did not normalize requested edge"):
+        execute_elk_layout(request, engine=fake_engine)
 
 
 def test_layout_swimlane_with_elk_runs_full_adapter_slice():
@@ -353,6 +782,144 @@ def test_layout_sppm_with_elk_rejects_non_sppm_options():
         assert str(exc) == "SPPM ELK adapter requires diagram='sppm'."
     else:
         raise AssertionError("Expected SPPM adapter to reject non-SPPM options")
+
+
+def test_layout_swimlane_with_elk_logs_render_diagnostics(monkeypatch, capsys):
+    def fake_execute_elk_layout(_request, *, engine):
+        return LayoutResult(
+            orientation="tb",
+            canvas_bounds=LayoutBounds(x_px=0, y_px=0, width_px=320, height_px=280),
+            node_bounds={
+                "start": LayoutBounds(x_px=36, y_px=44, width_px=120, height_px=52),
+                "review": LayoutBounds(x_px=36, y_px=180, width_px=140, height_px=52),
+            },
+            edge_paths={
+                ("start", "review"): RoutedEdgePath(
+                    edge=("start", "review"),
+                    points=(
+                        LayoutPoint(x_px=96, y_px=96),
+                        LayoutPoint(x_px=96, y_px=180),
+                    ),
+                    label="handoff",
+                )
+            },
+            diagnostics=(
+                RenderDiagnostic(
+                    code="elk-edge-missing",
+                    severity="warning",
+                    message="ELK response did not normalize requested edge 'start->review'.",
+                    metadata={"source_id": "start", "target_id": "review"},
+                ),
+            ),
+        )
+
+    root = logging.getLogger()
+    old_handlers = list(root.handlers)
+    old_level = root.level
+    try:
+        root.handlers.clear()
+        configure_logging(level=logging.INFO)
+        monkeypatch.setattr(elk_adapter, "execute_elk_layout", fake_execute_elk_layout)
+
+        result = layout_swimlane_with_elk(
+            {
+                "lanes": [{"id": "sales", "name": "Sales"}],
+                "nodes": [
+                    {"id": "start", "kind": "start", "name": "Start", "lane": "sales"},
+                    {"id": "review", "kind": "task", "name": "Review", "lane": "sales"},
+                ],
+                "edges": [
+                    {"source": "start", "target": "review", "outcome": "handoff"}
+                ],
+            },
+            engine=lambda payload: payload,
+            options=RenderOptions(diagram="swimlane", orientation="tb"),
+        )
+
+        assert result.diagnostics[0].code == "elk-edge-missing"
+        captured = capsys.readouterr()
+        assert "render_diagnostics_summary" in captured.err
+        assert "render_diagnostic" in captured.err
+        assert (
+            "backend='elk'" in captured.err
+            or 'backend="elk"' in captured.err
+            or "backend=elk" in captured.err
+        )
+        assert "layout_result" in captured.err
+        assert "start->review" in captured.err
+    finally:
+        root.handlers = old_handlers
+        root.setLevel(old_level)
+
+
+def test_layout_sppm_with_elk_logs_render_diagnostics(monkeypatch, capsys):
+    def fake_execute_elk_layout(_request, *, engine):
+        return LayoutResult(
+            orientation="lr",
+            canvas_bounds=LayoutBounds(x_px=0, y_px=0, width_px=320, height_px=160),
+            node_bounds={
+                "start": LayoutBounds(x_px=20, y_px=54, width_px=120, height_px=52),
+                "queue": LayoutBounds(x_px=180, y_px=54, width_px=120, height_px=52),
+            },
+            edge_paths={
+                ("start", "queue"): RoutedEdgePath(
+                    edge=("start", "queue"),
+                    points=(
+                        LayoutPoint(x_px=140, y_px=80),
+                        LayoutPoint(x_px=180, y_px=80),
+                    ),
+                    label="next",
+                )
+            },
+            diagnostics=(
+                RenderDiagnostic(
+                    code="elk-lane-frame-missing",
+                    severity="warning",
+                    message="ELK response did not produce geometry for expected lane 'front'.",
+                    metadata={"lane_id": "front"},
+                ),
+            ),
+        )
+
+    root = logging.getLogger()
+    old_handlers = list(root.handlers)
+    old_level = root.level
+    try:
+        root.handlers.clear()
+        configure_logging(level=logging.INFO)
+        monkeypatch.setattr(elk_adapter, "execute_elk_layout", fake_execute_elk_layout)
+
+        result = layout_sppm_with_elk(
+            {
+                "lanes": [{"id": "front", "name": "Front"}],
+                "nodes": [
+                    {"id": "start", "kind": "start", "name": "Start", "lane": "front"},
+                    {
+                        "id": "queue",
+                        "kind": "queue",
+                        "name": "Wait Queue",
+                        "lane": "front",
+                    },
+                ],
+                "edges": [{"source": "start", "target": "queue", "outcome": "next"}],
+            },
+            engine=lambda payload: payload,
+            options=RenderOptions(diagram="sppm", orientation="lr"),
+        )
+
+        assert result.diagnostics[0].code == "elk-lane-frame-missing"
+        captured = capsys.readouterr()
+        assert "render_diagnostics_summary" in captured.err
+        assert "render_diagnostic" in captured.err
+        assert (
+            "backend='elk'" in captured.err
+            or 'backend="elk"' in captured.err
+            or "backend=elk" in captured.err
+        )
+        assert "expected lane 'front'" in captured.err
+    finally:
+        root.handlers = old_handlers
+        root.setLevel(old_level)
 
 
 def test_layout_swimlane_with_elk_uses_real_runtime_when_available():

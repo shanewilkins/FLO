@@ -1,5 +1,6 @@
 """Unit tests for backend-neutral final layout geometry contracts."""
 
+from flo.render._diagnostics import RenderDiagnostic
 from flo.render.layout_core import (
     LayoutBounds,
     LayoutLaneFrame,
@@ -104,3 +105,64 @@ def test_layout_result_snapshot_is_stable():
     )
 
     assert serialize_layout_result(result) == expected
+
+
+def test_layout_result_can_materialize_render_diagnostics_report():
+    result = LayoutResult(
+        orientation="lr",
+        canvas_bounds=LayoutBounds(x_px=0, y_px=0, width_px=240, height_px=120),
+        node_bounds={
+            "start": LayoutBounds(x_px=20, y_px=34, width_px=100, height_px=52),
+            "finish": LayoutBounds(x_px=140, y_px=34, width_px=100, height_px=52),
+        },
+        edge_paths={},
+        diagnostics=(
+            RenderDiagnostic(
+                code="elk-edge-missing",
+                severity="warning",
+                message="ELK response did not normalize requested edge 'start->finish'.",
+                metadata={"source_id": "start", "target_id": "finish"},
+            ),
+        ),
+    )
+
+    report = result.diagnostics_report(
+        diagram="flowchart",
+        backend="elk",
+        artifact_kind="layout_result",
+    )
+
+    assert report.diagram == "flowchart"
+    assert report.backend == "elk"
+    assert report.artifact_kind == "layout_result"
+    assert report.warning_count == 1
+    assert report.error_count == 0
+    assert report.code_counts == {"elk-edge-missing": 1}
+    assert report.category_counts == {"missing_geometry": 1}
+    assert report.partial_output is True
+    assert report.summary == "1 warning(s) while rendering flowchart via elk"
+
+
+def test_layout_result_diagnostics_report_does_not_mark_advisory_output_as_partial():
+    result = LayoutResult(
+        orientation="lr",
+        canvas_bounds=LayoutBounds(x_px=0, y_px=0, width_px=240, height_px=120),
+        node_bounds={},
+        edge_paths={},
+        diagnostics=(
+            RenderDiagnostic(
+                code="custom-advisory-warning",
+                severity="warning",
+                message="Renderer used an advisory-only fallback note.",
+            ),
+        ),
+    )
+
+    report = result.diagnostics_report(
+        diagram="flowchart",
+        backend="elk",
+        artifact_kind="layout_result",
+    )
+
+    assert report.category_counts == {"uncategorized": 1}
+    assert report.partial_output is False
