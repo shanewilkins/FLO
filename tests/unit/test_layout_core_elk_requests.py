@@ -130,6 +130,34 @@ def test_build_swimlane_elk_layout_request_accepts_reference_example():
     )
 
 
+def test_build_sppm_elk_layout_request_parent_only_subprocess_edges_are_stable():
+    path = Path("examples/reference/chocolate_chip_cookies/process.flo")
+    adapter_model = parse_adapter(
+        path.read_text(encoding="utf-8"), source_path=str(path)
+    )
+    options = RenderOptions.from_mapping(
+        {
+            "diagram": "sppm",
+            "orientation": "lr",
+            "subprocess_view": "parent-only",
+        }
+    )
+
+    first = build_sppm_elk_layout_request(adapter_model, options=options)
+    second = build_sppm_elk_layout_request(adapter_model, options=options)
+
+    assert [edge.id for edge in first.edges] == [
+        "e0:start->prep_subprocess",
+        "e1:prep_subprocess->wet_mix_subprocess",
+        "e2:wet_mix_subprocess->add_dry_ingredients",
+        "e3:add_dry_ingredients->rest_dough",
+        "e4:rest_dough->preheat",
+        "e5:preheat->bake",
+        "e6:bake->end",
+    ]
+    assert [edge.id for edge in second.edges] == [edge.id for edge in first.edges]
+
+
 def test_build_flowchart_elk_layout_request_preserves_nodes_and_edges_without_lanes():
     process = {
         "lanes": [

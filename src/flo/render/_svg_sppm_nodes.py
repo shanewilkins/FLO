@@ -65,7 +65,7 @@ def _node_svg(
             lines=title_lines,
             size_px=14,
             weight="600",
-            fill=appearance.title_fill,
+            fill="#0f172a" if kind == "queue" else appearance.title_fill,
             line_gap_px=16.0,
             anchor="middle",
         )
@@ -111,10 +111,22 @@ def _append_node_shape_svg(
         return cy - ((_line_count(title_lines) - 1) * 8.0) + 5.0, None
     if kind == "queue":
         cx = x + (width / 2.0)
+        label_band_height = min(32.0, height * 0.24)
+        label_band_top = y + height - label_band_height
+        inset = (label_band_height / height) * (width / 2.0)
         parts.append(
-            f'<polygon points="{x:.1f},{y + height:.1f} {x + width:.1f},{y + height:.1f} {cx:.1f},{y:.1f}" fill="{appearance.fill}" stroke="{appearance.border}" stroke-width="2" />'
+            f'<polygon data-node-queue-body="true" points="{x:.1f},{y + height:.1f} {x + width:.1f},{y + height:.1f} {cx:.1f},{y:.1f}" fill="#ffffff" stroke="{appearance.border}" stroke-width="2" />'
         )
-        return y + height - 18.0 - ((_line_count(title_lines) - 1) * 8.0), None
+        parts.append(
+            f'<polygon data-node-queue-label-band="true" points="{x:.1f},{y + height:.1f} {x + width:.1f},{y + height:.1f} {x + width - inset:.1f},{label_band_top:.1f} {x + inset:.1f},{label_band_top:.1f}" fill="{appearance.fill}" stroke="none" />'
+        )
+        return (
+            label_band_top
+            + (label_band_height / 2.0)
+            + 5.0
+            - ((_line_count(title_lines) - 1) * 8.0),
+            None,
+        )
     if kind == "subprocess":
         cx = x + (width / 2.0)
         cy = y + (height / 2.0)
@@ -147,17 +159,6 @@ def _append_node_shape_svg(
         parts.append(
             f'<line x1="{x:.1f}" y1="{y + header_height:.1f}" x2="{x + width:.1f}" y2="{y + header_height:.1f}" stroke="{appearance.border}" stroke-width="1" opacity="0.35" />'
         )
-        if task_card is not None:
-            left_rail_x = x + task_card.gutter_width_px
-            right_rail_x = x + width - task_card.gutter_width_px
-            body_top = y + header_height
-            body_bottom = y + height
-            parts.append(
-                f'<line data-node-port-rail="in" x1="{left_rail_x:.1f}" y1="{body_top:.1f}" x2="{left_rail_x:.1f}" y2="{body_bottom:.1f}" stroke="{appearance.border}" stroke-width="0.8" opacity="0.20" />'
-            )
-            parts.append(
-                f'<line data-node-port-rail="out" x1="{right_rail_x:.1f}" y1="{body_top:.1f}" x2="{right_rail_x:.1f}" y2="{body_bottom:.1f}" stroke="{appearance.border}" stroke-width="0.8" opacity="0.20" />'
-            )
     return y + 18.0, header_height
 
 
@@ -180,8 +181,8 @@ def _node_info_lines_svg(
     if kind == "queue":
         info_line_count = _line_count(info_lines)
         info_start_y = max(
-            y + 20.0,
-            (y + (height * 0.42)) - ((info_line_count - 1) * 6.5),
+            y + 26.0,
+            (y + (height * 0.34)) - ((info_line_count - 1) * 6.5),
         )
         return _text_lines_svg(
             x=x + (width / 2.0),
@@ -189,7 +190,7 @@ def _node_info_lines_svg(
             lines=info_lines,
             size_px=11,
             weight="400",
-            fill=appearance.info_fill,
+            fill="#0f172a",
             line_gap_px=13.0,
             anchor="middle",
         )

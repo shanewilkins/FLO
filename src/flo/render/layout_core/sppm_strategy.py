@@ -21,9 +21,9 @@ _ENV_SPACING_PROFILE = "FLO_SPPM_SPACING_PROFILE"
 class SppmLayoutStrategy:
     """Resolved strategy controls for SPPM ELK request shaping."""
 
-    partition_mode: SppmPartitionMode = "chain_progressive"
+    partition_mode: SppmPartitionMode = "branch_aligned"
     port_constraints: SppmPortConstraintsMode = "fixed_order"
-    helper_anchors: SppmHelperAnchorMode = "off"
+    helper_anchors: SppmHelperAnchorMode = "always"
     spacing_profile: SppmSpacingProfile = "balanced"
 
 
@@ -66,7 +66,7 @@ def sppm_spacing_values() -> tuple[str, str]:
 
 
 def _read_partition_mode() -> SppmPartitionMode:
-    value = os.getenv(_ENV_PARTITION_MODE, "chain_progressive").strip().lower()
+    value = os.getenv(_ENV_PARTITION_MODE, "branch_aligned").strip().lower()
     if value == "chain_progressive":
         return "chain_progressive"
     return "branch_aligned"
@@ -80,7 +80,7 @@ def _read_port_constraints_mode() -> SppmPortConstraintsMode:
 
 
 def _read_helper_anchor_mode() -> SppmHelperAnchorMode:
-    value = os.getenv(_ENV_HELPER_ANCHORS, "off").strip().lower()
+    value = os.getenv(_ENV_HELPER_ANCHORS, "always").strip().lower()
     if value == "off":
         return "off"
     if value == "conditional":

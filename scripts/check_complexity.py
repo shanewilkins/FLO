@@ -19,6 +19,7 @@ except Exception:  # pragma: no cover - missing optional dep
 
 
 THRESHOLD = 15
+REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 EXCLUDED_FILES = {
     "src/flo/render/layout_core/elk.py",
     "src/flo/render/layout_core/elk_sppm_helpers.py",
@@ -27,7 +28,11 @@ EXCLUDED_FILES = {
 
 
 def _normalized(path: pathlib.Path) -> str:
-    return path.as_posix().lstrip("./")
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return resolved.as_posix().lstrip("./")
 
 
 def _is_excluded(path: pathlib.Path) -> bool:
@@ -72,7 +77,7 @@ def gather_files(args: Sequence[str]) -> list[pathlib.Path]:
         files = [pathlib.Path(a) for a in args if a.endswith(".py")]
         return [path for path in files if not _is_excluded(path)]
     # default: check all project python files under src
-    base = pathlib.Path(__file__).resolve().parents[1] / "src"
+    base = REPO_ROOT / "src"
     return [p for p in base.rglob("*.py")]
 
 

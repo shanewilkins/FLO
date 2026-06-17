@@ -6,6 +6,7 @@ from html import escape
 from typing import Any
 
 from flo.schema.render_metadata import PROCESS_METADATA_PROCESS_NAME_KEY
+from flo.services.errors import RenderError
 
 from ._artifact import RenderArtifact
 from ._diagnostics import (
@@ -23,6 +24,8 @@ from ._svg_sppm_edges import _lane_header_avoid_bounds
 from ._svg_sppm_nodes import _node_svg
 from ._svg_sppm_rows import _display_canvas_bounds
 from ._svg_sppm_rows import _enforce_sppm_row_alignment
+from ._svg_sppm_rows import _sppm_row_ids
+from ._svg_sppm_rows import rework_alignment_diagnostics
 from ._svg_sppm_rows import row_gap_diagnostics
 from .layout_core import build_sppm_elk_layout_request, execute_elk_layout
 from .layout_core.elk_runtime import run_elkjs_layout
@@ -30,6 +33,12 @@ from .layout_core.models import LayoutBounds
 from .options import RenderOptions
 
 _PADDING = 28.0
+_STRICT_POSTPROCESS_CODES = {
+    "sppm-annotation-overlap-fallback",
+    "sppm-attachment-miss-distance",
+    "sppm-branch-alignment-delta",
+    "sppm-return-alignment-delta",
+}
 
 __all__ = [
     "render_sppm_svg_artifact",
@@ -37,6 +46,7 @@ __all__ = [
     "_edge_callout_placement",
     "_label_placement",
     "_lane_header_avoid_bounds",
+    "rework_alignment_diagnostics",
     "row_gap_diagnostics",
 ]
 
@@ -52,20 +62,20 @@ def render_sppm_svg_artifact(
         edge_paths=result.edge_paths,
         lanes=result.lanes,
     )
-    postprocess_diagnostics = row_gap_diagnostics(
-        node_bounds=display_node_bounds,
-        lanes=result.lanes,
-        edge_paths=display_edge_paths,
+    postprocess_diagnostics = list(
+        row_gap_diagnostics(
+            node_bounds=display_node_bounds,
+            lanes=result.lanes,
+            edge_paths=display_edge_paths,
+        )
     )
-    diagnostics = tuple(result.diagnostics) + tuple(postprocess_diagnostics)
-    diagnostics_report = build_render_diagnostics_report(
-        diagnostics,
-        diagram="sppm",
-        backend="svg",
-        artifact_kind="svg",
-        strict=options.layout_fit == "fit-strict",
+    postprocess_diagnostics.extend(
+        rework_alignment_diagnostics(
+            node_bounds=display_node_bounds,
+            lanes=result.lanes,
+            edge_paths=display_edge_paths,
+        )
     )
-    log_render_diagnostics(diagnostics_report)
     display_canvas_bounds = _display_canvas_bounds(
         base_canvas=result.canvas_bounds,
         node_bounds=display_node_bounds,
@@ -116,6 +126,11 @@ def render_sppm_svg_artifact(
     node_kind_by_id = {
         str(node.id): str(node.kind or "task").lower() for node in request.nodes
     }
+    _mainline_ids, rework_ids = _sppm_row_ids(
+        lanes=result.lanes,
+        node_bounds=display_node_bounds,
+        edge_paths=display_edge_paths,
+    )
     occupied_annotation_bounds: list[LayoutBounds] = []
     for edge_key in sorted(display_edge_paths.keys()):
         source_id, target_id = edge_key
@@ -127,9 +142,27 @@ def render_sppm_svg_artifact(
             target_kind=node_kind_by_id.get(target_id, "task"),
             avoid_bounds=avoid_bounds + tuple(occupied_annotation_bounds),
             canvas_bounds=canvas_bounds,
+            diagnostics=postprocess_diagnostics,
+            render_as_rework_style=(
+                source_id in rework_ids and target_id in rework_ids
+            ),
         )
         parts.extend(edge_parts)
         occupied_annotation_bounds.extend(annotation_bounds)
+
+    diagnostics = tuple(result.diagnostics) + tuple(postprocess_diagnostics)
+    _raise_for_strict_postprocess_diagnostics(
+        diagnostics=diagnostics,
+        strict=options.layout_fit == "fit-strict",
+    )
+    diagnostics_report = build_render_diagnostics_report(
+        diagnostics,
+        diagram="sppm",
+        backend="svg",
+        artifact_kind="svg",
+        strict=options.layout_fit == "fit-strict",
+    )
+    log_render_diagnostics(diagnostics_report)
 
     for node in request.nodes:
         bounds = display_node_bounds.get(node.id)
@@ -163,6 +196,25 @@ def render_sppm_svg_artifact(
             },
         ),
         None,
+    )
+
+
+def _raise_for_strict_postprocess_diagnostics(
+    *, diagnostics: tuple[Any, ...], strict: bool
+) -> None:
+    if not strict:
+        return
+    blocking = [
+        diagnostic
+        for diagnostic in diagnostics
+        if getattr(diagnostic, "code", "") in _STRICT_POSTPROCESS_CODES
+    ]
+    if not blocking:
+        return
+    first = blocking[0]
+    raise RenderError(
+        "Strict SPPM post-process diagnostics failed: "
+        f"{getattr(first, 'code', 'unknown')} - {getattr(first, 'message', '')}"
     )
 
 

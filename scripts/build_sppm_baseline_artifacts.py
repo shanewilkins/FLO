@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from dataclasses import asdict
 import json
+import os
 from pathlib import Path
 import shutil
 import sys
@@ -17,6 +18,10 @@ if str(SRC_ROOT) not in sys.path:
 
 DEFAULT_MANIFEST = REPO_ROOT / "examples" / "conformance" / "sppm_corpus.json"
 DEFAULT_OUTDIR = REPO_ROOT / "renders" / "conformance" / "sppm_baseline"
+ENV_PARTITION_MODE = "FLO_SPPM_PARTITION_MODE"
+ENV_PORT_CONSTRAINTS = "FLO_SPPM_PORT_CONSTRAINTS"
+ENV_HELPER_ANCHORS = "FLO_SPPM_HELPER_ANCHORS"
+ENV_SPACING_PROFILE = "FLO_SPPM_SPACING_PROFILE"
 
 
 def main() -> int:
@@ -39,11 +44,17 @@ def main() -> int:
         action="store_true",
         help="Remove output directory before generation.",
     )
+    parser.add_argument(
+        "--case-id",
+        action="append",
+        default=[],
+        help="Optional case id to build. Repeat to limit generation to a subset.",
+    )
     args = parser.parse_args()
 
     manifest_path = _resolve_repo_path(args.manifest)
     outdir = _resolve_repo_path(args.outdir)
-    cases = _load_cases(manifest_path)
+    cases = _filter_cases(_load_cases(manifest_path), case_ids=args.case_id)
 
     if args.clean and outdir.exists():
         shutil.rmtree(outdir)
@@ -87,6 +98,20 @@ def _load_cases(manifest_path: Path) -> list[dict[str, Any]]:
     return cases
 
 
+def _filter_cases(cases: list[dict[str, Any]], *, case_ids: list[str]) -> list[dict[str, Any]]:
+    if not case_ids:
+        return cases
+    wanted = {case_id.strip() for case_id in case_ids if case_id.strip()}
+    if not wanted:
+        return cases
+    filtered = [case for case in cases if str(case.get("id")) in wanted]
+    missing = sorted(wanted.difference(str(case.get("id")) for case in filtered))
+    if missing:
+        missing_text = ", ".join(missing)
+        raise ValueError(f"Unknown case id(s): {missing_text}")
+    return filtered
+
+
 def _build_case(*, case: dict[str, Any], outdir: Path) -> None:
     from flo.adapters import parse_adapter
     from flo.render._svg_sppm import render_sppm_svg_artifact
@@ -96,6 +121,7 @@ def _build_case(*, case: dict[str, Any], outdir: Path) -> None:
         run_elkjs_layout,
         serialize_elk_layout_request,
     )
+    from flo.render.layout_core.sppm_strategy import current_sppm_layout_strategy
     from flo.render.options import RenderOptions
 
     case_id = str(case["id"])
@@ -117,6 +143,7 @@ def _build_case(*, case: dict[str, Any], outdir: Path) -> None:
     normalized_layout = normalize_elk_layout_result(response_payload, request=request)
 
     svg_artifact, _ = render_sppm_svg_artifact(model, options)
+    strategy = current_sppm_layout_strategy()
 
     case_dir = outdir / case_id
     case_dir.mkdir(parents=True, exist_ok=True)
@@ -127,6 +154,19 @@ def _build_case(*, case: dict[str, Any], outdir: Path) -> None:
             "id": case_id,
             "input": str(source_path.relative_to(REPO_ROOT)),
             "options": options_mapping,
+            "strategy_profile": _strategy_profile_id(),
+            "strategy": {
+                "partition_mode": strategy.partition_mode,
+                "port_constraints": strategy.port_constraints,
+                "helper_anchors": strategy.helper_anchors,
+                "spacing_profile": strategy.spacing_profile,
+            },
+            "strategy_env": {
+                ENV_PARTITION_MODE: os.getenv(ENV_PARTITION_MODE),
+                ENV_PORT_CONSTRAINTS: os.getenv(ENV_PORT_CONSTRAINTS),
+                ENV_HELPER_ANCHORS: os.getenv(ENV_HELPER_ANCHORS),
+                ENV_SPACING_PROFILE: os.getenv(ENV_SPACING_PROFILE),
+            },
         },
     )
     _write_json(case_dir / "elk_request.json", request_payload)
@@ -136,7 +176,7 @@ def _build_case(*, case: dict[str, Any], outdir: Path) -> None:
     )
     (case_dir / "render.svg").write_text(svg_artifact.content, encoding="utf-8")
 
-    print(f"Built: {case_dir.relative_to(REPO_ROOT)}")
+    print(f"Built: {_display_path(case_dir)}")
 
 
 def _layout_result_to_jsonable(result: Any) -> dict[str, Any]:
@@ -189,6 +229,28 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(
         json.dumps(payload, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
+    )
+
+
+def _display_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
+def _strategy_profile_id() -> str:
+    values = {
+        ENV_PARTITION_MODE: os.getenv(ENV_PARTITION_MODE, "branch_aligned").strip().lower() or "branch_aligned",
+        ENV_PORT_CONSTRAINTS: os.getenv(ENV_PORT_CONSTRAINTS, "fixed_order").strip().lower() or "fixed_order",
+        ENV_HELPER_ANCHORS: os.getenv(ENV_HELPER_ANCHORS, "always").strip().lower() or "always",
+        ENV_SPACING_PROFILE: os.getenv(ENV_SPACING_PROFILE, "balanced").strip().lower() or "balanced",
+    }
+    return (
+        f"part={values[ENV_PARTITION_MODE]}|"
+        f"port={values[ENV_PORT_CONSTRAINTS]}|"
+        f"anchors={values[ENV_HELPER_ANCHORS]}|"
+        f"space={values[ENV_SPACING_PROFILE]}"
     )
 
 

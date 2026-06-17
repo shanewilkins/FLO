@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from html import escape
 from typing import Any
 
+from ._diagnostics import RenderDiagnostic
 from ._svg_sppm_nodes import _text_lines_svg
 from ._svg_sppm_edge_segments import (
     _candidate_segment_indexes,
@@ -16,6 +17,7 @@ from .layout_core.models import LayoutBounds, LayoutPoint
 
 _LANE_HEADER_AVOID_HEIGHT_PX = 34.0
 _SPPM_SYNTHETIC_ROW_PREFIX = "__sppm_row_"
+_ATTACHMENT_MISS_WARN_PX = 24.0
 
 
 @dataclass(frozen=True)
@@ -34,26 +36,33 @@ def _edge_svg(
     target_kind: str = "task",
     avoid_bounds: tuple[Any, ...] = (),
     canvas_bounds: Any | None = None,
+    diagnostics: list[RenderDiagnostic] | None = None,
+    render_as_rework_style: bool = False,
 ) -> tuple[list[str], tuple[LayoutBounds, ...]]:
-    rework_edge = bool(edge_path.is_rework)
-    points = _normalize_rework_edge_points(
+    rework_edge = bool(edge_path.is_rework or render_as_rework_style)
+    original_points = _normalize_rework_edge_points(
         edge_path.points,
         is_rework=rework_edge,
         rework_variant=str(edge_path.rework_variant or ""),
     )
     points = _clip_edge_points_to_node_bounds(
-        points,
+        original_points,
         source_bounds=source_bounds,
         source_kind=source_kind,
         target_bounds=target_bounds,
         target_kind=target_kind,
+        diagnostics=diagnostics,
+        edge_id=f"{edge_path.edge[0]}->{edge_path.edge[1]}",
     )
     if len(points) < 2:
         return [], ()
     polyline = " ".join(f"{point.x_px:.1f},{point.y_px:.1f}" for point in points)
     edge_kind = "rework" if rework_edge else "direct"
     rework_variant = str(edge_path.rework_variant or "")
-    stroke, dash_pattern, stroke_width = _edge_stroke(edge_path)
+    stroke, dash_pattern, stroke_width = _edge_stroke(
+        edge_path,
+        render_as_rework_style=render_as_rework_style,
+    )
     dash_attrs = f' stroke-dasharray="{dash_pattern}"' if dash_pattern else ""
     annotation_bounds: list[LayoutBounds] = []
     parts = [
@@ -92,6 +101,11 @@ def _edge_svg(
                 box_width=label_width,
                 box_height=18.0,
                 canvas_bounds=canvas_bounds,
+                diagnostics=diagnostics,
+                diagnostic_context={
+                    "annotation_kind": "edge_label",
+                    "edge": f"{edge_path.edge[0]}->{edge_path.edge[1]}",
+                },
             )
         label_text = escape(edge_path.label)
         parts.append(
@@ -116,6 +130,11 @@ def _edge_svg(
             rework_edge=rework_edge,
             avoid_bounds=avoid_bounds + tuple(annotation_bounds),
             canvas_bounds=canvas_bounds,
+            diagnostics=diagnostics,
+            diagnostic_context={
+                "annotation_kind": "edge_callout",
+                "edge": f"{edge_path.edge[0]}->{edge_path.edge[1]}",
+            },
         )
         parts.extend(callout_parts)
         annotation_bounds.extend(callout_bounds)
@@ -148,6 +167,8 @@ def _label_placement(
     box_width: float = 28.0,
     box_height: float = 18.0,
     canvas_bounds: Any | None = None,
+    diagnostics: list[RenderDiagnostic] | None = None,
+    diagnostic_context: dict[str, Any] | None = None,
 ) -> _LabelPlacement:
     preferred_index = (
         _first_rightward_horizontal_segment_index(points)
@@ -196,6 +217,8 @@ def _label_placement(
         segment_dx=dx,
         segment_dy=dy,
         canvas_bounds=canvas_bounds,
+        diagnostics=diagnostics,
+        diagnostic_context=diagnostic_context,
     )
 
 
@@ -208,6 +231,8 @@ def _edge_callout_svg(
     rework_edge: bool,
     avoid_bounds: tuple[Any, ...] = (),
     canvas_bounds: Any | None = None,
+    diagnostics: list[RenderDiagnostic] | None = None,
+    diagnostic_context: dict[str, Any] | None = None,
 ) -> tuple[list[str], tuple[LayoutBounds, ...]]:
     max_chars = max(len(line) for line in lines)
     width = max(88.0, float(max_chars * 6.7) + 18.0)
@@ -221,6 +246,8 @@ def _edge_callout_svg(
         box_width=width,
         box_height=height,
         canvas_bounds=canvas_bounds,
+        diagnostics=diagnostics,
+        diagnostic_context=diagnostic_context,
     )
     x = placement.x - (width / 2.0)
     y = placement.y - 12.0
@@ -258,6 +285,8 @@ def _edge_callout_placement(
     box_width: float = 88.0,
     box_height: float = 40.0,
     canvas_bounds: Any | None = None,
+    diagnostics: list[RenderDiagnostic] | None = None,
+    diagnostic_context: dict[str, Any] | None = None,
 ) -> _LabelPlacement:
     segment_index = _callout_segment_index(
         points,
@@ -289,6 +318,8 @@ def _edge_callout_placement(
         segment_dx=dx,
         segment_dy=dy,
         canvas_bounds=canvas_bounds,
+        diagnostics=diagnostics,
+        diagnostic_context=diagnostic_context,
     )
 
 
@@ -318,14 +349,25 @@ def _avoid_bounds_overlap(
     segment_dx: float,
     segment_dy: float,
     canvas_bounds: Any | None,
+    diagnostics: list[RenderDiagnostic] | None = None,
+    diagnostic_context: dict[str, Any] | None = None,
 ) -> _LabelPlacement:
     if not avoid_bounds:
-        return _clamp_placement_to_canvas(
+        final_candidate = _clamp_placement_to_canvas(
             placement,
             box_width=box_width,
             box_height=box_height,
             canvas_bounds=canvas_bounds,
         )
+        _record_overlap_fallback_diagnostic(
+            placement=final_candidate,
+            box_width=box_width,
+            box_height=box_height,
+            avoid_bounds=avoid_bounds,
+            diagnostics=diagnostics,
+            diagnostic_context=diagnostic_context,
+        )
+        return final_candidate
 
     if abs(segment_dx) >= abs(segment_dy):
         candidate_offsets = (0.0, -28.0, 28.0, -56.0, 56.0, -84.0, 84.0)
@@ -348,12 +390,21 @@ def _avoid_bounds_overlap(
                 avoid_bounds=avoid_bounds,
             ):
                 return candidate
-        return _clamp_placement_to_canvas(
+        final_candidate = _clamp_placement_to_canvas(
             placement,
             box_width=box_width,
             box_height=box_height,
             canvas_bounds=canvas_bounds,
         )
+        _record_overlap_fallback_diagnostic(
+            placement=final_candidate,
+            box_width=box_width,
+            box_height=box_height,
+            avoid_bounds=avoid_bounds,
+            diagnostics=diagnostics,
+            diagnostic_context=diagnostic_context,
+        )
+        return final_candidate
 
     candidate_offsets = (0.0, -28.0, 28.0, -56.0, 56.0, -84.0, 84.0)
     for offset in candidate_offsets:
@@ -375,11 +426,60 @@ def _avoid_bounds_overlap(
             avoid_bounds=avoid_bounds,
         ):
             return candidate
-    return _clamp_placement_to_canvas(
+    final_candidate = _clamp_placement_to_canvas(
         placement,
         box_width=box_width,
         box_height=box_height,
         canvas_bounds=canvas_bounds,
+    )
+    _record_overlap_fallback_diagnostic(
+        placement=final_candidate,
+        box_width=box_width,
+        box_height=box_height,
+        avoid_bounds=avoid_bounds,
+        diagnostics=diagnostics,
+        diagnostic_context=diagnostic_context,
+    )
+    return final_candidate
+
+
+def _record_overlap_fallback_diagnostic(
+    *,
+    placement: _LabelPlacement,
+    box_width: float,
+    box_height: float,
+    avoid_bounds: tuple[Any, ...],
+    diagnostics: list[RenderDiagnostic] | None,
+    diagnostic_context: dict[str, Any] | None,
+) -> None:
+    if diagnostics is None:
+        return
+    if not _placement_overlaps_bounds(
+        placement,
+        box_width=box_width,
+        box_height=box_height,
+        avoid_bounds=avoid_bounds,
+    ):
+        return
+    metadata = dict(diagnostic_context or {})
+    metadata.update(
+        {
+            "x": round(placement.x, 2),
+            "y": round(placement.y, 2),
+            "box_width": round(box_width, 2),
+            "box_height": round(box_height, 2),
+            "avoid_bounds_count": len(avoid_bounds),
+        }
+    )
+    diagnostics.append(
+        RenderDiagnostic(
+            code="sppm-annotation-overlap-fallback",
+            severity="warning",
+            message=(
+                "SPPM annotation placement fell back to a placement that still overlaps existing bounds."
+            ),
+            metadata=metadata,
+        )
     )
 
 
@@ -478,15 +578,19 @@ def _edge_token_placement(points: Any, *, near_source: bool) -> _LabelPlacement:
     return _LabelPlacement(x=anchor.x_px + horizontal, y=anchor.y_px + vertical)
 
 
-def _edge_stroke(edge_path: Any) -> tuple[str, str | None, float]:
-    if not bool(edge_path.is_rework):
+def _edge_stroke(
+    edge_path: Any,
+    *,
+    render_as_rework_style: bool = False,
+) -> tuple[str, str | None, float]:
+    if not bool(edge_path.is_rework or render_as_rework_style):
         return "#475569", None, 2.5
     variant = str(edge_path.rework_variant or "")
     if variant == "branch":
-        return "#b91c1c", "8 6", 2.6
+        return "#b91c1c", "2 6", 2.6
     if variant == "return":
-        return "#c2410c", "4 6", 2.4
-    return "#b91c1c", "8 6", 2.5
+        return "#c2410c", "2 6", 2.4
+    return "#b91c1c", "2 6", 2.5
 
 
 def _edge_variant_attr(rework_variant: str) -> str:
@@ -569,24 +673,102 @@ def _clip_edge_points_to_node_bounds(
     source_kind: str,
     target_bounds: LayoutBounds | None,
     target_kind: str,
+    diagnostics: list[RenderDiagnostic] | None = None,
+    edge_id: str | None = None,
 ) -> tuple[LayoutPoint, ...]:
     if len(points) < 2:
         return points
 
     clipped_points = list(points)
     if source_bounds is not None:
+        original_source = clipped_points[0]
         clipped_points[0] = _shape_edge_point(
             bounds=source_bounds,
             kind=source_kind,
             toward=clipped_points[1],
         )
+        _record_attachment_quality_diagnostic(
+            diagnostics=diagnostics,
+            edge_id=edge_id,
+            endpoint_role="source",
+            node_kind=source_kind,
+            node_bounds=source_bounds,
+            original_point=original_source,
+            clipped_point=clipped_points[0],
+        )
     if target_bounds is not None:
+        original_target = clipped_points[-1]
         clipped_points[-1] = _shape_edge_point(
             bounds=target_bounds,
             kind=target_kind,
             toward=clipped_points[-2],
         )
+        _record_attachment_quality_diagnostic(
+            diagnostics=diagnostics,
+            edge_id=edge_id,
+            endpoint_role="target",
+            node_kind=target_kind,
+            node_bounds=target_bounds,
+            original_point=original_target,
+            clipped_point=clipped_points[-1],
+        )
     return tuple(clipped_points)
+
+
+def _record_attachment_quality_diagnostic(
+    *,
+    diagnostics: list[RenderDiagnostic] | None,
+    edge_id: str | None,
+    endpoint_role: str,
+    node_kind: str,
+    node_bounds: LayoutBounds,
+    original_point: LayoutPoint,
+    clipped_point: LayoutPoint,
+) -> None:
+    if diagnostics is None:
+        return
+    miss_distance_px = _point_distance(original_point, clipped_point)
+    allowed_miss_px = _attachment_miss_warn_px(
+        node_kind=node_kind,
+        node_bounds=node_bounds,
+    )
+    if miss_distance_px <= allowed_miss_px:
+        return
+    diagnostics.append(
+        RenderDiagnostic(
+            code="sppm-attachment-miss-distance",
+            severity="warning",
+            message=(
+                "SPPM endpoint clipping required a large attachment correction from the ELK endpoint."
+            ),
+            metadata={
+                "edge": edge_id,
+                "endpoint_role": endpoint_role,
+                "node_kind": str(node_kind or "task").lower(),
+                "miss_distance_px": round(miss_distance_px, 2),
+                "max_expected_miss_px": round(allowed_miss_px, 2),
+                "original_x": round(original_point.x_px, 2),
+                "original_y": round(original_point.y_px, 2),
+                "clipped_x": round(clipped_point.x_px, 2),
+                "clipped_y": round(clipped_point.y_px, 2),
+            },
+        )
+    )
+
+
+def _attachment_miss_warn_px(*, node_kind: str, node_bounds: LayoutBounds) -> float:
+    normalized_kind = str(node_kind or "task").lower()
+    if normalized_kind == "queue":
+        # ELK attaches to the queue's bounding box, while SVG clips to the inset
+        # triangle face. The expected horizontal correction is one quarter width.
+        return max(_ATTACHMENT_MISS_WARN_PX, float(node_bounds.width_px) / 4.0)
+    return _ATTACHMENT_MISS_WARN_PX
+
+
+def _point_distance(first: LayoutPoint, second: LayoutPoint) -> float:
+    dx = float(first.x_px - second.x_px)
+    dy = float(first.y_px - second.y_px)
+    return (dx * dx + dy * dy) ** 0.5
 
 
 def _shape_edge_point(

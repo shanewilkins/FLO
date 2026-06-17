@@ -167,7 +167,7 @@ def test_run_sppm_svg_export_emits_svg(tmp_path):
     assert "SPPM SVG Demo" in result.output
     assert "Coordinator" in result.output
     assert "CT: 4 min" in result.output
-    assert 'data-node-port-rail="in"' in result.output
+    assert 'data-node-port-rail="in"' not in result.output
 
 
 def test_run_svg_export_rejects_graphviz_backend_override(tmp_path, caplog):

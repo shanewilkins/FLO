@@ -9,6 +9,7 @@ from ._diagnostics import RenderDiagnostic
 from .layout_core.models import LayoutBounds, LayoutPoint
 
 _MIN_MAINLINE_REWORK_GAP_PX = 56.0
+_MAX_REWORK_ALIGNMENT_DELTA_PX = 48.0
 
 
 def _enforce_sppm_row_alignment(
@@ -189,6 +190,91 @@ def row_gap_diagnostics(
                 "min_gap_px": _MIN_MAINLINE_REWORK_GAP_PX,
             },
         ),
+    )
+
+
+def rework_alignment_diagnostics(
+    *,
+    node_bounds: dict[str, LayoutBounds],
+    lanes: tuple[Any, ...],
+    edge_paths: dict[tuple[str, str], Any],
+) -> tuple[RenderDiagnostic, ...]:
+    """Report warnings when rework branch/return alignment drifts from intent."""
+    mainline_ids, rework_ids = _sppm_row_ids(
+        lanes=lanes,
+        node_bounds=node_bounds,
+        edge_paths=edge_paths,
+    )
+    if not mainline_ids or not rework_ids:
+        return ()
+
+    diagnostics: list[RenderDiagnostic] = []
+    for (source_id, target_id), edge_path in edge_paths.items():
+        variant = str(getattr(edge_path, "rework_variant", "") or "")
+        if (
+            variant == "branch"
+            and source_id in mainline_ids
+            and target_id in rework_ids
+        ):
+            _append_alignment_diagnostic(
+                diagnostics=diagnostics,
+                node_bounds=node_bounds,
+                reference_id=source_id,
+                candidate_id=target_id,
+                code="sppm-branch-alignment-delta",
+                message=(
+                    "SPPM rework branch target drifted away from its branch-source alignment intent."
+                ),
+            )
+        if (
+            variant == "return"
+            and source_id in rework_ids
+            and target_id in mainline_ids
+        ):
+            _append_alignment_diagnostic(
+                diagnostics=diagnostics,
+                node_bounds=node_bounds,
+                reference_id=target_id,
+                candidate_id=source_id,
+                code="sppm-return-alignment-delta",
+                message=(
+                    "SPPM rework return source drifted away from its reintegration-target alignment intent."
+                ),
+            )
+
+    return tuple(diagnostics)
+
+
+def _append_alignment_diagnostic(
+    *,
+    diagnostics: list[RenderDiagnostic],
+    node_bounds: dict[str, LayoutBounds],
+    reference_id: str,
+    candidate_id: str,
+    code: str,
+    message: str,
+) -> None:
+    reference_bounds = node_bounds.get(reference_id)
+    candidate_bounds = node_bounds.get(candidate_id)
+    if reference_bounds is None or candidate_bounds is None:
+        return
+    reference_center_x = reference_bounds.x_px + (reference_bounds.width_px / 2.0)
+    candidate_center_x = candidate_bounds.x_px + (candidate_bounds.width_px / 2.0)
+    delta_px = abs(candidate_center_x - reference_center_x)
+    if delta_px <= _MAX_REWORK_ALIGNMENT_DELTA_PX:
+        return
+    diagnostics.append(
+        RenderDiagnostic(
+            code=code,
+            severity="warning",
+            message=message,
+            metadata={
+                "reference_node": reference_id,
+                "candidate_node": candidate_id,
+                "alignment_delta_px": round(delta_px, 2),
+                "max_expected_delta_px": _MAX_REWORK_ALIGNMENT_DELTA_PX,
+            },
+        )
     )
 
 

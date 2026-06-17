@@ -164,28 +164,46 @@ def project_parent_only_subprocess_view(
     edges: list[dict[str, Any]],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Hide subprocess parent nodes and reconnect visible edges across them."""
-    hidden_ids = {
-        str(node.get("id") or "")
-        for node in nodes
-        if str(node.get("id") or "") and _subprocess_parent(node)
-    }
+    hidden_ids = _hidden_subprocess_parent_ids(nodes)
     if not hidden_ids:
         return nodes, edges
 
-    visible_nodes = [
-        node
-        for node in nodes
-        if (node_id := str(node.get("id") or "")) and node_id not in hidden_ids
-    ]
-    visible_ids = {
-        str(node.get("id") or "") for node in visible_nodes if str(node.get("id") or "")
-    }
+    visible_nodes = _visible_non_hidden_nodes(nodes, hidden_ids=hidden_ids)
+    visible_ids = _node_ids(visible_nodes)
     outgoing = _index_outgoing_edges(edges)
+    visible_order = _node_id_order(visible_nodes)
     return visible_nodes, _collapse_hidden_edges(
+        visible_order=visible_order,
         visible_ids=visible_ids,
         hidden_ids=hidden_ids,
         outgoing=outgoing,
     )
+
+
+def _hidden_subprocess_parent_ids(nodes: list[dict[str, Any]]) -> set[str]:
+    return {
+        node_id
+        for node in nodes
+        if (node_id := str(node.get("id") or "")) and _subprocess_parent(node)
+    }
+
+
+def _visible_non_hidden_nodes(
+    nodes: list[dict[str, Any]], *, hidden_ids: set[str]
+) -> list[dict[str, Any]]:
+    return [
+        node
+        for node in nodes
+        if (node_id := str(node.get("id") or "")) and node_id not in hidden_ids
+    ]
+
+
+def _node_ids(nodes: list[dict[str, Any]]) -> set[str]:
+    return {node_id for node in nodes if (node_id := str(node.get("id") or ""))}
+
+
+def _node_id_order(nodes: list[dict[str, Any]]) -> list[str]:
+    return [node_id for node in nodes if (node_id := str(node.get("id") or ""))]
 
 
 def edge_label(edge: dict[str, Any]) -> str | None:
@@ -553,13 +571,14 @@ def _sequential_edges(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def _collapse_hidden_edges(
     *,
+    visible_order: list[str],
     visible_ids: set[str],
     hidden_ids: set[str],
     outgoing: dict[str, list[dict[str, Any]]],
 ) -> list[dict[str, Any]]:
     collapsed_edges: list[dict[str, Any]] = []
     seen_edges: set[tuple[str, str, str | None]] = set()
-    for source in visible_ids:
+    for source in visible_order:
         for edge in outgoing.get(source, []):
             _append_visible_or_nested_edges(
                 source=source,

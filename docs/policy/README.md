@@ -12,6 +12,7 @@ Current policy documents:
 
 - `authoritative_artifacts.md`
 - `artifact_scope.md`
+- `sppm_regression_gates.md`
 
 Related design companion:
 
