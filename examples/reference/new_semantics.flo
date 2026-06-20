@@ -1,0 +1,11 @@
+process:
+  name: baking chocolate chip cookies
+
+steps:
+  - preheat oven
+  - mix ingredients
+  - rest dough
+  - bake cookies
+  - cool cookies
+
+ingredients:

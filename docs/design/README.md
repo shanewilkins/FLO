@@ -88,6 +88,12 @@ in the migration plan instead of duplicating them across all three files.
 families FLO produces, which ones are canonical versus derived, and which layer
 owns each artifact family.
 
+## Language Primitive Taxonomy
+
+`language_primitive_taxonomy.md` defines the proposed hierarchy of process
+ primitives, relations, organizing structures, and compiled forms for FLO's
+ process-first language direction.
+
 ## Current Cleanup Notes
 
 - `docs/design/IR.md` is retained background material and should not be treated

@@ -9,14 +9,18 @@ the spec remains authoritative.
 ## 1) What FLO Is
 
 FLO is a domain-specific, declarative language for modeling business processes.
+Authors normally write ordered steps and local branch outcomes.
+FLO then compiles that source into canonical IR for validation, analysis, and rendering.
 
 FLO provides:
+
 - Deterministic compilation to canonical IR
 - Structural and semantic validation
 - DOT and JSON exports
 - Flowchart, swimlane, spaghetti-map, and SPPM DOT projections
 
 FLO does not provide:
+
 - Workflow execution
 - Scheduling or orchestration
 - Runtime simulation
@@ -79,32 +83,32 @@ steps:
   - id: finish
     kind: end
     name: Complete
-
-transitions:
-  - source: start
-    target: collect_docs
-  - source: collect_docs
-    target: finish
 ```
 
 Notes:
-- Use stable `id` values because transitions and diagnostics reference them.
-- `decision` steps should define outcomes to branch flow.
+
+- Use stable `id` values because outcomes, optional explicit transitions, and diagnostics reference them.
+- When `transitions` are omitted, FLO connects adjacent non-`end` steps in source order.
+- `decision` steps should define `outcomes` to branch flow.
 
 ## 4.1) Terminology
 
-FLO enables us to represent a business process as a [directed graph](https://en.wikipedia.org/wiki/Directed_graph#:~:text=In%20mathematics%2C%20and%20more%20specifically%20in%20graph,edges%2C%20often%20called%20arcs.%20A%20directed%20graph.).
-Each node in the graph represents a *step* in the process and we join the steps together with *transitions*.
+FLO lets you describe a business process in the order work happens.
+In the common case, each authored step becomes a node in the compiled model and adjacent steps become control-flow edges automatically.
+When the process branches, the branching step declares `outcomes` that point to the next relevant steps.
+The compiled result is still a directed graph, but authors usually do not need to build that graph edge-by-edge.
 
 ## 4.1.1) File Composition (Includes)
 
 Large models can be split into multiple files with top-level include directives.
 
 Extension convention:
+
 - Use `.flo` for both entry files and included fragments.
 - Parsing is extension-agnostic: any included file that contains a valid YAML mapping is accepted.
 
 Supported include keys:
+
 - `includes`: list of file paths
 - `include`: single file path (alias)
 
@@ -120,6 +124,7 @@ includes:
 ```
 
 Composition behavior:
+
 - Includes are loaded first, then the current file is merged last.
 - Duplicate step IDs across included files are rejected.
 - Include cycles are rejected.
@@ -133,11 +138,12 @@ The current schema-aligned node kinds are:
 - `system_task`: an explicitly system-owned task
 - `queue`: a queue/buffer step (requires queue metadata in current validation)
 - `wait`: an explicit wait/hold step (rendered with a dedicated wait symbol)
-- `decision`: a branch point with at least two outgoing transitions
+- `decision`: a branch point with at least two outgoing outcomes
 - `subprocess`: a collapsed child-process step
 - `end`: a terminal step
 
 Optional common node fields:
+
 - `name`: display label for the node
 - `lane`: swimlane grouping key
 - `location`: location ID for spatial/movement analysis
@@ -167,16 +173,6 @@ steps:
         name: Mix Inputs
   - id: end
     kind: end
-
-transitions:
-  - source: start
-    target: prep
-  - source: prep
-    target: gather
-  - source: gather
-    target: mix
-  - source: mix
-    target: end
 ```
 
 Time-related node metadata fields (for example `cycle_time`, `wait_time`, `lead_time`) should use:
