@@ -35,34 +35,47 @@ def _node_to_schema(node: Any) -> dict[str, Any]:
     if not isinstance(attrs, dict):
         return node_entry
 
-    name = attrs.get("name")
-    if name is not None:
-        node_entry["name"] = name
-    lane = attrs.get("lane")
-    if lane is not None:
-        node_entry["lane"] = lane
-    note = attrs.get("note")
-    if note is not None:
-        node_entry["note"] = note
-    location = attrs.get("location")
-    if location is not None:
-        node_entry["location"] = location
-    workers = attrs.get("workers")
-    if isinstance(workers, list):
-        node_entry["workers"] = workers
-    equipment = attrs.get("equipment")
-    if isinstance(equipment, list):
-        node_entry["equipment"] = equipment
-    inputs = attrs.get("inputs")
-    if isinstance(inputs, list):
-        node_entry["inputs"] = inputs
-    outputs = attrs.get("outputs")
-    if isinstance(outputs, list):
-        node_entry["outputs"] = outputs
+    _copy_optional_scalars(
+        source=attrs,
+        target=node_entry,
+        keys=("name", "lane", "note", "location"),
+    )
+    _copy_optional_lists(
+        source=attrs,
+        target=node_entry,
+        keys=(
+            "workers",
+            "equipment",
+            "inputs",
+            "outputs",
+            "consumes",
+            "produces",
+            "performed_by",
+            "uses",
+        ),
+    )
     metadata = attrs.get("metadata")
     if isinstance(metadata, dict):
         node_entry["metadata"] = metadata
     return node_entry
+
+
+def _copy_optional_scalars(
+    *, source: dict[str, Any], target: dict[str, Any], keys: tuple[str, ...]
+) -> None:
+    for key in keys:
+        value = source.get(key)
+        if value is not None:
+            target[key] = value
+
+
+def _copy_optional_lists(
+    *, source: dict[str, Any], target: dict[str, Any], keys: tuple[str, ...]
+) -> None:
+    for key in keys:
+        value = source.get(key)
+        if isinstance(value, list):
+            target[key] = value
 
 
 def _edges_to_schema(ir: IR) -> list[dict[str, Any]]:
@@ -84,6 +97,8 @@ def _edge_to_schema(edge: Any) -> dict[str, Any]:
         edge_entry["label"] = edge.label
     if edge.edge_type is not None:
         edge_entry["edge_type"] = edge.edge_type
+    if edge.handoff is not None:
+        edge_entry["handoff"] = edge.handoff
     if edge.rework is not None:
         edge_entry["rework"] = edge.rework
     if isinstance(edge.metadata, dict):

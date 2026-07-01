@@ -1,0 +1,41 @@
+spec_version: "0.1"
+
+process:
+  id: valid_canonical_relations_with_resources
+  name: Valid Canonical Relations With Resources
+
+items:
+  - id: flour
+    name: Flour
+    kind: material
+  - id: dough
+    name: Dough
+    kind: material
+
+resources:
+  - id: baker
+    name: Baker
+    kind: person
+  - id: mixer
+    name: Mixer
+    kind: equipment
+
+steps:
+  - id: start
+    kind: start
+
+  - id: mix
+    kind: task
+    consumes: [flour]
+    produces: [dough]
+    performed_by: [baker]
+    uses: [mixer]
+
+  - id: end
+    kind: end
+
+transitions:
+  - source: start
+    target: mix
+  - source: mix
+    target: end

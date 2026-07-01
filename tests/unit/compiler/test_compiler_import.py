@@ -298,3 +298,94 @@ def test_compile_flattens_nested_subprocess_subnodes():
     assert by_id["outer"].attrs.get("subprocess_parent") is None
     assert by_id["inner"].attrs.get("subprocess_parent") == "outer"
     assert by_id["inner_task"].attrs.get("subprocess_parent") == "inner"
+
+
+def test_compile_promotes_canonical_items_and_resources_to_process_metadata():
+    parsed = {
+        "process": {"id": "p", "name": "Process"},
+        "items": [
+            {"id": "order", "name": "Order", "kind": "information"},
+            {"id": "dough", "name": "Dough", "kind": "material"},
+        ],
+        "resources": [
+            {"id": "baker", "name": "Baker", "kind": "person"},
+            {"id": "mixer", "name": "Mixer", "kind": "equipment"},
+        ],
+        "steps": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "transitions": [
+            {"source": "start", "target": "end"},
+        ],
+    }
+
+    ir = compile_adapter(parsed)
+    assert ir.process_metadata is not None
+    assert ir.process_metadata["items"][0]["id"] == "order"
+    assert ir.process_metadata["resources"][0]["id"] == "baker"
+
+
+def test_compile_preserves_canonical_step_relations():
+    parsed = {
+        "process": {"id": "p", "name": "Process"},
+        "steps": [
+            {
+                "id": "mix",
+                "kind": "task",
+                "name": "Mix",
+                "consumes": ["flour", "water"],
+                "produces": ["dough"],
+                "performed_by": ["lead_baker"],
+                "uses": ["mixer"],
+            }
+        ],
+    }
+
+    ir = compile_adapter(parsed)
+    assert ir.nodes[0].attrs is not None
+    assert ir.nodes[0].attrs.get("consumes") == ["flour", "water"]
+    assert ir.nodes[0].attrs.get("produces") == ["dough"]
+    assert ir.nodes[0].attrs.get("performed_by") == ["lead_baker"]
+    assert ir.nodes[0].attrs.get("uses") == ["mixer"]
+
+
+def test_compile_maps_legacy_step_relations_to_canonical_aliases():
+    parsed = {
+        "process": {"id": "p", "name": "Process"},
+        "steps": [
+            {
+                "id": "mix",
+                "kind": "task",
+                "name": "Mix",
+                "inputs": ["flour", "water"],
+                "outputs": ["dough"],
+                "workers": ["lead_baker"],
+                "equipment": ["mixer"],
+            }
+        ],
+    }
+
+    ir = compile_adapter(parsed)
+    assert ir.nodes[0].attrs is not None
+    assert ir.nodes[0].attrs.get("consumes") == ["flour", "water"]
+    assert ir.nodes[0].attrs.get("produces") == ["dough"]
+    assert ir.nodes[0].attrs.get("performed_by") == ["lead_baker"]
+    assert ir.nodes[0].attrs.get("uses") == ["mixer"]
+
+
+def test_compile_preserves_explicit_handoff_on_transition():
+    parsed = {
+        "process": {"id": "p", "name": "Process"},
+        "steps": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "transitions": [
+            {"source": "start", "target": "end", "handoff": True},
+        ],
+    }
+
+    ir = compile_adapter(parsed)
+    assert len(ir.edges) == 1
+    assert ir.edges[0].handoff is True

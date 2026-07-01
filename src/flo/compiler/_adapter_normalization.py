@@ -46,7 +46,14 @@ def resolve_process_metadata(adapter: dict[str, Any]) -> dict[str, Any] | None:
     if isinstance(process_name, str) and process_name.strip():
         metadata.setdefault(PROCESS_METADATA_PROCESS_NAME_KEY, process_name)
 
-    for key in ("materials", "equipment", "locations", "workers"):
+    for key in (
+        "items",
+        "resources",
+        "locations",
+        "materials",
+        "equipment",
+        "workers",
+    ):
         value = adapter.get(key)
         if not _is_resource_collection(value):
             value = process.get(key)
@@ -100,6 +107,10 @@ def normalize_node_attrs(a_node: dict[str, Any]) -> dict[str, Any]:
         "name",
         "lane",
         "location",
+        "consumes",
+        "produces",
+        "performed_by",
+        "uses",
         "workers",
         "equipment",
         "note",
@@ -113,6 +124,18 @@ def normalize_node_attrs(a_node: dict[str, Any]) -> dict[str, Any]:
     outcomes = a_node.get("outcomes")
     if isinstance(outcomes, dict) and "outcomes" not in normalized:
         normalized["outcomes"] = outcomes
+
+    # Canonical aliases are populated from legacy keys when explicit canonical
+    # values are absent so downstream logic can consume one preferred surface.
+    if "consumes" not in normalized and isinstance(normalized.get("inputs"), list):
+        normalized["consumes"] = list(normalized["inputs"])
+    if "produces" not in normalized and isinstance(normalized.get("outputs"), list):
+        normalized["produces"] = list(normalized["outputs"])
+    if "performed_by" not in normalized and isinstance(normalized.get("workers"), list):
+        normalized["performed_by"] = list(normalized["workers"])
+    if "uses" not in normalized and isinstance(normalized.get("equipment"), list):
+        normalized["uses"] = list(normalized["equipment"])
+
     return normalized
 
 

@@ -7,6 +7,8 @@ from typing import Any
 from .models import IR
 from .enums import ProcessValueClass
 from .schema_projection import ir_to_schema_dict
+from .validate_relations import validate_item_relations, validate_resource_relations
+from .validate_structure import validate_parallel_structure
 from .validate_subprocess import validate_subprocess_metadata
 from .validate_render_intent import validate_render_intent
 from flo.services.errors import ValidationError
@@ -53,6 +55,9 @@ def validate_ir(obj: Any) -> None:
     validate_subprocess_metadata(obj)
     _validate_edge_metadata(obj)
     _validate_process_resources(obj)
+    validate_item_relations(obj)
+    validate_resource_relations(obj)
+    validate_parallel_structure(obj, incoming_counts, outgoing_counts)
     _validate_node_connectivity(obj, incoming_counts, outgoing_counts)
     _validate_global_reachability(obj)
 
@@ -271,7 +276,14 @@ def _validate_node_io_lists(obj: IR) -> None:
         if not isinstance(attrs, dict):
             continue
 
-        for field in ("inputs", "outputs"):
+        for field in (
+            "inputs",
+            "outputs",
+            "consumes",
+            "produces",
+            "performed_by",
+            "uses",
+        ):
             value = attrs.get(field)
             if value is None:
                 continue
@@ -339,7 +351,14 @@ def _validate_process_resources(obj: IR) -> None:
     if not isinstance(process_metadata, dict):
         return
 
-    for resource_key in ("materials", "equipment", "locations", "workers"):
+    for resource_key in (
+        "items",
+        "resources",
+        "locations",
+        "materials",
+        "equipment",
+        "workers",
+    ):
         resources = process_metadata.get(resource_key)
         if resources is None:
             continue
@@ -401,6 +420,16 @@ def _validate_resource_item(resource_key: str, path: str, resource: Any) -> None
     resource_id = resource.get("id")
     if resource_id is not None and not isinstance(resource_id, str):
         raise ValidationError(f"E1203: {path}.id must be a string")
+
+    resource_kind = resource.get("kind")
+    if resource_key == "items" and resource_kind is not None:
+        if resource_kind not in {"material", "information"}:
+            raise ValidationError(
+                f"E1217: {path}.kind must be 'material' or 'information'"
+            )
+    if resource_key == "resources" and resource_kind is not None:
+        if resource_kind not in {"person", "equipment"}:
+            raise ValidationError(f"E1218: {path}.kind must be 'person' or 'equipment'")
 
     if resource_key == "locations":
         _validate_location_spatial(path=path, resource=resource)
@@ -558,6 +587,12 @@ def _validate_node_value_class(obj: IR) -> None:
 
 def _validate_edge_metadata(obj: IR) -> None:
     for edge in obj.edges:
+        handoff_value = getattr(edge, "handoff", None)
+        if handoff_value is not None and not isinstance(handoff_value, bool):
+            raise ValidationError(
+                f"E1410: edge '{edge.source}' -> '{edge.target}' handoff must be boolean"
+            )
+
         metadata = getattr(edge, "metadata", None)
         if not isinstance(metadata, dict) or not metadata:
             continue

@@ -1,6 +1,6 @@
 from flo.compiler.compile import compile_adapter
 from flo.compiler.ir.validate import validate_against_schema
-from flo.compiler.ir.models import IR, Node
+from flo.compiler.ir.models import IR, Node, Edge
 from flo.services.errors import ValidationError
 
 
@@ -29,3 +29,22 @@ def test_malformed_ir_raises_validation_error() -> None:
     except ValidationError:
         # expected
         pass
+
+
+def test_schema_accepts_parallel_kinds_and_handoff_field() -> None:
+    ir = IR(
+        name="p",
+        nodes=[
+            Node(id="start", type="start", attrs={}),
+            Node(id="split", type="parallel_split", attrs={}),
+            Node(id="join", type="parallel_join", attrs={}),
+            Node(id="end", type="end", attrs={}),
+        ],
+        edges=[
+            Edge(source="start", target="split"),
+            Edge(source="split", target="join", handoff=True),
+            Edge(source="join", target="end"),
+        ],
+    )
+
+    validate_against_schema(ir)

@@ -1,0 +1,172 @@
+spec_version: "0.1"
+
+process:
+  id: semantic_controls_showcase
+  name: Semantic Controls Showcase
+
+items:
+  - id: work_order
+    name: Work Order
+    kind: information
+  - id: batch_ticket
+    name: Batch Ticket
+    kind: information
+  - id: resin
+    name: Resin
+    kind: material
+  - id: prepped_resin
+    name: Prepped Resin
+    kind: material
+  - id: qa_packet
+    name: QA Packet
+    kind: information
+  - id: assembled_unit
+    name: Assembled Unit
+    kind: material
+  - id: shipped_unit
+    name: Shipped Unit
+    kind: material
+
+resources:
+  - id: coordinator
+    name: Coordinator
+    kind: person
+  - id: operator
+    name: Operator
+    kind: person
+  - id: analyst
+    name: Analyst
+    kind: person
+  - id: technician
+    name: Technician
+    kind: person
+  - id: shipper
+    name: Shipper
+    kind: person
+  - id: mixer
+    name: Mixer
+    kind: equipment
+  - id: press
+    name: Press
+    kind: equipment
+  - id: workbench
+    name: Workbench
+    kind: equipment
+  - id: sealer
+    name: Sealer
+    kind: equipment
+
+steps:
+  - id: start
+    kind: start
+    name: Start
+
+  - id: intake
+    kind: task
+    name: Intake Work Order
+    consumes: [work_order]
+    produces: [batch_ticket]
+    performed_by: [coordinator]
+
+  - id: split
+    kind: parallel_split
+    name: Split Prep
+
+  - id: prep_material
+    kind: task
+    name: Prepare Material
+    consumes: [resin]
+    produces: [prepped_resin]
+    performed_by: [operator]
+    uses: [mixer]
+
+  - id: prep_docs
+    kind: task
+    name: Prepare QA Packet
+    consumes: [batch_ticket]
+    produces: [qa_packet]
+    performed_by: [analyst]
+
+  - id: join
+    kind: parallel_join
+    name: Join Prep
+
+  - id: assemble
+    kind: task
+    name: Assemble Unit
+    consumes: [prepped_resin, qa_packet]
+    produces: [assembled_unit]
+    performed_by: [operator]
+    uses: [press]
+
+  - id: quality
+    kind: decision
+    name: Quality OK?
+    outcomes:
+      approved: package
+      rework: fix
+
+  - id: fix
+    kind: task
+    name: Rework Unit
+    consumes: [assembled_unit]
+    produces: [assembled_unit]
+    performed_by: [technician]
+    uses: [workbench]
+
+  - id: package
+    kind: task
+    name: Package Unit
+    consumes: [assembled_unit]
+    produces: [shipped_unit]
+    performed_by: [shipper]
+    uses: [sealer]
+
+  - id: end
+    kind: end
+    name: End
+
+transitions:
+  - source: start
+    target: intake
+
+  - source: intake
+    target: split
+
+  - source: split
+    target: prep_material
+
+  - source: split
+    target: prep_docs
+
+  - source: prep_material
+    target: join
+
+  - source: prep_docs
+    target: join
+    handoff: true
+
+  - source: join
+    target: assemble
+
+  - source: assemble
+    target: quality
+
+  - source: quality
+    target: package
+    outcome: approved
+
+  - source: quality
+    target: fix
+    outcome: rework
+    edge_type: rework
+    rework: true
+
+  - source: fix
+    target: assemble
+    edge_type: rework
+    rework: true
+
+  - source: package
+    target: end
+    handoff: true

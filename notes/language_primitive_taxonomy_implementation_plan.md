@@ -257,6 +257,38 @@ Success criteria:
 - compiler behavior is explicit about canonical source surfaces for this phase
 - no renderer-specific assumptions are needed for compiler tests to pass
 
+Status:
+
+- complete
+
+Completion notes:
+
+- source normalization now supports canonical process-level `items` and
+  `resources` and canonical step-level relations (`consumes`, `produces`,
+  `performed_by`, `uses`) with legacy alias intake preserved for compatibility
+- IR assembly and typed IR models include explicit edge-level `handoff`
+  semantics and support explicit `parallel_split` and `parallel_join` step
+  kinds
+- validation covers canonical node fields, item and resource declaration
+  integrity, resource kind checks for performer and equipment relations, explicit
+  handoff typing checks, and parallel split/join structural rules
+- schema projection and schema contracts align with the new fields and kinds,
+  including runtime schema parity with packaged schema files
+- fixtures were updated to include canonical representative and conformance
+  coverage:
+  - updated reference fixture:
+    `examples/reference/new_semantics.flo`
+  - added valid conformance fixture:
+    `examples/conformance/valid/valid_canonical_relations_with_resources.flo`
+  - added invalid conformance fixture:
+    `examples/conformance/invalid/invalid_consumes_undeclared_item.flo`
+
+Validation snapshot:
+
+- focused compiler and conformance suite currently passes:
+  - `uv run pytest -q tests/unit/test_conformance_examples.py tests/unit/compiler/test_compiler_import.py tests/unit/compiler/test_schema_contract.py tests/unit/test_validate_errors.py tests/unit/test_json_export_branches.py`
+  - result: `87 passed`
+
 ## Phase 2: Update Schemas And Typed Metadata
 
 Goal:

@@ -1,11 +1,92 @@
+spec_version: "0.1"
+
 process:
-  name: baking chocolate chip cookies
+  id: canonical_semantics_reference
+  name: Canonical Semantics Reference
+
+items:
+  - id: ticket
+    name: Work Ticket
+    kind: information
+  - id: dough
+    name: Dough
+    kind: material
+  - id: packed_dough
+    name: Packed Dough
+    kind: material
+
+resources:
+  - id: baker
+    name: Baker
+    kind: person
+  - id: mixer
+    name: Mixer
+    kind: equipment
+  - id: packer
+    name: Packer
+    kind: person
+  - id: sealer
+    name: Sealer
+    kind: equipment
 
 steps:
-  - preheat oven
-  - mix ingredients
-  - rest dough
-  - bake cookies
-  - cool cookies
+  - id: start
+    kind: start
+    name: Start
 
-ingredients:
+  - id: split
+    kind: parallel_split
+    name: Split Preparation
+
+  - id: prep_ticket
+    kind: task
+    name: Prepare Ticket
+    consumes: [ticket]
+    performed_by: [baker]
+
+  - id: mix_dough
+    kind: task
+    name: Mix Dough
+    consumes: [dough]
+    produces: [dough]
+    performed_by: [baker]
+    uses: [mixer]
+
+  - id: join
+    kind: parallel_join
+    name: Join Preparation
+
+  - id: package
+    kind: task
+    name: Package Dough
+    consumes: [dough]
+    produces: [packed_dough]
+    performed_by: [packer]
+    uses: [sealer]
+
+  - id: end
+    kind: end
+    name: End
+
+transitions:
+  - source: start
+    target: split
+
+  - source: split
+    target: prep_ticket
+
+  - source: split
+    target: mix_dough
+
+  - source: prep_ticket
+    target: join
+    handoff: true
+
+  - source: mix_dough
+    target: join
+
+  - source: join
+    target: package
+
+  - source: package
+    target: end

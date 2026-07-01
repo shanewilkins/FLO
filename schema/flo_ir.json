@@ -28,7 +28,7 @@
         "required": ["id","kind"],
         "properties": {
           "id": { "type": "string" },
-          "kind": { "type": "string", "enum": ["start","task","system_task","queue","wait","decision","end","subprocess"] },
+          "kind": { "type": "string", "enum": ["start","task","system_task","queue","wait","decision","end","subprocess","parallel_split","parallel_join"] },
           "name": { "type": "string" },
           "lane": { "type": "string" },
           "location": { "type": "string" },
@@ -49,6 +49,22 @@
             "type": "array",
             "items": { "type": "string" }
           },
+          "consumes": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "produces": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "performed_by": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "uses": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
           "metadata": { "type": "object", "additionalProperties": true }
         },
         "additionalProperties": false
@@ -66,6 +82,7 @@
           "outcome": { "type": "string" },
           "label": { "type": "string" },
           "edge_type": { "type": "string" },
+          "handoff": { "type": "boolean" },
           "rework": { "type": "boolean" },
           "metadata": { "type": "object", "additionalProperties": true }
         },

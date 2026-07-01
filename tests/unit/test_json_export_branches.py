@@ -136,6 +136,41 @@ def test_node_location_workers_and_equipment_are_exported_when_present():
     assert payload["nodes"][0]["equipment"] == ["mixer"]
 
 
+def test_node_canonical_relations_are_exported_when_present():
+    ir = IR(
+        name="p",
+        nodes=[
+            Node(
+                id="mix",
+                type="task",
+                attrs={
+                    "name": "Mix",
+                    "consumes": ["flour", "water"],
+                    "produces": ["dough"],
+                    "performed_by": ["lead_baker"],
+                    "uses": ["mixer"],
+                },
+            )
+        ],
+        edges=[],
+    )
+    payload = ir_to_schema_dict(ir)
+    assert payload["nodes"][0]["consumes"] == ["flour", "water"]
+    assert payload["nodes"][0]["produces"] == ["dough"]
+    assert payload["nodes"][0]["performed_by"] == ["lead_baker"]
+    assert payload["nodes"][0]["uses"] == ["mixer"]
+
+
+def test_edge_handoff_is_exported_when_present():
+    ir = IR(
+        name="p",
+        nodes=[Node(id="a", type="start"), Node(id="b", type="end")],
+        edges=[Edge(source="a", target="b", handoff=True)],
+    )
+    payload = ir_to_schema_dict(ir)
+    assert payload["edges"][0]["handoff"] is True
+
+
 def test_process_metadata_is_exported_when_present():
     ir = IR(
         name="cookie_process",
