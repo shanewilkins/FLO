@@ -78,6 +78,43 @@ def test_non_dot_export_rejects_dot_only_flags(extra_args: list[str], caplog):
         "require a diagram render output" in record.getMessage()
         for record in caplog.records
     )
+    assert "deprecated compatibility-only" in result.output or any(
+        "deprecated compatibility-only" in record.getMessage()
+        for record in caplog.records
+    )
+
+
+def test_dot_export_rejects_svg_backend_with_compatibility_only_message(tmp_path):
+    model = tmp_path / "simple.flo"
+    payload = {
+        "spec_version": "0.1",
+        "process": {"id": "simple", "name": "Simple"},
+        "steps": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "transitions": [
+            {"source": "start", "target": "end"},
+        ],
+    }
+    model.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            str(model),
+            "--export",
+            "dot",
+            "--render-backend",
+            "svg",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "deprecated compatibility-only" in result.output
+    assert "--render-backend graphviz" in result.output
 
 
 def test_run_show_notes_and_orientation(tmp_path):

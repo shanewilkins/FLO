@@ -1,0 +1,22 @@
+spec_version: "0.1"
+
+process:
+  id: invalid_handoff_not_boolean
+  name: Invalid Handoff Not Boolean
+
+steps:
+  - id: start
+    kind: start
+
+  - id: review
+    kind: task
+
+  - id: end
+    kind: end
+
+transitions:
+  - source: start
+    target: review
+    handoff: "yes"
+  - source: review
+    target: end

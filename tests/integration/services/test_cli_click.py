@@ -13,3 +13,12 @@ def test_cli_run_cmd_using_click(tmp_flo_file):
     print("DEBUG EXC:\n", repr(result.exception))
     assert result.exit_code == 0
     assert "digraph" in result.output
+
+
+def test_cli_run_help_marks_dot_as_deprecated_compatibility_only():
+    runner = CliRunner()
+    result = runner.invoke(cli, ["run", "--help"])
+
+    assert result.exit_code == 0
+    assert "deprecated compatibility-only" in result.output
+    assert "prefer svg or json" in result.output

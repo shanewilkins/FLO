@@ -1,4 +1,5 @@
 from flo.compiler.analysis import (
+    infer_material_movements,
     infer_people_movements,
     aggregate_people_movements,
     aggregate_people_movements_by_worker,
@@ -118,3 +119,69 @@ def test_extract_location_spatial_index_includes_location_kind():
     locations = extract_location_spatial_index(process)
     assert locations["pantry"]["kind"] == "storage"
     assert locations["oven_station"]["kind"] == "heat"
+
+
+def test_infer_material_movements_uses_canonical_produces_and_consumes(
+    node_factory,
+):
+    ir = IR(
+        name="materials",
+        nodes=[
+            node_factory(
+                "mix",
+                type="task",
+                attrs={
+                    "location": "prep_bench",
+                    "produces": ["dough"],
+                },
+            ),
+            node_factory(
+                "bake",
+                type="task",
+                attrs={
+                    "location": "oven_station",
+                    "consumes": ["dough"],
+                },
+            ),
+        ],
+        edges=[Edge(source="mix", target="bake")],
+    )
+
+    movements = infer_material_movements(ir)
+
+    assert len(movements) == 1
+    assert movements[0]["from_location"] == "prep_bench"
+    assert movements[0]["to_location"] == "oven_station"
+    assert movements[0]["items"] == ["dough"]
+
+
+def test_infer_people_movements_uses_canonical_performed_by(node_factory):
+    ir = IR(
+        name="people",
+        nodes=[
+            node_factory(
+                "review",
+                type="task",
+                attrs={
+                    "location": "intake",
+                    "performed_by": ["reviewer"],
+                },
+            ),
+            node_factory(
+                "approve",
+                type="task",
+                attrs={
+                    "location": "approval_desk",
+                    "performed_by": ["reviewer"],
+                },
+            ),
+        ],
+        edges=[Edge(source="review", target="approve")],
+    )
+
+    movements = infer_people_movements(ir)
+
+    assert len(movements) == 1
+    assert movements[0]["from_location"] == "intake"
+    assert movements[0]["to_location"] == "approval_desk"
+    assert movements[0]["workers"] == ["reviewer"]

@@ -10,14 +10,27 @@ from __future__ import annotations
 from typing import Any
 
 from .models import IR
+from flo.schema.render_metadata import (
+    PROCESS_METADATA_PROCESS_ID_KEY,
+    PROCESS_METADATA_PROCESS_NAME_KEY,
+)
 
 
 def ir_to_schema_dict(ir: IR) -> dict[str, Any]:
     """Project canonical IR into the JSON-schema contract shape."""
-    process_id = ir.name or "generated"
-    process: dict[str, Any] = {"id": process_id, "name": process_id}
-    if isinstance(ir.process_metadata, dict) and ir.process_metadata:
-        process["metadata"] = ir.process_metadata
+    process_metadata = (
+        ir.process_metadata if isinstance(ir.process_metadata, dict) else {}
+    )
+    process_id = _resolve_process_field(
+        process_metadata, PROCESS_METADATA_PROCESS_ID_KEY, fallback=ir.name
+    )
+    process_name = _resolve_process_field(
+        process_metadata, PROCESS_METADATA_PROCESS_NAME_KEY, fallback=ir.name
+    )
+
+    process: dict[str, Any] = {"id": process_id, "name": process_name}
+    if process_metadata:
+        process["metadata"] = process_metadata
 
     nodes_out = [_node_to_schema(node) for node in ir.nodes]
     edges_out = _edges_to_schema(ir)
@@ -27,6 +40,17 @@ def ir_to_schema_dict(ir: IR) -> dict[str, Any]:
         "nodes": nodes_out,
         "edges": edges_out,
     }
+
+
+def _resolve_process_field(
+    process_metadata: dict[str, Any], metadata_key: str, *, fallback: str | None
+) -> str:
+    value = process_metadata.get(metadata_key)
+    if isinstance(value, str) and value.strip():
+        return value
+    if isinstance(fallback, str) and fallback.strip():
+        return fallback
+    return "generated"
 
 
 def _node_to_schema(node: Any) -> dict[str, Any]:

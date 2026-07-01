@@ -47,7 +47,7 @@ def parse_args(
     parser.add_argument(
         "--export",
         choices=["dot", "svg", "json", "ingredients", "movement"],
-        help="Export format (dot|svg|json|ingredients|movement)",
+        help="Export format (dot is deprecated compatibility-only; prefer svg or json)",
     )
     parser.add_argument(
         "--format",

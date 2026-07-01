@@ -31,7 +31,7 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
     RenderOptionSpec(
         "render_backend",
         "--render-backend",
-        "Renderer backend for diagram artifacts",
+        "Renderer backend for diagram artifacts (graphviz is deprecated compatibility-only)",
         choices=("graphviz", "svg"),
     ),
     RenderOptionSpec(
@@ -46,7 +46,7 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
     RenderOptionSpec(
         "orientation",
         "--orientation",
-        "Layout orientation for Graphviz-backed diagram output",
+        "Layout orientation for deprecated Graphviz-backed diagram output",
         choices=("lr", "tb"),
     ),
     RenderOptionSpec(
@@ -179,7 +179,7 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
     RenderOptionSpec(
         "render_to",
         "--render-to",
-        "Write the rendered artifact to a file (Graphviz for DOT, direct write for SVG)",
+        "Write the rendered artifact to a file (Graphviz for DOT compatibility output, direct write for SVG)",
         metavar="FILE",
     ),
 )

@@ -1,13 +1,24 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "FLO Typed Metadata",
-  "description": "Recommended typed metadata keys for FLO process/node/edge/lane metadata (v0.0).",
+  "description": "Recommended typed metadata keys for FLO process/node/edge/lane metadata (v0.1).",
   "definitions": {
     "duration_seconds": { "type": "number", "minimum": 0 },
     "timestamp": { "type": "string", "format": "date-time" },
     "activity_key": { "type": "string" },
     "case_id": { "type": "string" },
     "value_class": { "type": "string", "enum": ["VA","RNVA","NVA","unknown"] },
+    "handoff_type": {
+      "type": "string",
+      "enum": [
+        "responsibility",
+        "information",
+        "material",
+        "system",
+        "location",
+        "mixed"
+      ]
+    },
     "time_unit": { "type": "string", "enum": ["s", "m", "min", "hr", "d"] },
     "time_duration": {
       "type": "object",
@@ -49,6 +60,158 @@
         {
           "if": { "required": ["canonical_unit"] },
           "then": { "required": ["canonical_value"] }
+        }
+      ]
+    },
+    "item_kind": { "type": "string", "enum": ["material", "information"] },
+    "resource_kind": { "type": "string", "enum": ["person", "equipment"] },
+    "canonical_item": {
+      "type": "object",
+      "required": ["id", "name", "kind"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "kind": { "$ref": "#/definitions/item_kind" },
+        "quantity": {
+          "oneOf": [
+            { "$ref": "#/definitions/quantity_count" },
+            { "$ref": "#/definitions/quantity_measure" }
+          ]
+        },
+        "metadata": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": true
+    },
+    "canonical_resource": {
+      "type": "object",
+      "required": ["id", "name", "kind"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "kind": { "$ref": "#/definitions/resource_kind" },
+        "quantity": {
+          "oneOf": [
+            { "$ref": "#/definitions/quantity_count" },
+            { "$ref": "#/definitions/quantity_measure" }
+          ]
+        },
+        "metadata": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": true
+    },
+    "canonical_location": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "kind": { "type": "string" },
+        "metadata": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": true
+    },
+    "canonical_item_group": {
+      "oneOf": [
+        {
+          "type": "object",
+          "minProperties": 1,
+          "patternProperties": {
+            "^(?!name$).+": { "$ref": "#/definitions/canonical_item_collection" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": { "type": "string" }
+          },
+          "patternProperties": {
+            "^(?!name$).+": { "$ref": "#/definitions/canonical_item_collection" }
+          },
+          "additionalProperties": false,
+          "minProperties": 2
+        }
+      ]
+    },
+    "canonical_item_collection": {
+      "oneOf": [
+        {
+          "type": "array",
+          "items": { "$ref": "#/definitions/canonical_item" }
+        },
+        {
+          "$ref": "#/definitions/canonical_item_group"
+        }
+      ]
+    },
+    "canonical_resource_group": {
+      "oneOf": [
+        {
+          "type": "object",
+          "minProperties": 1,
+          "patternProperties": {
+            "^(?!name$).+": { "$ref": "#/definitions/canonical_resource_collection" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": { "type": "string" }
+          },
+          "patternProperties": {
+            "^(?!name$).+": { "$ref": "#/definitions/canonical_resource_collection" }
+          },
+          "additionalProperties": false,
+          "minProperties": 2
+        }
+      ]
+    },
+    "canonical_resource_collection": {
+      "oneOf": [
+        {
+          "type": "array",
+          "items": { "$ref": "#/definitions/canonical_resource" }
+        },
+        {
+          "$ref": "#/definitions/canonical_resource_group"
+        }
+      ]
+    },
+    "canonical_location_group": {
+      "oneOf": [
+        {
+          "type": "object",
+          "minProperties": 1,
+          "patternProperties": {
+            "^(?!name$).+": { "$ref": "#/definitions/canonical_location_collection" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": { "type": "string" }
+          },
+          "patternProperties": {
+            "^(?!name$).+": { "$ref": "#/definitions/canonical_location_collection" }
+          },
+          "additionalProperties": false,
+          "minProperties": 2
+        }
+      ]
+    },
+    "canonical_location_collection": {
+      "oneOf": [
+        {
+          "type": "array",
+          "items": { "$ref": "#/definitions/canonical_location" }
+        },
+        {
+          "$ref": "#/definitions/canonical_location_group"
         }
       ]
     },
@@ -125,7 +288,7 @@
       "description": "Typed metadata for edges/transitions.",
       "properties": {
         "handoff": { "type": "boolean" },
-        "handoff_type": { "type": "string" },
+        "handoff_type": { "$ref": "#/definitions/handoff_type" },
         "expected_latency_seconds": { "$ref": "#/definitions/duration_seconds" },
         "rate": { "type": "number", "minimum": 0, "maximum": 1 },
         "reason": { "type": "string", "minLength": 1 },
@@ -147,13 +310,20 @@
         "sla_target_seconds": { "$ref": "#/definitions/duration_seconds" },
         "business_impact": { "type": "string" },
         "value_class": { "$ref": "#/definitions/value_class" },
+        "items": {
+          "$ref": "#/definitions/canonical_item_collection"
+        },
+        "resources": {
+          "$ref": "#/definitions/canonical_resource_collection"
+        },
+        "locations": {
+          "$ref": "#/definitions/canonical_location_collection"
+        },
+
         "materials": {
           "$ref": "#/definitions/resource_collection"
         },
         "equipment": {
-          "$ref": "#/definitions/resource_collection"
-        },
-        "locations": {
           "$ref": "#/definitions/resource_collection"
         },
         "workers": {
@@ -174,8 +344,8 @@
   },
   "recommended_keys": {
     "node": ["activity_key","sla_target_seconds","cycle_time","value_class"],
-    "edge": ["handoff","expected_latency_seconds","rate","reason","count","frequency"],
-    "process": ["sla_target_seconds","value_class","materials","equipment","locations","workers"]
+    "edge": ["handoff","handoff_type","expected_latency_seconds","rate","reason","count","frequency"],
+    "process": ["sla_target_seconds","value_class","items","resources","locations"]
   },
   "examples": {
     "node_metadata": {
@@ -186,6 +356,7 @@
     },
     "edge_metadata": {
       "handoff": true,
+      "handoff_type": "responsibility",
       "expected_latency_seconds": 300,
       "rate": 0.08,
       "reason": "Missing approvals",
@@ -197,6 +368,71 @@
       "sla_target_seconds": 86400,
       "business_impact": "high",
       "value_class": "VA",
+      "items": [
+        {
+          "id": "order_ticket",
+          "name": "Order Ticket",
+          "kind": "information",
+          "quantity": { "kind": "count", "value": 1, "unit": "each" }
+        },
+        {
+          "id": "flour",
+          "name": "Flour",
+          "kind": "material",
+          "quantity": { "kind": "measure", "value": 250, "unit": "g", "canonical_value": 0.25, "canonical_unit": "kg" }
+        }
+      ],
+      "resources": [
+        {
+          "id": "baker",
+          "name": "Baker",
+          "kind": "person",
+          "quantity": { "kind": "count", "value": 1, "unit": "each", "qualifier": "senior" }
+        },
+        {
+          "id": "oven",
+          "name": "Convection Oven",
+          "kind": "equipment",
+          "quantity": { "kind": "count", "value": 1, "unit": "each" }
+        }
+      ],
+      "locations": [
+        {
+          "id": "kitchen",
+          "name": "Main Kitchen"
+        }
+      ]
+    },
+    "process_metadata_grouped_items": {
+      "items": {
+        "dry": {
+          "name": "Dry Ingredients",
+          "items": [
+            {
+              "id": "flour",
+              "name": "Flour",
+              "kind": "material",
+              "quantity": { "kind": "measure", "value": 250, "unit": "g" }
+            }
+          ]
+        },
+        "wet": {
+          "name": "Wet Ingredients",
+          "dairy": {
+            "name": "Dairy",
+            "items": [
+              {
+                "id": "butter",
+                "name": "Butter",
+                "kind": "material",
+                "quantity": { "kind": "measure", "value": 100, "unit": "g" }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "process_metadata_legacy_compat": {
       "materials": [
         {
           "id": "egg",
@@ -229,33 +465,6 @@
           "quantity": { "kind": "count", "value": 1, "unit": "each" }
         }
       ]
-    },
-    "process_metadata_grouped_materials": {
-      "materials": {
-        "dry": {
-          "name": "Dry Ingredients",
-          "items": [
-            {
-              "id": "flour",
-              "name": "Flour",
-              "quantity": { "kind": "measure", "value": 250, "unit": "g" }
-            }
-          ]
-        },
-        "wet": {
-          "name": "Wet Ingredients",
-          "dairy": {
-            "name": "Dairy",
-            "items": [
-              {
-                "id": "butter",
-                "name": "Butter",
-                "quantity": { "kind": "measure", "value": 100, "unit": "g" }
-              }
-            ]
-          }
-        }
-      }
     }
   }
 }

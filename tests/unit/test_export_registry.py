@@ -67,6 +67,38 @@ def test_export_ir_ingredients_mode_outputs_group_labels():
     assert "Flour" in out
 
 
+def test_export_ir_ingredients_mode_prefers_canonical_items_and_resources():
+    ir = IR(
+        name="canonical_cookie",
+        nodes=[Node(id="start", type="start", attrs={})],
+        edges=[],
+        process_metadata={
+            "items": [
+                {
+                    "id": "ticket",
+                    "name": "Work Ticket",
+                    "quantity": {"kind": "count", "value": 1, "unit": "each"},
+                }
+            ],
+            "resources": [
+                {
+                    "id": "mixer",
+                    "name": "Mixer",
+                    "quantity": {"kind": "count", "value": 1, "unit": "each"},
+                }
+            ],
+            "materials": [{"id": "legacy_flour", "name": "Legacy Flour"}],
+        },
+    )
+
+    out = export_ir(ir, options={"export": "ingredients"})
+
+    assert "Items and Resources" in out
+    assert "Work Ticket: 1 each" in out
+    assert "Mixer: 1 each" in out
+    assert "Legacy Flour" not in out
+
+
 def test_export_ir_movement_mode_outputs_inferred_route_summary():
     ir = IR(
         name="cookie",
@@ -142,3 +174,38 @@ def test_export_ir_movement_mode_includes_people_movement_section():
     assert "Inferred People Movement" in out
     assert "pantry -> prep_bench" in out
     assert "workers=assistant_baker" in out
+
+
+def test_export_ir_movement_mode_prefers_canonical_relations():
+    ir = IR(
+        name="canonical_movement",
+        nodes=[
+            Node(
+                id="shape",
+                type="task",
+                attrs={
+                    "location": "bench",
+                    "produces": ["dough"],
+                    "performed_by": ["baker"],
+                },
+            ),
+            Node(
+                id="pack",
+                type="task",
+                attrs={
+                    "location": "sealer",
+                    "consumes": ["dough"],
+                    "performed_by": ["baker"],
+                },
+            ),
+        ],
+        edges=[Edge(source="shape", target="pack")],
+    )
+
+    out = export_ir(ir, options={"export": "movement"})
+
+    assert "Inferred Material Movement" in out
+    assert "bench -> sealer" in out
+    assert "items=dough" in out
+    assert "Inferred People Movement" in out
+    assert "workers=baker" in out

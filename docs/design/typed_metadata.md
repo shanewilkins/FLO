@@ -36,8 +36,10 @@ human-friendly guidance and examples.
 - `count` (number|string, rework edge): observed rework count, either as a positive number or compact text such as `3 per 40 cases`.
 - `frequency` (string, rework edge): frequency text such as `avg 0.12 loops/case`.
 - `note` (string, rework edge): supporting observation note shown in the rendered rework data box.
-- `materials`, `equipment`, `locations`, and `workers` (process): current
-  typed process-level collections used by the v0.1 schema.
+- `items`, `resources`, and `locations` (process): canonical typed
+  process-level collections used by the v0.1 schema.
+- `materials`, `equipment`, and `workers` (process): legacy compatibility
+  collections retained as typed aliases during migration.
 
 ## Typing and coercion rules
 

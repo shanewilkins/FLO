@@ -26,3 +26,13 @@ Testing pattern:
 - Load fixtures from tests instead of duplicating test-only YAML snippets.
 - Use `reference/` for broad pipeline tests and rendered-output anchors.
 - Use `conformance/` for parser, compiler, validator, and contract-focused rule tests.
+
+Current canonical highlights:
+
+- `reference/new_semantics.flo` demonstrates canonical item/resource relations,
+	explicit handoff, and explicit parallel split/join.
+- `reference/semantic_controls_showcase.flo` is the primary broad exemplar for
+	mixed material and information flow, explicit handoff, explicit rework, and
+	parallel coordination.
+- `conformance/` fixtures are expected to stay narrow and rule-specific even as
+	canonical semantics evolve.

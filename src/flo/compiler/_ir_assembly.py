@@ -58,9 +58,7 @@ def _build_explicit_edges(explicit_edges: list[Any]) -> list[Edge]:
                 edge_type=str(edge.get("edge_type"))
                 if edge.get("edge_type") is not None
                 else None,
-                handoff=edge.get("handoff")
-                if isinstance(edge.get("handoff"), bool)
-                else None,
+                handoff=edge.get("handoff") if "handoff" in edge else None,
                 rework=edge.get("rework")
                 if isinstance(edge.get("rework"), bool)
                 else None,
@@ -108,9 +106,7 @@ def _build_outcome_edge(*, source: str, outcome: Any, target_spec: Any) -> Edge 
             edge_type=str(target_spec.get("edge_type"))
             if target_spec.get("edge_type") is not None
             else None,
-            handoff=target_spec.get("handoff")
-            if isinstance(target_spec.get("handoff"), bool)
-            else None,
+            handoff=target_spec.get("handoff") if "handoff" in target_spec else None,
             rework=target_spec.get("rework")
             if isinstance(target_spec.get("rework"), bool)
             else None,

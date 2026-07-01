@@ -104,3 +104,29 @@ def test_materials_and_ingredients_aliases_return_same_output():
     assert materials_out == ingredients_out
     assert shim_out == ingredients_out
     assert ingredients_export.ir_to_materials_text(ir) == materials_out
+
+
+def test_materials_export_prefers_canonical_items_and_resources():
+    ir = SimpleNamespace(
+        process_metadata={
+            "items": [
+                {"id": "ticket", "name": "Work Ticket", "kind": "information"},
+                {"id": "flour", "name": "Flour", "kind": "material"},
+            ],
+            "resources": [
+                {"id": "baker", "name": "Baker", "kind": "person"},
+                {"id": "mixer", "name": "Mixer", "kind": "equipment"},
+            ],
+            "materials": [{"id": "legacy_flour", "name": "Legacy Flour"}],
+        }
+    )
+
+    out = materials_export.ir_to_materials_text(ir)
+    assert out.startswith("Items and Resources")
+    assert "- Items" in out
+    assert "Work Ticket" in out
+    assert "Flour" in out
+    assert "- Resources" in out
+    assert "Baker" in out
+    assert "Mixer" in out
+    assert "Legacy Flour" not in out

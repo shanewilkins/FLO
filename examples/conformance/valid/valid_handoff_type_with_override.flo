@@ -1,0 +1,50 @@
+spec_version: "0.1"
+
+process:
+  id: valid_handoff_type_with_override
+  name: Valid Handoff Type With Override
+
+items:
+  - id: intake_ticket
+    name: Intake Ticket
+    kind: information
+
+resources:
+  - id: intake_agent
+    name: Intake Agent
+    kind: person
+  - id: reviewer
+    name: Reviewer
+    kind: person
+
+steps:
+  - id: start
+    kind: start
+
+  - id: intake
+    kind: task
+    consumes: [intake_ticket]
+    produces: [intake_ticket]
+    performed_by: [intake_agent]
+
+  - id: review
+    kind: task
+    consumes: [intake_ticket]
+    performed_by: [reviewer]
+
+  - id: end
+    kind: end
+
+transitions:
+  - source: start
+    target: intake
+  - source: intake
+    target: review
+    handoff: true
+    metadata:
+      handoff_type: information
+  - source: review
+    target: end
+    handoff: false
+    metadata:
+      handoff_type: responsibility

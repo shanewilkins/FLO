@@ -13,13 +13,13 @@ def infer_material_movements(process: Any) -> list[dict[str, Any]]:
     - source and target nodes both declare `location`
     - locations differ
 
-    Material items are inferred as the intersection of source `outputs` and
-    target `inputs`.
+    Material items are inferred as the intersection of source `produces` and
+    target `consumes`, with legacy `outputs`/`inputs` fallback.
     """
     return _infer_movements(
         process=process,
-        source_field="outputs",
-        target_field="inputs",
+        source_fields=("produces", "outputs"),
+        target_fields=("consumes", "inputs"),
         entities_field="items",
         require_shared_entities=False,
     )
@@ -31,12 +31,12 @@ def infer_people_movements(process: Any) -> list[dict[str, Any]]:
     A movement is inferred when:
     - source and target nodes both declare `location`
     - locations differ
-    - source and target share at least one worker id
+    - source and target share at least one performer id
     """
     return _infer_movements(
         process=process,
-        source_field="workers",
-        target_field="workers",
+        source_fields=("performed_by", "workers"),
+        target_fields=("performed_by", "workers"),
         entities_field="workers",
         require_shared_entities=True,
     )
@@ -83,8 +83,8 @@ def aggregate_people_movements_by_worker(
 
 def _infer_movements(
     process: Any,
-    source_field: str,
-    target_field: str,
+    source_fields: tuple[str, ...],
+    target_fields: tuple[str, ...],
     entities_field: str,
     require_shared_entities: bool,
 ) -> list[dict[str, Any]]:
@@ -110,8 +110,8 @@ def _infer_movements(
         ):
             continue
 
-        source_entities = _as_text_list(source_attrs.get(source_field))
-        target_entities = _as_text_list(target_attrs.get(target_field))
+        source_entities = _resolve_first_text_list(source_attrs, source_fields)
+        target_entities = _resolve_first_text_list(target_attrs, target_fields)
         entities = _shared_text_values(source_entities, target_entities)
         if require_shared_entities and not entities:
             continue
@@ -466,6 +466,16 @@ def _as_text_list(value: Any) -> list[str]:
         if text:
             out.append(text)
     return out
+
+
+def _resolve_first_text_list(
+    attrs: dict[str, Any], candidate_fields: tuple[str, ...]
+) -> list[str]:
+    for field in candidate_fields:
+        values = _as_text_list(attrs.get(field))
+        if values:
+            return values
+    return []
 
 
 def _is_number(value: Any) -> TypeGuard[int | float]:

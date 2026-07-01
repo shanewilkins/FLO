@@ -3,6 +3,10 @@
 This module is the backend-oriented aggregation point for Graphviz-backed
 diagram rendering. It supersedes the older ``graphviz_dot`` compatibility
 facade, which remains available for legacy imports.
+
+Graphviz-backed rendering is now a deprecated compatibility-only surface.
+New semantic feature work should target maintained direct rendering and export
+paths instead of expanding DOT behavior.
 """
 
 from __future__ import annotations

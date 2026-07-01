@@ -1,4 +1,5 @@
 from click.testing import CliRunner
+import yaml
 
 from flo.core.cli import cli
 
@@ -42,6 +43,24 @@ def test_default_path_accepts_export_ingredients_flag():
     assert "Materials and Equipment" in result.output
 
 
+def test_default_path_accepts_export_ingredients_flag_for_canonical_fixture():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "run",
+            "examples/reference/new_semantics.flo",
+            "--export",
+            "ingredients",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Items and Resources" in result.output
+    assert "Work Ticket" in result.output
+    assert "Baker" in result.output
+
+
 def test_default_path_accepts_export_movement_flag():
     runner = CliRunner()
     result = runner.invoke(
@@ -55,3 +74,69 @@ def test_default_path_accepts_export_movement_flag():
     )
     assert result.exit_code == 0
     assert "Inferred Material Movement" in result.output
+
+
+def test_default_path_accepts_export_movement_flag_for_canonical_payload(tmp_path):
+    model = tmp_path / "canonical_movement.flo"
+    payload = {
+        "spec_version": "0.1",
+        "process": {
+            "id": "canonical_movement_demo",
+            "name": "Canonical Movement Demo",
+        },
+        "items": [
+            {"id": "dough", "name": "Dough", "kind": "material"},
+        ],
+        "resources": [
+            {"id": "baker", "name": "Baker", "kind": "person"},
+        ],
+        "locations": [
+            {
+                "id": "bench",
+                "name": "Bench",
+                "metadata": {"spatial": {"x": 0.0, "y": 0.0, "unit": "m"}},
+            },
+            {
+                "id": "sealer",
+                "name": "Sealer",
+                "metadata": {"spatial": {"x": 3.0, "y": 4.0, "unit": "m"}},
+            },
+        ],
+        "steps": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {
+                "id": "shape",
+                "kind": "task",
+                "name": "Shape Dough",
+                "location": "bench",
+                "produces": ["dough"],
+                "performed_by": ["baker"],
+            },
+            {
+                "id": "pack",
+                "kind": "task",
+                "name": "Pack Dough",
+                "location": "sealer",
+                "consumes": ["dough"],
+                "performed_by": ["baker"],
+            },
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+        "edges": [
+            {"source": "start", "target": "shape"},
+            {"source": "shape", "target": "pack"},
+            {"source": "pack", "target": "end"},
+        ],
+    }
+    model.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["run", str(model), "--export", "movement"])
+
+    assert result.exit_code == 0
+    assert "Inferred Material Movement" in result.output
+    assert "bench -> sealer" in result.output
+    assert "items=dough" in result.output
+    assert "distance=5.00 m" in result.output
+    assert "Inferred People Movement" in result.output
+    assert "workers=baker" in result.output

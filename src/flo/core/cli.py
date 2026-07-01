@@ -269,7 +269,7 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
     "--export",
     "export_fmt",
     type=click.Choice(["dot", "svg", "json", "ingredients", "movement"]),
-    help="Export format",
+    help="Export format (dot is deprecated compatibility-only; prefer svg or json)",
 )
 @_apply_render_click_options(include_render_to=True)
 def run_cmd(
@@ -308,7 +308,11 @@ def run_cmd(
     sppm_output_profile: Optional[str],
     render_to: Optional[str],
 ) -> None:  # pragma: no cover - integration
-    """Render a FLO diagram (default command)."""
+    """Render a FLO diagram (default command).
+
+    DOT remains available as a deprecated compatibility-only export surface.
+    Prefer SVG for rendered artifacts and JSON for machine-readable export.
+    """
     command = "validate" if validate else "run"
     opts = _build_render_opts(
         verbose=verbose,
@@ -381,6 +385,7 @@ def validate_cmd(
     type=click.Choice(["dot", "svg", "json", "ingredients", "movement"]),
     default="dot",
     show_default=True,
+    help="Export format (dot is deprecated compatibility-only; prefer svg or json)",
 )
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.option("-o", "--output", help="Write output to file")
@@ -419,7 +424,7 @@ def export_cmd(
     sppm_max_label_ctwt: Optional[int],
     sppm_output_profile: Optional[str],
 ) -> None:  # pragma: no cover - integration
-    """Export FLO input as DOT or JSON."""
+    """Export FLO input as SVG, JSON, text summaries, or compatibility DOT."""
     opts = _build_render_opts(
         verbose=verbose,
         output=output,

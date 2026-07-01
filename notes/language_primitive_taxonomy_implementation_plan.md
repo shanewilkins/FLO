@@ -336,6 +336,38 @@ Success criteria:
 - schema examples demonstrate the accepted item and handoff direction clearly
 - JSON export tests prove that compiler output conforms to the updated schemas
 
+Status:
+
+- complete
+
+Completion notes:
+
+- synchronized IR schema contract between repo and packaged runtime schema:
+  - `schema/flo_ir.json`
+  - `src/flo/schema/flo_ir.json`
+- confirmed process metadata render-intent structure is aligned in both IR
+  schema copies
+- advanced typed metadata contract in `schema/flo_types.json`:
+  - canonical process-level typed collections now include `items`, `resources`,
+    and `locations`
+  - legacy process-level `materials`, `equipment`, and `workers` remain as
+    compatibility aliases
+  - `handoff_type` is now an explicit enum:
+    `responsibility`, `information`, `material`, `system`, `location`,
+    `mixed`
+  - recommended keys and examples updated to canonical item/resource direction
+- aligned explanatory design note `docs/design/typed_metadata.md` to canonical
+  process-level typed collections and legacy alias posture
+- added schema contract tests for:
+  - repo versus packaged IR schema parity
+  - Phase 2 typed metadata canonical key and handoff-type coverage
+
+Validation snapshot:
+
+- focused schema and export checks currently pass:
+  - `uv run pytest -q tests/unit/compiler/test_schema_contract.py tests/unit/test_validate_schema.py tests/unit/test_json_export_branches.py`
+  - result: `21 passed`
+
 ## Phase 3: Migrate Examples And Conformance Fixtures
 
 Goal:
@@ -398,66 +430,192 @@ Success criteria:
 - `tests/fixtures/sample_fixtures.py` points at a representative fixture that
   exercises the intended new source model
 
-## Phase 4: Update Renderers And Exports
+Status:
+
+- complete
+
+Completion notes:
+
+- reference fixture coverage now includes strong canonical exemplars:
+  - `examples/reference/new_semantics.flo`
+  - `examples/reference/semantic_controls_showcase.flo`
+- the reference corpus now clearly covers mixed material and information flow,
+  explicit handoff, explicit rework, and explicit parallel split/join
+- conformance fixtures now include narrow valid coverage for:
+  - canonical item/resource relations
+  - explicit handoff-bearing edges
+  - rework plus handoff coexistence
+  - explicit parallel split/join structure
+- conformance fixtures now include narrow invalid coverage for:
+  - undeclared item references
+  - invalid item kind
+  - wrong resource kind for canonical resource relations
+  - malformed handoff override values
+  - malformed parallel structure
+  - malformed rework metadata
+- fixture guidance docs updated:
+  - `examples/README.md`
+  - `examples/conformance/README.md`
+- `tests/fixtures/sample_fixtures.py` now seeds integration tests from
+  `examples/reference/semantic_controls_showcase.flo`
+- compiler edge assembly preserves raw authored `handoff` values so malformed
+  explicit handoff overrides survive to semantic validation instead of being
+  silently dropped during compilation
+
+Validation snapshot:
+
+- focused fixture-driven coverage currently passes:
+  - `uv run pytest -q tests/unit/test_conformance_examples.py tests/unit/compiler/test_compiler_import.py tests/integration/test_pipeline_integration.py tests/integration/services/test_cli_click.py tests/integration/test_cli_examples.py`
+  - result: `39 passed`
+
+## Phase 4: Deprecate Graphviz And Strengthen Export Surfaces
 
 Goal:
-Make every renderer and export path tolerate or correctly use the new IR fields
-and node kinds.
+Treat Graphviz and DOT as deprecated compatibility paths, not strategic
+implementation targets, while making canonical JSON and human-readable export
+surfaces correct and useful.
 
 Work:
 
-1. Graphviz and shared backend common code
-   - update `src/flo/render/_graphviz_backend_common_impl.py`
-   - ensure new node kinds and edge semantics survive the common lowering path
+1. Mark Graphviz and DOT deprecated
+   - update CLI help, option guidance, and source-level comments where needed
+   - identify Graphviz-backed modules as compatibility-only surfaces
+   - record a removal posture: no new feature investment, retain only until
+     direct SVG/export parity is acceptable and at least one release cycle of
+     deprecation messaging has elapsed
 
-2. Diagram-specific DOT renderers
-   - update `src/flo/render/_graphviz_dot_flowchart.py`
-   - update `src/flo/render/_graphviz_dot_swimlane.py`
-   - update `src/flo/render/_graphviz_dot_sppm.py`
-   - update `src/flo/render/_graphviz_dot_spaghetti.py`
-   - ensure parallel nodes, typed handoffs, and item-driven labels do not break
-     rendering
+2. Freeze Graphviz behavior to compatibility-only maintenance
+   - do not add new semantic parity work for DOT output
+   - only make minimal repairs needed to keep existing compatibility paths from
+     failing unexpectedly during the transition window
+   - prefer explicit limitations or warnings over silently partial semantics
 
-3. SVG and ELK-based paths
-   - update `src/flo/render/layout_core/elk_support.py`
-   - update `src/flo/render/_svg_flowchart.py`
-   - update `src/flo/render/_svg_spaghetti.py`
-   - update `src/flo/render/_svg_sppm.py`
-   - ensure direct SVG consumers tolerate new IR and do not rely on stale node
-     kind enumerations
+3. Keep maintained direct rendering paths honest
+   - update direct SVG and related maintained rendering surfaces only where they
+     are still active product paths
+   - ensure maintained non-DOT rendering paths either tolerate accepted IR
+     semantics or fail with deterministic, actionable limitations
+   - do not force maintained rendering paths to mirror deprecated DOT behavior
 
-4. Text and analysis exports
+4. Strengthen canonical JSON export
+   - treat JSON as the sole machine-readable export target for this phase
+   - do not introduce XML in this phase
+   - update `src/flo/export/json_export.py` and any supporting projection code
+     as needed so exported JSON is both syntactically valid and semantically
+     aligned with the accepted canonical IR contract
+   - ensure JSON export remains the key contract surface for downstream tools,
+     analysis, and future interoperability work
+
+5. Align text and analysis exports to canonical semantics
    - update `src/flo/export/materials_export.py`
    - update `src/flo/export/movement_export.py`
    - update `src/flo/compiler/analysis/movement.py`
-   - ensure movement and summary exports incorporate material and information
-     semantics intentionally rather than only through legacy fields
+   - ensure material, information, people, equipment, and location-oriented
+     summaries use canonical item/resource/location semantics intentionally
+     rather than relying only on legacy `inputs`, `outputs`, `workers`, and
+     `equipment` fields
+   - keep human-readable text exports in scope for bills of materials,
+     movement summaries, and related operational reporting
 
-Important rule:
+Important rules:
 
-- renderer work in this phase should preserve compatibility where reasonable
-- do not let renderer convenience override the accepted semantic shape of the IR
+- Graphviz and DOT are deprecated in this phase but not yet removed
+- no XML export work belongs in this phase
+- JSON is the authoritative machine-readable export format for this stage of
+  the roadmap
+- do not let deprecated renderer constraints distort the accepted semantic
+  shape of the IR or export contracts
+- text exports remain in scope as human-readable operational summaries, not as
+  substitutes for canonical machine-readable export
 
 Focused validation:
 
-- narrow unit tests per renderer family
-- existing integration tests updated where expected outputs change
-- targeted render baseline updates only after semantic behavior is agreed
+- narrow JSON export and schema-alignment tests
+- focused text export and movement-analysis tests
+- targeted CLI export tests for `json`, `ingredients`, and `movement`
+- targeted deprecation messaging checks for DOT/Graphviz surfaces when those
+  messages are introduced
+- maintained direct SVG tests only when a maintained rendering path is touched
 
 Stop line:
 
-- all supported render and export paths either handle the new IR correctly or
-  fail with an explicit documented limitation
+- Graphviz and DOT are clearly deprecated with an explicit compatibility-only
+  posture
+- canonical JSON export is trustworthy as the primary machine-readable export
+  contract
+- text and analysis exports reflect canonical semantics intentionally rather
+  than only through legacy field assumptions
 
 Success criteria:
 
-- Graphviz-based renderers accept the new node kinds and edge semantics without
-  silent degradation
-- SVG and ELK-backed paths accept the same IR contracts as the Graphviz path
-- movement and summary exports treat material and information semantics
-  intentionally rather than only through legacy fields
-- any unsupported primitive on a renderer path fails with an actionable,
-  deterministic limitation message
+- CLI and source surfaces make Graphviz/DOT deprecation visible and
+  unambiguous
+- no new Phase 4 implementation depends on achieving DOT feature parity
+- `flo compile` and `--export json` emit schema-aligned canonical JSON that is
+  semantically correct for accepted item/resource/handoff/parallel semantics
+- text exports remain useful for human-readable bills of materials and movement
+  summaries
+- movement and related analysis exports use canonical item/resource/location
+  semantics intentionally enough to support downstream Python and pandas-based
+  analysis without requiring XML
+- any maintained rendering path that does not yet support an accepted
+  primitive fails with an actionable, deterministic limitation message
+
+Status:
+
+- complete
+
+Completion notes:
+
+- Graphviz and DOT now carry explicit deprecated compatibility-only messaging
+  across CLI help, option validation, and backend/service comments:
+  - `src/flo/core/cli.py`
+  - `src/flo/core/cli_args.py`
+  - `src/flo/core/render_option_schema.py`
+  - `src/flo/core/_option_validation.py`
+  - `src/flo/core/__init__.py`
+  - `src/flo/render/graphviz_backend.py`
+  - `src/flo/services/graphviz.py`
+- Phase 4 implementation was intentionally constrained away from DOT feature
+  parity work; Graphviz surfaces were limited to compatibility messaging and
+  minimal guardrail repairs rather than new semantic investment
+- canonical JSON export was strengthened as the authoritative machine-readable
+  contract surface:
+  - `src/flo/compiler/ir/schema_projection.py` now preserves authored process
+    identity from canonical metadata when projecting schema-shaped JSON
+  - JSON export and schema-alignment tests cover canonical process metadata,
+    branch behavior, and schema parity expectations
+- text export surfaces now prefer canonical process semantics when available:
+  - `src/flo/export/materials_export.py` prefers `items` and `resources` over
+    legacy `materials` and `equipment`
+  - human-readable ingredient/material summaries remain available as an
+    operational reporting surface rather than a machine-readable contract
+- movement analysis now uses canonical authored relations intentionally:
+  - `src/flo/compiler/analysis/movement.py` prefers
+    `produces`/`consumes` and `performed_by` with legacy fallback to
+    `outputs`/`inputs` and `workers`
+  - movement exports therefore reflect canonical item/resource/location
+    semantics without requiring XML or deprecated renderer behavior
+- targeted export coverage now exercises canonical semantics through both the
+  registry and CLI layers:
+  - `tests/unit/export/test_materials_export.py`
+  - `tests/unit/analysis/test_movement.py`
+  - `tests/unit/test_export_registry.py`
+  - `tests/integration/test_cli_export_flag.py`
+  - `tests/integration/test_cli_render_options.py`
+  - `tests/integration/services/test_cli_click.py`
+
+Validation snapshot:
+
+- focused Phase 4 export and deprecation slices passed during implementation:
+  - `uv run pytest -q tests/integration/services/test_cli_click.py tests/integration/test_cli_render_options.py`
+  - `uv run pytest -q tests/unit/test_json_export_branches.py tests/unit/test_export_registry.py tests/integration/test_cli_export_flag.py`
+  - `uv run pytest -q tests/unit/export/test_materials_export.py tests/unit/analysis/test_movement.py tests/unit/test_export_registry.py tests/integration/test_cli_export_flag.py`
+- full repository checkpoint currently passes:
+  - `uv run pytest -q`
+  - result: `851 passed`
+- full repository hook gate currently passes:
+  - `uv run pre-commit run --all-files`
 
 ## Phase 5: Update Tests And Regression Baselines
 
@@ -562,7 +720,7 @@ Recommended order:
 1. Phase 1 compiler support
 2. Phase 2 schema and typed contract alignment
 3. Phase 3 fixture migration
-4. Phase 4 renderer and export updates
+4. Phase 4 Graphviz deprecation and export updates
 5. Phase 5 tests and baselines
 6. Phase 6 documentation alignment
 

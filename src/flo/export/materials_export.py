@@ -6,26 +6,30 @@ from typing import Any
 
 
 def ir_to_materials_text(ir: Any) -> str:
-    """Render a formatted materials and equipment list from process metadata."""
+    """Render a formatted item/resource list from process metadata."""
     process_metadata = getattr(ir, "process_metadata", None)
-    materials = (
-        process_metadata.get("materials")
-        if isinstance(process_metadata, dict)
-        else None
-    )
-    equipment = (
-        process_metadata.get("equipment")
-        if isinstance(process_metadata, dict)
-        else None
+    metadata = process_metadata if isinstance(process_metadata, dict) else {}
+    items = metadata.get("items")
+    resources = metadata.get("resources")
+    materials = metadata.get("materials")
+    equipment = metadata.get("equipment")
+
+    use_canonical_sections = items is not None or resources is not None
+    sections = (
+        [("Items", items), ("Resources", resources)]
+        if use_canonical_sections
+        else [("Materials", materials), ("Equipment", equipment)]
     )
 
-    lines: list[str] = ["Materials and Equipment"]
-    if materials is None and equipment is None:
+    lines: list[str] = [
+        "Items and Resources" if use_canonical_sections else "Materials and Equipment"
+    ]
+    if all(collection is None for _, collection in sections):
         lines.append("- none")
         return "\n".join(lines)
 
-    _append_section(lines=lines, title="Materials", collection=materials)
-    _append_section(lines=lines, title="Equipment", collection=equipment)
+    for title, collection in sections:
+        _append_section(lines=lines, title=title, collection=collection)
 
     return "\n".join(lines)
 

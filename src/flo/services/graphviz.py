@@ -3,6 +3,9 @@
 Provides a thin wrapper around the system `dot` binary that converts DOT
 source into an image file.  The DOT pipeline is kept as a separate step so
 that FLO's core rendering logic never depends on Graphviz being installed.
+
+This service remains in place as a deprecated compatibility-only path while
+direct SVG rendering and export surfaces take precedence.
 """
 
 from __future__ import annotations

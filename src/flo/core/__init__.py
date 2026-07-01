@@ -156,7 +156,7 @@ def _resolve_render_options_for_output(
     if output_format == "dot":
         if explicit_backend not in {None, "", "graphviz"}:
             raise CLIError(
-                "DOT export currently requires --render-backend graphviz or no --render-backend.",
+                "DOT export is deprecated compatibility-only and currently requires --render-backend graphviz or no --render-backend.",
                 code=EXIT_USAGE,
             )
         return replace(render_options, backend="graphviz")
@@ -320,7 +320,7 @@ def _write_render_artifact(
         if Path(render_to).suffix.lower() != ".svg":
             raise RenderError(
                 "Direct SVG rendering currently supports only .svg output paths. "
-                "Use a .svg target or switch to the Graphviz backend for raster/PDF output."
+                "Use a .svg target or switch to the deprecated Graphviz backend for raster/PDF output."
             )
         write_rc, write_err = write_output(content, render_to)
         if write_rc != 0:

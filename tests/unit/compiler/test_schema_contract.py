@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 from flo.compiler.compile import compile_adapter
 from flo.compiler.ir.validate import validate_against_schema
 from flo.compiler.ir.models import IR, Node, Edge
@@ -48,3 +51,39 @@ def test_schema_accepts_parallel_kinds_and_handoff_field() -> None:
     )
 
     validate_against_schema(ir)
+
+
+def test_repo_and_packaged_ir_schema_are_in_sync() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+    schema_path = repo_root / "schema" / "flo_ir.json"
+    packaged_schema_path = repo_root / "src" / "flo" / "schema" / "flo_ir.json"
+
+    with schema_path.open("r", encoding="utf-8") as fh:
+        repo_schema = json.load(fh)
+    with packaged_schema_path.open("r", encoding="utf-8") as fh:
+        packaged_schema = json.load(fh)
+
+    assert packaged_schema == repo_schema
+
+
+def test_flo_types_schema_includes_phase2_canonical_keys() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+    schema_path = repo_root / "schema" / "flo_types.json"
+
+    with schema_path.open("r", encoding="utf-8") as fh:
+        typed_schema = json.load(fh)
+
+    process_props = typed_schema["properties"]["process"]["properties"]
+    assert "items" in process_props
+    assert "resources" in process_props
+    assert "locations" in process_props
+
+    handoff_type = typed_schema["definitions"]["handoff_type"]
+    assert handoff_type["enum"] == [
+        "responsibility",
+        "information",
+        "material",
+        "system",
+        "location",
+        "mixed",
+    ]

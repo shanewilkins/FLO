@@ -79,6 +79,6 @@ def ensure_render_options_compatible_with_output(
     if invalid:
         names = ", ".join(f"--{name}" for name in invalid)
         raise CLIError(
-            f"Render options {names} require a diagram render output. Use --export dot, --export svg, or remove those flags.",
+            f"Render options {names} require a diagram render output. Use --export svg, use --export dot (deprecated compatibility-only), or remove those flags.",
             code=EXIT_USAGE,
         )

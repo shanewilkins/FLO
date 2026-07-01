@@ -13,6 +13,22 @@ def test_schema_dict_defaults_generated_process_name():
     assert payload["process"]["name"] == "generated"
 
 
+def test_schema_dict_prefers_authored_process_id_and_name_from_metadata():
+    ir = IR(
+        name="compiled_fallback_name",
+        nodes=[Node(id="n", type="task", attrs={})],
+        edges=[],
+        process_metadata={
+            "process_id": "authored_process_id",
+            "process_name": "Authored Process Name",
+        },
+    )
+
+    payload = ir_to_schema_dict(ir)
+    assert payload["process"]["id"] == "authored_process_id"
+    assert payload["process"]["name"] == "Authored Process Name"
+
+
 def test_node_to_schema_skips_non_dict_attrs():
     ir = IR(name="p", nodes=[Node(id="n", type="task", attrs="bad")], edges=[])
     payload = ir_to_schema_dict(ir)

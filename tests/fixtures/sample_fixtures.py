@@ -24,11 +24,12 @@ def repo_root(start: Path | None = None) -> Path:
 def tmp_flo_file():
     """Create a temporary .flo file seeded with a real example and yield its Path.
 
-    This uses the first example from the `examples/reference/` directory so integration
-    tests exercise the real parsing/compilation pipeline instead of a stub.
+    This uses a representative semantic reference example so integration tests
+    exercise the real parsing/compilation pipeline against the newer canonical
+    source model instead of a minimal legacy shape.
     """
     examples_dir = repo_root() / "examples" / "reference"
-    example = examples_dir / "linear.flo"
+    example = examples_dir / "semantic_controls_showcase.flo"
     if not example.exists():
         example = sorted(examples_dir.glob("*.flo"))[0]
     content = example.read_text()
@@ -52,7 +53,9 @@ def adapter_model_from_example():
     one manually or mocking the parsing step.
     """
     examples_dir = repo_root() / "examples" / "reference"
-    example = sorted(examples_dir.glob("*.flo"))[0]
+    example = examples_dir / "semantic_controls_showcase.flo"
+    if not example.exists():
+        example = sorted(examples_dir.glob("*.flo"))[0]
     content = example.read_text()
     model = AdapterModel.model_validate({"name": example.stem, "content": content})
     return model
