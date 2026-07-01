@@ -38,7 +38,11 @@ build_svg "examples/reference/chocolate_chip_cookies.flo" "renders/reference/cho
 build_text_export "examples/reference/chocolate_chip_cookies.flo" "renders/reference/chocolate_chip_cookies_ingredients.md"
 build_svg "examples/reference/linear.flo" "renders/reference/linear.svg" --diagram sppm --orientation lr
 build_svg "examples/reference/linear.flo" "renders/reference/linear_elk_flowchart.svg" --diagram flowchart --render-backend svg
+build_svg "examples/reference/new_semantics.flo" "renders/reference/new_semantics.svg" --diagram sppm --orientation lr
+build_text_export "examples/reference/new_semantics.flo" "renders/reference/new_semantics_ingredients.md"
 build_svg "examples/reference/rework_loop.flo" "renders/reference/rework_loop.svg" --diagram sppm --orientation lr
+build_svg "examples/reference/semantic_controls_showcase.flo" "renders/reference/semantic_controls_showcase.svg" --diagram sppm --orientation lr
+build_text_export "examples/reference/semantic_controls_showcase.flo" "renders/reference/semantic_controls_showcase_ingredients.md"
 build_svg "examples/reference/sppm_feature_showcase.flo" "renders/reference/sppm_feature_showcase.svg" --diagram sppm --orientation lr
 build_svg "examples/reference/sppm_feature_showcase_wrapped.flo" "renders/reference/sppm_feature_showcase_wrapped.svg" --diagram sppm --orientation lr --layout-wrap auto --layout-target-columns 3 --publication-page-format letter
 build_svg "examples/reference/sppm_long_label_stress.flo" "renders/reference/sppm_long_label_stress.svg" --diagram sppm --orientation lr

@@ -138,7 +138,7 @@ def _build_one(
             svg_out.write_text(artifact.content, encoding="utf-8")
             created.append(str(svg_out.relative_to(REPO_ROOT)))
 
-        if _has_materials_or_equipment_collection(ir):
+        if _has_item_or_resource_collection(ir):
             ingredients_out = base_out.with_name(
                 f"{base_out.name}_ingredients"
             ).with_suffix(".md")
@@ -206,7 +206,9 @@ def _render_options_for_example(example_file: Path) -> dict[str, str]:
     name = example_file.stem.lower()
     sppm_defaults: dict[str, dict[str, str]] = {
         "linear": {"diagram": "sppm", "orientation": "lr"},
+        "new_semantics": {"diagram": "sppm", "orientation": "lr"},
         "rework_loop": {"diagram": "sppm", "orientation": "lr"},
+        "semantic_controls_showcase": {"diagram": "sppm", "orientation": "lr"},
         "sppm_feature_showcase": {"diagram": "sppm", "orientation": "lr"},
         "sppm_feature_showcase_wrapped": {
             "diagram": "sppm",
@@ -266,11 +268,13 @@ def _direct_svg_variants_for_example(
     return []
 
 
-def _has_materials_or_equipment_collection(ir: object) -> bool:
+def _has_item_or_resource_collection(ir: object) -> bool:
     process_metadata = getattr(ir, "process_metadata", None)
     if not isinstance(process_metadata, dict):
         return False
     return (
+        process_metadata.get("items") is not None
+        or process_metadata.get("resources") is not None
         process_metadata.get("materials") is not None
         or process_metadata.get("equipment") is not None
     )
