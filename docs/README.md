@@ -32,6 +32,12 @@ FLO uses four main documentation layers.
    - migration plans
    - ADRs and historical context
 
+Design substructure:
+
+- `docs/design/adr/` for architecture decision records
+- `docs/design/renderers/` for renderer-family design notes
+- `docs/design/history/` for non-normative historical background
+
 Supporting user-facing documents live at the top of `docs/`:
 
 - `User_Manual.md` for how to use FLO
@@ -61,6 +67,8 @@ Start here based on the question you are trying to answer.
 - What does a diagram type mean: `docs/specs/`
 - What is the serialized contract: `schema/flo_ir.json` and `schema/flo_types.json`
 - Why was it designed this way: `docs/design/`
+- Where are key architecture decisions: `docs/design/adr/`
+- Where are renderer implementation notes: `docs/design/renderers/`
 - How do I use the tool: `docs/User_Manual.md`
 - What changed recently: `docs/CHANGELOG.md`
 

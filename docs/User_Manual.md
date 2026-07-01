@@ -990,7 +990,7 @@ Useful project references:
 - `README.md`
 - `docs/specs/cli_error_contract.md`
 - `docs/specs/core_language.md`
-- `docs/design/IR.md`
+- `docs/design/history/IR.md`
 - `schema/flo_ir.json`
 - `examples/README.md`
 

@@ -65,6 +65,6 @@ Those later slices should build on this model rather than adding new renderer-sp
 ## Related design documents
 
 - `docs/design/artifact_taxonomy.md`
-- `docs/design/adr_render_stack_elk_svg_typst.md`
+- `docs/design/adr/render_stack_elk_svg_typst.md`
 - `docs/design/render_platform_target_architecture.md`
 - `docs/design/render_platform_migration_plan.md`

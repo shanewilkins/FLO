@@ -114,6 +114,6 @@ The following topics do not block the language-primitive implementation plan.
 
 ## Required Cross-References
 
-- Decision record: `docs/design/adr_language_primitive_taxonomy.md`
+- Decision record: `docs/design/adr/language_primitive_taxonomy.md`
 - Explanatory taxonomy note: `docs/design/language_primitive_taxonomy.md`
 - Active execution plan: `notes/language_primitive_taxonomy_implementation_plan.md`

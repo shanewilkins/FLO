@@ -493,6 +493,6 @@ Mitigation:
 
 ## References
 
-- `docs/design/adr_render_stack_elk_svg_typst.md`
+- `docs/design/adr/render_stack_elk_svg_typst.md`
 - `docs/design/render_platform_target_architecture.md`
 - `docs/design/publication_model.md`

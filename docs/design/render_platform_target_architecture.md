@@ -300,7 +300,7 @@ This target architecture does not require:
 
 - `docs/design/artifact_taxonomy.md`
 - `docs/design/publication_model.md`
-- `docs/design/renderer_architecture_boundaries.md`
-- `docs/design/spaghetti_renderer_design.md`
-- `docs/design/adr_render_stack_elk_svg_typst.md`
+- `docs/design/renderers/boundaries.md`
+- `docs/design/renderers/spaghetti.md`
+- `docs/design/adr/render_stack_elk_svg_typst.md`
 - `docs/design/render_platform_migration_plan.md`

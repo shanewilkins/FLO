@@ -8,24 +8,21 @@ contracts live in `schema/flo_types.json`.
 This is a draft explanatory guide.
 Schema remains the authoritative contract for tooling.
 
-Purpose
--------
+## Purpose
 
 This document explains the machine-readable typed metadata defined in
 `schema/flo_types.json`, why we have it, and how authors and tools should use
 it. The JSON schema is the authoritative form for tooling; this doc provides
 human-friendly guidance and examples.
 
-Why typed metadata
--------------------
+## Why typed metadata
 
 - Enables deterministic validation and clearer diagnostics during parsing.
 - Supports quantitative analyses (SLA aggregation, latency sums) and tooling.
 - Keeps freeform annotations possible while encouraging a small set of
   well-typed keys for analytics and telemetry mapping.
 
-Key typed fields (recommended)
-------------------------------
+## Key typed fields (recommended)
 
 - `activity_key` (string, node): stable key used to align telemetry events to a node.
 - `sla_target_seconds` (duration/number, node/process): expected time budget for the step/process.
@@ -42,23 +39,20 @@ Key typed fields (recommended)
 - `materials`, `equipment`, `locations`, and `workers` (process): current
   typed process-level collections used by the v0.1 schema.
 
-Typing and coercion rules
--------------------------
+## Typing and coercion rules
 
 - Parser behavior: attempt safe coercions (e.g., numeric string → number). If
   coercion fails, emit a validation error.
 - Unknown metadata keys: allowed but flagged with a `warning: untyped_key` so
   authors can consider adding types to the schema.
 
-Schema location and usage
--------------------------
+## Schema location and usage
 
 - Machine schema: `schema/flo_types.json` — consumed by validators and CI.
 - IR schema: `schema/flo_ir.json` defines structure (nodes/edges). Typed
   metadata complements the IR schema by describing common metadata keys.
 
-Examples
---------
+## Examples
 
 - Node metadata example:
 
@@ -87,8 +81,7 @@ Examples
     "value_class": "VA"
   }
 
-Best practices
---------------
+## Best practices
 
 - Prefer stable, compact `id`s for nodes and use `activity_key` to map events.
 - Keep metadata small and typed for critical analysis fields; use freeform
@@ -96,22 +89,19 @@ Best practices
 - Use `sla_target_seconds` consistently as seconds for easier aggregation.
 - For SPPM rework loops, attach rework observations to edge metadata rather than the rework task node so the renderer can place the data box on the dashed loop itself.
 
-Extending the typed schema
---------------------------
+## Extending the typed schema
 
 - Add new keys to `schema/flo_types.json` with a short justification and an
   example. Each addition should be explainable in one paragraph and map to IR
   fields or analysis needs.
 
-Tooling notes
--------------
+## Tooling notes
 
 - Validators should load both `schema/flo_ir.json` and `schema/flo_types.json`.
 - Editors/IDEs can surface `recommended_keys` and show warnings for untyped
   metadata.
 
-Next steps
-----------
+## Next steps
 
 - Integrate typed-schema checks into the CLI `flo validate` command.
 - Add examples demonstrating invalid metadata and expected diagnostics.

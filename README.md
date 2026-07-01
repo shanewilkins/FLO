@@ -134,7 +134,7 @@ Downstream projects depend on FLO IR.
 - Policy authority: `docs/policy/authoritative_artifacts.md`
 - Diagram and artifact specs: `docs/specs/`
 - Core semantic spec: `docs/specs/core_language.md`
-- Historical semantic background note: `docs/design/IR.md`
+- Historical semantic background note: `docs/design/history/IR.md`
 - User-facing summary: `README.md`
 
 Hierarchy policy and update workflow are defined in

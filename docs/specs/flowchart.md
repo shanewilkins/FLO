@@ -67,5 +67,5 @@ A flowchart is not:
 - Shared rich process-map semantics belong in `process_map.md` rather than
    here.
 - Renderer structure and shared routing boundaries belong in
-  `docs/design/flowchart_renderer_design.md`.
+  `docs/design/renderers/flowchart.md`.
 - Core process semantics belong in `docs/specs/core_language.md`.

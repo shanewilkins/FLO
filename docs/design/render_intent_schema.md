@@ -8,8 +8,7 @@ The authoritative structural contract lives in `schema/flo_ir.json` under
 Implementation rollout remains phased and this note is non-blocking for the
 language-primitive compiler migration.
 
-Purpose
--------
+## Purpose
 
 Define a source-level schema for publication and render intent so a single `.flo`
 model can produce multiple complementary render perspectives (for example SPPM
@@ -18,8 +17,7 @@ and spaghetti) with reproducible defaults.
 This document is a design contract for refactoring. It does not change runtime
 behavior by itself.
 
-Goals
------
+## Goals
 
 - Keep process semantics in core IR and compiler validation.
 - Move publication and renderer intent into process metadata for portability.
@@ -27,16 +25,14 @@ Goals
 - Support multiple render modes from one source without duplication.
 - Keep `.flo` files easy to author, review, and maintain by humans.
 
-Non-goals
----------
+## Non-goals
 
 - Do not force one canonical rendered output per `.flo` file.
 - Do not remove existing CLI options immediately.
 - Do not entangle execution semantics with presentation semantics.
 - Do not require verbose boilerplate metadata for common author workflows.
 
-Human readability constraints (must-have)
------------------------------------------
+## Human readability constraints (must-have)
 
 Render intent schema decisions should be filtered through these authoring rules:
 
@@ -48,8 +44,7 @@ Render intent schema decisions should be filtered through these authoring rules:
 6. Minimize repeated values across views via inheritance from `render.defaults`.
 7. Error messages must suggest short, copy-pasteable fixes.
 
-Authoring ergonomics (recommended)
-----------------------------------
+## Authoring ergonomics (recommended)
 
 - Treat `render.defaults` as the preferred place for shared intent.
 - Require only per-view deltas under `render.views.<id>`.
@@ -60,15 +55,13 @@ Authoring ergonomics (recommended)
 - Preserve alias migration paths long enough to avoid manual rewrites of all
   existing examples in one release.
 
-Recommended ownership model
----------------------------
+## Recommended ownership model
 
 1. Source metadata owns document intent.
 2. CLI owns session-level overrides.
 3. Built-in profile defaults fill any missing values.
 
-Precedence contract
--------------------
+## Precedence contract
 
 For each resolved render option:
 
@@ -80,8 +73,7 @@ For each resolved render option:
 
 This keeps source reproducible while preserving fast local iteration.
 
-Render intent structure (proposed)
-----------------------------------
+## Render intent structure (proposed)
 
 Render intent should live under process metadata:
 
@@ -150,8 +142,7 @@ Notes:
 - `diagram` remains optional in `defaults`; if omitted there, each view must set it.
 - Existing metadata aliases can remain supported during migration.
 
-Should intended render modes be in source?
-------------------------------------------
+## Should intended render modes be in source?
 
 Yes, as optional named views.
 
@@ -167,8 +158,7 @@ Important constraint:
 - View selection should be explicit (`--view sppm_main`) and overrideable
   (`--diagram spaghetti`), not inferred from file path.
 
-Proposed CLI evolution
-----------------------
+## Proposed CLI evolution
 
 Keep current flags. Add only small routing helpers:
 
@@ -177,8 +167,7 @@ Keep current flags. Add only small routing helpers:
 
 All existing flags continue to work and override source values.
 
-Minimal schema keys (phase 1)
------------------------------
+## Minimal schema keys (phase 1)
 
 Start narrow to reduce risk:
 
@@ -198,8 +187,7 @@ Defer until phase 2 or later:
 - Renderer-specific deep subtrees beyond currently supported options
 - Pagination policies and multi-page sequencing directives
 
-Validation rules (proposed)
----------------------------
+## Validation rules (proposed)
 
 - Unknown `render.views` entries are allowed but warned if malformed.
 - `render.views.<id>.diagram` must be one of supported diagrams.
@@ -213,8 +201,7 @@ Validation usability rules:
 - Diagnostics should include one valid example snippet.
 - For unknown keys (strict mode), diagnostics should suggest closest valid key.
 
-Refactor plan (careful, staged)
--------------------------------
+## Refactor plan (careful, staged)
 
 Phase 0: no behavior change
 
@@ -243,8 +230,7 @@ Phase 4: migration and deprecation
 - Document recommended source-first workflow.
 - Optionally deprecate select CLI knobs only after at least one stable cycle.
 
-Testing strategy
-----------------
+## Testing strategy
 
 - Unit tests for resolver precedence and partial overrides.
 - Integration tests for:
@@ -258,15 +244,13 @@ Testing strategy
   - single-view defaults-only example remains concise,
   - multi-view example avoids duplicated defaults.
 
-Compatibility constraints
--------------------------
+## Compatibility constraints
 
 - Existing `.flo` files without render intent must produce identical outputs.
 - Existing CLI contracts and error codes must remain stable.
 - Existing build scripts should need no immediate changes.
 
-Open decisions
---------------
+## Open decisions
 
 - Should `render.views` require stable ids or allow freeform labels?
 - Should diagram-specific keys live under `render.views.<id>.<diagram_name>`
@@ -274,8 +258,7 @@ Open decisions
 - Should margins be strict pixel integers in phase 1, or permit dimensions
   (`px`, `in`, `cm`) immediately?
 
-Recommendation
---------------
+## Recommendation
 
 Adopt source-level render intent with named multi-view support, keep CLI as
 overrides, and stage refactoring through a precedence resolver before exposing

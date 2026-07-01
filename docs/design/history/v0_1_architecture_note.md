@@ -255,10 +255,10 @@ Normative renderer specs:
 
 Explanatory renderer design notes:
 
-- `docs/design/flowchart_renderer_design.md`
-- `docs/design/swimlane_renderer_design.md`
-- `docs/design/spaghetti_renderer_design.md`
-- `docs/design/sppm_renderer_design.md`
+- `docs/design/renderers/flowchart.md`
+- `docs/design/renderers/swimlane.md`
+- `docs/design/renderers/spaghetti.md`
+- `docs/design/renderers/sppm.md`
 
 All renderers share:
 
@@ -271,7 +271,7 @@ All renderers share:
 
 Renderer-specific concerns are isolated in dedicated modules to prevent
 SPPM-specific or swimlane-specific semantics from leaking into shared code.
-See `docs/design/renderer_architecture_boundaries.md` for shared-core vs.
+See `docs/design/renderers/boundaries.md` for shared-core vs.
 renderer-specific module placement rules. See `docs/design/README.md` for the
 design-vs-spec authority boundary and `docs/design/render_platform_target_architecture.md`
 for post-v0.1 backend evolution.

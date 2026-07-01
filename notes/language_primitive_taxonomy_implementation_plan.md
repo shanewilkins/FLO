@@ -121,12 +121,12 @@ This plan assumes the current names remain unchanged.
 
 ### Documentation
 
-- `docs/design/adr_language_primitive_taxonomy.md`
+- `docs/design/adr/language_primitive_taxonomy.md`
 - `docs/specs/core_language.md`
 - `docs/User_Manual.md`
 - diagram specs under `docs/specs/` when new IR fields change diagram meaning
 - `docs/design/typed_metadata.md`
-- `docs/design/ontology.md`
+- `docs/design/history/ontology.md`
 - `docs/design/language_primitive_taxonomy.md` if the implementation reveals
   adjustments
 
@@ -179,7 +179,7 @@ Deliverables:
 - accepted fixture taxonomy decision: keep `reference/` and `conformance/`
 - accepted taxonomy note in `docs/design/language_primitive_taxonomy.md`
 - ADR recording the accepted language-primitive direction in
-  `docs/design/adr_language_primitive_taxonomy.md`
+  `docs/design/adr/language_primitive_taxonomy.md`
 
 Stop line:
 
@@ -494,8 +494,8 @@ Work:
 
 4. Design notes
 
-   - add `docs/design/adr_language_primitive_taxonomy.md`
-   - update `docs/design/ontology.md`
+   - add `docs/design/adr/language_primitive_taxonomy.md`
+   - update `docs/design/history/ontology.md`
    - update `docs/design/typed_metadata.md`
    - keep `docs/design/language_primitive_taxonomy.md` consistent with the
      implementation reality
@@ -512,7 +512,7 @@ Stop line:
 
 Success criteria:
 
-- `docs/design/adr_language_primitive_taxonomy.md` records the accepted
+- `docs/design/adr/language_primitive_taxonomy.md` records the accepted
   architecture decision separately from the broader explanatory design note
 - `docs/specs/core_language.md` describes the accepted primitive model without
   falling back to graph-first framing

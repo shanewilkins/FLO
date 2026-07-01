@@ -234,5 +234,5 @@ FLO core language semantics do not by themselves define:
 - Timing rationale and modeling background are further explained in
    `docs/design/wait-time-vs-changeover-time-semantics.md`, but this file owns
    the normative rule.
-- The historical design note in `docs/design/IR.md` is explanatory background
+- The historical design note in `docs/design/history/IR.md` is explanatory background
    only; this file is the normative semantic source.

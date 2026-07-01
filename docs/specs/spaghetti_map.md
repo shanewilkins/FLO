@@ -58,7 +58,7 @@ A spaghetti map is not:
 
 - Diagram meaning is defined here.
 - Renderer structure and implementation boundaries belong in
-  `docs/design/spaghetti_renderer_design.md`.
+  `docs/design/renderers/spaghetti.md`.
 - Movement analysis behavior belongs in the analysis implementation and any
   future movement-analysis spec.
 - Core process semantics belong in `docs/specs/core_language.md`.

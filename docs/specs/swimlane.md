@@ -67,5 +67,5 @@ A swimlane diagram is not:
 - Diagram meaning is defined here.
 - Shared rich process-map semantics belong in `process_map.md`.
 - Renderer structure and lane-rendering boundaries belong in
-  `docs/design/swimlane_renderer_design.md`.
+  `docs/design/renderers/swimlane.md`.
 - Core process semantics belong in `docs/specs/core_language.md`.

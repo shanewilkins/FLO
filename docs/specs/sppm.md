@@ -99,6 +99,6 @@ An SPPM is not:
 - Diagram meaning is defined here.
 - Shared rich process-map semantics belong in `process_map.md`.
 - Renderer decomposition and refactor boundaries belong in
-  `docs/design/sppm_renderer_design.md`.
+  `docs/design/renderers/sppm.md`.
 - Structural IR contract belongs in `schema/flo_ir.json`.
 - Core process semantics belong in `docs/specs/core_language.md`.
