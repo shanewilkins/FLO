@@ -101,7 +101,8 @@ def test_postprocess_step_nonzero_and_fallback(monkeypatch):
     rc, payload, err = step.run((0, ir, None), services=None)
     assert rc == 0
     assert payload == ir
-    assert err is None
+    assert err is not None
+    assert err.startswith("fail-open postprocess: scc_condense failed:")
 
 
 def test_render_step_nonzero_passthrough_and_error_mapping(monkeypatch):
@@ -143,7 +144,7 @@ def test_pipeline_runner_handles_non_tuple_state_and_non_int_state(monkeypatch):
         def __enter__(self):
             return self
 
-        def __exit__(self, exc_type, exc, tb):
+        def __exit__(self, _exc_type, exc, _tb):
             return False
 
         def set_attribute(self, key, value):

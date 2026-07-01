@@ -44,54 +44,32 @@ dev = [
 ]
 
 [tool.importlinter]
-# Import-linter rules for enforcing layer boundaries in the FLO project.
-# Note: import-linter expects a specific schema; this section encodes the
-# intended rules in pyproject.toml so CI and tooling can be wired to the
-# enforcement tool. Adjust keys below to match the import-linter version used.
-
-# The top-level package that import-linter should treat as the project's
-# root importable package. This must match the importable package name
-# (e.g. the `flo` package under `src/flo`).
+# Import-linter rules for enforcing layer boundaries in FLO.
 root_package = "flo"
 
-[tool.importlinter.layers]
-# Logical layer -> package prefix
-# Keep layer names small and map to specific package prefixes.
-core = "flo.core"
-adapters = "flo.adapters"
-compiler = "flo.compiler"
-render = "flo.render"
-services = "flo.services"
+[[tool.importlinter.contracts]]
+name = "Domain layers do not import core"
+type = "forbidden"
+source_modules = ["flo.adapters", "flo.compiler", "flo.render", "flo.services"]
+forbidden_modules = ["flo.core"]
 
-[[tool.importlinter.rules]]
-name = "no_core_deps"
-description = "Core/CLI must not be imported by domain layers."
-modules = ["flo.core"]
-forbidden = ["flo.compiler", "flo.adapters", "flo.render", "flo.services"]
+[[tool.importlinter.contracts]]
+name = "Compiler and adapters avoid logging internals"
+type = "forbidden"
+source_modules = ["flo.compiler", "flo.adapters"]
+forbidden_modules = ["flo.services.logging"]
 
-[[tool.importlinter.rules]]
-name = "no_compiler_to_core_logging"
-description = "Compiler and adapters must not import core or logging setup."
-modules = ["flo.compiler", "flo.adapters"]
-forbidden = ["flo.core", "flo.services.logging"]
+[[tool.importlinter.contracts]]
+name = "Compiler IR is independent of higher-level packages"
+type = "forbidden"
+source_modules = ["flo.compiler.ir"]
+forbidden_modules = ["flo.core", "flo.adapters", "flo.render", "flo.services"]
 
-[[tool.importlinter.rules]]
-name = "compiler_ir_independent"
-description = "Compiler IR package must be independent of higher-level concerns."
-modules = ["flo.compiler.ir"]
-forbidden = ["flo.core", "flo.adapters", "flo.render", "flo.services"]
-
-[[tool.importlinter.rules]]
-name = "render_optional"
-description = "Renderers should only depend on compiler layers and services, not on core internals."
-modules = ["flo.render"]
-forbidden = ["flo.core", "flo.services.logging"]
-
-[[tool.importlinter.rules]]
-name = "no_domain_import_core"
-description = "Domain layers must not import core entrypoint modules."
-modules = ["flo.adapters", "flo.compiler", "flo.render", "flo.services"]
-forbidden = ["flo.core"]
+[[tool.importlinter.contracts]]
+name = "Render package does not import core"
+type = "forbidden"
+source_modules = ["flo.render"]
+forbidden_modules = ["flo.core"]
 
 [tool.coverage.report]
 omit = [

@@ -68,6 +68,42 @@ FLO's normative source-authoring model is process-first rather than graph-first.
    - Include cycles are invalid.
    - Duplicate step identifiers introduced by composition are invalid.
 
+## Canonical authored primitives
+
+FLO's accepted authored semantic model is process-first.
+
+Process-level collections:
+
+- `items` is the canonical collection for flow objects.
+- `resources` is the canonical collection for performers and enabling support.
+- `locations` is the canonical collection for movement-relevant places.
+
+Canonical item kinds:
+
+- `material`
+- `information`
+
+Canonical resource kinds:
+
+- `person`
+- `equipment`
+
+Canonical step-level relations:
+
+- `consumes`
+- `produces`
+- `performed_by`
+- `uses`
+- `location`
+
+Compatibility posture:
+
+- Legacy aliases such as `materials`, `workers`, `equipment`, `inputs`, and
+   `outputs` remain accepted for compatibility in the current v0.1
+   implementation.
+- New normative examples and guidance should use canonical `items`,
+   `resources`, `consumes`, `produces`, `performed_by`, and `uses`.
+
 ## Core entities
 
 The canonical compiled FLO process model includes the following entity
@@ -87,9 +123,21 @@ families:
    - An optional grouping surface for nodes, commonly used for role,
      department, or system responsibility.
 
-5. Timing and IO metadata
-   - Optional descriptive metadata that enriches nodes without changing the
-     fundamental graph model.
+5. Item
+    - A process-level declared flow object that may be consumed, produced,
+       transferred, or reworked.
+
+6. Resource
+    - A process-level declared performer or enabling support entity used by one
+       or more steps.
+
+7. Location
+    - A process-level declared place where work occurs or through which items
+       or people move.
+
+8. Timing and descriptive metadata
+    - Optional descriptive metadata that enriches nodes, edges, and the process
+       without changing the fundamental process model.
 
 ## Node types
 
@@ -103,6 +151,8 @@ The current MVP node vocabulary is:
 - `wait`
 - `decision`
 - `subprocess`
+- `parallel_split`
+- `parallel_join`
 
 Other node families may be added later, but this set defines the current
 normative baseline.
@@ -113,6 +163,39 @@ Current node-family intent:
 - `wait` represents an explicit hold state without implying active work.
 - `subprocess` represents a collapsible child-process boundary in the source
    model and may be projected differently by renderers.
+- `parallel_split` starts one-to-many concurrent control flow.
+- `parallel_join` synchronizes many-to-one concurrent control flow.
+
+## Canonical relation semantics
+
+FLO models several authored relations as first-class semantic surfaces.
+
+1. Control-flow relations
+   - Default sequence, decision outcomes, explicit transitions, and rework
+     edges all compile into canonical directed edges.
+
+2. Handoff relation
+   - `handoff` is a first-class transition relation.
+   - In the current canonical structural contract it is represented as a
+     boolean edge field.
+   - Optional typed classification such as `handoff_type` may be attached in
+     edge metadata.
+
+3. Item relations
+   - `consumes` and `produces` identify declared process items used or emitted
+     by a step.
+
+4. Resource relations
+   - `performed_by` identifies declared `person` resources.
+   - `uses` identifies declared `equipment` resources.
+
+5. Location relation
+   - `location` identifies the declared process location associated with a
+     step.
+
+6. Rework relation
+   - `rework` is a relation on an edge, not a node kind.
+   - An edge may be both `rework` and `handoff`.
 
 ## Timing semantics
 
@@ -198,6 +281,31 @@ An implementation of FLO must enforce these minimum semantic rules:
       integer greater than or equal to `1`.
     - `metadata.queue_policy` is optional under the current v0.1 implementation
       and may be used by downstream analysis or future queueing models.
+
+15. Item relation integrity
+      - If process-level `items` are declared, every `consumes` and `produces`
+         reference must resolve to a declared process item id.
+
+16. Resource relation integrity
+      - If process-level `resources` are declared, every `performed_by` and
+         `uses` reference must resolve to a declared process resource id.
+
+17. Resource kind compatibility
+      - `performed_by` references must resolve to resources of kind `person`.
+      - `uses` references must resolve to resources of kind `equipment`.
+
+18. Explicit handoff typing and shape
+      - If `handoff` is present on an edge or transition, it must be boolean in
+         the canonical structural contract.
+      - Optional typed handoff metadata must not contradict the structural
+         meaning of the edge.
+
+19. Parallel structure validity
+      - `parallel_split` nodes must have at least two outgoing edges.
+      - `parallel_split` nodes must reach at least one `parallel_join` node.
+      - `parallel_join` nodes must have at least two incoming edges.
+      - `parallel_join` nodes must be reachable from at least one
+         `parallel_split` node.
 
 ## Serialization relationship
 

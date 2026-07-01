@@ -41,6 +41,9 @@ if TYPE_CHECKING:
     from flo.render._sppm_postprocess_contract import SppmSvgPostprocessContract
 
 
+_FAIL_OPEN_SCC_PREFIX = "fail-open postprocess: scc_condense failed"
+
+
 def run_content(
     content: str, command: str = "run", options: dict | None = None
 ) -> Tuple[int, str, str]:
@@ -89,14 +92,14 @@ def run_content(
     )
     ensure_render_projection_supported(render_options)
 
-    artifact, contract = _render_artifact_with_postprocess(
+    artifact, contract, warning = _render_artifact_with_postprocess(
         ir, render_options=render_options
     )
     if render_to:
         _write_render_artifact(
             artifact=artifact, render_to=render_to, contract=contract
         )
-        return EXIT_SUCCESS, "", ""
+        return EXIT_SUCCESS, "", warning or ""
     return (
         EXIT_SUCCESS,
         _render_artifact_for_stdout(
@@ -104,7 +107,7 @@ def run_content(
             output_format=output_format,
             contract=contract,
         ),
-        "",
+        warning or "",
     )
 
 
@@ -284,14 +287,17 @@ def render_dot_and_contract(
 
 def _render_artifact_with_postprocess(
     ir: IR, render_options: RenderOptions
-) -> tuple[RenderArtifact, SppmSvgPostprocessContract | None]:
+) -> tuple[RenderArtifact, SppmSvgPostprocessContract | None, str | None]:
     """SCC-condense then render, returning (artifact, backend contract)."""
     processed = ir
+    warning: str | None = None
 
     try:
         processed = scc_condense(processed)
-    except Exception:
-        pass
+    except Exception as exc:
+        # Explicit fail-open policy: when SCC postprocess fails, continue with
+        # original IR and surface a deterministic warning for diagnostics.
+        warning = f"{_FAIL_OPEN_SCC_PREFIX}: {exc}"
 
     try:
         artifact, contract = render_artifact_and_contract(
@@ -300,7 +306,7 @@ def _render_artifact_with_postprocess(
     except Exception as e:
         raise RenderError(str(e))
 
-    return artifact, contract
+    return artifact, contract, warning
 
 
 def _write_render_artifact(

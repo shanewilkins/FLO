@@ -12,7 +12,7 @@ from typing import Optional
 import structlog
 
 
-def _add_otel_trace_info(logger, method_name: str, event_dict: dict) -> dict:
+def _add_otel_trace_info(logger, _method_name: str, event_dict: dict) -> dict:
     """Structlog processor that adds OpenTelemetry trace/span ids when present.
 
     Returns the (possibly) enriched `event_dict`.  This processor is defensive
@@ -38,7 +38,7 @@ def _add_otel_trace_info(logger, method_name: str, event_dict: dict) -> dict:
 
 
 def _add_service_name(name: Optional[str]):
-    def _processor(logger, method_name: str, event_dict: dict) -> dict:
+    def _processor(logger, _method_name: str, event_dict: dict) -> dict:
         if name:
             event_dict.setdefault("service", name)
         return event_dict

@@ -6,8 +6,8 @@ This is an accepted explanatory taxonomy note.
 The migration contract is locked in
 `docs/policy/language_primitive_migration_contract.md`.
 The decision record lives in `docs/design/adr/language_primitive_taxonomy.md`.
-Current implemented normative semantics remain in
-`docs/specs/core_language.md` until the migration lands in code and tests.
+Current normative semantics are implemented in
+`docs/specs/core_language.md` and the schema contracts under `schema/`.
 
 ## Purpose
 

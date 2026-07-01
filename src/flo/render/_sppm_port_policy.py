@@ -92,81 +92,6 @@ def _edge_is_explicit_branch_out(*, edge: dict[str, Any], source_kind: str) -> b
     )
 
 
-def _preferred_tailport(
-    *,
-    node_id: str,
-    kind: str,
-    core_route: Any | None,
-    slot_role: str,
-    fallback_side: str,
-    port_policy: SppmPortPolicy,
-) -> str:
-    _ = slot_role
-    if node_id in port_policy.secondary_line_targets and core_route is not None:
-        return _graphviz_tailport_for_side(
-            slot_index=core_route.source_port.slot_index,
-            side=fallback_side,
-            kind=kind,
-        )
-    return f"tailport={fallback_side}"
-
-
-def _preferred_headport(
-    *,
-    node_id: str,
-    kind: str,
-    core_route: Any | None,
-    slot_role: str,
-    fallback_side: str,
-    port_policy: SppmPortPolicy,
-) -> str:
-    _ = slot_role
-    if node_id in port_policy.secondary_line_targets and core_route is not None:
-        return _graphviz_headport_for_side(
-            slot_index=core_route.target_port.slot_index,
-            side=fallback_side,
-            kind=kind,
-        )
-    if (
-        core_route is not None
-        and _supports_named_ports(kind)
-        and fallback_side in {"w", "e"}
-    ):
-        return _graphviz_headport_for_side(
-            slot_index=core_route.target_port.slot_index,
-            side=fallback_side,
-            kind=kind,
-        )
-    return f"headport={fallback_side}"
-
-
-def _preferred_return_headport(
-    *,
-    node_id: str,
-    kind: str,
-    core_route: Any | None,
-    fallback_side: str,
-) -> str:
-    _ = node_id
-    if core_route is not None and _supports_named_ports(kind):
-        return f'headport="rin_{core_route.target_port.slot_index}:e"'
-    return f"headport={fallback_side}"
-
-
-def _graphviz_tailport_for_side(*, slot_index: int, side: str, kind: str) -> str:
-    if _supports_named_ports(kind):
-        if side == "w":
-            return f'tailport="in_{slot_index}:w"'
-        return f'tailport="out_{slot_index}:{side}"'
-    return f"tailport={side}"
-
-
-def _graphviz_headport_for_side(*, slot_index: int, side: str, kind: str) -> str:
-    if _supports_named_ports(kind):
-        return f'headport="in_{slot_index}:{side}"'
-    return f"headport={side}"
-
-
 def _build_boundary_lane_map(*, wrap_plan: WrapPlan) -> dict[tuple[str, str], str]:
     if not wrap_plan.active:
         return {}
@@ -200,12 +125,6 @@ def _graphviz_tailport_for_spec(port_spec: Any, *, kind: str) -> str:
     if _supports_named_ports(kind):
         return f'tailport="out_{port_spec.slot_index}:{port_spec.side}"'
     return f"tailport={port_spec.side}"
-
-
-def _graphviz_headport_for_spec(port_spec: Any, *, kind: str) -> str:
-    if _supports_named_ports(kind):
-        return f'headport="in_{port_spec.slot_index}:{port_spec.side}"'
-    return f"headport={port_spec.side}"
 
 
 def _supports_named_ports(kind: str) -> bool:

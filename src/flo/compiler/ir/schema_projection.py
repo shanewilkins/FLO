@@ -7,16 +7,20 @@ layer needs to own the transformation.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TypeAlias, cast
 
-from .models import IR
+from .models import IR, Edge, Node
 from flo.schema.render_metadata import (
     PROCESS_METADATA_PROCESS_ID_KEY,
     PROCESS_METADATA_PROCESS_NAME_KEY,
 )
 
+JsonValue: TypeAlias = Any
+JsonObject: TypeAlias = dict[str, JsonValue]
+JsonArray: TypeAlias = list[JsonObject]
 
-def ir_to_schema_dict(ir: IR) -> dict[str, Any]:
+
+def ir_to_schema_dict(ir: IR) -> JsonObject:
     """Project canonical IR into the JSON-schema contract shape."""
     process_metadata = (
         ir.process_metadata if isinstance(ir.process_metadata, dict) else {}
@@ -28,7 +32,7 @@ def ir_to_schema_dict(ir: IR) -> dict[str, Any]:
         process_metadata, PROCESS_METADATA_PROCESS_NAME_KEY, fallback=ir.name
     )
 
-    process: dict[str, Any] = {"id": process_id, "name": process_name}
+    process: JsonObject = {"id": process_id, "name": process_name}
     if process_metadata:
         process["metadata"] = process_metadata
 
@@ -43,7 +47,7 @@ def ir_to_schema_dict(ir: IR) -> dict[str, Any]:
 
 
 def _resolve_process_field(
-    process_metadata: dict[str, Any], metadata_key: str, *, fallback: str | None
+    process_metadata: JsonObject, metadata_key: str, *, fallback: str | None
 ) -> str:
     value = process_metadata.get(metadata_key)
     if isinstance(value, str) and value.strip():
@@ -53,11 +57,9 @@ def _resolve_process_field(
     return "generated"
 
 
-def _node_to_schema(node: Any) -> dict[str, Any]:
-    node_entry: dict[str, Any] = {"id": node.id, "kind": node.type}
-    attrs = node.attrs or {}
-    if not isinstance(attrs, dict):
-        return node_entry
+def _node_to_schema(node: Node) -> JsonObject:
+    node_entry: JsonObject = {"id": node.id, "kind": node.type}
+    attrs = _normalize_json_object(node.attrs)
 
     _copy_optional_scalars(
         source=attrs,
@@ -85,7 +87,7 @@ def _node_to_schema(node: Any) -> dict[str, Any]:
 
 
 def _copy_optional_scalars(
-    *, source: dict[str, Any], target: dict[str, Any], keys: tuple[str, ...]
+    *, source: JsonObject, target: JsonObject, keys: tuple[str, ...]
 ) -> None:
     for key in keys:
         value = source.get(key)
@@ -94,7 +96,7 @@ def _copy_optional_scalars(
 
 
 def _copy_optional_lists(
-    *, source: dict[str, Any], target: dict[str, Any], keys: tuple[str, ...]
+    *, source: JsonObject, target: JsonObject, keys: tuple[str, ...]
 ) -> None:
     for key in keys:
         value = source.get(key)
@@ -102,14 +104,14 @@ def _copy_optional_lists(
             target[key] = value
 
 
-def _edges_to_schema(ir: IR) -> list[dict[str, Any]]:
+def _edges_to_schema(ir: IR) -> JsonArray:
     if ir.edges:
         return [_edge_to_schema(edge) for edge in ir.edges]
     return _legacy_edges_from_node_attrs(ir)
 
 
-def _edge_to_schema(edge: Any) -> dict[str, Any]:
-    edge_entry: dict[str, Any] = {
+def _edge_to_schema(edge: Edge) -> JsonObject:
+    edge_entry: JsonObject = {
         "source": edge.source,
         "target": edge.target,
     }
@@ -130,19 +132,24 @@ def _edge_to_schema(edge: Any) -> dict[str, Any]:
     return edge_entry
 
 
-def _legacy_edges_from_node_attrs(ir: IR) -> list[dict[str, Any]]:
-    edges_out: list[dict[str, Any]] = []
+def _legacy_edges_from_node_attrs(ir: IR) -> JsonArray:
+    edges_out: JsonArray = []
     edge_idx = 0
     for node in ir.nodes:
-        attrs = node.attrs or {}
-        if not isinstance(attrs, dict):
+        attrs = _normalize_json_object(node.attrs)
+        targets_value = attrs.get("edges")
+        if not isinstance(targets_value, list):
             continue
-        targets = attrs.get("edges") or []
-        if not isinstance(targets, list):
-            continue
+        targets = cast(list[Any], targets_value)
         for target in targets:
             edges_out.append(
                 {"id": f"e_{edge_idx}", "source": node.id, "target": str(target)}
             )
             edge_idx += 1
     return edges_out
+
+
+def _normalize_json_object(value: object) -> JsonObject:
+    if isinstance(value, dict):
+        return cast(JsonObject, value)
+    return {}

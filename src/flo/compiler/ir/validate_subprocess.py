@@ -7,7 +7,7 @@ from typing import Any
 from flo.schema.subprocess_refs import iter_subprocess_detail_map_reference_values
 
 from .models import IR
-from flo.services.errors import ValidationError
+from flo.errors import ValidationError
 
 
 def validate_subprocess_metadata(obj: IR) -> None:

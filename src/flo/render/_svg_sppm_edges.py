@@ -599,13 +599,6 @@ def _edge_variant_attr(rework_variant: str) -> str:
     return f' data-edge-rework-variant="{escape(rework_variant)}"'
 
 
-def _has_explicit_attachment_ports(edge_path: Any) -> bool:
-    return bool(
-        getattr(edge_path, "source_port_side", None)
-        and getattr(edge_path, "target_port_side", None)
-    )
-
-
 def _normalize_rework_edge_points(
     points: tuple[LayoutPoint, ...], *, is_rework: bool, rework_variant: str
 ) -> tuple[LayoutPoint, ...]:

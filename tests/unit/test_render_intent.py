@@ -186,10 +186,15 @@ class TestRenderIntentResolverViewIntent:
                         "page_format": "a4",
                         "margins": {
                             "top": 10,
+                            "right": 30,
+                            "bottom": 40,
                             "left": 20,
                         },
                         "header": {
                             "enabled": True,
+                        },
+                        "footer": {
+                            "enabled": False,
                         },
                     }
                 }
@@ -203,8 +208,11 @@ class TestRenderIntentResolverViewIntent:
         )
         assert intent.publication_page_format == "a4"
         assert intent.publication_margins_top == 10
+        assert intent.publication_margins_right == 30
+        assert intent.publication_margins_bottom == 40
         assert intent.publication_margins_left == 20
         assert intent.publication_header_enabled is True
+        assert intent.publication_footer_enabled is False
 
     def test_nested_layout_config_flattened(self):
         """Should flatten nested layout config."""

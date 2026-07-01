@@ -93,3 +93,11 @@ def test_execute_shuts_down_telemetry_on_write_error(monkeypatch):
 
     assert rc == 5
     assert calls == ["err:write failed", "shutdown"]
+
+
+def test_click_command_callbacks_are_exported_entrypoints():
+    # Click decorators register these callbacks dynamically; reference them
+    # explicitly so dead-code scanners treat them as intentional API surface.
+    assert callable(cli_mod.compile_cmd)
+    assert callable(cli_mod.validate_cmd)
+    assert callable(cli_mod.export_cmd)

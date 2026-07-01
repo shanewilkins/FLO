@@ -41,10 +41,14 @@ A process map in FLO must satisfy the following characteristics:
    - The visual treatment must preserve distinctions between meaningful node
      kinds and support a broader shape vocabulary than a minimal flowchart when
      the variant requires it.
+   - This includes accepted control-flow kinds such as `decision`, `queue`,
+     `wait`, `subprocess`, `parallel_split`, and `parallel_join`.
 
 3. Explicit branching and rework visibility
    - Directed edges, outcomes, and rework-oriented flow must remain legible so
      the reader can understand process logic, not just local sequencing.
+   - Handoff-bearing transitions should remain readable as distinct semantic
+     relations when the variant surfaces them.
 
 4. Variant-specific structural grouping
    - A process-map variant may organize the same process graph by lanes,

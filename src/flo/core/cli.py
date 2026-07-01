@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import uuid
 from typing import Any, Optional
 
 import click
@@ -47,21 +48,174 @@ def _get_flo_version() -> str:  # pragma: no cover - importlib optional
         return "unknown"
 
 
+def _safe_set_span_attr(span: Any, key: str, value: object) -> None:
+    setter = getattr(span, "set_attribute", None)
+    if callable(setter):
+        try:
+            setter(key, value)
+        except Exception:
+            pass
+
+
+def _safe_add_span_event(
+    span: Any, event_name: str, attributes: dict[str, object]
+) -> None:
+    add_event = getattr(span, "add_event", None)
+    if callable(add_event):
+        try:
+            add_event(event_name, attributes)
+        except Exception:
+            pass
+
+
+def _handle_run_content_exception(
+    *,
+    root_span: Any,
+    exc: Exception,
+    services: Any,
+    command: str,
+    command_id: str,
+    effective_path: str,
+) -> int:
+    from flo.services.errors import map_exception_to_rc
+    from flo.services.telemetry import record_span_error
+
+    mapped_rc, msg, internal = map_exception_to_rc(exc)
+    _safe_set_span_attr(root_span, "flo.exit_code", mapped_rc)
+    record_span_error(root_span, msg or "")
+    display_msg = f"Unexpected error: {msg or 'internal error'}" if internal else msg
+    _emit_error(
+        services,
+        display_msg,
+        error_kind="internal" if internal else "domain",
+        error_stage="run_content",
+        exit_code=mapped_rc,
+        internal=internal,
+        command=command,
+        command_id=command_id,
+        path=effective_path,
+    )
+    return mapped_rc
+
+
+def _handle_nonzero_run_content_result(
+    *,
+    root_span: Any,
+    rc: int,
+    err: str | None,
+    services: Any,
+    command: str,
+    command_id: str,
+    effective_path: str,
+) -> int:
+    from flo.services.telemetry import record_span_error
+
+    _safe_set_span_attr(root_span, "flo.exit_code", rc)
+    record_span_error(root_span, err or f"command failed with exit code {rc}")
+    if err:
+        _emit_error(
+            services,
+            err,
+            error_kind="domain",
+            error_stage="run_content",
+            exit_code=rc,
+            internal=False,
+            command=command,
+            command_id=command_id,
+            path=effective_path,
+        )
+    return rc
+
+
+def _handle_degraded_success(
+    *,
+    root_span: Any,
+    err: str | None,
+    options: dict,
+    services: Any,
+    command: str,
+    command_id: str,
+    effective_path: str,
+) -> None:
+    if not err:
+        return
+    _safe_set_span_attr(root_span, "flo.degraded", True)
+    _safe_set_span_attr(root_span, "flo.degraded_reason", err)
+    _safe_add_span_event(root_span, "flo.degraded", {"flo.degraded_reason": err})
+    if options.get("verbose"):
+        _emit_error(
+            services,
+            f"Warning: {err}",
+            error_kind="diagnostic",
+            error_stage="fail_open_fallback",
+            exit_code=0,
+            internal=False,
+            command=command,
+            command_id=command_id,
+            path=effective_path,
+        )
+
+
+def _write_output_or_emit_failure(
+    *,
+    root_span: Any,
+    out: str | None,
+    options: dict,
+    services: Any,
+    command: str,
+    command_id: str,
+    effective_path: str,
+) -> int | None:
+    from flo.services.io import write_output
+    from flo.services.telemetry import record_span_error
+
+    if not out:
+        return None
+    _safe_set_span_attr(root_span, "flo.output.bytes", len(out))
+    _safe_set_span_attr(root_span, "flo.output.to_file", bool(options.get("output")))
+    write_rc, write_err = write_output(out, options.get("output"))
+    if write_rc == 0:
+        return None
+    _safe_set_span_attr(root_span, "flo.exit_code", write_rc)
+    record_span_error(root_span, write_err or "")
+    _emit_error(
+        services,
+        write_err,
+        error_kind="io",
+        error_stage="write_output",
+        exit_code=write_rc,
+        internal=False,
+        command=command,
+        command_id=command_id,
+        path=effective_path,
+    )
+    return write_rc
+
+
 def _execute_span_body(
-    root_span: Any, path: str | None, command: str, options: dict, services: Any
+    root_span: Any,
+    path: str | None,
+    command: str,
+    options: dict,
+    services: Any,
+    command_id: str,
 ) -> int:
     """Run the FLO pipeline within an existing trace span.
 
     Returns an integer exit code.
     """
     from flo.core import run_content
-    from flo.services.io import read_input, write_output
-    from flo.services.errors import map_exception_to_rc
+    from flo.services.io import read_input
     from flo.services.telemetry import record_span_error
 
     effective_path = path or "-"
+    _safe_set_span_attr(root_span, "flo.command", command)
+    _safe_set_span_attr(root_span, "flo.command_id", command_id)
+    _safe_set_span_attr(root_span, "flo.input.path", effective_path)
+    _safe_set_span_attr(root_span, "flo.input.from_stdin", effective_path == "-")
     rc, content, err = read_input(effective_path)
     if rc != 0:
+        _safe_set_span_attr(root_span, "flo.exit_code", rc)
         record_span_error(root_span, err or "")
         _emit_error(
             services,
@@ -71,50 +225,63 @@ def _execute_span_body(
             exit_code=rc,
             internal=False,
             command=command,
+            command_id=command_id,
             path=effective_path,
         )
         return rc
+    _safe_set_span_attr(root_span, "flo.input.bytes", len(content or ""))
 
     run_options = dict(options)
     if path and path != "-":
         run_options.setdefault("source_path", path)
+    _safe_set_span_attr(root_span, "flo.options.count", len(run_options))
 
     try:
         rc, out, err = run_content(content, command=command, options=run_options)
     except Exception as exc:
-        mapped_rc, msg, internal = map_exception_to_rc(exc)
-        record_span_error(root_span, msg or "")
-        display_msg = (
-            f"Unexpected error: {msg or 'internal error'}" if internal else msg
-        )
-        _emit_error(
-            services,
-            display_msg,
-            error_kind="internal" if internal else "domain",
-            error_stage="run_content",
-            exit_code=mapped_rc,
-            internal=internal,
+        return _handle_run_content_exception(
+            root_span=root_span,
+            exc=exc,
+            services=services,
             command=command,
-            path=effective_path,
+            command_id=command_id,
+            effective_path=effective_path,
         )
-        return mapped_rc
 
-    if out:
-        write_rc, write_err = write_output(out, options.get("output"))
-        if write_rc != 0:
-            record_span_error(root_span, write_err or "")
-            _emit_error(
-                services,
-                write_err,
-                error_kind="io",
-                error_stage="write_output",
-                exit_code=write_rc,
-                internal=False,
-                command=command,
-                path=effective_path,
-            )
-            return write_rc
+    if rc != 0:
+        return _handle_nonzero_run_content_result(
+            root_span=root_span,
+            rc=rc,
+            err=err,
+            services=services,
+            command=command,
+            command_id=command_id,
+            effective_path=effective_path,
+        )
 
+    _handle_degraded_success(
+        root_span=root_span,
+        err=err,
+        options=options,
+        services=services,
+        command=command,
+        command_id=command_id,
+        effective_path=effective_path,
+    )
+
+    write_failure_rc = _write_output_or_emit_failure(
+        root_span=root_span,
+        out=out,
+        options=options,
+        services=services,
+        command=command,
+        command_id=command_id,
+        effective_path=effective_path,
+    )
+    if write_failure_rc is not None:
+        return write_failure_rc
+
+    _safe_set_span_attr(root_span, "flo.exit_code", rc)
     return rc
 
 
@@ -126,18 +293,38 @@ def _execute(
     Returns an integer exit code.
     """
     from flo.services import get_services
-    from flo.services.telemetry import get_tracer
+    from flo.services.telemetry import get_tracer, record_span_success
 
     services = get_services(verbose=bool(options.get("verbose")))
     telemetry = services.telemetry
     tracer = get_tracer("flo.cli")
+    command_id = uuid.uuid4().hex
     try:
         with tracer.start_as_current_span("flo.cli.execute") as root_span:
             root_span.set_attribute("flo.command", command)
+            root_span.set_attribute("flo.command_id", command_id)
             root_span.set_attribute("flo.version", _get_flo_version())
             if path:
                 root_span.set_attribute("flo.source_path", path)
-            return _execute_span_body(root_span, path, command, options, services)
+            rc = _execute_span_body(
+                root_span,
+                path,
+                command,
+                options,
+                services,
+                command_id,
+            )
+            if rc == 0:
+                record_span_success(
+                    root_span,
+                    event_name="flo.cli.completed",
+                    attributes={
+                        "flo.exit_code": 0,
+                        "flo.command": command,
+                        "flo.command_id": command_id,
+                    },
+                )
+            return rc
     finally:
         try:
             telemetry.shutdown()

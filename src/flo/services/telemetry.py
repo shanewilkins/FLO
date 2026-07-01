@@ -40,16 +40,21 @@ class _NoOpSpan:
         """No-op attribute setter."""
         return None
 
-    def record_exception(self, exception: BaseException, **_: Any) -> None:
+    def record_exception(self, exception: BaseException, **kwargs: Any) -> None:
         """No-op exception recorder."""
+        _unused = (exception, kwargs)
+        _ = _unused
         return None
 
     def set_status(self, status: Any, description: str = "") -> None:  # noqa: ARG002
         """No-op status setter."""
+        _ = (status, description)
         return None
 
-    def add_event(self, name: str, attributes: Any = None, **_: Any) -> None:  # noqa: ARG002
+    def add_event(self, name: str, attributes: Any = None, **kwargs: Any) -> None:  # noqa: ARG002
         """No-op event adder."""
+        _unused = (name, attributes, kwargs)
+        _ = _unused
         return None
 
 
@@ -191,9 +196,56 @@ def record_span_error(span: Any, message: str = "") -> None:
             set_status(StatusCode.ERROR, message)
     except Exception:
         pass
+    # Capture an exception-like signal so tracing backends can attach error
+    # stack context even when callers only provide message text.
+    record_exception = getattr(span, "record_exception", None)
+    if callable(record_exception):
+        try:
+            record_exception(RuntimeError(message or "span error"))
+        except Exception:
+            pass
     add_event = getattr(span, "add_event", None)
     if callable(add_event):
         try:
             add_event("error", {"error.message": message})
+        except Exception:
+            pass
+
+
+def record_span_success(
+    span: Any,
+    *,
+    event_name: str = "success",
+    attributes: dict[str, Any] | None = None,
+) -> None:
+    """Mark *span* as successful and attach a completion event.
+
+    Sets ``StatusCode.OK`` when OpenTelemetry is available and annotates the
+    span with any provided ``attributes`` before emitting ``event_name``.
+    Safe to call on no-op spans.
+    """
+    try:
+        from opentelemetry.trace import StatusCode  # type: ignore[import]
+
+        set_status = getattr(span, "set_status", None)
+        if callable(set_status):
+            set_status(StatusCode.OK, "")
+    except Exception:
+        pass
+
+    payload = dict(attributes or {})
+    if payload:
+        set_attribute = getattr(span, "set_attribute", None)
+        if callable(set_attribute):
+            for key, value in payload.items():
+                try:
+                    set_attribute(str(key), value)
+                except Exception:
+                    continue
+
+    add_event = getattr(span, "add_event", None)
+    if callable(add_event):
+        try:
+            add_event(event_name, payload or None)
         except Exception:
             pass

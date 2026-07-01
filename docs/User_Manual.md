@@ -20,8 +20,9 @@ FLO provides:
 
 - Deterministic compilation to canonical IR
 - Structural and semantic validation
-- DOT and JSON exports
-- Flowchart, swimlane, spaghetti-map, and SPPM DOT projections
+- Schema-shaped JSON export for downstream tools
+- Human-readable ingredient and movement exports
+- Flowchart, swimlane, spaghetti-map, and SPPM diagram rendering
 
 FLO does not provide:
 
@@ -32,7 +33,7 @@ FLO does not provide:
 ## 2) Requirements
 
 - Python 3.14+
-- Graphviz `dot` (optional, only needed for SVG generation)
+- Graphviz `dot` (optional, only needed for deprecated DOT compatibility workflows and non-SVG image targets)
 
 ## 3) Install and Run
 
@@ -42,10 +43,18 @@ From the repository root:
 uv sync --dev
 ```
 
-Run FLO on a file (default output is DOT to stdout):
+Run FLO on a file.
+The default output is deprecated compatibility DOT to stdout.
 
 ```bash
 uv run flo examples/reference/linear.flo
+```
+
+Preferred modern entry points:
+
+```bash
+uv run flo compile examples/reference/new_semantics.flo
+uv run flo run examples/reference/new_semantics.flo --export svg --render-to new_semantics.svg --diagram sppm
 ```
 
 You can also use explicit subcommands:
@@ -133,31 +142,40 @@ Composition behavior:
 - Duplicate step IDs across included files are rejected.
 - Include cycles are rejected.
 
-## 4.2) Node Kinds
+## 4.2) Step Kinds and Canonical Step Fields
 
-The current schema-aligned node kinds are:
+The current schema-aligned step kinds are:
 
 - `start`: the single process entry point
-- `task`: a general human or system work step
+- `task`: a general work step
 - `system_task`: an explicitly system-owned task
-- `queue`: a queue/buffer step (requires queue metadata in current validation)
-- `wait`: an explicit wait/hold step (rendered with a dedicated wait symbol)
+- `queue`: a queue or buffer step
+- `wait`: an explicit hold state
 - `decision`: a branch point with at least two outgoing outcomes
 - `subprocess`: a collapsed child-process step
+- `parallel_split`: the start of concurrent control flow
+- `parallel_join`: the synchronization point for concurrent control flow
 - `end`: a terminal step
 
-Optional common node fields:
+Canonical common step fields:
 
-- `name`: display label for the node
+- `name`: display label for the step
 - `lane`: swimlane grouping key
-- `location`: location ID for spatial/movement analysis
-- `workers`: optional list of worker IDs used by the step
-- `equipment`: optional list of equipment IDs used by the step
-- `note`: short human note for review/context (rendered only when notes are enabled)
-- `inputs`: list of input item IDs/names consumed by the step
-- `outputs`: list of output item IDs/names produced by the step
-- `subnodes`: optional nested step list for `subprocess` nodes (flattened during compilation)
-- `metadata`: machine-facing metadata map (see below for recognized keys)
+- `location`: location id for spatial and movement analysis
+- `performed_by`: list of person resource ids performing the step
+- `uses`: list of equipment resource ids used by the step
+- `consumes`: list of item ids consumed by the step
+- `produces`: list of item ids produced by the step
+- `note`: short human note for review or context
+- `subnodes`: optional nested step list for `subprocess` nodes
+- `metadata`: machine-facing metadata map
+
+Compatibility aliases remain accepted in v0.1.
+
+- `workers` maps to `performed_by`
+- `equipment` maps to `uses`
+- `inputs` maps to `consumes`
+- `outputs` maps to `produces`
 
 Subprocess child-node example:
 
@@ -193,7 +211,7 @@ The `value_class` field classifies a step by its Lean value contribution:
 
 The `description` field is a free-text string providing a human-readable explanation of what the step does. It is displayed in the SPPM info box and is available as a pass-through field in other renderers.
 
-Queue/task timing constraint:
+Queue and task timing constraint:
 
 - `wait_time` is valid only on `queue` nodes.
 - `cycle_time`, `crossover_time`, `transfer_time`, and `changeover_time` are valid on work nodes such as `task`, `system_task`, and `subprocess`.
@@ -202,7 +220,7 @@ Queue/task timing constraint:
 The following metadata keys are recognized and validated by FLO. Any other keys are passed through to the IR without validation and can be used for custom tooling.
 
 | Key | Type | Description |
-|---|---|---|
+| --- | --- | --- |
 | `cycle_time` | time object | Active processing time for the step |
 | `wait_time` | time object | Queue delay before work begins — `queue` nodes only |
 | `lead_time` | time object | Total elapsed time including wait |
@@ -244,7 +262,7 @@ steps:
   - id: wash
     kind: task
     name: Wash
-    workers:
+    performed_by:
       - Staff
     metadata:
       value_class: VA
@@ -329,47 +347,113 @@ FLO supports these transition forms:
 
 - Explicit transition list: `transitions` with `source` and `target`
 - Outcome transitions from decisions: `outcomes` mapping under a `decision` step
-- Optional transition labels: `outcome` and/or `label` fields
-- Optional transition metadata: `metadata` object on each transition
+- Optional transition labels: `outcome` and or `label` fields
+- Optional transition semantics: `handoff`, `rework`, `edge_type`, and `metadata`
 
-Examples:
+Canonical transition example:
 
 ```yaml
+items:
+  - id: submission
+    name: Submission
+    kind: information
+
+resources:
+  - id: reviewer
+    name: Reviewer
+    kind: person
+  - id: editor
+    name: Editor
+    kind: person
+
+steps:
+  - id: start
+    kind: start
+
+  - id: review
+    kind: task
+    consumes: [submission]
+    produces: [submission]
+    performed_by: [reviewer]
+
+  - id: decision
+    kind: decision
+    name: Accepted?
+    outcomes:
+      yes: publish
+      no:
+        target: rework
+        edge_type: rework
+        rework: true
+
+  - id: rework
+    kind: task
+    consumes: [submission]
+    produces: [submission]
+    performed_by: [editor]
+
+  - id: publish
+    kind: end
+
 transitions:
   - source: start
-    target: assess
-  - source: assess
-    target: approve
-    outcome: approved
-  - source: assess
-    target: reject
-    outcome: rejected
-  - source: reject
-    target: end
-    label: "stop process"
+    target: review
+  - source: review
+    target: decision
+    handoff: true
     metadata:
-      handoff: true
+      handoff_type: responsibility
+  - source: decision
+    target: publish
+    outcome: yes
+  - source: decision
+    target: rework
+    outcome: no
+    edge_type: rework
+    rework: true
+  - source: rework
+    target: review
+    edge_type: rework
+    rework: true
 ```
 
-Decision-outcome form:
+Parallel-flow example:
 
 ```yaml
 steps:
-  - id: approved
-    kind: decision
-    name: Approved?
-    outcomes:
-      yes: finish
-      no: collect_docs
+  - id: split
+    kind: parallel_split
+    name: Split Preparation
+
+  - id: prep_a
+    kind: task
+
+  - id: prep_b
+    kind: task
+
+  - id: join
+    kind: parallel_join
+    name: Join Preparation
+
+transitions:
+  - source: split
+    target: prep_a
+  - source: split
+    target: prep_b
+  - source: prep_a
+    target: join
+  - source: prep_b
+    target: join
 ```
 
-## 4.4) Process Metadata, Materials, Equipment, Locations, and Workers
+## 4.4) Process Metadata, Items, Resources, and Locations
 
 Process-level KPI and resource data should be stored in metadata.
 
 - Canonical IR location: `process.metadata`
 - Recommended place for KPIs: `process.metadata` (for example cycle time, yield)
-- Top-level `materials`, `equipment`, `locations`, and `workers` collections are supported in FLO source and are preserved under `process.metadata` in the exported schema JSON.
+- Top-level `items`, `resources`, and `locations` are the canonical process-level collections in FLO source and are preserved under `process.metadata` in exported schema JSON.
+- Legacy `materials`, `equipment`, and `workers` collections are still accepted in v0.1 as compatibility aliases.
 - A resource collection can be either:
   - A flat list of resource items.
   - A grouped object where each key maps to another collection (list or grouped object). This allows nested grouping.
@@ -380,7 +464,8 @@ For material quantities, use one of two quantity shapes:
 - Discrete count: `kind: count`, integer `value`, `unit: each` (optional `qualifier`, for example `large`)
 - Continuous SI-style measure: `kind: measure`, numeric `value`, and metric `unit` from `mg|g|kg|ml|l|mm|cm|m`
 
-The same quantity contract can be used for `equipment` and `workers` when counts or measured quantities are useful. `locations` can include quantity, but most models use IDs, names, and location metadata.
+The same quantity contract can be used for canonical `items` and `resources` when counts or measured quantities are useful.
+`locations` usually use ids, names, optional kinds, and location metadata rather than quantity.
 
 For spatial analysis and spaghetti-map rendering, locations can include optional spatial coordinates:
 
@@ -454,21 +539,23 @@ locations:
         unit: m
 ```
 
-Grouping example for materials:
+Grouping example for canonical items:
 
 ```yaml
-materials:
+items:
   dry:
     name: Dry Ingredients
     items:
       - id: flour
         name: Flour
+        kind: material
         quantity:
           kind: measure
           value: 250
           unit: g
       - id: sugar
         name: Sugar
+        kind: material
         quantity:
           kind: measure
           value: 120
@@ -480,6 +567,7 @@ materials:
       items:
         - id: butter
           name: Butter
+          kind: material
           quantity:
             kind: measure
             value: 100
@@ -489,6 +577,7 @@ materials:
       items:
         - id: egg
           name: Egg
+          kind: material
           quantity:
             kind: count
             value: 2
@@ -510,26 +599,33 @@ process:
     yield_fraction:
       target: 0.96
 
-materials:
-  - id: egg
-    name: Egg
+items:
+  - id: order_ticket
+    name: Order Ticket
+    kind: information
     quantity:
       kind: count
-      value: 2
+      value: 1
       unit: each
-      qualifier: large
-  - id: flour
-    name: Flour
+  - id: dough
+    name: Dough
+    kind: material
     quantity:
       kind: measure
-      value: 250
-      unit: g
-      canonical_value: 0.25
-      canonical_unit: kg
+      value: 2
+      unit: kg
 
-equipment:
+resources:
+  - id: baker
+    name: Baker
+    kind: person
+    quantity:
+      kind: count
+      value: 1
+      unit: each
   - id: oven
     name: Convection Oven
+    kind: equipment
     quantity:
       kind: count
       value: 1
@@ -538,25 +634,27 @@ equipment:
 locations:
   - id: main_kitchen
     name: Main Kitchen
+    kind: operation
     metadata:
       site_code: HQ-01
-
-workers:
-  - id: baker
-    name: Baker
-    quantity:
-      kind: count
-      value: 1
-      unit: each
 
 steps:
   - id: start
     kind: start
+  - id: mix
+    kind: task
+    consumes: [order_ticket, dough]
+    produces: [dough]
+    performed_by: [baker]
+    uses: [oven]
+    location: main_kitchen
   - id: end
     kind: end
 
 transitions:
   - source: start
+    target: mix
+  - source: mix
     target: end
 ```
 
@@ -565,11 +663,11 @@ transitions:
 FLO can render a process model as several different diagram types, each suited to a different analysis goal:
 
 | Diagram | Flag | Best for |
-|---|---|---|
+| --- | --- | --- |
 | Flowchart | `--diagram flowchart` (default) | General process documentation, decision flows |
 | Swimlane | `--diagram swimlane` | Handoff analysis — requires `lane` on steps |
 | Spaghetti map | `--diagram spaghetti` | Movement/travel path analysis — requires `location` on steps |
-| SPPM | `--diagram sppm` | Lean process performance — uses `value_class`, `cycle_time`, queue `wait_time`, `workers` |
+| SPPM | `--diagram sppm` | Lean process performance — uses `value_class`, `cycle_time`, queue `wait_time`, and `performed_by` |
 
 ### SPPM (Standard Process Performance Map)
 
@@ -579,17 +677,21 @@ SPPM renders a left-to-right (or top-to-bottom with `--orientation tb`) process 
 - **Yellow** — Required non-value-adding (`RNVA`)
 - **Red** — Non-value-adding (`NVA`)
 
-Each step node has a colored header (the step name) and a white info sub-box showing available metrics (for example description, cycle time, workers, wait time on queue nodes, and changeover time on task-like nodes).
+Each step node has a colored header and a white info sub-box showing available metrics.
+Typical fields include description, cycle time, performers, wait time on queue nodes, and changeover time on task-like nodes.
 
 SPPM-relevant fields per step:
+
 - `metadata.value_class`: controls node color
 - `metadata.cycle_time`: shown in info box as `CT:`
 - `metadata.wait_time`: shown in info box as `WT:` (queue nodes)
 - `metadata.crossover_time`: shown in info box as `CO:` (task/system_task/subprocess)
 - `metadata.description`: shown as the first line of the info box
-- `workers`: shown as `Workers:` in info box
+- `performed_by`: shown as the performer line in the info box
+- `uses`: available for equipment-aware examples and downstream summaries
 
 The default theme uses stoplight colors. Alternative themes:
+
 - `--sppm-theme print` — high-contrast fills suitable for black-and-white printing
 - `--sppm-theme monochrome` — grayscale only
 - `--sppm-theme <name>` — any custom theme defined under `[sppm.themes.<name>]` in `diagrams.toml`
@@ -623,51 +725,89 @@ fill = "#FFFFFF"
 border = "#343A40"
 ```
 
-If a theme name is missing or the configuration is malformed, FLO falls back
-to the built-in default theme.
+If a theme name is missing or the configuration is malformed, FLO falls back to the built-in default theme.
 
-SPPM DOT output must be piped through Graphviz `dot` to produce an image:
+Preferred maintained SPPM rendering path:
 
 ```bash
-flo run washnfold.flo --diagram sppm | dot -Tpng -o washnfold.png
-flo run washnfold.flo --diagram sppm --orientation tb | dot -Tsvg -o washnfold.svg
+uv run flo run examples/reference/semantic_controls_showcase.flo \
+  --export svg \
+  --render-to semantic_controls_showcase.svg \
+  --diagram sppm
+```
+
+Deprecated DOT compatibility path:
+
+```bash
+uv run flo run examples/reference/washnfold.flo --export dot --diagram sppm | dot -Tpng -o washnfold.png
+uv run flo run examples/reference/washnfold.flo --export dot --diagram sppm --orientation tb | dot -Tsvg -o washnfold.svg
 ```
 
 ## 4.6) Understanding the Output Pipeline
 
-All `--export dot` (and default) output is Graphviz DOT source — plain text describing a graph. To produce an image you must pipe it through the `dot` program from the Graphviz package:
+FLO has three main output families.
+
+1. Canonical machine-readable output.
+
+  `flo compile` and `flo export --export json` emit schema-shaped JSON.
+
+1. Maintained diagram artifacts.
+
+  `flo run --export svg --render-to <file.svg>` emits direct SVG.
+
+1. Compatibility and operational text outputs.
+
+  `flo run --export dot` emits deprecated Graphviz DOT.
+  `flo run --export ingredients` emits human-readable item and resource summaries.
+  `flo run --export movement` emits inferred movement summaries.
+
+Canonical JSON example:
 
 ```bash
-# PNG
-flo run model.flo | dot -Tpng -o output.png
-
-# SVG (scales cleanly for web/PDF)
-flo run model.flo | dot -Tsvg -o output.svg
-
-# Write DOT to file directly
-flo run model.flo -o output.dot
+uv run flo compile examples/reference/new_semantics.flo
+uv run flo export examples/reference/new_semantics.flo --export json -o new_semantics.json
 ```
 
-`flo compile` emits canonical schema-shaped JSON (FLO IR) — useful for downstream tools that consume the structured graph rather than an image.
+Maintained SVG example:
 
-`flo export --export json` is equivalent to `flo compile`.
+```bash
+uv run flo run examples/reference/new_semantics.flo \
+  --export svg \
+  --render-to new_semantics.svg \
+  --diagram sppm
+```
+
+Deprecated DOT compatibility example:
+
+```bash
+uv run flo run model.flo --export dot -o output.dot
+dot -Tsvg output.dot -o output.svg
+```
+
+Human-readable text export examples:
+
+```bash
+uv run flo run examples/reference/new_semantics.flo --export ingredients
+uv run flo run examples/reference/chocolate_chip_cookies.flo --export movement
+```
 
 ## 5) Core CLI Commands
 
-For composed models, keep entry and included files as `.flo` files; see Section 4.1.1 for include conventions.
+For composed models, keep entry and included files as `.flo` files.
+See Section 4.1.1 for include conventions.
 
 ## 5.1 Run
 
-Parse, compile, validate, and render/export output.
+Parse, compile, validate, and render or export output.
 
 ```bash
-flo run path/to/model.flo
+uv run flo run path/to/model.flo
 ```
 
 Equivalent shorthand:
 
 ```bash
-flo path/to/model.flo
+uv run flo path/to/model.flo
 ```
 
 ## 5.2 Validate
@@ -675,7 +815,7 @@ flo path/to/model.flo
 Only validate model correctness.
 
 ```bash
-flo validate path/to/model.flo
+uv run flo validate path/to/model.flo
 ```
 
 ## 5.3 Compile
@@ -683,43 +823,50 @@ flo validate path/to/model.flo
 Compile to canonical schema-shaped JSON.
 
 ```bash
-flo compile path/to/model.flo
+uv run flo compile path/to/model.flo
 ```
 
 ## 5.4 Export
 
-Export as DOT, JSON, ingredients text, or inferred movement report.
+Export as deprecated DOT, JSON, ingredients text, movement text, or maintained SVG.
 
 ```bash
-flo export path/to/model.flo --export dot
-flo export path/to/model.flo --export json
-flo export path/to/model.flo --export ingredients
-flo export path/to/model.flo --export movement
+uv run flo export path/to/model.flo --export dot
+uv run flo export path/to/model.flo --export json
+uv run flo export path/to/model.flo --export ingredients
+uv run flo export path/to/model.flo --export movement
 ```
+
+Maintained SVG is typically requested from `run` because it also needs diagram options and `--render-to`.
 
 ## 6) Options
 
 Common options:
-- `-o, --output <file>`: write output to file
-- `-v, --verbose`: verbose logging
-- `--export {dot,json,ingredients,movement}`: choose output format
 
-Render options (DOT only):
+- `-o, --output <file>`: write text or JSON output to file
+- `-v, --verbose`: verbose logging
+- `--export {dot,svg,json,ingredients,movement}`: choose output format
+
+Diagram render options:
+
 - `--diagram {flowchart,swimlane,spaghetti,sppm}`
+- `--render-backend {graphviz,svg}`
 - `--spaghetti-channel {both,material,people}`
 - `--spaghetti-people-mode {worker,aggregate}`
-- `--sppm-theme {default,print,monochrome}`
+- `--sppm-theme {default,print,monochrome}` or a config-defined theme name
 - `--layout-wrap {auto,off}`
+- `--layout-fit {fit-preferred,fit-strict}`
+- `--layout-spacing {standard,compact}`
 - `--sppm-step-numbering {off,node,edge}`
 - `--sppm-label-density {full,compact,teaching}`
 - `--sppm-wrap-strategy {word,balanced,hard}`
 - `--sppm-truncation-policy {ellipsis,clip,none}`
-- `--layout-max-width-px <dimension>` (positive `px`, `in`, or `cm`; examples: `800`, `8.5in`, `21cm`)
-- `--layout-target-columns <int>` (positive integer)
+- `--layout-max-width-px <dimension>`
+- `--layout-target-columns <int>`
 - `--publication-page-format {letter,a4,legal,tabloid}`
-- `--sppm-max-label-step-name <int>` (positive integer)
-- `--sppm-max-label-workers <int>` (positive integer)
-- `--sppm-max-label-ctwt <int>` (positive integer)
+- `--sppm-max-label-step-name <int>`
+- `--sppm-max-label-workers <int>`
+- `--sppm-max-label-ctwt <int>`
 - `--sppm-output-profile {default,book,web,print,slide}`
 - `--profile {default,analysis}`
 - `--detail {summary,standard,verbose}`
@@ -728,144 +875,66 @@ Render options (DOT only):
 - `--subprocess-view {expanded,parent-only}`
 - `--sppm-projection {top-level,child-map,inline}`
 - `--sppm-focus-subprocess <node-id>`
-- `--render-to <file>`: render directly to an image file via Graphviz `dot` (e.g. `output.png`, `output.svg`, `output.pdf`). Requires Graphviz to be installed. Supported extensions: `.png`, `.svg`, `.pdf`, `.eps`, `.ps`. When used, nothing is written to stdout.
+- `--render-to <file>`
 
-SPPM publication controls (discoverability quick list):
-- `--no-header`: hide publication header band.
-- `--no-footer`: hide publication footer band.
-- `--publication-page-format {letter,a4,legal,tabloid}`: set named page preset.
-- `--sppm-output-profile {default,book,web,print,slide}`: apply publication defaults profile.
-- `--sppm-projection {top-level,child-map,inline}`: choose hierarchy projection mode.
-- `--sppm-focus-subprocess <node-id>`: focus subprocess for `child-map` or `inline` projection.
+`--render-to` behavior:
+
+- With `--export svg`, FLO writes maintained direct SVG to the target `.svg` file.
+- With `--export dot`, FLO uses the deprecated Graphviz compatibility backend.
+- Raster and PDF targets still require Graphviz.
 
 Examples:
 
 ```bash
-flo run examples/reference/swimlane.flo --export dot --diagram swimlane
-flo run examples/reference/linear.flo --export dot --detail summary
-flo run examples/reference/linear.flo --export dot --orientation tb
-flo run examples/reference/chocolate_chip_cookies.flo --export dot --subprocess-view parent-only
-flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram spaghetti
-flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram spaghetti --spaghetti-channel people
-flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram spaghetti --spaghetti-channel people --spaghetti-people-mode worker --profile analysis
-flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram sppm --sppm-projection child-map --sppm-focus-subprocess prep_subprocess
-flo run examples/reference/chocolate_chip_cookies.flo --export dot --diagram sppm --sppm-projection inline --sppm-focus-subprocess prep_subprocess
-flo run examples/reference/washnfold.flo --export dot --diagram sppm
-flo run examples/reference/washnfold.flo --export dot --diagram sppm --sppm-theme print
-flo run examples/reference/washnfold.flo --export dot --diagram sppm --orientation lr --layout-wrap auto --layout-target-columns 6
-flo run examples/reference/washnfold.flo --export dot --diagram sppm --orientation tb --layout-wrap auto --layout-target-columns 5
-flo run examples/reference/washnfold.flo --diagram sppm --render-to washnfold_sppm.png
-flo run examples/reference/washnfold.flo --diagram sppm --render-to washnfold_sppm.svg
-flo run examples/reference/linear.flo --export json
-flo run examples/reference/chocolate_chip_cookies.flo --export ingredients
-flo run examples/reference/chocolate_chip_cookies.flo --export movement
+uv run flo run examples/reference/swimlane.flo --export svg --render-to swimlane.svg --diagram swimlane
+uv run flo run examples/reference/new_semantics.flo --export json
+uv run flo run examples/reference/chocolate_chip_cookies.flo --export ingredients
+uv run flo run examples/reference/chocolate_chip_cookies.flo --export movement
+uv run flo run examples/reference/washnfold.flo --export svg --render-to washnfold_sppm.svg --diagram sppm --layout-wrap auto --layout-target-columns 6
+uv run flo run examples/reference/washnfold.flo --export dot --diagram sppm --orientation tb
 ```
 
 Important:
-- Render-only flags are invalid with non-DOT export modes.
-- If you pass render-only flags (`--diagram`, `--spaghetti-channel`, `--spaghetti-people-mode`, `--layout-wrap`, `--layout-max-width-px`, `--layout-target-columns`, any `--sppm-*` render option, `--render-to`, `--profile`, `--detail`, `--orientation`, `--show-notes`, or `--subprocess-view`) together with JSON, ingredients, or movement export, FLO returns usage error code `1`.
-- Wrapped SPPM layout is orientation-aware: with `--orientation lr` it wraps into rows (snake down), and with `--orientation tb` it wraps into columns (snake right).
-- Wrapped LR SPPM SVG output applies a narrow deterministic boundary-edge normalization pass after Graphviz layout so boundary doglegs keep stable top-entry landing behavior.
+
+- Render-only flags are invalid with JSON, ingredients, or movement export modes.
+- If you pass render-only flags together with JSON, ingredients, or movement export, FLO returns usage error code `1`.
+- Wrapped SPPM layout is orientation-aware.
+- Wrapped LR SPPM SVG output applies a narrow deterministic boundary-edge normalization pass after layout so boundary doglegs keep stable top-entry landing behavior.
 
 SPPM subprocess projection contract:
+
 - `--subprocess-view parent-only` keeps subprocesses collapsed on the parent map and hides nested child nodes.
 - `--sppm-projection top-level` is the default SPPM projection and renders the top-level map.
-- `--sppm-projection child-map` focuses one subprocess and includes entry/exit context nodes; use `--sppm-focus-subprocess` to pick the subprocess node id.
-- `--sppm-projection inline` tries to expand child steps inline near the parent context. If readability budget is exceeded, FLO falls back to `child-map` under `fit-preferred`, or fails under `fit-strict`.
-- Discovery cues for collapsed subprocesses are always explicit in SPPM node labels: `Subprocess` and `Detail map: <ref>`.
-- Parent/detail-map linkage is stable by subprocess id plus detail-map reference metadata (`detail_map_ref` or compatible fallback metadata keys).
+- `--sppm-projection child-map` focuses one subprocess and includes entry and exit context nodes.
+- `--sppm-projection inline` tries to expand child steps inline near the parent context.
+- Discovery cues for collapsed subprocesses are always explicit in SPPM node labels.
 
 Renderer policy decisions:
-- Rework edges are always dashed.
-- Rework classification precedence is explicit metadata first (`rework` boolean,
-  then `edge_type: rework`), inferred back-edge fallback second.
-- Cross-lane rework uses composite behavior (cross-lane routing + dashed styling).
-- Layout fit modes are policy-defined as fit-preferred and fit-strict; readability
-  is prioritized over geometric symmetry.
-- Publication readability follows the same fit policy: `fit-preferred` may fall back with explicit warnings, while `fit-strict` fails instead of silently changing the requested publication mode.
 
-SPPM preset/config defaults:
-- Built-in `--sppm-output-profile` presets set baseline SPPM defaults for orientation,
-  wrapping, density, and named page formats (`book` -> `letter`, `print` -> `a4`, `slide` -> `tabloid`).
-- If a `diagrams.toml` file exists beside the source `.flo` file (or in the current
-  working directory), FLO loads `[sppm]` defaults automatically.
-- Precedence is: CLI flags > `diagrams.toml` explicit `[sppm]` keys >
-  `diagrams.toml` preset overrides (`[sppm.presets.<profile>]`) > built-in profile defaults.
+- Rework edges are always dashed.
+- Rework classification precedence is explicit metadata first and inferred back-edge fallback second.
+- Cross-lane rework uses composite behavior.
+- Layout fit modes are policy-defined as fit-preferred and fit-strict.
+
+SPPM preset and config defaults:
+
+- Built-in `--sppm-output-profile` presets set baseline SPPM defaults for orientation, wrapping, density, and named page formats.
+- If a `diagrams.toml` file exists beside the source `.flo` file or in the current working directory, FLO loads `[sppm]` defaults automatically.
+- Precedence is CLI flags, then explicit `diagrams.toml` keys, then preset overrides, then built-in defaults.
 
 SPPM label policy matrix:
-- Shared controls:
-  - `--sppm-wrap-strategy` selects wrapping behavior (`word`, `balanced`, `hard`).
-  - `--sppm-truncation-policy` selects overflow behavior (`ellipsis`, `clip`, `none`).
-- Surface mapping:
-  - Task node names, decision labels, subprocess titles, queue badges, decision/branch edge labels, and publication header/footer text all use `--sppm-max-label-step-name`.
-  - Worker-line text uses `--sppm-max-label-workers`.
-  - CT/WT metric lines and footer metric values use `--sppm-max-label-ctwt`.
-- Determinism:
-  - The same policy is applied consistently across these surfaces, so long labels behave predictably for each truncation mode.
 
-SPPM time semantics (waiting vs changeover):
+- `--sppm-wrap-strategy` selects wrapping behavior.
+- `--sppm-truncation-policy` selects overflow behavior.
+- Task node names, decision labels, subprocess titles, queue badges, decision and branch labels, and publication header and footer text all use `--sppm-max-label-step-name`.
+- Performer-line text uses `--sppm-max-label-workers`.
+- CT and WT metric lines and footer metric values use `--sppm-max-label-ctwt`.
 
-**Core Distinction**: FLO separates queue delays from setup/changeover time because they represent different operational problems with different solutions.
+SPPM time semantics:
 
-- **Waiting Time (WT)**: Queue/idle delay caused by unavailability of the next resource or step (e.g., waiting in line, awaiting the oven to be free). Metric: `wait_time`.
-  - Root cause: Resource scheduling, demand leveling, batch economics
-  - Countermeasures: Pull systems, kanban, takt time alignment, work-in-progress limits
-
-- **Changeover Time (CO)**: Setup/transition time required to reconfigure a step for the next product or mode (e.g., oven preheat, equipment changeover). Metric: `crossover_time` (or `transfer_time`/`changeover_time` as legacy aliases).
-  - Root cause: Process design, lack of standardization, skill gaps
-  - Countermeasures: 5S, SMED, process documentation, cross-training
-
-**Why This Distinction Matters**: 5S and SMED reduce changeover time, but don't solve queue delays. A bakery might reduce oven changeover from 30 min to 5 min (via SMED), but if croissants spend 2 hours waiting for the oven to be available, the problem isn't setup—it's resource scheduling. Teaching students to ask "Is this a queue or a setup?" directs them to the right improvement tools.
-
-**Metadata Field Precedence** for crossover time extraction:
-  1. `crossover_time` (preferred)
-  2. `transfer_time`
-  3. `changeover_time` (legacy alias)
-
-**Rendering**: Both metrics render distinctly in node labels and publication footers when present:
-  - `WT: 9 min` (queue time)
-  - `CO: 2 min` (setup time)
-
-### AI Quick Reference: Max Width and Compact Density
-
-Use this section for direct command recipes.
-
-Search keys:
-- `layout-max-width-px`
-- `sppm-label-density compact`
-- `layout-wrap auto`
-
-Most common commands:
-
-```bash
-# Wrap SPPM based on width budget (pixels)
-flo run examples/reference/washnfold.flo \
-  --export dot \
-  --diagram sppm \
-  --orientation lr \
-  --layout-wrap auto \
-  --layout-max-width-px 800
-
-# Compact SPPM labels (less text in each box)
-flo run examples/reference/washnfold.flo \
-  --export dot \
-  --diagram sppm \
-  --sppm-label-density compact
-
-# Typical combined usage for readable wrapped output
-flo run examples/reference/washnfold.flo \
-  --export dot \
-  --diagram sppm \
-  --orientation lr \
-  --layout-wrap auto \
-  --layout-max-width-px 800 \
-  --sppm-label-density compact
-```
-
-Notes:
-- `--layout-max-width-px` only affects DOT rendering modes.
-- `--layout-wrap auto` must be enabled for width-triggered wrapping behavior.
-- `--sppm-label-density compact` reduces visible label payload but keeps process sequence unchanged.
+- `wait_time` models queue delay.
+- `crossover_time` models setup or changeover time.
+- These metrics are intentionally distinct because they imply different operational problems and different improvement methods.
 
 ## 7) Input and Output Streams
 
@@ -873,14 +942,13 @@ FLO supports POSIX-style streams:
 
 - Input path `-` means read from stdin
 - Output path `-` means write to stdout
-- Telemetry/debug output is kept off stdout payload streams (use stderr or
-  external telemetry sinks) so JSON/DOT output remains parse-safe.
+- Telemetry and debug output is kept off stdout payload streams so JSON, text export, and DOT output remain parse-safe.
 
 Examples:
 
 ```bash
-cat examples/reference/linear.flo | flo -
-flo run examples/reference/linear.flo -o -
+cat examples/reference/linear.flo | uv run flo -
+uv run flo run examples/reference/linear.flo -o -
 ```
 
 ## 8) Exit Codes
@@ -900,6 +968,7 @@ This section summarizes the normative CLI contract in `docs/specs/cli_error_cont
 This section summarizes the normative rules in `docs/specs/core_language.md`.
 
 Current semantic constraints include:
+
 - Exactly one `start` node
 - At least one `end` node
 - All transition endpoints must resolve to declared node IDs
@@ -908,42 +977,59 @@ Current semantic constraints include:
 - Every node reachable from `start`
 - Every node can reach at least one `end`
 - Every `decision` has at least two outgoing transitions
+- `parallel_split` nodes need at least two outgoing edges and must reach a `parallel_join`
+- `parallel_join` nodes need at least two incoming edges and must be reachable from a `parallel_split`
+- Canonical `consumes` and `produces` references must resolve to declared `items` when `items` are present
+- Canonical `performed_by` and `uses` references must resolve to declared `resources` with the correct kind when `resources` are present
+- `handoff` must be boolean in the structural edge contract
 - `wait_time` is only valid on `queue` nodes
 - Queue nodes must not carry active work or setup-time fields such as `cycle_time` or `crossover_time`
 
 ## 10) Diagrams and Rendering
 
-DOT output can be rendered to SVG with Graphviz:
+Preferred maintained SVG rendering:
 
 ```bash
-flo run examples/reference/linear.flo --export dot -o /tmp/linear.dot
+uv run flo run examples/reference/new_semantics.flo \
+  --export svg \
+  --render-to /tmp/new_semantics.svg \
+  --diagram sppm
+```
+
+Deprecated DOT compatibility rendering:
+
+```bash
+uv run flo run examples/reference/linear.flo --export dot -o /tmp/linear.dot
 dot -Tsvg /tmp/linear.dot -o /tmp/linear.svg
 ```
 
 Swimlane rendering:
 
 ```bash
-flo run examples/reference/swimlane.flo --export dot --diagram swimlane -o /tmp/swimlane.dot
-dot -Tsvg /tmp/swimlane.dot -o /tmp/swimlane.svg
+uv run flo run examples/reference/swimlane.flo \
+  --export svg \
+  --render-to /tmp/swimlane.svg \
+  --diagram swimlane
 ```
 
 ## 11) Build All Example Artifacts
 
-Regenerate DOT/SVG for all examples:
+Regenerate curated render artifacts for all examples:
 
 ```bash
-PYTHONPATH=src .venv/bin/python scripts/build_all.py
+uv run python scripts/build_all.py
 ```
 
 Include intentionally invalid fixtures:
 
 ```bash
-PYTHONPATH=src .venv/bin/python scripts/build_all.py --include-invalid
+uv run python scripts/build_all.py --include-invalid
 ```
 
 Output is written under `renders/` with the same relative structure as `examples/`.
 
 The build includes both the default and top-down chocolate chip cookie artifacts:
+
 - `renders/reference/chocolate_chip_cookies.dot`
 - `renders/reference/chocolate_chip_cookies.svg`
 - `renders/reference/chocolate_chip_cookies_topdown.dot`
@@ -954,39 +1040,42 @@ The build includes both the default and top-down chocolate chip cookie artifacts
 ## 12.1 Author and validate quickly
 
 ```bash
-flo validate path/to/model.flo
+uv run flo validate path/to/model.flo
 ```
 
 ## 12.2 Generate diagram for review
 
 ```bash
-flo run path/to/model.flo --export dot --diagram flowchart -o review.dot
-dot -Tsvg review.dot -o review.svg
+uv run flo run path/to/model.flo --export svg --render-to review.svg --diagram flowchart
 ```
 
 ## 12.3 Generate machine-readable JSON for downstream tooling
 
 ```bash
-flo export path/to/model.flo --export json -o model.json
+uv run flo export path/to/model.flo --export json -o model.json
 ```
 
 ## 13) Troubleshooting
 
-Problem: "Render options ... require DOT output"
-- Cause: DOT-only flags were used with JSON export.
-- Fix: remove render flags or switch to `--export dot`.
+Problem: "Render options ... require a diagram render output"
+
+- Cause: diagram render flags were used with JSON, ingredients, or movement export.
+- Fix: remove render flags or switch to `--export svg` or deprecated `--export dot`.
 
 Problem: validation errors like missing predecessor/successor
+
 - Cause: disconnected or dangling nodes.
 - Fix: ensure every non-start has incoming flow and every non-end has outgoing flow.
 
 Problem: SVG not generated
-- Cause: Graphviz `dot` is missing.
-- Fix: install Graphviz and re-run render command.
+
+- Cause: the deprecated Graphviz compatibility path was selected for DOT or a raster or PDF target.
+- Fix: install Graphviz or switch to maintained direct SVG output.
 
 ## 14) Reference Files
 
 Useful project references:
+
 - `README.md`
 - `docs/specs/cli_error_contract.md`
 - `docs/specs/core_language.md`
@@ -997,5 +1086,6 @@ Useful project references:
 ---
 
 If you want, the next revision can be split into two manuals:
+
 - A short Quickstart (2-3 pages)
 - A full Reference Guide (complete command and schema details)

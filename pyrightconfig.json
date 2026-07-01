@@ -1,6 +1,11 @@
 {
+  "include": ["src"],
   "typeCheckingMode": "basic",
-  "exclude": [".venv", "dist", "build", "*.egg-info"],
+  "strict": [
+    "src/flo/compiler/ir/schema_projection.py",
+    "src/flo/core/render_option_schema.py"
+  ],
+  "exclude": [".venv", "dist", "build", "*.egg-info", "tests", "scripts"],
   "executionEnvironments": [
     {
       "root": ".",

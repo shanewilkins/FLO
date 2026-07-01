@@ -68,3 +68,38 @@ def test_execute_emits_internal_error_event_fields(monkeypatch):
     assert event["command"] == "run"
     assert event["path"] == "input.flo"
     assert "error_kind" not in get_contextvars()
+
+
+def test_execute_emits_verbose_diagnostic_on_fail_open_fallback(monkeypatch):
+    captured: list[tuple[str, dict[str, object]]] = []
+
+    def error_handler(msg: str) -> None:
+        captured.append((msg, dict(get_contextvars())))
+
+    services = SimpleNamespace(
+        telemetry=SimpleNamespace(shutdown=lambda: None),
+        error_handler=error_handler,
+    )
+
+    monkeypatch.setattr("flo.services.get_services", lambda verbose=False: services)
+    monkeypatch.setattr("flo.services.io.read_input", lambda path: (0, "content", ""))
+    monkeypatch.setattr(
+        "flo.core.run_content",
+        lambda *_args, **_kwargs: (
+            0,
+            "dot",
+            "fail-open postprocess: scc_condense failed: boom",
+        ),
+    )
+    monkeypatch.setattr("flo.services.io.write_output", lambda out, path: (0, ""))
+
+    rc = cli_mod._execute("input.flo", "run", {"verbose": True})
+
+    assert rc == 0
+    msg, event = captured[-1]
+    assert msg.startswith("Warning: fail-open postprocess: scc_condense failed:")
+    assert event["error_kind"] == "diagnostic"
+    assert event["error_stage"] == "fail_open_fallback"
+    assert event["exit_code"] == 0
+    assert event["command"] == "run"
+    assert event["path"] == "input.flo"

@@ -32,6 +32,8 @@ A spaghetti map in FLO must satisfy the following characteristics:
 
 2. Channel-aware rendering
    - FLO must support movement views for material, people, or both.
+   - These views are derived from canonical `consumes` and `produces`,
+     `performed_by`, and location semantics rather than only legacy aliases.
 
 3. Location-based topology
    - Nodes represent locations or movement-relevant places, not arbitrary FLO
@@ -42,8 +44,8 @@ A spaghetti map in FLO must satisfy the following characteristics:
      that inferred movement surface.
 
 5. Graceful degradation
-   - Missing spatial metadata or absent worker-specific metadata should degrade
-     the output predictably rather than invalidate the entire render.
+   - Missing spatial metadata or absent performer-specific metadata should
+     degrade the output predictably rather than invalidate the entire render.
 
 ## Non-goals
 

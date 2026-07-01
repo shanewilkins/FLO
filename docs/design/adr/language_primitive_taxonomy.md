@@ -60,9 +60,9 @@ FLO also accepts the following migration surfaces.
   `docs/policy/language_primitive_migration_contract.md`.
 - The explanatory taxonomy note remains in
   `docs/design/language_primitive_taxonomy.md`.
-- Current implemented normative behavior remains described by
-  `docs/specs/core_language.md` until compiler, schema, tests, and examples are
-  updated together.
+- The implemented normative behavior is now described by
+   `docs/specs/core_language.md`, the schema contracts, and the aligned fixture
+   corpus.
 - Render intent and typed metadata guidance are explicitly non-blocking for the
   first language-primitive compiler slice because their current authoritative
   structure already lives in schema.

@@ -11,7 +11,7 @@ from .validate_relations import validate_item_relations, validate_resource_relat
 from .validate_structure import validate_parallel_structure
 from .validate_subprocess import validate_subprocess_metadata
 from .validate_render_intent import validate_render_intent
-from flo.services.errors import ValidationError
+from flo.errors import ValidationError
 from pathlib import Path
 import json
 

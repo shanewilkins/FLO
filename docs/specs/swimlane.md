@@ -42,6 +42,9 @@ A swimlane diagram in FLO must satisfy the following characteristics:
 4. Cross-lane flow visibility
    - Edges that cross lane boundaries must remain understandable as transitions
      between responsibility surfaces.
+   - Cross-lane flow is useful evidence for handoff analysis, but lane changes
+     do not redefine the underlying handoff semantics owned by the core
+     language.
 
 5. Rich process-map affordances remain available
    - Lane organization must not force the diagram back down to minimal

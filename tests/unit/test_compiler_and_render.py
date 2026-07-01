@@ -1,7 +1,7 @@
 from flo.adapters import parse_adapter
 from flo.compiler import compile_adapter
 from flo.compiler.ir import validate_ir
-from flo.render import render_dot
+from flo.render import render_artifact, render_dot
 from tests.fixtures.sample_fixtures import repo_root
 
 
@@ -81,3 +81,40 @@ steps:
         '"__rework_corridor_decision_rework_1" -> "rework" [headport=w, constraint=false, minlen=3, weight=0, style=dashed, label="no"];'
         in dot
     )
+
+
+def test_compile_and_render_canonical_examples_with_direct_svg_backend():
+    cases = [
+        (
+            repo_root() / "examples" / "reference" / "new_semantics.flo",
+            [
+                "Canonical Semantics Reference",
+                "Split Preparation",
+                "Join Preparation",
+            ],
+        ),
+        (
+            repo_root() / "examples" / "reference" / "semantic_controls_showcase.flo",
+            ["Semantic Controls Showcase", "Split Prep", "Quality OK?"],
+        ),
+    ]
+
+    for example_path, expected_labels in cases:
+        content = example_path.read_text()
+        adapter = parse_adapter(content, source_path=str(example_path))
+        ir = compile_adapter(adapter)
+        validate_ir(ir)
+
+        artifact = render_artifact(
+            ir,
+            options={
+                "diagram": "sppm",
+                "render_backend": "svg",
+            },
+        )
+
+        assert artifact.kind == "svg"
+        assert artifact.backend == "svg"
+        assert "<svg" in artifact.content
+        for label in expected_labels:
+            assert label in artifact.content

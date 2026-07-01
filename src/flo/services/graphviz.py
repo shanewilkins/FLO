@@ -28,7 +28,6 @@ from flo.services._svg_utils import (
     _format_svg_length,
     _set_edge_path,
     _set_arrow_polygon,
-    _set_arrow_polygon_horizontal,
     _write_svg_tree,
 )
 from flo.services._graphviz_direct_midpoint import (
@@ -122,36 +121,6 @@ def render_dot_to_file(
         )
 
 
-def _postprocess_sppm_return_loop_edges_svg(
-    *,
-    dot: str,
-    output_path: Path,
-    contract: SppmSvgPostprocessContract | None = None,
-) -> None:
-    """Legacy compatibility hook.
-
-    Rework return-loop geometry normalization is owned by the direct ELK/SVG
-    backend and should not be duplicated in Graphviz postprocessing.
-    """
-    _ = (dot, output_path, contract)
-    return
-
-
-def _postprocess_sppm_branch_edges_svg(
-    *,
-    dot: str,
-    output_path: Path,
-    contract: SppmSvgPostprocessContract | None = None,
-) -> None:
-    """Legacy compatibility hook.
-
-    Rework branch geometry normalization is owned by the direct ELK/SVG
-    backend and should not be duplicated in Graphviz postprocessing.
-    """
-    _ = (dot, output_path, contract)
-    return
-
-
 def _postprocess_sppm_rework_labels_svg(
     *,
     dot: str,
@@ -241,87 +210,6 @@ def _collect_branch_anchor_specs(
         return specs
 
     return []
-
-
-def _find_rework_edge_group(
-    *,
-    edge_groups: dict[str, ET.Element],
-    source_id: str,
-    target_id: str,
-) -> tuple[ET.Element | None, str, str]:
-    best: tuple[ET.Element | None, str, str, int] = (None, "e", "w", -1)
-    for title, group in edge_groups.items():
-        parsed = _parse_edge_title_for_ids(
-            title=title, source_id=source_id, target_id=target_id
-        )
-        if parsed is None:
-            continue
-        source_side, target_side = parsed
-        score = int(source_side in {"n", "s", "e", "w"}) + int(
-            target_side in {"n", "s", "e", "w"}
-        )
-        if score > best[3]:
-            best = (group, source_side, target_side, score)
-            if score == 2:
-                break
-
-    return best[0], best[1], best[2]
-
-
-def _parse_edge_title_for_ids(
-    *, title: str, source_id: str, target_id: str
-) -> tuple[str, str] | None:
-    if "->" not in title:
-        return None
-    left, right = title.split("->", 1)
-    if not _endpoint_matches_node_id(left, source_id):
-        return None
-    if not _endpoint_matches_node_id(right, target_id):
-        return None
-    return (_endpoint_compass_side(left), _endpoint_compass_side(right))
-
-
-def _endpoint_matches_node_id(endpoint: str, node_id: str) -> bool:
-    return endpoint == node_id or endpoint.startswith(f"{node_id}:")
-
-
-def _endpoint_compass_side(endpoint: str) -> str:
-    if ":" not in endpoint:
-        return "e"
-    side = endpoint.rsplit(":", 1)[-1]
-    if side in {"n", "s", "e", "w"}:
-        return side
-    return "e"
-
-
-def _point_on_bounds(
-    bounds: tuple[float, float, float, float], side: str
-) -> tuple[float, float]:
-    left, top, right, bottom = bounds
-    if side == "n":
-        return ((left + right) / 2.0, top)
-    if side == "s":
-        return ((left + right) / 2.0, bottom)
-    if side == "w":
-        return (left, (top + bottom) / 2.0)
-    if side == "e":
-        return (right, (top + bottom) / 2.0)
-    return ((left + right) / 2.0, (top + bottom) / 2.0)
-
-
-def _set_arrow_for_side(
-    group: ET.Element, *, tip: tuple[float, float], side: str
-) -> None:
-    if side == "w":
-        _set_arrow_polygon_horizontal(group, tip=tip, direction=-1)
-        return
-    if side == "e":
-        _set_arrow_polygon_horizontal(group, tip=tip, direction=1)
-        return
-    if side == "s":
-        _set_arrow_polygon(group, tip=tip, direction=1)
-        return
-    _set_arrow_polygon(group, tip=tip, direction=-1)
 
 
 def _edge_path_start_end(

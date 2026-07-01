@@ -107,6 +107,7 @@ def test_postprocess_nonfatal(monkeypatch, ir_factory, node_factory):
     rc, out, err = run_content("ok content")
     assert rc == 0
     assert out == "dot"
+    assert err.startswith("fail-open postprocess: scc_condense failed:")
 
 
 def test_run_wrapper():
@@ -129,7 +130,7 @@ def test_run_content_render_to_calls_graphviz_service(
     monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
     monkeypatch.setattr(
         "flo.core.render_artifact_and_contract",
-        lambda i, **kw: (
+        lambda i, **_kw: (
             RenderArtifact(kind="dot", content="dot output", backend="graphviz"),
             None,
         ),
@@ -139,6 +140,7 @@ def test_run_content_render_to_calls_graphviz_service(
     calls: list[tuple] = []
 
     def fake_render_to_file(dot: str, path: str, sppm_contract=None) -> None:
+        _ = sppm_contract
         calls.append((dot, path))
 
     import flo.services.graphviz as gv_mod

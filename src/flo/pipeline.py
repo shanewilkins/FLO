@@ -23,6 +23,9 @@ import time
 from flo.services.telemetry import get_tracer, record_span_error
 
 
+_FAIL_OPEN_SCC_PREFIX = "fail-open postprocess: scc_condense failed"
+
+
 def _step_error(e: Exception, services: Any, default_rc: int) -> tuple[int, None, str]:
     """Notify the error handler and map an exception to an (rc, None, message) tuple."""
     try:
@@ -109,15 +112,16 @@ class PostprocessStep:
     """Run optional postprocessing (e.g., SCC condensation)."""
 
     def run(self, previous: Tuple[int, Any, Any], services: Any):
-        """Execute postprocessing step with non-fatal fallback behavior."""
+        """Execute postprocessing step with explicit fail-open fallback policy."""
         rc, ir, err = previous
         if rc != 0:
             return rc, ir, err
         try:
             return 0, scc_condense(ir), None
-        except Exception:
-            # Fall back to original IR if postprocessing fails.
-            return 0, ir, None
+        except Exception as exc:
+            # Explicit fail-open policy: continue with the original IR, but
+            # propagate a deterministic warning for diagnostics/telemetry.
+            return 0, ir, f"{_FAIL_OPEN_SCC_PREFIX}: {exc}"
 
 
 @dataclass
@@ -167,32 +171,83 @@ class PipelineRunner:
         """Initialize runner with ordered step list."""
         self.steps = steps
 
+    @staticmethod
+    def _normalize_step_state(state: Any) -> Tuple[int, Any, Any]:
+        if isinstance(state, tuple) and len(state) == 3:
+            return state
+        if isinstance(state, int):
+            return int(state), None, None
+        rc = int(getattr(state, "rc", 1))
+        return rc, None, None
+
+    @staticmethod
+    def _set_step_span_attributes(
+        *, span: Any, step_name: str, rc: int, duration_ms: int, err: Any
+    ) -> None:
+        setter = getattr(span, "set_attribute", None)
+        if not callable(setter):
+            return
+        setter("pipeline.step.name", step_name)
+        setter("pipeline.step.rc", rc)
+        setter("pipeline.step.duration_ms", duration_ms)
+        setter("pipeline.step.status", "ok" if rc == 0 else "error")
+        if rc == 0 and err:
+            setter("pipeline.step.degraded", True)
+            setter("pipeline.step.degraded_reason", str(err))
+
+    @staticmethod
+    def _add_step_events(
+        *, span: Any, step_name: str, rc: int, duration_ms: int, err: Any
+    ) -> None:
+        add_event = getattr(span, "add_event", None)
+        if not callable(add_event):
+            return
+        try:
+            add_event(
+                "pipeline.step.completed",
+                {
+                    "pipeline.step.name": step_name,
+                    "pipeline.step.rc": rc,
+                    "pipeline.step.duration_ms": duration_ms,
+                },
+            )
+            if rc == 0 and err:
+                add_event(
+                    "pipeline.step.degraded",
+                    {
+                        "pipeline.step.name": step_name,
+                        "pipeline.step.degraded_reason": str(err),
+                    },
+                )
+        except Exception:
+            pass
+
     def run(self, services: Any) -> int:
         """Run all steps sequentially, stopping on first non-zero rc."""
         state: Tuple[int, Any, Any] = (0, None, None)
         tracer = get_tracer("flo.pipeline")
         for step in self.steps:
-            span_name = f"pipeline.step.{step.__class__.__name__}"
+            step_name = step.__class__.__name__
+            span_name = f"pipeline.step.{step_name}"
             with tracer.start_as_current_span(span_name) as span:
                 start = time.perf_counter()
-                state = step.run(state, services)
-                # Normalize results to expected 3-tuple
-                if not (isinstance(state, tuple) and len(state) == 3):
-                    if isinstance(state, int):
-                        rc = int(state)
-                        state = (rc, None, None)
-                    else:
-                        rc = int(getattr(state, "rc", 1))
-                        # fallback if shape unexpected
-                        state = (rc, None, None)
+                state = self._normalize_step_state(step.run(state, services))
                 rc = int(state[0] or 0)
                 duration_ms = int((time.perf_counter() - start) * 1000)
-                setter = getattr(span, "set_attribute", None)
-                if callable(setter):
-                    setter("pipeline.step.name", step.__class__.__name__)
-                    setter("pipeline.step.rc", rc)
-                    setter("pipeline.step.duration_ms", duration_ms)
-                    setter("pipeline.step.status", "ok" if rc == 0 else "error")
+                self._set_step_span_attributes(
+                    span=span,
+                    step_name=step_name,
+                    rc=rc,
+                    duration_ms=duration_ms,
+                    err=state[2],
+                )
+                self._add_step_events(
+                    span=span,
+                    step_name=step_name,
+                    rc=rc,
+                    duration_ms=duration_ms,
+                    err=state[2],
+                )
                 if rc != 0:
                     record_span_error(span, str(state[2] or ""))
                     # stop on first non-zero rc

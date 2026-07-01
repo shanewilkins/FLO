@@ -275,7 +275,7 @@ def _has_item_or_resource_collection(ir: object) -> bool:
     return (
         process_metadata.get("items") is not None
         or process_metadata.get("resources") is not None
-        process_metadata.get("materials") is not None
+        or process_metadata.get("materials") is not None
         or process_metadata.get("equipment") is not None
     )
 

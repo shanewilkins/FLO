@@ -436,6 +436,8 @@ class _NormalizeFunctionClone(ast.NodeTransformer):
     ) -> ast.FunctionDef | ast.AsyncFunctionDef:
         clone = cast(ast.FunctionDef | ast.AsyncFunctionDef, self.generic_visit(node))
         clone.name = "FUNCTION"
+        # Drop decorations and return annotations so dry-analysis compares
+        # implementation structure only, not declaration metadata.
         clone.decorator_list = []
         clone.returns = None
         return clone

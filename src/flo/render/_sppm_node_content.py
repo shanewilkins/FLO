@@ -161,11 +161,6 @@ def measure_sppm_node(
     )
 
 
-def sppm_node_subtitle(content: SppmNodeContent) -> str | None:
-    """Return the first supporting line for compact SVG display."""
-    return content.info_lines[0] if content.info_lines else None
-
-
 def _queue_content(
     *, name: str, metadata: dict[str, Any], options: RenderOptions
 ) -> SppmNodeContent:

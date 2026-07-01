@@ -662,6 +662,55 @@ Success criteria:
 - a clean targeted test run exists for each migration phase before broader
   regression runs are required
 
+Status:
+
+- complete
+
+Completion notes:
+
+- compiler, renderer, and integration regression coverage now explicitly
+  exercises the canonical reference fixtures:
+  - `tests/integration/test_cli_examples.py` now verifies `flo compile` on
+    `examples/reference/new_semantics.flo` and
+    `examples/reference/semantic_controls_showcase.flo`
+  - `tests/unit/test_compiler_and_render.py` now verifies maintained direct SVG
+    rendering for the same canonical fixtures
+- fixture-backed smoke coverage remains centralized on real examples:
+  - `tests/integration/test_cli_examples.py` continues to iterate across
+    `examples/reference/*.flo`
+  - `tests/fixtures/sample_fixtures.py` remains pointed at
+    `examples/reference/semantic_controls_showcase.flo`
+- baseline generation scripts now recognize canonical process collections and
+  canonical semantic exemplars:
+  - `scripts/build_all.py` now emits ingredient baselines for canonical
+    `items` and `resources`, not only legacy `materials` and `equipment`
+  - `scripts/build_all.py` now assigns stable SPPM render defaults for
+    `new_semantics` and `semantic_controls_showcase`
+  - `scripts/build_reference_artifacts.sh` now includes curated reference
+    outputs for the canonical exemplar fixtures
+- reference regression assets under `renders/reference/` now include canonical
+  semantic baselines aligned to the accepted migration examples:
+  - `renders/reference/new_semantics.svg`
+  - `renders/reference/new_semantics_ingredients.md`
+  - `renders/reference/semantic_controls_showcase.svg`
+  - `renders/reference/semantic_controls_showcase_ingredients.md`
+- Phase 5 intentionally avoided broad baseline churn:
+  - only the missing canonical reference artifacts were added for the newly
+    authoritative fixtures
+  - no blanket rewrite of unrelated legacy reference outputs was required in
+    this slice
+
+Validation snapshot:
+
+- focused Phase 5 example-backed regression slice currently passes:
+  - `uv run pytest -q tests/integration/test_cli_examples.py tests/unit/test_compiler_and_render.py`
+  - result: `5 passed`
+- broader compile/render/export regression slice currently passes:
+  - `uv run pytest -q tests/integration/test_cli_examples.py tests/unit/test_compiler_and_render.py tests/integration/test_cli_export_flag.py tests/unit/test_export_registry.py tests/unit/export/test_materials_export.py tests/unit/analysis/test_movement.py`
+  - result: `31 passed`
+- scoped hook gate for the Phase 5 slice currently passes:
+  - `uv run pre-commit run --files scripts/build_reference_artifacts.sh scripts/build_all.py tests/integration/test_cli_examples.py tests/unit/test_compiler_and_render.py notes/language_primitive_taxonomy_implementation_plan.md renders/reference/new_semantics.svg renders/reference/new_semantics_ingredients.md renders/reference/semantic_controls_showcase.svg renders/reference/semantic_controls_showcase_ingredients.md`
+
 ## Phase 6: Update Normative And User-Facing Documentation
 
 Goal:
@@ -712,6 +761,52 @@ Success criteria:
   primitives
 - the design notes remain explanatory and consistent with the implemented
   semantics rather than serving as the only place the new model is described
+
+Status:
+
+- complete
+
+Completion notes:
+
+- normative core-language documentation now describes the implemented
+  process-first primitive model directly in:
+  - `docs/specs/core_language.md`
+  - canonical process-level `items`, `resources`, and `locations`
+  - canonical step-level `consumes`, `produces`, `performed_by`, `uses`,
+    explicit `handoff`, and explicit parallel split and join semantics
+- user-facing guidance now teaches the accepted authoring model with canonical
+  examples in:
+  - `docs/User_Manual.md`
+  - updated examples now cover canonical item versus information flow,
+    handoff-bearing transitions, rework edges, and parallel split and join
+    structure
+  - CLI guidance now treats JSON as the authoritative machine-readable export,
+    direct SVG as the maintained diagram artifact path, and DOT as deprecated
+    compatibility output
+- relevant diagram specs were aligned where the new primitives change diagram
+  meaning:
+  - `docs/specs/process_map.md`
+  - `docs/specs/swimlane.md`
+  - `docs/specs/spaghetti_map.md`
+- explanatory design notes were brought into sync with implementation reality:
+  - `docs/design/language_primitive_taxonomy.md`
+  - `docs/design/adr/language_primitive_taxonomy.md`
+  - `docs/design/history/ontology.md`
+- Phase 6 kept authority boundaries intact:
+  - normative rules remain in `docs/specs/`
+  - explanatory taxonomy and historical context remain in `docs/design/`
+  - no design note is now required as the only source for the current language
+    model
+
+Validation snapshot:
+
+- docs governance currently passes:
+  - `uv run python scripts/check_docs_governance.py`
+- touched Phase 6 docs currently report no editor diagnostics in the targeted
+  check set
+- nearby regression slice currently passes after the docs update:
+  - `uv run pytest -q tests/integration/test_cli_examples.py tests/unit/test_compiler_and_render.py`
+  - result: `5 passed`
 
 ## Recommended Execution Order
 

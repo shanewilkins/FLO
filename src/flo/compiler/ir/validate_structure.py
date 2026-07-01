@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from .models import IR
-from flo.services.errors import ValidationError
+from flo.errors import ValidationError
 
 
 def validate_parallel_structure(

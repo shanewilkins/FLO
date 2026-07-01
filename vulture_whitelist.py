@@ -20,3 +20,7 @@ whitelist = [
     "_shutdown_called",
     "_active_span_processors",
 ]
+
+# Keep a direct reference so dead-code scanners do not flag this container
+# while the file is used as a vulture whitelist input.
+_ = whitelist
