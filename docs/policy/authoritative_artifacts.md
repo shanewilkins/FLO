@@ -71,6 +71,22 @@ For implementation-only refactors with no behavior change:
 1. Update design notes only if they would otherwise become misleading.
 2. Do not change specs unless observable behavior or normative meaning changed.
 
+## Pre-implementation ratification rule
+
+Some accepted future changes need a locked migration contract before code and
+specs can move together.
+
+In those cases:
+
+1. Put governance about the migration boundary and compatibility posture in
+   `docs/policy/`.
+2. Put the decision record in an ADR under `docs/design/`.
+3. Keep current implemented normative semantics in `docs/specs/` until the
+   implementation and spec are updated together.
+
+The language-primitive effort uses this pattern in
+`docs/policy/language_primitive_migration_contract.md`.
+
 ## Practical rule
 
 If a future contributor asks, "What is an SPPM?" or "What is a spaghetti map in

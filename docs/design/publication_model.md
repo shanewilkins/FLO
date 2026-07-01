@@ -1,6 +1,6 @@
 # Publication Model
 
-Status: accepted shared model note
+Status: accepted
 
 The shared publication model sits above canonical IR and below renderer-specific output such as DOT, SVG, or later PDF views.
 

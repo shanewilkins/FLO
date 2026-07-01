@@ -29,8 +29,8 @@
   - `--sppm-max-width-px` -> `--layout-max-width-px`
   - `--sppm-target-columns` -> `--layout-target-columns`
 
-- Add design spec for SPPM layout-width, row wrapping, label density/text controls,
-  and output profile presets in `docs/design/SPPM_Layout_Enhancement_Spec.md`.
+- Add SPPM design note for layout-width, row wrapping, label density/text controls,
+  and output profile presets in `docs/design/sppm_layout_enhancement_design.md`.
 - Implement Phase 1 foundations:
   - New shared CLI/render option plumbing for autoformat width controls and
     orientation-aware wrap mode (`--layout-wrap`, `--layout-max-width-px`,

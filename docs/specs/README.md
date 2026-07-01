@@ -3,6 +3,9 @@
 This directory holds normative specifications for FLO concepts and diagram
 types.
 
+For the repository-wide documentation map and authority order, start with
+`docs/README.md`.
+
 A spec should answer:
 
 - What the artifact is for.
@@ -29,8 +32,12 @@ Preferred split:
 
 - Core language and canonical process semantics belong in `core_language.md`.
 - Shared diagram-family semantics belong in a family spec such as
-	`process_map.md` when multiple variants inherit the same richer meaning.
+  `process_map.md` when multiple variants inherit the same richer meaning.
 - Variant-specific diagram meaning belongs in one spec per concrete diagram
-	surface such as `flowchart.md`, `swimlane.md`, or `sppm.md`.
+  surface such as `flowchart.md`, `swimlane.md`, or `sppm.md`.
 - Implementation strategy belongs in `docs/design/`.
 
+See also:
+
+- `docs/policy/authoritative_artifacts.md` for source-of-truth rules
+- `docs/design/README.md` for explanatory architecture and migration material

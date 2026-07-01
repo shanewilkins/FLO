@@ -1,4 +1,4 @@
-# SPPM Publication and Feature Completeness Spec
+# SPPM Publication and Feature Completeness Design
 
 Status: draft
 

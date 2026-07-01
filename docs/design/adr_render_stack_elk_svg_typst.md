@@ -1,6 +1,6 @@
 # ADR: Render Stack Direction
 
-Status: accepted (May 2026)
+Status: accepted
 
 ## Context
 

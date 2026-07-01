@@ -2,6 +2,12 @@
 
 Status: draft
 
+This is a draft explanatory design note for source-owned render intent.
+The authoritative structural contract lives in `schema/flo_ir.json` under
+`process.metadata.render`.
+Implementation rollout remains phased and this note is non-blocking for the
+language-primitive compiler migration.
+
 Purpose
 -------
 

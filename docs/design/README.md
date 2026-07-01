@@ -2,6 +2,9 @@
 
 This directory holds explanatory design material for FLO.
 
+For the top-level documentation map and authority order, start with
+`docs/README.md`.
+
 Design documents explain architecture, implementation strategy, refactor plans,
 and historical rationale. They do not override policy, specs, or schema.
 
@@ -40,6 +43,9 @@ Recommended values:
 - `Status: accepted` for a ratified design decision
 - `Status: completed` for a delivered implementation note kept for context
 - `Status: historical` for retained background material that is not current guidance
+
+Use one of those exact status values.
+Put extra detail such as scope, phase, or date on a separate line if needed.
 
 If a document has no status, contributors should treat that as a documentation
 gap and add one.
@@ -90,11 +96,61 @@ owns each artifact family.
 
 ## Language Primitive Taxonomy
 
-`language_primitive_taxonomy.md` defines the proposed hierarchy of process
+`language_primitive_taxonomy.md` defines the accepted hierarchy of process
  primitives, relations, organizing structures, and compiled forms for FLO's
  process-first language direction.
+
+## Current Design Index
+
+This is the current triage view for the design set.
+
+### Accepted
+
+- `adr_language_primitive_taxonomy.md` - accepted decision record for language primitive direction
+- `adr_render_stack_elk_svg_typst.md` - active ADR for render-stack direction
+- `artifact_taxonomy.md` - accepted artifact-family taxonomy
+- `flowchart_renderer_design.md` - accepted flowchart implementation note
+- `language_primitive_taxonomy.md` - accepted explanatory taxonomy for the ratified language direction
+- `layout_canvas_boundary_contract.md` - accepted ELK-to-SVG boundary contract
+- `publication_model.md` - accepted publication-model note
+- `renderer_architecture_boundaries.md` - accepted renderer boundary note
+- `spaghetti_renderer_design.md` - accepted spaghetti renderer note
+- `sppm_renderer_design.md` - accepted SPPM renderer note
+- `swimlane_renderer_design.md` - accepted swimlane renderer note
+- `wait-time-vs-changeover-time-semantics.md` - accepted timing rationale
+
+### Proposed
+
+- `render_platform_target_architecture.md` - proposed steady-state render target
+
+### Draft
+
+- `render_intent_schema.md` - draft explanatory guide for source-owned render intent
+- `render_platform_migration_plan.md` - active migration plan for the accepted render-stack direction
+- `sppm_layout_enhancement_design.md` - draft SPPM publication and completeness design note
+- `typed_metadata.md` - draft explanatory guide for typed metadata schema
+
+### Completed
+
+- `v0_1_architecture_note.md` - delivered baseline architecture note retained for context
+
+### Historical
+
+- `IR.md` - historical background on the canonical process model
+- `ontology.md` - historical ontology draft retained for background only
+
+## Current Triage Decisions
+
+- Keep accepted, completed, and historical notes in place.
+- Keep `render_platform_migration_plan.md` as a draft because it is still an active plan rather than a delivered note.
+- Treat `language_primitive_taxonomy.md` as accepted explanatory guidance because the migration contract and ADR now ratify the direction.
+- Keep `render_intent_schema.md` and `typed_metadata.md` as draft explanatory guides; both are non-blocking because their authoritative structure already lives in schema.
+- Keep `render_platform_target_architecture.md` as proposed until its steady-state architecture is ratified independently of the current migration slices.
+- Rename the former `SPPM_Layout_Enhancement_Spec.md` file to `sppm_layout_enhancement_design.md` because it is explanatory design material, not a normative spec.
 
 ## Current Cleanup Notes
 
 - `docs/design/IR.md` is retained background material and should not be treated
   as normative over `docs/specs/core_language.md`.
+- `docs/README.md` is the entrypoint for repository-wide documentation
+  navigation before drilling into design, policy, or specs.

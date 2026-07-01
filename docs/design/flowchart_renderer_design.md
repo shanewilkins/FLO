@@ -1,6 +1,6 @@
 # Flowchart Renderer Design
 
-Status: accepted renderer design note
+Status: accepted
 
 ## Why This Exists
 

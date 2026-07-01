@@ -1,6 +1,6 @@
 Canonical FLO Process Model (CPM) - historical background
 
-Status: historical background note
+Status: historical
 
 This note is retained as background context only. Normative semantics live in
 `docs/specs/core_language.md` and authoritative structural contracts live in

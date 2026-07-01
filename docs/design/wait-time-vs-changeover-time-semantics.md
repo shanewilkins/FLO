@@ -1,6 +1,6 @@
 # Wait Time vs Changeover Time Semantics
 
-Status: accepted design rationale note
+Status: accepted
 
 Normative timing-placement rules now live in `docs/specs/core_language.md`.
 

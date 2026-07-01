@@ -1,6 +1,6 @@
 # FLO Artifact Taxonomy
 
-Status: accepted shared taxonomy note
+Status: accepted
 
 ## Purpose
 

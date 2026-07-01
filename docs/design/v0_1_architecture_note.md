@@ -1,6 +1,6 @@
 # FLO v0.1 Architecture Note (Syntax, Semantics, and Boundaries)
 
-Status: completed v0.1 baseline with May 2026 governance update
+Status: completed
 
 ## 0) Ratified Decisions (March 2026)
 

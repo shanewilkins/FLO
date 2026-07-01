@@ -6,6 +6,10 @@ Normative language semantics and CLI contracts live under `docs/specs/`.
 This manual is user-facing guidance and examples; when it summarizes a rule,
 the spec remains authoritative.
 
+For the documentation map, see `docs/README.md`.
+For governance and source-of-truth rules, see `docs/policy/authoritative_artifacts.md`.
+For the project framing and modeling principles, see `docs/FLO_Manifesto.md`.
+
 ## 1) What FLO Is
 
 FLO is a domain-specific, declarative language for modeling business processes.

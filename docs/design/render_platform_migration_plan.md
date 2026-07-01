@@ -1,6 +1,8 @@
 # Render Platform Migration Plan
 
-Status: active migration plan, in progress (May 2026)
+Status: draft
+
+Plan state: in progress (May 2026)
 
 ## Purpose
 

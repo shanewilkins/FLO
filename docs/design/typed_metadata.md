@@ -5,6 +5,9 @@ Status: draft
 This note provides human guidance only. The authoritative typed metadata
 contracts live in `schema/flo_types.json`.
 
+This is a draft explanatory guide.
+Schema remains the authoritative contract for tooling.
+
 Purpose
 -------
 
@@ -28,12 +31,16 @@ Key typed fields (recommended)
 - `sla_target_seconds` (duration/number, node/process): expected time budget for the step/process.
 - `value_class` (enum string, node/process): high-level classification used in Lean analysis (VA/RNVA/NVA/unknown).
 - `handoff` (boolean, edge): indicates a cross-lane or responsibility handoff.
+- `handoff_type` (string, edge): optional typed handoff classification such as
+  responsibility, information, material, system, location, or mixed.
 - `expected_latency_seconds` (duration/number, edge): typical latency to traverse the edge.
 - `rate` (number, rework edge): rework proportion on a rework loop, expressed as a fraction from 0 to 1.
 - `reason` (string, rework edge): short cause label for why the rework loop occurs.
 - `count` (number|string, rework edge): observed rework count, either as a positive number or compact text such as `3 per 40 cases`.
 - `frequency` (string, rework edge): frequency text such as `avg 0.12 loops/case`.
 - `note` (string, rework edge): supporting observation note shown in the rendered rework data box.
+- `materials`, `equipment`, `locations`, and `workers` (process): current
+  typed process-level collections used by the v0.1 schema.
 
 Typing and coercion rules
 -------------------------
@@ -111,4 +118,4 @@ Next steps
 - See `docs/design/render_intent_schema.md` for the proposed source-level
   render/publication intent schema and multi-view render design.
 
-Document version: draft (v0.0)
+Document version: accepted explanatory guide

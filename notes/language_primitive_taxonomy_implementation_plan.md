@@ -1,12 +1,13 @@
 # FLO Language Primitive Taxonomy Implementation Plan
 
-Status: draft working plan
+Status: active implementation plan
 
 ## Purpose
 
 Define the execution plan for aligning FLO's source language, compiler, IR,
-renderers, fixtures, tests, and documentation with the proposed language
-primitive taxonomy in `docs/design/language_primitive_taxonomy.md`.
+renderers, fixtures, tests, and documentation with the accepted migration
+contract in `docs/policy/language_primitive_migration_contract.md` and the
+accepted taxonomy direction in `docs/design/language_primitive_taxonomy.md`.
 
 This plan is implementation-facing.
 It records the recommended migration order, file families likely to change, the
@@ -120,6 +121,7 @@ This plan assumes the current names remain unchanged.
 
 ### Documentation
 
+- `docs/design/adr_language_primitive_taxonomy.md`
 - `docs/specs/core_language.md`
 - `docs/User_Manual.md`
 - diagram specs under `docs/specs/` when new IR fields change diagram meaning
@@ -128,39 +130,41 @@ This plan assumes the current names remain unchanged.
 - `docs/design/language_primitive_taxonomy.md` if the implementation reveals
   adjustments
 
-## Main Design Questions To Resolve In Implementation
+## Locked Implementation Decisions
 
-Before broad code edits, the implementation should lock these source and IR
-questions.
+The migration contract now locks the following implementation decisions before
+broad code edits.
 
-1. Source syntax for items
-   - decide whether top-level authored collections use `items:` with typed
-     entries, separate `materials:` and `information:` collections, or both
-     with one as sugar for the other
+- Source syntax for items:
+  - canonical process-level authoring uses `items:` with typed entries
+  - new docs and fixtures should not use `materials:` or `information:`
 
-2. Step-level item relations
-   - decide how `consumes` and `produces` are authored in source
-   - decide whether legacy `inputs` and `outputs` remain compatibility aliases
+- Step-level item relations:
+  - canonical step-level relations are `consumes` and `produces`
+  - new docs and fixtures should not use `inputs` or `outputs`
 
-3. Resource typing
-   - decide whether source keeps separate `workers:` and `equipment:` fields or
-     introduces a unified `resources:` surface with typed entries
+- Resource typing:
+  - canonical process-level authoring uses `resources:` with typed entries
+  - new docs and fixtures should not use process-level `workers:` or
+    `equipment:` as canonical surfaces
+  - canonical step-level relations are `performed_by` and `uses`
+  - new docs and fixtures should not use step-level `workers` or `equipment`
 
-4. Parallel syntax and IR shape
-   - decide whether `parallel_split` and `parallel_join` are introduced as new
-     step kinds first, or whether a higher-level sugar is also added in the
-     same phase
+- Parallel syntax and IR shape:
+  - Phase 1 introduces `parallel_split` and `parallel_join` as explicit step
+    kinds first
+  - no higher-level parallel sugar is required in the same phase
 
-5. Handoff shape
-   - decide the explicit source surface for handoff typing and override while
-     preserving inferred defaults
+- Handoff shape:
+  - explicit source surface in Phase 1 lives on transitions or edges via
+    `handoff`
+  - typed handoff categories such as `handoff_type` are deferred to a
+    follow-on phase
+  - no inferred handoff semantics are required in Phase 1
 
-6. Backward compatibility posture
-   - decide which current aliases survive in v0.1 compatibility mode and which
-     require explicit migration in examples and docs
-
-The recommended sequence is to lock these questions in the compiler and schema
-layer before rewriting broad example sets.
+- Backward compatibility posture:
+  - new examples and docs should use canonical surfaces immediately
+  - compatibility aliases are not part of the migration contract
 
 ## Phase 0: Freeze The Migration Contract
 
@@ -170,8 +174,12 @@ Write down the concrete migration boundaries before changing behavior.
 Deliverables:
 
 - this implementation plan in `notes/`
+- accepted migration contract in
+  `docs/policy/language_primitive_migration_contract.md`
 - accepted fixture taxonomy decision: keep `reference/` and `conformance/`
 - accepted taxonomy note in `docs/design/language_primitive_taxonomy.md`
+- ADR recording the accepted language-primitive direction in
+  `docs/design/adr_language_primitive_taxonomy.md`
 
 Stop line:
 
@@ -181,13 +189,14 @@ Stop line:
 Success criteria:
 
 - the taxonomy note, fixture decision, and implementation plan do not conflict
+- the ADR records the accepted direction in a short, decision-focused form
 - contributors can identify the next execution phase without reopening the
   taxonomy debate
 - no active migration work depends on unstated fixture or hierarchy decisions
 
 Status:
 
-- complete once this note is reviewed
+- complete
 
 ## Phase 1: Introduce Source-Level Primitive Support In The Compiler
 
@@ -237,8 +246,7 @@ Focused validation:
 Stop line:
 
 - new source semantics compile to IR and validate deterministically
-- compatibility examples that are not yet migrated still compile under the
-  documented alias rules
+- canonical examples compile under the documented canonical rules
 
 Success criteria:
 
@@ -246,8 +254,7 @@ Success criteria:
   through the new source path
 - unit tests cover item support, handoff support, rework relation handling, and
   parallel step-kind validation
-- compiler behavior is explicit about which legacy aliases still normalize and
-  which now require migration
+- compiler behavior is explicit about canonical source surfaces for this phase
 - no renderer-specific assumptions are needed for compiler tests to pass
 
 ## Phase 2: Update Schemas And Typed Metadata
@@ -486,6 +493,8 @@ Work:
      realistic examples
 
 4. Design notes
+
+   - add `docs/design/adr_language_primitive_taxonomy.md`
    - update `docs/design/ontology.md`
    - update `docs/design/typed_metadata.md`
    - keep `docs/design/language_primitive_taxonomy.md` consistent with the
@@ -503,6 +512,8 @@ Stop line:
 
 Success criteria:
 
+- `docs/design/adr_language_primitive_taxonomy.md` records the accepted
+  architecture decision separately from the broader explanatory design note
 - `docs/specs/core_language.md` describes the accepted primitive model without
   falling back to graph-first framing
 - `docs/User_Manual.md` teaches items, handoffs, rework, and parallel flow with

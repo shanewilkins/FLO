@@ -1,6 +1,6 @@
 # Render Platform Target Architecture
 
-Status: proposed target architecture (May 2026)
+Status: proposed
 
 ## Purpose
 

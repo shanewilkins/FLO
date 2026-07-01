@@ -1,6 +1,9 @@
-# FLO Ontology — v0.0 draft
+# FLO Ontology (Historical Draft)
 
-Status: historical background note
+Status: historical
+
+This note is retained as background context only.
+Normative semantics live in `docs/specs/core_language.md` and authoritative structural contracts live in `schema/flo_ir.json`.
 
 Purpose
 -------

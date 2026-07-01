@@ -1,6 +1,6 @@
 # Renderer Architecture Boundaries
 
-Status: accepted (v0.1 renderer-platform-completeness)
+Status: accepted
 
 ## Purpose
 
