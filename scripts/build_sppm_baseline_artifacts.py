@@ -114,7 +114,7 @@ def _filter_cases(cases: list[dict[str, Any]], *, case_ids: list[str]) -> list[d
 
 def _build_case(*, case: dict[str, Any], outdir: Path) -> None:
     from flo.adapters import parse_adapter
-    from flo.render._svg_sppm import render_sppm_svg_artifact
+    from flo.render._svg_sppm import render_sppm_svg_artifact_from_layout
     from flo.render.layout_core import (
         build_sppm_elk_layout_request,
         normalize_elk_layout_result,
@@ -142,7 +142,12 @@ def _build_case(*, case: dict[str, Any], outdir: Path) -> None:
     response_payload = run_elkjs_layout(request_payload)
     normalized_layout = normalize_elk_layout_result(response_payload, request=request)
 
-    svg_artifact, _ = render_sppm_svg_artifact(model, options)
+    svg_artifact, _ = render_sppm_svg_artifact_from_layout(
+        process=model,
+        options=options,
+        request=request,
+        result=normalized_layout,
+    )
     strategy = current_sppm_layout_strategy()
 
     case_dir = outdir / case_id

@@ -42,6 +42,7 @@ _STRICT_POSTPROCESS_CODES = {
 
 __all__ = [
     "render_sppm_svg_artifact",
+    "render_sppm_svg_artifact_from_layout",
     "_annotation_bounds_for_placement",
     "_edge_callout_placement",
     "_label_placement",
@@ -57,6 +58,22 @@ def render_sppm_svg_artifact(
     """Render a minimal standalone SVG for SPPM diagrams using ELK layout."""
     request = build_sppm_elk_layout_request(process, options=options)
     result = execute_elk_layout(request, engine=run_elkjs_layout)
+    return render_sppm_svg_artifact_from_layout(
+        process=process,
+        options=options,
+        request=request,
+        result=result,
+    )
+
+
+def render_sppm_svg_artifact_from_layout(
+    *,
+    process: dict[str, Any] | Any,
+    options: RenderOptions,
+    request: Any,
+    result: Any,
+) -> tuple[RenderArtifact, None]:
+    """Render SPPM SVG using a precomputed ELK request/result pair."""
     display_node_bounds, display_edge_paths = _enforce_sppm_row_alignment(
         node_bounds=result.node_bounds,
         edge_paths=result.edge_paths,

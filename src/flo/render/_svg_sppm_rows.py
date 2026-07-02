@@ -338,7 +338,9 @@ def _align_rework_clusters(
     sorted_pairs = sorted(
         branch_pairs,
         key=lambda pair: (
-            node_bounds[pair[0]].x_px + (node_bounds[pair[0]].width_px / 2.0)
+            node_bounds[pair[0]].x_px + (node_bounds[pair[0]].width_px / 2.0),
+            pair[0],
+            pair[1],
         ),
     )
     return_target_by_source = {
@@ -453,7 +455,7 @@ def _ordered_cluster(
                 for node_id in adjacency.get(current, set())
                 if node_id in cluster and node_id not in ordered_cluster
             ),
-            key=lambda node_id: node_bounds[node_id].x_px,
+            key=lambda node_id: (node_bounds[node_id].x_px, node_id),
         )
         if not next_ids:
             break
@@ -551,7 +553,12 @@ def _enforce_mainline_min_horizontal_gap(
     shifts: dict[str, tuple[float, float]],
 ) -> None:
     ordered_mainline = sorted(
-        mainline_ids, key=lambda node_id: node_bounds[node_id].x_px
+        mainline_ids,
+        key=lambda node_id: (
+            node_bounds[node_id].x_px,
+            node_bounds[node_id].y_px,
+            node_id,
+        ),
     )
     if len(ordered_mainline) < 2:
         return
