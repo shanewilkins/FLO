@@ -1,6 +1,6 @@
 # FLO
 
-FLO is a declarative language for modeling organizational flow.
+FLO is a declarative language for modeling process flow.
 
 It allows you to define processes in a minimal, versioned format and
 compile them into a canonical graph representation (FLO IR) for
