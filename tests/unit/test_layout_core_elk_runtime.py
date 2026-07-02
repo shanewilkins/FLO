@@ -600,6 +600,200 @@ def test_normalize_elk_layout_result_reports_missing_expected_edge_diagnostic():
     assert all(diagnostic.severity == "warning" for diagnostic in result.diagnostics)
 
 
+def test_normalize_elk_layout_result_reports_edge_endpoints_missing_diagnostic():
+    request = build_flowchart_elk_layout_request(
+        {
+            "nodes": [
+                {"id": "start", "kind": "start", "name": "Start"},
+                {"id": "finish", "kind": "end", "name": "Finish"},
+            ],
+            "edges": [{"source": "start", "target": "finish"}],
+        },
+        options=RenderOptions(diagram="flowchart", orientation="lr"),
+    )
+
+    result = normalize_elk_layout_result(
+        {
+            "id": "root",
+            "width": 360,
+            "height": 160,
+            "children": [
+                {"id": "start", "x": 20, "y": 54, "width": 120, "height": 52},
+                {"id": "finish", "x": 220, "y": 54, "width": 120, "height": 52},
+            ],
+            "edges": [
+                {
+                    "id": "invalid-endpoints",
+                    "sources": [],
+                    "targets": ["finish"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 140, "y": 80},
+                            "endPoint": {"x": 220, "y": 80},
+                        }
+                    ],
+                },
+                {
+                    "id": "e0:start->finish",
+                    "sources": ["start"],
+                    "targets": ["finish"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 140, "y": 80},
+                            "endPoint": {"x": 220, "y": 80},
+                        }
+                    ],
+                },
+            ],
+        },
+        request=request,
+    )
+
+    assert any(
+        diagnostic.code == "elk-edge-endpoints-missing"
+        for diagnostic in result.diagnostics
+    )
+
+
+def test_normalize_elk_layout_result_reports_edge_geometry_missing_diagnostic():
+    request = build_flowchart_elk_layout_request(
+        {
+            "nodes": [
+                {"id": "start", "kind": "start", "name": "Start"},
+                {"id": "finish", "kind": "end", "name": "Finish"},
+            ],
+            "edges": [{"source": "start", "target": "finish"}],
+        },
+        options=RenderOptions(diagram="flowchart", orientation="lr"),
+    )
+
+    result = normalize_elk_layout_result(
+        {
+            "id": "root",
+            "width": 360,
+            "height": 160,
+            "children": [
+                {"id": "start", "x": 20, "y": 54, "width": 120, "height": 52},
+                {"id": "finish", "x": 220, "y": 54, "width": 120, "height": 52},
+            ],
+            "edges": [
+                {
+                    "id": "missing-geometry",
+                    "sources": ["start"],
+                    "targets": ["finish"],
+                    "sections": [],
+                }
+            ],
+        },
+        request=request,
+    )
+
+    assert any(
+        diagnostic.code == "elk-edge-geometry-missing"
+        for diagnostic in result.diagnostics
+    )
+
+
+def test_normalize_elk_layout_result_reports_unexpected_edge_diagnostic():
+    request = build_flowchart_elk_layout_request(
+        {
+            "nodes": [
+                {"id": "start", "kind": "start", "name": "Start"},
+                {"id": "finish", "kind": "end", "name": "Finish"},
+            ],
+            "edges": [{"source": "start", "target": "finish"}],
+        },
+        options=RenderOptions(diagram="flowchart", orientation="lr"),
+    )
+
+    result = normalize_elk_layout_result(
+        {
+            "id": "root",
+            "width": 360,
+            "height": 160,
+            "children": [
+                {"id": "start", "x": 20, "y": 54, "width": 120, "height": 52},
+                {"id": "finish", "x": 220, "y": 54, "width": 120, "height": 52},
+            ],
+            "edges": [
+                {
+                    "id": "e0:start->finish",
+                    "sources": ["start"],
+                    "targets": ["finish"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 140, "y": 80},
+                            "endPoint": {"x": 220, "y": 80},
+                        }
+                    ],
+                },
+                {
+                    "id": "unexpected",
+                    "sources": ["finish"],
+                    "targets": ["start"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 220, "y": 80},
+                            "endPoint": {"x": 140, "y": 80},
+                        }
+                    ],
+                },
+            ],
+        },
+        request=request,
+    )
+
+    assert any(
+        diagnostic.code == "elk-edge-unexpected" for diagnostic in result.diagnostics
+    )
+
+
+def test_normalize_elk_layout_result_reports_unknown_edge_container_diagnostic():
+    request = build_flowchart_elk_layout_request(
+        {
+            "nodes": [
+                {"id": "start", "kind": "start", "name": "Start"},
+                {"id": "finish", "kind": "end", "name": "Finish"},
+            ],
+            "edges": [{"source": "start", "target": "finish"}],
+        },
+        options=RenderOptions(diagram="flowchart", orientation="lr"),
+    )
+
+    result = normalize_elk_layout_result(
+        {
+            "id": "root",
+            "width": 360,
+            "height": 160,
+            "children": [
+                {"id": "start", "x": 20, "y": 54, "width": 120, "height": 52},
+                {"id": "finish", "x": 220, "y": 54, "width": 120, "height": 52},
+            ],
+            "edges": [
+                {
+                    "id": "container-missing",
+                    "container": "lane-that-does-not-exist",
+                    "sources": ["start"],
+                    "targets": ["finish"],
+                    "sections": [
+                        {
+                            "startPoint": {"x": 140, "y": 80},
+                            "endPoint": {"x": 220, "y": 80},
+                        }
+                    ],
+                }
+            ],
+        },
+        request=request,
+    )
+
+    assert result.path_for("start", "finish") is not None
+    assert any(
+        diagnostic.code == "elk-edge-container-unknown"
+        for diagnostic in result.diagnostics
+    )
+
+
 def test_execute_elk_layout_raises_render_error_for_strict_diagnostics():
     request = build_flowchart_elk_layout_request(
         {

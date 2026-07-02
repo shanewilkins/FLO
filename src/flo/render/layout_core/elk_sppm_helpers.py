@@ -126,29 +126,12 @@ def _sppm_synthetic_row_lanes(
     nodes: list[dict[str, Any]],
     edges: tuple[ElkLayoutEdge, ...],
 ) -> tuple[ElkLayoutLane, ...]:
-    node_ids = [
-        str(node.get("id") or "") for node in nodes if str(node.get("id") or "")
-    ]
+    node_ids = _node_ids(nodes)
     if not node_ids:
         return ()
 
-    branch_targets, return_sources = _sppm_rework_endpoints(edges=edges)
-    if not branch_targets:
-        return ()
-
-    adjacency = _sppm_non_rework_adjacency(node_ids=node_ids, edges=edges)
-    terminal_ids = {
-        node_id
-        for node in nodes
-        if (node_id := str(node.get("id") or ""))
-        and str(node.get("kind") or node.get("type") or "").lower() == "end"
-    }
-    rework_node_ids = _sppm_rework_reachable_nodes(
-        node_ids=node_ids,
-        branch_targets=branch_targets,
-        return_sources=return_sources,
-        adjacency=adjacency,
-        terminal_ids=terminal_ids,
+    rework_node_ids = _synthetic_rework_node_ids(
+        nodes=nodes, node_ids=node_ids, edges=edges
     )
 
     if not rework_node_ids:
@@ -166,6 +149,40 @@ def _sppm_synthetic_row_lanes(
         return ()
 
     return _sppm_synthetic_lane_pair(mainline_ids=mainline_ids, rework_ids=rework_ids)
+
+
+def _node_ids(nodes: list[dict[str, Any]]) -> list[str]:
+    return [str(node.get("id") or "") for node in nodes if str(node.get("id") or "")]
+
+
+def _synthetic_rework_node_ids(
+    *,
+    nodes: list[dict[str, Any]],
+    node_ids: list[str],
+    edges: tuple[ElkLayoutEdge, ...],
+) -> set[str]:
+    branch_targets, return_sources = _sppm_rework_endpoints(edges=edges)
+    if not branch_targets:
+        return set()
+
+    adjacency = _sppm_non_rework_adjacency(node_ids=node_ids, edges=edges)
+    terminal_ids = _terminal_node_ids(nodes)
+    return _sppm_rework_reachable_nodes(
+        node_ids=node_ids,
+        branch_targets=branch_targets,
+        return_sources=return_sources,
+        adjacency=adjacency,
+        terminal_ids=terminal_ids,
+    )
+
+
+def _terminal_node_ids(nodes: list[dict[str, Any]]) -> set[str]:
+    return {
+        node_id
+        for node in nodes
+        if (node_id := str(node.get("id") or ""))
+        and str(node.get("kind") or node.get("type") or "").lower() == "end"
+    }
 
 
 def _sppm_rework_endpoints(
@@ -316,14 +333,7 @@ def _sppm_partition_indexes_for_synthetic_rows(
     if len(lanes) < 2:
         return {}
 
-    mainline_lane = next(
-        (lane for lane in lanes if lane.id == "__sppm_row_mainline"),
-        None,
-    )
-    rework_lane = next(
-        (lane for lane in lanes if lane.id == "__sppm_row_rework"),
-        None,
-    )
+    mainline_lane, rework_lane = _synthetic_row_lane_pair(lanes)
     if mainline_lane is None or rework_lane is None:
         return {}
 
@@ -341,50 +351,109 @@ def _sppm_partition_indexes_for_synthetic_rows(
         rework_node_ids=rework_set,
         edges=edges,
     )
-    claimed: set[str] = set()
-    for source_id, chain in chains_by_branch:
-        start = main_index.get(source_id, 0)
-        end_node_id = next(
-            (
-                node_id
-                for node_id in reversed(chain)
-                if node_id in return_target_by_source
-            ),
-            None,
-        )
-        end = (
-            main_index.get(return_target_by_source[end_node_id], start)
-            if end_node_id is not None
-            else None
-        )
-        strategy = current_sppm_layout_strategy()
-        for offset, node_id in enumerate(chain):
-            if node_id in claimed:
-                continue
-            claimed.add(node_id)
-            if strategy.partition_mode == "chain_progressive":
-                if end is not None and len(chain) > 1:
-                    ratio = offset / float(len(chain) - 1)
-                    partition_map[node_id] = max(
-                        0,
-                        int(round((start * (1.0 - ratio)) + (end * ratio))),
-                    )
-                else:
-                    partition_map[node_id] = max(0, start - offset)
-                continue
-
-            # branch_aligned keeps branch targets anchored under the branch source,
-            # but still anchors the return source at its reintegration target.
-            if end is not None and node_id == end_node_id:
-                partition_map[node_id] = max(0, end)
-            else:
-                partition_map[node_id] = start
+    strategy = current_sppm_layout_strategy()
+    _apply_chain_partitions(
+        chains_by_branch=chains_by_branch,
+        main_index=main_index,
+        return_target_by_source=return_target_by_source,
+        strategy_partition_mode=strategy.partition_mode,
+        partition_map=partition_map,
+    )
 
     for node_id in rework_lane.node_ids:
         if node_id not in partition_map:
             partition_map[node_id] = 0
 
     return partition_map
+
+
+def _synthetic_row_lane_pair(
+    lanes: tuple[ElkLayoutLane, ...],
+) -> tuple[ElkLayoutLane | None, ElkLayoutLane | None]:
+    mainline_lane = next(
+        (lane for lane in lanes if lane.id == "__sppm_row_mainline"),
+        None,
+    )
+    rework_lane = next(
+        (lane for lane in lanes if lane.id == "__sppm_row_rework"),
+        None,
+    )
+    return mainline_lane, rework_lane
+
+
+def _apply_chain_partitions(
+    *,
+    chains_by_branch: list[tuple[str, tuple[str, ...]]],
+    main_index: dict[str, int],
+    return_target_by_source: dict[str, str],
+    strategy_partition_mode: str,
+    partition_map: dict[str, int],
+) -> set[str]:
+    claimed: set[str] = set()
+    for source_id, chain in chains_by_branch:
+        start = main_index.get(source_id, 0)
+        end_node_id, end = _chain_end_partition(
+            chain=chain,
+            return_target_by_source=return_target_by_source,
+            main_index=main_index,
+            start=start,
+        )
+        for offset, node_id in enumerate(chain):
+            if node_id in claimed:
+                continue
+            claimed.add(node_id)
+            partition_map[node_id] = _chain_partition_value(
+                node_id=node_id,
+                offset=offset,
+                chain_len=len(chain),
+                start=start,
+                end=end,
+                end_node_id=end_node_id,
+                strategy_partition_mode=strategy_partition_mode,
+            )
+    return claimed
+
+
+def _chain_end_partition(
+    *,
+    chain: tuple[str, ...],
+    return_target_by_source: dict[str, str],
+    main_index: dict[str, int],
+    start: int,
+) -> tuple[str | None, int | None]:
+    end_node_id = next(
+        (node_id for node_id in reversed(chain) if node_id in return_target_by_source),
+        None,
+    )
+    end = (
+        main_index.get(return_target_by_source[end_node_id], start)
+        if end_node_id is not None
+        else None
+    )
+    return end_node_id, end
+
+
+def _chain_partition_value(
+    *,
+    node_id: str,
+    offset: int,
+    chain_len: int,
+    start: int,
+    end: int | None,
+    end_node_id: str | None,
+    strategy_partition_mode: str,
+) -> int:
+    if strategy_partition_mode == "chain_progressive":
+        if end is not None and chain_len > 1:
+            ratio = offset / float(chain_len - 1)
+            return max(0, int(round((start * (1.0 - ratio)) + (end * ratio))))
+        return max(0, start - offset)
+
+    # branch_aligned keeps branch targets anchored under the branch source,
+    # but still anchors the return source at its reintegration target.
+    if end is not None and node_id == end_node_id:
+        return max(0, end)
+    return start
 
 
 def _walk_rework_chain(

@@ -13,6 +13,13 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+      - id: ruff-ann401-advisory
+        name: ruff ANN401 advisory (via uv)
+        # Advisory-only gate for explicit Any usage. Keep non-blocking for now.
+        entry: uv run ruff check src tests --select ANN401 --exit-zero
+        language: system
+        types: [python]
+        pass_filenames: false
       - id: pydocstyle-check
         name: pydocstyle (via uv)
         entry: uv run pydocstyle src tests
@@ -39,16 +46,13 @@ repos:
         language: system
         pass_filenames: true
         files: "\\.py$"
-        exclude: "^(scripts/|src/flo/render/layout_core/elk\\.py|src/flo/render/layout_core/elk_sppm_helpers\\.py|src/flo/render/_svg_sppm_rows\\.py)$"
         stages: ["pre-commit"]
         description: "Fail commit if any function/class complexity > 15"
       - id: vulture-check
         name: vulture (via uv)
-        # run vulture but do not fail the commit for now; results are
-        # reported for manual triage. This keeps pre-commit green while
-        # we iterate toward fewer false positives. If a whitelist exists,
-        # pass it to vulture so reports focus on new findings.
-        entry: bash -c "if [ -f vulture_whitelist.py ]; then uv run vulture src/flo tests --min-confidence 60 vulture_whitelist.py || true; else uv run vulture src/flo tests --min-confidence 60 || true; fi"
+        # Run vulture as a hard quality gate and include whitelist symbols
+        # as an analyzed module so known intentional false positives are ignored.
+        entry: bash -c "if [ -f vulture_whitelist.py ]; then uv run vulture src/flo tests vulture_whitelist.py --min-confidence 60; else uv run vulture src/flo tests --min-confidence 60; fi"
         language: system
         types: [python]
         pass_filenames: false

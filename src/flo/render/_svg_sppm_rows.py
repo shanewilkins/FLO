@@ -111,47 +111,84 @@ def _infer_row_ids_from_rework_edges(
     edge_paths: dict[tuple[str, str], Any],
 ) -> tuple[set[str], set[str]]:
     node_ids = set(node_bounds)
-    branch_targets = {
-        target_id
-        for (_source_id, target_id), edge_path in edge_paths.items()
-        if str(getattr(edge_path, "rework_variant", "") or "") == "branch"
-        and target_id in node_ids
-    }
-    return_sources = {
-        source_id
-        for (source_id, _target_id), edge_path in edge_paths.items()
-        if str(getattr(edge_path, "rework_variant", "") or "") == "return"
-        and source_id in node_ids
-    }
+    branch_targets = _collect_rework_variant_node_ids(
+        edge_paths=edge_paths,
+        node_ids=node_ids,
+        variant="branch",
+        source=False,
+    )
+    return_sources = _collect_rework_variant_node_ids(
+        edge_paths=edge_paths,
+        node_ids=node_ids,
+        variant="return",
+        source=True,
+    )
     if not branch_targets:
         return set(), set()
 
-    adjacency: dict[str, list[str]] = {node_id: [] for node_id in node_ids}
-    for (source_id, target_id), edge_path in edge_paths.items():
-        if (
-            source_id not in node_ids
-            or target_id not in node_ids
-            or bool(getattr(edge_path, "is_rework", False))
-        ):
-            continue
-        adjacency[source_id].append(target_id)
-
-    rework_node_ids: set[str] = set()
-    frontier = list(branch_targets)
-    while frontier:
-        current = frontier.pop()
-        if current in rework_node_ids:
-            continue
-        rework_node_ids.add(current)
-        if current in return_sources:
-            continue
-        for next_id in adjacency.get(current, []):
-            if next_id not in rework_node_ids:
-                frontier.append(next_id)
+    adjacency = _non_rework_adjacency(edge_paths=edge_paths, node_ids=node_ids)
+    rework_node_ids = _reachable_until_return_sources(
+        start_ids=branch_targets,
+        return_sources=return_sources,
+        adjacency=adjacency,
+    )
 
     if not rework_node_ids:
         return set(), set()
     return node_ids - rework_node_ids, rework_node_ids
+
+
+def _collect_rework_variant_node_ids(
+    *,
+    edge_paths: dict[tuple[str, str], Any],
+    node_ids: set[str],
+    variant: str,
+    source: bool,
+) -> set[str]:
+    results: set[str] = set()
+    for (source_id, target_id), edge_path in edge_paths.items():
+        if str(getattr(edge_path, "rework_variant", "") or "") != variant:
+            continue
+        candidate = source_id if source else target_id
+        if candidate in node_ids:
+            results.add(candidate)
+    return results
+
+
+def _non_rework_adjacency(
+    *,
+    edge_paths: dict[tuple[str, str], Any],
+    node_ids: set[str],
+) -> dict[str, list[str]]:
+    adjacency: dict[str, list[str]] = {node_id: [] for node_id in node_ids}
+    for (source_id, target_id), edge_path in edge_paths.items():
+        if source_id not in node_ids or target_id not in node_ids:
+            continue
+        if bool(getattr(edge_path, "is_rework", False)):
+            continue
+        adjacency[source_id].append(target_id)
+    return adjacency
+
+
+def _reachable_until_return_sources(
+    *,
+    start_ids: set[str],
+    return_sources: set[str],
+    adjacency: dict[str, list[str]],
+) -> set[str]:
+    reachable: set[str] = set()
+    frontier = list(start_ids)
+    while frontier:
+        current = frontier.pop()
+        if current in reachable:
+            continue
+        reachable.add(current)
+        if current in return_sources:
+            continue
+        for next_id in adjacency.get(current, []):
+            if next_id not in reachable:
+                frontier.append(next_id)
+    return reachable
 
 
 def row_gap_diagnostics(
@@ -335,19 +372,13 @@ def _align_rework_clusters(
         rework_ids=rework_ids,
     )
     visited_rework_ids: set[str] = set()
-    sorted_pairs = sorted(
-        branch_pairs,
-        key=lambda pair: (
-            node_bounds[pair[0]].x_px + (node_bounds[pair[0]].width_px / 2.0),
-            pair[0],
-            pair[1],
-        ),
+    sorted_pairs = _sorted_branch_pairs(
+        branch_pairs=branch_pairs, node_bounds=node_bounds
     )
-    return_target_by_source = {
-        source_id: target_id
-        for (source_id, target_id), edge_path in edge_paths.items()
-        if str(edge_path.rework_variant or "") == "return" and target_id in mainline_ids
-    }
+    return_target_by_source = _return_target_by_source(
+        edge_paths=edge_paths,
+        mainline_ids=mainline_ids,
+    )
     for source_id, target_id in sorted_pairs:
         if target_id in visited_rework_ids:
             continue
@@ -371,33 +402,92 @@ def _align_rework_clusters(
             ),
             None,
         )
-        tail_target_center_x = (
-            node_bounds[return_target_by_source[tail_node_id]].x_px
-            + (node_bounds[return_target_by_source[tail_node_id]].width_px / 2.0)
-            if tail_node_id is not None
-            else None
+        tail_target_center_x = _tail_target_center_x(
+            tail_node_id=tail_node_id,
+            return_target_by_source=return_target_by_source,
+            node_bounds=node_bounds,
         )
         for index, node_id in enumerate(ordered_cluster):
             bounds = node_bounds[node_id]
             current_center_x = bounds.x_px + (bounds.width_px / 2.0)
-            if tail_target_center_x is not None and len(ordered_cluster) > 1:
-                ratio = index / float(len(ordered_cluster) - 1)
-                target_center_x = (
-                    source_center_x * (1.0 - ratio) + tail_target_center_x * ratio
-                )
-            elif index == 0:
-                # Keep branch targets directly under the branch source.
-                target_center_x = source_center_x
-            elif tail_target_center_x is not None and node_id == tail_node_id:
-                # Keep return sources directly under reintegration targets.
-                target_center_x = tail_target_center_x
-            else:
-                # Avoid aggressive horizontal spreading in postprocess when anchor
-                # intent is incomplete; preserve ELK-native horizontal placement.
-                target_center_x = current_center_x
+            target_center_x = _cluster_target_center_x(
+                index=index,
+                node_id=node_id,
+                ordered_cluster=ordered_cluster,
+                source_center_x=source_center_x,
+                tail_target_center_x=tail_target_center_x,
+                tail_node_id=tail_node_id,
+                current_center_x=current_center_x,
+            )
             _, dy = shifts.get(node_id, (0.0, 0.0))
             shifts[node_id] = (target_center_x - current_center_x, dy)
         visited_rework_ids.update(cluster)
+
+
+def _sorted_branch_pairs(
+    *,
+    branch_pairs: list[tuple[str, str]],
+    node_bounds: dict[str, LayoutBounds],
+) -> list[tuple[str, str]]:
+    return sorted(
+        branch_pairs,
+        key=lambda pair: (
+            node_bounds[pair[0]].x_px + (node_bounds[pair[0]].width_px / 2.0),
+            pair[0],
+            pair[1],
+        ),
+    )
+
+
+def _return_target_by_source(
+    *,
+    edge_paths: dict[tuple[str, str], Any],
+    mainline_ids: set[str],
+) -> dict[str, str]:
+    return {
+        source_id: target_id
+        for (source_id, target_id), edge_path in edge_paths.items()
+        if str(edge_path.rework_variant or "") == "return" and target_id in mainline_ids
+    }
+
+
+def _tail_target_center_x(
+    *,
+    tail_node_id: str | None,
+    return_target_by_source: dict[str, str],
+    node_bounds: dict[str, LayoutBounds],
+) -> float | None:
+    if tail_node_id is None:
+        return None
+    target_id = return_target_by_source.get(tail_node_id)
+    if target_id is None:
+        return None
+    target_bounds = node_bounds[target_id]
+    return target_bounds.x_px + (target_bounds.width_px / 2.0)
+
+
+def _cluster_target_center_x(
+    *,
+    index: int,
+    node_id: str,
+    ordered_cluster: list[str],
+    source_center_x: float,
+    tail_target_center_x: float | None,
+    tail_node_id: str | None,
+    current_center_x: float,
+) -> float:
+    if tail_target_center_x is not None and len(ordered_cluster) > 1:
+        ratio = index / float(len(ordered_cluster) - 1)
+        return source_center_x * (1.0 - ratio) + tail_target_center_x * ratio
+    if index == 0:
+        # Keep branch targets directly under the branch source.
+        return source_center_x
+    if tail_target_center_x is not None and node_id == tail_node_id:
+        # Keep return sources directly under reintegration targets.
+        return tail_target_center_x
+    # Avoid aggressive horizontal spreading in postprocess when anchor intent is
+    # incomplete; preserve ELK-native horizontal placement.
+    return current_center_x
 
 
 def _rework_graph(

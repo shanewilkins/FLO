@@ -1,26 +1,7 @@
-"""Vulture whitelist for current intentional/known false positives.
+"""Vulture whitelist symbols for intentional false positives.
 
-This module defines a `whitelist` list used when invoking Vulture so CI
-reports focus on new/unexpected findings. Items added here are expected to
-be temporary for v0.1 and should be removed (un-whitelisted) as the
-corresponding features are implemented.
+Keep this file minimal and remove entries as soon as code no longer needs them.
 """
 
-whitelist = [
-    "DECISION",
-    "START",
-    "END",
-    "POOL",
-    "NUMBER",
-    "TIMESTAMP",
-    "exc",
-    "exc_type",
-    "tb",
-    "shutdown_called",
-    "_shutdown_called",
-    "_active_span_processors",
-]
-
-# Keep a direct reference so dead-code scanners do not flag this container
-# while the file is used as a vulture whitelist input.
-_ = whitelist
+_.decorator_list  # unused attribute (ast node normalization assignment)
+_.returns  # unused attribute (ast node normalization assignment)

@@ -20,10 +20,9 @@ except Exception:  # pragma: no cover - missing optional dep
 
 THRESHOLD = 15
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
+# Single source of truth for complexity exclusions.
+# Keep this list intentionally small and retire entries as refactors land.
 EXCLUDED_FILES = {
-    "src/flo/render/layout_core/elk.py",
-    "src/flo/render/layout_core/elk_sppm_helpers.py",
-    "src/flo/render/_svg_sppm_rows.py",
 }
 
 

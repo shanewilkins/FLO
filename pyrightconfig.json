@@ -1,6 +1,11 @@
 {
   "include": ["src"],
   "typeCheckingMode": "basic",
+  "reportUnusedImport": "error",
+  "reportUnusedVariable": "error",
+  "reportUnknownParameterType": "warning",
+  "reportUnknownMemberType": "warning",
+  "reportUnknownVariableType": "warning",
   "strict": [
     "src/flo/compiler/ir/schema_projection.py",
     "src/flo/core/render_option_schema.py"
