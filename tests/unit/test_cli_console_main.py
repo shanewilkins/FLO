@@ -11,9 +11,9 @@ def test_console_main_uses_sys_argv_when_argv_is_none(monkeypatch):
     monkeypatch.setattr(cli_mod.sys, "argv", ["flo", "from_sys.flo"])
     monkeypatch.setattr(
         "flo.core._cli_contract.parse_cli_args",
-        lambda argv: ParsedArgs(path="from_sys.flo", command="run", options={}),
+        lambda argv: ParsedArgs(path="from_sys.flo", command="render", options={}),
     )
-    monkeypatch.setattr(cli_mod, "_execute", lambda path, command, options: 0)
+    monkeypatch.setattr(cli_mod, "_execute_request", lambda _request: 0)
 
     assert cli_mod.console_main(None) == 0
 
@@ -26,13 +26,13 @@ def test_console_main_maps_clierror_from_execute(monkeypatch):
     monkeypatch.setattr("flo.services.get_services", lambda verbose=False: services)
     monkeypatch.setattr(
         "flo.core._cli_contract.parse_cli_args",
-        lambda argv: ParsedArgs(path="input.flo", command="run", options={}),
+        lambda argv: ParsedArgs(path="input.flo", command="render", options={}),
     )
 
-    def raise_clierror(path, command, options):
+    def raise_clierror(_request):
         raise CLIError("bad options", code=9)
 
-    monkeypatch.setattr(cli_mod, "_execute", raise_clierror)
+    monkeypatch.setattr(cli_mod, "_execute_request", raise_clierror)
 
     rc = cli_mod.console_main(["input.flo"])
     assert rc == 9
@@ -47,12 +47,12 @@ def test_console_main_maps_unexpected_error_from_execute(monkeypatch):
     monkeypatch.setattr("flo.services.get_services", lambda verbose=False: services)
     monkeypatch.setattr(
         "flo.core._cli_contract.parse_cli_args",
-        lambda argv: ParsedArgs(path="input.flo", command="run", options={}),
+        lambda argv: ParsedArgs(path="input.flo", command="render", options={}),
     )
     monkeypatch.setattr(
         cli_mod,
-        "_execute",
-        lambda path, command, options: (_ for _ in ()).throw(RuntimeError("boom")),
+        "_execute_request",
+        lambda _request: (_ for _ in ()).throw(RuntimeError("boom")),
     )
 
     rc = cli_mod.console_main(["input.flo"])

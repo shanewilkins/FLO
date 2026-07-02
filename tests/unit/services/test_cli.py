@@ -30,7 +30,7 @@ def test_main_captures_stdout_and_stderr():
 
 def test_cli_module_has_expected_entrypoints():
     # Ensure the CLI module exposes the main commands used by integration
-    assert hasattr(fm_cli, "run_cmd") or hasattr(fm_cli, "console_main")
+    assert hasattr(fm_cli, "render_cmd") or hasattr(fm_cli, "console_main")
 
 
 def test_main_error_path_writes_stderr(monkeypatch, capsys):

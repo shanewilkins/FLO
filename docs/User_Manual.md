@@ -52,14 +52,14 @@ uv run flo examples/reference/linear.flo
 Preferred modern entry points:
 
 ```bash
-uv run flo compile examples/reference/new_semantics.flo
-uv run flo run examples/reference/new_semantics.flo --export svg --render-to new_semantics.svg --diagram sppm
+uv run flo export examples/reference/new_semantics.flo -o new_semantics.json
+uv run flo render examples/reference/new_semantics.flo --export svg --render-to new_semantics.svg --diagram sppm
 ```
 
 You can also use explicit subcommands:
 
 ```bash
-uv run flo run examples/reference/linear.flo
+uv run flo render examples/reference/linear.flo
 ```
 
 Common developer commands:
@@ -729,7 +729,7 @@ If a theme name is missing or the configuration is malformed, FLO falls back to 
 Preferred maintained SPPM rendering path:
 
 ```bash
-uv run flo run examples/reference/semantic_controls_showcase.flo \
+uv run flo render examples/reference/semantic_controls_showcase.flo \
   --export svg \
   --render-to semantic_controls_showcase.svg \
   --diagram sppm
@@ -741,28 +741,27 @@ FLO has three main output families.
 
 1. Canonical machine-readable output.
 
-  `flo compile` and `flo export --export json` emit schema-shaped JSON.
+  `flo export` emits schema-shaped JSON by default.
 
 1. Maintained diagram artifacts.
 
-  `flo run --export svg --render-to <file.svg>` emits direct SVG.
+  `flo render --export svg --render-to <file.svg>` emits direct SVG.
 
 1. Operational text outputs.
 
-  `flo run --export ingredients` emits human-readable item and resource summaries.
-  `flo run --export movement` emits inferred movement summaries.
+  `flo render --export ingredients` emits human-readable item and resource summaries.
+  `flo render --export movement` emits inferred movement summaries.
 
 Canonical JSON example:
 
 ```bash
-uv run flo compile examples/reference/new_semantics.flo
-uv run flo export examples/reference/new_semantics.flo --export json -o new_semantics.json
+uv run flo export examples/reference/new_semantics.flo -o new_semantics.json
 ```
 
 Maintained SVG example:
 
 ```bash
-uv run flo run examples/reference/new_semantics.flo \
+uv run flo render examples/reference/new_semantics.flo \
   --export svg \
   --render-to new_semantics.svg \
   --diagram sppm
@@ -771,8 +770,8 @@ uv run flo run examples/reference/new_semantics.flo \
 Human-readable text export examples:
 
 ```bash
-uv run flo run examples/reference/new_semantics.flo --export ingredients
-uv run flo run examples/reference/chocolate_chip_cookies.flo --export movement
+uv run flo render examples/reference/new_semantics.flo --export ingredients
+uv run flo render examples/reference/chocolate_chip_cookies.flo --export movement
 ```
 
 ## 5) Core CLI Commands
@@ -780,12 +779,12 @@ uv run flo run examples/reference/chocolate_chip_cookies.flo --export movement
 For composed models, keep entry and included files as `.flo` files.
 See Section 4.1.1 for include conventions.
 
-## 5.1 Run
+## 5.1 Render
 
 Parse, compile, validate, and render or export output.
 
 ```bash
-uv run flo run path/to/model.flo
+uv run flo render path/to/model.flo
 ```
 
 Equivalent shorthand:
@@ -802,26 +801,18 @@ Only validate model correctness.
 uv run flo validate path/to/model.flo
 ```
 
-## 5.3 Compile
+## 5.3 Export
 
-Compile to canonical schema-shaped JSON.
-
-```bash
-uv run flo compile path/to/model.flo
-```
-
-## 5.4 Export
-
-Export as SVG, JSON, ingredients text, or movement text.
+Export as JSON by default, or choose SVG, ingredients text, or movement text.
 
 ```bash
-uv run flo export path/to/model.flo --export svg
-uv run flo export path/to/model.flo --export json
+uv run flo export path/to/model.flo
 uv run flo export path/to/model.flo --export ingredients
 uv run flo export path/to/model.flo --export movement
+uv run flo export path/to/model.flo --export svg
 ```
 
-SVG is typically requested from `run` when diagram options or `--render-to` are needed.
+SVG is typically requested from `render` when diagram options or `--render-to` are needed.
 
 ## 6) Options
 
@@ -869,11 +860,11 @@ Diagram render options:
 Examples:
 
 ```bash
-uv run flo run examples/reference/swimlane.flo --export svg --render-to swimlane.svg --diagram swimlane
-uv run flo run examples/reference/new_semantics.flo --export json
-uv run flo run examples/reference/chocolate_chip_cookies.flo --export ingredients
-uv run flo run examples/reference/chocolate_chip_cookies.flo --export movement
-uv run flo run examples/reference/washnfold.flo --export svg --render-to washnfold_sppm.svg --diagram sppm --layout-wrap auto --layout-target-columns 6
+uv run flo render examples/reference/swimlane.flo --export svg --render-to swimlane.svg --diagram swimlane
+uv run flo render examples/reference/new_semantics.flo --export json
+uv run flo render examples/reference/chocolate_chip_cookies.flo --export ingredients
+uv run flo render examples/reference/chocolate_chip_cookies.flo --export movement
+uv run flo render examples/reference/washnfold.flo --export svg --render-to washnfold_sppm.svg --diagram sppm --layout-wrap auto --layout-target-columns 6
 ```
 
 Important:
@@ -930,7 +921,7 @@ Examples:
 
 ```bash
 cat examples/reference/linear.flo | uv run flo -
-uv run flo run examples/reference/linear.flo -o -
+uv run flo render examples/reference/linear.flo -o -
 ```
 
 ## 8) Exit Codes
@@ -972,7 +963,7 @@ Current semantic constraints include:
 Preferred maintained SVG rendering:
 
 ```bash
-uv run flo run examples/reference/new_semantics.flo \
+uv run flo render examples/reference/new_semantics.flo \
   --export svg \
   --render-to /tmp/new_semantics.svg \
   --diagram sppm
@@ -981,7 +972,7 @@ uv run flo run examples/reference/new_semantics.flo \
 Swimlane rendering:
 
 ```bash
-uv run flo run examples/reference/swimlane.flo \
+uv run flo render examples/reference/swimlane.flo \
   --export svg \
   --render-to /tmp/swimlane.svg \
   --diagram swimlane
@@ -1019,13 +1010,13 @@ uv run flo validate path/to/model.flo
 ## 12.2 Generate diagram for review
 
 ```bash
-uv run flo run path/to/model.flo --export svg --render-to review.svg --diagram flowchart
+uv run flo render path/to/model.flo --export svg --render-to review.svg --diagram flowchart
 ```
 
 ## 12.3 Generate machine-readable JSON for downstream tooling
 
 ```bash
-uv run flo export path/to/model.flo --export json -o model.json
+uv run flo export path/to/model.flo -o model.json
 ```
 
 ## 13) Troubleshooting

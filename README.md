@@ -24,7 +24,7 @@ uv sync --dev
 Run FLO locally:
 
 ```bash
-uv run flo run examples/reference/linear.flo
+uv run flo render examples/reference/linear.flo
 ```
 
 Run quality gates:

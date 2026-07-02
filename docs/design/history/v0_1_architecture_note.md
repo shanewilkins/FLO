@@ -211,8 +211,8 @@ Do **not** make JSON the primary in-process interface to analysis libraries unle
 Recommended command posture:
 
 - `flo validate <file>`: parse + compile + semantic/schema validation
-- `flo compile <file>`: compile to canonical IR (in-memory), optional IR print/debug
-- `flo export --format json|dot <file>`: projection/export only
+- `flo render <file>`: maintained diagram rendering flow (SVG by default)
+- `flo export <file>`: canonical JSON export by default; optional alternate export formats via `--export`
 
 This separation prevents conflating compilation with presentation format.
 

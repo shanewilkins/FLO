@@ -22,7 +22,7 @@ def parse_args(
     """
     import argparse
 
-    command = "run"
+    command = "render"
     options: dict = {}
     path: str | None = None
     logger = services.logger
@@ -34,7 +34,7 @@ def parse_args(
     parser.add_argument(
         "command_or_path",
         nargs="?",
-        help="Command (run/compile/validate/export) or path",
+        help="Command (render/validate/export) or path",
     )
     parser.add_argument("path", nargs="?", help="Path to .flo file (or - for stdin)")
     parser.add_argument(
@@ -57,7 +57,7 @@ def parse_args(
     add_argparse_render_options(parser, include_render_to=True)
     parsed = parser.parse_args(argv)
 
-    supported_commands = {"run", "compile", "validate", "export"}
+    supported_commands = {"render", "validate", "export"}
     first = parsed.command_or_path
     second = parsed.path
 
@@ -69,9 +69,9 @@ def parse_args(
     if parsed.validate:
         command = "validate"
 
-    if command in {"run", "export"} and "export" not in options:
+    if command == "render" and "export" not in options:
         options["export"] = "svg"
-    if command == "compile" and "export" not in options:
+    if command == "export" and "export" not in options:
         options["export"] = "json"
 
     if options.get("verbose"):
@@ -86,7 +86,7 @@ def _resolve_command_and_path(
 ) -> tuple[str, str | None]:
     if first in supported_commands:
         return str(first), second
-    return "run", first
+    return "render", first
 
 
 def _build_options_from_parsed(parsed: object) -> dict:

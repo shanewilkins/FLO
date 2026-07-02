@@ -138,13 +138,13 @@ def test_console_main_handles_clierror_and_telemetry_shutdown_is_suppressed(
     services_mod = _il.import_module("flo.services")
     monkeypatch.setattr(services_mod, "get_services", lambda verbose=False: services)
 
-    # Monkeypatch parse_args (imported inside console_main)
-    cli_args_mod = _il.import_module("flo.core.cli_args")
+    # Monkeypatch parse_cli_args (imported inside console_main)
+    cli_contract_mod = _il.import_module("flo.core._cli_contract")
 
-    def fake_parse_args(argv, s):
-        return ("-", "run", {}, services, None)
+    def fake_parse_cli_args(_argv):
+        return cli_contract_mod.ParsedArgs(path="-", command="render", options={})
 
-    monkeypatch.setattr(cli_args_mod, "parse_args", fake_parse_args)
+    monkeypatch.setattr(cli_contract_mod, "parse_cli_args", fake_parse_cli_args)
 
     # read_input / run_content / write_output come from flo.io and flo.core
     io_mod = _il.import_module("flo.services.io")

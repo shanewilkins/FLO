@@ -18,7 +18,7 @@ def test_execute_shuts_down_telemetry_on_read_error(monkeypatch):
         "flo.services.io.read_input", lambda path: (5, "", "read failed")
     )
 
-    rc = cli_mod._execute("/missing.flo", "run", {})
+    rc = cli_mod._execute("/missing.flo", "render", {})
 
     assert rc == 5
     assert calls == ["err:read failed", "shutdown"]
@@ -36,12 +36,12 @@ def test_execute_maps_unexpected_exception_to_internal(monkeypatch):
     monkeypatch.setattr("flo.services.get_services", lambda verbose=False: services)
     monkeypatch.setattr("flo.services.io.read_input", lambda path: (0, "content", ""))
 
-    def boom(content, command="run", options=None):
+    def boom(content, command="render", options=None):
         raise RuntimeError("kaboom")
 
     monkeypatch.setattr("flo.core.run_content", boom)
 
-    rc = cli_mod._execute("input.flo", "run", {})
+    rc = cli_mod._execute("input.flo", "render", {})
 
     assert rc == EXIT_INTERNAL_ERROR
     assert calls == ["err:Unexpected error: kaboom", "shutdown"]
@@ -59,12 +59,12 @@ def test_execute_maps_domain_exception_code(monkeypatch):
     monkeypatch.setattr("flo.services.get_services", lambda verbose=False: services)
     monkeypatch.setattr("flo.services.io.read_input", lambda path: (0, "content", ""))
 
-    def fail_domain(content, command="run", options=None):
+    def fail_domain(content, command="render", options=None):
         raise CLIError("invalid option", code=3)
 
     monkeypatch.setattr("flo.core.run_content", fail_domain)
 
-    rc = cli_mod._execute("input.flo", "run", {})
+    rc = cli_mod._execute("input.flo", "render", {})
 
     assert rc == 3
     assert calls == ["err:invalid option", "shutdown"]
@@ -83,13 +83,13 @@ def test_execute_shuts_down_telemetry_on_write_error(monkeypatch):
     monkeypatch.setattr("flo.services.io.read_input", lambda path: (0, "content", ""))
     monkeypatch.setattr(
         "flo.core.run_content",
-        lambda content, command="run", options=None: (0, "<svg />", ""),
+        lambda content, command="render", options=None: (0, "<svg />", ""),
     )
     monkeypatch.setattr(
         "flo.services.io.write_output", lambda out, path: (5, "write failed")
     )
 
-    rc = cli_mod._execute("input.flo", "run", {"output": "out.svg"})
+    rc = cli_mod._execute("input.flo", "render", {"output": "out.svg"})
 
     assert rc == 5
     assert calls == ["err:write failed", "shutdown"]
@@ -98,6 +98,6 @@ def test_execute_shuts_down_telemetry_on_write_error(monkeypatch):
 def test_click_command_callbacks_are_exported_entrypoints():
     # Click decorators register these callbacks dynamically; reference them
     # explicitly so dead-code scanners treat them as intentional API surface.
-    assert callable(cli_mod.compile_cmd)
+    assert callable(cli_mod.render_cmd)
     assert callable(cli_mod.validate_cmd)
     assert callable(cli_mod.export_cmd)

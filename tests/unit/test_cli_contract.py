@@ -6,15 +6,15 @@ from flo.core._cli_contract import ParsedArgs, parse_cli_args
 
 
 def test_parsed_args_contract_stores_components():
-    args = ParsedArgs(path="test.flo", command="run", options={"verbose": True})
+    args = ParsedArgs(path="test.flo", command="render", options={"verbose": True})
     assert args.path == "test.flo"
-    assert args.command == "run"
+    assert args.command == "render"
     assert args.options == {"verbose": True}
 
 
 def test_parsed_args_is_frozen():
     """Verify ParsedArgs cannot be mutated after creation."""
-    args = ParsedArgs(path="test.flo", command="run", options={})
+    args = ParsedArgs(path="test.flo", command="render", options={})
     with pytest.raises(AttributeError):
         args.path = "other.flo"  # type: ignore
 
@@ -32,20 +32,20 @@ def test_parsed_args_asdict_for_backward_compat():
 def test_parse_cli_args_with_none_returns_default():
     parsed = parse_cli_args(None)
     assert parsed.path is None
-    assert parsed.command == "run"
+    assert parsed.command == "render"
     assert parsed.options == {}
 
 
 def test_parse_cli_args_parses_file_path():
     parsed = parse_cli_args(["test.flo"])
     assert parsed.path == "test.flo"
-    assert parsed.command == "run"
+    assert parsed.command == "render"
 
 
-def test_parse_cli_args_parses_explicit_command():
-    parsed = parse_cli_args(["compile", "test.flo"])
+def test_parse_cli_args_parses_explicit_render_command():
+    parsed = parse_cli_args(["render", "test.flo"])
     assert parsed.path == "test.flo"
-    assert parsed.command == "compile"
+    assert parsed.command == "render"
 
 
 def test_parse_cli_args_respects_validate_flag():

@@ -14,12 +14,12 @@ from typing import Any
 
 
 @dataclass(frozen=True)
-class ParsedArgs:
-    """Contract representing parsed CLI arguments and their execution intent.
+class CLIExecutionRequest:
+    """Typed execution request shared between parser adapters and dispatch.
 
     Attributes:
         path: File path or '-' for stdin (None means no explicit path).
-        command: CLI command name (run, compile, validate, export).
+        command: CLI command name (render, validate, export).
         options: Render/execution options dict (may be empty).
     """
 
@@ -32,7 +32,11 @@ class ParsedArgs:
         return {"path": self.path, "command": self.command, "options": self.options}
 
 
-def parse_cli_args(argv: list[str] | None) -> ParsedArgs:
+# Backward-compatible alias retained for existing imports/tests.
+ParsedArgs = CLIExecutionRequest
+
+
+def parse_cli_args(argv: list[str] | None) -> CLIExecutionRequest:
     """Parse CLI arguments from argv into a framework-agnostic contract.
 
     This function is independent of Click or any other framework, making it
@@ -40,10 +44,10 @@ def parse_cli_args(argv: list[str] | None) -> ParsedArgs:
 
     Args:
         argv: Command-line arguments (e.g., sys.argv[1:]). If None, returns
-              a default run command with no path.
+              a default render command with no path.
 
     Returns:
-        ParsedArgs contract ready for dispatch.
+        CLIExecutionRequest contract ready for dispatch.
 
     Raises:
         SystemExit: On parsing errors (for argparse compatibility).
@@ -52,8 +56,8 @@ def parse_cli_args(argv: list[str] | None) -> ParsedArgs:
     from flo.services import get_services
 
     if argv is None:
-        return ParsedArgs(path=None, command="run", options={})
+        return CLIExecutionRequest(path=None, command="render", options={})
 
     services = get_services(verbose=False)
     path, command, options, _services, _logger = argparse_parse_args(argv, services)
-    return ParsedArgs(path=path, command=command, options=dict(options or {}))
+    return CLIExecutionRequest(path=path, command=command, options=dict(options or {}))

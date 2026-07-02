@@ -30,7 +30,7 @@ def test_execute_emits_domain_error_event_fields(monkeypatch):
         lambda *_args, **_kwargs: (_ for _ in ()).throw(CLIError("bad flags", code=3)),
     )
 
-    rc = cli_mod._execute("input.flo", "run", {})
+    rc = cli_mod._execute("input.flo", "render", {})
 
     assert rc == 3
     msg, event = captured[-1]
@@ -39,7 +39,7 @@ def test_execute_emits_domain_error_event_fields(monkeypatch):
     assert event["error_stage"] == "run_content"
     assert event["exit_code"] == 3
     assert event["internal"] is False
-    assert event["command"] == "run"
+    assert event["command"] == "render"
     assert event["path"] == "input.flo"
     assert "error_kind" not in get_contextvars()
 
@@ -62,7 +62,7 @@ def test_execute_emits_internal_error_event_fields(monkeypatch):
         lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("boom")),
     )
 
-    rc = cli_mod._execute("input.flo", "run", {})
+    rc = cli_mod._execute("input.flo", "render", {})
 
     assert rc == EXIT_INTERNAL_ERROR
     msg, event = captured[-1]
@@ -71,7 +71,7 @@ def test_execute_emits_internal_error_event_fields(monkeypatch):
     assert event["error_stage"] == "run_content"
     assert event["exit_code"] == EXIT_INTERNAL_ERROR
     assert event["internal"] is True
-    assert event["command"] == "run"
+    assert event["command"] == "render"
     assert event["path"] == "input.flo"
     assert "error_kind" not in get_contextvars()
 
@@ -99,7 +99,7 @@ def test_execute_emits_verbose_diagnostic_on_fail_open_fallback(monkeypatch):
     )
     monkeypatch.setattr("flo.services.io.write_output", lambda out, path: (0, ""))
 
-    rc = cli_mod._execute("input.flo", "run", {"verbose": True})
+    rc = cli_mod._execute("input.flo", "render", {"verbose": True})
 
     assert rc == 0
     msg, event = captured[-1]
@@ -107,7 +107,7 @@ def test_execute_emits_verbose_diagnostic_on_fail_open_fallback(monkeypatch):
     assert event["error_kind"] == "diagnostic"
     assert event["error_stage"] == "fail_open_fallback"
     assert event["exit_code"] == 0
-    assert event["command"] == "run"
+    assert event["command"] == "render"
     assert event["path"] == "input.flo"
 
 
@@ -133,7 +133,9 @@ def test_execute_emits_write_output_error_fields_on_export_json(monkeypatch):
         lambda out, path: (5, "I/O error writing out.json: boom"),
     )
 
-    rc = cli_mod._execute("input.flo", "run", {"export": "json", "output": "out.json"})
+    rc = cli_mod._execute(
+        "input.flo", "render", {"export": "json", "output": "out.json"}
+    )
 
     assert rc == 5
     msg, event = captured[-1]
@@ -141,7 +143,7 @@ def test_execute_emits_write_output_error_fields_on_export_json(monkeypatch):
     assert event["error_kind"] == "io"
     assert event["error_stage"] == "write_output"
     assert event["exit_code"] == 5
-    assert event["command"] == "run"
+    assert event["command"] == "render"
     assert event["path"] == "input.flo"
 
 
@@ -165,7 +167,7 @@ def test_execute_maps_compile_error_stage_granularity(monkeypatch):
         ),
     )
 
-    rc = cli_mod._execute("input.flo", "run", {"export": "json"})
+    rc = cli_mod._execute("input.flo", "render", {"export": "json"})
 
     assert rc == 3
     msg, event = captured[-1]
@@ -195,7 +197,7 @@ def test_execute_maps_parse_error_stage_granularity(monkeypatch):
         ),
     )
 
-    rc = cli_mod._execute("input.flo", "run", {"export": "json"})
+    rc = cli_mod._execute("input.flo", "render", {"export": "json"})
 
     assert rc == 2
     msg, event = captured[-1]

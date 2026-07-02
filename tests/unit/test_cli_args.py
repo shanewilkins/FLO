@@ -11,7 +11,7 @@ def services():
 def test_parse_args_none_returns_defaults(services):
     path, command, options, services_out, logger = parse_args(None, services)
     assert path is None
-    assert command == "run"
+    assert command == "render"
     assert isinstance(options, dict)
     assert services_out is services
 
@@ -24,7 +24,7 @@ def test_parse_args_none_returns_defaults(services):
             "validate",
             "out.txt",
         ),
-        (["file.flo"], "run", None),
+        (["file.flo"], "render", None),
     ],
 )
 def test_parse_args_with_flags(services, args, expected_command, expected_output):
@@ -48,8 +48,15 @@ def test_parse_args_with_flags(services, args, expected_command, expected_output
 def test_parse_args_export_flag(services, extra_args: list[str], expected_export: str):
     path, command, options, _, _ = parse_args(["file.flo"] + extra_args, services)
     assert path == "file.flo"
-    assert command == "run"
+    assert command == "render"
     assert options["export"] == expected_export
+
+
+def test_parse_args_export_command_defaults_to_json(services):
+    path, command, options, _, _ = parse_args(["export", "file.flo"], services)
+    assert path == "file.flo"
+    assert command == "export"
+    assert options["export"] == "json"
 
 
 def test_parse_args_render_options(services):
@@ -75,7 +82,7 @@ def test_parse_args_render_options(services):
         services,
     )
     assert path == "file.flo"
-    assert command == "run"
+    assert command == "render"
     assert options["diagram"] == "swimlane"
     assert options["profile"] == "analysis"
     assert options["detail"] == "verbose"
@@ -91,7 +98,7 @@ def test_parse_args_spaghetti_diagram_option(services):
         ["file.flo", "--diagram", "spaghetti"], services
     )
     assert path == "file.flo"
-    assert command == "run"
+    assert command == "render"
     assert options["diagram"] == "spaghetti"
 
 
@@ -100,7 +107,7 @@ def test_parse_args_spaghetti_channel_option(services):
         ["file.flo", "--spaghetti-channel", "material"], services
     )
     assert path == "file.flo"
-    assert command == "run"
+    assert command == "render"
     assert options["spaghetti_channel"] == "material"
 
 
@@ -109,7 +116,7 @@ def test_parse_args_spaghetti_people_mode_option(services):
         ["file.flo", "--spaghetti-people-mode", "aggregate"], services
     )
     assert path == "file.flo"
-    assert command == "run"
+    assert command == "render"
     assert options["spaghetti_people_mode"] == "aggregate"
 
 
@@ -119,7 +126,7 @@ def test_parse_args_render_backend_option(services):
         services,
     )
     assert path == "file.flo"
-    assert command == "run"
+    assert command == "render"
     assert options["diagram"] == "spaghetti"
     assert options["render_backend"] == "svg"
 
@@ -127,7 +134,7 @@ def test_parse_args_render_backend_option(services):
 def test_parse_args_sppm_extended_options(services):
     path, command, options, _, _ = parse_args(_extended_sppm_args(), services)
     assert path == "file.flo"
-    assert command == "run"
+    assert command == "render"
     _assert_expected_options(
         options,
         {
@@ -164,7 +171,7 @@ def test_parse_args_accepts_dimension_layout_width(services):
     )
 
     assert path == "file.flo"
-    assert command == "run"
+    assert command == "render"
     assert options["layout_max_width_px"] == "8.5in"
 
 
@@ -183,7 +190,7 @@ def test_parse_args_sppm_projection_options(services):
     )
 
     assert path == "file.flo"
-    assert command == "run"
+    assert command == "render"
     assert options["sppm_projection"] == "child-map"
     assert options["sppm_focus_subprocess"] == "prep"
 
@@ -194,7 +201,7 @@ def test_parse_args_accepts_custom_sppm_theme_name(services):
     )
 
     assert path == "file.flo"
-    assert command == "run"
+    assert command == "render"
     assert options["sppm_theme"] == "sunrise"
 
 

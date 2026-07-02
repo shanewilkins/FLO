@@ -69,7 +69,7 @@ def test_run_spaghetti_svg_export_emits_svg(tmp_path):
     result = runner.invoke(
         cli,
         [
-            "run",
+            "render",
             str(model),
             "--export",
             "svg",
@@ -106,7 +106,7 @@ def test_run_flowchart_svg_export_emits_svg(tmp_path):
     result = runner.invoke(
         cli,
         [
-            "run",
+            "render",
             str(model),
             "--export",
             "svg",
@@ -153,7 +153,7 @@ def test_run_sppm_svg_export_emits_svg(tmp_path):
     result = runner.invoke(
         cli,
         [
-            "run",
+            "render",
             str(model),
             "--export",
             "svg",
@@ -177,7 +177,7 @@ def test_run_svg_export_rejects_non_svg_backend_override(tmp_path):
     result = runner.invoke(
         cli,
         [
-            "run",
+            "render",
             str(model),
             "--export",
             "svg",
@@ -197,7 +197,7 @@ def test_run_spaghetti_svg_export_on_reference_example_emits_stable_svg_markers(
     result = runner.invoke(
         cli,
         [
-            "run",
+            "render",
             "examples/reference/chocolate_chip_cookies.flo",
             "--export",
             "svg",

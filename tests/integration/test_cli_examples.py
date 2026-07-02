@@ -11,13 +11,13 @@ def test_cli_run_all_examples():
     assert examples, "No example files found for integration test"
 
     for ex in examples:
-        result = runner.invoke(cli, ["run", str(ex)])
+        result = runner.invoke(cli, ["render", str(ex)])
         # basic sanity: CLI returns success and prints rendered SVG
         assert result.exit_code == 0
         assert "<svg" in result.output
 
 
-def test_cli_compile_canonical_reference_examples_emit_expected_json():
+def test_cli_export_json_canonical_reference_examples_emit_expected_json():
     runner = CliRunner()
     cases = [
         (
@@ -33,7 +33,10 @@ def test_cli_compile_canonical_reference_examples_emit_expected_json():
     ]
 
     for example_path, expected_process_id, expected_kinds in cases:
-        result = runner.invoke(cli, ["compile", str(example_path)])
+        result = runner.invoke(
+            cli,
+            ["export", str(example_path)],
+        )
 
         assert result.exit_code == 0
         payload = json.loads(result.output)

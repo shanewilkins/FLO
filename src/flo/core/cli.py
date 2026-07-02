@@ -290,12 +290,28 @@ def _execute_span_body(
 def _execute(
     path: str | None, command: str, options: dict
 ) -> int:  # pragma: no cover - integration
+    """Compatibility wrapper that builds a typed execution request."""
+    from flo.core._cli_contract import CLIExecutionRequest
+
+    request = CLIExecutionRequest(
+        path=path,
+        command=command,
+        options=dict(options or {}),
+    )
+    return _execute_request(request)
+
+
+def _execute_request(request: Any) -> int:  # pragma: no cover - integration
     """Read input, run core pipeline, and write output.
 
     Returns an integer exit code.
     """
     from flo.services import get_services
     from flo.services.telemetry import get_tracer, record_span_success
+
+    path = request.path
+    command = request.command
+    options = dict(request.options or {})
 
     services = get_services(verbose=bool(options.get("verbose")))
     telemetry = services.telemetry
@@ -449,7 +465,7 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
     pass
 
 
-@cli.command()
+@cli.command("render")
 @click.argument("path", required=False)
 @click.option("--validate", is_flag=True, help="Only validate file")
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
@@ -461,7 +477,7 @@ def cli() -> None:  # pragma: no cover - thin CLI layer
     help="Export format (svg for diagrams, json for machine-readable output)",
 )
 @_apply_render_click_options(include_render_to=True)
-def run_cmd(
+def render_cmd(
     path: Optional[str],
     validate: bool,
     verbose: bool,
@@ -498,7 +514,9 @@ def run_cmd(
     render_to: Optional[str],
 ) -> None:  # pragma: no cover - integration
     """Render a FLO diagram as SVG by default."""
-    command = "validate" if validate else "run"
+    from flo.core._cli_contract import CLIExecutionRequest
+
+    command = "validate" if validate else "render"
     opts = _build_render_opts(
         verbose=verbose,
         output=output,
@@ -533,21 +551,7 @@ def run_cmd(
         sppm_max_label_workers=sppm_max_label_workers,
         sppm_max_label_ctwt=sppm_max_label_ctwt,
     )
-    rc = _execute(path, command, opts)
-    raise SystemExit(rc)
-
-
-@cli.command("compile")
-@click.argument("path", required=False)
-@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
-@click.option("-o", "--output", help="Write output to file")
-def compile_cmd(
-    path: Optional[str], verbose: bool, output: Optional[str]
-) -> None:  # pragma: no cover - integration
-    """Compile FLO input and emit a schema-shaped JSON export of the model."""
-    rc = _execute(
-        path, "compile", {"verbose": verbose, "output": output, "export": "json"}
-    )
+    rc = _execute_request(CLIExecutionRequest(path=path, command=command, options=opts))
     raise SystemExit(rc)
 
 
@@ -557,8 +561,12 @@ def compile_cmd(
 def validate_cmd(
     path: Optional[str], verbose: bool
 ) -> None:  # pragma: no cover - integration
-    """Validate FLO input and return non-zero on parse/compile/validation errors."""
-    rc = _execute(path, "validate", {"verbose": verbose})
+    """Validate FLO input and return non-zero on parse/validation errors."""
+    from flo.core._cli_contract import CLIExecutionRequest
+
+    rc = _execute_request(
+        CLIExecutionRequest(path=path, command="validate", options={"verbose": verbose})
+    )
     raise SystemExit(rc)
 
 
@@ -568,7 +576,7 @@ def validate_cmd(
     "--export",
     "export_fmt",
     type=click.Choice(["svg", "json", "ingredients", "movement"]),
-    default="svg",
+    default="json",
     show_default=True,
     help="Export format (svg for diagrams, json for machine-readable output)",
 )
@@ -610,6 +618,8 @@ def export_cmd(
     sppm_output_profile: Optional[str],
 ) -> None:  # pragma: no cover - integration
     """Export FLO input as SVG, JSON, or text summaries."""
+    from flo.core._cli_contract import CLIExecutionRequest
+
     opts = _build_render_opts(
         verbose=verbose,
         output=output,
@@ -644,7 +654,9 @@ def export_cmd(
         sppm_max_label_workers=sppm_max_label_workers,
         sppm_max_label_ctwt=sppm_max_label_ctwt,
     )
-    rc = _execute(path, "export", opts)
+    rc = _execute_request(
+        CLIExecutionRequest(path=path, command="export", options=opts)
+    )
     raise SystemExit(rc)
 
 
@@ -666,7 +678,7 @@ def console_main(argv: list | None = None) -> int:
 
     try:
         parsed = parse_cli_args(argv)
-        return _execute(parsed.path, parsed.command, parsed.options)
+        return _execute_request(parsed)
     except SystemExit as exc:
         code = getattr(exc, "code", EXIT_USAGE)
         return code if isinstance(code, int) else EXIT_USAGE

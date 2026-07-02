@@ -40,7 +40,7 @@ _FAIL_OPEN_SCC_PREFIX = "fail-open postprocess: scc_condense failed"
 
 
 def run_content(
-    content: str, command: str = "run", options: dict | None = None
+    content: str, command: str = "render", options: dict | None = None
 ) -> Tuple[int, str, str]:
     """Run the content through parse -> compile -> validate -> render.
 
@@ -188,9 +188,7 @@ def _raise_with_stage(exc: CLIError, *, stage: str) -> None:
 
 def _resolve_output_format(command: str, options: dict | None) -> str:
     output_format = (options or {}).get("export") or (options or {}).get("format")
-    if command == "compile":
-        return "json"
-    if command in {"run", "export"} and output_format in {
+    if command in {"render", "export"} and output_format in {
         "json",
         "ingredients",
         "movement",

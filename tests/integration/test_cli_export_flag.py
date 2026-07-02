@@ -8,7 +8,7 @@ from flo.core.cli import cli
 def test_default_path_accepts_export_json_flag():
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["run", "examples/reference/linear.flo", "--export", "json"]
+        cli, ["render", "examples/reference/linear.flo", "--export", "json"]
     )
     assert result.exit_code == 0
     assert '"process"' in result.output
@@ -19,7 +19,7 @@ def test_default_path_export_json_emits_canonical_ir_contract() -> None:
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["run", "examples/reference/new_semantics.flo", "--export", "json"],
+        ["render", "examples/reference/new_semantics.flo", "--export", "json"],
     )
 
     assert result.exit_code == 0
@@ -45,7 +45,14 @@ def test_default_path_exports_json_to_file(tmp_path):
     out = tmp_path / "linear.json"
     result = runner.invoke(
         cli,
-        ["run", "examples/reference/linear.flo", "--export", "json", "-o", str(out)],
+        [
+            "render",
+            "examples/reference/linear.flo",
+            "--export",
+            "json",
+            "-o",
+            str(out),
+        ],
     )
     assert result.exit_code == 0
     assert out.exists()
@@ -73,7 +80,7 @@ def test_default_path_export_json_reports_compile_contract_error(tmp_path) -> No
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["run", str(model), "--export", "json"])
+    result = runner.invoke(cli, ["render", str(model), "--export", "json"])
 
     assert result.exit_code != 0
     assert "process.id must be a non-empty string" in result.output
@@ -86,7 +93,14 @@ def test_default_path_export_json_reports_write_error(tmp_path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["run", "examples/reference/linear.flo", "--export", "json", "-o", str(out)],
+        [
+            "render",
+            "examples/reference/linear.flo",
+            "--export",
+            "json",
+            "-o",
+            str(out),
+        ],
     )
 
     assert result.exit_code != 0
@@ -98,7 +112,7 @@ def test_default_path_accepts_export_ingredients_flag():
     result = runner.invoke(
         cli,
         [
-            "run",
+            "render",
             "examples/reference/chocolate_chip_cookies.flo",
             "--export",
             "ingredients",
@@ -113,7 +127,7 @@ def test_default_path_accepts_export_ingredients_flag_for_canonical_fixture():
     result = runner.invoke(
         cli,
         [
-            "run",
+            "render",
             "examples/reference/new_semantics.flo",
             "--export",
             "ingredients",
@@ -131,7 +145,7 @@ def test_default_path_accepts_export_movement_flag():
     result = runner.invoke(
         cli,
         [
-            "run",
+            "render",
             "examples/reference/chocolate_chip_cookies.flo",
             "--export",
             "movement",
@@ -196,7 +210,7 @@ def test_default_path_accepts_export_movement_flag_for_canonical_payload(tmp_pat
     model.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["run", str(model), "--export", "movement"])
+    result = runner.invoke(cli, ["render", str(model), "--export", "movement"])
 
     assert result.exit_code == 0
     assert "Inferred Material Movement" in result.output
