@@ -130,13 +130,17 @@ def test_render_step_nonzero_passthrough_and_error_mapping(monkeypatch):
 
 
 def test_output_step_nonzero_passthrough_and_write_failure(monkeypatch):
-    step = OutputStep(options={"output": "out.dot"})
-    assert step.run((9, "dot", "err"), services=None) == (9, "dot", "err")
+    step = OutputStep(options={"output": "out.svg"})
+    assert step.run((9, "<svg />", "err"), services=None) == (
+        9,
+        "<svg />",
+        "err",
+    )
 
     monkeypatch.setattr(
         "flo.pipeline.write_output", lambda out, path: (5, "write failed")
     )
-    assert step.run((0, "dot", None), services=None) == (5, None, "write failed")
+    assert step.run((0, "<svg />", None), services=None) == (5, None, "write failed")
 
 
 def test_pipeline_runner_handles_non_tuple_state_and_non_int_state(monkeypatch):

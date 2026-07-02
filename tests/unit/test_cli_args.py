@@ -38,7 +38,7 @@ def test_parse_args_with_flags(services, args, expected_command, expected_output
 @pytest.mark.parametrize(
     "extra_args, expected_export",
     [
-        ([], "dot"),
+        ([], "svg"),
         (["--export", "svg"], "svg"),
         (["--export", "json"], "json"),
         (["--export", "ingredients"], "ingredients"),
@@ -58,8 +58,6 @@ def test_parse_args_render_options(services):
             "file.flo",
             "--diagram",
             "swimlane",
-            "--render-backend",
-            "graphviz",
             "--profile",
             "analysis",
             "--detail",
@@ -79,7 +77,6 @@ def test_parse_args_render_options(services):
     assert path == "file.flo"
     assert command == "run"
     assert options["diagram"] == "swimlane"
-    assert options["render_backend"] == "graphviz"
     assert options["profile"] == "analysis"
     assert options["detail"] == "verbose"
     assert options["orientation"] == "tb"

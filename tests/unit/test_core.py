@@ -95,7 +95,7 @@ def test_postprocess_nonfatal(monkeypatch, ir_factory, node_factory):
     monkeypatch.setattr(
         "flo.core.render_artifact_and_contract",
         lambda i, options=None: (
-            RenderArtifact(kind="dot", content="dot", backend="graphviz"),
+            RenderArtifact(kind="svg", content="<svg>ok</svg>", backend="svg"),
             None,
         ),
     )
@@ -106,7 +106,7 @@ def test_postprocess_nonfatal(monkeypatch, ir_factory, node_factory):
     monkeypatch.setattr("flo.core.scc_condense", bad_scc)
     rc, out, err = run_content("ok content")
     assert rc == 0
-    assert out == "dot"
+    assert out == "<svg>ok</svg>"
     assert err.startswith("fail-open postprocess: scc_condense failed:")
 
 
@@ -114,43 +114,6 @@ def test_run_wrapper():
     rc, out, err = run()
     assert rc == 0
     assert out == ""
-
-
-def test_run_content_render_to_calls_graphviz_service(
-    monkeypatch, ir_factory, node_factory
-):
-    monkeypatch.setattr(
-        "flo.core.parse_adapter",
-        lambda c, source_path=None: ir_factory(name="t", nodes=[node_factory("n")]),
-    )
-    monkeypatch.setattr(
-        "flo.core.compile_adapter",
-        lambda a: ir_factory(name="t", nodes=[node_factory("n")]),
-    )
-    monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
-    monkeypatch.setattr(
-        "flo.core.render_artifact_and_contract",
-        lambda i, **_kw: (
-            RenderArtifact(kind="dot", content="dot output", backend="graphviz"),
-            None,
-        ),
-    )
-    monkeypatch.setattr("flo.core.scc_condense", lambda i: i)
-
-    calls: list[tuple] = []
-
-    def fake_render_to_file(dot: str, path: str, sppm_contract=None) -> None:
-        _ = sppm_contract
-        calls.append((dot, path))
-
-    import flo.services.graphviz as gv_mod
-
-    monkeypatch.setattr(gv_mod, "render_dot_to_file", fake_render_to_file)
-
-    rc, out, err = run_content("some content", options={"render_to": "/tmp/out.png"})
-    assert rc == 0
-    assert out == ""
-    assert calls == [("dot output", "/tmp/out.png")]
 
 
 def test_run_content_returns_svg_artifact_content(
@@ -254,7 +217,7 @@ def test_run_content_render_to_rejects_non_svg_target_for_svg_artifact(
         )
 
 
-def test_run_content_svg_export_rejects_graphviz_backend_override(
+def test_run_content_svg_export_rejects_non_svg_backend_override(
     monkeypatch, ir_factory, node_factory
 ):
     monkeypatch.setattr(
@@ -274,30 +237,6 @@ def test_run_content_svg_export_rejects_graphviz_backend_override(
                 "diagram": "spaghetti",
                 "export": "svg",
                 "render_backend": "graphviz",
-            },
-        )
-
-
-def test_run_content_svg_export_rejects_unsupported_swimlane_svg_projection(
-    monkeypatch, ir_factory, node_factory
-):
-    monkeypatch.setattr(
-        "flo.core.parse_adapter",
-        lambda c, source_path=None: ir_factory(name="t", nodes=[node_factory("n")]),
-    )
-    monkeypatch.setattr(
-        "flo.core.compile_adapter",
-        lambda a: ir_factory(name="t", nodes=[node_factory("n")]),
-    )
-    monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
-
-    with pytest.raises(CLIError, match="Unsupported projection"):
-        run_content(
-            "some content",
-            options={
-                "diagram": "swimlane",
-                "export": "svg",
-                "render_backend": "svg",
             },
         )
 
@@ -328,13 +267,13 @@ def test_run_content_applies_render_metadata_defaults_to_render_options(
 
     def fake_render(i, options=None):
         captured["options"] = options
-        return RenderArtifact(kind="dot", content="dot", backend="graphviz"), None
+        return RenderArtifact(kind="svg", content="<svg>ok</svg>", backend="svg"), None
 
     monkeypatch.setattr("flo.core.render_artifact_and_contract", fake_render)
 
     rc, out, err = run_content("some content")
     assert rc == 0
-    assert out == "dot"
+    assert out == "<svg>ok</svg>"
     assert err == ""
 
     render_options = captured["options"]
@@ -370,7 +309,7 @@ def test_run_content_cli_options_override_render_metadata_defaults(
 
     def fake_render(i, options=None):
         captured["options"] = options
-        return RenderArtifact(kind="dot", content="dot", backend="graphviz"), None
+        return RenderArtifact(kind="svg", content="<svg>ok</svg>", backend="svg"), None
 
     monkeypatch.setattr("flo.core.render_artifact_and_contract", fake_render)
 
@@ -383,7 +322,7 @@ def test_run_content_cli_options_override_render_metadata_defaults(
         },
     )
     assert rc == 0
-    assert out == "dot"
+    assert out == "<svg>ok</svg>"
     assert err == ""
 
     render_options = captured["options"]
@@ -392,7 +331,7 @@ def test_run_content_cli_options_override_render_metadata_defaults(
     assert render_options.spaghetti_channel == "material"
 
 
-def test_run_content_without_render_metadata_keeps_legacy_default_diagram(
+def test_run_content_without_render_metadata_keeps_default_diagram(
     monkeypatch, node_factory
 ):
     ir = IR(name="t", nodes=[node_factory("n")], process_metadata=None)
@@ -406,13 +345,13 @@ def test_run_content_without_render_metadata_keeps_legacy_default_diagram(
 
     def fake_render(i, options=None):
         captured["options"] = options
-        return RenderArtifact(kind="dot", content="dot", backend="graphviz"), None
+        return RenderArtifact(kind="svg", content="<svg>ok</svg>", backend="svg"), None
 
     monkeypatch.setattr("flo.core.render_artifact_and_contract", fake_render)
 
     rc, out, err = run_content("some content")
     assert rc == 0
-    assert out == "dot"
+    assert out == "<svg>ok</svg>"
     assert err == ""
 
     render_options = captured["options"]

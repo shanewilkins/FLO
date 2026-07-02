@@ -46,12 +46,12 @@ def parse_args(
     )
     parser.add_argument(
         "--export",
-        choices=["dot", "svg", "json", "ingredients", "movement"],
-        help="Export format (dot is deprecated compatibility-only; prefer svg or json)",
+        choices=["svg", "json", "ingredients", "movement"],
+        help="Export format (svg for diagrams, json for machine-readable output)",
     )
     parser.add_argument(
         "--format",
-        choices=["dot", "svg", "json", "ingredients", "movement"],
+        choices=["svg", "json", "ingredients", "movement"],
         help=argparse.SUPPRESS,
     )
     add_argparse_render_options(parser, include_render_to=True)
@@ -70,7 +70,7 @@ def parse_args(
         command = "validate"
 
     if command in {"run", "export"} and "export" not in options:
-        options["export"] = "dot"
+        options["export"] = "svg"
     if command == "compile" and "export" not in options:
         options["export"] = "json"
 

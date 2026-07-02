@@ -68,9 +68,10 @@ Flowchart rendering follows the shared renderer architecture:
 
 - `src/flo/render/_graphviz_dot_flowchart.py`
   Flowchart entrypoint and node/edge assembly.
-- `src/flo/render/_graphviz_dot_common.py`
-  Shared helpers: node/edge extraction, subprocess projection, cluster assembly.
-- `src/flo/render/_graphviz_dot_edge_routing.py`
+- `src/flo/render/_graphviz_backend_common.py`
+  Shared Graphviz helpers: node/edge extraction, subprocess projection, cluster
+  assembly.
+- `src/flo/render/_graphviz_backend_routing.py`
   Shared edge routing (normal, boundary corridor, rework) used by flowchart
   and swimlane.
 

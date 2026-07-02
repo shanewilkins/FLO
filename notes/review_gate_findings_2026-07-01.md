@@ -66,15 +66,15 @@ Action:
 ~~- Emit telemetry and verbose diagnostics when fallback is used.~~
 ~~- Add tests proving intended degradation behavior.~~
 
-## 7) Renderer Migration Debris Is Accumulating
+## ~~7) Renderer Migration Debris Is Accumulating~~
 
-Issue:
-- Deprecated Graphviz compatibility path still contains substantial legacy/no-op shape and dead helper candidates.
+~~Issue:~~
+~~- Deprecated Graphviz compatibility path still contains substantial legacy/no-op shape and dead helper candidates.~~
 
-Action:
-- Split active compatibility behavior from retired migration code.
-- Delete no-op hooks unless required by tested public compatibility surface.
-- Document migration boundary in one authoritative location.
+~~Action:~~
+~~- Split active compatibility behavior from retired migration code.~~
+~~- Delete no-op hooks unless required by tested public compatibility surface.~~
+~~- Document migration boundary in one authoritative location.~~
 
 ## 8) User Ergonomics Still Favor Deprecated Default Path
 

@@ -170,7 +170,7 @@ def test_run_sppm_svg_export_emits_svg(tmp_path):
     assert 'data-node-port-rail="in"' not in result.output
 
 
-def test_run_svg_export_rejects_graphviz_backend_override(tmp_path, caplog):
+def test_run_svg_export_rejects_non_svg_backend_override(tmp_path):
     model = _write_spaghetti_svg_model(tmp_path)
 
     runner = CliRunner()
@@ -188,11 +188,8 @@ def test_run_svg_export_rejects_graphviz_backend_override(tmp_path, caplog):
         ],
     )
 
-    assert result.exit_code == 1
-    assert "SVG export currently requires" in result.output or any(
-        "SVG export currently requires" in record.getMessage()
-        for record in caplog.records
-    )
+    assert result.exit_code == 2
+    assert "Invalid value for '--render-backend'" in result.output
 
 
 def test_run_spaghetti_svg_export_on_reference_example_emits_stable_svg_markers():

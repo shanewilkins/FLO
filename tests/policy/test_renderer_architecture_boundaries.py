@@ -30,56 +30,35 @@ def _import_modules_for_file(path: Path) -> list[str]:
     return modules
 
 
-def test_shared_renderer_core_does_not_import_sppm_modules() -> None:
+def test_backend_neutral_renderer_core_does_not_import_backend_modules() -> None:
     root = _find_repo_root()
     shared_files = [
-        root / "src" / "flo" / "render" / "_callout_layout.py",
-        root / "src" / "flo" / "render" / "_continuation_labels.py",
-        root / "src" / "flo" / "render" / "_graphviz_dot_edge_routing.py",
         root / "src" / "flo" / "render" / "_publication.py",
     ]
 
     offenders: list[str] = []
     for file_path in shared_files:
         imports = _import_modules_for_file(file_path)
-        sppm_imports = [module for module in imports if "_sppm" in module]
-        if sppm_imports:
-            offenders.append(f"{file_path.name}: {', '.join(sorted(sppm_imports))}")
+        backend_imports = [
+            module
+            for module in imports
+            if any(marker in module for marker in ("_graphviz", "_sppm", "_svg"))
+        ]
+        if backend_imports:
+            offenders.append(f"{file_path.name}: {', '.join(sorted(backend_imports))}")
 
-    assert not offenders, "Shared renderer core imports SPPM modules: " + "; ".join(
+    assert not offenders, "Backend-neutral renderer core imports backend modules: " + (
+        "; ".join(offenders)
+    )
+
+
+def test_graphviz_renderer_modules_are_removed() -> None:
+    root = _find_repo_root()
+    offenders = sorted(
+        path.relative_to(root).as_posix()
+        for path in (root / "src" / "flo").rglob("*graphviz*.py")
+    )
+
+    assert not offenders, "Graphviz renderer/source modules remain: " + "; ".join(
         offenders
     )
-
-
-def test_shared_continuation_labels_are_consumed_by_sppm_and_non_sppm_paths() -> None:
-    root = _find_repo_root()
-
-    edge_routing_imports = _import_modules_for_file(
-        root / "src" / "flo" / "render" / "_graphviz_dot_edge_routing.py"
-    )
-    sppm_continuation_imports = _import_modules_for_file(
-        root / "src" / "flo" / "render" / "_sppm_continuation_labels.py"
-    )
-
-    assert "._continuation_labels" in edge_routing_imports
-    assert "._continuation_labels" in sppm_continuation_imports
-
-
-def test_shared_callout_layout_is_consumed_by_sppm_rework_path() -> None:
-    root = _find_repo_root()
-
-    rework_databox_imports = _import_modules_for_file(
-        root / "src" / "flo" / "render" / "_sppm_rework_databox.py"
-    )
-
-    assert "._callout_layout" in rework_databox_imports
-
-
-def test_shared_callout_layout_is_consumed_by_non_sppm_path() -> None:
-    root = _find_repo_root()
-
-    spaghetti_imports = _import_modules_for_file(
-        root / "src" / "flo" / "render" / "_graphviz_dot_spaghetti.py"
-    )
-
-    assert "._callout_layout" in spaghetti_imports

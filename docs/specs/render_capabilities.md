@@ -1,7 +1,7 @@
 # FLO Render Capabilities
 
-Purpose: define the normative projection capability contract for diagram and
-render-backend combinations.
+Purpose: define the normative projection capability contract for supported
+diagram render surfaces.
 
 ## Scope
 
@@ -15,10 +15,10 @@ capability.
 
 Current support matrix:
 
-- flowchart: graphviz supported, svg supported
-- swimlane: graphviz supported, svg unsupported
-- spaghetti: graphviz supported, svg supported
-- sppm: graphviz supported, svg supported
+- flowchart: svg supported
+- swimlane: svg supported
+- spaghetti: svg supported
+- sppm: svg supported
 
 ## Runtime Contract
 
@@ -27,6 +27,7 @@ When a user requests a diagram and backend pair:
 1. If the pair is supported, rendering may proceed.
 2. If the pair is unsupported, FLO must fail early with a usage-level CLI error.
 3. FLO must not silently downgrade or switch backends for unsupported requests.
+4. The only supported render backend is `svg`.
 
 ## Authority
 

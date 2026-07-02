@@ -12,9 +12,9 @@ def test_cli_run_all_examples():
 
     for ex in examples:
         result = runner.invoke(cli, ["run", str(ex)])
-        # basic sanity: CLI returns success and prints the rendered DOT
+        # basic sanity: CLI returns success and prints rendered SVG
         assert result.exit_code == 0
-        assert "digraph" in result.output
+        assert "<svg" in result.output
 
 
 def test_cli_compile_canonical_reference_examples_emit_expected_json():

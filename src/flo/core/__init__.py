@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
-from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, Tuple
+from typing import Any, Tuple
 
 from flo.services.errors import (
     CLIError,
@@ -36,10 +35,6 @@ from flo.core._option_validation import (
 from flo.core._capability_validation import ensure_render_projection_supported
 from flo.core.render_intent import RenderIntentResolver
 from flo.services.io import write_output
-
-if TYPE_CHECKING:
-    from flo.render._sppm_postprocess_contract import SppmSvgPostprocessContract
-
 
 _FAIL_OPEN_SCC_PREFIX = "fail-open postprocess: scc_condense failed"
 
@@ -151,7 +146,7 @@ def _resolve_output_format(command: str, options: dict | None) -> str:
     if output_format is None and isinstance(render_to, str):
         if Path(render_to).suffix.lower() == ".svg":
             return "svg"
-    return "dot"
+    return "svg"
 
 
 def _resolve_render_options_for_output(
@@ -159,14 +154,6 @@ def _resolve_render_options_for_output(
 ) -> RenderOptions:
     render_options = RenderOptions.from_mapping(resolved_options)
     explicit_backend = (resolved_options or {}).get("render_backend")
-
-    if output_format == "dot":
-        if explicit_backend not in {None, "", "graphviz"}:
-            raise CLIError(
-                "DOT export is deprecated compatibility-only and currently requires --render-backend graphviz or no --render-backend.",
-                code=EXIT_USAGE,
-            )
-        return replace(render_options, backend="graphviz")
 
     if output_format == "svg":
         if explicit_backend not in {None, "", "svg"}:
@@ -281,17 +268,9 @@ def _collect_changed_inverted_boolean_overrides(
             overrides[option_field] = not bool(value)
 
 
-def render_dot_and_contract(
-    ir: IR, options: RenderOptions | dict | None = None
-) -> tuple[str, SppmSvgPostprocessContract | None]:
-    """Legacy compatibility wrapper for callers still expecting DOT plus contract."""
-    artifact, contract = render_artifact_and_contract(ir, options=options)
-    return artifact.content, contract
-
-
 def _render_artifact_with_postprocess(
     ir: IR, render_options: RenderOptions
-) -> tuple[RenderArtifact, SppmSvgPostprocessContract | None, str | None]:
+) -> tuple[RenderArtifact, None, str | None]:
     """SCC-condense then render, returning (artifact, backend contract)."""
     processed = ir
     warning: str | None = None
@@ -317,20 +296,15 @@ def _write_render_artifact(
     *,
     artifact: RenderArtifact,
     render_to: str,
-    contract: SppmSvgPostprocessContract | None,
+    contract: None,
 ) -> None:
     kind = artifact.kind
     content = artifact.content
-    if kind == "dot":
-        from flo.services.graphviz import render_dot_to_file
-
-        render_dot_to_file(content, render_to, sppm_contract=contract)
-        return
     if kind == "svg":
         if Path(render_to).suffix.lower() != ".svg":
             raise RenderError(
                 "Direct SVG rendering currently supports only .svg output paths. "
-                "Use a .svg target or switch to the deprecated Graphviz backend for raster/PDF output."
+                "Use a .svg target for rendered diagram output."
             )
         write_rc, write_err = write_output(content, render_to)
         if write_rc != 0:
@@ -343,22 +317,12 @@ def _render_artifact_for_stdout(
     *,
     artifact: RenderArtifact,
     output_format: str,
-    contract: SppmSvgPostprocessContract | None,
+    contract: None,
 ) -> str:
     """Materialize the requested stdout format from a backend-neutral artifact."""
-    if artifact.kind == "svg" or output_format != "svg":
+    if artifact.kind == "svg":
         return artifact.content
-    if artifact.kind != "dot":
-        raise RenderError(
-            f"Unsupported render artifact kind: {artifact.kind or 'unknown'}"
-        )
-
-    from flo.services.graphviz import render_dot_to_file
-
-    with TemporaryDirectory(prefix="flo-svg-stdout-") as temp_dir:
-        svg_path = Path(temp_dir) / "stdout.svg"
-        render_dot_to_file(artifact.content, str(svg_path), sppm_contract=contract)
-        return svg_path.read_text(encoding="utf-8")
+    raise RenderError(f"Unsupported render artifact kind: {artifact.kind or 'unknown'}")
 
 
 def run() -> Tuple[int, str, str]:

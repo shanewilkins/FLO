@@ -33,7 +33,6 @@ FLO does not provide:
 ## 2) Requirements
 
 - Python 3.14+
-- Graphviz `dot` (optional, only needed for deprecated DOT compatibility workflows and non-SVG image targets)
 
 ## 3) Install and Run
 
@@ -44,7 +43,7 @@ uv sync --dev
 ```
 
 Run FLO on a file.
-The default output is deprecated compatibility DOT to stdout.
+The default output is direct SVG to stdout.
 
 ```bash
 uv run flo examples/reference/linear.flo
@@ -736,13 +735,6 @@ uv run flo run examples/reference/semantic_controls_showcase.flo \
   --diagram sppm
 ```
 
-Deprecated DOT compatibility path:
-
-```bash
-uv run flo run examples/reference/washnfold.flo --export dot --diagram sppm | dot -Tpng -o washnfold.png
-uv run flo run examples/reference/washnfold.flo --export dot --diagram sppm --orientation tb | dot -Tsvg -o washnfold.svg
-```
-
 ## 4.6) Understanding the Output Pipeline
 
 FLO has three main output families.
@@ -755,9 +747,8 @@ FLO has three main output families.
 
   `flo run --export svg --render-to <file.svg>` emits direct SVG.
 
-1. Compatibility and operational text outputs.
+1. Operational text outputs.
 
-  `flo run --export dot` emits deprecated Graphviz DOT.
   `flo run --export ingredients` emits human-readable item and resource summaries.
   `flo run --export movement` emits inferred movement summaries.
 
@@ -775,13 +766,6 @@ uv run flo run examples/reference/new_semantics.flo \
   --export svg \
   --render-to new_semantics.svg \
   --diagram sppm
-```
-
-Deprecated DOT compatibility example:
-
-```bash
-uv run flo run model.flo --export dot -o output.dot
-dot -Tsvg output.dot -o output.svg
 ```
 
 Human-readable text export examples:
@@ -828,16 +812,16 @@ uv run flo compile path/to/model.flo
 
 ## 5.4 Export
 
-Export as deprecated DOT, JSON, ingredients text, movement text, or maintained SVG.
+Export as SVG, JSON, ingredients text, or movement text.
 
 ```bash
-uv run flo export path/to/model.flo --export dot
+uv run flo export path/to/model.flo --export svg
 uv run flo export path/to/model.flo --export json
 uv run flo export path/to/model.flo --export ingredients
 uv run flo export path/to/model.flo --export movement
 ```
 
-Maintained SVG is typically requested from `run` because it also needs diagram options and `--render-to`.
+SVG is typically requested from `run` when diagram options or `--render-to` are needed.
 
 ## 6) Options
 
@@ -845,12 +829,12 @@ Common options:
 
 - `-o, --output <file>`: write text or JSON output to file
 - `-v, --verbose`: verbose logging
-- `--export {dot,svg,json,ingredients,movement}`: choose output format
+- `--export {svg,json,ingredients,movement}`: choose output format
 
 Diagram render options:
 
 - `--diagram {flowchart,swimlane,spaghetti,sppm}`
-- `--render-backend {graphviz,svg}`
+- `--render-backend {svg}`
 - `--spaghetti-channel {both,material,people}`
 - `--spaghetti-people-mode {worker,aggregate}`
 - `--sppm-theme {default,print,monochrome}` or a config-defined theme name
@@ -880,8 +864,7 @@ Diagram render options:
 `--render-to` behavior:
 
 - With `--export svg`, FLO writes maintained direct SVG to the target `.svg` file.
-- With `--export dot`, FLO uses the deprecated Graphviz compatibility backend.
-- Raster and PDF targets still require Graphviz.
+- Raster and PDF output are not emitted directly by FLO; convert SVG with an external tool if needed.
 
 Examples:
 
@@ -891,7 +874,6 @@ uv run flo run examples/reference/new_semantics.flo --export json
 uv run flo run examples/reference/chocolate_chip_cookies.flo --export ingredients
 uv run flo run examples/reference/chocolate_chip_cookies.flo --export movement
 uv run flo run examples/reference/washnfold.flo --export svg --render-to washnfold_sppm.svg --diagram sppm --layout-wrap auto --layout-target-columns 6
-uv run flo run examples/reference/washnfold.flo --export dot --diagram sppm --orientation tb
 ```
 
 Important:
@@ -942,7 +924,7 @@ FLO supports POSIX-style streams:
 
 - Input path `-` means read from stdin
 - Output path `-` means write to stdout
-- Telemetry and debug output is kept off stdout payload streams so JSON, text export, and DOT output remain parse-safe.
+- Telemetry and debug output is kept off stdout payload streams so SVG, JSON, and text exports remain parse-safe.
 
 Examples:
 
@@ -996,13 +978,6 @@ uv run flo run examples/reference/new_semantics.flo \
   --diagram sppm
 ```
 
-Deprecated DOT compatibility rendering:
-
-```bash
-uv run flo run examples/reference/linear.flo --export dot -o /tmp/linear.dot
-dot -Tsvg /tmp/linear.dot -o /tmp/linear.svg
-```
-
 Swimlane rendering:
 
 ```bash
@@ -1028,11 +1003,9 @@ uv run python scripts/build_all.py --include-invalid
 
 Output is written under `renders/` with the same relative structure as `examples/`.
 
-The build includes both the default and top-down chocolate chip cookie artifacts:
+The build includes default and variant SVG artifacts, including chocolate chip cookie variants:
 
-- `renders/reference/chocolate_chip_cookies.dot`
 - `renders/reference/chocolate_chip_cookies.svg`
-- `renders/reference/chocolate_chip_cookies_topdown.dot`
 - `renders/reference/chocolate_chip_cookies_topdown.svg`
 
 ## 12) Common Workflows
@@ -1060,17 +1033,12 @@ uv run flo export path/to/model.flo --export json -o model.json
 Problem: "Render options ... require a diagram render output"
 
 - Cause: diagram render flags were used with JSON, ingredients, or movement export.
-- Fix: remove render flags or switch to `--export svg` or deprecated `--export dot`.
+- Fix: remove render flags or switch to `--export svg`.
 
 Problem: validation errors like missing predecessor/successor
 
 - Cause: disconnected or dangling nodes.
 - Fix: ensure every non-start has incoming flow and every non-end has outgoing flow.
-
-Problem: SVG not generated
-
-- Cause: the deprecated Graphviz compatibility path was selected for DOT or a raster or PDF target.
-- Fix: install Graphviz or switch to maintained direct SVG output.
 
 ## 14) Reference Files
 

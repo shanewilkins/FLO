@@ -87,7 +87,7 @@ def test_execute_emits_verbose_diagnostic_on_fail_open_fallback(monkeypatch):
         "flo.core.run_content",
         lambda *_args, **_kwargs: (
             0,
-            "dot",
+            "<svg />",
             "fail-open postprocess: scc_condense failed: boom",
         ),
     )

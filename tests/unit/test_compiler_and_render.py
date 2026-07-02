@@ -1,7 +1,7 @@
 from flo.adapters import parse_adapter
 from flo.compiler import compile_adapter
 from flo.compiler.ir import validate_ir
-from flo.render import render_artifact, render_dot
+from flo.render import render_artifact
 from tests.fixtures.sample_fixtures import repo_root
 
 
@@ -15,8 +15,9 @@ def test_compile_and_render_examples():
         ir = compile_adapter(adapter)
         # validate_ir raises on failure
         validate_ir(ir)
-        dot = render_dot(ir)
-        assert "digraph" in dot
+        artifact = render_artifact(ir)
+        assert artifact.kind == "svg"
+        assert "<svg" in artifact.content
 
 
 def test_compile_and_render_preserves_rework_outcome_semantics():
@@ -68,19 +69,11 @@ steps:
     assert rework_edge.edge_type == "rework"
     assert rework_edge.rework is True
 
-    dot = render_dot(ir)
-    assert (
-        '"__rework_corridor_decision_rework_1" [shape=point, width=0.01, height=0.01, label="", style=invis];'
-        in dot
-    )
-    assert (
-        '"decision" -> "__rework_corridor_decision_rework_1" [tailport=e, constraint=false, weight=0, style=dashed, arrowhead=none];'
-        in dot
-    )
-    assert (
-        '"__rework_corridor_decision_rework_1" -> "rework" [headport=w, constraint=false, minlen=3, weight=0, style=dashed, label="no"];'
-        in dot
-    )
+    artifact = render_artifact(ir, options={"diagram": "sppm"})
+    assert artifact.kind == "svg"
+    assert 'data-edge-source="decision"' in artifact.content
+    assert 'data-edge-target="rework"' in artifact.content
+    assert 'data-edge-kind="rework"' in artifact.content
 
 
 def test_compile_and_render_canonical_examples_with_direct_svg_backend():

@@ -83,13 +83,13 @@ def test_execute_shuts_down_telemetry_on_write_error(monkeypatch):
     monkeypatch.setattr("flo.services.io.read_input", lambda path: (0, "content", ""))
     monkeypatch.setattr(
         "flo.core.run_content",
-        lambda content, command="run", options=None: (0, "dot", ""),
+        lambda content, command="run", options=None: (0, "<svg />", ""),
     )
     monkeypatch.setattr(
         "flo.services.io.write_output", lambda out, path: (5, "write failed")
     )
 
-    rc = cli_mod._execute("input.flo", "run", {"output": "out.dot"})
+    rc = cli_mod._execute("input.flo", "run", {"output": "out.svg"})
 
     assert rc == 5
     assert calls == ["err:write failed", "shutdown"]

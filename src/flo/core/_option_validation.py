@@ -69,7 +69,7 @@ def ensure_render_options_compatible_with_output(
     options: dict | None, output_format: str
 ) -> None:
     """Raise ``CLIError`` if diagram-render flags are used with a non-render export."""
-    if output_format == "dot":
+    if output_format == "svg":
         return
 
     opts = options or {}
@@ -79,6 +79,6 @@ def ensure_render_options_compatible_with_output(
     if invalid:
         names = ", ".join(f"--{name}" for name in invalid)
         raise CLIError(
-            f"Render options {names} require a diagram render output. Use --export svg, use --export dot (deprecated compatibility-only), or remove those flags.",
+            f"Render options {names} require a diagram render output. Use --export svg or remove those flags.",
             code=EXIT_USAGE,
         )

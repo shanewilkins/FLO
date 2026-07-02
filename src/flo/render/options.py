@@ -28,7 +28,7 @@ SppmTruncationPolicy = Literal["ellipsis", "clip", "none"]
 SppmOutputProfile = Literal["default", "book", "web", "print", "slide"]
 PublicationPageFormatName = Literal["letter", "a4", "legal", "tabloid"]
 DimensionUnit = Literal["px", "in", "cm"]
-RenderBackend = Literal["graphviz", "svg"]
+RenderBackend = Literal["svg"]
 
 _DIMENSION_TO_PX: dict[str, float] = {
     "px": 1.0,
@@ -122,12 +122,11 @@ def parse_dimension(value: Any) -> Dimension | None:
 class RenderOptions:
     """Configuration for selecting renderer behavior.
 
-    Defaults preserve current user-facing behavior: DOT flowchart with
-    standard detail and default rule profile.
+    Defaults render SVG flowcharts with standard detail and default rule profile.
     """
 
     diagram: DiagramType = "flowchart"
-    backend: RenderBackend = "graphviz"
+    backend: RenderBackend = "svg"
     profile: RenderProfile = "default"
     detail: DetailLevel = "standard"
     orientation: Orientation = "lr"
@@ -262,10 +261,7 @@ def _parse_diagram(options: Mapping[str, Any]) -> DiagramType:
 
 
 def _parse_backend(options: Mapping[str, Any]) -> RenderBackend:
-    backend_raw = _normalized_option(options, "render_backend", "graphviz")
-    if backend_raw == "svg":
-        return "svg"
-    return "graphviz"
+    return "svg"
 
 
 def _parse_profile(options: Mapping[str, Any]) -> RenderProfile:

@@ -12,13 +12,13 @@ def test_cli_run_cmd_using_click(tmp_flo_file):
     print("DEBUG OUTPUT:\n", result.output)
     print("DEBUG EXC:\n", repr(result.exception))
     assert result.exit_code == 0
-    assert "digraph" in result.output
+    assert "<svg" in result.output
 
 
-def test_cli_run_help_marks_dot_as_deprecated_compatibility_only():
+def test_cli_run_help_marks_svg_as_primary_render_output():
     runner = CliRunner()
     result = runner.invoke(cli, ["run", "--help"])
 
     assert result.exit_code == 0
-    assert "deprecated compatibility-only" in result.output
-    assert "prefer svg or json" in result.output
+    assert "Render a FLO diagram as SVG by default" in result.output
+    assert "svg for diagrams" in result.output

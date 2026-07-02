@@ -1,7 +1,7 @@
 import logging
 
 import flo.render._svg_flowchart as svg_flowchart
-from flo.render import render_artifact, render_dot
+from flo.render import render_artifact
 from flo.render._diagnostics import RenderDiagnostic
 from flo.render.layout_core.models import (
     LayoutBounds,
@@ -108,37 +108,6 @@ def test_render_artifact_can_select_direct_svg_spaghetti_backend():
     assert "Kitchen Boundary" in artifact.content
     assert "Pantry" in artifact.content
     assert "Prep Bench" in artifact.content
-
-
-def test_render_dot_forces_graphviz_even_when_svg_backend_is_requested():
-    ir_like = {
-        "nodes": [
-            {"id": "a", "kind": "task", "name": "A", "location": "one"},
-            {"id": "b", "kind": "task", "name": "B", "location": "two"},
-        ],
-        "edges": [{"source": "a", "target": "b"}],
-        "process": {
-            "metadata": {
-                "locations": [
-                    {
-                        "id": "one",
-                        "name": "One",
-                        "metadata": {"spatial": {"x": 0, "y": 0}},
-                    },
-                    {
-                        "id": "two",
-                        "name": "Two",
-                        "metadata": {"spatial": {"x": 1, "y": 1}},
-                    },
-                ]
-            }
-        },
-    }
-
-    out = render_dot(ir_like, options={"diagram": "spaghetti", "render_backend": "svg"})
-
-    assert "digraph" in out
-    assert "<svg" not in out
 
 
 def test_render_artifact_flowchart_svg_logs_and_serializes_render_diagnostics(

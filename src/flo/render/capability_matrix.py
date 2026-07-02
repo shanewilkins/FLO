@@ -20,40 +20,24 @@ RenderCapabilityMatrix = dict[str, dict[str, BackendCapability]]
 
 RENDER_CAPABILITY_MATRIX: Final[RenderCapabilityMatrix] = {
     "flowchart": {
-        "graphviz": {
-            "supported": True,
-            "note": "Graphviz DOT renderer is supported.",
-        },
         "svg": {
             "supported": True,
             "note": "Direct SVG renderer is supported.",
         },
     },
     "swimlane": {
-        "graphviz": {
-            "supported": True,
-            "note": "Graphviz DOT renderer is supported.",
-        },
         "svg": {
-            "supported": False,
-            "note": "Direct SVG swimlane renderer is not implemented yet.",
+            "supported": True,
+            "note": "Direct SVG renderer is supported.",
         },
     },
     "spaghetti": {
-        "graphviz": {
-            "supported": True,
-            "note": "Graphviz DOT renderer is supported.",
-        },
         "svg": {
             "supported": True,
             "note": "Direct SVG renderer is supported.",
         },
     },
     "sppm": {
-        "graphviz": {
-            "supported": True,
-            "note": "Graphviz DOT renderer is supported.",
-        },
         "svg": {
             "supported": True,
             "note": "Direct SVG renderer is supported.",

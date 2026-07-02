@@ -19,23 +19,19 @@ except Exception:  # pragma: no cover - optional dev dependency
 
 
 DEFAULT_SPPM_REFACTOR_BASELINE_FILES: tuple[str, ...] = (
-    "src/flo/render/_sppm_graph_builder.py",
-    "src/flo/render/_sppm_node_render.py",
-    "src/flo/render/_sppm_routing.py",
     "src/flo/render/_sppm_publication.py",
-    "src/flo/render/_sppm_band_render.py",
-    "src/flo/render/_sppm_edge_render.py",
+    "src/flo/render/_svg_sppm.py",
+    "src/flo/render/_svg_sppm_edges.py",
+    "src/flo/render/_svg_sppm_nodes.py",
+    "src/flo/render/_svg_sppm_rows.py",
+    "src/flo/render/layout_core/elk_sppm_helpers.py",
 )
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _SRC_ROOT = _REPO_ROOT / "src"
-_RENDER_SHARED_CORE_FILES: tuple[str, ...] = (
-    "src/flo/render/_continuation_labels.py",
-    "src/flo/render/_graphviz_dot_edge_routing.py",
-    "src/flo/render/_process_header.py",
+_RENDER_BACKEND_NEUTRAL_SHARED_FILES: tuple[str, ...] = (
     "src/flo/render/_publication.py",
 )
-_RENDER_SHARED_CORE_DIRS: tuple[str, ...] = ("src/flo/render/layout_core",)
 _LAYER_PATHS: dict[str, tuple[str, ...]] = {
     "services": ("src/flo/services/", "src/flo/io/"),
     "adapters": ("src/flo/adapters/",),
@@ -234,9 +230,7 @@ def _collect_layer_violations(files: Sequence[Path]) -> tuple[ImportViolation, .
 
 
 def _iter_render_shared_core_paths() -> tuple[Path, ...]:
-    paths = [Path(raw) for raw in _RENDER_SHARED_CORE_FILES]
-    for raw_dir in _RENDER_SHARED_CORE_DIRS:
-        paths.extend(sorted(Path(raw_dir).rglob("*.py")))
+    paths = [Path(raw) for raw in _RENDER_BACKEND_NEUTRAL_SHARED_FILES]
     return tuple(
         _normalize_repo_path(path)
         for path in paths
@@ -254,7 +248,7 @@ def _collect_renderer_boundary_violations(path: Path) -> list[ImportViolation]:
                     path=path,
                     lineno=lineno,
                     imported_module=imported_module,
-                    rule="shared renderer core must not import SPPM-specific modules",
+                    rule="shared renderer helpers must not import SPPM-specific modules",
                 )
             )
     return violations

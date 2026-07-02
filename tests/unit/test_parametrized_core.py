@@ -17,7 +17,7 @@ def test_run_content_with_example_file(example_file: Path):
     rc, out, err = run_content(content, options={"source_path": str(example_file)})
 
     assert rc == EXIT_SUCCESS
-    assert "digraph" in out
+    assert "<svg" in out
     assert err == ""
 
 

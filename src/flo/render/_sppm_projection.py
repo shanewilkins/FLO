@@ -5,10 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from ._graphviz_backend_common import (
-    _project_parent_only_subprocess_view,
-    _project_subprocess_visible_ids,
-)
+from .layout_core.elk_support import project_parent_only_subprocess_view
 from .options import RenderOptions
 
 
@@ -48,9 +45,7 @@ def project_sppm_subprocess_view(
         return _project_inline(
             nodes, edges, nodes_by_id=nodes_by_id, focus_id=focus_id, options=options
         )
-    projected_nodes, projected_edges = _project_parent_only_subprocess_view(
-        nodes, edges
-    )
+    projected_nodes, projected_edges = project_parent_only_subprocess_view(nodes, edges)
     return (
         projected_nodes,
         projected_edges,
@@ -70,7 +65,7 @@ def _project_child_map(
     requested_mode: str,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], SppmProjectionContext]:
     if not _is_subprocess_node(focus_id, nodes_by_id):
-        projected_nodes, projected_edges = _project_parent_only_subprocess_view(
+        projected_nodes, projected_edges = project_parent_only_subprocess_view(
             nodes, edges
         )
         return (
@@ -117,7 +112,7 @@ def _project_inline(
     options: RenderOptions,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], SppmProjectionContext]:
     if not _is_subprocess_node(focus_id, nodes_by_id):
-        projected_nodes, projected_edges = _project_parent_only_subprocess_view(
+        projected_nodes, projected_edges = project_parent_only_subprocess_view(
             nodes, edges
         )
         return (
@@ -184,6 +179,24 @@ def _inline_budget(options: RenderOptions) -> int:
 
 def _nodes_by_id(nodes: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return {str(node.get("id") or ""): node for node in nodes if node.get("id")}
+
+
+def _project_subprocess_visible_ids(
+    nodes: list[dict[str, Any]],
+    edges: list[dict[str, Any]],
+    *,
+    visible_ids: set[str],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    projected_nodes = [
+        node for node in nodes if str(node.get("id") or "") in visible_ids
+    ]
+    projected_edges = [
+        edge
+        for edge in edges
+        if str(edge.get("source") or "") in visible_ids
+        and str(edge.get("target") or "") in visible_ids
+    ]
+    return projected_nodes, projected_edges
 
 
 def _descendant_ids(

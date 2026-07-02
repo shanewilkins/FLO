@@ -36,7 +36,7 @@ indicating detail-map availability.
 
 ### Edge Routing
 
-Swimlane uses shared edge routing from `_graphviz_dot_edge_routing.py`:
+Swimlane uses shared edge routing from `_graphviz_backend_routing.py`:
 
 - Normal edges route as straight lines or splines (Graphviz-determined).
 - Boundary edges (across layout wrapping) use corridor markers.
@@ -78,9 +78,10 @@ Swimlane rendering follows the shared renderer architecture:
 
 - `src/flo/render/_graphviz_dot_swimlane.py`
   Swimlane entrypoint, lane grouping, and cluster rendering.
-- `src/flo/render/_graphviz_dot_common.py`
-  Shared helpers: node/edge extraction, subprocess projection, cluster assembly.
-- `src/flo/render/_graphviz_dot_edge_routing.py`
+- `src/flo/render/_graphviz_backend_common.py`
+   Shared Graphviz helpers: node/edge extraction, subprocess projection, cluster
+   assembly.
+- `src/flo/render/_graphviz_backend_routing.py`
   Shared edge routing (normal, boundary corridor, rework) used by swimlane
   and flowchart.
 
