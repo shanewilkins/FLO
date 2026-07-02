@@ -7,6 +7,7 @@ import statistics
 from typing import Any, Callable
 
 from flo.render._diagnostics import RenderDiagnostic, RenderDiagnosticSeverity
+from flo.render._sppm_rework_graph import infer_rework_row_ids, translate_edge_points
 from .elk_contracts import (
     ElkDirection,
     ElkLayoutEdge,
@@ -452,7 +453,7 @@ def _apply_layout_shifts(
             shifted_label_point = LayoutPoint(x_px=lx, y_px=ly)
         edge_paths[edge_key] = replace(
             edge_path,
-            points=_translate_edge_points(
+            points=translate_edge_points(
                 edge_path.points,
                 source_shift=source_shift,
                 target_shift=target_shift,
@@ -466,127 +467,18 @@ def _infer_sppm_row_ids_from_request(
     request: ElkLayoutRequest,
     node_ids: set[str],
 ) -> tuple[set[str], set[str]]:
-    branch_targets = _request_rework_variant_node_ids(
-        request=request,
+    return infer_rework_row_ids(
         node_ids=node_ids,
-        variant="branch",
-        source=False,
+        edges=(
+            (
+                edge.source_id,
+                edge.target_id,
+                edge.is_rework,
+                edge.rework_variant,
+            )
+            for edge in request.edges
+        ),
     )
-    return_sources = _request_rework_variant_node_ids(
-        request=request,
-        node_ids=node_ids,
-        variant="return",
-        source=True,
-    )
-    if not branch_targets:
-        return set(), set()
-
-    adjacency = _request_non_rework_adjacency(request=request, node_ids=node_ids)
-    rework_node_ids = _reachable_rework_nodes_from_branches(
-        branch_targets=branch_targets,
-        return_sources=return_sources,
-        adjacency=adjacency,
-    )
-
-    if not rework_node_ids:
-        return set(), set()
-    return node_ids - rework_node_ids, rework_node_ids
-
-
-def _request_rework_variant_node_ids(
-    *,
-    request: ElkLayoutRequest,
-    node_ids: set[str],
-    variant: str,
-    source: bool,
-) -> set[str]:
-    result: set[str] = set()
-    for edge in request.edges:
-        if str(edge.rework_variant or "") != variant:
-            continue
-        candidate = edge.source_id if source else edge.target_id
-        if candidate in node_ids:
-            result.add(candidate)
-    return result
-
-
-def _request_non_rework_adjacency(
-    *,
-    request: ElkLayoutRequest,
-    node_ids: set[str],
-) -> dict[str, list[str]]:
-    adjacency: dict[str, list[str]] = {node_id: [] for node_id in node_ids}
-    for edge in request.edges:
-        if (
-            edge.is_rework
-            or edge.source_id not in adjacency
-            or edge.target_id not in node_ids
-        ):
-            continue
-        adjacency[edge.source_id].append(edge.target_id)
-    return adjacency
-
-
-def _reachable_rework_nodes_from_branches(
-    *,
-    branch_targets: set[str],
-    return_sources: set[str],
-    adjacency: dict[str, list[str]],
-) -> set[str]:
-    rework_node_ids: set[str] = set()
-    frontier = list(branch_targets)
-    while frontier:
-        current = frontier.pop()
-        if current in rework_node_ids:
-            continue
-        rework_node_ids.add(current)
-        if current in return_sources:
-            continue
-        for next_id in adjacency.get(current, []):
-            if next_id not in rework_node_ids:
-                frontier.append(next_id)
-    return rework_node_ids
-
-
-def _translate_edge_points(
-    points: tuple[LayoutPoint, ...],
-    *,
-    source_shift: tuple[float, float],
-    target_shift: tuple[float, float],
-) -> tuple[LayoutPoint, ...]:
-    if not points:
-        return points
-    sx, sy = source_shift
-    tx, ty = target_shift
-    if abs(sx - tx) < 1e-9 and abs(sy - ty) < 1e-9:
-        return tuple(
-            LayoutPoint(x_px=point.x_px + sx, y_px=point.y_px + sy) for point in points
-        )
-
-    distances = [0.0]
-    total = 0.0
-    for index in range(len(points) - 1):
-        p0 = points[index]
-        p1 = points[index + 1]
-        seg_len = ((p1.x_px - p0.x_px) ** 2 + (p1.y_px - p0.y_px) ** 2) ** 0.5
-        total += seg_len
-        distances.append(total)
-
-    if total <= 1e-9:
-        mid_x = (sx + tx) / 2.0
-        mid_y = (sy + ty) / 2.0
-        return tuple(
-            LayoutPoint(x_px=point.x_px + mid_x, y_px=point.y_px + mid_y)
-            for point in points
-        )
-
-    translated: list[LayoutPoint] = []
-    for point, distance in zip(points, distances):
-        ratio = distance / total
-        dx = (sx * (1.0 - ratio)) + (tx * ratio)
-        dy = (sy * (1.0 - ratio)) + (ty * ratio)
-        translated.append(LayoutPoint(x_px=point.x_px + dx, y_px=point.y_px + dy))
-    return tuple(translated)
 
 
 def _edge_metadata_maps(

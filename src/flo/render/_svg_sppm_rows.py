@@ -6,6 +6,7 @@ from dataclasses import replace
 from typing import Any
 
 from ._diagnostics import RenderDiagnostic
+from ._sppm_rework_graph import infer_rework_row_ids, translate_edge_points
 from .layout_core.models import LayoutBounds, LayoutPoint
 
 _MIN_MAINLINE_REWORK_GAP_PX = 56.0
@@ -110,85 +111,18 @@ def _infer_row_ids_from_rework_edges(
     node_bounds: dict[str, LayoutBounds],
     edge_paths: dict[tuple[str, str], Any],
 ) -> tuple[set[str], set[str]]:
-    node_ids = set(node_bounds)
-    branch_targets = _collect_rework_variant_node_ids(
-        edge_paths=edge_paths,
-        node_ids=node_ids,
-        variant="branch",
-        source=False,
+    return infer_rework_row_ids(
+        node_ids=set(node_bounds),
+        edges=(
+            (
+                source_id,
+                target_id,
+                bool(getattr(edge_path, "is_rework", False)),
+                str(getattr(edge_path, "rework_variant", "") or "") or None,
+            )
+            for (source_id, target_id), edge_path in edge_paths.items()
+        ),
     )
-    return_sources = _collect_rework_variant_node_ids(
-        edge_paths=edge_paths,
-        node_ids=node_ids,
-        variant="return",
-        source=True,
-    )
-    if not branch_targets:
-        return set(), set()
-
-    adjacency = _non_rework_adjacency(edge_paths=edge_paths, node_ids=node_ids)
-    rework_node_ids = _reachable_until_return_sources(
-        start_ids=branch_targets,
-        return_sources=return_sources,
-        adjacency=adjacency,
-    )
-
-    if not rework_node_ids:
-        return set(), set()
-    return node_ids - rework_node_ids, rework_node_ids
-
-
-def _collect_rework_variant_node_ids(
-    *,
-    edge_paths: dict[tuple[str, str], Any],
-    node_ids: set[str],
-    variant: str,
-    source: bool,
-) -> set[str]:
-    results: set[str] = set()
-    for (source_id, target_id), edge_path in edge_paths.items():
-        if str(getattr(edge_path, "rework_variant", "") or "") != variant:
-            continue
-        candidate = source_id if source else target_id
-        if candidate in node_ids:
-            results.add(candidate)
-    return results
-
-
-def _non_rework_adjacency(
-    *,
-    edge_paths: dict[tuple[str, str], Any],
-    node_ids: set[str],
-) -> dict[str, list[str]]:
-    adjacency: dict[str, list[str]] = {node_id: [] for node_id in node_ids}
-    for (source_id, target_id), edge_path in edge_paths.items():
-        if source_id not in node_ids or target_id not in node_ids:
-            continue
-        if bool(getattr(edge_path, "is_rework", False)):
-            continue
-        adjacency[source_id].append(target_id)
-    return adjacency
-
-
-def _reachable_until_return_sources(
-    *,
-    start_ids: set[str],
-    return_sources: set[str],
-    adjacency: dict[str, list[str]],
-) -> set[str]:
-    reachable: set[str] = set()
-    frontier = list(start_ids)
-    while frontier:
-        current = frontier.pop()
-        if current in reachable:
-            continue
-        reachable.add(current)
-        if current in return_sources:
-            continue
-        for next_id in adjacency.get(current, []):
-            if next_id not in reachable:
-                frontier.append(next_id)
-    return reachable
 
 
 def row_gap_diagnostics(
@@ -618,7 +552,7 @@ def _apply_edge_shifts(
         source_id, target_id = edge_key
         source_shift = shifts.get(source_id, (0.0, 0.0))
         target_shift = shifts.get(target_id, (0.0, 0.0))
-        translated_points = _translate_edge_points(
+        translated_points = translate_edge_points(
             edge_path.points,
             source_shift=source_shift,
             target_shift=target_shift,
@@ -664,47 +598,6 @@ def _enforce_mainline_min_horizontal_gap(
         if deficit > 0.0:
             propagated_dx += deficit
         shifts[current_id] = (current_dx + propagated_dx, current_dy)
-
-
-def _translate_edge_points(
-    points: tuple[LayoutPoint, ...],
-    *,
-    source_shift: tuple[float, float],
-    target_shift: tuple[float, float],
-) -> tuple[LayoutPoint, ...]:
-    if not points:
-        return points
-    sx, sy = source_shift
-    tx, ty = target_shift
-    if abs(sx - tx) < 1e-9 and abs(sy - ty) < 1e-9:
-        return tuple(
-            LayoutPoint(x_px=point.x_px + sx, y_px=point.y_px + sy) for point in points
-        )
-
-    distances = [0.0]
-    total = 0.0
-    for index in range(len(points) - 1):
-        p0 = points[index]
-        p1 = points[index + 1]
-        seg_len = ((p1.x_px - p0.x_px) ** 2 + (p1.y_px - p0.y_px) ** 2) ** 0.5
-        total += seg_len
-        distances.append(total)
-
-    if total <= 1e-9:
-        mid_x = (sx + tx) / 2.0
-        mid_y = (sy + ty) / 2.0
-        return tuple(
-            LayoutPoint(x_px=point.x_px + mid_x, y_px=point.y_px + mid_y)
-            for point in points
-        )
-
-    translated: list[LayoutPoint] = []
-    for point, distance in zip(points, distances):
-        ratio = distance / total
-        dx = (sx * (1.0 - ratio)) + (tx * ratio)
-        dy = (sy * (1.0 - ratio)) + (ty * ratio)
-        translated.append(LayoutPoint(x_px=point.x_px + dx, y_px=point.y_px + dy))
-    return tuple(translated)
 
 
 def _orthogonalize_points(points: tuple[LayoutPoint, ...]) -> tuple[LayoutPoint, ...]:
