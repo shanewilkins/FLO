@@ -24,6 +24,9 @@ jobs:
       - name: Sync project dependencies
         run: uv sync
 
+      - name: Install Node runtime deps (elkjs)
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
       - name: Run quality gates
         run: uv run pre-commit run --all-files
 
