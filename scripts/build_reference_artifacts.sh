@@ -15,7 +15,7 @@ build_svg() {
   local input="$REPO_ROOT/$input_rel"
   local output="$REPO_ROOT/$output_rel"
 
-  uv run flo run "$input" --export svg --render-to "$output" "$@"
+  uv run flo render "$input" --export svg --render-to "$output" "$@"
   echo "Built: $output_rel"
 }
 
@@ -26,7 +26,7 @@ build_text_export() {
   local input="$REPO_ROOT/$input_rel"
   local output="$REPO_ROOT/$output_rel"
 
-  uv run flo run "$input" --export ingredients -o "$output"
+  uv run flo render "$input" --export ingredients -o "$output"
   echo "Built: $output_rel"
 }
 
