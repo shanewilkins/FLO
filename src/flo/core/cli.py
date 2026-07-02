@@ -504,7 +504,7 @@ def run_cmd(
     opts = _build_render_opts(
         verbose=verbose,
         output=output,
-        export_fmt=export_fmt or "dot",
+        export_fmt=export_fmt,
         diagram=diagram,
         render_backend=render_backend,
         profile=profile,

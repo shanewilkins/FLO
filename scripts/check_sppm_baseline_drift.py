@@ -1,4 +1,9 @@
-"""Fail when canonical SPPM baseline artifacts drift from checked-in outputs."""
+"""Local-only check for canonical SPPM baseline artifact drift.
+
+Baseline render artifacts live under ``renders/`` and are intentionally ignored
+by git, so this script is for developer-managed local regression review rather
+than remote CI enforcement.
+"""
 
 from __future__ import annotations
 
@@ -50,7 +55,7 @@ def main() -> int:
         "--baseline-dir",
         type=Path,
         default=DEFAULT_OUTDIR,
-        help="Checked-in baseline artifact directory.",
+        help="Local baseline artifact directory.",
     )
     parser.add_argument(
         "--case-id",
@@ -83,7 +88,7 @@ def main() -> int:
     checked_count = len(_tracked_files_for_cases(baseline_dir, case_ids=case_ids))
     print(
         "SPPM baseline drift check passed: "
-        f"{len(case_ids)} case(s), {checked_count} file(s) matched checked-in artifacts."
+        f"{len(case_ids)} case(s), {checked_count} file(s) matched local artifacts."
     )
     return 0
 
@@ -140,7 +145,7 @@ def _tracked_files_for_cases(
 def _print_drift(drift: DriftSummary) -> None:
     print("SPPM baseline drift detected.")
     if drift.missing_files:
-        print("Missing checked-in files:")
+        print("Missing local baseline files:")
         for relative_path in drift.missing_files:
             print(f"  - {relative_path}")
     if drift.extra_files:

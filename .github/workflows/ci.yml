@@ -51,11 +51,6 @@ jobs:
       - name: Install Node runtime deps (elkjs)
         run: npm ci --ignore-scripts --no-audit --no-fund
 
-      - name: Install Graphviz runtime
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y graphviz
-
       - name: Prepare uv runner and project dev deps
         run: |
           python -m pip install --upgrade pip
@@ -66,9 +61,6 @@ jobs:
 
       - name: Run pre-commit hooks (match local pre-commit)
         run: uv run pre-commit run --all-files
-
-      - name: Enforce SPPM baseline drift gate
-        run: uv run python scripts/check_sppm_baseline_drift.py
 
       - name: Run SPPM layout invariant suite
         run: uv run pytest -q tests/unit/test_sppm_layout_invariants.py

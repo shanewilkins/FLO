@@ -147,6 +147,10 @@ def _resolve_output_format(command: str, options: dict | None) -> str:
         "svg",
     }:
         return str(output_format)
+    render_to = (options or {}).get("render_to")
+    if output_format is None and isinstance(render_to, str):
+        if Path(render_to).suffix.lower() == ".svg":
+            return "svg"
     return "dot"
 
 

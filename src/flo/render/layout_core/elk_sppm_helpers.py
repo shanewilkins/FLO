@@ -137,11 +137,18 @@ def _sppm_synthetic_row_lanes(
         return ()
 
     adjacency = _sppm_non_rework_adjacency(node_ids=node_ids, edges=edges)
+    terminal_ids = {
+        node_id
+        for node in nodes
+        if (node_id := str(node.get("id") or ""))
+        and str(node.get("kind") or node.get("type") or "").lower() == "end"
+    }
     rework_node_ids = _sppm_rework_reachable_nodes(
         node_ids=node_ids,
         branch_targets=branch_targets,
         return_sources=return_sources,
         adjacency=adjacency,
+        terminal_ids=terminal_ids,
     )
 
     if not rework_node_ids:
@@ -192,12 +199,15 @@ def _sppm_rework_reachable_nodes(
     branch_targets: set[str],
     return_sources: set[str],
     adjacency: dict[str, list[str]],
+    terminal_ids: set[str],
 ) -> set[str]:
     rework_node_ids: set[str] = set()
     frontier = [target_id for target_id in node_ids if target_id in branch_targets]
     while frontier:
         current = frontier.pop()
         if current in rework_node_ids:
+            continue
+        if current in terminal_ids and current not in branch_targets:
             continue
         rework_node_ids.add(current)
         if current in return_sources:
