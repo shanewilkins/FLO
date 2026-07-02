@@ -9,6 +9,7 @@ def test_validate_writes_no_stdout_on_success():
 
 process:
   id: p
+  name: Process
 
 steps:
   - id: start
@@ -32,6 +33,7 @@ def test_validate_reports_errors_to_stderr_stream():
 
 process:
   id: bad
+  name: Bad Process
 
 steps:
   - id: only_task

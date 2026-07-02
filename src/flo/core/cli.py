@@ -80,15 +80,17 @@ def _handle_run_content_exception(
     from flo.services.errors import map_exception_to_rc
     from flo.services.telemetry import record_span_error
 
-    mapped_rc, msg, internal = map_exception_to_rc(exc)
+    mapped_rc, msg, internal, error_stage = map_exception_to_rc(exc)
+    stage = error_stage or "run_content"
     _safe_set_span_attr(root_span, "flo.exit_code", mapped_rc)
+    _safe_set_span_attr(root_span, "flo.error.stage", stage)
     record_span_error(root_span, msg or "")
     display_msg = f"Unexpected error: {msg or 'internal error'}" if internal else msg
     _emit_error(
         services,
         display_msg,
         error_kind="internal" if internal else "domain",
-        error_stage="run_content",
+        error_stage=stage,
         exit_code=mapped_rc,
         internal=internal,
         command=command,
@@ -669,7 +671,8 @@ def console_main(argv: list | None = None) -> int:
         code = getattr(exc, "code", EXIT_USAGE)
         return code if isinstance(code, int) else EXIT_USAGE
     except Exception as exc:
-        rc, msg, internal = map_exception_to_rc(exc)
+        rc, msg, internal, error_stage = map_exception_to_rc(exc)
+        stage = error_stage or "console_main"
         from flo.services import get_services
 
         services = get_services(verbose=False)
@@ -678,7 +681,7 @@ def console_main(argv: list | None = None) -> int:
                 services,
                 f"Unexpected error: {msg or 'internal error'}",
                 error_kind="internal",
-                error_stage="console_main",
+                error_stage=stage,
                 exit_code=rc,
                 internal=True,
                 command="console_main",
@@ -688,7 +691,7 @@ def console_main(argv: list | None = None) -> int:
                 services,
                 msg,
                 error_kind="domain",
-                error_stage="console_main",
+                error_stage=stage,
                 exit_code=rc,
                 internal=False,
                 command="console_main",

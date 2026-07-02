@@ -49,9 +49,7 @@ def run_content(
     if not content:
         return EXIT_SUCCESS, "", ""
 
-    source_path = (
-        (options or {}).get("source_path") if isinstance(options, dict) else None
-    )
+    source_path = _resolve_source_path(options)
     ir = _parse_compile_validate(content, source_path=source_path)
 
     if command == "validate":
@@ -59,28 +57,56 @@ def run_content(
 
     output_format = _resolve_output_format(command=command, options=options)
     if output_format in {"json", "ingredients", "movement"}:
-        ensure_render_options_compatible_with_output(
-            options=options, output_format=output_format
-        )
-        return (
-            EXIT_SUCCESS,
-            export_ir(ir, options={**(options or {}), "export": output_format}),
-            "",
-        )
+        return _run_export_output(ir=ir, options=options, output_format=output_format)
 
+    return _run_render_output(ir=ir, options=options, output_format=output_format)
+
+
+def _resolve_source_path(options: dict | None) -> str | None:
+    if not isinstance(options, dict):
+        return None
+    source_path = options.get("source_path")
+    return source_path if isinstance(source_path, str) else None
+
+
+def _run_export_output(
+    *,
+    ir: IR,
+    options: dict | None,
+    output_format: str,
+) -> tuple[int, str, str]:
+    try:
+        ensure_render_options_compatible_with_output(
+            options=options,
+            output_format=output_format,
+        )
+    except CLIError as exc:
+        _raise_with_stage(exc, stage="option_validation")
+
+    try:
+        exported = export_ir(
+            ir,
+            options={**(options or {}), "export": output_format},
+        )
+    except CLIError as exc:
+        _raise_with_stage(exc, stage="export_generate")
+    except Exception as exc:
+        raise RenderError(str(exc), error_stage="export_generate") from exc
+
+    return (EXIT_SUCCESS, exported, "")
+
+
+def _run_render_output(
+    *,
+    ir: IR,
+    options: dict | None,
+    output_format: str,
+) -> tuple[int, str, str]:
     resolved_options = merge_diagrams_toml_sppm_defaults(options=options)
     validate_sppm_numeric_render_options(options=resolved_options)
     render_to: str | None = (resolved_options or {}).get("render_to")
 
-    # Extract view-aware render intent from compiled IR (wires resolver into pipeline)
-    render_metadata = None
-    if isinstance(ir, IR) and isinstance(ir.process_metadata, dict):
-        render_metadata = ir.process_metadata.get("render")
-    resolved_options = _merge_view_intent_options(
-        render_metadata=render_metadata,
-        options=resolved_options,
-    )
-
+    resolved_options = _merge_render_intent_options(ir=ir, options=resolved_options)
     render_options = _resolve_render_options_for_output(
         resolved_options=resolved_options,
         output_format=output_format,
@@ -88,13 +114,17 @@ def run_content(
     ensure_render_projection_supported(render_options)
 
     artifact, contract, warning = _render_artifact_with_postprocess(
-        ir, render_options=render_options
+        ir,
+        render_options=render_options,
     )
     if render_to:
         _write_render_artifact(
-            artifact=artifact, render_to=render_to, contract=contract
+            artifact=artifact,
+            render_to=render_to,
+            contract=contract,
         )
         return EXIT_SUCCESS, "", warning or ""
+
     return (
         EXIT_SUCCESS,
         _render_artifact_for_stdout(
@@ -106,29 +136,54 @@ def run_content(
     )
 
 
+def _merge_render_intent_options(*, ir: IR, options: dict | None) -> dict | None:
+    # Extract view-aware render intent from compiled IR (wires resolver into pipeline)
+    render_metadata = None
+    if isinstance(ir.process_metadata, dict):
+        render_metadata = ir.process_metadata.get("render")
+    return _merge_view_intent_options(
+        render_metadata=render_metadata,
+        options=options,
+    )
+
+
 def _parse_compile_validate(content: str, source_path: str | None = None) -> IR:
     try:
         adapter_model = parse_adapter(content, source_path=source_path)
-    except Exception as e:
-        raise ParseError(str(e))
+    except Exception as exc:
+        raise ParseError(str(exc), error_stage="parse") from exc
 
     try:
         ir = compile_adapter(adapter_model)
-    except Exception as e:
-        raise CompileError(str(e))
+    except Exception as exc:
+        raise CompileError(str(exc), error_stage="compile") from exc
 
     try:
         validate_ir(ir)
-    except Exception as e:
-        raise ValidationError(str(e))
+    except ValidationError as exc:
+        if getattr(exc, "error_stage", None) is None:
+            exc.error_stage = "validate"
+        raise
+    except Exception as exc:
+        raise ValidationError(str(exc), error_stage="validate") from exc
 
     if isinstance(ir, IR):
         try:
             ensure_schema_aligned(ir)
-        except Exception as e:
-            raise ValidationError(str(e))
+        except ValidationError as exc:
+            if getattr(exc, "error_stage", None) is None:
+                exc.error_stage = "schema_validate"
+            raise
+        except Exception as exc:
+            raise ValidationError(str(exc), error_stage="schema_validate") from exc
 
     return ir
+
+
+def _raise_with_stage(exc: CLIError, *, stage: str) -> None:
+    if getattr(exc, "error_stage", None) is None:
+        exc.error_stage = stage
+    raise exc
 
 
 def _resolve_output_format(command: str, options: dict | None) -> str:

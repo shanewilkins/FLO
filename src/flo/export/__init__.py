@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from .json_export import ir_to_schema_dict, ir_to_schema_json
+from .json_export import ir_to_schema_json
 from .materials_export import ir_to_ingredients_text
 from .movement_export import ir_to_movement_text
 from .options import ExportOptions
@@ -38,4 +38,4 @@ def export_ir(ir: Any, options: dict | None = None) -> str:
     return exporter(ir, export_options)
 
 
-__all__ = ["ir_to_schema_dict", "ir_to_schema_json", "ExportOptions", "export_ir"]
+__all__ = ["ExportOptions", "export_ir"]

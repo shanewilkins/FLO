@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Any
-from pathlib import Path
-import json
+from typing import Any
 
 
 @dataclass
@@ -14,7 +12,13 @@ class Node:
 
     id: str
     type: str
-    attrs: Dict[str, Any] | None = None
+    attrs: dict[str, Any] | None = None
+
+    def __post_init__(self) -> None:
+        """Normalize scalar and mapping fields after dataclass initialization."""
+        self.id = str(self.id)
+        self.type = str(self.type)
+        self.attrs = _normalize_object_mapping(self.attrs, default={})
 
 
 @dataclass
@@ -29,7 +33,13 @@ class Edge:
     edge_type: str | None = None
     handoff: bool | None = None
     rework: bool | None = None
-    metadata: Dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None
+
+    def __post_init__(self) -> None:
+        """Normalize endpoint identifiers and optional metadata mapping."""
+        self.source = str(self.source)
+        self.target = str(self.target)
+        self.metadata = _normalize_object_mapping(self.metadata, default=None)
 
 
 @dataclass
@@ -37,86 +47,56 @@ class IR:
     """Represents a FLO intermediate representation (IR)."""
 
     name: str
-    nodes: List[Node]
-    edges: List[Edge] = field(default_factory=list)
-    process_metadata: Dict[str, Any] | None = None
+    nodes: list[Node]
+    edges: list[Edge] = field(default_factory=list)
+    process_metadata: dict[str, Any] | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Return a Python-native dict representation of the canonical IR."""
-        return {
-            "name": self.name,
-            "nodes": [self._node_to_dict(n) for n in self.nodes],
-            "edges": [self._edge_to_dict(e) for e in self.edges],
-            "process_metadata": self.process_metadata or {},
-        }
-
-    @staticmethod
-    def _node_to_dict(n: Node) -> Dict[str, Any]:
-        """Convert a `Node` instance to a plain dict."""
-        return {"id": n.id, "type": n.type, "attrs": (n.attrs or {})}
-
-    @staticmethod
-    def _edge_to_dict(e: Edge) -> Dict[str, Any]:
-        """Convert an `Edge` instance to a plain dict."""
-        out: Dict[str, Any] = {"source": e.source, "target": e.target}
-        if e.id is not None:
-            out["id"] = e.id
-        if e.outcome is not None:
-            out["outcome"] = e.outcome
-        if e.label is not None:
-            out["label"] = e.label
-        if e.edge_type is not None:
-            out["edge_type"] = e.edge_type
-        if e.handoff is not None:
-            out["handoff"] = e.handoff
-        if e.rework is not None:
-            out["rework"] = e.rework
-        if e.metadata is not None:
-            out["metadata"] = e.metadata
-        return out
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "IR":
-        """Construct an `IR` from a dict representation."""
-        nodes = []
-        for nd in data.get("nodes", []):
-            nodes.append(
-                Node(
-                    id=nd.get("id", ""),
-                    type=nd.get("type", ""),
-                    attrs=nd.get("attrs", {}),
-                )
-            )
-        edges = []
-        for ed in data.get("edges", []):
-            edges.append(
-                Edge(
-                    source=ed.get("source", ""),
-                    target=ed.get("target", ""),
-                    id=ed.get("id"),
-                    outcome=ed.get("outcome"),
-                    label=ed.get("label"),
-                    edge_type=ed.get("edge_type"),
-                    handoff=ed.get("handoff"),
-                    rework=ed.get("rework"),
-                    metadata=ed.get("metadata"),
-                )
-            )
-        process_metadata = data.get("process_metadata")
-        if not isinstance(process_metadata, dict):
-            process_metadata = None
-
-        return cls(
-            name=data.get("name", ""),
-            nodes=nodes,
-            edges=edges,
-            process_metadata=process_metadata,
+    def __post_init__(self) -> None:
+        """Coerce nested node/edge entries and normalize optional metadata."""
+        self.name = str(self.name)
+        self.nodes = [_coerce_node(value) for value in self.nodes]
+        self.edges = [_coerce_edge(value) for value in self.edges]
+        self.process_metadata = _normalize_object_mapping(
+            self.process_metadata,
+            default=None,
         )
 
-    def to_json(self, path: Path | str | None = None) -> str:
-        """Serialize the IR to JSON and optionally write to `path`."""
-        d = self.to_dict()
-        s = json.dumps(d, indent=2)
-        if path:
-            Path(path).write_text(s, encoding="utf-8")
-        return s
+
+def _coerce_node(value: Any) -> Node:
+    if isinstance(value, Node):
+        return value
+    if isinstance(value, dict):
+        return Node(
+            id=value.get("id", ""),
+            type=value.get("type", ""),
+            attrs=value.get("attrs", {}),
+        )
+    raise TypeError(f"IR.nodes entries must be Node or dict, got {type(value)!r}")
+
+
+def _coerce_edge(value: Any) -> Edge:
+    if isinstance(value, Edge):
+        return value
+    if isinstance(value, dict):
+        return Edge(
+            source=value.get("source", ""),
+            target=value.get("target", ""),
+            id=value.get("id"),
+            outcome=value.get("outcome"),
+            label=value.get("label"),
+            edge_type=value.get("edge_type"),
+            handoff=value.get("handoff"),
+            rework=value.get("rework"),
+            metadata=value.get("metadata"),
+        )
+    raise TypeError(f"IR.edges entries must be Edge or dict, got {type(value)!r}")
+
+
+def _normalize_object_mapping(
+    value: object,
+    *,
+    default: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    if isinstance(value, dict):
+        return value
+    return default

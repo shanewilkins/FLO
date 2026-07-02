@@ -30,9 +30,15 @@ class DomainError(Exception):
 
     exit_code: int = EXIT_USAGE
 
-    def __init__(self, message: str | None = None) -> None:
+    def __init__(
+        self,
+        message: str | None = None,
+        *,
+        error_stage: str | None = None,
+    ) -> None:
         """Initialize a DomainError with an optional user message."""
         super().__init__(message or "")
+        self.error_stage = error_stage
 
 
 class CLIError(DomainError):
@@ -42,9 +48,15 @@ class CLIError(DomainError):
     the codebase.
     """
 
-    def __init__(self, message: str, code: int = EXIT_USAGE) -> None:
+    def __init__(
+        self,
+        message: str,
+        code: int = EXIT_USAGE,
+        *,
+        error_stage: str | None = None,
+    ) -> None:
         """Initialize a CLIError and set both ``exit_code`` and ``code`` for compatibility."""
-        super().__init__(message)
+        super().__init__(message, error_stage=error_stage)
         self.exit_code = code
         # Keep backwards-compatible attribute name used elsewhere in code/tests
         self.code = code
@@ -53,48 +65,70 @@ class CLIError(DomainError):
 class ParseError(CLIError):
     """Raised for parse failures (maps to EXIT_PARSE_ERROR)."""
 
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str, *, error_stage: str | None = None) -> None:
         """Initialize a ParseError mapping to EXIT_PARSE_ERROR."""
-        super().__init__(message, code=EXIT_PARSE_ERROR)
+        super().__init__(
+            message,
+            code=EXIT_PARSE_ERROR,
+            error_stage=error_stage or "parse",
+        )
 
 
 class CompileError(CLIError):
     """Raised for compile failures (maps to EXIT_COMPILE_ERROR)."""
 
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str, *, error_stage: str | None = None) -> None:
         """Initialize a CompileError mapping to EXIT_COMPILE_ERROR."""
-        super().__init__(message, code=EXIT_COMPILE_ERROR)
+        super().__init__(
+            message,
+            code=EXIT_COMPILE_ERROR,
+            error_stage=error_stage or "compile",
+        )
 
 
 class ValidationError(CLIError):
     """Raised for validation failures (maps to EXIT_VALIDATION_ERROR)."""
 
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str, *, error_stage: str | None = None) -> None:
         """Initialize a ValidationError mapping to EXIT_VALIDATION_ERROR."""
-        super().__init__(message, code=EXIT_VALIDATION_ERROR)
+        super().__init__(
+            message,
+            code=EXIT_VALIDATION_ERROR,
+            error_stage=error_stage or "validate",
+        )
 
 
 class RenderError(CLIError):
     """Raised for render failures (maps to EXIT_RENDER_ERROR)."""
 
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str, *, error_stage: str | None = None) -> None:
         """Initialize a RenderError mapping to EXIT_RENDER_ERROR."""
-        super().__init__(message, code=EXIT_RENDER_ERROR)
+        super().__init__(
+            message,
+            code=EXIT_RENDER_ERROR,
+            error_stage=error_stage or "render",
+        )
 
 
-def map_exception_to_rc(exc: BaseException) -> tuple[int, str, bool]:
-    """Map an exception to a tuple of ``(rc, message, internal)``.
+def map_exception_to_rc(exc: BaseException) -> tuple[int, str, bool, str | None]:
+    """Map an exception to a tuple of ``(rc, message, internal, error_stage)``.
 
-    - If ``exc`` is a ``DomainError``/``CLIError``, return ``(exit_code, str(exc), False)``.
-    - Otherwise return ``(EXIT_INTERNAL_ERROR, str(exc) or "internal error", True)``.
+    - If ``exc`` is a ``DomainError``/``CLIError``, return
+      ``(exit_code, str(exc), False, error_stage)``.
+    - Otherwise return ``(EXIT_INTERNAL_ERROR, str(exc) or "internal error", True, None)``.
     """
     if isinstance(exc, DomainError):
         # DomainError instances provide an ``exit_code`` attribute.
-        return getattr(exc, "exit_code", EXIT_USAGE), str(exc) or "", False
+        return (
+            getattr(exc, "exit_code", EXIT_USAGE),
+            str(exc) or "",
+            False,
+            getattr(exc, "error_stage", None),
+        )
 
     # Fallback: unexpected/internal exceptions
     msg = str(exc) or "internal error"
-    return EXIT_INTERNAL_ERROR, msg, True
+    return EXIT_INTERNAL_ERROR, msg, True, None
 
 
 def handle_error(err: str, logger: Optional[BoundLogger] = None) -> None:

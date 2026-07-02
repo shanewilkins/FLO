@@ -23,27 +23,37 @@ This note captures the ten prioritized findings from the senior-dev review gate,
 ~~- Triage findings into: delete, intentional public API, dynamic-use false positive.~~
 ~~- Keep whitelist narrow and audited.~~
 
-## 3) Compiler Surface Still Reads as Prototype
+## ~~3) Compiler Surface Still Reads as Prototype~~
 
-Issue:
-- Compiler entrypoint language and adapter fallbacks still communicate stub/prototype behavior.
-- Permissive fallback parsing reduces trust in DSL correctness.
+~~Issue:~~
+~~- Compiler entrypoint language and adapter fallbacks still communicate stub/prototype behavior.~~
+~~- Permissive fallback parsing reduces trust in DSL correctness.~~
 
-Action:
-- Define and enforce a strict authoritative input model for spec_version/process/steps.
-- Remove arbitrary text fallback behavior.
-- Update compiler module docs to reflect actual v0.1 contract.
+~~Action:~~
+~~- Define and enforce a strict authoritative input model for spec_version/process/steps.~~
+~~- Remove arbitrary text fallback behavior.~~
+~~- Update compiler module docs to reflect actual v0.1 contract.~~
 
-## 4) IR Serialization Contract Is Confusing
+Completion notes:
+- Strict adapter contract validation now gates compile input (spec_version/process/steps/transitions) with explicit errors.
+- Prototype fallback behavior was removed from compiler internals; parser-boundary normalization handles legacy `edges` naming without reintroducing permissive compile fallbacks.
+- Tests were updated/added to assert strict normalization and compile contract behavior.
 
-Issue:
-- User-facing docs and internal IR methods imply different output shapes.
-- Internal and schema-shaped representations are not clearly separated by API naming.
+## ~~4) IR Serialization Contract Is Confusing~~
 
-Action:
-- Make one canonical public export path for schema-shaped output.
-- Rename internal helpers to explicitly indicate internal shape.
-- Align docs and code so contributors cannot misinterpret contract boundaries.
+~~Issue:~~
+~~- User-facing docs and internal IR methods imply different output shapes.~~
+~~- Internal and schema-shaped representations are not clearly separated by API naming.~~
+
+~~Action:~~
+~~- Make one canonical public export path for schema-shaped output.~~
+~~- Rename internal helpers to explicitly indicate internal shape.~~
+~~- Align docs and code so contributors cannot misinterpret contract boundaries.~~
+
+Completion notes:
+- Public API boundaries were narrowed so schema-shaped export flows through canonical export paths.
+- Internal-shape serialization was split into dedicated private helpers in `compiler/ir/_internal_shape.py`.
+- IR model constructors now normalize/coerce inputs, and policy/unit tests cover boundary and contract expectations.
 
 ## 5) CLI/Render Option Plumbing Is Too Wide
 
