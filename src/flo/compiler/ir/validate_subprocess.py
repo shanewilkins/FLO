@@ -7,6 +7,7 @@ from typing import Any
 from flo.schema.subprocess_refs import iter_subprocess_detail_map_reference_values
 
 from .models import IR
+from .metadata import extract_node_metadata
 from flo.errors import ValidationError
 
 
@@ -39,7 +40,7 @@ def validate_subprocess_metadata(obj: IR) -> None:
     for node in obj.nodes:
         if (node.type or "").lower() != "subprocess":
             continue
-        metadata = _extract_node_metadata(node)
+        metadata = extract_node_metadata(node)
         for key, value in iter_subprocess_detail_map_reference_values(metadata):
             if not value:
                 raise ValidationError(
@@ -76,13 +77,3 @@ def extract_subprocess_parent(node: Any) -> str | None:
         return None
     normalized = value.strip()
     return normalized or None
-
-
-def _extract_node_metadata(node: Any) -> dict[str, Any]:
-    attrs = getattr(node, "attrs", None)
-    if not isinstance(attrs, dict):
-        return {}
-    metadata = attrs.get("metadata")
-    if isinstance(metadata, dict):
-        return metadata
-    return {}

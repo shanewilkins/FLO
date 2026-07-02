@@ -11,6 +11,8 @@ from .validate_relations import validate_item_relations, validate_resource_relat
 from .validate_structure import validate_parallel_structure
 from .validate_subprocess import validate_subprocess_metadata
 from .validate_render_intent import validate_render_intent
+from ._graph_utils import build_adjacency_maps, traverse
+from .metadata import extract_node_metadata
 from flo.errors import ValidationError
 from pathlib import Path
 import json
@@ -108,7 +110,7 @@ def _validate_queue_nodes(
         if (node.type or "").lower() != "queue":
             continue
 
-        metadata = _extract_node_metadata(node)
+        metadata = extract_node_metadata(node)
         _validate_queue_metadata(node_id=node.id, metadata=metadata)
 
         if incoming_counts.get(node.id, 0) < 1:
@@ -131,7 +133,7 @@ def _validate_queue_wait_time_semantics(obj: IR) -> None:
     """
     for node in obj.nodes:
         node_type = (node.type or "").lower()
-        metadata = _extract_node_metadata(node)
+        metadata = extract_node_metadata(node)
 
         if node_type == "queue":
             # Queue nodes: reject cycle_time and crossover_time
@@ -182,7 +184,7 @@ def _validate_node_connectivity(
 
 def _validate_global_reachability(obj: IR) -> None:
     node_ids = [node.id for node in obj.nodes]
-    adjacency, reverse_adjacency = _build_adjacency_maps(
+    adjacency, reverse_adjacency = build_adjacency_maps(
         node_ids=node_ids, edges=obj.edges
     )
     start_nodes = _collect_node_ids_by_type(obj=obj, node_type="start")
@@ -195,22 +197,6 @@ def _validate_global_reachability(obj: IR) -> None:
     _ensure_all_nodes_can_reach_end(
         obj=obj, end_nodes=end_nodes, reverse_adjacency=reverse_adjacency
     )
-
-
-def _build_adjacency_maps(
-    node_ids: list[str],
-    edges: list[Any],
-) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
-    id_set = set(node_ids)
-    adjacency: dict[str, set[str]] = {node_id: set() for node_id in id_set}
-    reverse_adjacency: dict[str, set[str]] = {node_id: set() for node_id in id_set}
-
-    for edge in edges:
-        if edge.source in adjacency and edge.target in adjacency:
-            adjacency[edge.source].add(edge.target)
-            reverse_adjacency[edge.target].add(edge.source)
-
-    return adjacency, reverse_adjacency
 
 
 def _collect_node_ids_by_type(obj: IR, node_type: str) -> list[str]:
@@ -227,7 +213,7 @@ def _ensure_all_nodes_reachable_from_start(
     start_nodes: list[str],
     adjacency: dict[str, set[str]],
 ) -> None:
-    reachable_from_start = _traverse(start_nodes, adjacency)
+    reachable_from_start = traverse(start_nodes, adjacency)
     for node in obj.nodes:
         if node.id not in reachable_from_start:
             raise ValidationError(f"E1008: node '{node.id}' is unreachable from start")
@@ -238,24 +224,10 @@ def _ensure_all_nodes_can_reach_end(
     end_nodes: list[str],
     reverse_adjacency: dict[str, set[str]],
 ) -> None:
-    can_reach_end = _traverse(end_nodes, reverse_adjacency)
+    can_reach_end = traverse(end_nodes, reverse_adjacency)
     for node in obj.nodes:
         if node.id not in can_reach_end:
             raise ValidationError(f"E1009: node '{node.id}' cannot reach any end node")
-
-
-def _traverse(seed_ids: list[str], graph: dict[str, set[str]]) -> set[str]:
-    visited: set[str] = set()
-    stack: list[str] = list(seed_ids)
-    while stack:
-        current = stack.pop()
-        if current in visited:
-            continue
-        visited.add(current)
-        for nxt in graph.get(current, set()):
-            if nxt not in visited:
-                stack.append(nxt)
-    return visited
 
 
 def _validate_queue_metadata(node_id: str, metadata: dict[str, Any]) -> None:
@@ -300,7 +272,7 @@ def _validate_node_io_lists(obj: IR) -> None:
 
 def _validate_node_time_metadata(obj: IR) -> None:
     for node in obj.nodes:
-        metadata = _extract_node_metadata(node)
+        metadata = extract_node_metadata(node)
         for key, value in metadata.items():
             if not _is_node_time_metadata_key(key):
                 continue
@@ -574,7 +546,7 @@ def _validate_canonical_quantity(
 def _validate_node_value_class(obj: IR) -> None:
     valid_values = {vc.value for vc in ProcessValueClass}
     for node in obj.nodes:
-        metadata = _extract_node_metadata(node)
+        metadata = extract_node_metadata(node)
         raw = metadata.get("value_class")
         if raw is None:
             continue
@@ -638,16 +610,6 @@ def _validate_rework_edge_metadata(*, edge: Any, metadata: dict[str, Any]) -> No
             raise ValidationError(
                 f"E1403: {edge_path} metadata.count must be a positive number or non-empty string"
             )
-
-
-def _extract_node_metadata(node: Any) -> dict[str, Any]:
-    attrs = getattr(node, "attrs", None)
-    if not isinstance(attrs, dict):
-        return {}
-    metadata = attrs.get("metadata")
-    if isinstance(metadata, dict):
-        return metadata
-    return {}
 
 
 def validate_against_schema(ir: IR) -> None:

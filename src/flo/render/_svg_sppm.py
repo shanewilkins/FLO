@@ -17,11 +17,16 @@ from ._diagnostics import (
 )
 from ._svg_sppm_edges import _annotation_bounds_for_placement
 from ._svg_sppm_edges import _edge_callout_placement
-from ._svg_sppm_edges import _edge_svg
 from ._svg_sppm_edges import _is_synthetic_sppm_lane
 from ._svg_sppm_edges import _label_placement
 from ._svg_sppm_edges import _lane_header_avoid_bounds
-from ._svg_sppm_nodes import _node_svg
+from ._svg_shared_primitives import (
+    raw_node_lookup,
+    standard_edge_svg,
+    standard_lane_svg,
+    standard_node_svg,
+    standard_svg_defs,
+)
 from ._svg_sppm_rows import _display_canvas_bounds
 from ._svg_sppm_rows import _enforce_sppm_row_alignment
 from ._svg_sppm_rows import _sppm_row_ids
@@ -115,13 +120,9 @@ def render_sppm_svg_artifact_from_layout(
             'data-flo-artifact-kind="svg" data-flo-backend="svg" '
             'data-flo-diagram="sppm" data-flo-layout-engine="elk">'
         ),
-        "<defs>",
-        '<marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">',
-        '<path d="M0,0 L8,3 L0,6 z" fill="#475569" />',
-        "</marker>",
-        "</defs>",
         '<rect width="100%" height="100%" fill="#fffdf8" />',
     ]
+    parts[1:1] = standard_svg_defs()
 
     if title:
         parts.append(
@@ -134,7 +135,7 @@ def render_sppm_svg_artifact_from_layout(
         lane for lane in result.lanes if not _is_synthetic_sppm_lane(lane.id)
     )
     for lane in visible_lanes:
-        parts.extend(_lane_svg(lane))
+        parts.extend(standard_lane_svg(lane))
 
     avoid_bounds = tuple(display_node_bounds.values()) + _lane_header_avoid_bounds(
         visible_lanes
@@ -151,8 +152,8 @@ def render_sppm_svg_artifact_from_layout(
     occupied_annotation_bounds: list[LayoutBounds] = []
     for edge_key in sorted(display_edge_paths.keys()):
         source_id, target_id = edge_key
-        edge_parts, annotation_bounds = _edge_svg(
-            display_edge_paths[edge_key],
+        edge_parts, annotation_bounds = standard_edge_svg(
+            edge_path=display_edge_paths[edge_key],
             source_bounds=display_node_bounds.get(source_id),
             target_bounds=display_node_bounds.get(target_id),
             source_kind=node_kind_by_id.get(source_id, "task"),
@@ -187,7 +188,7 @@ def render_sppm_svg_artifact_from_layout(
             continue
         raw_node = raw_node_by_id.get(node.id, {})
         parts.extend(
-            _node_svg(
+            standard_node_svg(
                 node=node,
                 raw_node=raw_node,
                 options=options,
@@ -238,17 +239,7 @@ def _raise_for_strict_postprocess_diagnostics(
 def _raw_node_lookup(
     process: dict[str, Any] | Any, *, options: RenderOptions
 ) -> dict[str, dict[str, Any]]:
-    from .layout_core.elk_support import (
-        extract_nodes_and_edges,
-        project_parent_only_subprocess_view,
-    )
-
-    nodes, edges = extract_nodes_and_edges(process)
-    if options.subprocess_view == "parent_only":
-        nodes, edges = project_parent_only_subprocess_view(nodes, edges)
-    return {
-        str(node.get("id") or ""): node for node in nodes if str(node.get("id") or "")
-    }
+    return raw_node_lookup(process, options=options)
 
 
 def _process_title(process: dict[str, Any] | Any) -> str | None:
@@ -288,12 +279,3 @@ def _first_non_empty(*values: str | None) -> str | None:
         if value:
             return value
     return None
-
-
-def _lane_svg(lane: Any) -> list[str]:
-    return [
-        f'<g data-lane-id="{escape(lane.id)}">',
-        f'<rect x="{lane.bounds.x_px:.1f}" y="{lane.bounds.y_px:.1f}" width="{lane.bounds.width_px:.1f}" height="{lane.bounds.height_px:.1f}" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />',
-        f'<text x="{lane.bounds.x_px + 16.0:.1f}" y="{lane.bounds.y_px + 24.0:.1f}" font-family="Helvetica" font-size="13" font-weight="700" fill="#334155">{escape(lane.label)}</text>',
-        "</g>",
-    ]

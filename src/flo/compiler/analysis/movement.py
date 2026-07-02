@@ -5,6 +5,8 @@ from __future__ import annotations
 from math import sqrt
 from typing import Any, TypeGuard
 
+from .process_metadata import extract_process_metadata
+
 
 def infer_material_movements(process: Any) -> list[dict[str, Any]]:
     """Infer material movement hops from control-flow transitions.
@@ -267,7 +269,7 @@ def _sorted_text_values(values: Any) -> tuple[str, ...]:
 
 def extract_location_spatial_index(process: Any) -> dict[str, dict[str, Any]]:
     """Return location_id -> {name, kind, x, y, unit} from process metadata locations."""
-    process_metadata = _extract_process_metadata(process)
+    process_metadata = extract_process_metadata(process)
     collection = (
         process_metadata.get("locations")
         if isinstance(process_metadata, dict)
@@ -359,19 +361,6 @@ def _extract_edges(process: Any) -> list[dict[str, Any]]:
         if isinstance(edges_raw, list):
             return [edge for edge in edges_raw if isinstance(edge, dict)]
     return []
-
-
-def _extract_process_metadata(process: Any) -> dict[str, Any]:
-    if hasattr(process, "process_metadata"):
-        metadata = getattr(process, "process_metadata", None)
-        return metadata if isinstance(metadata, dict) else {}
-
-    if isinstance(process, dict):
-        proc = process.get("process")
-        if isinstance(proc, dict):
-            metadata = proc.get("metadata")
-            return metadata if isinstance(metadata, dict) else {}
-    return {}
 
 
 def _iter_resource_items(collection: Any):

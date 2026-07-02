@@ -105,6 +105,9 @@ steps:
 -   Ingredients list and movement report exports\
 -   Stable foundation for analytics
 
+Flowchart direct SVG rendering is deprecated and scheduled for removal in `0.2.0`.
+Prefer `--diagram swimlane` or `--diagram sppm` for forward-compatible diagram rendering.
+
 ------------------------------------------------------------------------
 
 ## What FLO Does Not Provide

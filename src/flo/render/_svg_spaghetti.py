@@ -11,6 +11,7 @@ from flo.compiler.analysis import (
     aggregate_people_movements,
     aggregate_people_movements_by_worker,
     extract_location_spatial_index,
+    extract_process_metadata,
     infer_material_movements,
     infer_people_movements,
 )
@@ -424,7 +425,7 @@ def _canonical_spaghetti_location_kind(kind_raw: Any) -> str | None:
 
 
 def _extract_spaghetti_boundary(process: dict[str, Any] | Any) -> dict[str, Any] | None:
-    process_metadata = _extract_process_metadata(process)
+    process_metadata = extract_process_metadata(process)
     boundary_candidate = _extract_boundary_candidate(process_metadata)
     points = _boundary_points(boundary_candidate)
     if len(points) < 3:
@@ -434,18 +435,6 @@ def _extract_spaghetti_boundary(process: dict[str, Any] | Any) -> dict[str, Any]
         boundary["name"] = boundary_candidate.get("name")
         boundary["label"] = boundary_candidate.get("label")
     return boundary
-
-
-def _extract_process_metadata(process: dict[str, Any] | Any) -> dict[str, Any]:
-    if hasattr(process, "process_metadata"):
-        metadata = getattr(process, "process_metadata", None)
-        return metadata if isinstance(metadata, dict) else {}
-    if isinstance(process, dict):
-        proc = process.get("process")
-        if isinstance(proc, dict):
-            metadata = proc.get("metadata")
-            return metadata if isinstance(metadata, dict) else {}
-    return {}
 
 
 def _extract_boundary_candidate(process_metadata: dict[str, Any]) -> Any:

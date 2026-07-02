@@ -663,7 +663,7 @@ FLO can render a process model as several different diagram types, each suited t
 
 | Diagram | Flag | Best for |
 | --- | --- | --- |
-| Flowchart | `--diagram flowchart` (default) | General process documentation, decision flows |
+| Flowchart | `--diagram flowchart` (deprecated, removal target `0.2.0`) | Legacy diagrams only; migrate to swimlane or SPPM |
 | Swimlane | `--diagram swimlane` | Handoff analysis — requires `lane` on steps |
 | Spaghetti map | `--diagram spaghetti` | Movement/travel path analysis — requires `location` on steps |
 | SPPM | `--diagram sppm` | Lean process performance — uses `value_class`, `cycle_time`, queue `wait_time`, and `performed_by` |
@@ -734,6 +734,11 @@ uv run flo render examples/reference/semantic_controls_showcase.flo \
   --render-to semantic_controls_showcase.svg \
   --diagram sppm
 ```
+
+Flowchart direct SVG rendering is deprecated.
+It remains available in `0.1.x` for compatibility.
+The current removal target is `0.2.0`.
+Use swimlane or SPPM diagrams for forward-compatible rendering.
 
 ## 4.6) Understanding the Output Pipeline
 
@@ -825,6 +830,8 @@ Common options:
 Diagram render options:
 
 - `--diagram {flowchart,swimlane,spaghetti,sppm}`
+
+`flowchart` is deprecated and planned for removal in `0.2.0`.
 - `--render-backend {svg}`
 - `--spaghetti-channel {both,material,people}`
 - `--spaghetti-people-mode {worker,aggregate}`
