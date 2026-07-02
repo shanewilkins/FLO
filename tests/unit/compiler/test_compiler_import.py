@@ -1,16 +1,21 @@
+import pytest
+
 from flo.compiler import compile_adapter
-from flo.compiler.ir import IR
 
 
-def test_compile_adapter_stub():
-    parsed = {"name": "x", "content": "c"}
-    ir = compile_adapter(parsed)
-    assert isinstance(ir, IR)
-    assert ir.name == "x"
+def test_compile_requires_spec_version_process_and_steps() -> None:
+    with pytest.raises(ValueError, match="spec_version"):
+        compile_adapter(
+            {
+                "process": {"id": "p", "name": "Process"},
+                "steps": [{"id": "start", "kind": "start", "name": "Start"}],
+            }
+        )
 
 
-def test_compile_accepts_transitions_key_for_explicit_connections():
+def test_compile_accepts_transitions_key_for_explicit_connections() -> None:
     parsed = {
+        "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
         "steps": [
             {"id": "start", "kind": "start", "name": "Start"},
@@ -27,8 +32,9 @@ def test_compile_accepts_transitions_key_for_explicit_connections():
     assert ir.edges[0].target == "end"
 
 
-def test_compile_preserves_edges_alias_for_backwards_compatibility():
+def test_compile_rejects_edges_alias() -> None:
     parsed = {
+        "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
         "steps": [
             {"id": "start", "kind": "start", "name": "Start"},
@@ -39,38 +45,27 @@ def test_compile_preserves_edges_alias_for_backwards_compatibility():
         ],
     }
 
-    ir = compile_adapter(parsed)
-    assert len(ir.edges) == 1
-    assert ir.edges[0].source == "start"
-    assert ir.edges[0].target == "end"
+    with pytest.raises(ValueError, match="transitions"):
+        compile_adapter(parsed)
 
 
-def test_compile_prefers_transitions_over_edges_when_both_provided():
+def test_compile_rejects_nodes_alias_for_steps() -> None:
     parsed = {
+        "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
-        "steps": [
+        "nodes": [
             {"id": "start", "kind": "start", "name": "Start"},
-            {"id": "task_a", "kind": "task", "name": "Task A"},
-            {"id": "task_b", "kind": "task", "name": "Task B"},
             {"id": "end", "kind": "end", "name": "End"},
-        ],
-        "transitions": [
-            {"source": "start", "target": "task_b"},
-            {"source": "task_b", "target": "end"},
-        ],
-        "edges": [
-            {"source": "start", "target": "task_a"},
-            {"source": "task_a", "target": "end"},
         ],
     }
 
-    ir = compile_adapter(parsed)
-    pairs = [(edge.source, edge.target) for edge in ir.edges]
-    assert pairs == [("start", "task_b"), ("task_b", "end")]
+    with pytest.raises(ValueError, match="steps"):
+        compile_adapter(parsed)
 
 
-def test_compile_accepts_from_to_transition_keys():
+def test_compile_rejects_from_to_transition_alias() -> None:
     parsed = {
+        "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
         "steps": [
             {"id": "start", "kind": "start", "name": "Start"},
@@ -81,14 +76,13 @@ def test_compile_accepts_from_to_transition_keys():
         ],
     }
 
-    ir = compile_adapter(parsed)
-    assert len(ir.edges) == 1
-    assert ir.edges[0].source == "start"
-    assert ir.edges[0].target == "end"
+    with pytest.raises(ValueError, match="source"):
+        compile_adapter(parsed)
 
 
 def test_compile_preserves_node_metadata():
     parsed = {
+        "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
         "steps": [
             {
@@ -106,6 +100,7 @@ def test_compile_preserves_node_metadata():
 
 def test_compile_preserves_step_inputs_and_outputs():
     parsed = {
+        "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
         "steps": [
             {
@@ -125,6 +120,7 @@ def test_compile_preserves_step_inputs_and_outputs():
 
 def test_compile_preserves_step_location_workers_and_equipment():
     parsed = {
+        "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
         "steps": [
             {
@@ -146,6 +142,7 @@ def test_compile_preserves_step_location_workers_and_equipment():
 
 def test_compile_promotes_top_level_resources_to_process_metadata():
     parsed = {
+        "spec_version": "0.1",
         "process": {
             "id": "p",
             "name": "Process",
@@ -168,7 +165,7 @@ def test_compile_promotes_top_level_resources_to_process_metadata():
             {"id": "start", "kind": "start", "name": "Start"},
             {"id": "end", "kind": "end", "name": "End"},
         ],
-        "edges": [
+        "transitions": [
             {"source": "start", "target": "end"},
         ],
     }
@@ -186,6 +183,7 @@ def test_compile_promotes_top_level_resources_to_process_metadata():
 
 def test_compile_promotes_grouped_materials_to_process_metadata():
     parsed = {
+        "spec_version": "0.1",
         "process": {
             "id": "p",
             "name": "Process",
@@ -212,7 +210,7 @@ def test_compile_promotes_grouped_materials_to_process_metadata():
             {"id": "start", "kind": "start", "name": "Start"},
             {"id": "end", "kind": "end", "name": "End"},
         ],
-        "edges": [
+        "transitions": [
             {"source": "start", "target": "end"},
         ],
     }
@@ -230,6 +228,7 @@ def test_compile_promotes_grouped_materials_to_process_metadata():
 
 def test_compile_flattens_subprocess_subnodes():
     parsed = {
+        "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
         "steps": [
             {"id": "start", "kind": "start", "name": "Start"},
@@ -263,6 +262,7 @@ def test_compile_flattens_subprocess_subnodes():
 
 def test_compile_flattens_nested_subprocess_subnodes():
     parsed = {
+        "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
         "steps": [
             {"id": "start", "kind": "start", "name": "Start"},
@@ -302,6 +302,7 @@ def test_compile_flattens_nested_subprocess_subnodes():
 
 def test_compile_promotes_canonical_items_and_resources_to_process_metadata():
     parsed = {
+        "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
         "items": [
             {"id": "order", "name": "Order", "kind": "information"},
@@ -328,6 +329,7 @@ def test_compile_promotes_canonical_items_and_resources_to_process_metadata():
 
 def test_compile_preserves_canonical_step_relations():
     parsed = {
+        "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
         "steps": [
             {
@@ -352,6 +354,7 @@ def test_compile_preserves_canonical_step_relations():
 
 def test_compile_maps_legacy_step_relations_to_canonical_aliases():
     parsed = {
+        "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
         "steps": [
             {
@@ -376,6 +379,7 @@ def test_compile_maps_legacy_step_relations_to_canonical_aliases():
 
 def test_compile_preserves_explicit_handoff_on_transition():
     parsed = {
+        "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
         "steps": [
             {"id": "start", "kind": "start", "name": "Start"},

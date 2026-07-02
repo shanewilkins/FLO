@@ -39,15 +39,13 @@ def _build_explicit_edges(explicit_edges: list[Any]) -> list[Edge]:
     edges: list[Edge] = []
     for edge in explicit_edges:
         if not isinstance(edge, dict):
-            continue
+            raise ValueError("transitions entries must be objects")
         src = edge.get("source")
-        if src is None:
-            src = edge.get("from")
         tgt = edge.get("target")
-        if tgt is None:
-            tgt = edge.get("to")
-        if src is None or tgt is None:
-            continue
+        if not isinstance(src, str) or not src.strip():
+            raise ValueError("transitions entries must include non-empty source")
+        if not isinstance(tgt, str) or not tgt.strip():
+            raise ValueError("transitions entries must include non-empty target")
         edges.append(
             Edge(
                 source=str(src),

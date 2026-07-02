@@ -9,10 +9,11 @@ from flo.services.errors import ValidationError
 
 def test_compile_emits_schema_and_validates() -> None:
     adapter = {
-        "name": "test_process",
-        "nodes": [
-            {"id": "n1", "kind": "task", "attrs": {"name": "Step 1"}},
-            {"id": "n2", "kind": "task", "attrs": {"name": "Step 2"}},
+        "spec_version": "0.1",
+        "process": {"id": "test_process", "name": "Test Process"},
+        "steps": [
+            {"id": "n1", "kind": "task", "name": "Step 1"},
+            {"id": "n2", "kind": "task", "name": "Step 2"},
         ],
     }
 

@@ -19,6 +19,74 @@ def coerce_adapter_model(adapter_model: dict[str, Any] | None) -> dict[str, Any]
     return adapter_model or {}
 
 
+def validate_adapter_contract(adapter: dict[str, Any]) -> None:
+    """Validate the strict v0.1 adapter contract for compilation.
+
+    Required payload keys are `spec_version`, `process`, and `steps`.
+    Compatibility aliases such as `nodes`, `edges`, and `from`/`to`
+    transition keys are intentionally rejected.
+    """
+    _validate_spec_version(adapter)
+    _validate_process(adapter)
+    _validate_steps(adapter)
+    _validate_transitions(adapter)
+
+
+def _validate_spec_version(adapter: dict[str, Any]) -> None:
+    spec_version = adapter.get("spec_version")
+    if spec_version != "0.1":
+        raise ValueError("spec_version must be present and set to '0.1'")
+
+
+def _validate_process(adapter: dict[str, Any]) -> None:
+    process_raw = adapter.get("process")
+    if not isinstance(process_raw, dict):
+        raise ValueError("process must be an object")
+
+    process_id = process_raw.get("id")
+    process_name = process_raw.get("name")
+    if not isinstance(process_id, str) or not process_id.strip():
+        raise ValueError("process.id must be a non-empty string")
+    if not isinstance(process_name, str) or not process_name.strip():
+        raise ValueError("process.name must be a non-empty string")
+
+
+def _validate_steps(adapter: dict[str, Any]) -> None:
+    if "nodes" in adapter:
+        raise ValueError("steps is required; nodes alias is not supported")
+    steps = adapter.get("steps")
+    if not isinstance(steps, list):
+        raise ValueError("steps must be a list")
+
+
+def _validate_transitions(adapter: dict[str, Any]) -> None:
+    if "edges" in adapter:
+        raise ValueError("transitions must be used; edges alias is not supported")
+
+    transitions = adapter.get("transitions")
+    if transitions is None:
+        return
+    if not isinstance(transitions, list):
+        raise ValueError("transitions must be a list when provided")
+
+    for idx, transition in enumerate(transitions):
+        _validate_transition_entry(idx=idx, transition=transition)
+
+
+def _validate_transition_entry(*, idx: int, transition: Any) -> None:
+    if not isinstance(transition, dict):
+        raise ValueError(f"transitions[{idx}] must be an object")
+    if "from" in transition or "to" in transition:
+        raise ValueError(f"transitions[{idx}] must use 'source' and 'target' keys")
+
+    source = transition.get("source")
+    target = transition.get("target")
+    if not isinstance(source, str) or not source.strip():
+        raise ValueError(f"transitions[{idx}].source must be a non-empty string")
+    if not isinstance(target, str) or not target.strip():
+        raise ValueError(f"transitions[{idx}].target must be a non-empty string")
+
+
 def resolve_process_name(adapter: dict[str, Any]) -> str:
     """Resolve display/process name from adapter payload."""
     process_raw = adapter.get("process")
@@ -64,11 +132,8 @@ def resolve_process_metadata(adapter: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def resolve_source_nodes(adapter: dict[str, Any]) -> Any:
-    """Resolve adapter source-node container preserving compatibility aliases."""
-    steps = adapter.get("steps")
-    if isinstance(steps, list):
-        return steps
-    return adapter.get("nodes")
+    """Resolve adapter source-node container from the authoritative steps list."""
+    return adapter.get("steps")
 
 
 def flatten_source_nodes(
@@ -140,11 +205,8 @@ def normalize_node_attrs(a_node: dict[str, Any]) -> dict[str, Any]:
 
 
 def resolve_explicit_transitions(adapter: dict[str, Any]) -> Any:
-    """Resolve explicit edge/transitions list from adapter payload."""
-    transitions = adapter.get("transitions")
-    if isinstance(transitions, list):
-        return transitions
-    return adapter.get("edges")
+    """Resolve explicit transitions list from adapter payload."""
+    return adapter.get("transitions")
 
 
 def _is_resource_collection(value: Any) -> bool:
