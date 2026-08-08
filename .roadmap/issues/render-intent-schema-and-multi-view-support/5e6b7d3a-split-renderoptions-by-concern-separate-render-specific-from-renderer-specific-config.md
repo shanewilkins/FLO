@@ -10,12 +10,12 @@ archived: false
 issue_type: feature
 milestone: render-intent-schema-and-multi-view-support
 labels:
-- refactor
 - critical-path
+- refactor
 remote_ids: {}
 created: '2026-05-13T17:30:00+00:00'
-updated: '2026-05-16T19:11:55.292085+00:00'
-assignee: shanewilkins
+updated: '2026-07-03T16:26:01.459406+00:00'
+assignee: null
 estimated_hours: 8.0
 due_date: null
 depends_on:

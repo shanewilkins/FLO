@@ -9,11 +9,11 @@ archived: false
 issue_type: feature
 milestone: render-intent-schema-and-multi-view-support
 labels:
-- schema
 - critical-path
+- schema
 remote_ids: {}
 created: '2026-05-13T17:30:00+00:00'
-updated: '2026-05-16T19:14:04.019702+00:00'
+updated: '2026-07-03T16:26:01.311494+00:00'
 assignee: null
 estimated_hours: 3.0
 due_date: null

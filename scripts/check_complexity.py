@@ -22,8 +22,7 @@ THRESHOLD = 15
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 # Single source of truth for complexity exclusions.
 # Keep this list intentionally small and retire entries as refactors land.
-EXCLUDED_FILES = {
-}
+EXCLUDED_FILES = {}
 
 
 def _normalized(path: pathlib.Path) -> str:

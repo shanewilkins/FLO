@@ -9,11 +9,11 @@ archived: false
 issue_type: feature
 milestone: render-intent-schema-and-multi-view-support
 labels:
-- domain-model
 - critical-path
+- domain-model
 remote_ids: {}
 created: '2026-05-13T17:30:00+00:00'
-updated: '2026-05-16T19:30:45.909216+00:00'
+updated: '2026-07-03T16:26:01.157160+00:00'
 assignee: shanewilkins
 estimated_hours: 8.0
 due_date: null

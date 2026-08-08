@@ -1,25 +1,20 @@
 ---
 name: renderer-platform-completeness
-headline: Build the shared publication, page, pagination, and continuation infrastructure
-  required to complete SPPM and reusable across renderers.
-description: Build the shared publication, page, pagination, and continuation infrastructure
-  required to complete SPPM and reusable across renderers.
+headline: ''
 due_date: null
-status: closed
+status: open
 archived: false
 github_milestone: null
-created: '2026-05-05T17:16:25.123444+00:00'
-updated: '2026-05-13T16:20:00+00:00'
-project_id: e7961ee8
-calculated_progress: 100
-last_progress_update: '2026-05-13T16:20:00+00:00'
-completion_velocity: stable
-risk_level: high
-actual_start_date: '2026-05-05T17:16:25.123444+00:00'
-actual_end_date: '2026-05-13T16:20:00+00:00'
+created: '2026-07-03T16:26:05.433164+00:00'
+updated: '2026-07-03T16:26:05.433165+00:00'
+project_id: null
+calculated_progress: null
+last_progress_update: null
+completion_velocity: null
+risk_level: low
+actual_start_date: null
+actual_end_date: null
 comments: []
 ---
-
-Build the shared publication, page, layout, pagination, and continuation infrastructure required to complete SPPM and reusable across renderers.
 
 

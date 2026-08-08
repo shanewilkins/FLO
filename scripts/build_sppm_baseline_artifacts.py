@@ -98,7 +98,9 @@ def _load_cases(manifest_path: Path) -> list[dict[str, Any]]:
     return cases
 
 
-def _filter_cases(cases: list[dict[str, Any]], *, case_ids: list[str]) -> list[dict[str, Any]]:
+def _filter_cases(
+    cases: list[dict[str, Any]], *, case_ids: list[str]
+) -> list[dict[str, Any]]:
     if not case_ids:
         return cases
     wanted = {case_id.strip() for case_id in case_ids if case_id.strip()}
@@ -246,10 +248,18 @@ def _display_path(path: Path) -> str:
 
 def _strategy_profile_id() -> str:
     values = {
-        ENV_PARTITION_MODE: os.getenv(ENV_PARTITION_MODE, "branch_aligned").strip().lower() or "branch_aligned",
-        ENV_PORT_CONSTRAINTS: os.getenv(ENV_PORT_CONSTRAINTS, "fixed_order").strip().lower() or "fixed_order",
-        ENV_HELPER_ANCHORS: os.getenv(ENV_HELPER_ANCHORS, "always").strip().lower() or "always",
-        ENV_SPACING_PROFILE: os.getenv(ENV_SPACING_PROFILE, "balanced").strip().lower() or "balanced",
+        ENV_PARTITION_MODE: os.getenv(ENV_PARTITION_MODE, "branch_aligned")
+        .strip()
+        .lower()
+        or "branch_aligned",
+        ENV_PORT_CONSTRAINTS: os.getenv(ENV_PORT_CONSTRAINTS, "fixed_order")
+        .strip()
+        .lower()
+        or "fixed_order",
+        ENV_HELPER_ANCHORS: os.getenv(ENV_HELPER_ANCHORS, "always").strip().lower()
+        or "always",
+        ENV_SPACING_PROFILE: os.getenv(ENV_SPACING_PROFILE, "balanced").strip().lower()
+        or "balanced",
     }
     return (
         f"part={values[ENV_PARTITION_MODE]}|"

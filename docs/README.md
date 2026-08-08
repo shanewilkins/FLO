@@ -43,6 +43,7 @@ Supporting user-facing documents live at the top of `docs/`:
 - `User_Manual.md` for how to use FLO
 - `CHANGELOG.md` for released changes
 - `FLO_Manifesto.md` for product and modeling principles
+- `ROADMAP.md` for the public criteria-first path to 1.0
 
 Working notes that are still being shaped should stay outside this tree until
 they are ready to become design, policy, spec, or user-facing docs.
@@ -71,6 +72,7 @@ Start here based on the question you are trying to answer.
 - Where are renderer implementation notes: `docs/design/renderers/`
 - How do I use the tool: `docs/User_Manual.md`
 - What changed recently: `docs/CHANGELOG.md`
+- What is the path to 1.0: `docs/ROADMAP.md`
 
 ## Placement Rules
 
