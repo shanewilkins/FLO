@@ -39,7 +39,10 @@ Current mappings:
 - Diagnostics and errors are written through the CLI error path, which is
   `stderr`-oriented.
 - Telemetry or logging output must not be emitted on `stdout` when commands
-  return payloads such as DOT or JSON.
+  return payloads such as SVG or JSON.
+- Process-event inputs and raw attributes must not appear in stdout payloads,
+  stderr diagnostics, logs, runtime spans, or ordinary artifacts except through
+  an explicit telemetry-derived export permitted by the privacy policy.
 - Input `-` means read from `stdin`.
 - Output `-` means write to `stdout`.
 
@@ -51,6 +54,8 @@ Current mappings:
     `src/flo/export`.
 - `--diagram` supports `flowchart`, `swimlane`, `spaghetti`, and `sppm` for
   render output.
+- `flowchart` is a deprecated 0.1.x compatibility choice and is removed in
+  0.2.0.
 - `--profile`, `--detail`, `--orientation`, `--show-notes`,
   `--subprocess-view`, shared autoformat controls (`--layout-wrap`,
   `--layout-max-width-px`, `--layout-target-columns`), and all SPPM render
@@ -70,6 +75,22 @@ Current mappings:
 Semantic validation uses stable diagnostic-style prefixes in messages (for
 example `E1003`, `E1101`) so failures are easier to script against and triage.
 
+### Structured diagnostic contract effective in 0.4
+
+The 0.4 MVP extends parser, include, compiler, and validator diagnostics to one
+typed record containing, where applicable:
+
+- stable code and severity
+- source file, line, and column
+- FLO field path
+- source excerpt
+- suggested correction
+- include chain
+
+Human stderr and machine-readable output must be generated from the same typed
+record so automation does not need to scrape prose. Sensitive telemetry input
+and raw attributes remain excluded under the telemetry privacy policy.
+
 ## Projection capability diagnostics
 
 Unsupported diagram/backend projection requests are usage errors and must:
@@ -85,3 +106,5 @@ Unsupported diagram/backend projection requests are usage errors and must:
 - Diagram meaning lives in the other files under `docs/specs/`.
 - This contract is the normative CLI/interface companion to the implementation
   in `src/flo/services/errors.py`.
+- Process-event semantics live in `docs/specs/telemetry_events.md`; privacy and
+  disclosure rules live in `docs/policy/telemetry_privacy.md`.

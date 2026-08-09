@@ -94,6 +94,31 @@ An SPPM is not:
 - a free-form reporting canvas for arbitrary KPIs
 - a minimal flowchart
 
+## Regression And Stability Gates
+
+The canonical SPPM corpus manifest is
+`examples/conformance/sppm_corpus.json`. Accepted normalized layout and SVG
+artifacts live under `tests/golden/sppm/` and must never be hand-edited.
+
+Every change that can affect SPPM geometry or diagnostics must pass:
+
+- the SPPM layout-invariant suite
+- byte-identical baseline regeneration and drift comparison
+- focused determinism tests for ordering and accepted strategy behavior
+
+The promoted production layout strategy remains frozen for ordinary
+correctness work. The historical strategy matrix is run only for a deliberate
+redesign, and reopening the strategy requires an explicit accepted decision.
+
+An intentional golden update must regenerate artifacts, review every diff,
+rerun the drift check, and explain the accepted change and review evidence.
+Generated artifacts are never edited by hand.
+
+The executable commands and corpus procedures live with
+`scripts/check_sppm_baseline_drift.py`,
+`scripts/build_sppm_baseline_artifacts.py`, and
+`tests/unit/test_sppm_layout_invariants.py`.
+
 ## Relationship to other documents
 
 - Diagram meaning is defined here.

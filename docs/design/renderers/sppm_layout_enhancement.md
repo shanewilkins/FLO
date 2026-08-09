@@ -1,6 +1,10 @@
 # SPPM Publication and Feature Completeness Design
 
-Status: draft
+Status: accepted
+
+Release ownership: 0.2 owns publication prerequisites and standalone SPPM
+hardening. 0.6 owns the complete multi-page publication acceptance boundary
+before SPPM reaches the stable renderer tier.
 
 ## 0) Locked Decisions (May 2026)
 
@@ -79,7 +83,8 @@ The following should remain implementation details unless a future need proves o
 
 ## 5) Publication Model
 
-SPPM publication needs an internal model above the canonical IR and below the renderer-specific DOT/SVG output.
+SPPM publication needs an internal model above the canonical IR and below
+layout, standalone SVG emission, and document composition.
 
 That publication model should be able to represent:
 
@@ -90,7 +95,9 @@ That publication model should be able to represent:
 - stable step references and cross-map references
 - selected projection mode for each map
 
-This model is renderer-independent. DOT, SVG, PDF, and any later interactive view should consume the same publication plan rather than recomputing semantics independently.
+This model is renderer-independent. Standalone SVG, composed PDF, and any later
+interactive view should consume the same publication plan rather than
+recomputing semantics independently.
 
 ## 6) Subprocess Semantics for SPPM
 
@@ -291,5 +298,6 @@ This spec is satisfied when the roadmap and implementation can demonstrate all o
 ## 14) Architectural Notes
 
 - Keep semantics in the compiler/publication model; keep geometry in the renderer.
-- Do not hardcode DOT-specific logic as the only representation of pagination or hierarchy.
+- Do not hardcode renderer-specific logic as the only representation of
+  pagination or hierarchy.
 - Static-first design should not block future interactive rendering as long as the publication model remains renderer-independent.

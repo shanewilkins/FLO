@@ -45,8 +45,9 @@ human-friendly guidance and examples.
 
 - Parser behavior: attempt safe coercions (e.g., numeric string → number). If
   coercion fails, emit a validation error.
-- Unknown metadata keys: allowed but flagged with a `warning: untyped_key` so
-  authors can consider adding types to the schema.
+- Unknown metadata keys: the approved requirement is to preserve them and emit
+  a non-fatal warning that identifies the exact metadata path. This remains an
+  implementation-alignment item while this guide is draft.
 
 ## Schema location and usage
 
@@ -110,4 +111,4 @@ human-friendly guidance and examples.
 - See `docs/design/render_intent_schema.md` for the proposed source-level
   render/publication intent schema and multi-view render design.
 
-Document version: accepted explanatory guide
+Document version: draft explanatory guide

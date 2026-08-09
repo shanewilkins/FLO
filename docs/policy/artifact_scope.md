@@ -21,7 +21,8 @@ These artifact classes fit FLO's scope:
 
 1. Core process projections
    - Direct views of the canonical process model.
-   - Examples: flowchart, swimlane, SPPM.
+   - Examples: swimlane and SPPM; flowchart is retained only as deprecated
+     0.1.x compatibility.
 
 2. Process-native movement and flow views
    - Views derived from process structure plus declared movement, layout, or
@@ -74,3 +75,18 @@ When proposing a new artifact for FLO, the proposal should explicitly state:
 
 If the proposal depends on external scoring, causal reasoning, prioritization,
 or customer-analysis semantics, it should be treated as out of scope for FLO.
+
+## Format Adapter Boundary
+
+An import or export adapter may live in FLO when it translates a process model
+to or from canonical FLO semantics without importing a distinct analytical
+methodology into the language core.
+
+Lossy or partial imports must produce an explicit fidelity report that
+distinguishes mapped, approximated, ignored, and unsupported constructs. They
+must not silently guess unsupported meaning or expand FLO's core semantics only
+to mirror the source format.
+
+The first committed BPMN bridge is therefore a post-1.0 one-way importer for a
+documented subset. BPMN export and round-trip compatibility are separate future
+decisions.

@@ -1,91 +1,54 @@
 # FLO Documentation Map
 
-This directory is the top-level navigation hub for FLO documentation.
+FLO uses domain-based governance: each type of question has one authoritative
+home. The complete rules are in `GOVERNANCE.md`.
 
-Use it to answer two questions quickly:
+## Authority By Question
 
-- where a document should live
-- which document is authoritative when topics overlap
+| Question | Start here |
+| --- | --- |
+| What must FLO deliver, and by when? | `requirements/` |
+| What does FLO source or a public interface mean? | `specs/` |
+| What serialized shape is valid? | `../schema/` |
+| What safety, privacy, scope, or governance rule applies? | `GOVERNANCE.md` and `policy/` |
+| Why was a durable decision made? | `design/adr/` |
+| How is a component implemented? | `design/` and source code |
+| How does a user accomplish a task? | `Quickstart.md` and `User_Manual.md` |
 
-## Documentation Roles
+No total document hierarchy applies across these domains. A requirement owns
+scope but does not silently change current semantics; an ADR records rationale
+but does not override a specification; a schema owns serialized structure but
+does not set release priority.
 
-FLO uses four main documentation layers.
+## Main Document Sets
 
-1. `docs/policy/`
-   - governance rules
-   - authority boundaries
-   - update policy for specs, schema, implementation, and tests
+- `requirements/`: normative user outcomes and cross-cutting technical
+  constraints, including the committed path through 1.0
+- `specs/`: normative current language, CLI, diagram, and interchange meaning
+- `policy/`: durable scope and privacy boundaries
+- `design/adr/`: accepted and superseded durable decisions
+- `design/`: explanatory architecture, implementation strategy, renderer
+  notes, migration plans, and history
+- `../schema/`: machine-readable canonical structural contracts
 
-2. `docs/specs/`
-   - normative human-readable semantics
-   - language meaning
-   - diagram meaning
-   - CLI-facing contracts
+Supporting documents:
 
-3. `schema/`
-   - machine-readable structural contracts
-   - canonical serialized IR and type shapes
-
-4. `docs/design/`
-   - explanatory architecture
-   - implementation strategy
-   - migration plans
-   - ADRs and historical context
-
-Design substructure:
-
-- `docs/design/adr/` for architecture decision records
-- `docs/design/renderers/` for renderer-family design notes
-- `docs/design/history/` for non-normative historical background
-
-Supporting user-facing documents live at the top of `docs/`:
-
-- `User_Manual.md` for how to use FLO
-- `CHANGELOG.md` for released changes
-- `FLO_Manifesto.md` for product and modeling principles
-- `ROADMAP.md` for the public criteria-first path to 1.0
-
-Working notes that are still being shaped should stay outside this tree until
-they are ready to become design, policy, spec, or user-facing docs.
-
-## Authority Order
-
-When documents overlap or disagree, resolve conflicts in this order:
-
-1. `schema/`
-2. `docs/policy/`
-3. `docs/specs/`
-4. `src/flo/`
-5. `README.md` and `docs/User_Manual.md`
-6. `docs/design/`
-
-## Quick Navigation
-
-Start here based on the question you are trying to answer.
-
-- What is authoritative: `docs/policy/authoritative_artifacts.md`
-- What does FLO source mean: `docs/specs/core_language.md`
-- What does a diagram type mean: `docs/specs/`
-- What is the serialized contract: `schema/flo_ir.json` and `schema/flo_types.json`
-- Why was it designed this way: `docs/design/`
-- Where are key architecture decisions: `docs/design/adr/`
-- Where are renderer implementation notes: `docs/design/renderers/`
-- How do I use the tool: `docs/User_Manual.md`
-- What changed recently: `docs/CHANGELOG.md`
-- What is the path to 1.0: `docs/ROADMAP.md`
+- `Quickstart.md`: shortest end-to-end user path
+- `User_Manual.md`: complete user reference
+- `ROADMAP.md`: milestone themes, MVP meaning, and release gates
+- `CHANGELOG.md`: released changes
+- `FLO_Manifesto.md`: product and modeling principles
 
 ## Placement Rules
 
-Put a document in `docs/policy/` when it defines governance or source-of-truth rules.
+- Put a user outcome or release commitment in the appropriate requirement
+  register.
+- Put language, CLI, diagram, or public-interface meaning in a specification.
+- Put serialized structure in a schema.
+- Put durable safety, privacy, scope, or governance rules in policy.
+- Put decision rationale in an ADR.
+- Put implementation explanation and temporary migration plans in design.
+- Put task-oriented teaching in the Quickstart or reference guide.
 
-Put a document in `docs/specs/` when it defines required semantics or diagram behavior.
-
-Put a document in `docs/design/` when it explains rationale, architecture, migration sequencing, or implementation boundaries.
-
-Keep active scratch plans in `notes/` until they are ready to be promoted into the documentation set.
-
-## Current Gaps To Watch
-
-- Draft and proposed design notes should either advance, be archived, or be marked explicitly as still open.
-- Historical design notes should point readers back to the current spec or schema authority.
-- File names in `docs/design/` should avoid implying normative status unless the file is explicitly non-normative.
+Working notes stay in `notes/` until their role is clear. Completed plans should
+move to history or point directly to the current contract.

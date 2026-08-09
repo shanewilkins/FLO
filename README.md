@@ -1,12 +1,18 @@
 # FLO
 
-FLO is a declarative language for modeling process flow.
+FLO is a declarative plain-text language for process-improvement professionals
+modeling business processes.
 
 It allows you to define processes in a minimal, versioned format and
 compile them into a canonical graph representation (FLO IR) for
 visualization and analysis.
 
-User documentation: `docs/User_Manual.md`
+The same model can serve visual review and downstream analysis tools without
+being trapped in a proprietary modeling application.
+
+Start here: `docs/Quickstart.md`
+
+Complete reference: `docs/User_Manual.md`
 
 ------------------------------------------------------------------------
 
@@ -24,7 +30,7 @@ uv sync --dev
 Run FLO locally:
 
 ```bash
-uv run flo render examples/reference/linear.flo
+uv run flo render examples/reference/linear.flo --diagram sppm
 ```
 
 Run quality gates:
@@ -100,7 +106,8 @@ steps:
 
 -   Deterministic compilation to FLO IR\
 -   Structural and semantic validation\
--   Graph projections: flowchart, swimlane, spaghetti map, SPPM\
+-   Graph projections: swimlane, spaghetti map, SPPM, plus deprecated
+    flowchart compatibility through 0.1.x\
 -   SVG and JSON exports\
 -   Ingredients list and movement report exports\
 -   Stable foundation for analytics
@@ -131,17 +138,20 @@ Downstream projects depend on FLO IR.
 
 ------------------------------------------------------------------------
 
-## Source of Truth Hierarchy
+## Governance And Sources Of Truth
 
-- Structural contract SSOT: `schema/flo_ir.json`
-- Policy authority: `docs/policy/authoritative_artifacts.md`
-- Diagram and artifact specs: `docs/specs/`
-- Core semantic spec: `docs/specs/core_language.md`
-- Historical semantic background note: `docs/design/history/IR.md`
-- User-facing summary: `README.md`
+FLO assigns authority by domain rather than using one total document
+hierarchy:
 
-Hierarchy policy and update workflow are defined in
-`docs/policy/authoritative_artifacts.md`.
+- product outcomes and release commitments: `docs/requirements/`
+- language, CLI, diagram, and public-interface meaning: `docs/specs/`
+- serialized structure: `schema/`
+- scope and privacy boundaries: `docs/policy/`
+- durable decision rationale: `docs/design/adr/`
+- user workflows: `docs/Quickstart.md` and `docs/User_Manual.md`
+
+The complete governance model and change classes are defined in
+`docs/GOVERNANCE.md`.
 
 ------------------------------------------------------------------------
 

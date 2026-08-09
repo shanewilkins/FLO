@@ -2,116 +2,96 @@
 
 Status: accepted
 
-## Why This Exists
+## Purpose
 
-Spaghetti diagrams visualize material and people movement paths through a process,
-useful for lean manufacturing analysis and facility layout optimization. This
-specification clarifies how FLO infers and renders movement flows so the diagram
-remains a reliable analysis tool.
+Define the current implementation boundaries for FLO's movement-oriented,
+FLO-owned direct-SVG renderer.
 
-## Visual Conventions
+Normative diagram meaning remains in `docs/specs/spaghetti_map.md`.
 
-### Spatial Layout
+## Current rendering path
 
-Spaghetti diagrams use position-based layout (neato):
+Spaghetti rendering follows this pipeline:
 
-- Nodes represent locations (inferred from node lane assignments).
-- Location positions are derived from explicit spatial metadata in the process model.
-- Edges represent movement flows (material, people, or both).
-- Flow lines are routed with spline interpolation over explicit node positions.
+1. infer material and people movements from canonical IR
+2. aggregate movements into location-pair routes
+3. extract declared locations, spatial coordinates, and optional boundaries
+4. project explicit coordinates into canvas geometry
+5. emit a standalone FLO-owned SVG artifact
 
-### Channel Selection
+The renderer does not use a graph-layout fallback. Graphviz is deprecated and
+must not be reintroduced to infer missing positions.
 
-Users may choose which movement types to visualize via `--spaghetti-channel`:
+## Channel and aggregation controls
 
-- `material` — shows material movement paths only.
-- `people` — shows people/worker movement paths only.
-- `both` — shows both material and people flows (default).
+The renderer supports:
 
-### People Movement Aggregation
+- `material`, `people`, or `both` movement channels
+- aggregate people routes by location pair
+- worker-level people routes when worker identity is available
 
-When visualizing people movements, users control aggregation via `--spaghetti-people-mode`:
+Movement inference and aggregation remain analysis concerns. SVG emission
+consumes their results and does not recalculate process semantics.
 
-- `aggregate` — combines all worker movements by location pair (default).
-- `worker` — breaks down flows by individual worker role (when available).
+## Spatial contract
 
-### Location Nodes
+Rendered route endpoints require explicit numeric spatial coordinates.
 
-Location nodes are styled as filled circles with labels showing location names.
-Flow edges are labeled with edge counts or movement frequency when available.
+The current direct-SVG implementation fails with an actionable render error if
+any rendered location lacks coordinates. Rectangle and polygon boundaries are
+optional and affect the canvas when supplied.
 
-## Renderer Boundary Model
+This is an implementation gap against the accepted partial-rendering policy in
+`docs/specs/spaghetti_map.md`.
 
-Spaghetti rendering follows a distinct pattern from swimlane/flowchart:
+The target implementation partitions selected movement routes into renderable
+and omitted sets. Default mode emits the renderable set, a stable stderr
+warning, and a visible partial-map notice. Strict mode fails when the omitted
+set is non-empty. Default mode also fails when the renderable set is empty.
 
-1. **Movement inference**
-   Extract implicit material and people movement paths from the process IR
-   using analysis helpers (`infer_material_movements`, `infer_people_movements`).
+Missing IDs and counts remain deterministic. No mode assigns synthetic
+coordinates or invokes graph layout; a deprecated layout backend is not an
+acceptable fallback.
 
-2. **Movement aggregation**
-   Combine individual movements into location-pair routes, optionally grouped
-   by worker.
+## Location presentation
 
-3. **Location and boundary extraction**
-   Extract explicit spatial/location metadata from the process model to
-   position nodes and render facility boundaries (if present).
+Location kind controls semantic SVG shape and styling. Unknown kinds keep the
+default location treatment. Route groups retain channel, source, target, item,
+worker, and aggregation information where available so artifacts remain
+inspectable and testable.
 
-4. **Graph assembly and rendering**
-   Assemble location nodes and movement edges, apply spatial layout directives,
-   and render boundary overlays (rectangles, polygons from metadata).
+## Current module boundaries
 
-## Current Module Layout
-
-- `src/flo/render/_graphviz_dot_spaghetti.py`
-  Spaghetti entrypoint, movement aggregation, and spatial graph assembly.
+- `src/flo/render/_svg_spaghetti.py`
+  Direct-SVG projection and artifact emission.
 - `flo.compiler.analysis`
-  Movement inference and aggregation (reusable for other tools).
+  Movement inference and aggregation.
+- `src/flo/render/_svg_shared_primitives.py`
+  Shared SVG definitions where the semantics are renderer-neutral.
 
-## Edge Cases and Policies
+## Verification
 
-### Missing Spatial Metadata
+Artifact-contract tests cover:
 
-If a location lacks explicit spatial coordinates:
-- The node is still rendered but position is inferred by Graphviz layout.
-- Boundary overlays that require spatial metadata are skipped gracefully.
-- A diagnostic may warn users about missing spatial data for optimal visualization.
+- channel selection
+- worker and aggregate people modes
+- route labels, titles, styles, and counts
+- location-kind shapes
+- rectangle and polygon boundaries
+- deterministic missing-spatial failure
 
-### No Movements Inferred
+Required implementation coverage adds:
 
-If a process has no material or people movements (e.g., purely administrative):
-- The diagram renders with location nodes but no edges.
-- It indicates that movement analysis is not applicable to the process.
-- Users can still export the location topology.
+- mixed positioned and unpositioned endpoints in default partial mode
+- stable omitted location and route counts
+- visible partial-map notice
+- strict-mode failure before artifact emission
+- default-mode failure when no complete route remains
 
-### Boundary Overlays
+## Extension rules
 
-Facility boundaries are optional metadata (`layout_boundary` or `boundary` fields):
-- Rectangle boundaries define min/max coordinates.
-- Polygon boundaries define explicit point sequences.
-- Boundaries are rendered as subgraph cluster boxes or polygon shapes.
-
-### Worker Identity in People Movement
-
-Worker-level aggregation requires staffing metadata (`staff_role` or similar).
-When metadata is absent:
-- People movements fall back to location-pair aggregation.
-- A diagnostic notes missing staffing data for granular analysis.
-
-## Analysis vs. Rendering Separation
-
-Movement inference and aggregation are part of the analysis layer (not the
-renderer). This allows:
-
-- Reuse of movement analysis for other tools (reports, metrics, simulations).
-- Decoupling of spatial visualization from movement computation.
-- Future support for different spatial backends (not just Graphviz).
-
-## Guidance for Spaghetti Extensions
-
-Future spaghetti work should:
-
-- Keep movement inference in the analysis layer.
-- Keep spatial metadata extraction and boundary rendering separate.
-- Use Graphviz's neato layout for position-driven diagrams.
-- Avoid baking spatial semantics into shared renderer modules.
-- Support future backends (e.g., SVG, D3) by separating analysis from rendering.
+- Keep movement inference outside the renderer.
+- Keep explicit spatial semantics separate from graph layout.
+- Implement the accepted partial and strict missing-spatial policy before
+  claiming the gap is closed.
+- Do not add deprecated backend dependencies.

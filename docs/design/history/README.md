@@ -1,5 +1,7 @@
 # Historical Design Notes
 
+Status: historical
+
 This directory keeps historical context that is useful for background only.
 
 Files here are not normative.

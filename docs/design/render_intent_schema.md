@@ -1,8 +1,9 @@
-# Render Intent Schema (design)
+# Render Intent Schema
 
-Status: draft
+Status: accepted
 
-This is a draft explanatory design note for source-owned render intent.
+This is the accepted explanatory design contract for source-owned render
+intent.
 The authoritative structural contract lives in `schema/flo_ir.json` under
 `process.metadata.render`.
 Implementation rollout remains phased and this note is non-blocking for the
@@ -40,7 +41,8 @@ Render intent schema decisions should be filtered through these authoring rules:
 2. Keep nesting shallow where possible.
 3. Prefer stable, descriptive keys over compact cryptic abbreviations.
 4. Support clear defaults so authors can omit most fields.
-5. Keep view ids readable and task-oriented (for example `sppm_main`, `spaghetti_flow`).
+5. Keep stable view ids readable and task-oriented (for example `sppm_main`,
+   `spaghetti_flow`); use an optional label for display text.
 6. Minimize repeated values across views via inheritance from `render.defaults`.
 7. Error messages must suggest short, copy-pasteable fixes.
 
@@ -50,7 +52,9 @@ Render intent schema decisions should be filtered through these authoring rules:
 - Require only per-view deltas under `render.views.<id>`.
 - Keep numeric/unit fields human-oriented:
   - page format as named token (`letter`, `a4`, `legal`, `tabloid`),
-  - dimensions as familiar strings (`800`, `8.5in`, `21cm`).
+  - dimensions as familiar values (`800`, `800px`, `8.5in`, `21cm`, `210mm`).
+- Treat a bare numeric dimension as pixels for compatibility. New examples
+  should include units when physical size matters.
 - Avoid schema branches that force duplicated option names in many locations.
 - Preserve alias migration paths long enough to avoid manual rewrites of all
   existing examples in one release.
@@ -73,7 +77,7 @@ For each resolved render option:
 
 This keeps source reproducible while preserving fast local iteration.
 
-## Render intent structure (proposed)
+## Render intent structure
 
 Render intent should live under process metadata:
 
@@ -103,6 +107,7 @@ process:
 
       views:
         sppm_main:
+          label: Main Process Map
           diagram: sppm
           publication:
             page_format: letter
@@ -115,6 +120,7 @@ process:
             target_columns: 3
 
         spaghetti_material:
+          label: Material Travel
           diagram: spaghetti
           spaghetti:
             channel: material
@@ -139,8 +145,35 @@ Notes:
 
 - `defaults` applies to all views unless overridden.
 - `views` defines named projections for the same underlying process.
+- Each view key is a stable machine identifier. `label` is optional display
+  text and may change without changing the identifier used by CLI, bundles, or
+  automation.
 - `diagram` remains optional in `defaults`; if omitted there, each view must set it.
+- Shared `publication` and `layout` sections carry cross-renderer intent.
+  Renderer-specific options live in a subtree named for the renderer, such as
+  `spaghetti`, `sppm`, `swimlane`, or `value_stream`.
+- A renderer-specific subtree must agree with the resolved `diagram`; unrelated
+  renderer subtrees are rejected or warned according to validation mode.
 - Existing metadata aliases can remain supported during migration.
+
+## Accepted vocabulary
+
+After flowchart removal, maintained diagram identifiers are `sppm`,
+`swimlane`, and `spaghetti`. The 0.3 value-stream-map release adds
+`value_stream` when that renderer becomes available.
+
+Spaghetti intent uses:
+
+- channels: `material`, `people`, `both`
+- people modes: `aggregate`, `worker`
+
+The schema, validator, resolver, CLI, and tests must retire or explicitly
+migrate the stale render-intent-only values `topdown`, `equipment`, and
+`individual`. Until those layers agree, the accepted contract is an
+implementation gap rather than a claim about current runtime behavior.
+
+Dimensions accept `px`, `in`, `cm`, and `mm`. Bare numeric values remain
+compatible and are interpreted as pixels.
 
 ## Should intended render modes be in source?
 
@@ -158,7 +191,7 @@ Important constraint:
 - View selection should be explicit (`--view sppm_main`) and overrideable
   (`--diagram spaghetti`), not inferred from file path.
 
-## Proposed CLI evolution
+## CLI evolution
 
 Keep current flags. Add only small routing helpers:
 
@@ -179,20 +212,23 @@ Start narrow to reduce risk:
 - `render.defaults.layout.max_width`
 - `render.defaults.layout.target_columns`
 - `render.views.<id>.diagram`
+- `render.views.<id>.label`
 - Optional view overrides for the same publication/layout keys
 
 Defer until phase 2 or later:
 
-- Full margin controls and unit syntax
 - Renderer-specific deep subtrees beyond currently supported options
 - Pagination policies and multi-page sequencing directives
 
-## Validation rules (proposed)
+## Validation rules
 
 - Unknown `render.views` entries are allowed but warned if malformed.
 - `render.views.<id>.diagram` must be one of supported diagrams.
+- `render.views.<id>.label`, when present, must be non-empty display text.
 - `publication.page_format` must be one of known presets.
-- Numeric fields (`max_width`, `target_columns`) must be positive.
+- Dimension fields accept positive numbers interpreted as pixels or positive
+  values with `px`, `in`, `cm`, or `mm` units.
+- Count fields such as `target_columns` must be positive integers.
 - `header.enabled` and `footer.enabled` are booleans.
 
 Validation usability rules:
@@ -250,16 +286,18 @@ Phase 4: migration and deprecation
 - Existing CLI contracts and error codes must remain stable.
 - Existing build scripts should need no immediate changes.
 
-## Open decisions
+## Accepted decisions
 
-- Should `render.views` require stable ids or allow freeform labels?
-- Should diagram-specific keys live under `render.views.<id>.<diagram_name>`
-  or under a shared flat option map?
-- Should margins be strict pixel integers in phase 1, or permit dimensions
-  (`px`, `in`, `cm`) immediately?
+- `render.views` uses stable machine identifiers with optional display labels.
+- Cross-renderer publication and layout intent uses shared sections;
+  renderer-specific options use renderer-named subtrees.
+- Dimension fields accept `px`, `in`, `cm`, and `mm`; bare numbers remain
+  pixel-compatible.
+- CLI values override named views, named views merge over process defaults,
+  process defaults override profiles, and profiles override renderer defaults.
 
-## Recommendation
+## Decision summary
 
 Adopt source-level render intent with named multi-view support, keep CLI as
-overrides, and stage refactoring through a precedence resolver before exposing
-new public behavior.
+overrides, and complete the phased resolver, schema, validator, and vocabulary
+alignment without changing legacy inputs silently.

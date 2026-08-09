@@ -16,12 +16,13 @@ This note complements `docs/policy/artifact_scope.md`.
 
 ## Taxonomy Overview
 
-FLO produces four broad artifact families:
+FLO produces five broad artifact families:
 
 1. Canonical model artifacts
 2. Standalone presentation artifacts
 3. Composed publication artifacts
-4. Test and regression artifacts
+4. Observed process data and analysis artifacts
+5. Test and regression artifacts
 
 These families should remain distinct. A contributor should not treat a test
 fixture as the same kind of thing as a user-facing deliverable, and should not
@@ -61,7 +62,7 @@ their own.
 
 Examples:
 
-- flowchart render
+- deprecated 0.1.x flowchart compatibility render
 - swimlane render
 - spaghetti map render
 - SPPM standalone figure
@@ -72,7 +73,7 @@ Expected output forms:
 
 - SVG as the preferred standalone vector graphic
 - PNG and PDF as derived convenience forms
-- DOT as a backend-oriented projection while Graphviz remains in active use
+- DOT only as a historical or externally produced compatibility projection
 - plain-text or structured summary exports where the artifact is not graphical
 
 Ownership:
@@ -85,12 +86,12 @@ Canonicality:
 
 - canonical standalone graphic target: SVG
 - derived convenience forms: PNG, PDF
-- transitional backend artifact: DOT
+- historical compatibility artifact: DOT
 
 Rule:
 
-- Treat DOT as an implementation-era projection, not the long-term primary
-  user-facing artifact.
+- Do not restore DOT as a FLO renderer intermediate or primary user-facing
+  artifact.
 
 ## 3. Composed Publication Artifacts
 
@@ -122,7 +123,37 @@ Rule:
   artifact family with page furniture, continuation behavior, and composition
   rules.
 
-## 4. Test And Regression Artifacts
+## 4. Observed Process Data And Analysis Artifacts
+
+These artifacts describe observed executions and conclusions derived from them.
+They remain separate from designed source and canonical IR.
+
+Examples:
+
+- trace datasets aligned to `schema/flo_trace.json`
+- explicit activity-key mapping inputs
+- model-to-trace alignment reports
+- aggregate transition, wait, and rework reports
+
+Ownership:
+
+- event semantics: `docs/specs/telemetry_events.md`
+- structural contract: `schema/flo_trace.json`
+- trust, persistence, and disclosure: `docs/policy/telemetry_privacy.md`
+- future implementation: telemetry import and analysis modules
+
+Canonicality:
+
+- the imported trace is authoritative only for the observations it contains
+- alignment and analysis reports are derived artifacts
+- neither imported nor derived telemetry silently changes the designed model
+
+Rule:
+
+- Runtime observability spans are not process trace datasets, and process trace
+  data is not canonical model truth.
+
+## 5. Test And Regression Artifacts
 
 These artifacts exist to validate behavior, not to serve as end-user outputs.
 
@@ -158,7 +189,7 @@ Contributors should use this decision order:
 2. Primary normative contracts: policy, specs, schema
 3. Primary standalone graphic target: SVG
 4. Primary publication deliverable: composed document output
-5. Derived convenience or transitional outputs: DOT, PNG, backend-specific
+5. Derived convenience or historical outputs: DOT, PNG, backend-specific
    intermediates, baseline render files
 
 ## Ownership Matrix
@@ -168,6 +199,7 @@ Contributors should use this decision order:
 | canonical model semantics | specs + schema | `docs/specs/`, `schema/` |
 | renderer and export behavior | specs + design + code | `docs/specs/`, `docs/design/`, `src/flo/render/`, `src/flo/export/` |
 | publication composition | design + future implementation | `docs/design/`, `src/flo/publish/` |
+| observed process data and analysis | schema + spec + policy + future implementation | `schema/flo_trace.json`, `docs/specs/`, `docs/policy/` |
 | fixtures and regression assets | examples + tests + scripts | `examples/`, `tests/`, `renders/`, `scripts/` |
 
 ## Repository Placement Guidance
@@ -189,14 +221,17 @@ Given the accepted render-platform direction:
 
 - SVG is the intended primary standalone graphics artifact.
 - PDF remains a primary composed-publication deliverable.
-- DOT remains a current implementation artifact while Graphviz is still active.
+- DOT is historical compatibility context; it is not part of the active
+  renderer platform.
 - Typst or similar compositor input should be treated as an intermediate
   composition artifact rather than the end-user deliverable.
+- Process trace datasets and derived conformance reports remain separate from
+  canonical model artifacts and from runtime observability.
 
 ## References
 
 - `docs/policy/artifact_scope.md`
-- `docs/policy/authoritative_artifacts.md`
+- `docs/GOVERNANCE.md`
 - `docs/design/publication_model.md`
 - `docs/design/render_platform_target_architecture.md`
 - `examples/README.md`

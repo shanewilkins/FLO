@@ -31,8 +31,8 @@ FLO will adopt the following target render stack:
 - FLO-owned SVG emission as the canonical standalone graphics path
 - Typst as the publication compositor for page-aware document output
 
-Graphviz remains supported only as a migration backend and optional fallback,
-not as the long-term architectural center of the renderer platform.
+Graphviz was accepted only as a temporary migration backend. It is now
+deprecated and absent from the active renderer path.
 
 ## Decision Details
 
@@ -112,7 +112,7 @@ Negative consequences:
 
 The migration should be incremental.
 
-- Keep Graphviz working while extracting backend-neutral contracts.
+- Preserve user-visible behavior while extracting backend-neutral contracts.
 - Move diagram families independently rather than attempting a flag day.
 - Treat spaghetti and SPPM differently from flowchart/swimlane when their
   semantics demand it.

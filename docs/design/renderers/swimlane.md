@@ -14,8 +14,7 @@ Current implementation status:
 - Swimlane is a maintained direct-SVG diagram family.
 - Layout is built through the FLO-owned ELK request/result seam in
    `src/flo/render/layout_core/`.
-- Graphviz-era DOT behavior is retained only as historical context or
-   compatibility background where older notes still mention it.
+- Deprecated Graphviz-era behavior is not part of the active renderer path.
 
 ## Visual Conventions
 

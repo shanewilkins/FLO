@@ -1,13 +1,16 @@
-# FLO User Manual
+# FLO Reference Guide
 
-This manual explains how to write FLO models, validate them, and generate outputs for visualization and automation.
+This reference explains the complete FLO authoring, validation, rendering, and
+export surface. New users should begin with `docs/Quickstart.md`.
 
 Normative language semantics and CLI contracts live under `docs/specs/`.
 This manual is user-facing guidance and examples; when it summarizes a rule,
 the spec remains authoritative.
 
 For the documentation map, see `docs/README.md`.
-For governance and source-of-truth rules, see `docs/policy/authoritative_artifacts.md`.
+For governance, change classes, and domain-specific authority, see
+`docs/GOVERNANCE.md`.
+For normative product and technical requirements, see `docs/requirements/`.
 For the project framing and modeling principles, see `docs/FLO_Manifesto.md`.
 
 ## 1) What FLO Is
@@ -43,10 +46,11 @@ uv sync --dev
 ```
 
 Run FLO on a file.
-The default output is direct SVG to stdout.
+The default output format is direct SVG to stdout. New work should explicitly
+select a maintained diagram family.
 
 ```bash
-uv run flo examples/reference/linear.flo
+uv run flo examples/reference/linear.flo --diagram sppm
 ```
 
 Preferred modern entry points:
@@ -59,7 +63,7 @@ uv run flo render examples/reference/new_semantics.flo --export svg --render-to 
 You can also use explicit subcommands:
 
 ```bash
-uv run flo render examples/reference/linear.flo
+uv run flo render examples/reference/linear.flo --diagram sppm
 ```
 
 Common developer commands:
@@ -216,7 +220,10 @@ Queue and task timing constraint:
 - `cycle_time`, `crossover_time`, `transfer_time`, and `changeover_time` are valid on work nodes such as `task`, `system_task`, and `subprocess`.
 - If `wait_time` appears on a work node, compiler validation fails and the model must be restructured by inserting a queue node.
 
-The following metadata keys are recognized and validated by FLO. Any other keys are passed through to the IR without validation and can be used for custom tooling.
+The following metadata keys are recognized and validated by FLO. Other keys are
+currently preserved in IR for custom tooling. The approved requirement is to
+emit non-fatal warnings for unknown keys without rejecting or dropping them;
+implementation alignment is tracked in the technical requirements catalog.
 
 | Key | Type | Description |
 | --- | --- | --- |
@@ -473,6 +480,12 @@ For spatial analysis and spaghetti-map rendering, locations can include optional
 - `metadata.spatial.unit`: optional unit (`mm|cm|m|in|ft`)
 - `kind`: optional semantic location kind used for spaghetti-map shape styling
 
+Current 0.1.x direct-SVG spaghetti rendering requires coordinates for every
+rendered location and fails actionably when any are absent. The accepted future
+contract is deterministic partial rendering by default with a visible warning,
+plus strict failure on request; implementation alignment is tracked as
+`TR-042` in the technical requirements catalog.
+
 Recommended domain-neutral kinds:
 
 - `storage`: inventory/holding areas
@@ -523,6 +536,7 @@ process:
           - {x: 8.0, y: 0.0}
           - {x: 8.0, y: 4.0}
           - {x: 0.0, y: 4.0}
+```
 
 Example:
 
@@ -804,13 +818,13 @@ See Section 4.1.1 for include conventions.
 Parse, compile, validate, and render or export output.
 
 ```bash
-uv run flo render path/to/model.flo
+uv run flo render path/to/model.flo --diagram sppm
 ```
 
 Equivalent shorthand:
 
 ```bash
-uv run flo path/to/model.flo
+uv run flo path/to/model.flo --diagram sppm
 ```
 
 ## 5.2 Validate
@@ -1032,7 +1046,7 @@ uv run flo validate path/to/model.flo
 ## 12.2 Generate diagram for review
 
 ```bash
-uv run flo render path/to/model.flo --export svg --render-to review.svg --diagram flowchart
+uv run flo render path/to/model.flo --export svg --render-to review.svg --diagram sppm
 ```
 
 ## 12.3 Generate machine-readable JSON for downstream tooling
@@ -1063,10 +1077,3 @@ Useful project references:
 - `docs/design/history/IR.md`
 - `schema/flo_ir.json`
 - `examples/README.md`
-
----
-
-If you want, the next revision can be split into two manuals:
-
-- A short Quickstart (2-3 pages)
-- A full Reference Guide (complete command and schema details)

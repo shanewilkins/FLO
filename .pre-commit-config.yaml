@@ -63,9 +63,9 @@ repos:
         pass_filenames: false
       - id: docs-governance-check
         name: docs governance (via uv)
-        entry: uv run python scripts/check_docs_governance.py
+        entry: uv run python scripts/check_docs_governance.py --strict
         language: system
-        pass_filenames: true
+        pass_filenames: false
         files: "^(docs/|examples/|schema/|README\\.md|src/flo/services/errors\\.py)"
       - id: pytest-check
         name: pytest (via uv)

@@ -1,7 +1,13 @@
 # Flowchart
 
+Status: deprecated in 0.1.x; removal committed for 0.2.0
+
 Purpose: define what a flowchart means in FLO and which behavior is part of its
 normative contract.
+
+This contract exists only for 0.1.x compatibility. New models and documentation
+should use swimlane or SPPM. Flowchart is removed from the capability matrix,
+CLI, implementation, and active documentation in 0.2.0.
 
 ## Intent
 

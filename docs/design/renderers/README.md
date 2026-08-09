@@ -1,5 +1,7 @@
 # Renderer Design Notes
 
+Status: accepted
+
 This directory holds explanatory renderer implementation notes.
 
 These notes describe decomposition, boundaries, and rendering strategy.
@@ -9,7 +11,7 @@ Normative diagram behavior belongs in `docs/specs/`.
 Current renderer notes:
 
 - `boundaries.md`
-- `flowchart.md`
+- `flowchart.md` (historical compatibility note; renderer removal in 0.2.0)
 - `spaghetti.md`
 - `sppm.md`
 - `sppm_layout_enhancement.md`

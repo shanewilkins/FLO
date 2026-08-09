@@ -1,11 +1,11 @@
 # Render Platform Target Architecture
 
-Status: proposed
+Status: accepted
 
 ## Purpose
 
 Define the target split between diagram semantics, layout, rendering, and true
-document composition after the current Graphviz-first design.
+document composition after the former Graphviz-first design.
 
 This document is explanatory. Diagram meaning remains defined by
 `docs/specs/`, and publication governance remains defined by `docs/policy/`.
@@ -19,8 +19,8 @@ Target stack:
 - ELK for algorithmic graph layout and routing where a diagram needs it.
 - FLO-owned SVG emission as the canonical standalone graphics path.
 - Typst as the document compositor for publication-grade paged output.
-- Graphviz retained only as a legacy backend during migration and as an
-  optional fallback where parity is not yet complete.
+- Graphviz is deprecated and no longer participates in the active renderer
+  path. Historical compatibility context remains in the migration record only.
 
 ## Bright-Line Responsibilities
 
@@ -87,9 +87,9 @@ This split avoids two failure modes:
 1. forcing the layout backend to become a publication system
 2. forcing the document compositor to become a graph layout engine
 
-The current Graphviz stack shows both pressures. Graphviz is being asked to do
-publication-adjacent work it does not naturally model, while the renderer layer
-contains increasing amounts of backend-specific routing and SVG repair logic.
+The former Graphviz stack showed both pressures: a layout backend was asked to
+do publication-adjacent work, while shared renderer code accumulated
+backend-specific routing and SVG repair logic.
 
 ## True Composition Versus Large Graphics
 
@@ -237,16 +237,6 @@ Suggested contents:
 - `markers.py`
 - `shapes.py`
 
-### `src/flo/render/backends/graphviz/`
-
-Legacy DOT lowering and Graphviz invocation isolated from shared render logic.
-
-Suggested contents:
-
-- `dot_emit.py`
-- `service.py`
-- `postprocess_svg.py`
-
 ### `src/flo/publish/`
 
 Publication planning and Typst composition.
@@ -260,13 +250,14 @@ Suggested contents:
 
 ## Diagram-Family Guidance
 
-### Flowchart and swimlane
+### Swimlane
 
 Primary target:
 
 - Diagram model -> ELK -> FLO SVG
 
-Graphviz may remain as a temporary fallback until layout parity is acceptable.
+Flowchart uses this path only for 0.1.x compatibility and is removed in 0.2.0
+rather than carried forward as a target renderer family.
 
 ### Spaghetti map
 
@@ -274,18 +265,30 @@ Primary target:
 
 - Diagram model with explicit spatial coordinates -> FLO SVG
 
-Spaghetti should not depend on ELK when location metadata already determines
-placement. ELK is optional only for graceful fallback when positions are absent.
+Spaghetti does not depend on ELK when location metadata determines placement.
+Missing positions follow the accepted partial-or-strict policy: FLO may omit
+incomplete routes with explicit diagnostics, but it never invents geometry or
+uses graph layout as a spatial fallback.
 
 ### SPPM
 
 Primary target:
 
-- Diagram model -> selective layout support -> FLO SVG fragments -> Typst
+- Diagram model -> ELK -> FLO SVG fragments -> Typst
   publication composition
 
 SPPM should be treated as publication-first output, not merely as a large graph
 that happens to be split into pages.
+
+### Value stream map
+
+Primary target for the planned 0.3 renderer:
+
+- Canonical and analysis-backed diagram model -> ELK -> FLO SVG
+
+Information flow and material flow remain distinct semantic surfaces. Partial
+data produces explicit diagnostics; the renderer must not infer that an absent
+surface exists.
 
 ## Non-Goals
 
@@ -294,7 +297,7 @@ This target architecture does not require:
 - a browser runtime
 - a commercial diagram engine
 - LaTeX or TikZ as the primary diagram backend
-- immediate removal of Graphviz from the codebase
+- reconstruction of a Graphviz compatibility backend
 
 ## References
 

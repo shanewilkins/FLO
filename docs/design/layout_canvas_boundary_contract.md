@@ -11,8 +11,8 @@ shape policy has one owner.
 
 - ELK plus direct SVG backend owns edge route shape policy for SPPM rework
   branch and return variants.
-- Graphviz SVG postprocess is compatibility-only and must not own or duplicate
-  rework route policy.
+- Deprecated backend postprocessing must not be restored or allowed to own or
+  duplicate rework route policy.
 - Canvas consumers render what layout provides and may apply deterministic
   presentation transforms only when they do not redefine route policy.
 
@@ -33,16 +33,15 @@ shape policy has one owner.
 
 - Layout layer does not encode renderer-specific SVG element concerns.
 - Renderer layer does not rerun layout or introduce alternative route policy.
-- Graphviz compatibility passes may normalize canvas padding/background and
-  wrapped-boundary fallback details, but must not mutate ELK-owned rework path
-  shapes.
+- Canvas presentation passes may normalize padding and background, but must not
+  mutate ELK-owned rework path shapes.
 
 ## Validation Expectations
 
 - Direct SVG backend tests assert orthogonal and deterministic rework branch
   and return polyline normalization.
-- Graphviz service tests focus on compatibility transforms, not route-shape
-  ownership logic.
+- SVG presentation tests focus on deterministic transforms, not competing
+  route-shape ownership logic.
 
 ## Migration Implication
 

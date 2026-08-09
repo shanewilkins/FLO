@@ -141,7 +141,7 @@ families:
 
 ## Node types
 
-The current MVP node vocabulary is:
+The current normative node vocabulary is:
 
 - `start`
 - `end`

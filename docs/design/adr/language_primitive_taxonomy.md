@@ -56,8 +56,8 @@ FLO also accepts the following migration surfaces.
 
 - The implementation plan can proceed without reopening primitive-hierarchy
   debates.
-- The accepted migration contract is locked in
-  `docs/policy/language_primitive_migration_contract.md`.
+- The former migration-policy path is retained as a historical redirect;
+  current language meaning lives in `docs/specs/core_language.md`.
 - The explanatory taxonomy note remains in
   `docs/design/language_primitive_taxonomy.md`.
 - The implemented normative behavior is now described by

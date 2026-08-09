@@ -1,5 +1,7 @@
 # FLO Design Documents
 
+Status: accepted
+
 This directory holds explanatory design material for FLO.
 
 For the top-level documentation map and authority order, start with
@@ -24,16 +26,11 @@ notes, migration plans, and taxonomy notes that span multiple components.
 
 ## Authority Boundary
 
-When documents disagree, use this order:
+Design documents are explanatory. ADRs record durable rationale but do not
+override the authoritative domain identified in `docs/GOVERNANCE.md`.
 
-1. `schema/` for serialized structural contracts
-2. `docs/policy/` for governance and source-of-truth rules
-3. `docs/specs/` for normative language and diagram meaning
-4. `src/flo/` for implementation that must conform to the above
-5. `docs/design/` for explanatory rationale and implementation plans
-
-If a design note appears to define normative behavior, contributors should move
-or mirror the normative rule into `docs/specs/` or `docs/policy/`.
+If a design note appears to define normative behavior, move that behavior into
+the appropriate requirement, specification, schema, or policy and link to it.
 
 ## Document Types
 
@@ -48,21 +45,11 @@ Common document types in this directory:
 
 ## Status Guidance
 
-Design documents should carry a clear status near the top.
+ADRs use the controlled states `proposed`, `accepted`, and `superseded`.
 
-Recommended values:
-
-- `Status: draft` for active design work not yet ratified
-- `Status: proposed` for a concrete direction awaiting acceptance
-- `Status: accepted` for a ratified design decision
-- `Status: completed` for a delivered implementation note kept for context
-- `Status: historical` for retained background material that is not current guidance
-
-Use one of those exact status values.
-Put extra detail such as scope, phase, or date on a separate line if needed.
-
-If a document has no status, contributors should treat that as a documentation
-gap and add one.
+Ordinary design notes may carry descriptive status text when it helps readers,
+but governance does not require or validate a status header on every note.
+Completed plans should move to history or clearly link to the current contract.
 
 ## Naming Guidance
 
@@ -80,6 +67,7 @@ Prefer file names that reveal purpose without opening the file:
 If you need to answer one of these questions:
 
 - "What governs authoritative truth?" -> `docs/policy/`
+- "What must FLO deliver, and by when?" -> `docs/requirements/`
 - "What does this FLO artifact mean?" -> `docs/specs/`
 - "How is this implemented or why was it designed this way?" -> `docs/design/`
 - "What is the serialized contract?" -> `schema/`
@@ -118,13 +106,14 @@ owns each artifact family.
 
 ### Decisions
 
+- `adr/governance_v2.md`
 - `adr/language_primitive_taxonomy.md`
 - `adr/render_stack_elk_svg_typst.md`
 
 ### Renderer Design
 
 - `renderers/boundaries.md`
-- `renderers/flowchart.md`
+- `renderers/flowchart.md` (historical compatibility note; removal in 0.2.0)
 - `renderers/spaghetti.md`
 - `renderers/sppm.md`
 - `renderers/sppm_layout_enhancement.md`

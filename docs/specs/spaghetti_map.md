@@ -17,10 +17,10 @@ instruction.
 A spaghetti map depends on two layers of information:
 
 1. Canonical FLO process structure for inferring movement paths.
-2. Spatial or location metadata for positioning locations when available.
+2. Spatial or location metadata for positioning movement-route endpoints.
 
-If spatial metadata is incomplete, FLO may still render a usable map, but the
-diagram becomes less exact as a layout artifact.
+If spatial metadata is incomplete, FLO follows the deterministic partial or
+strict policy below. It never invents coordinates.
 
 ## Normative characteristics
 
@@ -44,8 +44,42 @@ A spaghetti map in FLO must satisfy the following characteristics:
      that inferred movement surface.
 
 5. Graceful degradation
-   - Missing spatial metadata or absent performer-specific metadata should
-     degrade the output predictably rather than invalidate the entire render.
+   - Default mode renders complete positioned routes and identifies omitted
+     data explicitly.
+   - Strict mode rejects any selected route with an unpositioned endpoint.
+   - Absent performer-specific metadata degrades predictably according to the
+     selected aggregation mode.
+
+## Missing-spatial policy
+
+The policy applies after channel selection and movement inference.
+
+### Default partial mode
+
+- A route is renderable only when both endpoint locations have numeric spatial
+  coordinates.
+- FLO renders all renderable selected routes and omits selected routes with one
+  or two unpositioned endpoints.
+- An incomplete result emits the stable `spaghetti-missing-spatial` warning to
+  `stderr`.
+- The warning lists missing location IDs in sorted order and reports omitted
+  location and route counts.
+- The SVG includes a visible `Partial map` notice with the omitted counts so a
+  detached artifact cannot be mistaken for complete spatial evidence.
+- If no selected route remains renderable, FLO fails with a render error and
+  emits no misleading empty map.
+
+### Strict mode
+
+Strict mode fails before artifact emission if any selected route has an
+unpositioned endpoint. Diagnostics use the same stable code and deterministic
+location ordering as partial mode.
+
+### Prohibited fallback
+
+FLO must not synthesize coordinates, approximately place missing locations, or
+invoke automatic graph layout for a spaghetti map. Such placement would imply
+spatial evidence the model does not contain.
 
 ## Non-goals
 

@@ -6,6 +6,11 @@ types.
 For the repository-wide documentation map and authority order, start with
 `docs/README.md`.
 
+Normative product scope, lifecycle, and acceptance criteria live in
+`docs/requirements/`. Specifications in this directory define current semantic
+meaning and must be updated with the catalogs when an approved requirement
+changes behavior.
+
 A spec should answer:
 
 - What the artifact is for.
@@ -20,8 +25,9 @@ Current specs:
 
 - `core_language.md`
 - `cli_error_contract.md`
+- `telemetry_events.md`
 - `process_map.md`
-- `flowchart.md`
+- `flowchart.md` (deprecated 0.1.x compatibility; removed in 0.2.0)
 - `value_stream_map.md`
 - `swimlane.md`
 - `sppm.md`
@@ -39,5 +45,5 @@ Preferred split:
 
 See also:
 
-- `docs/policy/authoritative_artifacts.md` for source-of-truth rules
+- `docs/GOVERNANCE.md` for domain-specific authority and change classes
 - `docs/design/README.md` for explanatory architecture and migration material

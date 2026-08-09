@@ -15,10 +15,22 @@ capability.
 
 Current support matrix:
 
-- flowchart: svg supported
+- flowchart: svg supported only for deprecated 0.1.x compatibility; removed in 0.2.0
 - swimlane: svg supported
 - spaghetti: svg supported
 - sppm: svg supported
+
+The 0.2.0 matrix removes flowchart. Swimlane, spaghetti, and SPPM are the
+maintained renderer families.
+
+The 0.3 matrix adds:
+
+- value_stream: svg supported
+
+The value-stream entry becomes maintained when the implementation, capability
+declaration, tests, deterministic fixtures, and user documentation land
+together. Planning text does not make the pair available in the current
+runtime.
 
 ## Runtime Contract
 

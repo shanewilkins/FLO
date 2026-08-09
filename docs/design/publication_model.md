@@ -2,7 +2,8 @@
 
 Status: accepted
 
-The shared publication model sits above canonical IR and below renderer-specific output such as DOT, SVG, or later PDF views.
+The shared publication model sits above canonical IR and below standalone SVG
+or later composed PDF views.
 
 The initial contract is intentionally small:
 
