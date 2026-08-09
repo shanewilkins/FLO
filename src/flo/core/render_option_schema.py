@@ -46,7 +46,7 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
     RenderOptionSpec(
         "orientation",
         "--orientation",
-        "Layout orientation for rendered diagram output",
+        "Layout orientation: lr (left-to-right) or tb (top-to-bottom)",
         choices=("lr", "tb"),
     ),
     RenderOptionSpec("show_notes", "--show-notes", "Include node notes", is_flag=True),

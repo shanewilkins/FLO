@@ -480,11 +480,11 @@ For spatial analysis and spaghetti-map rendering, locations can include optional
 - `metadata.spatial.unit`: optional unit (`mm|cm|m|in|ft`)
 - `kind`: optional semantic location kind used for spaghetti-map shape styling
 
-Current 0.1.x direct-SVG spaghetti rendering requires coordinates for every
-rendered location and fails actionably when any are absent. The accepted future
+Current 0.2 direct-SVG spaghetti rendering requires coordinates for every
+rendered location and fails actionably when any are absent. The accepted 0.3
 contract is deterministic partial rendering by default with a visible warning,
-plus strict failure on request; implementation alignment is tracked as
-`TR-042` in the technical requirements catalog.
+plus strict failure on request; implementation is tracked as `TR-042` in the
+technical requirements catalog.
 
 Recommended domain-neutral kinds:
 
@@ -873,7 +873,7 @@ Diagram render options:
 - `--sppm-output-profile {default,book,web,print,slide}`
 - `--profile {default,analysis}`
 - `--detail {summary,standard,verbose}`
-- `--orientation {lr,tb}`
+- `--orientation {lr,tb}` (`tb` means top-to-bottom)
 - `--show-notes`
 - `--subprocess-view {expanded,parent-only}`
 - `--sppm-projection {top-level,child-map,inline}`
@@ -1025,7 +1025,7 @@ Output is written under `renders/` with the same relative structure as `examples
 The build includes default and variant SVG artifacts, including chocolate chip cookie variants:
 
 - `renders/reference/chocolate_chip_cookies.svg`
-- `renders/reference/chocolate_chip_cookies_topdown.svg`
+- top-to-bottom orientation: `renders/reference/chocolate_chip_cookies_tb.svg`
 
 ## 12) Common Workflows
 

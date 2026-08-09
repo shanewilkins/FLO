@@ -43,7 +43,7 @@ This makes it impossible to:
 
 A strict, source-driven render intent model with:
 - Typed `.render` metadata in process definitions expressing diagram type, publication format, layout hints
-- Named views for multi-artifact generation (SPPM, spaghetti, topdown, etc. from one compile)
+- Named views for multi-artifact generation (SPPM, spaghetti, swimlane, etc. from one compile)
 - Validated intent with clear precedence: CLI override > view intent > profiles > hard defaults
 - Bundle orchestration executor emitting ordered artifacts
 - Staged deprecation of TOML and legacy CLI options

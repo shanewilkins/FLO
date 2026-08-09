@@ -125,6 +125,7 @@ def test_build_sppm_publication_plan_uses_print_page_format_and_header_rows():
     header_band = primary_page.band("header")
     assert header_band is not None
     assert header_band.region.name == "header"
+    assert header_band.region.height_px >= 152
     assert ("Process", "wash_n_fold") in header_band.content.rows
     assert ("Profile", "print") in header_band.content.rows
     assert ("Subprocess View", "parent-only") in header_band.content.rows

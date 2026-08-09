@@ -15,7 +15,7 @@ def validate_render_intent(ir: IR) -> None:
     """Validate render-intent structure in process metadata.
 
     Enforces:
-    - Valid diagram types (sppm, spaghetti, topdown)
+    - Valid diagram types (sppm, swimlane, spaghetti)
     - Valid page formats (letter, a4, legal, tabloid)
     - Valid diagram-specific configs (sppm, spaghetti)
     - View names are identifiers
@@ -69,7 +69,7 @@ def _validate_render_view(view: dict[str, Any], path: str) -> None:
 
 def _validate_render_diagram(view: dict[str, Any], path: str) -> None:
     """Validate diagram type in render view."""
-    _VALID_DIAGRAMS = {"sppm", "spaghetti", "topdown"}
+    _VALID_DIAGRAMS = {"sppm", "swimlane", "spaghetti"}
     diagram = view.get("diagram")
     if diagram is not None:
         if not isinstance(diagram, str):

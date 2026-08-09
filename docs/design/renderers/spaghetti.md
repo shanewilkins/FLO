@@ -41,13 +41,11 @@ The current direct-SVG implementation fails with an actionable render error if
 any rendered location lacks coordinates. Rectangle and polygon boundaries are
 optional and affect the canvas when supplied.
 
-This is an implementation gap against the accepted partial-rendering policy in
-`docs/specs/spaghetti_map.md`.
-
-The target implementation partitions selected movement routes into renderable
-and omitted sets. Default mode emits the renderable set, a stable stderr
-warning, and a visible partial-map notice. Strict mode fails when the omitted
-set is non-empty. Default mode also fails when the renderable set is empty.
+The 0.3 planned implementation partitions selected movement routes into
+renderable and omitted sets. Default mode emits the renderable set, a stable
+stderr warning, and a visible partial-map notice. Strict mode fails when the
+omitted set is non-empty. Default mode also fails when the renderable set is
+empty.
 
 Missing IDs and counts remain deterministic. No mode assigns synthetic
 coordinates or invokes graph layout; a deprecated layout backend is not an
@@ -80,7 +78,7 @@ Artifact-contract tests cover:
 - rectangle and polygon boundaries
 - deterministic missing-spatial failure
 
-Required implementation coverage adds:
+The target 0.3 implementation coverage adds:
 
 - mixed positioned and unpositioned endpoints in default partial mode
 - stable omitted location and route counts
@@ -92,6 +90,5 @@ Required implementation coverage adds:
 
 - Keep movement inference outside the renderer.
 - Keep explicit spatial semantics separate from graph layout.
-- Implement the accepted partial and strict missing-spatial policy before
-  claiming the gap is closed.
+- Implement the accepted partial and strict missing-spatial policy in 0.3.
 - Do not add deprecated backend dependencies.

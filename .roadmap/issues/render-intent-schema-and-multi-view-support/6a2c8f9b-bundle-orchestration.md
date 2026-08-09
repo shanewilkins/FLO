@@ -1,7 +1,7 @@
 ---
 id: 6a2c8f9b
 title: Build bundle orchestration layer for multi-view, multi-artifact rendering
-headline: Create executor that chains view selections and emits ordered artifacts (SPPM, spaghetti, topdown in one invocation).
+headline: Create executor that chains view selections and emits ordered artifacts (SPPM, spaghetti, swimlane in one invocation).
 priority: critical
 status: todo
 archived: false
@@ -47,7 +47,7 @@ Current renderer is single-diagram dispatcher ([src/flo/render/__init__.py](../.
 - [ ] Orchestrator takes: (compiled IR, list of view names, RenderOptions overrides) → list of (view_name, artifact_path) tuples
 - [ ] For each view: resolve RenderIntent → select diagram renderer → invoke renderer → capture artifact
 - [ ] Maintain deterministic view ordering (as specified in source intent or CLI)
-- [ ] Write integration tests asserting multi-view bundles for reference models (chocolate_chip_cookies with SPPM + spaghetti + topdown, etc.)
+- [ ] Write integration tests asserting multi-view bundles for reference models (chocolate_chip_cookies with SPPM + spaghetti + swimlane, etc.)
 - [ ] Update [src/flo/core/__init__.py](../../../src/flo/core/__init__.py) run() to optionally use orchestrator when multi-view rendering requested
 - [ ] Verify all existing single-view tests still pass without orchestrator involvement
 

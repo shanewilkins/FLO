@@ -95,7 +95,7 @@ Historical compatibility text may remain only when clearly labeled.
 
 ### Phase A: 0.2 renderer consolidation
 
-Status: in progress
+Status: complete
 
 Outcome:
 
@@ -104,7 +104,7 @@ Outcome:
 - consolidated SVG and ELK contracts
 - deterministic artifact and documentation gates
 
-Work:
+Completed work:
 
 1. Remove flowchart from CLI choices, capability matrix, implementation, and
    active tests in 0.2.0.
@@ -112,8 +112,7 @@ Work:
 3. Finish shared SVG primitive extraction where more than one renderer owns the
    same presentation behavior.
 4. Deepen deterministic artifact coverage for swimlane, spaghetti, and SPPM.
-5. Implement the accepted spaghetti partial-or-strict missing-spatial policy.
-6. Keep strict documentation and requirements governance in CI.
+5. Keep strict documentation and requirements governance in CI.
 
 Exit criteria:
 
@@ -144,6 +143,9 @@ Work:
    deterministic artifact tests, and user documentation together.
 4. Promote the renderer to maintained in 0.3 and complete stable-tier gates by
    1.0.
+5. Implement the accepted spaghetti partial-or-strict missing-spatial policy,
+  including deterministic warnings, partial-map notices, and strict-mode
+  failure.
 
 ### Phase C: publication composition
 

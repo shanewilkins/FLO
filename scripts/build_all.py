@@ -212,7 +212,7 @@ def _extra_render_variants_for_example(
 ) -> list[tuple[str, dict[str, str]]]:
     if example_file.stem.lower() == "chocolate_chip_cookies":
         return [
-            ("_topdown", {"diagram": "flowchart", "orientation": "tb"}),
+            ("_tb", {"diagram": "sppm", "orientation": "tb"}),
             ("_spaghetti", {"diagram": "spaghetti"}),
         ]
     if example_file.stem.lower() == "washnfold":

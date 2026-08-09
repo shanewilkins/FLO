@@ -5,7 +5,6 @@ from __future__ import annotations
 from html import escape
 from typing import Any
 
-from flo.schema.render_metadata import PROCESS_METADATA_PROCESS_NAME_KEY
 from flo.services.errors import RenderError
 
 from ._artifact import RenderArtifact
@@ -33,9 +32,11 @@ from ._svg_sppm_rows import _sppm_row_ids
 from ._svg_sppm_rows import rework_alignment_diagnostics
 from ._svg_sppm_rows import row_gap_diagnostics
 from .layout_core import build_sppm_elk_layout_request, execute_elk_layout
+from .layout_core.elk_support import extract_nodes_and_edges
 from .layout_core.elk_runtime import run_elkjs_layout
 from .layout_core.models import LayoutBounds
 from .options import RenderOptions
+from ._sppm_publication import build_sppm_publication_plan
 
 _PADDING = 28.0
 _STRICT_POSTPROCESS_CODES = {
@@ -104,30 +105,48 @@ def render_sppm_svg_artifact_from_layout(
         edge_paths=display_edge_paths,
     )
     raw_node_by_id = _raw_node_lookup(process, options=options)
-    title = _process_title(process)
+    publication_plan = _build_sppm_publication_plan(
+        process=process,
+        options=options,
+        request=request,
+    )
+    publication_page = publication_plan.primary_series().pages[0]
+    header_band = publication_page.band("header")
+    footer_band = publication_page.band("footer")
+    header_height = float(header_band.region.height_px or 0) if header_band else 0.0
+    footer_height = float(footer_band.region.height_px or 0) if footer_band else 0.0
 
     width = max(1.0, display_canvas_bounds.width_px + (_PADDING * 2.0))
     height = max(
         1.0,
-        display_canvas_bounds.height_px + (_PADDING * 2.0) + (36.0 if title else 0.0),
+        display_canvas_bounds.height_px
+        + (_PADDING * 2.0)
+        + header_height
+        + footer_height,
     )
-    content_top = _PADDING + (36.0 if title else 0.0)
+    content_top = _PADDING + header_height
 
     parts = [
         (
             f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:.0f}" '
             f'height="{height:.0f}" viewBox="0 0 {width:.0f} {height:.0f}" '
             'data-flo-artifact-kind="svg" data-flo-backend="svg" '
-            'data-flo-diagram="sppm" data-flo-layout-engine="elk">'
+            'data-flo-diagram="sppm" data-flo-layout-engine="elk" '
+            f'data-sppm-publication-page-id="{escape(publication_page.page_id)}"'
+            ">"
         ),
         '<rect width="100%" height="100%" fill="#fffdf8" />',
     ]
     parts[1:1] = standard_svg_defs()
 
-    if title:
-        parts.append(
-            f'<text x="{_PADDING:.1f}" y="{_PADDING + 4.0:.1f}" font-family="Helvetica" font-size="22" font-weight="700" fill="#0f172a">{escape(title)}</text>'
+    parts.extend(
+        _publication_band_svg(
+            band=header_band,
+            x=_PADDING,
+            y=_PADDING,
+            width=width - (_PADDING * 2.0),
         )
+    )
 
     parts.append(f'<g transform="translate({_PADDING:.1f},{content_top:.1f})">')
 
@@ -200,6 +219,14 @@ def render_sppm_svg_artifact_from_layout(
         )
 
     parts.append("</g>")
+    parts.extend(
+        _publication_band_svg(
+            band=footer_band,
+            x=_PADDING,
+            y=content_top + display_canvas_bounds.height_px,
+            width=width - (_PADDING * 2.0),
+        )
+    )
     parts.append("</svg>")
     return (
         RenderArtifact(
@@ -211,6 +238,10 @@ def render_sppm_svg_artifact_from_layout(
                 "render_diagnostics_report": serialize_render_diagnostics_report(
                     diagnostics_report
                 ),
+                "publication": {
+                    "page_id": publication_page.page_id,
+                    "page_format": publication_page.metadata.get("page_format"),
+                },
             },
         ),
         None,
@@ -242,40 +273,53 @@ def _raw_node_lookup(
     return raw_node_lookup(process, options=options)
 
 
-def _process_title(process: dict[str, Any] | Any) -> str | None:
-    if isinstance(process, dict):
-        return _first_non_empty(
-            _clean_text(process.get("process", {}).get("name"))
-            if isinstance(process.get("process"), dict)
-            else None,
-            _clean_text(process.get("name")),
-        )
-
-    metadata = getattr(process, "process_metadata", None)
-    metadata_name = (
-        _first_non_empty(
-            _clean_text(metadata.get(PROCESS_METADATA_PROCESS_NAME_KEY)),
-            _clean_text(metadata.get("name")),
-        )
-        if isinstance(metadata, dict)
-        else None
-    )
-    return _first_non_empty(
-        _clean_text(getattr(process, "process_name", None)),
-        metadata_name,
-        _clean_text(getattr(process, "name", None)),
+def _build_sppm_publication_plan(
+    *, process: dict[str, Any] | Any, options: RenderOptions, request: Any
+) -> Any:
+    source_nodes, source_edges = extract_nodes_and_edges(process)
+    visible_node_ids = {str(node.id) for node in request.nodes}
+    nodes = [
+        node for node in source_nodes if str(node.get("id") or "") in visible_node_ids
+    ]
+    edges = [
+        edge
+        for edge in source_edges
+        if str(edge.get("source") or "") in visible_node_ids
+        and str(edge.get("target") or "") in visible_node_ids
+    ]
+    return build_sppm_publication_plan(
+        process=process,
+        options=options,
+        nodes=nodes,
+        edges=edges,
     )
 
 
-def _clean_text(value: Any) -> str | None:
-    if value is None:
-        return None
-    text = str(value).strip()
-    return text or None
-
-
-def _first_non_empty(*values: str | None) -> str | None:
-    for value in values:
-        if value:
-            return value
-    return None
+def _publication_band_svg(
+    *, band: Any | None, x: float, y: float, width: float
+) -> list[str]:
+    if band is None:
+        return []
+    content = band.content
+    line_y = y + 24.0
+    parts = [
+        f'<g data-sppm-publication-band="{escape(band.name)}">',
+        f'<line x1="{x:.1f}" y1="{y:.1f}" x2="{x + width:.1f}" y2="{y:.1f}" stroke="#cbd5e1" stroke-width="1" />',
+    ]
+    if content.title:
+        parts.append(
+            f'<text x="{x:.1f}" y="{line_y:.1f}" font-family="Helvetica" font-size="22" font-weight="700" fill="#0f172a">{escape(content.title)}</text>'
+        )
+        line_y += 24.0
+    for label, value in (*content.rows, *content.context_rows):
+        parts.append(
+            f'<text x="{x:.1f}" y="{line_y:.1f}" font-family="Helvetica" font-size="12" fill="#334155">{escape(label)}: {escape(value)}</text>'
+        )
+        line_y += 16.0
+    for note in content.notes:
+        parts.append(
+            f'<text x="{x:.1f}" y="{line_y:.1f}" font-family="Helvetica" font-size="12" fill="#334155">{escape(note)}</text>'
+        )
+        line_y += 16.0
+    parts.append("</g>")
+    return parts

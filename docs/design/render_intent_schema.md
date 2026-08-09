@@ -168,9 +168,12 @@ Spaghetti intent uses:
 - people modes: `aggregate`, `worker`
 
 The schema, validator, resolver, CLI, and tests must retire or explicitly
-migrate the stale render-intent-only values `topdown`, `equipment`, and
-`individual`. Until those layers agree, the accepted contract is an
-implementation gap rather than a claim about current runtime behavior.
+migrate the stale render-intent-only values `equipment` and `individual`.
+Until those layers agree, the accepted contract is an implementation gap rather
+than a claim about current runtime behavior.
+
+Orientation belongs to render options rather than diagram identifiers.
+Current CLI orientation values are `lr` and `tb`.
 
 Dimensions accept `px`, `in`, `cm`, and `mm`. Bare numeric values remain
 compatible and are interpreted as pixels.

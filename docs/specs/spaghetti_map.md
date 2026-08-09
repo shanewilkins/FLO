@@ -50,15 +50,20 @@ A spaghetti map in FLO must satisfy the following characteristics:
    - Absent performer-specific metadata degrades predictably according to the
      selected aggregation mode.
 
-## Missing-spatial policy
+## Current missing-spatial behavior
 
-The policy applies after channel selection and movement inference.
+Current 0.2 direct-SVG behavior applies after channel selection and movement inference.
+Every selected route endpoint must have numeric spatial coordinates.
+If any selected route has an unpositioned endpoint, FLO fails with a render error and emits no SVG artifact.
+FLO does not synthesize coordinates or invoke automatic graph layout.
+
+## 0.3 planned missing-spatial policy
 
 ### Default partial mode
 
 - A route is renderable only when both endpoint locations have numeric spatial
   coordinates.
-- FLO renders all renderable selected routes and omits selected routes with one
+- 0.3 FLO renders all renderable selected routes and omits selected routes with one
   or two unpositioned endpoints.
 - An incomplete result emits the stable `spaghetti-missing-spatial` warning to
   `stderr`.
@@ -77,9 +82,9 @@ location ordering as partial mode.
 
 ### Prohibited fallback
 
-FLO must not synthesize coordinates, approximately place missing locations, or
-invoke automatic graph layout for a spaghetti map. Such placement would imply
-spatial evidence the model does not contain.
+The 0.3 implementation must not synthesize coordinates, approximately place
+missing locations, or invoke automatic graph layout for a spaghetti map.
+Such placement would imply spatial evidence the model does not contain.
 
 ## Non-goals
 

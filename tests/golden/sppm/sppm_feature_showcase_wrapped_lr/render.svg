@@ -1,12 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="4192" height="500" viewBox="0 0 4192 500" data-flo-artifact-kind="svg" data-flo-backend="svg" data-flo-diagram="sppm" data-flo-layout-engine="elk">
+<svg xmlns="http://www.w3.org/2000/svg" width="4192" height="696" viewBox="0 0 4192 696" data-flo-artifact-kind="svg" data-flo-backend="svg" data-flo-diagram="sppm" data-flo-layout-engine="elk" data-sppm-publication-page-id="main-p1">
 <defs>
 <marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
 <path d="M0,0 L8,3 L0,6 z" fill="#475569" />
 </marker>
 </defs>
 <rect width="100%" height="100%" fill="#fffdf8" />
-<text x="28.0" y="32.0" font-family="Helvetica" font-size="22" font-weight="700" fill="#0f172a">SPPM Feature Showcase (Wrapped)</text>
-<g transform="translate(28.0,64.0)">
+<g data-sppm-publication-band="header">
+<line x1="28.0" y1="28.0" x2="4164.0" y2="28.0" stroke="#cbd5e1" stroke-width="1" />
+<text x="28.0" y="52.0" font-family="Helvetica" font-size="22" font-weight="700" fill="#0f172a">SPPM Feature Showcase (Wrapped)</text>
+<text x="28.0" y="76.0" font-family="Helvetica" font-size="12" fill="#334155">Process: sppm_feature_showcase_wrapped_v1</text>
+<text x="28.0" y="92.0" font-family="Helvetica" font-size="12" fill="#334155">Subprocess View: parent-only</text>
+<text x="28.0" y="108.0" font-family="Helvetica" font-size="12" fill="#334155">Nodes: 19</text>
+<text x="28.0" y="124.0" font-family="Helvetica" font-size="12" fill="#334155">Edges: 20</text>
+</g>
+<g transform="translate(28.0,148.0)">
 <g data-edge-source="assess_scope" data-edge-target="execute_service_wait_queue" data-edge-kind="direct">
 <polyline points="1866.0,87.0 1971.8,87.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
 </g>
@@ -224,5 +231,13 @@
 <rect x="4004.0" y="61.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
 <text x="4070.0" y="92.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Stop</text>
 </g>
+</g>
+<g data-sppm-publication-band="footer">
+<line x1="28.0" y1="556.0" x2="4164.0" y2="556.0" stroke="#cbd5e1" stroke-width="1" />
+<text x="28.0" y="580.0" font-family="Helvetica" font-size="12" fill="#334155">Queue: Orange upright triangles indicate staged work.</text>
+<text x="28.0" y="596.0" font-family="Helvetica" font-size="12" fill="#334155">Continuation: Labeled circles indicate page/jump anchors (P{page}-{letter}).</text>
+<text x="28.0" y="612.0" font-family="Helvetica" font-size="12" fill="#334155">Rework: Red cards and dashed returns indicate corrective loops.</text>
+<text x="28.0" y="628.0" font-family="Helvetica" font-size="12" fill="#334155">Waiting Time: 35 min</text>
+<text x="28.0" y="644.0" font-family="Helvetica" font-size="12" fill="#334155">Reference map covering wrapped publication flow, continuation anchors, explicit override tokens, rework, and publication footer semantics.</text>
 </g>
 </svg>

@@ -59,7 +59,9 @@ The first live adopter is SPPM.
 
 ## Deferred work
 
-This issue does not implement full pagination, footer rendering, or hierarchical child-map output.
+The 0.2 standalone SPPM path renders enabled header and footer bands from this
+model without changing the process layout.
+Full pagination and hierarchical child-map output remain deferred to 0.6.
 
 Those later slices should build on this model rather than adding new renderer-specific layout structures.
 

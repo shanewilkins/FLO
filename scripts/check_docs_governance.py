@@ -24,6 +24,11 @@ REQUIREMENT_STATES = {
 }
 SPECIAL_RELEASES = {"Current", "Ongoing", "Out of scope", "Post-1.0"}
 RELEASE_PATTERN = re.compile(r"(?:0\.1\.x|\d+\.\d+(?:\.\d+)?)")
+ROADMAP_RELEASE_CLAIM_PATTERN = re.compile(
+    r"^\s*-\s+`(?P<requirement_id>(?:UR|TR)-\d{3})`\s+"
+    r"\[(?P<release>[^;\]]+);\s*(?P<state>[^\]]+)\]:",
+    re.MULTILINE,
+)
 
 REQUIREMENT_FILES: dict[Path, dict[str, Any]] = {
     Path("docs/requirements/user_requirements.csv"): {
@@ -246,7 +251,7 @@ def _warn_current_user_guidance(targets: Iterable[Path], warnings: list[str]) ->
         except OSError:
             continue
         if re.search(r"uv run flo render[^\n]*--diagram flowchart", text):
-            warnings.append(f"{rel}: active workflow recommends deprecated flowchart")
+            warnings.append(f"{rel}: active workflow invokes removed flowchart")
 
 
 def _warn_known_files(targets: Iterable[Path], warnings: list[str]) -> None:
@@ -305,6 +310,12 @@ def _warn_roadmap_contract(warnings: list[str]) -> None:
                 f"docs/ROADMAP.md: {requirement_id} must remain {state} for {release}"
             )
 
+    _warn_roadmap_release_claims(
+        roadmap=roadmap,
+        requirements=requirements,
+        warnings=warnings,
+    )
+
     required_phrases = {
         "FLO 0.4 is the minimum viable product milestone": "0.4 MVP boundary",
         "this complete authoring journey takes": "authoring-over-telemetry tradeoff",
@@ -313,6 +324,38 @@ def _warn_roadmap_contract(warnings: list[str]) -> None:
     for phrase, label in required_phrases.items():
         if phrase not in roadmap:
             warnings.append(f"docs/ROADMAP.md: missing {label}")
+
+
+def _warn_roadmap_release_claims(
+    *,
+    roadmap: str,
+    requirements: dict[str, dict[str, str]],
+    warnings: list[str],
+) -> None:
+    for match in ROADMAP_RELEASE_CLAIM_PATTERN.finditer(roadmap):
+        requirement_id = match["requirement_id"]
+        claimed_release = match["release"].strip()
+        claimed_state = match["state"].strip()
+        row = requirements.get(requirement_id)
+        if row is None:
+            warnings.append(
+                f"docs/ROADMAP.md: release claim references unknown {requirement_id}"
+            )
+            continue
+
+        actual_releases = {
+            release.strip() for release in row["Target_Release"].split(";")
+        }
+        if claimed_release not in actual_releases:
+            warnings.append(
+                f"docs/ROADMAP.md: {requirement_id} claims {claimed_release}, "
+                f"but register targets {row['Target_Release']}"
+            )
+        if claimed_state != row["State"]:
+            warnings.append(
+                f"docs/ROADMAP.md: {requirement_id} claims {claimed_state}, "
+                f"but register state is {row['State']}"
+            )
 
 
 def _release_view() -> str:

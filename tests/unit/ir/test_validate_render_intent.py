@@ -134,7 +134,7 @@ def test_validate_render_intent_accepts_valid_defaults_and_views() -> None:
             },
             "views": {
                 "overview": {
-                    "diagram": "spaghetti",
+                    "diagram": "swimlane",
                     "layout": {"wrap": "none"},
                 }
             },
@@ -142,6 +142,14 @@ def test_validate_render_intent_accepts_valid_defaults_and_views() -> None:
     )
 
     validate_render_intent(ir)
+
+
+def test_validate_render_intent_rejects_unsupported_diagram() -> None:
+    """Only maintained diagram identifiers are valid render intent."""
+    ir = _base_ir_with_render({"defaults": {"diagram": "unsupported"}})
+
+    with pytest.raises(ValidationError, match=r"diagram='unsupported' not supported"):
+        validate_render_intent(ir)
 
 
 def test_ensure_schema_aligned_invokes_render_intent_validation() -> None:

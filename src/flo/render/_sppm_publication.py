@@ -62,6 +62,7 @@ def build_sppm_publication_plan(
     )
     canvas = _build_sppm_publication_canvas(
         title=title,
+        header_rows=header_rows,
         footer_content=footer_content,
         options=options,
         show_header=show_header,

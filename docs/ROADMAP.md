@@ -121,6 +121,13 @@ Before 1.0, FLO will document:
 - Establish swimlane as a maintained renderer.
 - Define direct SVG determinism and golden-artifact regression strategy.
 
+0.2 closeout claims are checked against the normative registers:
+
+- `TR-038` [0.2; Implemented]: Flowchart removal is complete.
+- `UR-026` [0.2; Implemented]: Current guidance directs users to maintained renderers.
+- `UR-035` [0.2; Implemented]: Standalone SPPM SVG publication context is complete.
+- `TR-090` [0.2; Implemented]: Release views derive from the normative registers and roadmap claims are checked in CI.
+
 ### 0.3: Static Analytics Foundation
 
 - Deliver canonical IR analysis for handoffs, rework, path length, and step classification.
@@ -133,6 +140,8 @@ Before 1.0, FLO will document:
   primitives.
 - Represent material and information flow distinctly, and diagnose partial
   data without implying that an absent flow surface exists.
+- Implement default partial spaghetti rendering with deterministic warnings
+  and partial-map notices, while retaining strict failure on request.
 - Add capability-matrix support, deterministic fixtures, renderer tests, and
   user documentation as one release change.
 

@@ -1,6 +1,74 @@
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
 import pytest
 
+from flo.adapters import parse_adapter
+from flo.compiler import compile_adapter
+from flo.compiler.ir import ensure_schema_aligned, validate_ir
 from flo.render import render_artifact
+
+
+def test_reference_spaghetti_svg_artifact_is_deterministic():
+    artifact = _render_reference_spaghetti()
+    rerun_artifact = _render_reference_spaghetti()
+
+    assert artifact.kind == "svg"
+    assert artifact.backend == "svg"
+    assert artifact.content == rerun_artifact.content
+    assert _spaghetti_svg_signature(artifact.content) == {
+        "artifact_kind": "svg",
+        "backend": "svg",
+        "locations": (
+            "cooling_rack",
+            "dishwasher",
+            "oven_station",
+            "pantry",
+            "prep_bench",
+            "service_corridor",
+        ),
+        "route_channels": ("material", "people"),
+    }
+
+
+def _render_reference_spaghetti():
+    path = Path("examples/reference/chocolate_chip_cookies.flo")
+    adapter_model = parse_adapter(
+        path.read_text(encoding="utf-8"), source_path=str(path)
+    )
+    ir = compile_adapter(adapter_model)
+    validate_ir(ir)
+    ensure_schema_aligned(ir)
+    return render_artifact(
+        ir,
+        options={"diagram": "spaghetti", "render_backend": "svg"},
+    )
+
+
+def _spaghetti_svg_signature(svg: str) -> dict[str, object]:
+    root = ET.fromstring(svg)
+    locations = tuple(
+        sorted(
+            element.attrib["data-location-id"]
+            for element in root.iter()
+            if "data-location-id" in element.attrib
+        )
+    )
+    route_channels = tuple(
+        sorted(
+            {
+                element.attrib["data-route-channel"]
+                for element in root.iter()
+                if "data-route-channel" in element.attrib
+            }
+        )
+    )
+    return {
+        "artifact_kind": root.attrib.get("data-flo-artifact-kind"),
+        "backend": root.attrib.get("data-flo-backend"),
+        "locations": locations,
+        "route_channels": route_channels,
+    }
 
 
 def test_render_artifact_svg_spaghetti_people_channel_suppresses_material_routes():

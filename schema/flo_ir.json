@@ -121,7 +121,7 @@
       "properties": {
         "diagram": {
           "type": "string",
-          "enum": ["sppm","spaghetti","topdown"]
+          "enum": ["sppm","swimlane","spaghetti"]
         },
         "publication": { "$ref": "#/definitions/publication_config" },
         "layout": { "$ref": "#/definitions/layout_config" },

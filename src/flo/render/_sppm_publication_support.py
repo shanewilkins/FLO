@@ -299,12 +299,31 @@ def _format_sppm_publication_text(
 def _build_sppm_publication_canvas(
     *,
     title: str,
+    header_rows: list[tuple[str, str]],
     footer_content: PublicationBandContent | None,
     options: RenderOptions,
     show_header: bool,
 ) -> Any:
-    header_height_px = _SPPM_HEADER_BAND_HEIGHT_PX if (show_header and title) else 0
-    footer_height_px = 72 if footer_content is not None else 0
+    header_height_px = (
+        _publication_band_height(
+            title=title,
+            row_count=len(header_rows),
+            note_count=0,
+            minimum_height_px=_SPPM_HEADER_BAND_HEIGHT_PX,
+        )
+        if (show_header and title)
+        else 0
+    )
+    footer_height_px = (
+        _publication_band_height(
+            title="",
+            row_count=len(footer_content.rows) if footer_content else 0,
+            note_count=len(footer_content.notes) if footer_content else 0,
+            minimum_height_px=72,
+        )
+        if footer_content is not None
+        else 0
+    )
     if options.publication_page_format:
         return build_publication_canvas_for_format(
             page_format=options.publication_page_format,
@@ -320,6 +339,18 @@ def _build_sppm_publication_canvas(
         header_height_px=header_height_px,
         footer_height_px=footer_height_px,
     )
+
+
+def _publication_band_height(
+    *,
+    title: str,
+    row_count: int,
+    note_count: int,
+    minimum_height_px: int,
+) -> int:
+    content_height = 24 if title else 0
+    content_height += (row_count + note_count) * 16
+    return max(minimum_height_px, content_height + 32)
 
 
 def _publication_diagnostics(

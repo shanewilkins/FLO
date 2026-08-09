@@ -89,7 +89,7 @@ class TestRenderIntentResolverProfileDefaults:
             cli_overrides=None,
             profile="analysis",
         )
-        assert intent.diagram == "topdown"
+        assert intent.diagram == "sppm"
         assert intent.sppm_label_density == "compact"
         assert intent.layout_wrap == "auto"
 
@@ -117,7 +117,8 @@ class TestRenderIntentResolverProfileDefaults:
             profile="analysis",
         )
         assert intent_default.diagram == "sppm"
-        assert intent_analysis.diagram == "topdown"
+        assert intent_analysis.diagram == "sppm"
+        assert intent_analysis.layout_wrap == "auto"
 
 
 class TestRenderIntentResolverViewIntent:
@@ -165,7 +166,7 @@ class TestRenderIntentResolverViewIntent:
         """Should fall back to 'defaults' view if specific view not found."""
         metadata = {
             "defaults": {
-                "diagram": "topdown",
+                "diagram": "swimlane",
             },
             "views": {"other": {"diagram": "spaghetti"}},
         }
@@ -175,7 +176,7 @@ class TestRenderIntentResolverViewIntent:
             profile="default",
             view_name="missing_view",
         )
-        assert intent.diagram == "topdown"
+        assert intent.diagram == "swimlane"
 
     def test_nested_publication_config_flattened(self):
         """Should flatten nested publication config."""
@@ -315,7 +316,7 @@ class TestRenderIntentResolverCliPrecedence:
                 }
             }
         }
-        cli_overrides = {"diagram": "topdown"}
+        cli_overrides = {"diagram": "swimlane"}
         intent = RenderIntentResolver.resolve(
             render_metadata=metadata,
             cli_overrides=cli_overrides,
@@ -323,7 +324,7 @@ class TestRenderIntentResolverCliPrecedence:
             view_name="custom",
         )
         # diagram from CLI
-        assert intent.diagram == "topdown"
+        assert intent.diagram == "swimlane"
         # sppm_label_density from view intent (not overridden)
         assert intent.sppm_label_density == "teaching"
 
@@ -347,7 +348,7 @@ class TestRenderIntentResolverCliPrecedence:
         """CLI override should have highest precedence."""
         metadata = {
             "defaults": {
-                "diagram": "topdown",
+                "diagram": "swimlane",
             },
             "views": {
                 "custom": {
@@ -374,7 +375,7 @@ class TestRenderIntentResolverCompletePrecedence:
         """Test diagram resolution through full precedence chain."""
         metadata = {
             "defaults": {
-                "diagram": "topdown",  # hard
+                "diagram": "swimlane",  # defaults
             },
             "views": {
                 "custom": {
@@ -390,7 +391,7 @@ class TestRenderIntentResolverCompletePrecedence:
             profile="default",
             view_name="missing",
         )
-        assert intent1.diagram == "topdown"
+        assert intent1.diagram == "swimlane"
 
         # View intent overrides hard default
         intent2 = RenderIntentResolver.resolve(
@@ -412,14 +413,15 @@ class TestRenderIntentResolverCompletePrecedence:
 
     def test_profile_applied_between_view_and_cli(self):
         """Profile should apply between view and hard defaults."""
-        # Analysis profile sets diagram to topdown
+        # Analysis profile keeps SPPM and applies its own layout defaults.
         intent = RenderIntentResolver.resolve(
             render_metadata={},  # no view intent
             cli_overrides=None,  # no CLI override
             profile="analysis",
         )
-        # Profile default (topdown) should be used
-        assert intent.diagram == "topdown"
+        # Profile default SPPM should be used.
+        assert intent.diagram == "sppm"
+        assert intent.layout_wrap == "auto"
 
         # But CLI should still override profile
         intent2 = RenderIntentResolver.resolve(
@@ -437,7 +439,7 @@ class TestRenderIntentResolverViewNameHandling:
         """view_name='default' should use 'defaults' in metadata."""
         metadata = {
             "defaults": {
-                "diagram": "topdown",
+                "diagram": "swimlane",
             }
         }
         intent = RenderIntentResolver.resolve(
@@ -446,7 +448,7 @@ class TestRenderIntentResolverViewNameHandling:
             profile="default",
             view_name="default",
         )
-        assert intent.diagram == "topdown"
+        assert intent.diagram == "swimlane"
 
     def test_custom_view_name_uses_named_view(self):
         """Named view_name should use views[name] in metadata."""
@@ -472,7 +474,7 @@ class TestRenderIntentResolverViewNameHandling:
         """Missing view_name should fall back to 'defaults'."""
         metadata = {
             "defaults": {
-                "diagram": "topdown",
+                "diagram": "swimlane",
             },
             "views": {
                 "other": {
@@ -486,7 +488,7 @@ class TestRenderIntentResolverViewNameHandling:
             profile="default",
             view_name="missing",
         )
-        assert intent.diagram == "topdown"
+        assert intent.diagram == "swimlane"
 
 
 class TestRenderIntentResolverResolveViewMethod:
@@ -496,23 +498,23 @@ class TestRenderIntentResolverResolveViewMethod:
         """resolve_view() should exclude CLI overrides."""
         metadata = {
             "defaults": {
-                "diagram": "topdown",
+                "diagram": "swimlane",
             }
         }
         intent = RenderIntentResolver.resolve_view(
             render_metadata=metadata,
             view_name="default",
         )
-        assert intent.diagram == "topdown"
+        assert intent.diagram == "swimlane"
 
     def test_resolve_view_uses_default_profile(self):
         """resolve_view() should use 'default' profile."""
-        # Even though analysis profile changes diagram, resolve_view ignores profile
+        # resolve_view ignores profile defaults.
         intent = RenderIntentResolver.resolve_view(
             render_metadata={},
             view_name="default",
         )
-        # Should get hard default (sppm), not analysis profile (topdown)
+        # Should get hard default SPPM.
         assert intent.diagram == "sppm"
 
     def test_resolve_view_pure_source_intent(self):

@@ -82,7 +82,7 @@ class RenderIntentResolver:
             "sppm_label_density": "full",
         },
         "analysis": {
-            "diagram": "topdown",
+            "diagram": "sppm",
             "publication_page_format": None,
             "layout_wrap": "auto",
             "sppm_label_density": "compact",

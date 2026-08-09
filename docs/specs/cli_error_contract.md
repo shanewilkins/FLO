@@ -53,7 +53,7 @@ Current mappings:
   - Exporters (machine-readable or report-style projections) live under
     `src/flo/export`.
 - `--diagram` supports `swimlane`, `spaghetti`, and `sppm` for render output.
-- `--profile`, `--detail`, `--orientation`, `--show-notes`,
+- `--profile`, `--detail`, `--orientation {lr,tb}`, `--show-notes`,
   `--subprocess-view`, shared autoformat controls (`--layout-wrap`,
   `--layout-max-width-px`, `--layout-target-columns`), and all SPPM render
   controls are render-only options.
