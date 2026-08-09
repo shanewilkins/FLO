@@ -8,7 +8,7 @@ family.
 A process map is FLO's rich process-graph visualization family.
 
 It presents the canonical process graph with a broader visual and semantic
-surface than a minimal flowchart. A process map may add richer shapes,
+surface than a minimal control-flow diagram. A process map may add richer shapes,
 annotations, continuation conventions, and analytics-oriented adornments, but
 it still derives its meaning from the same underlying process structure.
 
@@ -39,7 +39,7 @@ A process map in FLO must satisfy the following characteristics:
 
 2. Rich node-kind visibility
    - The visual treatment must preserve distinctions between meaningful node
-     kinds and support a broader shape vocabulary than a minimal flowchart when
+    kinds and support a broader shape vocabulary than a minimal control-flow diagram when
      the variant requires it.
    - This includes accepted control-flow kinds such as `decision`, `queue`,
      `wait`, `subprocess`, `parallel_split`, and `parallel_join`.
@@ -76,7 +76,6 @@ A process map is not:
 ## Relationship to other documents
 
 - Shared rich process-map semantics are defined here.
-- Minimal control-flow semantics belong in `flowchart.md`.
 - Variant-specific meaning belongs in `sppm.md` and `swimlane.md`.
 - Core process semantics belong in `core_language.md`.
 - Implementation strategy belongs in `docs/design/`.

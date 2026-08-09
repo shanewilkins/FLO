@@ -9,7 +9,7 @@ from typing import Any, Literal, Mapping, cast
 
 from ._sppm_themes import SppmTheme, parse_custom_sppm_themes
 
-DiagramType = Literal["flowchart", "swimlane", "spaghetti", "sppm"]
+DiagramType = Literal["swimlane", "spaghetti", "sppm"]
 RenderProfile = Literal["default", "analysis"]
 DetailLevel = Literal["summary", "standard", "verbose"]
 Orientation = Literal["lr", "tb"]
@@ -122,10 +122,10 @@ def parse_dimension(value: Any) -> Dimension | None:
 class RenderOptions:
     """Configuration for selecting renderer behavior.
 
-    Defaults render SVG flowcharts with standard detail and default rule profile.
+    Defaults render SVG swimlanes with standard detail and default rule profile.
     """
 
-    diagram: DiagramType = "flowchart"
+    diagram: DiagramType = "swimlane"
     backend: RenderBackend = "svg"
     profile: RenderProfile = "default"
     detail: DetailLevel = "standard"
@@ -250,14 +250,14 @@ def _normalized_option(options: Mapping[str, Any], key: str, default: str) -> st
 
 
 def _parse_diagram(options: Mapping[str, Any]) -> DiagramType:
-    diagram_raw = _normalized_option(options, "diagram", "flowchart")
+    diagram_raw = _normalized_option(options, "diagram", "swimlane")
     if diagram_raw == "swimlane":
         return "swimlane"
     if diagram_raw == "spaghetti":
         return "spaghetti"
     if diagram_raw == "sppm":
         return "sppm"
-    return "flowchart"
+    return "swimlane"
 
 
 def _parse_backend(options: Mapping[str, Any]) -> RenderBackend:

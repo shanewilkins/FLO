@@ -24,8 +24,7 @@ The renderer platform has moved beyond the Graphviz-first implementation.
 Current facts:
 
 - SVG is the only public render backend.
-- Flowchart, swimlane, and SPPM use FLO-owned SVG emission over the ELK
-  request/result seam.
+- Swimlane and SPPM use FLO-owned SVG emission over the ELK request/result seam.
 - Spaghetti uses FLO-owned SVG emission from explicit spatial coordinates.
 - Backend-neutral layout, artifact, diagnostics, and publication contracts
   exist in code.
@@ -33,7 +32,7 @@ Current facts:
   behavior.
 - Graphviz is deprecated and has no active renderer module or backend-selection
   path.
-- Flowchart remains a 0.1.x compatibility surface and is removed in 0.2.0.
+- Flowchart was removed with the 0.2 renderer consolidation.
 - Publication-plan foundations exist, but Typst composition and full multi-page
   SPPM publication are not complete.
 
@@ -66,7 +65,6 @@ Status: complete
 
 Status: complete for current public diagram families
 
-- Flowchart compatibility rendering emits direct SVG.
 - Swimlane emits direct SVG.
 - Spaghetti emits direct SVG.
 - SPPM emits direct SVG.
@@ -77,7 +75,6 @@ Remaining work in this area is renderer hardening, not backend migration.
 
 Status: complete for current graph-family paths
 
-- Flowchart compatibility rendering uses ELK.
 - Swimlane uses ELK with lane-aware request and normalized result contracts.
 - SPPM uses ELK plus SPPM-specific row, port, boundary, and routing constraints.
 
@@ -224,11 +221,10 @@ Work:
 - Use explicit diagnostics for partial data instead of inventing absent flow.
 - Target maintained status in 0.3 and stable status by 1.0.
 
-### Flowchart
+### Removed Flowchart
 
-- Preserve only 0.1.x compatibility behavior.
-- Remove the renderer in 0.2.0.
-- Do not add features or use it as a proving ground for new abstractions.
+The 0.1.x compatibility renderer was removed as part of 0.2 consolidation.
+Migration guidance directs users to swimlane or SPPM.
 
 ## Validation strategy
 

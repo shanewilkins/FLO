@@ -26,7 +26,7 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
         "diagram",
         "--diagram",
         "Diagram type for rendered diagram output",
-        choices=("flowchart", "swimlane", "spaghetti", "sppm"),
+        choices=("swimlane", "spaghetti", "sppm"),
     ),
     RenderOptionSpec(
         "render_backend",

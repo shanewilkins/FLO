@@ -19,12 +19,6 @@ RenderCapabilityMatrix = dict[str, dict[str, BackendCapability]]
 
 
 RENDER_CAPABILITY_MATRIX: Final[RenderCapabilityMatrix] = {
-    "flowchart": {
-        "svg": {
-            "supported": True,
-            "note": "Direct SVG renderer is supported.",
-        },
-    },
     "swimlane": {
         "svg": {
             "supported": True,

@@ -11,7 +11,6 @@ Normative diagram behavior belongs in `docs/specs/`.
 Current renderer notes:
 
 - `boundaries.md`
-- `flowchart.md` (historical compatibility note; renderer removal in 0.2.0)
 - `spaghetti.md`
 - `sppm.md`
 - `sppm_layout_enhancement.md`

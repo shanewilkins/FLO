@@ -90,9 +90,6 @@ uv run flo render onboarding.flo \
   --render-to onboarding-swimlane.svg
 ```
 
-Flowchart rendering is deprecated in 0.1.x and is removed in 0.2.0. New work
-should use SPPM or swimlane.
-
 ## 5. Export canonical JSON
 
 ```bash

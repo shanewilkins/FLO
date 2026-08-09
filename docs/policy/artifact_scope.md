@@ -21,8 +21,7 @@ These artifact classes fit FLO's scope:
 
 1. Core process projections
    - Direct views of the canonical process model.
-   - Examples: swimlane and SPPM; flowchart is retained only as deprecated
-     0.1.x compatibility.
+    - Examples: swimlane and SPPM.
 
 2. Process-native movement and flow views
    - Views derived from process structure plus declared movement, layout, or

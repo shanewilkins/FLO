@@ -15,13 +15,11 @@ capability.
 
 Current support matrix:
 
-- flowchart: svg supported only for deprecated 0.1.x compatibility; removed in 0.2.0
 - swimlane: svg supported
 - spaghetti: svg supported
 - sppm: svg supported
 
-The 0.2.0 matrix removes flowchart. Swimlane, spaghetti, and SPPM are the
-maintained renderer families.
+Swimlane, spaghetti, and SPPM are the maintained renderer families.
 
 The 0.3 matrix adds:
 

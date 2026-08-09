@@ -127,12 +127,12 @@ def test_layout_result_can_materialize_render_diagnostics_report():
     )
 
     report = result.diagnostics_report(
-        diagram="flowchart",
+        diagram="swimlane",
         backend="elk",
         artifact_kind="layout_result",
     )
 
-    assert report.diagram == "flowchart"
+    assert report.diagram == "swimlane"
     assert report.backend == "elk"
     assert report.artifact_kind == "layout_result"
     assert report.warning_count == 1
@@ -140,7 +140,7 @@ def test_layout_result_can_materialize_render_diagnostics_report():
     assert report.code_counts == {"elk-edge-missing": 1}
     assert report.category_counts == {"missing_geometry": 1}
     assert report.partial_output is True
-    assert report.summary == "1 warning(s) while rendering flowchart via elk"
+    assert report.summary == "1 warning(s) while rendering swimlane via elk"
 
 
 def test_layout_result_diagnostics_report_does_not_mark_advisory_output_as_partial():
@@ -159,7 +159,7 @@ def test_layout_result_diagnostics_report_does_not_mark_advisory_output_as_parti
     )
 
     report = result.diagnostics_report(
-        diagram="flowchart",
+        diagram="swimlane",
         backend="elk",
         artifact_kind="layout_result",
     )

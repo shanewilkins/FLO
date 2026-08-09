@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from ._artifact import RenderArtifact
-from ._svg_flowchart import render_flowchart_svg_artifact
 from ._svg_sppm import render_sppm_svg_artifact
 from ._svg_spaghetti import render_spaghetti_svg_artifact
 from ._svg_swimlane import render_swimlane_svg_artifact
@@ -24,10 +23,8 @@ def render_with_selected_backend(
 
 def _select_artifact_renderer(render_options: RenderOptions) -> _ArtifactRenderer:
     backend = str(render_options.backend or "svg")
-    diagram = str(render_options.diagram or "flowchart")
+    diagram = str(render_options.diagram or "swimlane")
 
-    if backend == "svg" and diagram == "flowchart":
-        return render_flowchart_svg_artifact
     if backend == "svg" and diagram == "swimlane":
         return render_swimlane_svg_artifact
     if backend == "svg" and diagram == "spaghetti":

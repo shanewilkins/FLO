@@ -106,16 +106,10 @@ steps:
 
 -   Deterministic compilation to FLO IR\
 -   Structural and semantic validation\
--   Graph projections: swimlane, spaghetti map, SPPM, plus deprecated
-    flowchart compatibility through 0.1.x\
+-   Graph projections: swimlane, spaghetti map, and SPPM\
 -   SVG and JSON exports\
 -   Ingredients list and movement report exports\
 -   Stable foundation for analytics
-
-Flowchart direct SVG rendering is deprecated and scheduled for removal in `0.2.0`.
-Prefer `--diagram swimlane` or `--diagram sppm` for forward-compatible diagram rendering.
-
-------------------------------------------------------------------------
 
 ## What FLO Does Not Provide
 

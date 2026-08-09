@@ -52,10 +52,7 @@ Current mappings:
   - Renderers (human-readable visualization) live under `src/flo/render`.
   - Exporters (machine-readable or report-style projections) live under
     `src/flo/export`.
-- `--diagram` supports `flowchart`, `swimlane`, `spaghetti`, and `sppm` for
-  render output.
-- `flowchart` is a deprecated 0.1.x compatibility choice and is removed in
-  0.2.0.
+- `--diagram` supports `swimlane`, `spaghetti`, and `sppm` for render output.
 - `--profile`, `--detail`, `--orientation`, `--show-notes`,
   `--subprocess-view`, shared autoformat controls (`--layout-wrap`,
   `--layout-max-width-px`, `--layout-target-columns`), and all SPPM render

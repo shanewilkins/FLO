@@ -15,7 +15,7 @@ from flo.services.errors import CLIError, EXIT_USAGE
 
 def ensure_render_projection_supported(render_options: RenderOptions) -> None:
     """Raise CLIError when requested diagram/backend projection is unsupported."""
-    diagram = str(render_options.diagram or "flowchart").strip().lower()
+    diagram = str(render_options.diagram or "swimlane").strip().lower()
     backend = str(render_options.backend or "svg").strip().lower()
 
     diagram_capabilities = RENDER_CAPABILITY_MATRIX.get(diagram)

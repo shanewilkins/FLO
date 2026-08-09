@@ -80,7 +80,7 @@ A stable renderer provides:
 - Visual invariants for supported corpus artifacts, including no incoherent overlaps, clipped labels, missing edge endpoints, or broken routing.
 
 SPPM, swimlane, spaghetti, and value stream maps must all be stable by 1.0.
-Flowchart direct SVG rendering is deprecated and scheduled for removal in 0.2.0.
+Flowchart direct SVG rendering is removed in 0.2.0.
 
 ## Compatibility And Deprecation
 
@@ -115,7 +115,7 @@ Before 1.0, FLO will document:
 
 ### 0.2: Renderer Consolidation
 
-- Remove the deprecated flowchart rendering surface.
+- Remove the deprecated flowchart rendering surface. Complete on the 0.2 line.
 - Complete shared SVG and renderer-platform primitives.
 - Publish renderer tier definitions and capability expectations.
 - Establish swimlane as a maintained renderer.

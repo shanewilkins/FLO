@@ -5,7 +5,6 @@ from flo.adapters import parse_adapter
 import pytest
 from flo.render._sppm_node_content import build_sppm_node_content
 from flo.render.layout_core import (
-    build_flowchart_elk_layout_request,
     build_sppm_elk_layout_request,
     build_swimlane_elk_layout_request,
     serialize_elk_layout_request,
@@ -156,75 +155,6 @@ def test_build_sppm_elk_layout_request_parent_only_subprocess_edges_are_stable()
         "e6:bake->end",
     ]
     assert [edge.id for edge in second.edges] == [edge.id for edge in first.edges]
-
-
-def test_build_flowchart_elk_layout_request_preserves_nodes_and_edges_without_lanes():
-    process = {
-        "lanes": [
-            {"id": "sales", "name": "Sales"},
-            {"id": "ops", "name": "Operations"},
-        ],
-        "nodes": [
-            {"id": "start", "kind": "start", "name": "Start", "lane": "sales"},
-            {"id": "review", "kind": "task", "name": "Review", "lane": "ops"},
-            {"id": "finish", "kind": "end", "name": "Finish", "lane": "ops"},
-        ],
-        "edges": [
-            {"source": "start", "target": "review"},
-            {"source": "review", "target": "finish", "outcome": "approved"},
-        ],
-    }
-
-    request = build_flowchart_elk_layout_request(
-        process,
-        options=RenderOptions(diagram="flowchart", orientation="tb"),
-    )
-
-    assert request.diagram == "flowchart"
-    assert request.direction == "DOWN"
-    assert request.lanes == ()
-    assert [node.id for node in request.nodes] == ["start", "review", "finish"]
-    assert all(node.lane_id is None for node in request.nodes)
-    assert [edge.id for edge in request.edges] == [
-        "e0:start->review",
-        "e1:review->finish",
-    ]
-    assert request.edges[1].label == "approved"
-
-
-def test_build_flowchart_elk_layout_request_accepts_reference_example():
-    path = Path("examples/reference/linear.flo")
-    adapter_model = parse_adapter(
-        path.read_text(encoding="utf-8"), source_path=str(path)
-    )
-
-    request = build_flowchart_elk_layout_request(
-        adapter_model,
-        options=RenderOptions(diagram="flowchart", orientation="lr"),
-    )
-
-    assert request.direction == "RIGHT"
-    assert request.lanes == ()
-    assert [node.id for node in request.nodes] == [
-        "start",
-        "collect_docs",
-        "verify",
-        "approved",
-        "finish",
-    ]
-    assert all(node.lane_id is None for node in request.nodes)
-    assert any(
-        edge.source_id == "approved"
-        and edge.target_id == "finish"
-        and edge.label == "yes"
-        for edge in request.edges
-    )
-    assert any(
-        edge.source_id == "approved"
-        and edge.target_id == "collect_docs"
-        and edge.label == "no"
-        for edge in request.edges
-    )
 
 
 def test_build_sppm_elk_layout_request_accepts_reference_example_without_inventing_lanes():

@@ -27,7 +27,6 @@ Current specs:
 - `cli_error_contract.md`
 - `telemetry_events.md`
 - `process_map.md`
-- `flowchart.md` (deprecated 0.1.x compatibility; removed in 0.2.0)
 - `value_stream_map.md`
 - `swimlane.md`
 - `sppm.md`
@@ -40,7 +39,7 @@ Preferred split:
 - Shared diagram-family semantics belong in a family spec such as
   `process_map.md` when multiple variants inherit the same richer meaning.
 - Variant-specific diagram meaning belongs in one spec per concrete diagram
-  surface such as `flowchart.md`, `swimlane.md`, or `sppm.md`.
+  surface such as `swimlane.md` or `sppm.md`.
 - Implementation strategy belongs in `docs/design/`.
 
 See also:

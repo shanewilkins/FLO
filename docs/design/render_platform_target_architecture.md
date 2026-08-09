@@ -256,9 +256,6 @@ Primary target:
 
 - Diagram model -> ELK -> FLO SVG
 
-Flowchart uses this path only for 0.1.x compatibility and is removed in 0.2.0
-rather than carried forward as a target renderer family.
-
 ### Spaghetti map
 
 Primary target:

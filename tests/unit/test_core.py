@@ -316,7 +316,7 @@ def test_run_content_cli_options_override_render_metadata_defaults(
     rc, out, err = run_content(
         "some content",
         options={
-            "diagram": "flowchart",
+            "diagram": "swimlane",
             "layout_wrap": "off",
             "spaghetti_channel": "material",
         },
@@ -326,7 +326,7 @@ def test_run_content_cli_options_override_render_metadata_defaults(
     assert err == ""
 
     render_options = captured["options"]
-    assert render_options.diagram == "flowchart"
+    assert render_options.diagram == "swimlane"
     assert render_options.layout_wrap == "off"
     assert render_options.spaghetti_channel == "material"
 
@@ -355,4 +355,4 @@ def test_run_content_without_render_metadata_keeps_default_diagram(
     assert err == ""
 
     render_options = captured["options"]
-    assert render_options.diagram == "flowchart"
+    assert render_options.diagram == "swimlane"

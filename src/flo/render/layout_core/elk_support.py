@@ -67,15 +67,6 @@ def ordered_sppm_nodes(
     )
 
 
-def ordered_flowchart_nodes(nodes: list[dict[str, Any]]) -> tuple[ElkLayoutNode, ...]:
-    """Convert process nodes into flowchart ELK nodes without lane assignment."""
-    return tuple(
-        _elk_node({**node, "lane": None}, partition_index=index)
-        for index, node in enumerate(nodes)
-        if str(node.get("id") or "")
-    )
-
-
 def ordered_edges(
     edges: list[dict[str, Any]],
     *,

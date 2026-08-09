@@ -5,7 +5,6 @@ import pytest
 import flo.render.layout_core.elk_adapter as elk_adapter
 from flo.render._diagnostics import RenderDiagnostic
 from flo.render.layout_core import (
-    build_flowchart_elk_layout_request,
     build_sppm_elk_layout_request,
     build_swimlane_elk_layout_request,
     execute_elk_layout,
@@ -22,6 +21,20 @@ from flo.render.layout_core import (
 from flo.render.options import RenderOptions
 from flo.services.logging import configure_logging
 from flo.services.errors import RenderError
+
+
+def _build_generic_elk_layout_request(
+    process: dict[str, object],
+    *,
+    orientation: str = "lr",
+    layout_fit: str = "fit-preferred",
+):
+    return build_sppm_elk_layout_request(
+        process,
+        options=RenderOptions(
+            diagram="sppm", orientation=orientation, layout_fit=layout_fit
+        ),
+    )
 
 
 def test_normalize_elk_layout_result_preserves_rework_edge_semantics():
@@ -510,7 +523,7 @@ def test_serialize_elk_layout_request_builds_swimlane_payload_shape():
 
 
 def test_execute_elk_layout_round_trips_through_injected_engine():
-    request = build_flowchart_elk_layout_request(
+    request = _build_generic_elk_layout_request(
         {
             "nodes": [
                 {"id": "start", "kind": "start", "name": "Start"},
@@ -518,7 +531,7 @@ def test_execute_elk_layout_round_trips_through_injected_engine():
             ],
             "edges": [{"source": "start", "target": "finish", "outcome": "done"}],
         },
-        options=RenderOptions(diagram="flowchart", orientation="lr"),
+        orientation="lr",
     )
 
     captured: dict[str, object] = {}
@@ -553,7 +566,7 @@ def test_execute_elk_layout_round_trips_through_injected_engine():
 
     payload = captured.get("payload")
     assert isinstance(payload, dict)
-    assert payload["id"] == "flo:flowchart"
+    assert payload["id"] == "flo:sppm"
     assert payload["layoutOptions"]["elk.direction"] == "RIGHT"
     assert [child["id"] for child in payload["children"]] == ["start", "finish"]
     assert payload["edges"][0]["labels"][0]["text"] == "done"
@@ -569,7 +582,7 @@ def test_execute_elk_layout_round_trips_through_injected_engine():
 
 
 def test_normalize_elk_layout_result_reports_missing_expected_edge_diagnostic():
-    request = build_flowchart_elk_layout_request(
+    request = _build_generic_elk_layout_request(
         {
             "nodes": [
                 {"id": "start", "kind": "start", "name": "Start"},
@@ -577,7 +590,7 @@ def test_normalize_elk_layout_result_reports_missing_expected_edge_diagnostic():
             ],
             "edges": [{"source": "start", "target": "finish"}],
         },
-        options=RenderOptions(diagram="flowchart", orientation="lr"),
+        orientation="lr",
     )
 
     result = normalize_elk_layout_result(
@@ -601,7 +614,7 @@ def test_normalize_elk_layout_result_reports_missing_expected_edge_diagnostic():
 
 
 def test_normalize_elk_layout_result_reports_edge_endpoints_missing_diagnostic():
-    request = build_flowchart_elk_layout_request(
+    request = _build_generic_elk_layout_request(
         {
             "nodes": [
                 {"id": "start", "kind": "start", "name": "Start"},
@@ -609,7 +622,7 @@ def test_normalize_elk_layout_result_reports_edge_endpoints_missing_diagnostic()
             ],
             "edges": [{"source": "start", "target": "finish"}],
         },
-        options=RenderOptions(diagram="flowchart", orientation="lr"),
+        orientation="lr",
     )
 
     result = normalize_elk_layout_result(
@@ -656,7 +669,7 @@ def test_normalize_elk_layout_result_reports_edge_endpoints_missing_diagnostic()
 
 
 def test_normalize_elk_layout_result_reports_edge_geometry_missing_diagnostic():
-    request = build_flowchart_elk_layout_request(
+    request = _build_generic_elk_layout_request(
         {
             "nodes": [
                 {"id": "start", "kind": "start", "name": "Start"},
@@ -664,7 +677,7 @@ def test_normalize_elk_layout_result_reports_edge_geometry_missing_diagnostic():
             ],
             "edges": [{"source": "start", "target": "finish"}],
         },
-        options=RenderOptions(diagram="flowchart", orientation="lr"),
+        orientation="lr",
     )
 
     result = normalize_elk_layout_result(
@@ -695,7 +708,7 @@ def test_normalize_elk_layout_result_reports_edge_geometry_missing_diagnostic():
 
 
 def test_normalize_elk_layout_result_reports_unexpected_edge_diagnostic():
-    request = build_flowchart_elk_layout_request(
+    request = _build_generic_elk_layout_request(
         {
             "nodes": [
                 {"id": "start", "kind": "start", "name": "Start"},
@@ -703,7 +716,7 @@ def test_normalize_elk_layout_result_reports_unexpected_edge_diagnostic():
             ],
             "edges": [{"source": "start", "target": "finish"}],
         },
-        options=RenderOptions(diagram="flowchart", orientation="lr"),
+        orientation="lr",
     )
 
     result = normalize_elk_layout_result(
@@ -749,7 +762,7 @@ def test_normalize_elk_layout_result_reports_unexpected_edge_diagnostic():
 
 
 def test_normalize_elk_layout_result_reports_unknown_edge_container_diagnostic():
-    request = build_flowchart_elk_layout_request(
+    request = _build_generic_elk_layout_request(
         {
             "nodes": [
                 {"id": "start", "kind": "start", "name": "Start"},
@@ -757,7 +770,7 @@ def test_normalize_elk_layout_result_reports_unknown_edge_container_diagnostic()
             ],
             "edges": [{"source": "start", "target": "finish"}],
         },
-        options=RenderOptions(diagram="flowchart", orientation="lr"),
+        orientation="lr",
     )
 
     result = normalize_elk_layout_result(
@@ -795,7 +808,7 @@ def test_normalize_elk_layout_result_reports_unknown_edge_container_diagnostic()
 
 
 def test_execute_elk_layout_raises_render_error_for_strict_diagnostics():
-    request = build_flowchart_elk_layout_request(
+    request = _build_generic_elk_layout_request(
         {
             "nodes": [
                 {"id": "start", "kind": "start", "name": "Start"},
@@ -803,14 +816,13 @@ def test_execute_elk_layout_raises_render_error_for_strict_diagnostics():
             ],
             "edges": [{"source": "start", "target": "finish"}],
         },
-        options=RenderOptions(
-            diagram="flowchart", orientation="lr", layout_fit="fit-strict"
-        ),
+        orientation="lr",
+        layout_fit="fit-strict",
     )
 
     def fake_engine(_payload: dict[str, object]) -> dict[str, object]:
         return {
-            "id": "flo:flowchart",
+            "id": "flo:sppm",
             "width": 360,
             "height": 160,
             "children": [
@@ -904,7 +916,7 @@ def test_layout_swimlane_with_elk_rejects_non_swimlane_options():
         layout_swimlane_with_elk(
             {"nodes": [], "edges": []},
             engine=lambda payload: payload,
-            options=RenderOptions(diagram="flowchart"),
+            options=RenderOptions(diagram="spaghetti"),
         )
     except ValueError as exc:
         assert str(exc) == "Swimlane ELK adapter requires diagram='swimlane'."
@@ -970,7 +982,7 @@ def test_layout_sppm_with_elk_rejects_non_sppm_options():
         layout_sppm_with_elk(
             {"nodes": [], "edges": []},
             engine=lambda payload: payload,
-            options=RenderOptions(diagram="flowchart"),
+            options=RenderOptions(diagram="spaghetti"),
         )
     except ValueError as exc:
         assert str(exc) == "SPPM ELK adapter requires diagram='sppm'."
@@ -1145,8 +1157,8 @@ def test_layout_swimlane_with_elk_uses_real_runtime_when_available():
     assert edge_path.label == "handoff"
 
 
-def test_normalize_elk_layout_result_builds_flowchart_geometry():
-    request = build_flowchart_elk_layout_request(
+def test_normalize_elk_layout_result_builds_sppm_geometry():
+    request = _build_generic_elk_layout_request(
         {
             "nodes": [
                 {"id": "start", "kind": "start", "name": "Start"},
@@ -1156,7 +1168,7 @@ def test_normalize_elk_layout_result_builds_flowchart_geometry():
                 {"source": "start", "target": "finish", "outcome": "done"},
             ],
         },
-        options=RenderOptions(diagram="flowchart", orientation="lr"),
+        orientation="lr",
     )
 
     result = normalize_elk_layout_result(
@@ -1206,7 +1218,7 @@ def test_normalize_elk_layout_result_builds_flowchart_geometry():
 
 
 def test_normalize_elk_layout_result_captures_edge_label_point_from_elk_geometry():
-    request = build_flowchart_elk_layout_request(
+    request = _build_generic_elk_layout_request(
         {
             "nodes": [
                 {"id": "start", "kind": "start", "name": "Start"},
@@ -1216,7 +1228,7 @@ def test_normalize_elk_layout_result_captures_edge_label_point_from_elk_geometry
                 {"source": "start", "target": "finish", "outcome": "done"},
             ],
         },
-        options=RenderOptions(diagram="flowchart", orientation="lr"),
+        orientation="lr",
     )
 
     result = normalize_elk_layout_result(

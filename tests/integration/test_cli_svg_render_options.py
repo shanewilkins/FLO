@@ -83,7 +83,7 @@ def test_run_spaghetti_svg_export_emits_svg(tmp_path):
     assert 'data-flo-backend="svg"' in result.output
 
 
-def test_run_flowchart_svg_export_emits_svg(tmp_path):
+def test_run_flowchart_svg_export_is_rejected(tmp_path):
     model = tmp_path / "flowchart_svg.flo"
     payload = {
         "spec_version": "0.1",
@@ -115,11 +115,8 @@ def test_run_flowchart_svg_export_emits_svg(tmp_path):
         ],
     )
 
-    assert result.exit_code == 0
-    assert "<svg" in result.output
-    assert 'data-flo-diagram="flowchart"' in result.output
-    assert 'data-node-kind="decision"' in result.output
-    assert ">yes<" in result.output
+    assert result.exit_code != 0
+    assert "flowchart" in result.output
 
 
 def test_run_sppm_svg_export_emits_svg(tmp_path):

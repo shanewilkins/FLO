@@ -21,7 +21,6 @@ from .elk_support import (
     extract_nodes_and_edges,
     lane_specs,
     ordered_edges,
-    ordered_flowchart_nodes,
     ordered_nodes,
     ordered_sppm_nodes,
     project_parent_only_subprocess_view,
@@ -129,35 +128,6 @@ def build_sppm_elk_layout_request(
             for node in sppm_nodes
         ),
         edges=edge_specs,
-        strict_diagnostics=render_options.layout_fit == "fit-strict",
-    )
-    validate_elk_request_namespaces(request)
-    return request
-
-
-def build_flowchart_elk_layout_request(
-    process: dict[str, Any] | Any, options: RenderOptions | None = None
-) -> ElkLayoutRequest:
-    """Build the first ELK layout request slice for flowchart diagrams."""
-    render_options = options or RenderOptions(diagram="flowchart")
-    if render_options.diagram != "flowchart":
-        raise ValueError("Flowchart ELK request builder requires diagram='flowchart'.")
-
-    nodes, edges = extract_nodes_and_edges(process)
-    if render_options.subprocess_view == "parent_only":
-        nodes, edges = project_parent_only_subprocess_view(nodes, edges)
-
-    request = ElkLayoutRequest(
-        diagram="flowchart",
-        direction=_elk_direction(render_options),
-        lanes=(),
-        nodes=ordered_flowchart_nodes(nodes),
-        edges=ordered_edges(
-            edges,
-            node_kinds=_node_kind_map(nodes),
-            diagram="flowchart",
-            direction=_elk_direction(render_options),
-        ),
         strict_diagnostics=render_options.layout_fit == "fit-strict",
     )
     validate_elk_request_namespaces(request)
@@ -1111,7 +1081,6 @@ __all__ = [
     "ElkLayoutLane",
     "ElkLayoutNode",
     "ElkLayoutRequest",
-    "build_flowchart_elk_layout_request",
     "build_sppm_elk_layout_request",
     "build_swimlane_elk_layout_request",
     "execute_elk_layout",

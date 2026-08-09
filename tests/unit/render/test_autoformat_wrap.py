@@ -10,7 +10,7 @@ def test_chunked_wrap_plan_exposes_shared_overflow_policy_for_generic_renderers(
         {"id": "c", "kind": "task", "name": "C"},
     ]
     options = RenderOptions(
-        diagram="flowchart",
+        diagram="swimlane",
         orientation="lr",
         layout_wrap="auto",
         layout_fit="fit-strict",

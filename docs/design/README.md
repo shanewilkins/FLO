@@ -113,7 +113,6 @@ owns each artifact family.
 ### Renderer Design
 
 - `renderers/boundaries.md`
-- `renderers/flowchart.md` (historical compatibility note; removal in 0.2.0)
 - `renderers/spaghetti.md`
 - `renderers/sppm.md`
 - `renderers/sppm_layout_enhancement.md`

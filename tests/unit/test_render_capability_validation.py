@@ -12,7 +12,6 @@ from flo.services.errors import CLIError
 
 def test_render_capability_matrix_covers_known_diagrams() -> None:
     assert set(RENDER_CAPABILITY_MATRIX.keys()) == {
-        "flowchart",
         "swimlane",
         "spaghetti",
         "sppm",

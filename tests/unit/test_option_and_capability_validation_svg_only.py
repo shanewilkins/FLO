@@ -17,7 +17,7 @@ class _RenderOptionsLike:
 def test_capability_validation_rejects_unknown_backend_for_supported_diagram():
     with pytest.raises(CLIError, match="Unsupported render backend"):
         ensure_render_projection_supported(
-            _RenderOptionsLike(diagram="flowchart", backend="bogus")
+            _RenderOptionsLike(diagram="swimlane", backend="bogus")
         )
 
 
@@ -31,7 +31,7 @@ def test_capability_validation_rejects_unknown_diagram():
 def test_ensure_render_options_compatible_with_output_allows_svg_render_output():
     ensure_render_options_compatible_with_output(
         {
-            "diagram": "flowchart",
+            "diagram": "swimlane",
             "orientation": "tb",
             "show_notes": True,
             "render_to": "out.svg",
@@ -43,7 +43,7 @@ def test_ensure_render_options_compatible_with_output_allows_svg_render_output()
 def test_ensure_render_options_compatible_with_output_rejects_json_with_render_flags():
     with pytest.raises(CLIError, match="require a diagram render output"):
         ensure_render_options_compatible_with_output(
-            {"diagram": "flowchart", "orientation": "tb"},
+            {"diagram": "swimlane", "orientation": "tb"},
             "json",
         )
 
