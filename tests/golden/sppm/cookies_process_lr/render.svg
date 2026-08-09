@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2341" height="222" viewBox="0 0 2341 222" data-flo-artifact-kind="svg" data-flo-backend="svg" data-flo-diagram="sppm" data-flo-layout-engine="elk">
+<defs>
+<marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L8,3 L0,6 z" fill="#475569" />
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#fffdf8" />
+<text x="28.0" y="32.0" font-family="Helvetica" font-size="22" font-weight="700" fill="#0f172a">Chocolate Chip Cookie Process</text>
+<g transform="translate(28.0,64.0)">
+<g data-lane-id="prep">
+<rect x="12.0" y="12.0" width="1047.0" height="130.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+<text x="28.0" y="36.0" font-family="Helvetica" font-size="13" font-weight="700" fill="#334155">prep</text>
+</g>
+<g data-lane-id="hold">
+<rect x="1125.0" y="14.0" width="264.0" height="126.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+<text x="1141.0" y="38.0" font-family="Helvetica" font-size="13" font-weight="700" fill="#334155">hold</text>
+</g>
+<g data-lane-id="oven">
+<rect x="1455.0" y="14.0" width="620.0" height="126.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+<text x="1471.0" y="38.0" font-family="Helvetica" font-size="13" font-weight="700" fill="#334155">oven</text>
+</g>
+<g data-lane-id="finish">
+<rect x="2141.0" y="39.0" width="156.0" height="76.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+<text x="2157.0" y="63.0" font-family="Helvetica" font-size="13" font-weight="700" fill="#334155">finish</text>
+</g>
+<g data-edge-source="add_dry_ingredients" data-edge-target="rest_dough" data-edge-kind="direct">
+<polyline points="1047.0,77.0 1137.0,77.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="bake" data-edge-target="end" data-edge-kind="direct">
+<polyline points="2063.0,77.0 2153.0,77.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="preheat" data-edge-target="bake" data-edge-kind="direct">
+<polyline points="1707.0,77.0 1763.0,77.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="prep_subprocess" data-edge-target="wet_mix_subprocess" data-edge-kind="direct">
+<polyline points="460.0,77.0 516.0,77.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="rest_dough" data-edge-target="preheat" data-edge-kind="direct">
+<polyline points="1377.0,77.0 1467.0,77.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="start" data-edge-target="prep_subprocess" data-edge-kind="direct">
+<polyline points="156.0,77.0 212.0,77.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="wet_mix_subprocess" data-edge-target="add_dry_ingredients" data-edge-kind="direct">
+<polyline points="776.0,77.0 832.0,77.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-node-id="start" data-node-kind="start">
+<rect x="24.0" y="51.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="90.0" y="82.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Start</text>
+</g>
+<g data-node-id="prep_subprocess" data-node-kind="subprocess">
+<ellipse cx="336.0" cy="77.0" rx="124.0" ry="53.0" fill="#F8FAFC" stroke="#607D8B" stroke-width="2" stroke-dasharray="4 4" />
+<text x="336.0" y="48.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Prep Subprocess</text>
+<text x="336.0" y="69.0" text-anchor="middle" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Subprocess</text>
+<text x="336.0" y="82.0" text-anchor="middle" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Detail map: prep_subprocess</text>
+</g>
+<g data-node-id="wet_mix_subprocess" data-node-kind="subprocess">
+<ellipse cx="646.0" cy="77.0" rx="130.0" ry="53.0" fill="#F8FAFC" stroke="#607D8B" stroke-width="2" stroke-dasharray="4 4" />
+<text x="646.0" y="48.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Combine Wet Ingredients</text>
+<text x="646.0" y="69.0" text-anchor="middle" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Subprocess</text>
+<text x="646.0" y="82.0" text-anchor="middle" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Detail map: wet_mix_subprocess</text>
+</g>
+<g data-node-id="add_dry_ingredients" data-node-kind="task">
+<rect x="832.0" y="26.0" width="215.0" height="102.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 844.0 26.0 L 1035.0 26.0 Q 1047.0 26.0 1047.0 38.0 L 1047.0 60.0 L 832.0 60.0 L 832.0 38.0 Q 832.0 26.0 844.0 26.0 Z" fill="#FFFFFF" stroke="none" />
+<line x1="832.0" y1="60.0" x2="1047.0" y2="60.0" stroke="#9E9E9E" stroke-width="1" opacity="0.35" />
+<text x="939.5" y="44.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Add Dry Ingredients</text>
+<text x="850.0" y="78.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Workers: lead_baker</text>
+<text x="850.0" y="91.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">CT: 6 min</text>
+</g>
+<g data-node-id="rest_dough" data-node-kind="wait">
+<rect x="1137.0" y="26.0" width="240.0" height="102.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 1149.0 26.0 L 1365.0 26.0 Q 1377.0 26.0 1377.0 38.0 L 1377.0 60.0 L 1137.0 60.0 L 1137.0 38.0 Q 1137.0 26.0 1149.0 26.0 Z" fill="#FFFFFF" stroke="none" />
+<line x1="1137.0" y1="60.0" x2="1377.0" y2="60.0" stroke="#9E9E9E" stroke-width="1" opacity="0.35" />
+<text x="1257.0" y="44.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Rest Dough</text>
+<text x="1155.0" y="78.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Workers: assistant_baker</text>
+<text x="1155.0" y="91.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">WT: 12 min wait</text>
+</g>
+<g data-node-id="preheat" data-node-kind="task">
+<rect x="1467.0" y="26.0" width="240.0" height="102.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 1479.0 26.0 L 1695.0 26.0 Q 1707.0 26.0 1707.0 38.0 L 1707.0 60.0 L 1467.0 60.0 L 1467.0 38.0 Q 1467.0 26.0 1479.0 26.0 Z" fill="#FFFFFF" stroke="none" />
+<line x1="1467.0" y1="60.0" x2="1707.0" y2="60.0" stroke="#9E9E9E" stroke-width="1" opacity="0.35" />
+<text x="1587.0" y="44.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Preheat Oven</text>
+<text x="1485.0" y="78.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Workers: assistant_baker</text>
+<text x="1485.0" y="91.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">CT: 15 min</text>
+</g>
+<g data-node-id="bake" data-node-kind="task">
+<rect x="1763.0" y="26.0" width="300.0" height="102.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 1775.0 26.0 L 2051.0 26.0 Q 2063.0 26.0 2063.0 38.0 L 2063.0 60.0 L 1763.0 60.0 L 1763.0 38.0 Q 1763.0 26.0 1775.0 26.0 Z" fill="#FFFFFF" stroke="none" />
+<line x1="1763.0" y1="60.0" x2="2063.0" y2="60.0" stroke="#9E9E9E" stroke-width="1" opacity="0.35" />
+<text x="1913.0" y="44.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Bake</text>
+<text x="1781.0" y="78.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Workers: lead_baker, assistant_baker</text>
+<text x="1781.0" y="91.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">CT: 13 min</text>
+</g>
+<g data-node-id="end" data-node-kind="end">
+<rect x="2153.0" y="51.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="2219.0" y="82.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">End</text>
+</g>
+</g>
+</svg>

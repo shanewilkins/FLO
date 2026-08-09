@@ -18,11 +18,23 @@ jobs:
         with:
           python-version: '3.14'
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '26'
+          cache: 'npm'
+
+      - name: Install Node runtime deps (elkjs)
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
       - name: Prepare uv runner and project dev deps
         run: |
           python -m pip install --upgrade pip
           python -m pip install uv
           uv sync
+
+      - name: Run committed SPPM golden artifact gate
+        run: uv run python scripts/check_sppm_baseline_drift.py
 
       - name: Run focused SPPM determinism tests
         run: >-

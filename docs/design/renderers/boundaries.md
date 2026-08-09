@@ -23,7 +23,6 @@ Rule: backend-neutral modules must not import SVG or SPPM renderer modules.
 
 Examples of SPPM-only semantics:
 
-- queue triangle semantics and queue-specific visual policy
 - SPPM rework conventions and anchor token derivation
 - SPPM publication conventions (step numbering, SPPM-specific footer content)
 
@@ -33,7 +32,10 @@ Examples of SPPM-only semantics:
   Swimlane lane presentation and swimlane-specific SVG layout behavior.
 
 Swimlane should consume shared routing/label/publication primitives where
-possible and own only swimlane-only visual semantics.
+possible and own only lane grouping, lane frames, and lane-aware placement.
+
+Swimlane inherits shared SPPM process-node shapes, typography, themes, detail
+behavior, and edge/rework conventions through the SVG shared primitives.
 
 ## Feature Placement Rules
 

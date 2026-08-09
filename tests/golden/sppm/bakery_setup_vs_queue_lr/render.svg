@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="4284" height="254" viewBox="0 0 4284 254" data-flo-artifact-kind="svg" data-flo-backend="svg" data-flo-diagram="sppm" data-flo-layout-engine="elk">
+<defs>
+<marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L8,3 L0,6 z" fill="#475569" />
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#fffdf8" />
+<text x="28.0" y="32.0" font-family="Helvetica" font-size="22" font-weight="700" fill="#0f172a">Croissant Baking</text>
+<g transform="translate(28.0,64.0)">
+<g data-edge-source="bake" data-edge-target="cool_wait_queue" data-edge-kind="direct">
+<polyline points="3414.0,87.0 3523.5,87.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="bake_wait_queue" data-edge-target="bake" data-edge-kind="direct">
+<polyline points="3008.2,87.0 3114.0,87.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="cool" data-edge-target="end" data-edge-kind="direct">
+<polyline points="4040.0,87.0 4096.0,87.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="cool_wait_queue" data-edge-target="cool" data-edge-kind="direct">
+<polyline points="3630.5,87.0 3740.0,87.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="laminate" data-edge-target="rest_queue" data-edge-kind="direct">
+<polyline points="1611.0,87.0 1710.5,87.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="laminate_queue" data-edge-target="laminate_wait_queue" data-edge-kind="direct">
+<polyline points="931.5,87.0 1089.5,87.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="laminate_wait_queue" data-edge-target="laminate" data-edge-kind="direct">
+<polyline points="1196.5,87.0 1306.0,87.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="oven_queue" data-edge-target="bake_wait_queue" data-edge-kind="direct">
+<polyline points="2758.2,87.0 2908.8,87.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="oven_setup" data-edge-target="oven_queue" data-edge-kind="direct">
+<polyline points="2568.0,87.0 2668.8,87.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="prepare_dough" data-edge-target="laminate_queue" data-edge-kind="direct">
+<polyline points="730.0,87.0 834.5,87.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="prepare_dough_wait_queue" data-edge-target="prepare_dough" data-edge-kind="direct">
+<polyline points="353.0,87.0 460.0,87.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="proof" data-edge-target="oven_setup" data-edge-kind="direct">
+<polyline points="2217.0,87.0 2273.0,87.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="rest_queue" data-edge-target="proof" data-edge-kind="direct">
+<polyline points="1797.5,87.0 1897.0,87.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="start" data-edge-target="prepare_dough_wait_queue" data-edge-kind="direct">
+<polyline points="144.0,87.0 251.0,87.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-node-id="start" data-node-kind="start">
+<rect x="12.0" y="61.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="78.0" y="92.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Start Batch</text>
+</g>
+<g data-node-id="prepare_dough_wait_queue" data-node-kind="queue">
+<polygon data-node-queue-body="true" points="200.0,162.0 404.0,162.0 302.0,12.0" fill="#FFB74D" stroke="#E65100" stroke-width="2" />
+<text x="302.0" y="119.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Dough Prep Queue</text>
+<text x="302.0" y="63.0" text-anchor="middle" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">WT: 5 min</text>
+</g>
+<g data-node-id="prepare_dough" data-node-kind="task">
+<rect x="460.0" y="28.0" width="270.0" height="118.0" rx="12" fill="white" stroke="#2E7D32" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 472.0 28.0 L 718.0 28.0 Q 730.0 28.0 730.0 40.0 L 730.0 62.0 L 460.0 62.0 L 460.0 40.0 Q 460.0 28.0 472.0 28.0 Z" fill="#81C784" stroke="none" />
+<line x1="460.0" y1="62.0" x2="730.0" y2="62.0" stroke="#2E7D32" stroke-width="1" opacity="0.35" />
+<text x="595.0" y="46.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Prepare Dough</text>
+<text x="478.0" y="80.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Mix and knead croissant dough.</text>
+<text x="478.0" y="93.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Workers: Pastry Chef</text>
+<text x="478.0" y="106.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">CT: 20 min</text>
+</g>
+<g data-node-id="laminate_queue" data-node-kind="queue">
+<polygon data-node-queue-body="true" points="786.0,162.0 980.0,162.0 883.0,12.0" fill="#FFB74D" stroke="#E65100" stroke-width="2" />
+<text x="883.0" y="119.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Laminate Queue</text>
+<text x="883.0" y="63.0" text-anchor="middle" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">WT: 45 min</text>
+</g>
+<g data-node-id="laminate_wait_queue" data-node-kind="queue">
+<polygon data-node-queue-body="true" points="1036.0,162.0 1250.0,162.0 1143.0,12.0" fill="#FFB74D" stroke="#E65100" stroke-width="2" />
+<text x="1143.0" y="111.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Lamination Staging</text>
+<text x="1143.0" y="127.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Queue</text>
+<text x="1143.0" y="63.0" text-anchor="middle" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">WT: 10 min</text>
+</g>
+<g data-node-id="laminate" data-node-kind="task">
+<rect x="1306.0" y="28.0" width="305.0" height="118.0" rx="12" fill="white" stroke="#2E7D32" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 1318.0 28.0 L 1599.0 28.0 Q 1611.0 28.0 1611.0 40.0 L 1611.0 62.0 L 1306.0 62.0 L 1306.0 40.0 Q 1306.0 28.0 1318.0 28.0 Z" fill="#81C784" stroke="none" />
+<line x1="1306.0" y1="62.0" x2="1611.0" y2="62.0" stroke="#2E7D32" stroke-width="1" opacity="0.35" />
+<text x="1458.5" y="46.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Laminate Dough</text>
+<text x="1324.0" y="80.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Fold and roll dough to create layers.</text>
+<text x="1324.0" y="93.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Workers: Pastry Chef</text>
+<text x="1324.0" y="106.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">CT: 25 min</text>
+</g>
+<g data-node-id="rest_queue" data-node-kind="queue">
+<polygon data-node-queue-body="true" points="1667.0,162.0 1841.0,162.0 1754.0,12.0" fill="#FFB74D" stroke="#E65100" stroke-width="2" />
+<text x="1754.0" y="111.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Rest Queue</text>
+<text x="1754.0" y="127.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">(Fridge)</text>
+<text x="1754.0" y="63.0" text-anchor="middle" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">WT: 60 min</text>
+</g>
+<g data-node-id="proof" data-node-kind="task">
+<rect x="1897.0" y="28.0" width="320.0" height="118.0" rx="12" fill="white" stroke="#2E7D32" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 1909.0 28.0 L 2205.0 28.0 Q 2217.0 28.0 2217.0 40.0 L 2217.0 62.0 L 1897.0 62.0 L 1897.0 40.0 Q 1897.0 28.0 1909.0 28.0 Z" fill="#81C784" stroke="none" />
+<line x1="1897.0" y1="62.0" x2="2217.0" y2="62.0" stroke="#2E7D32" stroke-width="1" opacity="0.35" />
+<text x="2057.0" y="46.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Proof Dough</text>
+<text x="1915.0" y="80.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Place dough in controlled climate to rise.</text>
+<text x="1915.0" y="93.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Workers: Proofer</text>
+<text x="1915.0" y="106.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">CT: 120 min</text>
+</g>
+<g data-node-id="oven_setup" data-node-kind="task">
+<rect x="2273.0" y="12.0" width="295.0" height="150.0" rx="12" fill="white" stroke="#C62828" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 2285.0 12.0 L 2556.0 12.0 Q 2568.0 12.0 2568.0 24.0 L 2568.0 46.0 L 2273.0 46.0 L 2273.0 24.0 Q 2273.0 12.0 2285.0 12.0 Z" fill="#EF9A9A" stroke="none" />
+<line x1="2273.0" y1="46.0" x2="2568.0" y2="46.0" stroke="#C62828" stroke-width="1" opacity="0.35" />
+<text x="2420.5" y="30.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Oven Changeover</text>
+<text x="2291.0" y="64.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Clean oven from previous batch, set</text>
+<text x="2291.0" y="77.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">temperature, load pans.</text>
+<text x="2291.0" y="90.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Workers: Baker</text>
+<text x="2291.0" y="103.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">CT: 5 min</text>
+<text x="2291.0" y="116.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">CO: 30 min crossover</text>
+</g>
+<g data-node-id="oven_queue" data-node-kind="queue">
+<polygon data-node-queue-body="true" points="2624.0,162.0 2803.0,162.0 2713.5,12.0" fill="#FFB74D" stroke="#E65100" stroke-width="2" />
+<text x="2713.5" y="119.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Oven Queue</text>
+<text x="2713.5" y="63.0" text-anchor="middle" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">WT: 120 min</text>
+</g>
+<g data-node-id="bake_wait_queue" data-node-kind="queue">
+<polygon data-node-queue-body="true" points="2859.0,162.0 3058.0,162.0 2958.5,12.0" fill="#FFB74D" stroke="#E65100" stroke-width="2" />
+<text x="2958.5" y="119.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Bake Load Queue</text>
+<text x="2958.5" y="63.0" text-anchor="middle" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">WT: 3 min</text>
+</g>
+<g data-node-id="bake" data-node-kind="task">
+<rect x="3114.0" y="28.0" width="300.0" height="118.0" rx="12" fill="white" stroke="#2E7D32" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 3126.0 28.0 L 3402.0 28.0 Q 3414.0 28.0 3414.0 40.0 L 3414.0 62.0 L 3114.0 62.0 L 3114.0 40.0 Q 3114.0 28.0 3126.0 28.0 Z" fill="#81C784" stroke="none" />
+<line x1="3114.0" y1="62.0" x2="3414.0" y2="62.0" stroke="#2E7D32" stroke-width="1" opacity="0.35" />
+<text x="3264.0" y="46.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Bake Croissants</text>
+<text x="3132.0" y="80.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Place trays in oven, monitor baking.</text>
+<text x="3132.0" y="93.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Workers: Baker</text>
+<text x="3132.0" y="106.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">CT: 25 min</text>
+</g>
+<g data-node-id="cool_wait_queue" data-node-kind="queue">
+<polygon data-node-queue-body="true" points="3470.0,162.0 3684.0,162.0 3577.0,12.0" fill="#FFB74D" stroke="#E65100" stroke-width="2" />
+<text x="3577.0" y="119.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Cooling Rack Queue</text>
+<text x="3577.0" y="63.0" text-anchor="middle" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">WT: 2 min</text>
+</g>
+<g data-node-id="cool" data-node-kind="task">
+<rect x="3740.0" y="28.0" width="300.0" height="118.0" rx="12" fill="white" stroke="#2E7D32" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 3752.0 28.0 L 4028.0 28.0 Q 4040.0 28.0 4040.0 40.0 L 4040.0 62.0 L 3740.0 62.0 L 3740.0 40.0 Q 3740.0 28.0 3752.0 28.0 Z" fill="#81C784" stroke="none" />
+<line x1="3740.0" y1="62.0" x2="4040.0" y2="62.0" stroke="#2E7D32" stroke-width="1" opacity="0.35" />
+<text x="3890.0" y="46.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Cool &amp; Package</text>
+<text x="3758.0" y="80.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Cool on racks, package for delivery.</text>
+<text x="3758.0" y="93.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Workers: Packer</text>
+<text x="3758.0" y="106.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">CT: 15 min</text>
+</g>
+<g data-node-id="end" data-node-kind="end">
+<rect x="4096.0" y="61.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="4162.0" y="92.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Ready for Delivery</text>
+</g>
+</g>
+</svg>

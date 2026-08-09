@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1892" height="516" viewBox="0 0 1892 516" data-flo-artifact-kind="svg" data-flo-backend="svg" data-flo-diagram="sppm" data-flo-layout-engine="elk">
+<defs>
+<marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L8,3 L0,6 z" fill="#475569" />
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#fffdf8" />
+<text x="28.0" y="32.0" font-family="Helvetica" font-size="22" font-weight="700" fill="#0f172a">SPPM Long Label Stress Demonstration for Predictable Truncation Behavior</text>
+<g transform="translate(28.0,64.0)">
+<g data-edge-source="intake" data-edge-target="quality_gate" data-edge-kind="direct">
+<polyline points="765.0,103.0 821.0,103.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="intake_wait_queue" data-edge-target="intake" data-edge-kind="direct">
+<polyline points="356.8,103.0 465.0,103.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="process" data-edge-target="end" data-edge-kind="direct">
+<polyline points="1648.0,103.0 1704.0,103.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="process_queue" data-edge-target="process" data-edge-kind="direct">
+<polyline points="1268.5,103.0 1378.0,103.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="quality_gate" data-edge-target="process_queue" data-edge-kind="direct">
+<polyline points="1052.0,103.0 1161.5,103.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+<rect x="884.0" y="88.0" width="392.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
+<text x="1080.0" y="101.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">Continue through quality gate with manual oversight path</text>
+</g>
+<g data-edge-source="quality_gate" data-edge-target="rework" data-edge-kind="rework" data-edge-rework-variant="branch">
+<polyline points="936.5,185.0 936.5,290.0" fill="none" stroke="#b91c1c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" stroke-dasharray="2 6" />
+<rect x="712.5" y="187.7" width="448.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
+<text x="936.5" y="200.7" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">Return to intake and request revised package details immediately</text>
+</g>
+<g data-edge-source="rework" data-edge-target="intake_wait_queue" data-edge-kind="rework" data-edge-rework-variant="return">
+<polyline points="809.0,357.0 649.3,290.0 649.3,238.1 591.7,238.1 591.7,229.9 304.5,229.9 304.5,178.0" fill="none" stroke="#c2410c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" stroke-dasharray="2 6" />
+</g>
+<g data-edge-source="start" data-edge-target="intake_wait_queue" data-edge-kind="direct">
+<polyline points="144.0,103.0 252.2,103.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-node-id="start" data-node-kind="start">
+<rect x="12.0" y="77.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="78.0" y="108.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Start</text>
+</g>
+<g data-node-id="intake_wait_queue" data-node-kind="queue">
+<polygon data-node-queue-body="true" points="200.0,178.0 409.0,178.0 304.5,28.0" fill="#FFB74D" stroke="#E65100" stroke-width="2" />
+<text x="304.5" y="119.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Intake Queue for</text>
+<text x="304.5" y="135.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Extensive Context</text>
+<text x="304.5" y="151.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Review</text>
+<text x="304.5" y="79.0" text-anchor="middle" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">WT: 8 min</text>
+</g>
+<g data-node-id="intake" data-node-kind="task">
+<rect x="465.0" y="12.0" width="300.0" height="182.0" rx="12" fill="white" stroke="#F9A825" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 477.0 12.0 L 753.0 12.0 Q 765.0 12.0 765.0 24.0 L 765.0 110.0 L 465.0 110.0 L 465.0 24.0 Q 465.0 12.0 477.0 12.0 Z" fill="#FFF176" stroke="none" />
+<line x1="465.0" y1="110.0" x2="765.0" y2="110.0" stroke="#F9A825" stroke-width="1" opacity="0.35" />
+<text x="615.0" y="30.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Intake a customer</text>
+<text x="615.0" y="46.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">request requiring</text>
+<text x="615.0" y="62.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">extensive descriptive</text>
+<text x="615.0" y="78.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">context for stress</text>
+<text x="615.0" y="94.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">testing</text>
+<text x="483.0" y="128.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Workers: Primary Intake Coordinator,</text>
+<text x="483.0" y="141.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Senior Quality Analyst</text>
+<text x="483.0" y="154.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">CT: 11 min</text>
+</g>
+<g data-node-id="quality_gate" data-node-kind="decision">
+<polygon points="936.5,21.0 1052.0,103.0 936.5,185.0 821.0,103.0" fill="#E3EEF7" stroke="#285B8F" stroke-width="2" />
+<text x="936.5" y="68.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Should this</text>
+<text x="936.5" y="84.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">request continue</text>
+<text x="936.5" y="100.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">through the</text>
+<text x="936.5" y="116.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">accelerated</text>
+<text x="936.5" y="132.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">quality assurance</text>
+<text x="936.5" y="148.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">gate?</text>
+</g>
+<g data-node-id="process_queue" data-node-kind="queue">
+<polygon data-node-queue-body="true" points="1108.0,178.0 1322.0,178.0 1215.0,28.0" fill="#FFB74D" stroke="#E65100" stroke-width="2" />
+<text x="1215.0" y="119.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Exceptionally Long</text>
+<text x="1215.0" y="135.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Dispatch Review</text>
+<text x="1215.0" y="151.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Queue Label</text>
+<text x="1215.0" y="79.0" text-anchor="middle" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">WT: 19 min</text>
+</g>
+<g data-node-id="process" data-node-kind="task">
+<rect x="1378.0" y="28.0" width="270.0" height="150.0" rx="12" fill="white" stroke="#2E7D32" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 1390.0 28.0 L 1636.0 28.0 Q 1648.0 28.0 1648.0 40.0 L 1648.0 110.0 L 1378.0 110.0 L 1378.0 40.0 Q 1378.0 28.0 1390.0 28.0 Z" fill="#81C784" stroke="none" />
+<line x1="1378.0" y1="110.0" x2="1648.0" y2="110.0" stroke="#2E7D32" stroke-width="1" opacity="0.35" />
+<text x="1513.0" y="46.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Perform the core service</text>
+<text x="1513.0" y="62.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">operation with full</text>
+<text x="1513.0" y="78.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">traceability markers</text>
+<text x="1513.0" y="94.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">attached</text>
+<text x="1396.0" y="128.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Workers: Operations Specialist</text>
+<text x="1396.0" y="141.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">CT: 14 min</text>
+</g>
+<g data-node-id="rework" data-node-kind="task">
+<rect x="809.0" y="290.0" width="255.0" height="134.0" rx="12" fill="white" stroke="#C62828" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 821.0 290.0 L 1052.0 290.0 Q 1064.0 290.0 1064.0 302.0 L 1064.0 356.0 L 809.0 356.0 L 809.0 302.0 Q 809.0 290.0 821.0 290.0 Z" fill="#EF9A9A" stroke="none" />
+<line x1="809.0" y1="356.0" x2="1064.0" y2="356.0" stroke="#C62828" stroke-width="1" opacity="0.35" />
+<text x="936.5" y="308.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Rework upstream intake</text>
+<text x="936.5" y="324.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">details and route back</text>
+<text x="936.5" y="340.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">for verification</text>
+<text x="827.0" y="374.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Workers: Intake Coordinator</text>
+<text x="827.0" y="387.0" text-anchor="start" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">CT: 7 min</text>
+</g>
+<g data-node-id="end" data-node-kind="end">
+<rect x="1704.0" y="77.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="1770.0" y="108.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">End</text>
+</g>
+</g>
+</svg>

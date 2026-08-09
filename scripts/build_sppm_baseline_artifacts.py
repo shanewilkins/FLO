@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import asdict
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -17,7 +18,7 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 DEFAULT_MANIFEST = REPO_ROOT / "examples" / "conformance" / "sppm_corpus.json"
-DEFAULT_OUTDIR = REPO_ROOT / "renders" / "conformance" / "sppm_baseline"
+DEFAULT_OUTDIR = REPO_ROOT / "tests" / "golden" / "sppm"
 ENV_PARTITION_MODE = "FLO_SPPM_PARTITION_MODE"
 ENV_PORT_CONSTRAINTS = "FLO_SPPM_PORT_CONSTRAINTS"
 ENV_HELPER_ANCHORS = "FLO_SPPM_HELPER_ANCHORS"
@@ -182,6 +183,7 @@ def _build_case(*, case: dict[str, Any], outdir: Path) -> None:
         case_dir / "layout_result.json", _layout_result_to_jsonable(normalized_layout)
     )
     (case_dir / "render.svg").write_text(svg_artifact.content, encoding="utf-8")
+    _write_hash_manifest(case_dir)
 
     print(f"Built: {_display_path(case_dir)}")
 
@@ -237,6 +239,15 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
         json.dumps(payload, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+
+
+def _write_hash_manifest(case_dir: Path) -> None:
+    artifacts = {
+        path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in sorted(case_dir.iterdir())
+        if path.is_file() and path.name != "sha256.json"
+    }
+    _write_json(case_dir / "sha256.json", {"artifacts": artifacts})
 
 
 def _display_path(path: Path) -> str:

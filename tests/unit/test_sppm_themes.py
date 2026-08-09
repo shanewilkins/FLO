@@ -41,6 +41,7 @@ def test_resolve_sppm_theme_with_custom_overrides_builtin() -> None:
         rnva=SppmNodeStyle(fill="#303030", border="#404040"),
         nva=SppmNodeStyle(fill="#505050", border="#606060"),
         decision=SppmNodeStyle(fill="#707070", border="#808080"),
+        queue=SppmNodeStyle(fill="#818181", border="#828282"),
         unknown=SppmNodeStyle(fill="#909090", border="#A0A0A0"),
         start_end=SppmNodeStyle(fill="#B0B0B0", border="#C0C0C0"),
     )
@@ -59,6 +60,7 @@ def test_resolve_sppm_theme_with_custom_trims_name_and_falls_back_to_default() -
         rnva=SppmNodeStyle(fill="#333333", border="#444444"),
         nva=SppmNodeStyle(fill="#555555", border="#666666"),
         decision=SppmNodeStyle(fill="#777777", border="#888888"),
+        queue=SppmNodeStyle(fill="#898989", border="#8A8A8A"),
         unknown=SppmNodeStyle(fill="#999999", border="#AAAAAA"),
         start_end=SppmNodeStyle(fill="#BBBBBB", border="#CCCCCC"),
     )
@@ -85,6 +87,7 @@ def test_parse_custom_sppm_themes_supports_nested_and_flat_definitions() -> None
                 "rnva": {"fill": "#333", "border": "#444"},
                 "nva": {"fill": "#555", "border": "#666"},
                 "decision": {"fill": "#777", "border": "#888"},
+                "queue": {"fill": "#889", "border": "#99A"},
                 "unknown": {"fill": "#999", "border": "#AAA"},
                 "start_end": {"fill": "#BBB", "border": "#CCC"},
             },
@@ -97,6 +100,8 @@ def test_parse_custom_sppm_themes_supports_nested_and_flat_definitions() -> None
                 "nva_border": "#606",
                 "decision_fill": "#707",
                 "decision_border": "#808",
+                "queue_fill": "#809",
+                "queue_border": "#90A",
                 "unknown_fill": "#909",
                 "unknown_border": "#A0A",
                 "start_end_fill": "#B0B",
@@ -107,6 +112,7 @@ def test_parse_custom_sppm_themes_supports_nested_and_flat_definitions() -> None
                 "rnva": {"fill": "#333", "border": "#444"},
                 "nva": {"fill": "#555", "border": "#666"},
                 "decision": {"fill": "#777", "border": "#888"},
+                "queue": {"fill": "#889", "border": "#99A"},
                 "unknown": {"fill": "#999", "border": "#AAA"},
                 "start_end": {"fill": "#BBB", "border": "#CCC"},
             },
@@ -118,6 +124,33 @@ def test_parse_custom_sppm_themes_supports_nested_and_flat_definitions() -> None
     assert parsed["flat"].decision == SppmNodeStyle(fill="#707", border="#808")
 
 
+def test_flatly_theme_uses_bootstrap_semantic_colors() -> None:
+    theme = SPPM_THEMES["flatly"]
+
+    assert theme.va.fill == "#D1F2EB"
+    assert theme.rnva.fill == "#FDEBD0"
+    assert theme.nva.fill == "#FADBD8"
+    assert theme.queue.fill == "#F39C12"
+    assert theme.decision.border == "#2C3E50"
+
+
 def test_parse_custom_sppm_themes_non_mapping_returns_empty() -> None:
     assert parse_custom_sppm_themes(None) == {}
     assert parse_custom_sppm_themes(["bad"]) == {}
+
+
+def test_parse_custom_sppm_theme_uses_rnva_for_legacy_queue_style() -> None:
+    parsed = parse_custom_sppm_themes(
+        {
+            "legacy": {
+                "va": {"fill": "#111", "border": "#222"},
+                "rnva": {"fill": "#333", "border": "#444"},
+                "nva": {"fill": "#555", "border": "#666"},
+                "decision": {"fill": "#777", "border": "#888"},
+                "unknown": {"fill": "#999", "border": "#AAA"},
+                "start_end": {"fill": "#BBB", "border": "#CCC"},
+            }
+        }
+    )
+
+    assert parsed["legacy"].queue == parsed["legacy"].rnva

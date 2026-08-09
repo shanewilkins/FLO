@@ -96,7 +96,11 @@ quiet duplication of the broader analytics layer.
 Decision nodes use a dedicated, high-contrast style so branching points remain
 visually distinct without overpowering the rest of the map.
 
-- Decision diamonds use a pale amber fill with a darker amber border.
+- Decision diamonds use the theme's pale-primary fill with a darker primary border.
+- Queue triangles use the theme's warning fill across the complete triangle body,
+  with the queue name and wait time legible at normal zoom.
+- Value-class roles follow Bootstrap-compatible semantics: VA maps to `success`,
+  RNVA maps to `warning`, and NVA maps to `danger`.
 - The same policy applies in print-friendly output, but print mode tightens the
   palette to black-and-white-friendly contrast.
 - Outcome labels use neutral gray text, not bright accent colors, so they read
@@ -108,8 +112,8 @@ Chosen defaults:
 
 | Surface | Default treatment |
 | --- | --- |
-| Decision node fill | `#FFF8E1` |
-| Decision node border | `#B28704` |
+| Decision node fill | `#E3EEF7` |
+| Decision node border | `#285B8F` |
 | Decision outcome label text | `#455A64` |
 
 This keeps the decision branch legible in both dense diagrams and print output

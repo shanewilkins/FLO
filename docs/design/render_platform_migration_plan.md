@@ -32,6 +32,9 @@ Completed so far:
   channel selection, route labels/titles/styles, boundary rendering, location
   shape semantics, missing-spatial failure behavior, and multi-route
   aggregation counts
+- the direct-SVG swimlane slice now has focused artifact-contract coverage for
+  lane frames, nodes, edges, incomplete lane assignment, and reference fixture
+  determinism
 - focused validation passes across the affected render, core, pipeline, and CLI
   slices
 
@@ -54,8 +57,8 @@ Current phase assessment:
 - the next runtime slice adds a concrete `elkjs`-backed Node wrapper plus a
   stable ELK engine error contract for unavailable runtime, subprocess failure,
   timeout, and invalid payload/response cases
-- the first ELK-backed FLO-owned SVG flowchart slice now exists as a minimal
-  direct-SVG backend consuming `LayoutResult`
+- swimlane is the active graph-family ELK-backed direct-SVG slice; flowchart is
+  deprecated and should not receive new renderer investment
 - later Phase 3 ELK adapter work remains future work
 
 Current working interpretation:
@@ -351,8 +354,11 @@ Current state:
 - SVG export is first-class in CLI/core semantics
 - the direct-SVG spaghetti backend now has meaningful artifact-contract tests
   for both happy-path and failure-path behavior
-- image-fixture depth, broader per-family SVG coverage, and downstream SVG to
-  PNG/PDF derivation remain open work
+- the direct-SVG swimlane backend now has reference-fixture artifact coverage
+  that asserts stable semantic SVG structure and byte-for-byte repeatability for
+  the same input and options
+- image-fixture depth, broader maintained-diagram SVG coverage, and downstream
+  SVG to PNG/PDF derivation remain open work
 
 ## Phase 3: Add ELK For Graph-Like Diagram Families
 
@@ -371,7 +377,7 @@ Work:
 
 Recommended first adopter:
 
-- swimlane or flowchart
+- swimlane
 
 Reason:
 
@@ -452,8 +458,8 @@ Priority order:
   toward richer fixture-style artifact coverage
 2. reduce the remaining Graphviz leakage in legacy implementation module names
   where the migration value is still worth the churn
-3. choose the first ELK candidate between flowchart and swimlane, then define
-  the minimal layout contract expansion required for that slice
+3. extend swimlane reference-artifact coverage from semantic SVG signatures
+  toward explicit golden-drift review tooling
 4. continue treating SPPM publication and Typst composition as a separate lane
   until SVG and layout contracts are more stable
 

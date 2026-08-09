@@ -1,0 +1,1305 @@
+{
+  "$H": 13,
+  "children": [
+    {
+      "$H": 277,
+      "height": 52,
+      "id": "start",
+      "labels": [
+        {
+          "height": 0,
+          "text": "Start",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.layered.layering.layerConstraint": "FIRST",
+        "elk.partitioning.partition": "0",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "start"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "start__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0,
+          "x": 66,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "id": "start__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0,
+          "x": 132,
+          "y": 26
+        },
+        {
+          "height": 0,
+          "id": "start__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0,
+          "x": 66,
+          "y": 52
+        },
+        {
+          "height": 0,
+          "id": "start__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0,
+          "x": 0,
+          "y": 26
+        }
+      ],
+      "width": 132,
+      "x": 12,
+      "y": 61
+    },
+    {
+      "$H": 286,
+      "height": 102,
+      "id": "dropoff",
+      "labels": [
+        {
+          "height": 0,
+          "text": "Drop-off and ticket",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "1",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "task"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "dropoff__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0,
+          "x": 120,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "id": "dropoff__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0,
+          "x": 240,
+          "y": 51
+        },
+        {
+          "height": 0,
+          "id": "dropoff__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0,
+          "x": 120,
+          "y": 102
+        },
+        {
+          "height": 0,
+          "id": "dropoff__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0,
+          "x": 0,
+          "y": 51
+        }
+      ],
+      "width": 240,
+      "x": 200,
+      "y": 36
+    },
+    {
+      "$H": 293,
+      "height": 150,
+      "id": "sort_tag_wait_queue",
+      "labels": [
+        {
+          "height": 0,
+          "text": "Sort Queue",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "2",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "queue"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "sort_tag_wait_queue__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0,
+          "x": 87,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "id": "sort_tag_wait_queue__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0,
+          "x": 174,
+          "y": 75
+        },
+        {
+          "height": 0,
+          "id": "sort_tag_wait_queue__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0,
+          "x": 87,
+          "y": 150
+        },
+        {
+          "height": 0,
+          "id": "sort_tag_wait_queue__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0,
+          "x": 0,
+          "y": 75
+        }
+      ],
+      "width": 174,
+      "x": 496,
+      "y": 12
+    },
+    {
+      "$H": 300,
+      "height": 102,
+      "id": "sort_tag",
+      "labels": [
+        {
+          "height": 0,
+          "text": "Sort and tag",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "3",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "task"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "sort_tag__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0,
+          "x": 95,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "id": "sort_tag__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0,
+          "x": 190,
+          "y": 51
+        },
+        {
+          "height": 0,
+          "id": "sort_tag__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0,
+          "x": 95,
+          "y": 102
+        },
+        {
+          "height": 0,
+          "id": "sort_tag__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0,
+          "x": 0,
+          "y": 51
+        }
+      ],
+      "width": 190,
+      "x": 726,
+      "y": 36
+    },
+    {
+      "$H": 307,
+      "height": 150,
+      "id": "wash_wait_queue",
+      "labels": [
+        {
+          "height": 0,
+          "text": "Washer Queue",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "4",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "queue"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "wash_wait_queue__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0,
+          "x": 92,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "id": "wash_wait_queue__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0,
+          "x": 184,
+          "y": 75
+        },
+        {
+          "height": 0,
+          "id": "wash_wait_queue__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0,
+          "x": 92,
+          "y": 150
+        },
+        {
+          "height": 0,
+          "id": "wash_wait_queue__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0,
+          "x": 0,
+          "y": 75
+        }
+      ],
+      "width": 184,
+      "x": 972,
+      "y": 12
+    },
+    {
+      "$H": 314,
+      "height": 102,
+      "id": "wash",
+      "labels": [
+        {
+          "height": 0,
+          "text": "Wash",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "5",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "task"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "wash__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0,
+          "x": 95,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "id": "wash__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0,
+          "x": 190,
+          "y": 51
+        },
+        {
+          "height": 0,
+          "id": "wash__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0,
+          "x": 95,
+          "y": 102
+        },
+        {
+          "height": 0,
+          "id": "wash__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0,
+          "x": 0,
+          "y": 51
+        }
+      ],
+      "width": 190,
+      "x": 1212,
+      "y": 36
+    },
+    {
+      "$H": 321,
+      "height": 150,
+      "id": "dry_wait_queue",
+      "labels": [
+        {
+          "height": 0,
+          "text": "Dryer Queue",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "6",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "queue"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "dry_wait_queue__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0,
+          "x": 89.5,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "id": "dry_wait_queue__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0,
+          "x": 179,
+          "y": 75
+        },
+        {
+          "height": 0,
+          "id": "dry_wait_queue__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0,
+          "x": 89.5,
+          "y": 150
+        },
+        {
+          "height": 0,
+          "id": "dry_wait_queue__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0,
+          "x": 0,
+          "y": 75
+        }
+      ],
+      "width": 179,
+      "x": 1458,
+      "y": 12
+    },
+    {
+      "$H": 328,
+      "height": 102,
+      "id": "dry",
+      "labels": [
+        {
+          "height": 0,
+          "text": "Dry",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "7",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "task"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "dry__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0,
+          "x": 95,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "id": "dry__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0,
+          "x": 190,
+          "y": 51
+        },
+        {
+          "height": 0,
+          "id": "dry__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0,
+          "x": 95,
+          "y": 102
+        },
+        {
+          "height": 0,
+          "id": "dry__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0,
+          "x": 0,
+          "y": 51
+        }
+      ],
+      "width": 190,
+      "x": 1693,
+      "y": 36
+    },
+    {
+      "$H": 335,
+      "height": 150,
+      "id": "fold_package_wait_queue",
+      "labels": [
+        {
+          "height": 0,
+          "text": "Folding Queue",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "8",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "queue"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "fold_package_wait_queue__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0,
+          "x": 94.5,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "id": "fold_package_wait_queue__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0,
+          "x": 189,
+          "y": 75
+        },
+        {
+          "height": 0,
+          "id": "fold_package_wait_queue__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0,
+          "x": 94.5,
+          "y": 150
+        },
+        {
+          "height": 0,
+          "id": "fold_package_wait_queue__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0,
+          "x": 0,
+          "y": 75
+        }
+      ],
+      "width": 189,
+      "x": 1939,
+      "y": 12
+    },
+    {
+      "$H": 342,
+      "height": 102,
+      "id": "fold_package",
+      "labels": [
+        {
+          "height": 0,
+          "text": "Fold and package",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "9",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "task"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "fold_package__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0,
+          "x": 100,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "id": "fold_package__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0,
+          "x": 200,
+          "y": 51
+        },
+        {
+          "height": 0,
+          "id": "fold_package__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0,
+          "x": 100,
+          "y": 102
+        },
+        {
+          "height": 0,
+          "id": "fold_package__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0,
+          "x": 0,
+          "y": 51
+        }
+      ],
+      "width": 200,
+      "x": 2184,
+      "y": 36
+    },
+    {
+      "$H": 349,
+      "height": 150,
+      "id": "stage_notify_wait_queue",
+      "labels": [
+        {
+          "height": 0,
+          "text": "Dispatch Queue",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "10",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "queue"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "stage_notify_wait_queue__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0,
+          "x": 97,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "id": "stage_notify_wait_queue__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0,
+          "x": 194,
+          "y": 75
+        },
+        {
+          "height": 0,
+          "id": "stage_notify_wait_queue__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0,
+          "x": 97,
+          "y": 150
+        },
+        {
+          "height": 0,
+          "id": "stage_notify_wait_queue__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0,
+          "x": 0,
+          "y": 75
+        }
+      ],
+      "width": 194,
+      "x": 2440,
+      "y": 12
+    },
+    {
+      "$H": 356,
+      "height": 102,
+      "id": "stage_notify",
+      "labels": [
+        {
+          "height": 0,
+          "text": "Stage and notify",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "11",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "task"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "stage_notify__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0,
+          "x": 100,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "id": "stage_notify__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0,
+          "x": 200,
+          "y": 51
+        },
+        {
+          "height": 0,
+          "id": "stage_notify__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0,
+          "x": 100,
+          "y": 102
+        },
+        {
+          "height": 0,
+          "id": "stage_notify__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0,
+          "x": 0,
+          "y": 51
+        }
+      ],
+      "width": 200,
+      "x": 2690,
+      "y": 36
+    },
+    {
+      "$H": 363,
+      "height": 102,
+      "id": "payment_delivery",
+      "labels": [
+        {
+          "height": 0,
+          "text": "Payment and delivery",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "12",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "task"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "payment_delivery__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0,
+          "x": 120,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "id": "payment_delivery__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0,
+          "x": 240,
+          "y": 51
+        },
+        {
+          "height": 0,
+          "id": "payment_delivery__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0,
+          "x": 120,
+          "y": 102
+        },
+        {
+          "height": 0,
+          "id": "payment_delivery__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0,
+          "x": 0,
+          "y": 51
+        }
+      ],
+      "width": 240,
+      "x": 2946,
+      "y": 36
+    },
+    {
+      "$H": 370,
+      "height": 52,
+      "id": "end",
+      "labels": [
+        {
+          "height": 0,
+          "text": "Stop",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.layered.layering.layerConstraint": "LAST",
+        "elk.partitioning.partition": "13",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "end"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "end__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0,
+          "x": 66,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "id": "end__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0,
+          "x": 132,
+          "y": 26
+        },
+        {
+          "height": 0,
+          "id": "end__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0,
+          "x": 66,
+          "y": 52
+        },
+        {
+          "height": 0,
+          "id": "end__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0,
+          "x": 0,
+          "y": 26
+        }
+      ],
+      "width": 132,
+      "x": 3242,
+      "y": 61
+    }
+  ],
+  "edges": [
+    {
+      "container": "flo:sppm",
+      "id": "e0:start->dropoff",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 200,
+            "y": 87
+          },
+          "id": "e0:start->dropoff_s0",
+          "incomingShape": "start__port_east",
+          "outgoingShape": "dropoff__port_west",
+          "startPoint": {
+            "x": 144,
+            "y": 87
+          }
+        }
+      ],
+      "sources": [
+        "start__port_east"
+      ],
+      "targets": [
+        "dropoff__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e1:dropoff->sort_tag_wait_queue",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 496,
+            "y": 87
+          },
+          "id": "e1:dropoff->sort_tag_wait_queue_s0",
+          "incomingShape": "dropoff__port_east",
+          "outgoingShape": "sort_tag_wait_queue__port_west",
+          "startPoint": {
+            "x": 440,
+            "y": 87
+          }
+        }
+      ],
+      "sources": [
+        "dropoff__port_east"
+      ],
+      "targets": [
+        "sort_tag_wait_queue__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e2:sort_tag_wait_queue->sort_tag",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 726,
+            "y": 87
+          },
+          "id": "e2:sort_tag_wait_queue->sort_tag_s0",
+          "incomingShape": "sort_tag_wait_queue__port_east",
+          "outgoingShape": "sort_tag__port_west",
+          "startPoint": {
+            "x": 670,
+            "y": 87
+          }
+        }
+      ],
+      "sources": [
+        "sort_tag_wait_queue__port_east"
+      ],
+      "targets": [
+        "sort_tag__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e3:sort_tag->wash_wait_queue",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 972,
+            "y": 87
+          },
+          "id": "e3:sort_tag->wash_wait_queue_s0",
+          "incomingShape": "sort_tag__port_east",
+          "outgoingShape": "wash_wait_queue__port_west",
+          "startPoint": {
+            "x": 916,
+            "y": 87
+          }
+        }
+      ],
+      "sources": [
+        "sort_tag__port_east"
+      ],
+      "targets": [
+        "wash_wait_queue__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e4:wash_wait_queue->wash",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 1212,
+            "y": 87
+          },
+          "id": "e4:wash_wait_queue->wash_s0",
+          "incomingShape": "wash_wait_queue__port_east",
+          "outgoingShape": "wash__port_west",
+          "startPoint": {
+            "x": 1156,
+            "y": 87
+          }
+        }
+      ],
+      "sources": [
+        "wash_wait_queue__port_east"
+      ],
+      "targets": [
+        "wash__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e5:wash->dry_wait_queue",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 1458,
+            "y": 87
+          },
+          "id": "e5:wash->dry_wait_queue_s0",
+          "incomingShape": "wash__port_east",
+          "outgoingShape": "dry_wait_queue__port_west",
+          "startPoint": {
+            "x": 1402,
+            "y": 87
+          }
+        }
+      ],
+      "sources": [
+        "wash__port_east"
+      ],
+      "targets": [
+        "dry_wait_queue__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e6:dry_wait_queue->dry",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 1693,
+            "y": 87
+          },
+          "id": "e6:dry_wait_queue->dry_s0",
+          "incomingShape": "dry_wait_queue__port_east",
+          "outgoingShape": "dry__port_west",
+          "startPoint": {
+            "x": 1637,
+            "y": 87
+          }
+        }
+      ],
+      "sources": [
+        "dry_wait_queue__port_east"
+      ],
+      "targets": [
+        "dry__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e7:dry->fold_package_wait_queue",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 1939,
+            "y": 87
+          },
+          "id": "e7:dry->fold_package_wait_queue_s0",
+          "incomingShape": "dry__port_east",
+          "outgoingShape": "fold_package_wait_queue__port_west",
+          "startPoint": {
+            "x": 1883,
+            "y": 87
+          }
+        }
+      ],
+      "sources": [
+        "dry__port_east"
+      ],
+      "targets": [
+        "fold_package_wait_queue__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e8:fold_package_wait_queue->fold_package",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 2184,
+            "y": 87
+          },
+          "id": "e8:fold_package_wait_queue->fold_package_s0",
+          "incomingShape": "fold_package_wait_queue__port_east",
+          "outgoingShape": "fold_package__port_west",
+          "startPoint": {
+            "x": 2128,
+            "y": 87
+          }
+        }
+      ],
+      "sources": [
+        "fold_package_wait_queue__port_east"
+      ],
+      "targets": [
+        "fold_package__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e9:fold_package->stage_notify_wait_queue",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 2440,
+            "y": 87
+          },
+          "id": "e9:fold_package->stage_notify_wait_queue_s0",
+          "incomingShape": "fold_package__port_east",
+          "outgoingShape": "stage_notify_wait_queue__port_west",
+          "startPoint": {
+            "x": 2384,
+            "y": 87
+          }
+        }
+      ],
+      "sources": [
+        "fold_package__port_east"
+      ],
+      "targets": [
+        "stage_notify_wait_queue__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e10:stage_notify_wait_queue->stage_notify",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 2690,
+            "y": 87
+          },
+          "id": "e10:stage_notify_wait_queue->stage_notify_s0",
+          "incomingShape": "stage_notify_wait_queue__port_east",
+          "outgoingShape": "stage_notify__port_west",
+          "startPoint": {
+            "x": 2634,
+            "y": 87
+          }
+        }
+      ],
+      "sources": [
+        "stage_notify_wait_queue__port_east"
+      ],
+      "targets": [
+        "stage_notify__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e11:stage_notify->payment_delivery",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 2946,
+            "y": 87
+          },
+          "id": "e11:stage_notify->payment_delivery_s0",
+          "incomingShape": "stage_notify__port_east",
+          "outgoingShape": "payment_delivery__port_west",
+          "startPoint": {
+            "x": 2890,
+            "y": 87
+          }
+        }
+      ],
+      "sources": [
+        "stage_notify__port_east"
+      ],
+      "targets": [
+        "payment_delivery__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e12:payment_delivery->end",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 3242,
+            "y": 87
+          },
+          "id": "e12:payment_delivery->end_s0",
+          "incomingShape": "payment_delivery__port_east",
+          "outgoingShape": "end__port_west",
+          "startPoint": {
+            "x": 3186,
+            "y": 87
+          }
+        }
+      ],
+      "sources": [
+        "payment_delivery__port_east"
+      ],
+      "targets": [
+        "end__port_west"
+      ]
+    }
+  ],
+  "height": 174,
+  "id": "flo:sppm",
+  "layoutOptions": {
+    "elk.algorithm": "layered",
+    "elk.direction": "RIGHT",
+    "elk.edgeRouting": "ORTHOGONAL",
+    "elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES",
+    "elk.layered.crossingMinimization.forceNodeModelOrder": "true",
+    "elk.layered.feedbackEdges": "true",
+    "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+    "elk.layered.nodePlacement.favorStraightEdges": "true",
+    "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+    "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+    "elk.partitioning.activate": "true",
+    "elk.spacing.nodeNode": "160"
+  },
+  "width": 3386,
+  "x": 0,
+  "y": 0
+}

@@ -26,9 +26,8 @@ from flo.render.options import RenderOptions
             (
                 'data-node-kind="queue"',
                 'data-node-queue-body="true"',
-                'data-node-queue-label-band="true"',
             ),
-            (),
+            ('data-node-queue-label-band="true"',),
         ),
         (
             "subprocess",
@@ -144,3 +143,46 @@ def test_node_svg_queue_renders_wait_time_line() -> None:
 
     assert "Prep Queue" in svg
     assert "WT: 9 min" in svg
+    assert 'fill="#FFB74D"' in svg
+    assert 'fill="#ffffff"' not in svg
+
+
+def test_node_svg_queue_uses_selected_theme_colors() -> None:
+    node = SimpleNamespace(id="q1", kind="queue", label="Prep Queue")
+    raw_node = {"metadata": {"wait_time": {"value": 9, "unit": "min"}}}
+
+    svg = "".join(
+        _node_svg(
+            node=node,
+            raw_node=raw_node,
+            options=RenderOptions(diagram="sppm", sppm_theme="flatly"),
+            x=20.0,
+            y=30.0,
+            width=160.0,
+            height=160.0,
+        )
+    )
+
+    assert 'fill="#F39C12"' in svg
+    assert 'stroke="#C27D0E"' in svg
+    assert 'fill="#2C3E50">Prep Queue' in svg
+
+
+def test_node_svg_decision_uses_selected_primary_theme_colors() -> None:
+    node = SimpleNamespace(id="d1", kind="decision", label="Quality OK?")
+
+    svg = "".join(
+        _node_svg(
+            node=node,
+            raw_node={"metadata": {}},
+            options=RenderOptions(diagram="sppm", sppm_theme="flatly"),
+            x=20.0,
+            y=30.0,
+            width=160.0,
+            height=120.0,
+        )
+    )
+
+    assert 'fill="#D5D8DC"' in svg
+    assert 'stroke="#2C3E50"' in svg
+    assert 'fill="#121920">Quality OK?' in svg

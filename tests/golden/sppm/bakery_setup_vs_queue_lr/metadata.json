@@ -1,0 +1,21 @@
+{
+  "id": "bakery_setup_vs_queue_lr",
+  "input": "examples/reference/bakery_setup_vs_queue.flo",
+  "options": {
+    "diagram": "sppm",
+    "orientation": "lr"
+  },
+  "strategy": {
+    "helper_anchors": "always",
+    "partition_mode": "branch_aligned",
+    "port_constraints": "fixed_order",
+    "spacing_profile": "balanced"
+  },
+  "strategy_env": {
+    "FLO_SPPM_HELPER_ANCHORS": null,
+    "FLO_SPPM_PARTITION_MODE": null,
+    "FLO_SPPM_PORT_CONSTRAINTS": null,
+    "FLO_SPPM_SPACING_PROFILE": null
+  },
+  "strategy_profile": "part=branch_aligned|port=fixed_order|anchors=always|space=balanced"
+}

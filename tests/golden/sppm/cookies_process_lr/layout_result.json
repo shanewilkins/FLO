@@ -1,0 +1,287 @@
+{
+  "canvas_bounds": {
+    "height_px": 154.0,
+    "width_px": 2309.0,
+    "x_px": 0.0,
+    "y_px": 0.0
+  },
+  "edge_paths": [
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 1047.0,
+          "y_px": 77.0
+        },
+        {
+          "x_px": 1137.0,
+          "y_px": 77.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "add_dry_ingredients",
+      "source_port_side": "EAST",
+      "target": "rest_dough",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 2063.0,
+          "y_px": 77.0
+        },
+        {
+          "x_px": 2153.0,
+          "y_px": 77.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "bake",
+      "source_port_side": "EAST",
+      "target": "end",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 1707.0,
+          "y_px": 77.0
+        },
+        {
+          "x_px": 1763.0,
+          "y_px": 77.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "preheat",
+      "source_port_side": "EAST",
+      "target": "bake",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 460.0,
+          "y_px": 77.0
+        },
+        {
+          "x_px": 516.0,
+          "y_px": 77.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "prep_subprocess",
+      "source_port_side": "EAST",
+      "target": "wet_mix_subprocess",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 1377.0,
+          "y_px": 77.0
+        },
+        {
+          "x_px": 1467.0,
+          "y_px": 77.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "rest_dough",
+      "source_port_side": "EAST",
+      "target": "preheat",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 156.0,
+          "y_px": 77.0
+        },
+        {
+          "x_px": 212.0,
+          "y_px": 77.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "start",
+      "source_port_side": "EAST",
+      "target": "prep_subprocess",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 776.0,
+          "y_px": 77.0
+        },
+        {
+          "x_px": 832.0,
+          "y_px": 77.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "wet_mix_subprocess",
+      "source_port_side": "EAST",
+      "target": "add_dry_ingredients",
+      "target_port_side": "WEST"
+    }
+  ],
+  "lanes": [
+    {
+      "bounds": {
+        "height_px": 130.0,
+        "width_px": 1047.0,
+        "x_px": 12.0,
+        "y_px": 12.0
+      },
+      "id": "prep",
+      "label": "prep",
+      "node_ids": [
+        "start",
+        "prep_subprocess",
+        "wet_mix_subprocess",
+        "add_dry_ingredients"
+      ]
+    },
+    {
+      "bounds": {
+        "height_px": 126.0,
+        "width_px": 264.0,
+        "x_px": 1125.0,
+        "y_px": 14.0
+      },
+      "id": "hold",
+      "label": "hold",
+      "node_ids": [
+        "rest_dough"
+      ]
+    },
+    {
+      "bounds": {
+        "height_px": 126.0,
+        "width_px": 620.0,
+        "x_px": 1455.0,
+        "y_px": 14.0
+      },
+      "id": "oven",
+      "label": "oven",
+      "node_ids": [
+        "preheat",
+        "bake"
+      ]
+    },
+    {
+      "bounds": {
+        "height_px": 76.0,
+        "width_px": 156.0,
+        "x_px": 2141.0,
+        "y_px": 39.0
+      },
+      "id": "finish",
+      "label": "finish",
+      "node_ids": [
+        "end"
+      ]
+    }
+  ],
+  "node_bounds": {
+    "add_dry_ingredients": {
+      "height_px": 102.0,
+      "width_px": 215.0,
+      "x_px": 832.0,
+      "y_px": 26.0
+    },
+    "bake": {
+      "height_px": 102.0,
+      "width_px": 300.0,
+      "x_px": 1763.0,
+      "y_px": 26.0
+    },
+    "end": {
+      "height_px": 52.0,
+      "width_px": 132.0,
+      "x_px": 2153.0,
+      "y_px": 51.0
+    },
+    "preheat": {
+      "height_px": 102.0,
+      "width_px": 240.0,
+      "x_px": 1467.0,
+      "y_px": 26.0
+    },
+    "prep_subprocess": {
+      "height_px": 106.0,
+      "width_px": 248.0,
+      "x_px": 212.0,
+      "y_px": 24.0
+    },
+    "rest_dough": {
+      "height_px": 102.0,
+      "width_px": 240.0,
+      "x_px": 1137.0,
+      "y_px": 26.0
+    },
+    "start": {
+      "height_px": 52.0,
+      "width_px": 132.0,
+      "x_px": 24.0,
+      "y_px": 51.0
+    },
+    "wet_mix_subprocess": {
+      "height_px": 106.0,
+      "width_px": 260.0,
+      "x_px": 516.0,
+      "y_px": 24.0
+    }
+  },
+  "orientation": "lr"
+}

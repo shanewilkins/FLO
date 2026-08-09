@@ -1,0 +1,861 @@
+{
+  "$H": 13,
+  "children": [
+    {
+      "$H": 277,
+      "children": [
+        {
+          "$H": 281,
+          "height": 70,
+          "id": "submit",
+          "labels": [
+            {
+              "height": 0,
+              "text": "Submit Invoice",
+              "width": 0,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "1",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "task"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "submit__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0,
+              "x": 95,
+              "y": 0
+            },
+            {
+              "height": 0,
+              "id": "submit__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0,
+              "x": 190,
+              "y": 35
+            },
+            {
+              "height": 0,
+              "id": "submit__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0,
+              "x": 95,
+              "y": 70
+            },
+            {
+              "height": 0,
+              "id": "submit__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0,
+              "x": 0,
+              "y": 35
+            }
+          ],
+          "width": 190,
+          "x": 12,
+          "y": 252
+        },
+        {
+          "$H": 289,
+          "height": 70,
+          "id": "rework",
+          "labels": [
+            {
+              "height": 0,
+              "text": "Request Rework",
+              "width": 0,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "4",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "task"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "rework__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0,
+              "x": 95,
+              "y": 0
+            },
+            {
+              "height": 0,
+              "id": "rework__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0,
+              "x": 190,
+              "y": 35
+            },
+            {
+              "height": 0,
+              "id": "rework__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0,
+              "x": 95,
+              "y": 70
+            },
+            {
+              "height": 0,
+              "id": "rework__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0,
+              "x": 0,
+              "y": 35
+            }
+          ],
+          "width": 190,
+          "x": 12,
+          "y": 22
+        }
+      ],
+      "height": 334,
+      "id": "requester",
+      "labels": [
+        {
+          "height": 0,
+          "text": "Requester",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+        "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+        "elk.partitioning.partition": "0",
+        "elk.spacing.nodeNode": "160"
+      },
+      "width": 214,
+      "x": 37,
+      "y": 53
+    },
+    {
+      "$H": 296,
+      "children": [
+        {
+          "$H": 299,
+          "height": 70,
+          "id": "review",
+          "labels": [
+            {
+              "height": 0,
+              "text": "Review Invoice",
+              "width": 0,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "2",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "task"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "review__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0,
+              "x": 95,
+              "y": 0
+            },
+            {
+              "height": 0,
+              "id": "review__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0,
+              "x": 190,
+              "y": 35
+            },
+            {
+              "height": 0,
+              "id": "review__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0,
+              "x": 95,
+              "y": 70
+            },
+            {
+              "height": 0,
+              "id": "review__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0,
+              "x": 0,
+              "y": 35
+            }
+          ],
+          "width": 190,
+          "x": 12,
+          "y": 12
+        }
+      ],
+      "height": 94,
+      "id": "finance",
+      "labels": [
+        {
+          "height": 0,
+          "text": "Finance",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+        "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+        "elk.partitioning.partition": "1",
+        "elk.spacing.nodeNode": "160"
+      },
+      "width": 214,
+      "x": 317,
+      "y": 293
+    },
+    {
+      "$H": 306,
+      "children": [
+        {
+          "$H": 309,
+          "height": 52,
+          "id": "start",
+          "labels": [
+            {
+              "height": 0,
+              "text": "Start",
+              "width": 0,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "layoutOptions": {
+            "elk.layered.layering.layerConstraint": "FIRST",
+            "elk.partitioning.partition": "0",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "start"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "start__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0,
+              "x": 66,
+              "y": 0
+            },
+            {
+              "height": 0,
+              "id": "start__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0,
+              "x": 132,
+              "y": 26
+            },
+            {
+              "height": 0,
+              "id": "start__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0,
+              "x": 66,
+              "y": 52
+            },
+            {
+              "height": 0,
+              "id": "start__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0,
+              "x": 0,
+              "y": 26
+            }
+          ],
+          "width": 132,
+          "x": 38,
+          "y": 12
+        },
+        {
+          "$H": 316,
+          "height": 90,
+          "id": "decision",
+          "labels": [
+            {
+              "height": 0,
+              "text": "Valid?",
+              "width": 0,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "3",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "decision"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "decision__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0,
+              "x": 79,
+              "y": 0
+            },
+            {
+              "height": 0,
+              "id": "decision__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0,
+              "x": 158,
+              "y": 45
+            },
+            {
+              "height": 0,
+              "id": "decision__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0,
+              "x": 79,
+              "y": 90
+            },
+            {
+              "height": 0,
+              "id": "decision__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0,
+              "x": 0,
+              "y": 45
+            }
+          ],
+          "width": 158,
+          "x": 12,
+          "y": 85
+        },
+        {
+          "$H": 323,
+          "height": 52,
+          "id": "approve",
+          "labels": [
+            {
+              "height": 0,
+              "text": "Approved",
+              "width": 0,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "layoutOptions": {
+            "elk.layered.layering.layerConstraint": "LAST",
+            "elk.partitioning.partition": "5",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "end"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "approve__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0,
+              "x": 66,
+              "y": 0
+            },
+            {
+              "height": 0,
+              "id": "approve__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0,
+              "x": 132,
+              "y": 26
+            },
+            {
+              "height": 0,
+              "id": "approve__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0,
+              "x": 66,
+              "y": 52
+            },
+            {
+              "height": 0,
+              "id": "approve__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0,
+              "x": 0,
+              "y": 26
+            }
+          ],
+          "width": 132,
+          "x": 282,
+          "y": 104
+        }
+      ],
+      "height": 198,
+      "id": "unassigned",
+      "labels": [
+        {
+          "height": 0,
+          "text": "unassigned",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+        "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+        "elk.partitioning.partition": "2",
+        "elk.spacing.nodeNode": "160"
+      },
+      "width": 426,
+      "x": 597,
+      "y": 36
+    },
+    {
+      "$H": 330,
+      "height": 2,
+      "id": "__sppm_branch_anchor_0_decision_rework",
+      "layoutOptions": {
+        "elk.partitioning.partition": "3"
+      },
+      "width": 2,
+      "x": 1084,
+      "y": 220.33333333333334
+    }
+  ],
+  "edges": [
+    {
+      "container": "unassigned",
+      "id": "e0:decision->approve",
+      "labels": [
+        {
+          "height": 0,
+          "text": "yes",
+          "width": 0,
+          "x": 226,
+          "y": 133
+        }
+      ],
+      "sections": [
+        {
+          "endPoint": {
+            "x": 282,
+            "y": 130
+          },
+          "id": "e0:decision->approve_s0",
+          "incomingShape": "decision__port_east",
+          "outgoingShape": "approve__port_west",
+          "startPoint": {
+            "x": 170,
+            "y": 130
+          }
+        }
+      ],
+      "sources": [
+        "decision__port_east"
+      ],
+      "targets": [
+        "approve__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e1:decision->rework",
+      "junctionPoints": [
+        {
+          "x": 12,
+          "y": 65
+        },
+        {
+          "x": 1048,
+          "y": 221
+        }
+      ],
+      "labels": [
+        {
+          "height": 0,
+          "text": "no",
+          "width": 0,
+          "x": 424,
+          "y": 12
+        }
+      ],
+      "sections": [
+        {
+          "bendPoints": [
+            {
+              "x": 688,
+              "y": 221
+            },
+            {
+              "x": 1048,
+              "y": 221
+            },
+            {
+              "x": 1048,
+              "y": 15
+            },
+            {
+              "x": 12,
+              "y": 15
+            },
+            {
+              "x": 12,
+              "y": 65
+            },
+            {
+              "x": 144,
+              "y": 65
+            }
+          ],
+          "endPoint": {
+            "x": 144,
+            "y": 75
+          },
+          "id": "e1:decision->rework_s0",
+          "incomingShape": "decision__port_south",
+          "outgoingShape": "rework__port_north",
+          "startPoint": {
+            "x": 688,
+            "y": 211
+          }
+        }
+      ],
+      "sources": [
+        "decision__port_south"
+      ],
+      "targets": [
+        "rework__port_north"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e2:start->submit",
+      "sections": [
+        {
+          "bendPoints": [
+            {
+              "x": 1038,
+              "y": 74
+            },
+            {
+              "x": 1038,
+              "y": 26
+            },
+            {
+              "x": 22,
+              "y": 26
+            },
+            {
+              "x": 22,
+              "y": 340
+            }
+          ],
+          "endPoint": {
+            "x": 49,
+            "y": 340
+          },
+          "id": "e2:start->submit_s0",
+          "incomingShape": "start__port_east",
+          "outgoingShape": "submit__port_west",
+          "startPoint": {
+            "x": 767,
+            "y": 74
+          }
+        }
+      ],
+      "sources": [
+        "start__port_east"
+      ],
+      "targets": [
+        "submit__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e3:submit->review",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 329,
+            "y": 340
+          },
+          "id": "e3:submit->review_s0",
+          "incomingShape": "submit__port_east",
+          "outgoingShape": "review__port_west",
+          "startPoint": {
+            "x": 239,
+            "y": 340
+          }
+        }
+      ],
+      "sources": [
+        "submit__port_east"
+      ],
+      "targets": [
+        "review__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e4:review->decision",
+      "sections": [
+        {
+          "bendPoints": [
+            {
+              "x": 546,
+              "y": 340
+            },
+            {
+              "x": 546,
+              "y": 166
+            }
+          ],
+          "endPoint": {
+            "x": 609,
+            "y": 166
+          },
+          "id": "e4:review->decision_s0",
+          "incomingShape": "review__port_east",
+          "outgoingShape": "decision__port_west",
+          "startPoint": {
+            "x": 519,
+            "y": 340
+          }
+        }
+      ],
+      "sources": [
+        "review__port_east"
+      ],
+      "targets": [
+        "decision__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e5:rework->approve",
+      "junctionPoints": [
+        {
+          "x": 833,
+          "y": 166
+        }
+      ],
+      "sections": [
+        {
+          "bendPoints": [
+            {
+              "x": 833,
+              "y": 110
+            },
+            {
+              "x": 833,
+              "y": 166
+            }
+          ],
+          "endPoint": {
+            "x": 879,
+            "y": 166
+          },
+          "id": "e5:rework->approve_s0",
+          "incomingShape": "rework__port_east",
+          "outgoingShape": "approve__port_west",
+          "startPoint": {
+            "x": 239,
+            "y": 110
+          }
+        }
+      ],
+      "sources": [
+        "rework__port_east"
+      ],
+      "targets": [
+        "approve__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "__sppm_helper_a_0",
+      "sections": [
+        {
+          "bendPoints": [
+            {
+              "x": 688,
+              "y": 221
+            }
+          ],
+          "endPoint": {
+            "x": 1084,
+            "y": 221
+          },
+          "id": "__sppm_helper_a_0_s0",
+          "incomingShape": "decision__port_south",
+          "outgoingShape": "__sppm_branch_anchor_0_decision_rework",
+          "startPoint": {
+            "x": 688,
+            "y": 211
+          }
+        }
+      ],
+      "sources": [
+        "decision__port_south"
+      ],
+      "targets": [
+        "__sppm_branch_anchor_0_decision_rework"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "__sppm_helper_b_0",
+      "sections": [
+        {
+          "bendPoints": [
+            {
+              "x": 1058,
+              "y": 221.66666666666669
+            },
+            {
+              "x": 1058,
+              "y": 397
+            },
+            {
+              "x": 12,
+              "y": 397
+            },
+            {
+              "x": 12,
+              "y": 65
+            },
+            {
+              "x": 144,
+              "y": 65
+            }
+          ],
+          "endPoint": {
+            "x": 144,
+            "y": 75
+          },
+          "id": "__sppm_helper_b_0_s0",
+          "incomingShape": "__sppm_branch_anchor_0_decision_rework",
+          "outgoingShape": "rework__port_north",
+          "startPoint": {
+            "x": 1084,
+            "y": 221.66666666666669
+          }
+        }
+      ],
+      "sources": [
+        "__sppm_branch_anchor_0_decision_rework"
+      ],
+      "targets": [
+        "rework__port_north"
+      ]
+    }
+  ],
+  "height": 410,
+  "id": "flo:sppm",
+  "layoutOptions": {
+    "elk.algorithm": "layered",
+    "elk.direction": "RIGHT",
+    "elk.edgeRouting": "ORTHOGONAL",
+    "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+    "elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES",
+    "elk.layered.crossingMinimization.forceNodeModelOrder": "true",
+    "elk.layered.feedbackEdges": "true",
+    "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+    "elk.layered.nodePlacement.favorStraightEdges": "true",
+    "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+    "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+    "elk.partitioning.activate": "true",
+    "elk.spacing.nodeNode": "160"
+  },
+  "width": 1098,
+  "x": 0,
+  "y": 0
+}

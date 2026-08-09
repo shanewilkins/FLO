@@ -46,8 +46,7 @@ build_text_export "examples/reference/semantic_controls_showcase.flo" "renders/r
 build_svg "examples/reference/sppm_feature_showcase.flo" "renders/reference/sppm_feature_showcase.svg" --diagram sppm --orientation lr
 build_svg "examples/reference/sppm_feature_showcase_wrapped.flo" "renders/reference/sppm_feature_showcase_wrapped.svg" --diagram sppm --orientation lr --layout-wrap auto --layout-target-columns 3 --publication-page-format letter
 build_svg "examples/reference/sppm_long_label_stress.flo" "renders/reference/sppm_long_label_stress.svg" --diagram sppm --orientation lr
-# TODO: Re-enable once direct SVG backend supports swimlane rendering.
-# build_svg "examples/reference/swimlane.flo" "renders/reference/swimlane.svg" --diagram swimlane
+build_svg "examples/reference/swimlane.flo" "renders/reference/swimlane.svg" --diagram swimlane --render-backend svg
 build_svg "examples/reference/washnfold.flo" "renders/reference/washnfold.svg" --diagram sppm --orientation lr
 build_svg "examples/reference/washnfold.flo" "renders/reference/washnfold_sppm_wrap800.svg" --diagram sppm --orientation lr --layout-wrap auto --layout-max-width-px 800
 

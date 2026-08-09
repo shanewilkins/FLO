@@ -52,12 +52,15 @@ def resolve_sppm_node_appearance(
         return SppmNodeAppearance(
             fill=theme.decision.fill,
             border=theme.decision.border,
+            title_fill=theme.decision.title_fill,
+            info_fill=theme.decision.info_fill,
         )
     if normalized_kind == "queue":
         return SppmNodeAppearance(
-            fill="#FFB74D",
-            border="#E65100",
-            info_fill="#7c2d12",
+            fill=theme.queue.fill,
+            border=theme.queue.border,
+            title_fill=theme.queue.title_fill,
+            info_fill=theme.queue.info_fill,
         )
     if normalized_kind == "subprocess":
         return SppmNodeAppearance(
@@ -67,4 +70,9 @@ def resolve_sppm_node_appearance(
         )
 
     style = resolve_sppm_value_style(metadata=metadata, options=options)
-    return SppmNodeAppearance(fill=style.fill, border=style.border)
+    return SppmNodeAppearance(
+        fill=style.fill,
+        border=style.border,
+        title_fill=style.title_fill,
+        info_fill=style.info_fill,
+    )

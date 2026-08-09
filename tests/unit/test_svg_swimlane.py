@@ -83,3 +83,64 @@ def test_render_swimlane_svg_artifact_renders_lanes_nodes_and_edges(monkeypatch)
     assert 'data-edge-source="decision"' in artifact.content
     assert 'data-edge-target="task"' in artifact.content
     assert ">yes<" in artifact.content
+
+
+def test_render_swimlane_svg_artifact_keeps_unlaned_nodes_renderable(monkeypatch):
+    def fake_execute_elk_layout(request, *, engine):
+        assert [lane.id for lane in request.lanes] == ["sales", "unassigned"]
+        assert request.lanes[1].node_ids == ("finish",)
+        return LayoutResult(
+            orientation="lr",
+            canvas_bounds=LayoutBounds(x_px=0, y_px=0, width_px=280, height_px=180),
+            lanes=(
+                LayoutLaneFrame(
+                    id="sales",
+                    label="Sales",
+                    bounds=LayoutBounds(x_px=0, y_px=0, width_px=280, height_px=80),
+                    node_ids=("start",),
+                ),
+                LayoutLaneFrame(
+                    id="unassigned",
+                    label="unassigned",
+                    bounds=LayoutBounds(x_px=0, y_px=100, width_px=280, height_px=80),
+                    node_ids=("finish",),
+                ),
+            ),
+            node_bounds={
+                "start": LayoutBounds(x_px=20, y_px=20, width_px=60, height_px=40),
+                "finish": LayoutBounds(x_px=190, y_px=120, width_px=60, height_px=40),
+            },
+            edge_paths={
+                ("start", "finish"): RoutedEdgePath(
+                    edge=("start", "finish"),
+                    points=(
+                        LayoutPoint(x_px=80, y_px=40),
+                        LayoutPoint(x_px=140, y_px=40),
+                        LayoutPoint(x_px=190, y_px=140),
+                    ),
+                )
+            },
+            diagnostics=(),
+        )
+
+    monkeypatch.setattr(
+        "flo.render._svg_swimlane.execute_elk_layout", fake_execute_elk_layout
+    )
+
+    artifact, contract = render_swimlane_svg_artifact(
+        {
+            "lanes": [{"id": "sales", "name": "Sales"}],
+            "nodes": [
+                {"id": "start", "kind": "start", "name": "Start", "lane": "sales"},
+                {"id": "finish", "kind": "end", "name": "Done"},
+            ],
+            "edges": [{"source": "start", "target": "finish"}],
+        },
+        RenderOptions(diagram="swimlane"),
+    )
+
+    assert contract is None
+    assert 'data-lane-id="unassigned"' in artifact.content
+    assert 'data-node-id="finish"' in artifact.content
+    assert 'data-edge-source="start"' in artifact.content
+    assert 'data-edge-target="finish"' in artifact.content

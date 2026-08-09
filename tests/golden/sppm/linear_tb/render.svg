@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="746" height="732" viewBox="0 0 746 732" data-flo-artifact-kind="svg" data-flo-backend="svg" data-flo-diagram="sppm" data-flo-layout-engine="elk">
+<defs>
+<marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L8,3 L0,6 z" fill="#475569" />
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#fffdf8" />
+<text x="28.0" y="32.0" font-family="Helvetica" font-size="22" font-weight="700" fill="#0f172a">Client Onboarding</text>
+<g transform="translate(28.0,64.0)">
+<g data-lane-id="sales">
+<rect x="173.5" y="27.0" width="229.0" height="94.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+<text x="189.5" y="51.0" font-family="Helvetica" font-size="13" font-weight="700" fill="#334155">Sales</text>
+</g>
+<g data-lane-id="ops">
+<rect x="176.0" y="187.0" width="224.0" height="94.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+<text x="192.0" y="211.0" font-family="Helvetica" font-size="13" font-weight="700" fill="#334155">Operations</text>
+</g>
+<g data-lane-id="unassigned">
+<rect x="188.5" y="347.0" width="491.0" height="278.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+<text x="204.5" y="371.0" font-family="Helvetica" font-size="13" font-weight="700" fill="#334155">unassigned</text>
+</g>
+<g data-edge-source="approved" data-edge-target="collect_docs" data-edge-kind="direct">
+<polyline points="288.0,449.0 288.0,640.0 15.0,640.0 15.0,12.0 288.0,12.0 288.0,39.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+<rect x="0.0" y="222.0" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
+<text x="14.0" y="235.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">no</text>
+</g>
+<g data-edge-source="approved" data-edge-target="finish" data-edge-kind="direct">
+<polyline points="288.0,449.0 288.0,459.0 365.0,459.0 365.0,561.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+<rect x="349.0" y="493.0" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
+<text x="363.0" y="506.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">yes</text>
+</g>
+<g data-edge-source="collect_docs" data-edge-target="verify" data-edge-kind="direct">
+<polyline points="288.0,109.0 288.0,199.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="start" data-edge-target="collect_docs" data-edge-kind="direct">
+<polyline points="601.5,449.0 601.5,640.0 689.5,640.0 689.5,12.0 288.0,12.0 288.0,39.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="verify" data-edge-target="approved" data-edge-kind="direct">
+<polyline points="288.0,269.0 288.0,359.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-node-id="start" data-node-kind="start">
+<rect x="535.5" y="397.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="601.5" y="428.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Start</text>
+</g>
+<g data-node-id="collect_docs" data-node-kind="task">
+<rect x="185.5" y="39.0" width="205.0" height="70.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 197.5 39.0 L 378.5 39.0 Q 390.5 39.0 390.5 51.0 L 390.5 73.0 L 185.5 73.0 L 185.5 51.0 Q 185.5 39.0 197.5 39.0 Z" fill="#FFFFFF" stroke="none" />
+<text x="288.0" y="57.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Collect Documents</text>
+</g>
+<g data-node-id="verify" data-node-kind="task">
+<rect x="188.0" y="199.0" width="200.0" height="70.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 200.0 199.0 L 376.0 199.0 Q 388.0 199.0 388.0 211.0 L 388.0 233.0 L 188.0 233.0 L 188.0 211.0 Q 188.0 199.0 200.0 199.0 Z" fill="#FFFFFF" stroke="none" />
+<text x="288.0" y="217.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Verify Documents</text>
+</g>
+<g data-node-id="approved" data-node-kind="decision">
+<polygon points="288.0,359.0 375.5,404.0 288.0,449.0 200.5,404.0" fill="#E3EEF7" stroke="#285B8F" stroke-width="2" />
+<text x="288.0" y="409.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Approved?</text>
+</g>
+<g data-node-id="finish" data-node-kind="end">
+<rect x="299.0" y="561.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="365.0" y="592.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Complete</text>
+</g>
+</g>
+</svg>

@@ -65,7 +65,7 @@ def _node_svg(
             lines=title_lines,
             size_px=14,
             weight="600",
-            fill="#0f172a" if kind == "queue" else appearance.title_fill,
+            fill=appearance.title_fill,
             line_gap_px=16.0,
             anchor="middle",
         )
@@ -111,20 +111,11 @@ def _append_node_shape_svg(
         return cy - ((_line_count(title_lines) - 1) * 8.0) + 5.0, None
     if kind == "queue":
         cx = x + (width / 2.0)
-        label_band_height = min(32.0, height * 0.24)
-        label_band_top = y + height - label_band_height
-        inset = (label_band_height / height) * (width / 2.0)
         parts.append(
-            f'<polygon data-node-queue-body="true" points="{x:.1f},{y + height:.1f} {x + width:.1f},{y + height:.1f} {cx:.1f},{y:.1f}" fill="#ffffff" stroke="{appearance.border}" stroke-width="2" />'
-        )
-        parts.append(
-            f'<polygon data-node-queue-label-band="true" points="{x:.1f},{y + height:.1f} {x + width:.1f},{y + height:.1f} {x + width - inset:.1f},{label_band_top:.1f} {x + inset:.1f},{label_band_top:.1f}" fill="{appearance.fill}" stroke="none" />'
+            f'<polygon data-node-queue-body="true" points="{x:.1f},{y + height:.1f} {x + width:.1f},{y + height:.1f} {cx:.1f},{y:.1f}" fill="{appearance.fill}" stroke="{appearance.border}" stroke-width="2" />'
         )
         return (
-            label_band_top
-            + (label_band_height / 2.0)
-            + 5.0
-            - ((_line_count(title_lines) - 1) * 8.0),
+            y + (height * 0.68) + 5.0 - ((_line_count(title_lines) - 1) * 8.0),
             None,
         )
     if kind == "subprocess":
@@ -190,7 +181,7 @@ def _node_info_lines_svg(
             lines=info_lines,
             size_px=11,
             weight="400",
-            fill="#0f172a",
+            fill=appearance.info_fill,
             line_gap_px=13.0,
             anchor="middle",
         )

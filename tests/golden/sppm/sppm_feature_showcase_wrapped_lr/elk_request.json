@@ -1,0 +1,1282 @@
+{
+  "children": [
+    {
+      "height": 52,
+      "id": "start",
+      "labels": [
+        {
+          "text": "Start"
+        }
+      ],
+      "layoutOptions": {
+        "elk.layered.layering.layerConstraint": "FIRST",
+        "elk.partitioning.partition": "0",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "start"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "start__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "start__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "start__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "start__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 132
+    },
+    {
+      "height": 150,
+      "id": "intake_wait_queue",
+      "labels": [
+        {
+          "text": "Intake Queue"
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "1",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "queue"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "intake_wait_queue__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "intake_wait_queue__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "intake_wait_queue__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "intake_wait_queue__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 184
+    },
+    {
+      "height": 118,
+      "id": "intake",
+      "labels": [
+        {
+          "text": "Intake Request"
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "2",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "task"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "intake__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "intake__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "intake__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "intake__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 300
+    },
+    {
+      "height": 114,
+      "id": "triage",
+      "labels": [
+        {
+          "text": "Information Complete?"
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "3",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "decision"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "triage__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "triage__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "triage__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "triage__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 189
+    },
+    {
+      "height": 150,
+      "id": "rework_intake_wait_queue",
+      "labels": [
+        {
+          "text": "Rework Intake Queue"
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "3",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "queue"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "rework_intake_wait_queue__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "rework_intake_wait_queue__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "rework_intake_wait_queue__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "rework_intake_wait_queue__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 189
+    },
+    {
+      "height": 118,
+      "id": "rework_intake",
+      "labels": [
+        {
+          "text": "Rework Intake Data"
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "2",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "task"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "rework_intake__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "rework_intake__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "rework_intake__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "rework_intake__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 315
+    },
+    {
+      "height": 150,
+      "id": "process_queue",
+      "labels": [
+        {
+          "text": "Process Queue"
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "4",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "queue"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "process_queue__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "process_queue__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "process_queue__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "process_queue__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 189
+    },
+    {
+      "height": 150,
+      "id": "assess_scope_wait_queue",
+      "labels": [
+        {
+          "text": "Assess Scope Queue"
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "5",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "queue"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "assess_scope_wait_queue__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "assess_scope_wait_queue__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "assess_scope_wait_queue__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "assess_scope_wait_queue__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 214
+    },
+    {
+      "height": 134,
+      "id": "assess_scope",
+      "labels": [
+        {
+          "text": "Assess Service Scope"
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "6",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "task"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "assess_scope__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "assess_scope__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "assess_scope__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "assess_scope__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 310
+    },
+    {
+      "height": 150,
+      "id": "execute_service_wait_queue",
+      "labels": [
+        {
+          "text": "Execute Service Queue"
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "7",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "queue"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "execute_service_wait_queue__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "execute_service_wait_queue__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "execute_service_wait_queue__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "execute_service_wait_queue__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 199
+    },
+    {
+      "height": 134,
+      "id": "execute_service",
+      "labels": [
+        {
+          "text": "Execute Service Activity"
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "8",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "task"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "execute_service__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "execute_service__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "execute_service__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "execute_service__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 320
+    },
+    {
+      "height": 114,
+      "id": "qa",
+      "labels": [
+        {
+          "text": "Quality Check Pass?"
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "9",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "decision"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "qa__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "qa__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "qa__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "qa__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 203
+    },
+    {
+      "height": 150,
+      "id": "rework_quality_wait_queue",
+      "labels": [
+        {
+          "text": "Rework Quality Queue"
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "9",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "queue"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "rework_quality_wait_queue__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "rework_quality_wait_queue__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "rework_quality_wait_queue__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "rework_quality_wait_queue__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 194
+    },
+    {
+      "height": 118,
+      "id": "rework_quality",
+      "labels": [
+        {
+          "text": "Rework Quality Issues"
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "6",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "task"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "rework_quality__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "rework_quality__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "rework_quality__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "rework_quality__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 280
+    },
+    {
+      "height": 150,
+      "id": "complete_wait_queue",
+      "labels": [
+        {
+          "text": "Close Request Queue"
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "10",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "queue"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "complete_wait_queue__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "complete_wait_queue__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "complete_wait_queue__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "complete_wait_queue__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 189
+    },
+    {
+      "height": 134,
+      "id": "complete",
+      "labels": [
+        {
+          "text": "Close Request"
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "11",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "task"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "complete__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "complete__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "complete__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "complete__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 280
+    },
+    {
+      "height": 150,
+      "id": "dispatch_queue_wait",
+      "labels": [
+        {
+          "text": "Dispatch Queue"
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "12",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "queue"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "dispatch_queue_wait__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "dispatch_queue_wait__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "dispatch_queue_wait__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "dispatch_queue_wait__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 194
+    },
+    {
+      "height": 134,
+      "id": "dispatch_queue",
+      "labels": [
+        {
+          "text": "Stage Final Packet"
+        }
+      ],
+      "layoutOptions": {
+        "elk.partitioning.partition": "13",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "task"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "dispatch_queue__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "dispatch_queue__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "dispatch_queue__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "dispatch_queue__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 305
+    },
+    {
+      "height": 52,
+      "id": "stop",
+      "labels": [
+        {
+          "text": "Stop"
+        }
+      ],
+      "layoutOptions": {
+        "elk.layered.layering.layerConstraint": "LAST",
+        "elk.partitioning.partition": "14",
+        "elk.portConstraints": "FIXED_ORDER",
+        "flo.node.kind": "end"
+      },
+      "ports": [
+        {
+          "height": 0,
+          "id": "stop__port_north",
+          "layoutOptions": {
+            "elk.port.index": "0",
+            "elk.port.side": "NORTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "stop__port_east",
+          "layoutOptions": {
+            "elk.port.index": "1",
+            "elk.port.side": "EAST"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "stop__port_south",
+          "layoutOptions": {
+            "elk.port.index": "2",
+            "elk.port.side": "SOUTH"
+          },
+          "width": 0
+        },
+        {
+          "height": 0,
+          "id": "stop__port_west",
+          "layoutOptions": {
+            "elk.port.index": "3",
+            "elk.port.side": "WEST"
+          },
+          "width": 0
+        }
+      ],
+      "width": 132
+    },
+    {
+      "height": 2,
+      "id": "__sppm_branch_anchor_0_triage_rework_intake_wait_queue",
+      "layoutOptions": {
+        "elk.partitioning.partition": "3"
+      },
+      "width": 2
+    },
+    {
+      "height": 2,
+      "id": "__sppm_branch_anchor_1_qa_rework_quality_wait_queue",
+      "layoutOptions": {
+        "elk.partitioning.partition": "9"
+      },
+      "width": 2
+    }
+  ],
+  "edges": [
+    {
+      "id": "e0:start->intake_wait_queue",
+      "sources": [
+        "start__port_east"
+      ],
+      "targets": [
+        "intake_wait_queue__port_west"
+      ]
+    },
+    {
+      "id": "e1:intake_wait_queue->intake",
+      "sources": [
+        "intake_wait_queue__port_east"
+      ],
+      "targets": [
+        "intake__port_west"
+      ]
+    },
+    {
+      "id": "e2:intake->triage",
+      "sources": [
+        "intake__port_east"
+      ],
+      "targets": [
+        "triage__port_west"
+      ]
+    },
+    {
+      "id": "e3:triage->process_queue",
+      "labels": [
+        {
+          "text": "True"
+        }
+      ],
+      "sources": [
+        "triage__port_east"
+      ],
+      "targets": [
+        "process_queue__port_west"
+      ]
+    },
+    {
+      "id": "e4:triage->rework_intake_wait_queue",
+      "labels": [
+        {
+          "text": "False"
+        }
+      ],
+      "sources": [
+        "triage__port_south"
+      ],
+      "targets": [
+        "rework_intake_wait_queue__port_north"
+      ]
+    },
+    {
+      "id": "e5:rework_intake_wait_queue->rework_intake",
+      "sources": [
+        "rework_intake_wait_queue__port_west"
+      ],
+      "targets": [
+        "rework_intake__port_east"
+      ]
+    },
+    {
+      "id": "e6:rework_intake->intake",
+      "sources": [
+        "rework_intake__port_north"
+      ],
+      "targets": [
+        "intake__port_south"
+      ]
+    },
+    {
+      "id": "e7:process_queue->assess_scope_wait_queue",
+      "sources": [
+        "process_queue__port_east"
+      ],
+      "targets": [
+        "assess_scope_wait_queue__port_west"
+      ]
+    },
+    {
+      "id": "e8:assess_scope_wait_queue->assess_scope",
+      "sources": [
+        "assess_scope_wait_queue__port_east"
+      ],
+      "targets": [
+        "assess_scope__port_west"
+      ]
+    },
+    {
+      "id": "e9:assess_scope->execute_service_wait_queue",
+      "sources": [
+        "assess_scope__port_east"
+      ],
+      "targets": [
+        "execute_service_wait_queue__port_west"
+      ]
+    },
+    {
+      "id": "e10:execute_service_wait_queue->execute_service",
+      "sources": [
+        "execute_service_wait_queue__port_east"
+      ],
+      "targets": [
+        "execute_service__port_west"
+      ]
+    },
+    {
+      "id": "e11:execute_service->qa",
+      "sources": [
+        "execute_service__port_east"
+      ],
+      "targets": [
+        "qa__port_west"
+      ]
+    },
+    {
+      "id": "e12:qa->complete_wait_queue",
+      "labels": [
+        {
+          "text": "pass"
+        }
+      ],
+      "sources": [
+        "qa__port_east"
+      ],
+      "targets": [
+        "complete_wait_queue__port_west"
+      ]
+    },
+    {
+      "id": "e13:complete_wait_queue->complete",
+      "sources": [
+        "complete_wait_queue__port_east"
+      ],
+      "targets": [
+        "complete__port_west"
+      ]
+    },
+    {
+      "id": "e14:complete->dispatch_queue_wait",
+      "sources": [
+        "complete__port_east"
+      ],
+      "targets": [
+        "dispatch_queue_wait__port_west"
+      ]
+    },
+    {
+      "id": "e15:dispatch_queue_wait->dispatch_queue",
+      "sources": [
+        "dispatch_queue_wait__port_east"
+      ],
+      "targets": [
+        "dispatch_queue__port_west"
+      ]
+    },
+    {
+      "id": "e16:qa->rework_quality_wait_queue",
+      "labels": [
+        {
+          "text": "fail"
+        }
+      ],
+      "sources": [
+        "qa__port_south"
+      ],
+      "targets": [
+        "rework_quality_wait_queue__port_north"
+      ]
+    },
+    {
+      "id": "e17:rework_quality_wait_queue->rework_quality",
+      "sources": [
+        "rework_quality_wait_queue__port_west"
+      ],
+      "targets": [
+        "rework_quality__port_east"
+      ]
+    },
+    {
+      "id": "e18:rework_quality->assess_scope",
+      "sources": [
+        "rework_quality__port_north"
+      ],
+      "targets": [
+        "assess_scope__port_south"
+      ]
+    },
+    {
+      "id": "e19:dispatch_queue->stop",
+      "sources": [
+        "dispatch_queue__port_east"
+      ],
+      "targets": [
+        "stop__port_west"
+      ]
+    },
+    {
+      "id": "__sppm_helper_a_0",
+      "sources": [
+        "triage__port_south"
+      ],
+      "targets": [
+        "__sppm_branch_anchor_0_triage_rework_intake_wait_queue"
+      ]
+    },
+    {
+      "id": "__sppm_helper_b_0",
+      "sources": [
+        "__sppm_branch_anchor_0_triage_rework_intake_wait_queue"
+      ],
+      "targets": [
+        "rework_intake_wait_queue__port_north"
+      ]
+    },
+    {
+      "id": "__sppm_helper_a_1",
+      "sources": [
+        "qa__port_south"
+      ],
+      "targets": [
+        "__sppm_branch_anchor_1_qa_rework_quality_wait_queue"
+      ]
+    },
+    {
+      "id": "__sppm_helper_b_1",
+      "sources": [
+        "__sppm_branch_anchor_1_qa_rework_quality_wait_queue"
+      ],
+      "targets": [
+        "rework_quality_wait_queue__port_north"
+      ]
+    }
+  ],
+  "id": "flo:sppm",
+  "layoutOptions": {
+    "elk.algorithm": "layered",
+    "elk.direction": "RIGHT",
+    "elk.edgeRouting": "ORTHOGONAL",
+    "elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES",
+    "elk.layered.crossingMinimization.forceNodeModelOrder": "true",
+    "elk.layered.feedbackEdges": "true",
+    "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+    "elk.layered.nodePlacement.favorStraightEdges": "true",
+    "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+    "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+    "elk.partitioning.activate": "true",
+    "elk.spacing.nodeNode": "160"
+  }
+}

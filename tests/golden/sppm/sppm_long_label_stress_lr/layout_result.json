@@ -1,0 +1,284 @@
+{
+  "canvas_bounds": {
+    "height_px": 344.0,
+    "width_px": 2217.0,
+    "x_px": 0.0,
+    "y_px": 0.0
+  },
+  "edge_paths": [
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 765.0,
+          "y_px": 103.0
+        },
+        {
+          "x_px": 821.0,
+          "y_px": 103.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "intake",
+      "source_port_side": "EAST",
+      "target": "quality_gate",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 409.0,
+          "y_px": 103.0
+        },
+        {
+          "x_px": 465.0,
+          "y_px": 103.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "intake_wait_queue",
+      "source_port_side": "EAST",
+      "target": "intake",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 1648.0,
+          "y_px": 103.0
+        },
+        {
+          "x_px": 1704.0,
+          "y_px": 103.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "process",
+      "source_port_side": "EAST",
+      "target": "end",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 1322.0,
+          "y_px": 103.0
+        },
+        {
+          "x_px": 1378.0,
+          "y_px": 103.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "process_queue",
+      "source_port_side": "EAST",
+      "target": "process",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": "Continue through quality gate with manual oversight path",
+      "label_point": {
+        "x_px": 1080.0,
+        "y_px": 100.0
+      },
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 1052.0,
+          "y_px": 103.0
+        },
+        {
+          "x_px": 1108.0,
+          "y_px": 103.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "quality_gate",
+      "source_port_side": "EAST",
+      "target": "process_queue",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": true,
+      "label": "Return to intake and request revised package details immediately",
+      "label_point": {
+        "x_px": 460.0,
+        "y_px": 261.66666666666663
+      },
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 936.5,
+          "y_px": 185.0
+        },
+        {
+          "x_px": 959.3073028536361,
+          "y_px": 264.66666666666663
+        },
+        {
+          "x_px": 400.82463945995704,
+          "y_px": 264.66666666666663
+        },
+        {
+          "x_px": 422.7730899048788,
+          "y_px": 188.0
+        },
+        {
+          "x_px": 324.6371586376189,
+          "y_px": 188.0
+        },
+        {
+          "x_px": 327.5,
+          "y_px": 198.0
+        }
+      ],
+      "rework_variant": "branch",
+      "source": "quality_gate",
+      "source_port_side": "SOUTH",
+      "target": "rework",
+      "target_port_side": "NORTH"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": true,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 327.5,
+          "y_px": 198.0
+        },
+        {
+          "x_px": 317.4025974025974,
+          "y_px": 188.0
+        },
+        {
+          "x_px": 314.5974025974026,
+          "y_px": 188.0
+        },
+        {
+          "x_px": 304.5,
+          "y_px": 178.0
+        }
+      ],
+      "rework_variant": "return",
+      "source": "rework",
+      "source_port_side": "NORTH",
+      "target": "intake_wait_queue",
+      "target_port_side": "SOUTH"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 144.0,
+          "y_px": 103.0
+        },
+        {
+          "x_px": 200.0,
+          "y_px": 103.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "start",
+      "source_port_side": "EAST",
+      "target": "intake_wait_queue",
+      "target_port_side": "WEST"
+    }
+  ],
+  "lanes": [],
+  "node_bounds": {
+    "end": {
+      "height_px": 52.0,
+      "width_px": 132.0,
+      "x_px": 1704.0,
+      "y_px": 77.0
+    },
+    "intake": {
+      "height_px": 182.0,
+      "width_px": 300.0,
+      "x_px": 465.0,
+      "y_px": 12.0
+    },
+    "intake_wait_queue": {
+      "height_px": 150.0,
+      "width_px": 209.0,
+      "x_px": 200.0,
+      "y_px": 28.0
+    },
+    "process": {
+      "height_px": 150.0,
+      "width_px": 270.0,
+      "x_px": 1378.0,
+      "y_px": 28.0
+    },
+    "process_queue": {
+      "height_px": 150.0,
+      "width_px": 214.0,
+      "x_px": 1108.0,
+      "y_px": 28.0
+    },
+    "quality_gate": {
+      "height_px": 164.0,
+      "width_px": 231.0,
+      "x_px": 821.0,
+      "y_px": 21.0
+    },
+    "rework": {
+      "height_px": 134.0,
+      "width_px": 255.0,
+      "x_px": 200.0,
+      "y_px": 198.0
+    },
+    "start": {
+      "height_px": 52.0,
+      "width_px": 132.0,
+      "x_px": 12.0,
+      "y_px": 77.0
+    }
+  },
+  "orientation": "lr"
+}

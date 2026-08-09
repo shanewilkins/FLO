@@ -1,0 +1,9 @@
+{
+  "artifacts": {
+    "elk_request.json": "c889f22531f880bb6189219485191273796581902861a63e7ff4188d72d8187b",
+    "elk_response.json": "3a4335d15218b71513f85fd6e9f4717ec1d719448bbccb06996769e7493e7cf9",
+    "layout_result.json": "96db8e352001a221b0e0040230a524791080a0e61dd0f17ddeaf66419fe31e7f",
+    "metadata.json": "77224a50bf3044687b170f92f0119e3881d4f86a0ddaf18d77db43cef97dd3fb",
+    "render.svg": "2a1296ad31a845fe5a4f40002cd78bdb01de740c9da9657630bd35793d27e0bb"
+  }
+}

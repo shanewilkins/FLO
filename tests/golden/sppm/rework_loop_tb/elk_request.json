@@ -1,0 +1,492 @@
+{
+  "children": [
+    {
+      "children": [
+        {
+          "height": 70,
+          "id": "submit",
+          "labels": [
+            {
+              "text": "Submit Invoice"
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "1",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "task"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "submit__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "submit__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "submit__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "submit__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0
+            }
+          ],
+          "width": 190
+        },
+        {
+          "height": 70,
+          "id": "rework",
+          "labels": [
+            {
+              "text": "Request Rework"
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "4",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "task"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "rework__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "rework__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "rework__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "rework__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0
+            }
+          ],
+          "width": 190
+        }
+      ],
+      "id": "requester",
+      "labels": [
+        {
+          "text": "Requester"
+        }
+      ],
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "DOWN",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+        "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+        "elk.partitioning.partition": "0",
+        "elk.spacing.nodeNode": "160"
+      }
+    },
+    {
+      "children": [
+        {
+          "height": 70,
+          "id": "review",
+          "labels": [
+            {
+              "text": "Review Invoice"
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "2",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "task"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "review__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "review__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "review__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "review__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0
+            }
+          ],
+          "width": 190
+        }
+      ],
+      "id": "finance",
+      "labels": [
+        {
+          "text": "Finance"
+        }
+      ],
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "DOWN",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+        "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+        "elk.partitioning.partition": "1",
+        "elk.spacing.nodeNode": "160"
+      }
+    },
+    {
+      "children": [
+        {
+          "height": 52,
+          "id": "start",
+          "labels": [
+            {
+              "text": "Start"
+            }
+          ],
+          "layoutOptions": {
+            "elk.layered.layering.layerConstraint": "FIRST",
+            "elk.partitioning.partition": "0",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "start"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "start__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "start__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "start__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "start__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0
+            }
+          ],
+          "width": 132
+        },
+        {
+          "height": 90,
+          "id": "decision",
+          "labels": [
+            {
+              "text": "Valid?"
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "3",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "decision"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "decision__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "decision__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "decision__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "decision__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0
+            }
+          ],
+          "width": 158
+        },
+        {
+          "height": 52,
+          "id": "approve",
+          "labels": [
+            {
+              "text": "Approved"
+            }
+          ],
+          "layoutOptions": {
+            "elk.layered.layering.layerConstraint": "LAST",
+            "elk.partitioning.partition": "5",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "end"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "approve__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "approve__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "approve__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "approve__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0
+            }
+          ],
+          "width": 132
+        }
+      ],
+      "id": "unassigned",
+      "labels": [
+        {
+          "text": "unassigned"
+        }
+      ],
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "DOWN",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+        "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+        "elk.partitioning.partition": "2",
+        "elk.spacing.nodeNode": "160"
+      }
+    },
+    {
+      "height": 2,
+      "id": "__sppm_branch_anchor_0_decision_rework",
+      "layoutOptions": {
+        "elk.partitioning.partition": "3"
+      },
+      "width": 2
+    }
+  ],
+  "edges": [
+    {
+      "id": "e0:decision->approve",
+      "labels": [
+        {
+          "text": "yes"
+        }
+      ],
+      "sources": [
+        "decision__port_south"
+      ],
+      "targets": [
+        "approve__port_north"
+      ]
+    },
+    {
+      "id": "e1:decision->rework",
+      "labels": [
+        {
+          "text": "no"
+        }
+      ],
+      "sources": [
+        "decision__port_south"
+      ],
+      "targets": [
+        "rework__port_north"
+      ]
+    },
+    {
+      "id": "e2:start->submit",
+      "sources": [
+        "start__port_south"
+      ],
+      "targets": [
+        "submit__port_north"
+      ]
+    },
+    {
+      "id": "e3:submit->review",
+      "sources": [
+        "submit__port_south"
+      ],
+      "targets": [
+        "review__port_north"
+      ]
+    },
+    {
+      "id": "e4:review->decision",
+      "sources": [
+        "review__port_south"
+      ],
+      "targets": [
+        "decision__port_north"
+      ]
+    },
+    {
+      "id": "e5:rework->approve",
+      "sources": [
+        "rework__port_south"
+      ],
+      "targets": [
+        "approve__port_north"
+      ]
+    },
+    {
+      "id": "__sppm_helper_a_0",
+      "sources": [
+        "decision__port_south"
+      ],
+      "targets": [
+        "__sppm_branch_anchor_0_decision_rework"
+      ]
+    },
+    {
+      "id": "__sppm_helper_b_0",
+      "sources": [
+        "__sppm_branch_anchor_0_decision_rework"
+      ],
+      "targets": [
+        "rework__port_north"
+      ]
+    }
+  ],
+  "id": "flo:sppm",
+  "layoutOptions": {
+    "elk.algorithm": "layered",
+    "elk.direction": "DOWN",
+    "elk.edgeRouting": "ORTHOGONAL",
+    "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+    "elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES",
+    "elk.layered.crossingMinimization.forceNodeModelOrder": "true",
+    "elk.layered.feedbackEdges": "true",
+    "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+    "elk.layered.nodePlacement.favorStraightEdges": "true",
+    "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+    "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+    "elk.partitioning.activate": "true",
+    "elk.spacing.nodeNode": "160"
+  }
+}

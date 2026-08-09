@@ -1,0 +1,864 @@
+{
+  "$H": 13,
+  "children": [
+    {
+      "$H": 277,
+      "children": [
+        {
+          "$H": 281,
+          "height": 52,
+          "id": "start",
+          "labels": [
+            {
+              "height": 0,
+              "text": "Start",
+              "width": 0,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "layoutOptions": {
+            "elk.layered.layering.layerConstraint": "FIRST",
+            "elk.partitioning.partition": "0",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "start"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "start__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0,
+              "x": 66,
+              "y": 0
+            },
+            {
+              "height": 0,
+              "id": "start__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0,
+              "x": 132,
+              "y": 26
+            },
+            {
+              "height": 0,
+              "id": "start__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0,
+              "x": 66,
+              "y": 52
+            },
+            {
+              "height": 0,
+              "id": "start__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0,
+              "x": 0,
+              "y": 26
+            }
+          ],
+          "width": 132,
+          "x": 12,
+          "y": 39
+        },
+        {
+          "$H": 289,
+          "height": 106,
+          "id": "prep_subprocess",
+          "labels": [
+            {
+              "height": 0,
+              "text": "Prep Subprocess",
+              "width": 0,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "1",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "subprocess"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "prep_subprocess__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0,
+              "x": 124,
+              "y": 0
+            },
+            {
+              "height": 0,
+              "id": "prep_subprocess__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0,
+              "x": 248,
+              "y": 53
+            },
+            {
+              "height": 0,
+              "id": "prep_subprocess__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0,
+              "x": 124,
+              "y": 106
+            },
+            {
+              "height": 0,
+              "id": "prep_subprocess__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0,
+              "x": 0,
+              "y": 53
+            }
+          ],
+          "width": 248,
+          "x": 200,
+          "y": 12
+        },
+        {
+          "$H": 296,
+          "height": 106,
+          "id": "wet_mix_subprocess",
+          "labels": [
+            {
+              "height": 0,
+              "text": "Combine Wet Ingredients",
+              "width": 0,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "2",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "subprocess"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "wet_mix_subprocess__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0,
+              "x": 130,
+              "y": 0
+            },
+            {
+              "height": 0,
+              "id": "wet_mix_subprocess__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0,
+              "x": 260,
+              "y": 53
+            },
+            {
+              "height": 0,
+              "id": "wet_mix_subprocess__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0,
+              "x": 130,
+              "y": 106
+            },
+            {
+              "height": 0,
+              "id": "wet_mix_subprocess__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0,
+              "x": 0,
+              "y": 53
+            }
+          ],
+          "width": 260,
+          "x": 504,
+          "y": 12
+        },
+        {
+          "$H": 303,
+          "height": 102,
+          "id": "add_dry_ingredients",
+          "labels": [
+            {
+              "height": 0,
+              "text": "Add Dry Ingredients",
+              "width": 0,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "3",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "task"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "add_dry_ingredients__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0,
+              "x": 107.5,
+              "y": 0
+            },
+            {
+              "height": 0,
+              "id": "add_dry_ingredients__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0,
+              "x": 215,
+              "y": 51
+            },
+            {
+              "height": 0,
+              "id": "add_dry_ingredients__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0,
+              "x": 107.5,
+              "y": 102
+            },
+            {
+              "height": 0,
+              "id": "add_dry_ingredients__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0,
+              "x": 0,
+              "y": 51
+            }
+          ],
+          "width": 215,
+          "x": 820,
+          "y": 14
+        }
+      ],
+      "height": 130,
+      "id": "prep",
+      "labels": [
+        {
+          "height": 0,
+          "text": "prep",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+        "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+        "elk.partitioning.partition": "0",
+        "elk.spacing.nodeNode": "160"
+      },
+      "width": 1047,
+      "x": 12,
+      "y": 12
+    },
+    {
+      "$H": 310,
+      "children": [
+        {
+          "$H": 313,
+          "height": 102,
+          "id": "rest_dough",
+          "labels": [
+            {
+              "height": 0,
+              "text": "Rest Dough",
+              "width": 0,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "4",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "wait"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "rest_dough__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0,
+              "x": 120,
+              "y": 0
+            },
+            {
+              "height": 0,
+              "id": "rest_dough__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0,
+              "x": 240,
+              "y": 51
+            },
+            {
+              "height": 0,
+              "id": "rest_dough__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0,
+              "x": 120,
+              "y": 102
+            },
+            {
+              "height": 0,
+              "id": "rest_dough__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0,
+              "x": 0,
+              "y": 51
+            }
+          ],
+          "width": 240,
+          "x": 12,
+          "y": 12
+        }
+      ],
+      "height": 126,
+      "id": "hold",
+      "labels": [
+        {
+          "height": 0,
+          "text": "hold",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+        "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+        "elk.partitioning.partition": "1",
+        "elk.spacing.nodeNode": "160"
+      },
+      "width": 264,
+      "x": 1125,
+      "y": 14
+    },
+    {
+      "$H": 320,
+      "children": [
+        {
+          "$H": 323,
+          "height": 102,
+          "id": "preheat",
+          "labels": [
+            {
+              "height": 0,
+              "text": "Preheat Oven",
+              "width": 0,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "5",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "task"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "preheat__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0,
+              "x": 120,
+              "y": 0
+            },
+            {
+              "height": 0,
+              "id": "preheat__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0,
+              "x": 240,
+              "y": 51
+            },
+            {
+              "height": 0,
+              "id": "preheat__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0,
+              "x": 120,
+              "y": 102
+            },
+            {
+              "height": 0,
+              "id": "preheat__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0,
+              "x": 0,
+              "y": 51
+            }
+          ],
+          "width": 240,
+          "x": 12,
+          "y": 12
+        },
+        {
+          "$H": 330,
+          "height": 102,
+          "id": "bake",
+          "labels": [
+            {
+              "height": 0,
+              "text": "Bake",
+              "width": 0,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "6",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "task"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "bake__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0,
+              "x": 150,
+              "y": 0
+            },
+            {
+              "height": 0,
+              "id": "bake__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0,
+              "x": 300,
+              "y": 51
+            },
+            {
+              "height": 0,
+              "id": "bake__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0,
+              "x": 150,
+              "y": 102
+            },
+            {
+              "height": 0,
+              "id": "bake__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0,
+              "x": 0,
+              "y": 51
+            }
+          ],
+          "width": 300,
+          "x": 308,
+          "y": 12
+        }
+      ],
+      "height": 126,
+      "id": "oven",
+      "labels": [
+        {
+          "height": 0,
+          "text": "oven",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+        "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+        "elk.partitioning.partition": "2",
+        "elk.spacing.nodeNode": "160"
+      },
+      "width": 620,
+      "x": 1455,
+      "y": 14
+    },
+    {
+      "$H": 337,
+      "children": [
+        {
+          "$H": 340,
+          "height": 52,
+          "id": "end",
+          "labels": [
+            {
+              "height": 0,
+              "text": "End",
+              "width": 0,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "layoutOptions": {
+            "elk.layered.layering.layerConstraint": "LAST",
+            "elk.partitioning.partition": "7",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "end"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "end__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0,
+              "x": 66,
+              "y": 0
+            },
+            {
+              "height": 0,
+              "id": "end__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0,
+              "x": 132,
+              "y": 26
+            },
+            {
+              "height": 0,
+              "id": "end__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0,
+              "x": 66,
+              "y": 52
+            },
+            {
+              "height": 0,
+              "id": "end__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0,
+              "x": 0,
+              "y": 26
+            }
+          ],
+          "width": 132,
+          "x": 12,
+          "y": 12
+        }
+      ],
+      "height": 76,
+      "id": "finish",
+      "labels": [
+        {
+          "height": 0,
+          "text": "finish",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+        "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+        "elk.partitioning.partition": "3",
+        "elk.spacing.nodeNode": "160"
+      },
+      "width": 156,
+      "x": 2141,
+      "y": 39
+    }
+  ],
+  "edges": [
+    {
+      "container": "prep",
+      "id": "e0:start->prep_subprocess",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 200,
+            "y": 65
+          },
+          "id": "e0:start->prep_subprocess_s0",
+          "incomingShape": "start__port_east",
+          "outgoingShape": "prep_subprocess__port_west",
+          "startPoint": {
+            "x": 144,
+            "y": 65
+          }
+        }
+      ],
+      "sources": [
+        "start__port_east"
+      ],
+      "targets": [
+        "prep_subprocess__port_west"
+      ]
+    },
+    {
+      "container": "prep",
+      "id": "e1:prep_subprocess->wet_mix_subprocess",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 504,
+            "y": 65
+          },
+          "id": "e1:prep_subprocess->wet_mix_subprocess_s0",
+          "incomingShape": "prep_subprocess__port_east",
+          "outgoingShape": "wet_mix_subprocess__port_west",
+          "startPoint": {
+            "x": 448,
+            "y": 65
+          }
+        }
+      ],
+      "sources": [
+        "prep_subprocess__port_east"
+      ],
+      "targets": [
+        "wet_mix_subprocess__port_west"
+      ]
+    },
+    {
+      "container": "prep",
+      "id": "e2:wet_mix_subprocess->add_dry_ingredients",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 820,
+            "y": 65
+          },
+          "id": "e2:wet_mix_subprocess->add_dry_ingredients_s0",
+          "incomingShape": "wet_mix_subprocess__port_east",
+          "outgoingShape": "add_dry_ingredients__port_west",
+          "startPoint": {
+            "x": 764,
+            "y": 65
+          }
+        }
+      ],
+      "sources": [
+        "wet_mix_subprocess__port_east"
+      ],
+      "targets": [
+        "add_dry_ingredients__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e3:add_dry_ingredients->rest_dough",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 1137,
+            "y": 77
+          },
+          "id": "e3:add_dry_ingredients->rest_dough_s0",
+          "incomingShape": "add_dry_ingredients__port_east",
+          "outgoingShape": "rest_dough__port_west",
+          "startPoint": {
+            "x": 1047,
+            "y": 77
+          }
+        }
+      ],
+      "sources": [
+        "add_dry_ingredients__port_east"
+      ],
+      "targets": [
+        "rest_dough__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e4:rest_dough->preheat",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 1467,
+            "y": 77
+          },
+          "id": "e4:rest_dough->preheat_s0",
+          "incomingShape": "rest_dough__port_east",
+          "outgoingShape": "preheat__port_west",
+          "startPoint": {
+            "x": 1377,
+            "y": 77
+          }
+        }
+      ],
+      "sources": [
+        "rest_dough__port_east"
+      ],
+      "targets": [
+        "preheat__port_west"
+      ]
+    },
+    {
+      "container": "oven",
+      "id": "e5:preheat->bake",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 308,
+            "y": 63
+          },
+          "id": "e5:preheat->bake_s0",
+          "incomingShape": "preheat__port_east",
+          "outgoingShape": "bake__port_west",
+          "startPoint": {
+            "x": 252,
+            "y": 63
+          }
+        }
+      ],
+      "sources": [
+        "preheat__port_east"
+      ],
+      "targets": [
+        "bake__port_west"
+      ]
+    },
+    {
+      "container": "flo:sppm",
+      "id": "e6:bake->end",
+      "sections": [
+        {
+          "endPoint": {
+            "x": 2153,
+            "y": 77
+          },
+          "id": "e6:bake->end_s0",
+          "incomingShape": "bake__port_east",
+          "outgoingShape": "end__port_west",
+          "startPoint": {
+            "x": 2063,
+            "y": 77
+          }
+        }
+      ],
+      "sources": [
+        "bake__port_east"
+      ],
+      "targets": [
+        "end__port_west"
+      ]
+    }
+  ],
+  "height": 154,
+  "id": "flo:sppm",
+  "layoutOptions": {
+    "elk.algorithm": "layered",
+    "elk.direction": "RIGHT",
+    "elk.edgeRouting": "ORTHOGONAL",
+    "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+    "elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES",
+    "elk.layered.crossingMinimization.forceNodeModelOrder": "true",
+    "elk.layered.feedbackEdges": "true",
+    "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+    "elk.layered.nodePlacement.favorStraightEdges": "true",
+    "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+    "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+    "elk.partitioning.activate": "true",
+    "elk.spacing.nodeNode": "160"
+  },
+  "width": 2309,
+  "x": 0,
+  "y": 0
+}

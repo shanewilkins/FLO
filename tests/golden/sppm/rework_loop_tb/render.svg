@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="970" height="791" viewBox="0 0 970 791" data-flo-artifact-kind="svg" data-flo-backend="svg" data-flo-diagram="sppm" data-flo-layout-engine="elk">
+<defs>
+<marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L8,3 L0,6 z" fill="#475569" />
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#fffdf8" />
+<text x="28.0" y="32.0" font-family="Helvetica" font-size="22" font-weight="700" fill="#0f172a">Invoice Review (with rework)</text>
+<g transform="translate(28.0,64.0)">
+<g data-lane-id="requester">
+<rect x="48.0" y="37.0" width="564.0" height="94.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+<text x="64.0" y="61.0" font-family="Helvetica" font-size="13" font-weight="700" fill="#334155">Requester</text>
+</g>
+<g data-lane-id="finance">
+<rect x="48.0" y="197.0" width="214.0" height="94.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+<text x="64.0" y="221.0" font-family="Helvetica" font-size="13" font-weight="700" fill="#334155">Finance</text>
+</g>
+<g data-lane-id="unassigned">
+<rect x="33.0" y="357.0" width="538.0" height="278.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+<text x="49.0" y="381.0" font-family="Helvetica" font-size="13" font-weight="700" fill="#334155">unassigned</text>
+</g>
+<g data-edge-source="decision" data-edge-target="approve" data-edge-kind="direct">
+<polyline points="835.0,338.8 812.8,338.8 812.8,348.4 719.1,348.4 719.1,345.5 493.0,345.5 493.0,443.8" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+<rect x="686.5" y="379.2" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
+<text x="700.5" y="392.2" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">yes</text>
+</g>
+<g data-edge-source="decision" data-edge-target="rework" data-edge-kind="rework" data-edge-rework-variant="branch">
+<polyline points="756.0,293.8 753.4,338.8 753.4,611.0 871.4,611.0 871.4,698.7 598.8,698.7 598.8,332.2 431.8,332.2 431.8,382.0 416.0,382.0 416.0,434.8" fill="none" stroke="#b91c1c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" stroke-dasharray="2 6" />
+<rect x="694.4" y="300.5" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
+<text x="708.4" y="313.5" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">no</text>
+</g>
+<g data-edge-source="review" data-edge-target="decision" data-edge-kind="direct">
+<polyline points="574.0,328.8 574.0,342.7 835.0,342.7 835.0,216.3 835.0,248.8" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="rework" data-edge-target="approve" data-edge-kind="rework">
+<polyline points="511.0,469.8 493.9,504.8 493.9,461.9 484.2,461.9 484.2,448.6 493.0,448.6 493.0,443.8" fill="none" stroke="#b91c1c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" stroke-dasharray="2 6" />
+</g>
+<g data-edge-source="start" data-edge-target="submit" data-edge-kind="direct">
+<polyline points="177.0,293.8 142.0,319.8 142.0,573.3 68.3,573.3 68.3,602.1 170.2,602.1 170.2,179.7 323.6,179.7 323.6,222.9 328.0,222.9 328.0,258.8" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="submit" data-edge-target="review" data-edge-kind="direct">
+<polyline points="423.0,293.8 574.0,328.8 574.0,328.8" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-node-id="start" data-node-kind="start">
+<rect x="45.0" y="267.8" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="111.0" y="298.8" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Start</text>
+</g>
+<g data-node-id="submit" data-node-kind="task">
+<rect x="233.0" y="258.8" width="190.0" height="70.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 245.0 258.8 L 411.0 258.8 Q 423.0 258.8 423.0 270.8 L 423.0 292.8 L 233.0 292.8 L 233.0 270.8 Q 233.0 258.8 245.0 258.8 Z" fill="#FFFFFF" stroke="none" />
+<text x="328.0" y="276.8" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Submit Invoice</text>
+</g>
+<g data-node-id="review" data-node-kind="task">
+<rect x="479.0" y="258.8" width="190.0" height="70.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 491.0 258.8 L 657.0 258.8 Q 669.0 258.8 669.0 270.8 L 669.0 292.8 L 479.0 292.8 L 479.0 270.8 Q 479.0 258.8 491.0 258.8 Z" fill="#FFFFFF" stroke="none" />
+<text x="574.0" y="276.8" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Review Invoice</text>
+</g>
+<g data-node-id="decision" data-node-kind="decision">
+<polygon points="835.0,248.8 914.0,293.8 835.0,338.8 756.0,293.8" fill="#E3EEF7" stroke="#285B8F" stroke-width="2" />
+<text x="835.0" y="298.8" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Valid?</text>
+</g>
+<g data-node-id="rework" data-node-kind="task">
+<rect x="321.0" y="434.8" width="190.0" height="70.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 333.0 434.8 L 499.0 434.8 Q 511.0 434.8 511.0 446.8 L 511.0 468.8 L 321.0 468.8 L 321.0 446.8 Q 321.0 434.8 333.0 434.8 Z" fill="#FFFFFF" stroke="none" />
+<text x="416.0" y="452.8" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Request Rework</text>
+</g>
+<g data-node-id="approve" data-node-kind="end">
+<rect x="427.0" y="443.8" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="493.0" y="474.8" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Approved</text>
+</g>
+</g>
+</svg>

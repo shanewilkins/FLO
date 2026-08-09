@@ -1,0 +1,591 @@
+{
+  "children": [
+    {
+      "children": [
+        {
+          "height": 52,
+          "id": "start",
+          "labels": [
+            {
+              "text": "Start"
+            }
+          ],
+          "layoutOptions": {
+            "elk.layered.layering.layerConstraint": "FIRST",
+            "elk.partitioning.partition": "0",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "start"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "start__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "start__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "start__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "start__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0
+            }
+          ],
+          "width": 132
+        },
+        {
+          "height": 106,
+          "id": "prep_subprocess",
+          "labels": [
+            {
+              "text": "Prep Subprocess"
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "1",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "subprocess"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "prep_subprocess__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "prep_subprocess__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "prep_subprocess__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "prep_subprocess__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0
+            }
+          ],
+          "width": 248
+        },
+        {
+          "height": 106,
+          "id": "wet_mix_subprocess",
+          "labels": [
+            {
+              "text": "Combine Wet Ingredients"
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "2",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "subprocess"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "wet_mix_subprocess__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "wet_mix_subprocess__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "wet_mix_subprocess__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "wet_mix_subprocess__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0
+            }
+          ],
+          "width": 260
+        },
+        {
+          "height": 102,
+          "id": "add_dry_ingredients",
+          "labels": [
+            {
+              "text": "Add Dry Ingredients"
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "3",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "task"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "add_dry_ingredients__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "add_dry_ingredients__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "add_dry_ingredients__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "add_dry_ingredients__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0
+            }
+          ],
+          "width": 215
+        }
+      ],
+      "id": "prep",
+      "labels": [
+        {
+          "text": "prep"
+        }
+      ],
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+        "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+        "elk.partitioning.partition": "0",
+        "elk.spacing.nodeNode": "160"
+      }
+    },
+    {
+      "children": [
+        {
+          "height": 102,
+          "id": "rest_dough",
+          "labels": [
+            {
+              "text": "Rest Dough"
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "4",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "wait"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "rest_dough__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "rest_dough__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "rest_dough__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "rest_dough__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0
+            }
+          ],
+          "width": 240
+        }
+      ],
+      "id": "hold",
+      "labels": [
+        {
+          "text": "hold"
+        }
+      ],
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+        "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+        "elk.partitioning.partition": "1",
+        "elk.spacing.nodeNode": "160"
+      }
+    },
+    {
+      "children": [
+        {
+          "height": 102,
+          "id": "preheat",
+          "labels": [
+            {
+              "text": "Preheat Oven"
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "5",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "task"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "preheat__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "preheat__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "preheat__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "preheat__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0
+            }
+          ],
+          "width": 240
+        },
+        {
+          "height": 102,
+          "id": "bake",
+          "labels": [
+            {
+              "text": "Bake"
+            }
+          ],
+          "layoutOptions": {
+            "elk.partitioning.partition": "6",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "task"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "bake__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "bake__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "bake__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "bake__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0
+            }
+          ],
+          "width": 300
+        }
+      ],
+      "id": "oven",
+      "labels": [
+        {
+          "text": "oven"
+        }
+      ],
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+        "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+        "elk.partitioning.partition": "2",
+        "elk.spacing.nodeNode": "160"
+      }
+    },
+    {
+      "children": [
+        {
+          "height": 52,
+          "id": "end",
+          "labels": [
+            {
+              "text": "End"
+            }
+          ],
+          "layoutOptions": {
+            "elk.layered.layering.layerConstraint": "LAST",
+            "elk.partitioning.partition": "7",
+            "elk.portConstraints": "FIXED_ORDER",
+            "flo.node.kind": "end"
+          },
+          "ports": [
+            {
+              "height": 0,
+              "id": "end__port_north",
+              "layoutOptions": {
+                "elk.port.index": "0",
+                "elk.port.side": "NORTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "end__port_east",
+              "layoutOptions": {
+                "elk.port.index": "1",
+                "elk.port.side": "EAST"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "end__port_south",
+              "layoutOptions": {
+                "elk.port.index": "2",
+                "elk.port.side": "SOUTH"
+              },
+              "width": 0
+            },
+            {
+              "height": 0,
+              "id": "end__port_west",
+              "layoutOptions": {
+                "elk.port.index": "3",
+                "elk.port.side": "WEST"
+              },
+              "width": 0
+            }
+          ],
+          "width": 132
+        }
+      ],
+      "id": "finish",
+      "labels": [
+        {
+          "text": "finish"
+        }
+      ],
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+        "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+        "elk.partitioning.partition": "3",
+        "elk.spacing.nodeNode": "160"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e0:start->prep_subprocess",
+      "sources": [
+        "start__port_east"
+      ],
+      "targets": [
+        "prep_subprocess__port_west"
+      ]
+    },
+    {
+      "id": "e1:prep_subprocess->wet_mix_subprocess",
+      "sources": [
+        "prep_subprocess__port_east"
+      ],
+      "targets": [
+        "wet_mix_subprocess__port_west"
+      ]
+    },
+    {
+      "id": "e2:wet_mix_subprocess->add_dry_ingredients",
+      "sources": [
+        "wet_mix_subprocess__port_east"
+      ],
+      "targets": [
+        "add_dry_ingredients__port_west"
+      ]
+    },
+    {
+      "id": "e3:add_dry_ingredients->rest_dough",
+      "sources": [
+        "add_dry_ingredients__port_east"
+      ],
+      "targets": [
+        "rest_dough__port_west"
+      ]
+    },
+    {
+      "id": "e4:rest_dough->preheat",
+      "sources": [
+        "rest_dough__port_east"
+      ],
+      "targets": [
+        "preheat__port_west"
+      ]
+    },
+    {
+      "id": "e5:preheat->bake",
+      "sources": [
+        "preheat__port_east"
+      ],
+      "targets": [
+        "bake__port_west"
+      ]
+    },
+    {
+      "id": "e6:bake->end",
+      "sources": [
+        "bake__port_east"
+      ],
+      "targets": [
+        "end__port_west"
+      ]
+    }
+  ],
+  "id": "flo:sppm",
+  "layoutOptions": {
+    "elk.algorithm": "layered",
+    "elk.direction": "RIGHT",
+    "elk.edgeRouting": "ORTHOGONAL",
+    "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+    "elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES",
+    "elk.layered.crossingMinimization.forceNodeModelOrder": "true",
+    "elk.layered.feedbackEdges": "true",
+    "elk.layered.nodePlacement.bk.fixedAlignment": "TOP",
+    "elk.layered.nodePlacement.favorStraightEdges": "true",
+    "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+    "elk.layered.spacing.nodeNodeBetweenLayers": "56",
+    "elk.partitioning.activate": "true",
+    "elk.spacing.nodeNode": "160"
+  }
+}

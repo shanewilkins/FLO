@@ -689,11 +689,20 @@ SPPM-relevant fields per step:
 - `performed_by`: shown as the performer line in the info box
 - `uses`: available for equipment-aware examples and downstream summaries
 
-The default theme uses stoplight colors. Alternative themes:
+The default theme uses stoplight colors. Themes use Bootstrap-compatible semantic
+roles: `success` for VA, `warning` for RNVA and queues, `danger` for NVA, and
+`primary` for decision control points. FLO owns these tokens and does not import
+Bootstrap CSS at runtime.
 
+Alternative themes:
+
+- `--sppm-theme flatly` — Flatly-compatible Bootstrap semantic palette
 - `--sppm-theme print` — high-contrast fills suitable for black-and-white printing
 - `--sppm-theme monochrome` — grayscale only
 - `--sppm-theme <name>` — any custom theme defined under `[sppm.themes.<name>]` in `diagrams.toml`
+
+For backward compatibility, a custom theme that omits `queue` uses its `rnva`
+style for queue triangles.
 
 Custom theme example:
 
@@ -712,8 +721,14 @@ fill = "#FFADAD"
 border = "#D00000"
 
 [sppm.themes.sunrise.decision]
-fill = "#FFF8E1"
-border = "#B28704"
+fill = "#E3EEF7"
+border = "#285B8F"
+
+[sppm.themes.sunrise.queue]
+fill = "#F39C12"
+border = "#C27D0E"
+title_fill = "#2C3E50"
+info_fill = "#2C3E50"
 
 [sppm.themes.sunrise.unknown]
 fill = "#FFFFFF"

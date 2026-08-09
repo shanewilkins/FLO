@@ -89,12 +89,15 @@ Before 1.0, FLO will document:
 ### 0.6: Renderer Stabilization
 
 - Move SPPM, swimlane, and spaghetti to the stable renderer tier.
-- Add deterministic artifact, golden-render, and visual-invariant coverage.
+- Add visual-invariant coverage for node-label legibility, overlap, clipping, and
+	lane-frame containment on top of the established deterministic and golden-artifact gates.
 - Publish the renderer capability matrix and renderer compatibility guarantees.
 
 ### 0.7: Language, IR, And CLI Freeze Candidate
 
 - Freeze the proposed 1.0 language, canonical IR, schema, and CLI contracts.
+- Finalize the standard and verbose node-content policy, including approved
+	queue-detail fields and layout requirements for verbose rendering.
 - Remove or migrate legacy authoring aliases according to documented deprecation policy.
 - Expand conformance coverage for stable contracts and supported migration paths.
 
