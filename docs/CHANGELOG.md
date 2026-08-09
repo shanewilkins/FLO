@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.0 - 2026-08-09
+
+- Breaking (pre-1.0): remove the deprecated flowchart renderer from the CLI,
+  capability matrix, implementation, tests, and current user guidance.
+- Consolidate maintained direct-SVG renderer support around SPPM, swimlane, and
+  spaghetti maps.
+- Add deterministic standalone SPPM publication context, including named page
+  formats and SVG header and footer bands without multi-page composition.
+- Align stored render-intent validation with the maintained renderer vocabulary
+  and retain `lr` and `tb` as the only supported layout orientation values.
+- Document strict coordinate-required spaghetti rendering as the current 0.2
+  behavior, with deterministic partial rendering committed for 0.3.
+- Add release-view governance checks and strengthen deterministic SPPM
+  invariant and golden-artifact regression coverage.
+
 ## 0.1.2 - 2026-04-28
 
 - Wrapped SPPM SVG boundary routing hardening:
