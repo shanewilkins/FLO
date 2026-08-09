@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import asdict
-import hashlib
 import json
-import os
 from pathlib import Path
 import shutil
 import sys
@@ -19,14 +17,11 @@ if str(SRC_ROOT) not in sys.path:
 
 DEFAULT_MANIFEST = REPO_ROOT / "examples" / "conformance" / "sppm_corpus.json"
 DEFAULT_OUTDIR = REPO_ROOT / "tests" / "golden" / "sppm"
-ENV_PARTITION_MODE = "FLO_SPPM_PARTITION_MODE"
-ENV_PORT_CONSTRAINTS = "FLO_SPPM_PORT_CONSTRAINTS"
-ENV_HELPER_ANCHORS = "FLO_SPPM_HELPER_ANCHORS"
-ENV_SPACING_PROFILE = "FLO_SPPM_SPACING_PROFILE"
+CANONICAL_ARTIFACT_NAMES = frozenset({"layout_result.json", "render.svg"})
 
 
 def main() -> int:
-    """Build request, response, normalized layout, and SVG artifacts per corpus case."""
+    """Build normalized layout and SVG artifacts per corpus case."""
     parser = argparse.ArgumentParser(prog="build_sppm_baseline_artifacts.py")
     parser.add_argument(
         "--manifest",
@@ -51,18 +46,26 @@ def main() -> int:
         default=[],
         help="Optional case id to build. Repeat to limit generation to a subset.",
     )
+    parser.add_argument(
+        "--debug-dir",
+        type=Path,
+        help="Optional directory for ELK request and response diagnostics.",
+    )
     args = parser.parse_args()
 
     manifest_path = _resolve_repo_path(args.manifest)
     outdir = _resolve_repo_path(args.outdir)
+    debug_dir = _resolve_repo_path(args.debug_dir) if args.debug_dir else None
     cases = _filter_cases(_load_cases(manifest_path), case_ids=args.case_id)
 
     if args.clean and outdir.exists():
         shutil.rmtree(outdir)
     outdir.mkdir(parents=True, exist_ok=True)
+    if debug_dir:
+        debug_dir.mkdir(parents=True, exist_ok=True)
 
     for case in cases:
-        _build_case(case=case, outdir=outdir)
+        _build_case(case=case, outdir=outdir, debug_dir=debug_dir)
 
     print(
         f"Built {len(cases)} SPPM baseline cases into {outdir.relative_to(REPO_ROOT)}"
@@ -115,7 +118,9 @@ def _filter_cases(
     return filtered
 
 
-def _build_case(*, case: dict[str, Any], outdir: Path) -> None:
+def _build_case(
+    *, case: dict[str, Any], outdir: Path, debug_dir: Path | None = None
+) -> None:
     from flo.adapters import parse_adapter
     from flo.render._svg_sppm import render_sppm_svg_artifact_from_layout
     from flo.render.layout_core import (
@@ -124,7 +129,6 @@ def _build_case(*, case: dict[str, Any], outdir: Path) -> None:
         run_elkjs_layout,
         serialize_elk_layout_request,
     )
-    from flo.render.layout_core.sppm_strategy import current_sppm_layout_strategy
     from flo.render.options import RenderOptions
 
     case_id = str(case["id"])
@@ -151,39 +155,19 @@ def _build_case(*, case: dict[str, Any], outdir: Path) -> None:
         request=request,
         result=normalized_layout,
     )
-    strategy = current_sppm_layout_strategy()
-
     case_dir = outdir / case_id
     case_dir.mkdir(parents=True, exist_ok=True)
+    _prune_case_dir(case_dir)
 
-    _write_json(
-        case_dir / "metadata.json",
-        {
-            "id": case_id,
-            "input": str(source_path.relative_to(REPO_ROOT)),
-            "options": options_mapping,
-            "strategy_profile": _strategy_profile_id(),
-            "strategy": {
-                "partition_mode": strategy.partition_mode,
-                "port_constraints": strategy.port_constraints,
-                "helper_anchors": strategy.helper_anchors,
-                "spacing_profile": strategy.spacing_profile,
-            },
-            "strategy_env": {
-                ENV_PARTITION_MODE: os.getenv(ENV_PARTITION_MODE),
-                ENV_PORT_CONSTRAINTS: os.getenv(ENV_PORT_CONSTRAINTS),
-                ENV_HELPER_ANCHORS: os.getenv(ENV_HELPER_ANCHORS),
-                ENV_SPACING_PROFILE: os.getenv(ENV_SPACING_PROFILE),
-            },
-        },
-    )
-    _write_json(case_dir / "elk_request.json", request_payload)
-    _write_json(case_dir / "elk_response.json", response_payload)
     _write_json(
         case_dir / "layout_result.json", _layout_result_to_jsonable(normalized_layout)
     )
     (case_dir / "render.svg").write_text(svg_artifact.content, encoding="utf-8")
-    _write_hash_manifest(case_dir)
+    if debug_dir:
+        debug_case_dir = debug_dir / case_id
+        debug_case_dir.mkdir(parents=True, exist_ok=True)
+        _write_json(debug_case_dir / "elk_request.json", request_payload)
+        _write_json(debug_case_dir / "elk_response.json", response_payload)
 
     print(f"Built: {_display_path(case_dir)}")
 
@@ -241,13 +225,10 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     )
 
 
-def _write_hash_manifest(case_dir: Path) -> None:
-    artifacts = {
-        path.name: hashlib.sha256(path.read_bytes()).hexdigest()
-        for path in sorted(case_dir.iterdir())
-        if path.is_file() and path.name != "sha256.json"
-    }
-    _write_json(case_dir / "sha256.json", {"artifacts": artifacts})
+def _prune_case_dir(case_dir: Path) -> None:
+    for path in case_dir.iterdir():
+        if path.is_file() and path.name not in CANONICAL_ARTIFACT_NAMES:
+            path.unlink()
 
 
 def _display_path(path: Path) -> str:
@@ -255,29 +236,6 @@ def _display_path(path: Path) -> str:
         return str(path.relative_to(REPO_ROOT))
     except ValueError:
         return str(path)
-
-
-def _strategy_profile_id() -> str:
-    values = {
-        ENV_PARTITION_MODE: os.getenv(ENV_PARTITION_MODE, "branch_aligned")
-        .strip()
-        .lower()
-        or "branch_aligned",
-        ENV_PORT_CONSTRAINTS: os.getenv(ENV_PORT_CONSTRAINTS, "fixed_order")
-        .strip()
-        .lower()
-        or "fixed_order",
-        ENV_HELPER_ANCHORS: os.getenv(ENV_HELPER_ANCHORS, "always").strip().lower()
-        or "always",
-        ENV_SPACING_PROFILE: os.getenv(ENV_SPACING_PROFILE, "balanced").strip().lower()
-        or "balanced",
-    }
-    return (
-        f"part={values[ENV_PARTITION_MODE]}|"
-        f"port={values[ENV_PORT_CONSTRAINTS]}|"
-        f"anchors={values[ENV_HELPER_ANCHORS]}|"
-        f"space={values[ENV_SPACING_PROFILE]}"
-    )
 
 
 if __name__ == "__main__":

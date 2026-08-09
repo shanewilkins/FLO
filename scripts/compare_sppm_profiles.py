@@ -190,7 +190,7 @@ def _write_summary(
                 f"- `{(outdir / left_label).relative_to(REPO_ROOT)}`",
                 f"- `{(outdir / right_label).relative_to(REPO_ROOT)}`",
                 "",
-                "Review the paired `render.svg`, `layout_result.json`, and `metadata.json` files for each case.",
+                "Review the paired `render.svg` and `layout_result.json` files for each case.",
             ]
         )
         + "\n",

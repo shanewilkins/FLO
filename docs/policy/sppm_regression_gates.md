@@ -8,8 +8,13 @@ The canonical SPPM corpus manifest is `examples/conformance/sppm_corpus.json`.
 
 The checked-in accepted SPPM golden artifacts live under `tests/golden/sppm/`.
 
-Each case contains the normalized layout result, rendered SVG, and `sha256.json`
-for concise artifact identity review.
+Each case contains only the normalized layout result and rendered SVG.
+
+The corpus manifest remains the authority for case inputs and render options.
+
+Use `--debug-dir <path>` with the baseline builder to write ELK request and
+response diagnostics outside the committed golden corpus when investigating a
+layout regression.
 
 Generated output under `renders/` remains ignored and is for optional local visual
 inspection only; it is not an accepted regression reference.

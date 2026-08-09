@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import hashlib
 import importlib.util
-import json
 from pathlib import Path
 import sys
 
@@ -76,17 +74,11 @@ def test_compare_baseline_dirs_limits_results_to_selected_case_ids(tmp_path):
     assert drift.has_drift is False
 
 
-def test_committed_golden_hash_manifests_match_artifacts() -> None:
+def test_committed_golden_cases_contain_only_canonical_artifacts() -> None:
     golden_root = _REPO_ROOT / "tests" / "golden" / "sppm"
     case_dirs = sorted(path for path in golden_root.iterdir() if path.is_dir())
 
     assert case_dirs
     for case_dir in case_dirs:
-        manifest = json.loads((case_dir / "sha256.json").read_text(encoding="utf-8"))
-        expected_hashes = manifest["artifacts"]
-        actual_hashes = {
-            path.name: hashlib.sha256(path.read_bytes()).hexdigest()
-            for path in sorted(case_dir.iterdir())
-            if path.is_file() and path.name != "sha256.json"
-        }
-        assert expected_hashes == actual_hashes
+        artifacts = {path.name for path in case_dir.iterdir() if path.is_file()}
+        assert artifacts == {"layout_result.json", "render.svg"}
