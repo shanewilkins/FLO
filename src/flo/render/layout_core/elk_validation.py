@@ -10,6 +10,8 @@ from .sppm_strategy import should_emit_sppm_branch_anchors
 
 _RESERVED_RENDER_IDS = {
     "unassigned",
+    "unassigned_start",
+    "unassigned_end",
     "__sppm_row_mainline",
     "__sppm_row_rework",
 }
@@ -53,7 +55,7 @@ def _synthetic_lane_ids(request: ElkLayoutRequest) -> set[str]:
     node_lane_by_id = {node.id: node.lane_id for node in request.nodes}
     synthetic: set[str] = set()
     for lane in request.lanes:
-        if lane.id != "unassigned":
+        if lane.id not in {"unassigned", "unassigned_start", "unassigned_end"}:
             continue
         if lane.node_ids and all(
             node_lane_by_id.get(node_id) is None for node_id in lane.node_ids

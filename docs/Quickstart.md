@@ -11,55 +11,55 @@ FLO 0.4 will add the end-user tool-install path defined by the MVP requirements;
 that future path will not require a repository checkout.
 
 - Python 3.14+
+- Node.js 26+
 - `uv`
 
 From the repository root, install the development environment:
 
 ```bash
+npm ci --ignore-scripts --no-audit --no-fund
 uv sync --dev
 ```
 
 ## 2. Create a process
 
-Save this as `onboarding.flo`:
+Create a valid starter model with explicit stable IDs:
+
+```bash
+uv run flo new onboarding.flo --name "Client Onboarding"
+```
+
+The generated file is ordinary YAML-shaped plain text:
 
 ```yaml
 spec_version: "0.1"
 
 process:
-  id: onboarding
+  id: client_onboarding
   name: Client Onboarding
-
-resources:
-  - id: coordinator
-    name: Onboarding Coordinator
-    kind: person
 
 steps:
   - id: start
     kind: start
     name: Start
 
-  - id: collect_documents
+  - id: receive_request
     kind: task
-    name: Collect Documents
-    performed_by: [coordinator]
+    name: Receive Request
 
-  - id: review
-    kind: decision
-    name: Complete?
-    outcomes:
-      yes: finish
-      no: collect_documents
+  - id: complete_work
+    kind: task
+    name: Complete Work
 
   - id: finish
     kind: end
     name: Complete
 ```
 
-FLO normally connects adjacent steps automatically. Decision outcomes create
-their labeled branches. Stable IDs matter because transitions, diagnostics,
-and future telemetry alignment refer to them.
+Change the process and task names to match your work. FLO connects adjacent
+steps automatically. Keep IDs stable after other tools or people begin
+referring to the model; transitions, diagnostics, and future telemetry
+alignment use them.
 
 ## 3. Validate
 

@@ -1,0 +1,37 @@
+spec_version: "0.1"
+
+process:
+  id: yb_three_lane_handoff
+  name: Yellow Belt Three-Lane Handoff
+
+lanes:
+  - id: requester
+    name: Requester
+  - id: manager
+    name: Manager
+  - id: operations
+    name: Operations
+
+steps:
+  - id: start
+    kind: start
+    name: Need Identified
+
+  - id: submit_request
+    kind: task
+    name: Submit Request
+    lane: requester
+
+  - id: approve_request
+    kind: task
+    name: Approve Request
+    lane: manager
+
+  - id: fulfill_request
+    kind: task
+    name: Fulfill Request
+    lane: operations
+
+  - id: finish
+    kind: end
+    name: Request Complete

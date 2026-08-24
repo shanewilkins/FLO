@@ -213,7 +213,7 @@ def test_build_sppm_elk_layout_request_rejects_lane_node_namespace_collisions():
                 ],
                 "edges": [{"source": "bake", "target": "finish"}],
             },
-            options=RenderOptions(diagram="sppm", orientation="lr"),
+            options=RenderOptions(diagram="sppm", orientation="tb"),
         )
 
 
@@ -697,7 +697,7 @@ def test_build_sppm_synthetic_rows_anchor_return_source_to_reintegration_target(
     )
 
 
-def test_serialize_sppm_with_explicit_lanes_keeps_hierarchy_handling_enabled():
+def test_serialize_lr_sppm_flattens_business_lanes_for_process_order():
     request = build_sppm_elk_layout_request(
         {
             "lanes": [{"id": "front", "name": "Front"}],
@@ -712,4 +712,5 @@ def test_serialize_sppm_with_explicit_lanes_keeps_hierarchy_handling_enabled():
 
     payload = serialize_elk_layout_request(request)
 
-    assert payload["layoutOptions"]["elk.hierarchyHandling"] == "INCLUDE_CHILDREN"
+    assert "elk.hierarchyHandling" not in payload["layoutOptions"]
+    assert [child["id"] for child in payload["children"]] == ["start", "finish"]

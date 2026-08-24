@@ -27,7 +27,7 @@ def standard_lane_svg(lane: Any) -> list[str]:
     return [
         f'<g data-lane-id="{escape(str(lane.id))}">',
         f'<rect x="{lane.bounds.x_px:.1f}" y="{lane.bounds.y_px:.1f}" width="{lane.bounds.width_px:.1f}" height="{lane.bounds.height_px:.1f}" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />',
-        f'<text x="{lane.bounds.x_px + 16.0:.1f}" y="{lane.bounds.y_px + 24.0:.1f}" font-family="Helvetica" font-size="13" font-weight="700" fill="#334155">{escape(str(lane.label))}</text>',
+        f'<text x="{lane.bounds.x_px + 8.0:.1f}" y="{lane.bounds.y_px - 6.0:.1f}" font-family="Helvetica" font-size="12" font-weight="700" fill="#334155">{escape(str(lane.label))}</text>',
         "</g>",
     ]
 

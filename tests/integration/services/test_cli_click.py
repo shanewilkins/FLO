@@ -1,6 +1,32 @@
 from click.testing import CliRunner
+from pathlib import Path
 
 from flo.core.cli import cli
+
+
+def test_cli_new_creates_valid_starter_model():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            cli,
+            ["new", "purchase-request", "--name", "Purchase Request"],
+        )
+
+        assert result.exit_code == 0
+        target = Path("purchase-request.flo")
+        assert target.is_file()
+        assert "id: purchase_request" in target.read_text(encoding="utf-8")
+
+
+def test_cli_new_refuses_to_overwrite_existing_file():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("existing.flo").write_text("keep me", encoding="utf-8")
+        result = runner.invoke(cli, ["new", "existing.flo"])
+
+        assert result.exit_code == 1
+        assert "already exists" in result.output
+        assert Path("existing.flo").read_text(encoding="utf-8") == "keep me"
 
 
 def test_cli_render_cmd_using_click(tmp_flo_file):

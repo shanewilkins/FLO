@@ -43,7 +43,7 @@ def _get_flo_version() -> str:  # pragma: no cover - importlib optional
     try:
         import importlib.metadata as _meta
 
-        return _meta.version("flo")
+        return _meta.version("flo-lang")
     except Exception:
         return "unknown"
 
@@ -461,8 +461,13 @@ def _apply_render_click_options(*, include_render_to: bool) -> Any:
 
 @click.group()
 def cli() -> None:  # pragma: no cover - thin CLI layer
-    """Click command group for the FLO CLI."""
+    """Manage plain-text process models from authoring through export."""
     pass
+
+
+from flo.core.scaffold_cli import new_cmd  # noqa: E402
+
+cli.add_command(new_cmd)
 
 
 @cli.command("render")
@@ -714,9 +719,31 @@ def console_main(argv: list | None = None) -> int:
 def main(argv: list | None = None) -> int:
     """Programmatic CLI entrypoint.
 
-    Default behavior routes directly to `console_main` so users can run
-    `flo <path>` without an explicit subcommand.
+    Explicit commands use Click's command-specific help. The historical
+    `flo <path>` shorthand continues to use the compatibility parser.
 
     Returns an integer exit code suitable for `sys.exit`.
     """
-    return console_main(argv)
+    args = list(sys.argv[1:] if argv is None else argv)
+    explicit_commands = {"new", "render", "validate", "export"}
+    use_click = (
+        not args
+        or args[0] in explicit_commands
+        or args[0]
+        in {
+            "-h",
+            "--help",
+        }
+    )
+    if not use_click:
+        return console_main(args)
+
+    try:
+        result = cli.main(args=args, prog_name="flo", standalone_mode=False)
+    except click.ClickException as exc:
+        exc.show()
+        return int(exc.exit_code)
+    except SystemExit as exc:
+        code = exc.code
+        return code if isinstance(code, int) else 1
+    return int(result or 0)

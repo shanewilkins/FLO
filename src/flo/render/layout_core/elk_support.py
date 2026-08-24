@@ -12,39 +12,11 @@ from flo.render._sppm_rework_content import build_sppm_rework_metadata_lines
 from flo.render._sppm_rework_semantics import resolve_sppm_rework_variant
 from flo.render.options import RenderOptions
 
-from .elk_contracts import ElkLayoutEdge, ElkLayoutLane, ElkLayoutNode
+from .elk_contracts import ElkLayoutEdge, ElkLayoutNode
 from .sppm_strategy import sppm_port_constraints_value
 
 _DEFAULT_NODE_WIDTH_PX = 140
 _DEFAULT_NODE_HEIGHT_PX = 52
-
-
-def lane_specs(
-    *, process: dict[str, Any] | Any, nodes: list[dict[str, Any]]
-) -> tuple[ElkLayoutLane, ...]:
-    """Build ordered ELK lane specs from declared lanes and node membership."""
-    lane_labels = _declared_lane_labels(process)
-    ordered_lane_ids = _ordered_lane_ids(nodes=nodes, lane_labels=lane_labels)
-
-    lanes = _assigned_lanes(
-        nodes=nodes,
-        ordered_lane_ids=ordered_lane_ids,
-        lane_labels=lane_labels,
-    )
-    unassigned_ids = tuple(
-        str(node.get("id") or "")
-        for node in nodes
-        if not str(node.get("lane") or "").strip() and str(node.get("id") or "")
-    )
-    if unassigned_ids:
-        lanes.append(
-            ElkLayoutLane(
-                id="unassigned",
-                label="unassigned",
-                node_ids=unassigned_ids,
-            )
-        )
-    return tuple(lanes)
 
 
 def ordered_nodes(nodes: list[dict[str, Any]]) -> tuple[ElkLayoutNode, ...]:
@@ -207,72 +179,6 @@ def edge_label(edge: dict[str, Any]) -> str | None:
         if text:
             return text
     return None
-
-
-def _ordered_lane_ids(
-    *, nodes: list[dict[str, Any]], lane_labels: dict[str, str]
-) -> list[str]:
-    ordered_lane_ids = list(lane_labels.keys())
-    seen = set(ordered_lane_ids)
-    for node in nodes:
-        current_lane_id = str(node.get("lane") or "").strip()
-        if not current_lane_id or current_lane_id in seen:
-            continue
-        seen.add(current_lane_id)
-        ordered_lane_ids.append(current_lane_id)
-        lane_labels[current_lane_id] = current_lane_id
-    return ordered_lane_ids
-
-
-def _assigned_lanes(
-    *,
-    nodes: list[dict[str, Any]],
-    ordered_lane_ids: list[str],
-    lane_labels: dict[str, str],
-) -> list[ElkLayoutLane]:
-    lanes: list[ElkLayoutLane] = []
-    for current_lane_id in ordered_lane_ids:
-        node_ids = tuple(
-            str(node.get("id") or "")
-            for node in nodes
-            if str(node.get("lane") or "").strip() == current_lane_id
-            and str(node.get("id") or "")
-        )
-        if not node_ids:
-            continue
-        lanes.append(
-            ElkLayoutLane(
-                id=current_lane_id,
-                label=str(lane_labels.get(current_lane_id) or current_lane_id),
-                node_ids=node_ids,
-            )
-        )
-    return lanes
-
-
-def _declared_lane_labels(process: dict[str, Any] | Any) -> dict[str, str]:
-    if not isinstance(process, dict):
-        return {}
-    raw_lanes = process.get("lanes")
-    if not isinstance(raw_lanes, list):
-        process_block = process.get("process")
-        if isinstance(process_block, dict):
-            raw_lanes = process_block.get("lanes")
-    if not isinstance(raw_lanes, list):
-        return {}
-
-    lane_labels: dict[str, str] = {}
-    for raw_lane in raw_lanes:
-        if not isinstance(raw_lane, dict):
-            continue
-        current_lane_id = str(raw_lane.get("id") or "").strip()
-        if not current_lane_id:
-            continue
-        lane_name = (
-            str(raw_lane.get("name") or current_lane_id).strip() or current_lane_id
-        )
-        lane_labels[current_lane_id] = lane_name
-    return lane_labels
 
 
 def _elk_node(

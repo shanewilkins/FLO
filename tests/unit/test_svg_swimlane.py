@@ -87,7 +87,7 @@ def test_render_swimlane_svg_artifact_renders_lanes_nodes_and_edges(monkeypatch)
 
 def test_render_swimlane_svg_artifact_keeps_unlaned_nodes_renderable(monkeypatch):
     def fake_execute_elk_layout(request, *, engine):
-        assert [lane.id for lane in request.lanes] == ["sales", "unassigned"]
+        assert [lane.id for lane in request.lanes] == ["sales", "unassigned_end"]
         assert request.lanes[1].node_ids == ("finish",)
         return LayoutResult(
             orientation="lr",
@@ -100,8 +100,8 @@ def test_render_swimlane_svg_artifact_keeps_unlaned_nodes_renderable(monkeypatch
                     node_ids=("start",),
                 ),
                 LayoutLaneFrame(
-                    id="unassigned",
-                    label="unassigned",
+                    id="unassigned_end",
+                    label="Process end",
                     bounds=LayoutBounds(x_px=0, y_px=100, width_px=280, height_px=80),
                     node_ids=("finish",),
                 ),
@@ -140,7 +140,7 @@ def test_render_swimlane_svg_artifact_keeps_unlaned_nodes_renderable(monkeypatch
     )
 
     assert contract is None
-    assert 'data-lane-id="unassigned"' in artifact.content
+    assert 'data-lane-id="unassigned_end"' in artifact.content
     assert 'data-node-id="finish"' in artifact.content
     assert 'data-edge-source="start"' in artifact.content
     assert 'data-edge-target="finish"' in artifact.content

@@ -16,15 +16,15 @@
 <g transform="translate(28.0,148.0)">
 <g data-lane-id="sales">
 <rect x="173.5" y="27.0" width="229.0" height="94.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
-<text x="189.5" y="51.0" font-family="Helvetica" font-size="13" font-weight="700" fill="#334155">Sales</text>
+<text x="181.5" y="21.0" font-family="Helvetica" font-size="12" font-weight="700" fill="#334155">Sales</text>
 </g>
 <g data-lane-id="ops">
 <rect x="176.0" y="187.0" width="224.0" height="94.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
-<text x="192.0" y="211.0" font-family="Helvetica" font-size="13" font-weight="700" fill="#334155">Operations</text>
+<text x="184.0" y="181.0" font-family="Helvetica" font-size="12" font-weight="700" fill="#334155">Operations</text>
 </g>
 <g data-lane-id="unassigned">
 <rect x="188.5" y="347.0" width="491.0" height="278.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
-<text x="204.5" y="371.0" font-family="Helvetica" font-size="13" font-weight="700" fill="#334155">unassigned</text>
+<text x="196.5" y="341.0" font-family="Helvetica" font-size="12" font-weight="700" fill="#334155">unassigned</text>
 </g>
 <g data-edge-source="approved" data-edge-target="collect_docs" data-edge-kind="direct">
 <polyline points="288.0,449.0 288.0,640.0 15.0,640.0 15.0,12.0 288.0,12.0 288.0,39.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />

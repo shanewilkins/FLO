@@ -30,6 +30,9 @@ jobs:
       - name: Verify elkjs runtime import
         run: node --input-type=module -e "await import('elkjs/lib/elk.bundled.js'); console.log('elkjs import ok')"
 
+      - name: Vendor pinned elkjs runtime
+        run: python scripts/vendor_elkjs.py
+
       - name: Install uv
         run: python -m pip install uv
 
@@ -48,6 +51,12 @@ jobs:
           .tmp/publish-smoke/bin/python -m pip install --upgrade pip
           .tmp/publish-smoke/bin/python -m pip install dist/*.whl
           .tmp/publish-smoke/bin/flo --help
+          cd .tmp
+          publish-smoke/bin/flo new publish-smoke.flo --name "Publish Smoke"
+          publish-smoke/bin/flo validate publish-smoke.flo
+          publish-smoke/bin/flo render publish-smoke.flo --diagram sppm --render-to publish-smoke.svg
+          test -s publish-smoke.svg
+          publish-smoke/bin/python ../scripts/check_yb_journey.py --flo "$(pwd)/publish-smoke/bin/flo"
 
       - name: Upload dist artifacts
         uses: actions/upload-artifact@v7

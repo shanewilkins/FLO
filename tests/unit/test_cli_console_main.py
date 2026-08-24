@@ -74,7 +74,21 @@ def test_console_main_maps_parse_args_systemexit_to_usage(monkeypatch):
     assert rc == EXIT_USAGE
 
 
-def test_main_delegates_to_console_main(monkeypatch):
-    """Verify main() delegates to console_main()."""
+def test_main_delegates_path_shorthand_to_console_main(monkeypatch):
+    """Verify main() keeps the historical path shorthand."""
     monkeypatch.setattr(cli_mod, "console_main", lambda argv=None: 17)
     assert cli_mod.main(["x.flo"]) == 17
+
+
+def test_main_routes_explicit_command_to_click(monkeypatch):
+    """Verify explicit commands use Click's command-specific dispatcher."""
+    observed = []
+
+    def fake_main(*, args, prog_name, standalone_mode):
+        observed.append((args, prog_name, standalone_mode))
+        return None
+
+    monkeypatch.setattr(cli_mod.cli, "main", fake_main)
+
+    assert cli_mod.main(["render", "x.flo", "--help"]) == 0
+    assert observed == [(["render", "x.flo", "--help"], "flo", False)]

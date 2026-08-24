@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+- Add `flo new --template simple-process` with readable stable-ID generation
+  and non-overwriting file creation.
+- Route explicit CLI commands through command-specific Click help and emit
+  concise source-aware validation diagnostics with file, line, column, field
+  path, and source excerpt where the current validator identifies a node.
+- Vendor the pinned `elkjs` runtime and license into distribution artifacts,
+  and require a clean-wheel scaffold, validate, render, and export rehearsal
+  before publication.
+- Add the Yellow Belt visual acceptance corpus for linear, decision,
+  three-lane handoff, and rework-loop maps. Keep SPPM independent of invisible
+  business-lane hierarchy and place unassigned swimlane boundaries in process
+  order.
+
 ## 0.2.0 - 2026-08-09
 
 - Breaking (pre-1.0): remove the deprecated flowchart renderer from the CLI,
@@ -120,4 +135,3 @@
 - Remove the `Hello world!` placeholder output from the core/main paths;
   the program now returns the rendered DOT text (or an empty string for
   empty input) which simplifies the CLI and test expectations.
-

@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import sys
 from typing import Callable
 
 import structlog
 
 from .logging import configure_logging
-from . import errors
 from .telemetry import init_telemetry, Telemetry
 
 
@@ -41,9 +41,9 @@ def get_services(verbose: bool = False) -> Services:
     logger = structlog.get_logger()
 
     def _error_handler(msg: str) -> None:
-        # Delegate to the central `errors.handle_error` so behaviour is
-        # consistent and testable across the codebase.
-        errors.handle_error(msg, logger)
+        # Human-facing CLI diagnostics must stay concise. Structured runtime
+        # context belongs in telemetry rather than in ordinary stderr.
+        print(msg, file=sys.stderr)
 
     # Initialize telemetry (returns a no-op Telemetry if OTEL not installed).
     # Keep CLI stdout deterministic (e.g., JSON/DOT exports) by default.

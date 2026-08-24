@@ -148,10 +148,18 @@ def _merge_render_intent_options(*, ir: IR, options: dict | None) -> dict | None
 
 
 def _parse_compile_validate(content: str, source_path: str | None = None) -> IR:
+    from flo.core.source_diagnostics import source_aware_message
+
     try:
         adapter_model = parse_adapter(content, source_path=source_path)
     except Exception as exc:
-        raise ParseError(str(exc), error_stage="parse") from exc
+        message = source_aware_message(
+            str(exc),
+            content=content,
+            source_path=source_path,
+            cause=exc,
+        )
+        raise ParseError(message, error_stage="parse") from exc
 
     try:
         ir = compile_adapter(adapter_model)
@@ -163,7 +171,13 @@ def _parse_compile_validate(content: str, source_path: str | None = None) -> IR:
     except ValidationError as exc:
         if getattr(exc, "error_stage", None) is None:
             exc.error_stage = "validate"
-        raise
+        message = source_aware_message(
+            str(exc),
+            content=content,
+            source_path=source_path,
+            cause=exc,
+        )
+        raise ValidationError(message, error_stage=exc.error_stage) from exc
     except Exception as exc:
         raise ValidationError(str(exc), error_stage="validate") from exc
 

@@ -35,6 +35,9 @@ def _root_layout_options(request: ElkLayoutRequest) -> dict[str, str]:
         options["elk.partitioning.activate"] = "true"
     if request.lanes and not _synthetic_sppm_rows(request=request):
         options["elk.hierarchyHandling"] = "INCLUDE_CHILDREN"
+    if request.diagram == "swimlane":
+        options["elk.edgeRouting"] = "ORTHOGONAL"
+        options["elk.partitioning.activate"] = "true"
     return options
 
 
@@ -92,23 +95,6 @@ def _synthetic_sppm_rows(*, request: ElkLayoutRequest) -> bool:
         "__sppm_row_mainline",
         "__sppm_row_rework",
     }.issubset(lane_ids)
-
-
-def _preserves_lane_structure(
-    process: dict[str, Any] | Any, nodes: list[dict[str, Any]]
-) -> bool:
-    if any(str(node.get("lane") or "").strip() for node in nodes):
-        return True
-    if not isinstance(process, dict):
-        return False
-    raw_lanes = process.get("lanes")
-    if isinstance(raw_lanes, list) and raw_lanes:
-        return True
-    process_block = process.get("process")
-    if not isinstance(process_block, dict):
-        return False
-    nested_lanes = process_block.get("lanes")
-    return isinstance(nested_lanes, list) and bool(nested_lanes)
 
 
 def _node_kind_map(nodes: list[dict[str, Any]]) -> dict[str, str]:

@@ -26,8 +26,10 @@ Swimlanes group nodes by the `lane` field in the process model:
 - Declared lanes keep declaration order when present.
 - Lane IDs discovered from node assignments are appended by first node
    occurrence.
-- Unlaned nodes are assigned to a synthetic `unassigned` lane so they remain
-   visible in the responsibility view.
+- Unlaned work nodes are assigned to a synthetic `unassigned` lane so they
+   remain visible in the responsibility view. When responsibility lanes exist,
+   unlaned start and end events use boundary surfaces before and after those
+   lanes so the process does not visually begin at the far end of the map.
 - Cross-lane edges remain explicit SVG edges between the laid-out nodes.
 
 ### Node Rendering
@@ -108,7 +110,9 @@ placement, lane layout takes precedence without changing transition semantics.
 
 If a node lacks a lane assignment:
 
-- The node is included in a synthetic `unassigned` lane.
+- Work nodes are included in a synthetic `unassigned` lane.
+- Start and end events use synthetic process-boundary surfaces when assigned
+  responsibility lanes exist.
 - It remains reachable and renderable.
 - A future enhancement may issue a diagnostic when this weakens responsibility
    analysis.

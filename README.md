@@ -24,6 +24,7 @@ dependency sync, running commands, builds, and publish.
 From the repository root:
 
 ```bash
+npm ci --ignore-scripts --no-audit --no-fund
 uv sync --dev
 ```
 
@@ -42,6 +43,7 @@ uv run pre-commit run --all-files
 Build distributions:
 
 ```bash
+uv run python scripts/vendor_elkjs.py
 uv build
 ```
 

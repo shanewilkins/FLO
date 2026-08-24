@@ -3,6 +3,10 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const resolveElkSpecifiers = () => {
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+  const fromPackagedVendor = path.resolve(
+    scriptDir,
+    'vendor/elk.bundled.js'
+  );
   const fromScriptNodeModules = path.resolve(
     scriptDir,
     '../../../../node_modules/elkjs/lib/elk.bundled.js'
@@ -13,7 +17,7 @@ const resolveElkSpecifiers = () => {
   );
   const explicitPath = process.env.FLO_ELKJS_PATH;
 
-  const specifiers = ['elkjs/lib/elk.bundled.js'];
+  const specifiers = [pathToFileURL(fromPackagedVendor).href, 'elkjs/lib/elk.bundled.js'];
   if (explicitPath) {
     specifiers.push(pathToFileURL(path.resolve(explicitPath)).href);
   }

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1126" height="678" viewBox="0 0 1126 678" data-flo-artifact-kind="svg" data-flo-backend="svg" data-flo-diagram="sppm" data-flo-layout-engine="elk" data-sppm-publication-page-id="main-p1">
+<svg xmlns="http://www.w3.org/2000/svg" width="1192" height="428" viewBox="0 0 1192 428" data-flo-artifact-kind="svg" data-flo-backend="svg" data-flo-diagram="sppm" data-flo-layout-engine="elk" data-sppm-publication-page-id="main-p1">
 <defs>
 <marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
 <path d="M0,0 L8,3 L0,6 z" fill="#475569" />
@@ -6,7 +6,7 @@
 </defs>
 <rect width="100%" height="100%" fill="#fffdf8" />
 <g data-sppm-publication-band="header">
-<line x1="28.0" y1="28.0" x2="1098.0" y2="28.0" stroke="#cbd5e1" stroke-width="1" />
+<line x1="28.0" y1="28.0" x2="1164.0" y2="28.0" stroke="#cbd5e1" stroke-width="1" />
 <text x="28.0" y="52.0" font-family="Helvetica" font-size="22" font-weight="700" fill="#0f172a">Client Onboarding</text>
 <text x="28.0" y="76.0" font-family="Helvetica" font-size="12" fill="#334155">Process: onboarding_v1</text>
 <text x="28.0" y="92.0" font-family="Helvetica" font-size="12" fill="#334155">Subprocess View: parent-only</text>
@@ -14,58 +14,46 @@
 <text x="28.0" y="124.0" font-family="Helvetica" font-size="12" fill="#334155">Edges: 5</text>
 </g>
 <g transform="translate(28.0,148.0)">
-<g data-lane-id="sales">
-<rect x="27.0" y="176.0" width="229.0" height="94.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
-<text x="43.0" y="200.0" font-family="Helvetica" font-size="13" font-weight="700" fill="#334155">Sales</text>
-</g>
-<g data-lane-id="ops">
-<rect x="322.0" y="176.0" width="224.0" height="94.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
-<text x="338.0" y="200.0" font-family="Helvetica" font-size="13" font-weight="700" fill="#334155">Operations</text>
-</g>
-<g data-lane-id="unassigned">
-<rect x="612.0" y="166.0" width="443.0" height="326.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
-<text x="628.0" y="190.0" font-family="Helvetica" font-size="13" font-weight="700" fill="#334155">unassigned</text>
-</g>
 <g data-edge-source="approved" data-edge-target="collect_docs" data-edge-kind="direct">
-<polyline points="799.0,223.0 1070.0,223.0 1070.0,15.0 12.0,15.0 12.0,223.0 39.0,223.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
-<rect x="420.0" y="0.0" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
-<text x="434.0" y="13.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">no</text>
+<polyline points="892.0,57.0 902.0,57.0 902.0,252.0 154.0,252.0 154.0,57.0 200.0,57.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+<rect x="547.0" y="234.0" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
+<text x="561.0" y="247.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">no</text>
 </g>
 <g data-edge-source="approved" data-edge-target="finish" data-edge-kind="direct">
-<polyline points="799.0,223.0 809.0,223.0 809.0,260.0 911.0,260.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
-<rect x="841.0" y="251.0" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
-<text x="855.0" y="264.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">yes</text>
+<polyline points="892.0,57.0 1004.0,57.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+<rect x="934.0" y="48.0" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
+<text x="948.0" y="61.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">yes</text>
 </g>
 <g data-edge-source="collect_docs" data-edge-target="verify" data-edge-kind="direct">
-<polyline points="244.0,223.0 334.0,223.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+<polyline points="405.0,57.0 461.0,57.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
 </g>
 <g data-edge-source="start" data-edge-target="collect_docs" data-edge-kind="direct">
-<polyline points="799.0,454.0 1070.0,454.0 1070.0,502.0 12.0,502.0 12.0,223.0 39.0,223.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+<polyline points="144.0,57.0 200.0,57.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
 </g>
 <g data-edge-source="verify" data-edge-target="approved" data-edge-kind="direct">
-<polyline points="534.0,223.0 624.0,223.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+<polyline points="661.0,57.0 717.0,57.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
 </g>
 <g data-node-id="start" data-node-kind="start">
-<rect x="667.0" y="428.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
-<text x="733.0" y="459.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Start</text>
+<rect x="12.0" y="31.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="78.0" y="62.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Start</text>
 </g>
 <g data-node-id="collect_docs" data-node-kind="task">
-<rect x="39.0" y="188.0" width="205.0" height="70.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
-<path data-node-header="top-rounded" d="M 51.0 188.0 L 232.0 188.0 Q 244.0 188.0 244.0 200.0 L 244.0 222.0 L 39.0 222.0 L 39.0 200.0 Q 39.0 188.0 51.0 188.0 Z" fill="#FFFFFF" stroke="none" />
-<text x="141.5" y="206.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Collect Documents</text>
+<rect x="200.0" y="22.0" width="205.0" height="70.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 212.0 22.0 L 393.0 22.0 Q 405.0 22.0 405.0 34.0 L 405.0 56.0 L 200.0 56.0 L 200.0 34.0 Q 200.0 22.0 212.0 22.0 Z" fill="#FFFFFF" stroke="none" />
+<text x="302.5" y="40.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Collect Documents</text>
 </g>
 <g data-node-id="verify" data-node-kind="task">
-<rect x="334.0" y="188.0" width="200.0" height="70.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
-<path data-node-header="top-rounded" d="M 346.0 188.0 L 522.0 188.0 Q 534.0 188.0 534.0 200.0 L 534.0 222.0 L 334.0 222.0 L 334.0 200.0 Q 334.0 188.0 346.0 188.0 Z" fill="#FFFFFF" stroke="none" />
-<text x="434.0" y="206.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Verify Documents</text>
+<rect x="461.0" y="22.0" width="200.0" height="70.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 473.0 22.0 L 649.0 22.0 Q 661.0 22.0 661.0 34.0 L 661.0 56.0 L 461.0 56.0 L 461.0 34.0 Q 461.0 22.0 473.0 22.0 Z" fill="#FFFFFF" stroke="none" />
+<text x="561.0" y="40.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Verify Documents</text>
 </g>
 <g data-node-id="approved" data-node-kind="decision">
-<polygon points="711.5,178.0 799.0,223.0 711.5,268.0 624.0,223.0" fill="#E3EEF7" stroke="#285B8F" stroke-width="2" />
-<text x="711.5" y="228.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Approved?</text>
+<polygon points="804.5,12.0 892.0,57.0 804.5,102.0 717.0,57.0" fill="#E3EEF7" stroke="#285B8F" stroke-width="2" />
+<text x="804.5" y="62.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Approved?</text>
 </g>
 <g data-node-id="finish" data-node-kind="end">
-<rect x="911.0" y="234.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
-<text x="977.0" y="265.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Complete</text>
+<rect x="1004.0" y="31.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="1070.0" y="62.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Complete</text>
 </g>
 </g>
 </svg>

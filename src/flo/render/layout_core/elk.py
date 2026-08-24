@@ -19,7 +19,6 @@ from .elk_errors import ElkEngineProtocolError
 from .elk_validation import validate_elk_request_namespaces
 from .elk_support import (
     extract_nodes_and_edges,
-    lane_specs,
     ordered_edges,
     ordered_nodes,
     ordered_sppm_nodes,
@@ -27,9 +26,9 @@ from .elk_support import (
     serialize_edge,
     serialize_node,
 )
+from .lane_support import lane_specs
 from .elk_sppm_helpers import (
     _node_kind_map,
-    _preserves_lane_structure,
     _sppm_branch_anchor_helpers,
     _root_layout_options,
     _sppm_apply_secondary_row_edge_ports,
@@ -99,10 +98,18 @@ def build_sppm_elk_layout_request(
         direction=_elk_direction(render_options),
     )
     sppm_nodes = ordered_sppm_nodes(nodes, options=render_options)
-    if _preserves_lane_structure(process, nodes):
-        lanes = lane_specs(process=process, nodes=nodes)
+    direction = _elk_direction(render_options)
+    if direction == "DOWN":
+        lanes = lane_specs(
+            process=process,
+            nodes=nodes,
+            separate_process_boundaries=False,
+        )
         partition_overrides: dict[str, int] = {}
     else:
+        # LR SPPM is a process-flow surface, not a responsibility-lane surface.
+        # Business lanes previously became invisible ELK hierarchy containers,
+        # which could place unlaned start/end nodes after the mainline.
         synthetic_rows = _sppm_synthetic_row_lanes(nodes=nodes, edges=edge_specs)
         lanes = ()
         partition_overrides = _sppm_partition_indexes_for_synthetic_rows(
@@ -113,7 +120,7 @@ def build_sppm_elk_layout_request(
         edge_specs = _sppm_apply_secondary_row_edge_ports(
             edges=edge_specs,
             synthetic_rows=synthetic_rows,
-            root_direction=_elk_direction(render_options),
+            root_direction=direction,
         )
 
     request = ElkLayoutRequest(

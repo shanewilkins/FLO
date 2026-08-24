@@ -6,6 +6,8 @@ venv/
 flo.egg-info/
 *.egg-info/
 node_modules/
+src/flo/render/layout_core/vendor/elk.bundled.js
+src/flo/render/layout_core/vendor/ELKJS_LICENSE.md
 
 # Roadmap local data (generated exports, backups, logs, temp files)
 .roadmap/artifacts/

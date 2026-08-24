@@ -511,12 +511,12 @@ def test_serialize_elk_layout_request_builds_swimlane_payload_shape():
     assert [child["id"] for child in payload["children"]] == [
         "sales",
         "ops",
-        "unassigned",
+        "unassigned_end",
     ]
     assert payload["children"][0]["labels"][0]["text"] == "Sales"
     assert [child["id"] for child in payload["children"][0]["children"]] == ["start"]
     assert [child["id"] for child in payload["children"][1]["children"]] == ["review"]
-    assert payload["children"][2]["labels"][0]["text"] == "unassigned"
+    assert payload["children"][2]["labels"][0]["text"] == "Process end"
     assert [child["id"] for child in payload["children"][2]["children"]] == ["finish"]
     assert payload["edges"][0]["labels"][0]["text"] == "handoff"
     assert payload["edges"][1]["targets"] == ["finish"]
