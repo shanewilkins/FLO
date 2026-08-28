@@ -13,6 +13,7 @@ def ir_to_internal_dict(ir: IR) -> dict[str, Any]:
     """Return internal-shape dict for in-memory canonical IR."""
     return {
         "name": ir.name,
+        "process_version": ir.process_version,
         "nodes": [_node_to_dict(node) for node in ir.nodes],
         "edges": [_edge_to_dict(edge) for edge in ir.edges],
         "process_metadata": ir.process_metadata or {},
@@ -59,6 +60,7 @@ def ir_from_internal_dict(data: dict[str, Any]) -> IR:
         name=data.get("name", ""),
         nodes=nodes,
         edges=edges,
+        process_version=data.get("process_version"),
         process_metadata=process_metadata,
     )
 

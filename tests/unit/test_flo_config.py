@@ -108,6 +108,40 @@ def test_merge_diagrams_toml_loads_custom_themes(tmp_path, monkeypatch):
     assert out["sppm_themes"]["sunrise"]["start_end"]["border"] == "#343A40"
 
 
+def test_merge_diagrams_toml_loads_shared_registry_and_render_defaults(
+    tmp_path, monkeypatch
+):
+    model_path = tmp_path / "demo.flo"
+    model_path.write_text("spec_version: '0.1'\n", encoding="utf-8")
+    (tmp_path / "diagrams.toml").write_text(
+        "\n".join(
+            [
+                "[render]",
+                "theme = 'book_house'",
+                "[render.style.canvas]",
+                "background = '#F4F0FF'",
+                "[render.style.typography]",
+                "font_family = ['Avenir Next', 'Arial']",
+                "scale = 1.1",
+                "[themes.book_house]",
+                "extends = 'default'",
+                "[themes.book_house.roles.va]",
+                "fill = '#B8E6C1'",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+
+    out = merge_diagrams_toml_sppm_defaults({"source_path": str(model_path)})
+
+    assert out["theme"] == "book_house"
+    assert out["background_color"] == "#F4F0FF"
+    assert out["font_family"] == ["Avenir Next", "Arial"]
+    assert out["typography_scale"] == 1.1
+    assert out["themes"]["book_house"]["roles"]["va"]["fill"] == "#B8E6C1"
+
+
 def test_merge_diagrams_toml_invalid_toml_raises_clierror(tmp_path, monkeypatch):
     (tmp_path / "diagrams.toml").write_text("[sppm\nnot valid", encoding="utf-8")
     monkeypatch.chdir(tmp_path)

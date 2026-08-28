@@ -20,6 +20,7 @@ from ._svg_shared_primitives import (
 from .layout_core import build_swimlane_elk_layout_request, execute_elk_layout
 from .layout_core.elk_runtime import run_elkjs_layout
 from .options import RenderOptions
+from ._svg_theme import apply_svg_typography
 
 _PADDING = 24.0
 
@@ -50,13 +51,13 @@ def render_swimlane_svg_artifact(
             'data-flo-artifact-kind="svg" data-flo-backend="svg" '
             'data-flo-diagram="swimlane" data-flo-layout-engine="elk">'
         ),
-        '<rect width="100%" height="100%" fill="#fffdf8" />',
+        f'<rect width="100%" height="100%" fill="{options.resolved_theme.canvas_background}" />',
         f'<g transform="translate({_PADDING:.1f},{_PADDING:.1f})">',
     ]
-    parts[1:1] = standard_svg_defs()
+    parts[1:1] = standard_svg_defs(options)
 
     for lane in result.lanes:
-        parts.extend(standard_lane_svg(lane))
+        parts.extend(standard_lane_svg(lane, options))
 
     for edge_key in sorted(result.edge_paths.keys()):
         source_id, target_id = edge_key
@@ -74,6 +75,7 @@ def render_swimlane_svg_artifact(
             canvas_bounds=result.canvas_bounds,
             diagnostics=[],
             render_as_rework_style=False,
+            options=options,
         )
         parts.extend(edge_parts)
 
@@ -99,7 +101,7 @@ def render_swimlane_svg_artifact(
     return (
         RenderArtifact(
             kind="svg",
-            content="\n".join(parts),
+            content=apply_svg_typography("\n".join(parts), options),
             backend="svg",
             metadata={
                 "render_diagnostics": serialize_render_diagnostics(result.diagnostics),

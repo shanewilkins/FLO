@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1228" height="338" viewBox="0 0 1228 338" data-flo-artifact-kind="svg" data-flo-backend="svg" data-flo-diagram="sppm" data-flo-layout-engine="elk" data-sppm-publication-page-id="main-p1">
+<defs>
+<marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L8,3 L0,6 z" fill="#475569" />
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#fffdf8" />
+<g data-sppm-publication-band="header">
+<line x1="28.0" y1="28.0" x2="1200.0" y2="28.0" stroke="#cbd5e1" stroke-width="1" />
+<text x="28.0" y="52.0" font-family="Helvetica" font-size="22" font-weight="700" fill="#0f172a">Yellow Belt Decision Process</text>
+<text x="28.0" y="76.0" font-family="Helvetica" font-size="12" fill="#334155">Process: yb_simple_decision</text>
+<text x="28.0" y="92.0" font-family="Helvetica" font-size="12" fill="#334155">Profile: book</text>
+<text x="28.0" y="108.0" font-family="Helvetica" font-size="12" fill="#334155">Subprocess View: parent-only</text>
+<text x="28.0" y="124.0" font-family="Helvetica" font-size="12" fill="#334155">Nodes: 5</text>
+<text x="28.0" y="140.0" font-family="Helvetica" font-size="12" fill="#334155">Edges: 5</text>
+</g>
+<g transform="translate(28.0,164.0)">
+<g data-edge-source="perform_work" data-edge-target="finish" data-edge-kind="direct">
+<polyline points="723.0,47.0 994.0,47.0 994.0,101.0 1040.0,101.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="return_request" data-edge-target="finish" data-edge-kind="direct">
+<polyline points="984.0,101.0 1040.0,101.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="review_request" data-edge-target="perform_work" data-edge-kind="direct">
+<polyline points="431.0,101.0 441.0,101.0 441.0,47.0 543.0,47.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+<rect x="473.0" y="32.0" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
+<text x="487.0" y="45.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">True</text>
+</g>
+<g data-edge-source="review_request" data-edge-target="return_request" data-edge-kind="direct">
+<polyline points="431.0,101.0 779.0,101.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+<rect x="469.5" y="92.0" width="35.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
+<text x="487.0" y="105.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">False</text>
+</g>
+<g data-edge-source="start" data-edge-target="review_request" data-edge-kind="direct">
+<polyline points="144.0,101.0 200.0,101.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-node-id="start" data-node-kind="start">
+<rect x="12.0" y="75.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="78.0" y="106.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Request Received</text>
+</g>
+<g data-node-id="review_request" data-node-kind="decision">
+<polygon points="315.5,56.0 431.0,101.0 315.5,146.0 200.0,101.0" fill="#E3EEF7" stroke="#285B8F" stroke-width="2" />
+<text x="315.5" y="106.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Request Complete?</text>
+</g>
+<g data-node-id="perform_work" data-node-kind="task">
+<rect x="543.0" y="12.0" width="180.0" height="70.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 555.0 12.0 L 711.0 12.0 Q 723.0 12.0 723.0 24.0 L 723.0 46.0 L 543.0 46.0 L 543.0 24.0 Q 543.0 12.0 555.0 12.0 Z" fill="#FFFFFF" stroke="none" />
+<text x="633.0" y="30.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Perform Work</text>
+</g>
+<g data-node-id="return_request" data-node-kind="task">
+<rect x="779.0" y="58.0" width="205.0" height="86.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 791.0 58.0 L 972.0 58.0 Q 984.0 58.0 984.0 70.0 L 984.0 108.0 L 779.0 108.0 L 779.0 70.0 Q 779.0 58.0 791.0 58.0 Z" fill="#FFFFFF" stroke="none" />
+<text x="881.5" y="76.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Return Incomplete</text>
+<text x="881.5" y="92.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Request</text>
+</g>
+<g data-node-id="finish" data-node-kind="end">
+<rect x="1040.0" y="75.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="1106.0" y="106.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Request Closed</text>
+</g>
+</g>
+</svg>

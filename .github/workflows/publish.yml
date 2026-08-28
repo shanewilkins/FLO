@@ -50,6 +50,7 @@ jobs:
           python -m venv .tmp/publish-smoke
           .tmp/publish-smoke/bin/python -m pip install --upgrade pip
           .tmp/publish-smoke/bin/python -m pip install dist/*.whl
+          .tmp/publish-smoke/bin/python scripts/smoke_installed_imports.py
           .tmp/publish-smoke/bin/flo --help
           cd .tmp
           publish-smoke/bin/flo new publish-smoke.flo --name "Publish Smoke"

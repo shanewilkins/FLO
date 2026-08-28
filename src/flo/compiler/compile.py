@@ -7,6 +7,7 @@ from ._adapter_normalization import (
     flatten_source_nodes,
     resolve_process_metadata,
     resolve_process_name,
+    resolve_process_version,
     resolve_source_nodes,
     validate_adapter_contract,
 )
@@ -20,6 +21,7 @@ def compile_adapter(adapter_model: dict[str, Any]) -> IR:
     validate_adapter_contract(adapter)
 
     name = resolve_process_name(adapter)
+    process_version = resolve_process_version(adapter)
     process_metadata = resolve_process_metadata(adapter)
     source_nodes = resolve_source_nodes(adapter)
 
@@ -29,4 +31,10 @@ def compile_adapter(adapter_model: dict[str, Any]) -> IR:
     flat_source_nodes = flatten_source_nodes(source_nodes)
     nodes = build_nodes_from_flat_source(flat_source_nodes)
     edges = build_edges(adapter=adapter, nodes=nodes)
-    return IR(name=name, nodes=nodes, edges=edges, process_metadata=process_metadata)
+    return IR(
+        name=name,
+        nodes=nodes,
+        edges=edges,
+        process_version=process_version,
+        process_metadata=process_metadata,
+    )

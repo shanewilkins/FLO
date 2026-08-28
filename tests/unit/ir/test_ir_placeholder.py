@@ -10,6 +10,7 @@ def test_ir_schema_projection_emits_required_top_level_keys():
             Node(id="end", type="end", attrs={"name": "End"}),
         ],
         edges=[],
+        process_version="2026.1",
         process_metadata={"process_id": "p1", "process_name": "Demo Flow"},
     )
 
@@ -18,4 +19,5 @@ def test_ir_schema_projection_emits_required_top_level_keys():
     assert set(out.keys()) == {"process", "nodes", "edges"}
     assert out["process"]["id"] == "p1"
     assert out["process"]["name"] == "Demo Flow"
+    assert out["process"]["version"] == "2026.1"
     assert out["nodes"][0]["kind"] == "start"

@@ -66,10 +66,28 @@ source_modules = ["flo.compiler.ir"]
 forbidden_modules = ["flo.core", "flo.adapters", "flo.render", "flo.services"]
 
 [[tool.importlinter.contracts]]
-name = "Render package does not import core"
+name = "FLO package siblings are acyclic"
+type = "acyclic_siblings"
+ancestors = ["flo"]
+depth = 3
+
+[[tool.importlinter.contracts]]
+name = "Static analysis avoids outer application and presentation layers"
 type = "forbidden"
-source_modules = ["flo.render"]
-forbidden_modules = ["flo.core"]
+source_modules = ["flo.compiler.analysis"]
+forbidden_modules = ["flo.adapters", "flo.core", "flo.export", "flo.render", "flo.services"]
+
+[[tool.importlinter.contracts]]
+name = "Input adapters avoid compiler and output layers"
+type = "forbidden"
+source_modules = ["flo.adapters"]
+forbidden_modules = ["flo.compiler", "flo.core", "flo.export", "flo.render", "flo.services"]
+
+[[tool.importlinter.contracts]]
+name = "Schema helpers avoid behavior and infrastructure layers"
+type = "forbidden"
+source_modules = ["flo.schema"]
+forbidden_modules = ["flo.adapters", "flo.compiler", "flo.core", "flo.export", "flo.render", "flo.services"]
 
 [tool.coverage.report]
 omit = [

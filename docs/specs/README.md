@@ -32,6 +32,8 @@ Current specs:
 - `sppm.md`
 - `spaghetti_map.md`
 - `render_capabilities.md`
+- `render_themes.md`
+- `static_analysis.md`
 
 Preferred split:
 

@@ -33,6 +33,8 @@ def ir_to_schema_dict(ir: IR) -> JsonObject:
     )
 
     process: JsonObject = {"id": process_id, "name": process_name}
+    if ir.process_version is not None:
+        process["version"] = ir.process_version
     if process_metadata:
         process["metadata"] = process_metadata
 

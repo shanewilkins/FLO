@@ -13,6 +13,7 @@ from flo.render.layout_core import (
     ElkLayoutNode,
     ElkLayoutRequest,
     LayoutBounds,
+    LayoutLaneFrame,
     LayoutPoint,
     LayoutResult,
     RoutedEdgePath,
@@ -281,6 +282,89 @@ def test_sppm_corpus_layout_invariants_hold(case_id: str):
     _assert_mainline_monotonic(request, result)
     _assert_rework_separation(request, result)
     _assert_rework_edge_attachments(request, result)
+
+
+def test_white_belt_wrap_has_clear_rows_and_boundary_corridors():
+    request, result = _request_and_result("washnfold_white_belt")
+    wrap_lanes = tuple(
+        lane for lane in result.lanes if lane.id.startswith("__sppm_row_wrap_")
+    )
+
+    assert [len(lane.node_ids) for lane in wrap_lanes] == [4, 4, 4, 2]
+    assert result.canvas_bounds.width_px <= 1024
+
+    _assert_no_node_overlaps(result)
+    boundary_paths = _assert_white_belt_boundary_paths(request, result, wrap_lanes)
+    assert len(boundary_paths) == 3
+
+
+def _assert_no_node_overlaps(result: LayoutResult) -> None:
+    node_items = sorted(result.node_bounds.items())
+    for index, (left_id, left) in enumerate(node_items):
+        for right_id, right in node_items[index + 1 :]:
+            overlaps_x = (
+                left.x_px < right.x_px + right.width_px
+                and right.x_px < left.x_px + left.width_px
+            )
+            overlaps_y = (
+                left.y_px < right.y_px + right.height_px
+                and right.y_px < left.y_px + left.height_px
+            )
+            assert not (overlaps_x and overlaps_y), (
+                f"White Belt nodes overlap: {left_id} and {right_id}"
+            )
+
+
+def _assert_white_belt_boundary_paths(
+    request: ElkLayoutRequest,
+    result: LayoutResult,
+    wrap_lanes: tuple[LayoutLaneFrame, ...],
+) -> list[RoutedEdgePath]:
+    row_by_node = {
+        node_id: row_index
+        for row_index, lane in enumerate(wrap_lanes)
+        for node_id in lane.node_ids
+    }
+    boundary_paths = []
+    for edge in request.edges:
+        path = result.path_for(edge.source_id, edge.target_id)
+        assert path is not None
+        assert all(
+            first.x_px == second.x_px or first.y_px == second.y_px
+            for first, second in zip(path.points, path.points[1:])
+        ), f"White Belt edge is not orthogonal: {edge.source_id}->{edge.target_id}"
+        if row_by_node[edge.source_id] != row_by_node[edge.target_id]:
+            boundary_paths.append(path)
+            assert path.source_port_side == "SOUTH"
+            assert path.target_port_side == "NORTH"
+            assert len(path.points) == 4
+    return boundary_paths
+
+
+def test_simple_decision_book_has_distinct_labeled_branches():
+    request, result = _request_and_result("simple_decision_book")
+    decision_nodes = [node for node in request.nodes if node.kind == "decision"]
+
+    assert [node.id for node in decision_nodes] == ["review_request"]
+    decision_edges = [
+        edge for edge in request.edges if edge.source_id == "review_request"
+    ]
+    assert {edge.label for edge in decision_edges} == {"True", "False"}
+
+    target_centers = []
+    for edge in decision_edges:
+        path = result.path_for(edge.source_id, edge.target_id)
+        target_bounds = result.bounds_for(edge.target_id)
+        assert path is not None
+        assert path.label_point is not None
+        assert target_bounds is not None
+        assert all(
+            first.x_px == second.x_px or first.y_px == second.y_px
+            for first, second in zip(path.points, path.points[1:])
+        ), f"Decision edge is not orthogonal: {edge.source_id}->{edge.target_id}"
+        target_centers.append(target_bounds.y_px + (target_bounds.height_px / 2.0))
+
+    assert abs(target_centers[0] - target_centers[1]) >= 40.0
 
 
 def test_mainline_monotonic_reports_negative_case():

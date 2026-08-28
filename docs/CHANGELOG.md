@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+- Preserve authored integer or string `process.version` values through canonical
+  IR, internal serialization, schema projection, validation, and JSON export.
+- Activate deterministic direct-SVG row wrapping for linear LR SPPM sequences,
+  with explicit inter-row corridor routing and shape-aware connector attachment.
+  Add the book-profile White Belt wash-and-fold golden case and a build/check
+  command for copying its generated SVG into the book without hand editing.
+- Improve direct-SVG SPPM legibility with inverted split-tone queue triangles,
+  shallower colored title caps, and slightly larger task-card body text.
+- Add a compact book-profile decision golden with a diamond, labeled true/false
+  branches, deterministic convergence, and branch-geometry invariants.
+- Add the initial typed static timing-analysis engine with unit-normalized node
+  contributions, complete linear lead time, deterministic branch ranges, and
+  explicit diagnostics for incomplete, cyclic, parallel, or ambiguous models;
+  expose it through `flo inspect` as concise text or deterministic JSON, feed
+  it into SPPM publication footers, and label declared task changeover as `C/O`
+  on work-step shapes.
+- Implement deterministic publication background and font family/scale controls
+  through one typed cross-diagram theme registry, with inheritance, semantic
+  roles, render-intent and CLI precedence, legacy SPPM adaptation, validation,
+  accessibility checks, and configured-theme regression goldens.
 - Add `flo new --template simple-process` with readable stable-ID generation
   and non-overwriting file creation.
 - Route explicit CLI commands through command-specific Click help and emit

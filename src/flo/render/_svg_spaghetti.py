@@ -18,6 +18,7 @@ from flo.compiler.analysis import (
 
 from ._artifact import RenderArtifact
 from .options import RenderOptions
+from ._svg_theme import apply_svg_typography
 
 _PADDING = 40.0
 _SCALE = 80.0
@@ -55,11 +56,13 @@ def render_spaghetti_svg_artifact(
             f'height="{height:.0f}" viewBox="0 0 {width:.0f} {height:.0f}" '
             'data-flo-artifact-kind="svg" data-flo-backend="svg">'
         ),
-        '<rect width="100%" height="100%" fill="white" />',
+        f'<rect width="100%" height="100%" fill="{options.resolved_theme.canvas_background}" />',
     ]
 
     if boundary is not None:
-        boundary_svg = _boundary_svg(boundary=boundary, project=project)
+        boundary_svg = _boundary_svg(
+            boundary=boundary, project=project, options=options
+        )
         if boundary_svg:
             parts.extend(boundary_svg)
 
@@ -88,10 +91,24 @@ def render_spaghetti_svg_artifact(
 
     for location_id in location_ids:
         info = locations.get(location_id, {"name": location_id})
-        parts.extend(_location_svg(location_id=location_id, info=info, project=project))
+        parts.extend(
+            _location_svg(
+                location_id=location_id,
+                info=info,
+                project=project,
+                options=options,
+            )
+        )
 
     parts.append("</svg>")
-    return RenderArtifact(kind="svg", content="\n".join(parts), backend="svg"), None
+    return (
+        RenderArtifact(
+            kind="svg",
+            content=apply_svg_typography("\n".join(parts), options),
+            backend="svg",
+        ),
+        None,
+    )
 
 
 def _ensure_spatial_coordinates(
@@ -152,9 +169,15 @@ def _projection(
     return width, height, _project
 
 
-def _location_svg(*, location_id: str, info: dict[str, Any], project: Any) -> list[str]:
+def _location_svg(
+    *,
+    location_id: str,
+    info: dict[str, Any],
+    project: Any,
+    options: RenderOptions,
+) -> list[str]:
     x, y = project((float(info.get("x") or 0.0), float(info.get("y") or 0.0)))
-    fill, stroke, shape = _location_style(info)
+    fill, stroke, shape = _location_style(info, options)
     label = escape(str(info.get("name") or location_id))
     group = [
         f'<g data-location-id="{escape(location_id)}" data-location-shape="{shape}">'
@@ -240,14 +263,23 @@ def _route_style(
     *, route: dict[str, Any], options: RenderOptions, channel: str
 ) -> tuple[str, str]:
     if channel != "people":
-        return "tomato", 'stroke-linecap="round"'
+        return (
+            options.resolved_theme.role("material_route").border,
+            'stroke-linecap="round"',
+        )
 
     if _spaghetti_people_mode(options) == "aggregate":
-        return "royalblue", 'stroke-dasharray="8 6" stroke-linecap="round"'
+        return (
+            options.resolved_theme.role("people_route").border,
+            'stroke-dasharray="8 6" stroke-linecap="round"',
+        )
 
     worker = _spaghetti_primary_worker(route)
     if not worker:
-        return "royalblue", 'stroke-dasharray="8 6" stroke-linecap="round"'
+        return (
+            options.resolved_theme.role("people_route").border,
+            'stroke-dasharray="8 6" stroke-linecap="round"',
+        )
 
     color, dash = _spaghetti_worker_style(worker)
     dash_attr = f'stroke-dasharray="{dash}" ' if dash else ""
@@ -274,19 +306,24 @@ def _route_title(route: dict[str, Any], channel: str) -> str | None:
     return prefix + ": " + ", ".join(str(value) for value in values)
 
 
-def _location_style(info: dict[str, Any]) -> tuple[str, str, str]:
+def _location_style(
+    info: dict[str, Any], options: RenderOptions
+) -> tuple[str, str, str]:
     kind = _canonical_spaghetti_location_kind(info.get("kind"))
+    role_name = "location_unknown"
+    shape = "ellipse"
     if kind == "storage":
-        return "lemonchiffon", "goldenrod", "rect"
-    if kind == "transit":
-        return "mintcream", "slategray", "diamond"
-    if kind == "processing":
-        return "mistyrose", "firebrick", "ellipse"
-    if kind == "staging":
-        return "honeydew", "seagreen", "rect"
-    if kind == "support":
-        return "azure", "deepskyblue", "rect"
-    return "aliceblue", "steelblue", "ellipse"
+        role_name, shape = "location_storage", "rect"
+    elif kind == "transit":
+        role_name, shape = "location_transit", "diamond"
+    elif kind == "processing":
+        role_name, shape = "location_processing", "ellipse"
+    elif kind == "staging":
+        role_name, shape = "location_staging", "rect"
+    elif kind == "support":
+        role_name, shape = "location_support", "rect"
+    role = options.resolved_theme.role(role_name)
+    return role.fill, role.border, shape
 
 
 def _spaghetti_channels(options: RenderOptions) -> tuple[bool, bool]:
@@ -520,21 +557,24 @@ def _as_number(value: Any) -> float | None:
     return None
 
 
-def _boundary_svg(boundary: dict[str, Any], project: Any) -> list[str]:
+def _boundary_svg(
+    boundary: dict[str, Any], project: Any, options: RenderOptions
+) -> list[str]:
     points = boundary.get("points", [])
     if len(points) < 3:
         return []
     svg_points = [project(point) for point in points]
     point_attr = " ".join(f"{x:.1f},{y:.1f}" for x, y in svg_points)
+    role = options.resolved_theme.role("boundary")
     parts = [
-        f'<polygon points="{point_attr}" fill="none" stroke="gray" stroke-width="1.5" stroke-dasharray="6 4" />'
+        f'<polygon points="{point_attr}" fill="none" stroke="{role.border}" stroke-width="1.5" stroke-dasharray="6 4" />'
     ]
     label = _boundary_label(boundary)
     if label:
         centroid = _boundary_centroid(points)
         x, y = project(centroid)
         parts.append(
-            f'<text x="{x:.1f}" y="{y:.1f}" text-anchor="middle" font-family="Helvetica" font-size="11" fill="gray">{escape(label)}</text>'
+            f'<text x="{x:.1f}" y="{y:.1f}" text-anchor="middle" font-family="Helvetica" font-size="11" fill="{role.title_text}">{escape(label)}</text>'
         )
     return parts
 

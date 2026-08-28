@@ -368,6 +368,10 @@ def _build_render_opts(
     spaghetti_channel: Optional[str],
     spaghetti_people_mode: Optional[str],
     sppm_theme: Optional[str],
+    theme: Optional[str],
+    background_color: Optional[str],
+    font_family: Optional[str],
+    typography_scale: Optional[float],
     layout_wrap: Optional[str],
     layout_fit: Optional[str],
     layout_spacing: Optional[str],
@@ -400,6 +404,10 @@ def _build_render_opts(
         ("spaghetti_channel", spaghetti_channel),
         ("spaghetti_people_mode", spaghetti_people_mode),
         ("sppm_theme", sppm_theme),
+        ("theme", theme),
+        ("background_color", background_color),
+        ("font_family", font_family),
+        ("typography_scale", typography_scale),
         ("layout_wrap", layout_wrap),
         ("layout_fit", layout_fit),
         ("layout_spacing", layout_spacing),
@@ -502,6 +510,10 @@ def render_cmd(
     spaghetti_channel: Optional[str],
     spaghetti_people_mode: Optional[str],
     sppm_theme: Optional[str],
+    theme: Optional[str],
+    background_color: Optional[str],
+    font_family: Optional[str],
+    typography_scale: Optional[float],
     layout_wrap: Optional[str],
     layout_fit: Optional[str],
     layout_spacing: Optional[str],
@@ -540,6 +552,10 @@ def render_cmd(
         spaghetti_channel=spaghetti_channel,
         spaghetti_people_mode=spaghetti_people_mode,
         sppm_theme=sppm_theme,
+        theme=theme,
+        background_color=background_color,
+        font_family=font_family,
+        typography_scale=typography_scale,
         layout_wrap=layout_wrap,
         layout_fit=layout_fit,
         layout_spacing=layout_spacing,
@@ -560,19 +576,9 @@ def render_cmd(
     raise SystemExit(rc)
 
 
-@cli.command("validate")
-@click.argument("path", required=False)
-@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
-def validate_cmd(
-    path: Optional[str], verbose: bool
-) -> None:  # pragma: no cover - integration
-    """Validate FLO input and return non-zero on parse/validation errors."""
-    from flo.core._cli_contract import CLIExecutionRequest
+from flo.core._model_commands import register_model_commands  # noqa: E402
 
-    rc = _execute_request(
-        CLIExecutionRequest(path=path, command="validate", options={"verbose": verbose})
-    )
-    raise SystemExit(rc)
+validate_cmd, inspect_cmd = register_model_commands(cli, _execute_request)
 
 
 @cli.command("export")
@@ -607,6 +613,10 @@ def export_cmd(
     spaghetti_channel: Optional[str],
     spaghetti_people_mode: Optional[str],
     sppm_theme: Optional[str],
+    theme: Optional[str],
+    background_color: Optional[str],
+    font_family: Optional[str],
+    typography_scale: Optional[float],
     layout_wrap: Optional[str],
     layout_fit: Optional[str],
     layout_spacing: Optional[str],
@@ -643,6 +653,10 @@ def export_cmd(
         spaghetti_channel=spaghetti_channel,
         spaghetti_people_mode=spaghetti_people_mode,
         sppm_theme=sppm_theme,
+        theme=theme,
+        background_color=background_color,
+        font_family=font_family,
+        typography_scale=typography_scale,
         layout_wrap=layout_wrap,
         layout_fit=layout_fit,
         layout_spacing=layout_spacing,
@@ -671,49 +685,14 @@ def export_cmd(
 
 
 def console_main(argv: list | None = None) -> int:
-    """Thin console entry that wires services, IO, and core runners.
+    """Run the historical implicit-path console entry."""
+    from flo.core._console_entry import console_main as run_console
 
-    Returns an integer exit code.
-    """
-    from flo.services.errors import EXIT_USAGE, map_exception_to_rc
-    from flo.core._cli_contract import parse_cli_args
-
-    if argv is None:
-        argv = sys.argv[1:]
-
-    try:
-        parsed = parse_cli_args(argv)
-        return _execute_request(parsed)
-    except SystemExit as exc:
-        code = getattr(exc, "code", EXIT_USAGE)
-        return code if isinstance(code, int) else EXIT_USAGE
-    except Exception as exc:
-        rc, msg, internal, error_stage = map_exception_to_rc(exc)
-        stage = error_stage or "console_main"
-        from flo.services import get_services
-
-        services = get_services(verbose=False)
-        if internal:
-            _emit_error(
-                services,
-                f"Unexpected error: {msg or 'internal error'}",
-                error_kind="internal",
-                error_stage=stage,
-                exit_code=rc,
-                internal=True,
-                command="console_main",
-            )
-        else:
-            _emit_error(
-                services,
-                msg,
-                error_kind="domain",
-                error_stage=stage,
-                exit_code=rc,
-                internal=False,
-                command="console_main",
-            )
-        return rc
+    return run_console(
+        argv,
+        execute_request=_execute_request,
+        emit_error=_emit_error,
+    )
 
 
 def main(argv: list | None = None) -> int:
@@ -725,7 +704,7 @@ def main(argv: list | None = None) -> int:
     Returns an integer exit code suitable for `sys.exit`.
     """
     args = list(sys.argv[1:] if argv is None else argv)
-    explicit_commands = {"new", "render", "validate", "export"}
+    explicit_commands = {"new", "render", "validate", "inspect", "export"}
     use_click = (
         not args
         or args[0] in explicit_commands

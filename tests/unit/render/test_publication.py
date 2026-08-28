@@ -1,5 +1,6 @@
 from typing import Any
 
+from flo.compiler.ir.models import Edge, IR, Node
 from flo.render._publication import (
     PublicationBandContent,
     PublicationBounds,
@@ -462,6 +463,165 @@ def test_build_sppm_publication_plan_populates_footer_metrics_and_render_inputs(
     assert ("VA Ratio", "61%") in footer_band.content.rows
     assert ("Queue", "7 min") in footer_band.content.rows
     assert footer_band.content.notes == ("Handcrafted note",)
+
+
+def test_build_sppm_publication_plan_uses_typed_timing_analysis_for_footer():
+    process = IR(
+        name="Timed Process",
+        process_metadata={"process_id": "timed", "process_name": "Timed Process"},
+        nodes=[
+            Node(id="start", type="start"),
+            Node(
+                id="work",
+                type="task",
+                attrs={
+                    "metadata": {
+                        "cycle_time": {"value": 30, "unit": "s"},
+                        "changeover_time": {"value": 0.5, "unit": "min"},
+                    }
+                },
+            ),
+            Node(
+                id="queue",
+                type="queue",
+                attrs={"metadata": {"wait_time": {"value": 0.25, "unit": "hr"}}},
+            ),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="work"),
+            Edge(source="work", target="queue"),
+            Edge(source="queue", target="end"),
+        ],
+    )
+    nodes = [
+        {"id": "start", "kind": "start"},
+        {"id": "work", "kind": "task"},
+        {"id": "queue", "kind": "queue"},
+        {"id": "end", "kind": "end"},
+    ]
+
+    plan = build_sppm_publication_plan(
+        process=process,
+        options=RenderOptions(diagram="sppm"),
+        nodes=nodes,
+        edges=[],
+    )
+
+    footer = plan.primary_series().pages[0].band("footer")
+    assert footer is not None
+    assert footer.content.rows == (
+        ("Cycle Time", "30 s"),
+        ("Waiting Time", "15 min"),
+        ("C/O Time", "30 s"),
+        ("Lead Time", "16 min"),
+    )
+    assert footer.content.notes == ()
+
+
+def test_build_sppm_publication_plan_reports_alternative_lead_time_range():
+    process = IR(
+        name="Alternatives",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="choice", type="decision"),
+            Node(
+                id="fast",
+                type="task",
+                attrs={"metadata": {"cycle_time": {"value": 1, "unit": "min"}}},
+            ),
+            Node(
+                id="slow",
+                type="task",
+                attrs={"metadata": {"cycle_time": {"value": 2, "unit": "min"}}},
+            ),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="choice"),
+            Edge(source="choice", target="fast"),
+            Edge(source="choice", target="slow"),
+            Edge(source="fast", target="end"),
+            Edge(source="slow", target="end"),
+        ],
+    )
+    nodes = [{"id": node.id, "kind": node.type} for node in process.nodes]
+
+    plan = build_sppm_publication_plan(
+        process=process,
+        options=RenderOptions(diagram="sppm"),
+        nodes=nodes,
+        edges=[],
+    )
+
+    footer = plan.primary_series().pages[0].band("footer")
+    assert footer is not None
+    assert ("Lead Time", "3 min") not in footer.content.rows
+    assert ("Lead Time Range", "1 min to 2 min") in footer.content.rows
+
+
+def test_build_sppm_publication_plan_marks_unavailable_lead_time_and_diagnostics():
+    process = IR(
+        name="Incomplete",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(
+                id="timed_work",
+                type="task",
+                attrs={"metadata": {"cycle_time": {"value": 3, "unit": "min"}}},
+            ),
+            Node(id="untimed_work", type="task"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="timed_work"),
+            Edge(source="timed_work", target="untimed_work"),
+            Edge(source="untimed_work", target="end"),
+        ],
+    )
+    nodes = [{"id": node.id, "kind": node.type} for node in process.nodes]
+
+    plan = build_sppm_publication_plan(
+        process=process,
+        options=RenderOptions(diagram="sppm"),
+        nodes=nodes,
+        edges=[],
+    )
+
+    footer = plan.primary_series().pages[0].band("footer")
+    assert footer is not None
+    assert ("Lead Time", "Unavailable") in footer.content.rows
+    assert footer.content.notes == (
+        "Timing diagnostics available; run flo inspect for details.",
+    )
+
+
+def test_build_sppm_publication_plan_omits_derived_timing_for_partial_projection():
+    process = IR(
+        name="Partial",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(
+                id="work",
+                type="task",
+                attrs={"metadata": {"cycle_time": {"value": 5, "unit": "min"}}},
+            ),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="work"),
+            Edge(source="work", target="end"),
+        ],
+    )
+
+    plan = build_sppm_publication_plan(
+        process=process,
+        options=RenderOptions(diagram="sppm"),
+        nodes=[{"id": "work", "kind": "task"}],
+        edges=[],
+    )
+
+    assert plan.primary_series().pages[0].band("footer") is None
 
 
 def test_build_sppm_publication_plan_supports_legend_and_caption_metadata_aliases():

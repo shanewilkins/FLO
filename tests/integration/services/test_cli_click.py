@@ -1,3 +1,5 @@
+import json
+
 from click.testing import CliRunner
 from pathlib import Path
 
@@ -54,3 +56,62 @@ def test_cli_export_help_marks_json_as_default_output_format():
 
     assert result.exit_code == 0
     assert "[default: json]" in result.output
+
+
+def test_cli_inspect_reports_timing_for_file():
+    runner = CliRunner()
+    source = Path("examples/reference/washnfold.flo")
+
+    result = runner.invoke(cli, ["inspect", str(source)])
+
+    assert result.exit_code == 0
+    assert "Process: Wash n' Fold (wash_n_fold)" in result.output
+    assert "Cycle time: 105 min" in result.output
+    assert "Wait time: 95 min" in result.output
+    assert "Modeled lead time: 200 min" in result.output
+
+
+def test_cli_inspect_json_from_stdin_is_pure_json():
+    runner = CliRunner()
+    content = Path("examples/reference/washnfold.flo").read_text(encoding="utf-8")
+
+    result = runner.invoke(
+        cli,
+        ["inspect", "-", "--format", "json"],
+        input=content,
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["process"]["id"] == "wash_n_fold"
+    assert payload["modeled_lead_time_seconds"] == 12000.0
+
+
+def test_cli_inspect_can_write_json_to_file():
+    runner = CliRunner()
+    source = Path("examples/reference/washnfold.flo")
+    content = source.read_text(encoding="utf-8")
+    with runner.isolated_filesystem():
+        source_copy = Path("washnfold.flo")
+        source_copy.write_text(content, encoding="utf-8")
+
+        result = runner.invoke(
+            cli,
+            ["inspect", str(source_copy), "--format", "json", "-o", "timing.json"],
+        )
+
+        assert result.exit_code == 0
+        assert result.output == ""
+        payload = json.loads(Path("timing.json").read_text(encoding="utf-8"))
+        assert payload["declared_totals"]["cycle_time_seconds"] == 6300.0
+
+
+def test_cli_inspect_help_describes_defaults():
+    runner = CliRunner()
+
+    result = runner.invoke(cli, ["inspect", "--help"])
+
+    assert result.exit_code == 0
+    assert "deterministic static analysis" in result.output
+    assert "[default: timing]" in result.output
+    assert "[default: text]" in result.output

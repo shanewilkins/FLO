@@ -45,12 +45,16 @@ def _node_svg(
         else None
     )
 
+    surface_fill = options.resolved_theme.role("surface").fill
+    scale = options.resolved_theme.typography_scale
     label_start_y, header_height = _append_node_shape_svg(
         parts=parts,
         kind=kind,
         title_lines=title_lines,
         info_lines=info_lines,
         appearance=appearance,
+        surface_fill=surface_fill,
+        scale=scale,
         task_card=task_card,
         x=x,
         y=y,
@@ -68,6 +72,7 @@ def _node_svg(
             fill=appearance.title_fill,
             line_gap_px=16.0,
             anchor="middle",
+            scale=scale,
         )
     )
     parts.extend(
@@ -83,6 +88,7 @@ def _node_svg(
             y=y,
             width=width,
             height=height,
+            scale=scale,
         )
     )
     parts.append("</g>")
@@ -96,6 +102,8 @@ def _append_node_shape_svg(
     title_lines: tuple[str, ...],
     info_lines: tuple[str, ...],
     appearance: Any,
+    surface_fill: str,
+    scale: float,
     task_card: Any,
     x: float,
     y: float,
@@ -108,14 +116,31 @@ def _append_node_shape_svg(
         parts.append(
             f'<polygon points="{cx:.1f},{y:.1f} {x + width:.1f},{cy:.1f} {cx:.1f},{y + height:.1f} {x:.1f},{cy:.1f}" fill="{appearance.fill}" stroke="{appearance.border}" stroke-width="2" />'
         )
-        return cy - ((_line_count(title_lines) - 1) * 8.0) + 5.0, None
+        return (
+            cy - ((_line_count(title_lines) - 1) * 8.0 * scale) + (5.0 * scale),
+            None,
+        )
     if kind == "queue":
         cx = x + (width / 2.0)
+        split_y = y + (height * 0.35)
+        split_inset = width * 0.175
         parts.append(
-            f'<polygon data-node-queue-body="true" points="{x:.1f},{y + height:.1f} {x + width:.1f},{y + height:.1f} {cx:.1f},{y:.1f}" fill="{appearance.fill}" stroke="{appearance.border}" stroke-width="2" />'
+            f'<polygon data-node-queue-body="true" points="{x:.1f},{y:.1f} {x + width:.1f},{y:.1f} {cx:.1f},{y + height:.1f}" fill="{surface_fill}" stroke="none" />'
+        )
+        parts.append(
+            f'<polygon data-node-queue-color-band="true" points="{x:.1f},{y:.1f} {x + width:.1f},{y:.1f} {x + width - split_inset:.1f},{split_y:.1f} {x + split_inset:.1f},{split_y:.1f}" fill="{appearance.fill}" stroke="none" />'
+        )
+        parts.append(
+            f'<line data-node-queue-divider="true" x1="{x + split_inset:.1f}" y1="{split_y:.1f}" x2="{x + width - split_inset:.1f}" y2="{split_y:.1f}" stroke="{appearance.border}" stroke-width="1" opacity="0.55" />'
+        )
+        parts.append(
+            f'<polygon data-node-queue-outline="true" points="{x:.1f},{y:.1f} {x + width:.1f},{y:.1f} {cx:.1f},{y + height:.1f}" fill="none" stroke="{appearance.border}" stroke-width="2" />'
         )
         return (
-            y + (height * 0.68) + 5.0 - ((_line_count(title_lines) - 1) * 8.0),
+            y
+            + (height * 0.22)
+            + (5.0 * scale)
+            - ((_line_count(title_lines) - 1) * 8.0 * scale),
             None,
         )
     if kind == "subprocess":
@@ -131,17 +156,24 @@ def _append_node_shape_svg(
         parts.append(
             f'<ellipse cx="{cx:.1f}" cy="{cy:.1f}" rx="{rx:.1f}" ry="{ry:.1f}" fill="{appearance.fill}" stroke="{appearance.border}" stroke-width="2"{dash_attr} />'
         )
-        return y + 24.0, None
+        return y + (24.0 * scale), None
     if kind in {"start", "end"}:
         parts.append(
             f'<rect x="{x:.1f}" y="{y:.1f}" width="{width:.1f}" height="{height:.1f}" rx="18" fill="{appearance.fill}" stroke="{appearance.border}" stroke-width="2" />'
         )
-        return y + (height / 2.0) - ((_line_count(title_lines) - 1) * 8.0) + 5.0, None
+        return (
+            y
+            + (height / 2.0)
+            - ((_line_count(title_lines) - 1) * 8.0 * scale)
+            + (5.0 * scale),
+            None,
+        )
 
+    task_surface_fill = "white" if surface_fill == "#FFFFFF" else surface_fill
     parts.append(
-        f'<rect x="{x:.1f}" y="{y:.1f}" width="{width:.1f}" height="{height:.1f}" rx="12" fill="white" stroke="{appearance.border}" stroke-width="2" />'
+        f'<rect x="{x:.1f}" y="{y:.1f}" width="{width:.1f}" height="{height:.1f}" rx="12" fill="{task_surface_fill}" stroke="{appearance.border}" stroke-width="2" />'
     )
-    header_height = max(28.0, 18.0 + (_line_count(title_lines) * 16.0))
+    header_height = max(28.0, 18.0 + (_line_count(title_lines) * 16.0)) * scale
     header_radius = min(12.0, width / 2.0, header_height)
     parts.append(
         f'<path data-node-header="top-rounded" d="{_top_rounded_header_path(x=x, y=y, width=width, height=header_height, radius=header_radius)}" fill="{appearance.fill}" stroke="none" />'
@@ -150,7 +182,7 @@ def _append_node_shape_svg(
         parts.append(
             f'<line x1="{x:.1f}" y1="{y + header_height:.1f}" x2="{x + width:.1f}" y2="{y + header_height:.1f}" stroke="{appearance.border}" stroke-width="1" opacity="0.35" />'
         )
-    return y + 18.0, header_height
+    return y + (18.0 * scale), header_height
 
 
 def _node_info_lines_svg(
@@ -166,14 +198,15 @@ def _node_info_lines_svg(
     y: float,
     width: float,
     height: float,
+    scale: float,
 ) -> list[str]:
     if not info_lines:
         return []
     if kind == "queue":
         info_line_count = _line_count(info_lines)
         info_start_y = max(
-            y + 26.0,
-            (y + (height * 0.34)) - ((info_line_count - 1) * 6.5),
+            y + (height * 0.58),
+            (y + (height * 0.62)) - ((info_line_count - 1) * 6.5 * scale),
         )
         return _text_lines_svg(
             x=x + (width / 2.0),
@@ -184,22 +217,24 @@ def _node_info_lines_svg(
             fill=appearance.info_fill,
             line_gap_px=13.0,
             anchor="middle",
+            scale=scale,
         )
     if kind == "subprocess":
         return _text_lines_svg(
             x=x + (width / 2.0),
-            y=label_start_y + (_line_count(title_lines) * 15.0) + 6.0,
+            y=label_start_y + (_line_count(title_lines) * 15.0 * scale) + (6.0 * scale),
             lines=info_lines,
             size_px=11,
             weight="400",
             fill=appearance.info_fill,
             line_gap_px=13.0,
             anchor="middle",
+            scale=scale,
         )
     if kind in {"decision", "start", "end"}:
         return []
 
-    body_text_x = x + 12.0
+    body_text_x = x + (12.0 * scale)
     if task_card is not None:
         body_text_x = (
             x
@@ -207,18 +242,19 @@ def _node_info_lines_svg(
             + task_card.body_padding_px
             + task_card.body_text_offset_px
         )
-    effective_header_height = header_height or max(
-        28.0, 18.0 + (_line_count(title_lines) * 16.0)
+    effective_header_height = (
+        header_height or max(28.0, 18.0 + (_line_count(title_lines) * 16.0)) * scale
     )
     return _text_lines_svg(
         x=body_text_x,
-        y=y + effective_header_height + 18.0,
+        y=y + effective_header_height + (18.0 * scale),
         lines=info_lines,
-        size_px=11,
+        size_px=12,
         weight="400",
         fill=appearance.info_fill,
-        line_gap_px=13.0,
+        line_gap_px=14.0,
         anchor="start",
+        scale=scale,
     )
 
 
@@ -232,6 +268,7 @@ def _text_lines_svg(
     fill: str,
     line_gap_px: float,
     anchor: str,
+    scale: float = 1.0,
 ) -> list[str]:
     if not lines:
         return []
@@ -242,7 +279,7 @@ def _text_lines_svg(
             parts.append(
                 f'<text x="{x:.1f}" y="{current_y:.1f}" text-anchor="{anchor}" font-family="Helvetica" font-size="{size_px}" font-weight="{weight}" fill="{fill}">{escape(subline)}</text>'
             )
-            current_y += line_gap_px
+            current_y += line_gap_px * scale
     return parts
 
 

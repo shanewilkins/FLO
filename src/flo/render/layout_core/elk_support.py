@@ -9,20 +9,22 @@ from flo.render._sppm_continuation_tokens import (
 )
 from flo.render._sppm_node_content import measure_sppm_node
 from flo.render._sppm_rework_content import build_sppm_rework_metadata_lines
-from flo.render._sppm_rework_semantics import resolve_sppm_rework_variant
 from flo.render.options import RenderOptions
 
 from .elk_contracts import ElkLayoutEdge, ElkLayoutNode
+from .rework_semantics import resolve_rework_route_variant
 from .sppm_strategy import sppm_port_constraints_value
 
 _DEFAULT_NODE_WIDTH_PX = 140
 _DEFAULT_NODE_HEIGHT_PX = 52
 
 
-def ordered_nodes(nodes: list[dict[str, Any]]) -> tuple[ElkLayoutNode, ...]:
+def ordered_nodes(
+    nodes: list[dict[str, Any]], *, options: RenderOptions | None = None
+) -> tuple[ElkLayoutNode, ...]:
     """Convert process nodes into ordered ELK nodes with lane membership."""
     return tuple(
-        _elk_node(node, partition_index=index)
+        _elk_node(node, options=options, partition_index=index)
         for index, node in enumerate(nodes)
         if str(node.get("id") or "")
     )
@@ -203,6 +205,10 @@ def _elk_node(
         )
         width_px = measure.width_px
         height_px = measure.height_px
+    elif options is not None:
+        scale = options.resolved_theme.typography_scale
+        width_px = int(round(width_px * scale))
+        height_px = int(round(height_px * scale))
     return ElkLayoutNode(
         id=node_id,
         label=str(node.get("name") or node_id),
@@ -226,7 +232,7 @@ def _elk_edge(
     target_id = str(edge.get("target") or "")
     label = edge_label(edge)
     source_kind = str(node_kinds.get(source_id) or "task")
-    rework_variant = resolve_sppm_rework_variant(edge, source_kind=source_kind)
+    rework_variant = resolve_rework_route_variant(edge, source_kind=source_kind)
     outgoing_token, incoming_token = resolve_explicit_sppm_continuation_tokens(edge)
     callout_lines = (
         build_sppm_rework_metadata_lines(edge.get("metadata"))

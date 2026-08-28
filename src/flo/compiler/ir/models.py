@@ -50,10 +50,15 @@ class IR:
     nodes: list[Node]
     edges: list[Edge] = field(default_factory=list)
     process_metadata: dict[str, Any] | None = None
+    process_version: int | str | None = None
 
     def __post_init__(self) -> None:
         """Coerce nested node/edge entries and normalize optional metadata."""
         self.name = str(self.name)
+        if not isinstance(self.process_version, (int, str)) or isinstance(
+            self.process_version, bool
+        ):
+            self.process_version = None
         self.nodes = [_coerce_node(value) for value in self.nodes]
         self.edges = [_coerce_edge(value) for value in self.edges]
         self.process_metadata = _normalize_object_mapping(

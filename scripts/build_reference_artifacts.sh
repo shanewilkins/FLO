@@ -48,6 +48,6 @@ build_svg "examples/reference/sppm_feature_showcase_wrapped.flo" "renders/refere
 build_svg "examples/reference/sppm_long_label_stress.flo" "renders/reference/sppm_long_label_stress.svg" --diagram sppm --orientation lr
 build_svg "examples/reference/swimlane.flo" "renders/reference/swimlane.svg" --diagram swimlane --render-backend svg
 build_svg "examples/reference/washnfold.flo" "renders/reference/washnfold.svg" --diagram sppm --orientation lr
-build_svg "examples/reference/washnfold.flo" "renders/reference/washnfold_sppm_wrap800.svg" --diagram sppm --orientation lr --layout-wrap auto --layout-max-width-px 800
+build_svg "examples/reference/washnfold.flo" "renders/reference/washnfold_white_belt.svg" --diagram sppm --sppm-output-profile book --layout-target-columns 4
 
 echo "Done: reference artifacts built in $OUT_DIR"

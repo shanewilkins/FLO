@@ -19,7 +19,7 @@ class CLIExecutionRequest:
 
     Attributes:
         path: File path or '-' for stdin (None means no explicit path).
-        command: CLI command name (render, validate, export).
+        command: CLI command name (render, validate, inspect, export).
         options: Render/execution options dict (may be empty).
     """
 

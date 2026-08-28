@@ -26,8 +26,10 @@ from flo.render.options import RenderOptions
             (
                 'data-node-kind="queue"',
                 'data-node-queue-body="true"',
+                'data-node-queue-color-band="true"',
+                'data-node-queue-divider="true"',
             ),
-            ('data-node-queue-label-band="true"',),
+            (),
         ),
         (
             "subprocess",
@@ -98,6 +100,33 @@ def test_node_svg_task_includes_info_lines_and_note() -> None:
     assert "Note: Use cold water" in svg
 
 
+def test_node_svg_task_displays_declared_changeover_as_c_o_time() -> None:
+    node = SimpleNamespace(id="t1", kind="task", label="Set Up Oven")
+    raw_node = {
+        "metadata": {
+            "cycle_time": {"value": 5, "unit": "min"},
+            "changeover_time": {"value": 30, "unit": "min"},
+        },
+        "workers": ["Baker"],
+    }
+
+    svg = "".join(
+        _node_svg(
+            node=node,
+            raw_node=raw_node,
+            options=RenderOptions(diagram="sppm"),
+            x=0.0,
+            y=0.0,
+            width=220.0,
+            height=140.0,
+        )
+    )
+
+    assert "CT: 5 min" in svg
+    assert "C/O: 30 min" in svg
+    assert "CO: 30 min crossover" not in svg
+
+
 def test_node_svg_decision_omits_info_lines_even_when_metadata_present() -> None:
     node = SimpleNamespace(id="d1", kind="decision", label="Quality OK?")
     raw_node = {
@@ -144,7 +173,32 @@ def test_node_svg_queue_renders_wait_time_line() -> None:
     assert "Prep Queue" in svg
     assert "WT: 9 min" in svg
     assert 'fill="#FFB74D"' in svg
-    assert 'fill="#ffffff"' not in svg
+    assert 'fill="#FFFFFF"' in svg
+    assert 'font-size="14" font-weight="600"' in svg
+    assert 'points="20.0,30.0 180.0,30.0 152.0,86.0 48.0,86.0"' in svg
+    assert svg.index('data-node-queue-color-band="true"') < svg.index("Prep Queue")
+
+
+def test_node_svg_task_uses_larger_body_text() -> None:
+    node = SimpleNamespace(id="t1", kind="task", label="Mix Dough")
+    raw_node = {
+        "metadata": {"cycle_time": {"value": 7, "unit": "min"}},
+        "workers": ["Baker"],
+    }
+
+    svg = "".join(
+        _node_svg(
+            node=node,
+            raw_node=raw_node,
+            options=RenderOptions(diagram="sppm"),
+            x=0.0,
+            y=0.0,
+            width=220.0,
+            height=140.0,
+        )
+    )
+
+    assert 'font-size="12" font-weight="400"' in svg
 
 
 def test_node_svg_queue_uses_selected_theme_colors() -> None:

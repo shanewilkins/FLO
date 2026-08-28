@@ -1,0 +1,186 @@
+{
+  "canvas_bounds": {
+    "height_px": 158.0,
+    "width_px": 1184.0,
+    "x_px": 0.0,
+    "y_px": 0.0
+  },
+  "edge_paths": [
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 723.0,
+          "y_px": 47.0
+        },
+        {
+          "x_px": 994.0,
+          "y_px": 47.0
+        },
+        {
+          "x_px": 994.0,
+          "y_px": 101.0
+        },
+        {
+          "x_px": 1040.0,
+          "y_px": 101.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "perform_work",
+      "source_port_side": "EAST",
+      "target": "finish",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 984.0,
+          "y_px": 101.0
+        },
+        {
+          "x_px": 1040.0,
+          "y_px": 101.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "return_request",
+      "source_port_side": "EAST",
+      "target": "finish",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": "True",
+      "label_point": {
+        "x_px": 487.0,
+        "y_px": 44.0
+      },
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 431.0,
+          "y_px": 101.0
+        },
+        {
+          "x_px": 441.0,
+          "y_px": 101.0
+        },
+        {
+          "x_px": 441.0,
+          "y_px": 47.0
+        },
+        {
+          "x_px": 543.0,
+          "y_px": 47.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "review_request",
+      "source_port_side": "EAST",
+      "target": "perform_work",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": "False",
+      "label_point": {
+        "x_px": 487.0,
+        "y_px": 104.0
+      },
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 431.0,
+          "y_px": 101.0
+        },
+        {
+          "x_px": 779.0,
+          "y_px": 101.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "review_request",
+      "source_port_side": "EAST",
+      "target": "return_request",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 144.0,
+          "y_px": 101.0
+        },
+        {
+          "x_px": 200.0,
+          "y_px": 101.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "start",
+      "source_port_side": "EAST",
+      "target": "review_request",
+      "target_port_side": "WEST"
+    }
+  ],
+  "lanes": [],
+  "node_bounds": {
+    "finish": {
+      "height_px": 52.0,
+      "width_px": 132.0,
+      "x_px": 1040.0,
+      "y_px": 75.0
+    },
+    "perform_work": {
+      "height_px": 70.0,
+      "width_px": 180.0,
+      "x_px": 543.0,
+      "y_px": 12.0
+    },
+    "return_request": {
+      "height_px": 86.0,
+      "width_px": 205.0,
+      "x_px": 779.0,
+      "y_px": 58.0
+    },
+    "review_request": {
+      "height_px": 90.0,
+      "width_px": 231.0,
+      "x_px": 200.0,
+      "y_px": 56.0
+    },
+    "start": {
+      "height_px": 52.0,
+      "width_px": 132.0,
+      "x_px": 12.0,
+      "y_px": 75.0
+    }
+  },
+  "orientation": "lr"
+}

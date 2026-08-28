@@ -10,6 +10,14 @@ from .movement import (
     extract_location_spatial_index,
 )
 from .process_metadata import extract_process_metadata
+from .timing import (
+    NodeTiming,
+    ProcessTimingAnalysis,
+    TimingDiagnostic,
+    TimingPath,
+    TimingTotals,
+    analyze_process_timing,
+)
 
 __all__ = [
     "scc_condense",
@@ -20,4 +28,10 @@ __all__ = [
     "aggregate_people_movements_by_worker",
     "extract_location_spatial_index",
     "extract_process_metadata",
+    "NodeTiming",
+    "ProcessTimingAnalysis",
+    "TimingDiagnostic",
+    "TimingPath",
+    "TimingTotals",
+    "analyze_process_timing",
 ]

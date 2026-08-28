@@ -182,6 +182,48 @@ def test_build_sppm_elk_layout_request_accepts_reference_example_without_inventi
     )
 
 
+def test_build_sppm_elk_layout_request_builds_deterministic_wrap_rows():
+    path = Path("examples/reference/washnfold.flo")
+    adapter_model = parse_adapter(
+        path.read_text(encoding="utf-8"), source_path=str(path)
+    )
+    options = RenderOptions.from_mapping(
+        {
+            "diagram": "sppm",
+            "sppm_output_profile": "book",
+            "layout_target_columns": 4,
+        }
+    )
+
+    request = build_sppm_elk_layout_request(adapter_model, options=options)
+    payload = serialize_elk_layout_request(request)
+
+    assert [lane.node_ids for lane in request.lanes] == [
+        ("start", "dropoff", "sort_tag_wait_queue", "sort_tag"),
+        ("wash_wait_queue", "wash", "dry_wait_queue", "dry"),
+        (
+            "fold_package_wait_queue",
+            "fold_package",
+            "stage_notify_wait_queue",
+            "stage_notify",
+        ),
+        ("payment_delivery", "end"),
+    ]
+    boundary_edges = {
+        (edge.source_id, edge.target_id): edge
+        for edge in request.edges
+        if edge.source_port_side == "SOUTH"
+    }
+    assert set(boundary_edges) == {
+        ("sort_tag", "wash_wait_queue"),
+        ("dry", "fold_package_wait_queue"),
+        ("stage_notify", "payment_delivery"),
+    }
+    assert all(edge.target_port_side == "NORTH" for edge in boundary_edges.values())
+    assert payload["layoutOptions"]["elk.direction"] == "DOWN"
+    assert payload["layoutOptions"]["elk.hierarchyHandling"] == "INCLUDE_CHILDREN"
+
+
 def test_build_sppm_elk_layout_request_preserves_explicit_lane_structure_when_present():
     process = {
         "lanes": [{"id": "front", "name": "Front Office"}],

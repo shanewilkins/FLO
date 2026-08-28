@@ -115,21 +115,32 @@ def measure_sppm_node(
         options=options,
     )
 
+    def scaled(measure: SppmNodeMeasure) -> SppmNodeMeasure:
+        scale = options.resolved_theme.typography_scale
+        return SppmNodeMeasure(
+            width_px=int(round(measure.width_px * scale)),
+            height_px=int(round(measure.height_px * scale)),
+        )
+
     if normalized_kind == "decision":
         width = max(_DECISION_MIN_WIDTH_PX, 112 + (_widest_line_length(content) * 7))
         height = max(
             _DECISION_MIN_HEIGHT_PX,
             62 + (_line_count(content.title) * 26),
         )
-        return SppmNodeMeasure(
-            width_px=min(width, 280),
-            height_px=min(height, 164),
+        return scaled(
+            SppmNodeMeasure(
+                width_px=min(width, 280),
+                height_px=min(height, 164),
+            )
         )
     if normalized_kind == "queue":
         line_count = _line_count(content.title) + _multi_line_count(content.info_lines)
         height = max(_QUEUE_MIN_HEIGHT_PX, 82 + (line_count * 14))
         width = max(_QUEUE_MIN_WIDTH_PX, 124 + (_widest_line_length(content) * 5))
-        return SppmNodeMeasure(width_px=min(width, 220), height_px=min(height, 196))
+        return scaled(
+            SppmNodeMeasure(width_px=min(width, 220), height_px=min(height, 196))
+        )
     if normalized_kind == "subprocess":
         width = max(_SUBPROCESS_MIN_WIDTH_PX, 140 + (_widest_line_length(content) * 4))
         height = max(
@@ -140,10 +151,14 @@ def measure_sppm_node(
                 * 14
             ),
         )
-        return SppmNodeMeasure(width_px=min(width, 300), height_px=min(height, 148))
+        return scaled(
+            SppmNodeMeasure(width_px=min(width, 300), height_px=min(height, 148))
+        )
     if normalized_kind in {"start", "end"}:
-        return SppmNodeMeasure(
-            width_px=_START_END_WIDTH_PX, height_px=_START_END_HEIGHT_PX
+        return scaled(
+            SppmNodeMeasure(
+                width_px=_START_END_WIDTH_PX, height_px=_START_END_HEIGHT_PX
+            )
         )
 
     width = max(_TASK_MIN_WIDTH_PX, 120 + (_widest_line_length(content) * 5))
@@ -155,9 +170,11 @@ def measure_sppm_node(
             * _TASK_LINE_HEIGHT_PX
         ),
     )
-    return SppmNodeMeasure(
-        width_px=min(width, _TASK_MAX_WIDTH_PX),
-        height_px=min(height, 220),
+    return scaled(
+        SppmNodeMeasure(
+            width_px=min(width, _TASK_MAX_WIDTH_PX),
+            height_px=min(height, 220),
+        )
     )
 
 
@@ -213,8 +230,8 @@ def _task_info_lines(
     )
     co_line = _format_time_line(
         get_metadata_crossover_time(metadata),
-        "CO",
-        " crossover",
+        "C/O",
+        "",
         options,
         require_positive=True,
     )

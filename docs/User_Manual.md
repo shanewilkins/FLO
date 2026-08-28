@@ -714,6 +714,34 @@ Alternative themes:
 - `--sppm-theme monochrome` — grayscale only
 - `--sppm-theme <name>` — any custom theme defined under `[sppm.themes.<name>]` in `diagrams.toml`
 
+The preferred 0.3 interface is the shared `--theme <name>` option. It applies
+one central theme to SPPM, swimlane, and spaghetti SVG output. Built-ins are
+`default`, `flatly`, `print`, and `monochrome`. Direct session overrides are
+`--background-color`, `--font-family` (a comma-separated fallback list), and
+`--typography-scale` (`0.75` through `1.5`).
+
+New reusable themes belong in the top-level registry and can inherit partial
+values from one parent:
+
+```toml
+[render]
+theme = "white_belt"
+
+[themes.white_belt]
+extends = "default"
+
+[themes.white_belt.canvas]
+background = "#fffdf8"
+
+[themes.white_belt.typography]
+font_family = ["Source Sans 3", "Arial", "sans-serif"]
+scale = 1.05
+
+[themes.white_belt.roles.queue]
+fill = "#FFB74D"
+border = "#E65100"
+```
+
 For backward compatibility, a custom theme that omits `queue` uses its `rnva`
 style for queue triangles.
 
@@ -752,7 +780,10 @@ fill = "#FFFFFF"
 border = "#343A40"
 ```
 
-If a theme name is missing or the configuration is malformed, FLO falls back to the built-in default theme.
+Legacy `--sppm-theme` keeps its historical missing-name fallback. The shared
+registry rejects unknown selected themes, unknown parents, inheritance cycles,
+invalid colors, empty font lists, out-of-range scales, and unregistered roles
+with an actionable option-validation error.
 
 Preferred maintained SPPM rendering path:
 
@@ -765,7 +796,7 @@ uv run flo render examples/reference/semantic_controls_showcase.flo \
 
 ## 4.6) Understanding the Output Pipeline
 
-FLO has three main output families.
+FLO has four main output families.
 
 1. Canonical machine-readable output.
 
@@ -779,6 +810,11 @@ FLO has three main output families.
 
   `flo render --export ingredients` emits human-readable item and resource summaries.
   `flo render --export movement` emits inferred movement summaries.
+
+1. Static analysis reports.
+
+  `flo inspect` emits a concise timing report by default, or deterministic JSON
+  with `--format json`.
 
 Canonical JSON example:
 
@@ -829,7 +865,23 @@ Only validate model correctness.
 uv run flo validate path/to/model.flo
 ```
 
-## 5.3 Export
+## 5.3 Inspect
+
+Inspect declared process timing after parsing, compilation, and validation.
+The default text report keeps cycle, queue-wait, and changeover time separate,
+and reports modeled lead time only when the graph semantics support it.
+
+```bash
+uv run flo inspect path/to/model.flo
+uv run flo inspect path/to/model.flo --format json -o timing.json
+```
+
+The initial supported analysis is `--analysis timing`. Deterministic JSON uses
+seconds as the canonical unit and includes per-node contributions, path
+summaries, timing coverage, and explicit diagnostics. Cyclic and parallel
+models do not receive a guessed lead time.
+
+## 5.4 Export
 
 Export as JSON by default, or choose SVG, ingredients text, or movement text.
 
@@ -850,6 +902,11 @@ Common options:
 - `-v, --verbose`: verbose logging
 - `--export {svg,json,ingredients,movement}`: choose output format
 
+Inspect options:
+
+- `--analysis {timing}`: choose the static analysis; timing is the default
+- `--format {text,json}`: choose human-readable text or deterministic JSON
+
 Diagram render options:
 
 - `--diagram {swimlane,spaghetti,sppm}`
@@ -857,6 +914,10 @@ Diagram render options:
 - `--spaghetti-channel {both,material,people}`
 - `--spaghetti-people-mode {worker,aggregate}`
 - `--sppm-theme {default,print,monochrome}` or a config-defined theme name
+- `--theme <name>`
+- `--background-color <color>`
+- `--font-family <family[,fallback...]>`
+- `--typography-scale <0.75..1.5>`
 - `--layout-wrap {auto,off}`
 - `--layout-fit {fit-preferred,fit-strict}`
 - `--layout-spacing {standard,compact}`
@@ -892,15 +953,35 @@ uv run flo render examples/reference/swimlane.flo --export svg --render-to swiml
 uv run flo render examples/reference/new_semantics.flo --export json
 uv run flo render examples/reference/chocolate_chip_cookies.flo --export ingredients
 uv run flo render examples/reference/chocolate_chip_cookies.flo --export movement
-uv run flo render examples/reference/washnfold.flo --export svg --render-to washnfold_sppm.svg --diagram sppm --layout-wrap auto --layout-target-columns 6
+uv run flo render examples/reference/washnfold.flo --export svg --render-to washnfold_sppm.svg --diagram sppm --sppm-output-profile book --layout-target-columns 4
 ```
 
 Important:
 
 - Render-only flags are invalid with JSON, ingredients, or movement export modes.
 - If you pass render-only flags together with JSON, ingredients, or movement export, FLO returns usage error code `1`.
-- Wrapped SPPM layout is orientation-aware.
-- Wrapped LR SPPM SVG output applies a narrow deterministic boundary-edge normalization pass after layout so boundary doglegs keep stable top-entry landing behavior.
+- Direct-SVG row wrapping currently applies to unambiguous linear LR SPPM
+  sequences. Branching and rework maps remain unwrapped until their continuation
+  semantics can be preserved without conflating branches with page rows.
+- Wrapped LR SPPM SVG routes each row boundary through a deterministic clear
+  corridor from the previous row's bottom port to the next row's top port.
+
+White Belt book asset:
+
+```bash
+# Build the reviewed SVG at the default reference-output path.
+uv run --locked python scripts/build_white_belt_book_artifact.py
+
+# Copy it directly into a book checkout.
+uv run --locked python scripts/build_white_belt_book_artifact.py --output /path/to/book/diagrams/washnfold.svg
+
+# Release/CI check: reject a missing, stale, or manually edited book asset.
+uv run --locked python scripts/build_white_belt_book_artifact.py --check --output /path/to/book/diagrams/washnfold.svg
+```
+
+The command first regenerates `washnfold_white_belt` and requires it to match
+the committed SPPM golden byte-for-byte. It then copies or verifies that exact
+generated SVG; the book image must not be edited manually.
 
 SPPM subprocess projection contract:
 
@@ -936,6 +1017,12 @@ SPPM time semantics:
 - `wait_time` models queue delay.
 - `crossover_time` models setup or changeover time.
 - These metrics are intentionally distinct because they imply different operational problems and different improvement methods.
+- Work-step shapes display declared setup or changeover as `C/O`; queue shapes
+  display queue delay as `WT`.
+- When timing is declared for the complete visible process, the footer shows
+  cycle, waiting, C/O, and modeled lead time from the same static-analysis
+  result used by `flo inspect`. Alternative paths show a range; unresolved
+  timing shows `Unavailable` and points to inspect diagnostics.
 
 ## 7) Input and Output Streams
 
@@ -950,6 +1037,7 @@ Examples:
 ```bash
 cat examples/reference/linear.flo | uv run flo -
 uv run flo render examples/reference/linear.flo -o -
+cat examples/reference/washnfold.flo | uv run flo inspect - --format json
 ```
 
 ## 8) Exit Codes
@@ -1041,7 +1129,13 @@ uv run flo validate path/to/model.flo
 uv run flo render path/to/model.flo --export svg --render-to review.svg --diagram sppm
 ```
 
-## 12.3 Generate machine-readable JSON for downstream tooling
+## 12.3 Inspect declared timing before interpreting a diagram
+
+```bash
+uv run flo inspect path/to/model.flo
+```
+
+## 12.4 Generate machine-readable JSON for downstream tooling
 
 ```bash
 uv run flo export path/to/model.flo -o model.json

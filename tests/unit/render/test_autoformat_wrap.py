@@ -1,4 +1,4 @@
-from flo.render._autoformat_wrap import build_wrap_plan
+from flo.render.layout_core.wrap import build_wrap_plan
 from flo.render.options import RenderOptions
 
 

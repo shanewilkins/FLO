@@ -8,6 +8,7 @@ import re
 from typing import Any, Literal, Mapping, cast
 
 from ._sppm_themes import SppmTheme, parse_custom_sppm_themes
+from .themes import DEFAULT_THEME, RenderTheme, resolve_render_theme
 
 DiagramType = Literal["swimlane", "spaghetti", "sppm"]
 RenderProfile = Literal["default", "analysis"]
@@ -65,6 +66,7 @@ _SPPM_PROFILE_DEFAULTS: dict[str, dict[str, Any]] = {
         "layout_target_columns": 5,
         "sppm_label_density": "teaching",
         "publication_page_format": "a4",
+        "theme": "print",
     },
     "slide": {
         "orientation": "lr",
@@ -138,6 +140,12 @@ class RenderOptions:
     spaghetti_people_mode: SpaghettiPeopleMode = "aggregate"
     sppm_theme: SppmThemeName = "default"
     sppm_themes: dict[str, SppmTheme] = field(default_factory=dict)
+    theme: str | None = None
+    themes: dict[str, Any] = field(default_factory=dict)
+    background_color: str | None = None
+    font_family: tuple[str, ...] | str | None = None
+    typography_scale: float | None = None
+    resolved_theme: RenderTheme = field(default=DEFAULT_THEME, init=False)
     layout_wrap: LayoutWrap = "off"
     layout_fit: LayoutFit = "fit-preferred"
     layout_spacing: LayoutSpacing = "standard"
@@ -157,6 +165,22 @@ class RenderOptions:
     sppm_max_label_ctwt: int | None = None
     sppm_footer_metrics: tuple[tuple[str, str], ...] = ()
     sppm_footer_notes: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        """Resolve the single immutable theme consumed by every renderer."""
+        object.__setattr__(
+            self,
+            "resolved_theme",
+            resolve_render_theme(
+                selected_name=self.theme or self.sppm_theme,
+                definitions=self.themes,
+                legacy_sppm_themes=self.sppm_themes,
+                background_color=self.background_color,
+                font_family=self.font_family,
+                typography_scale=self.typography_scale,
+                strict_name=self.theme is not None,
+            ),
+        )
 
     @classmethod
     def from_mapping(cls, options: Mapping[str, Any] | None) -> "RenderOptions":
@@ -189,6 +213,17 @@ class RenderOptions:
             ),
             sppm_theme=_parse_sppm_theme(effective_options),
             sppm_themes=_parse_sppm_themes(effective_options),
+            theme=_parse_optional_string(effective_options.get("theme")),
+            themes=_parse_theme_definitions(effective_options.get("themes")),
+            background_color=_parse_optional_string(
+                effective_options.get("background_color")
+            ),
+            font_family=_parse_font_family_override(
+                effective_options.get("font_family")
+            ),
+            typography_scale=_parse_optional_float(
+                effective_options.get("typography_scale")
+            ),
             layout_wrap=_parse_layout_wrap(effective_options),
             layout_fit=_parse_layout_fit(effective_options),
             layout_spacing=_parse_layout_spacing(effective_options),
@@ -360,6 +395,32 @@ def _parse_sppm_theme(options: Mapping[str, Any]) -> SppmThemeName:
 
 def _parse_sppm_themes(options: Mapping[str, Any]) -> dict[str, SppmTheme]:
     return parse_custom_sppm_themes(options.get("sppm_themes"))
+
+
+def _parse_theme_definitions(value: Any) -> dict[str, Any]:
+    if not isinstance(value, Mapping):
+        return {}
+    return {str(name).strip(): raw for name, raw in value.items() if str(name).strip()}
+
+
+def _parse_font_family_override(value: Any) -> tuple[str, ...] | str | None:
+    if value is None:
+        return None
+    if isinstance(value, (list, tuple)):
+        return tuple(str(item) for item in value)
+    return str(value)
+
+
+def _parse_optional_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return float(value)
+    try:
+        return float(value)
+    except TypeError, ValueError:
+        # Preserve the invalid value for the central validator's diagnostic.
+        return cast(Any, value)
 
 
 def _parse_layout_wrap(options: Mapping[str, Any]) -> LayoutWrap:

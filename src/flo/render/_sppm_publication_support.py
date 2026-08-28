@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from flo.compiler.analysis import ProcessTimingAnalysis
 from flo.schema.render_metadata import (
     SPPM_FOOTER_METRIC_METADATA_KEYS,
     SPPM_FOOTER_NOTES_METADATA_KEYS,
@@ -22,10 +23,6 @@ from ._publication import (
     build_publication_canvas,
     build_publication_canvas_for_format,
     evaluate_publication_fallback,
-)
-from ._sppm_metadata_schema import (
-    get_metadata_wait_time_minutes,
-    get_metadata_crossover_time,
 )
 from ._sppm_projection import SppmProjectionContext
 from ._sppm_text import format_text_field, normalize_space
@@ -123,18 +120,29 @@ def _build_sppm_child_slots(
 
 
 def _build_sppm_footer_content(
-    *, context: Any, options: RenderOptions, nodes: list[dict[str, Any]] | None = None
+    *,
+    context: Any,
+    options: RenderOptions,
+    nodes: list[dict[str, Any]] | None = None,
+    timing_analysis: ProcessTimingAnalysis | None = None,
 ) -> PublicationBandContent | None:
-    metric_rows = [
-        *_footer_metric_rows_from_metadata(context.metadata, options=options),
-        *_footer_metric_rows_from_node_aggregation(nodes=nodes or [], options=options),
-        *[
-            _footer_metric_row(label=label, value=value, options=options)
-            for label, value in options.sppm_footer_metrics
-        ],
-    ]
-    metric_rows = [row for row in metric_rows if row is not None]
+    timing_rows, timing_notes = _footer_content_from_timing_analysis(
+        timing_analysis,
+        visible_nodes=nodes or [],
+        options=options,
+    )
+    metric_rows = _merge_footer_metric_rows(
+        [
+            *timing_rows,
+            *_footer_metric_rows_from_metadata(context.metadata, options=options),
+            *[
+                _footer_metric_row(label=label, value=value, options=options)
+                for label, value in options.sppm_footer_metrics
+            ],
+        ]
+    )
     notes = [
+        *timing_notes,
         *_footer_notes_from_metadata(context.metadata, options=options),
         *[
             _format_sppm_publication_text(
@@ -150,52 +158,115 @@ def _build_sppm_footer_content(
     return PublicationBandContent(rows=tuple(metric_rows), notes=tuple(notes))
 
 
-def _footer_metric_rows_from_node_aggregation(
+def _footer_content_from_timing_analysis(
+    analysis: ProcessTimingAnalysis | None,
     *,
-    nodes: list[dict[str, Any]],
+    visible_nodes: list[dict[str, Any]],
     options: RenderOptions,
+) -> tuple[list[tuple[str, str]], list[str]]:
+    if analysis is None or not _analysis_matches_visible_process(
+        analysis, visible_nodes=visible_nodes
+    ):
+        return [], []
+    missing_ids = set(analysis.missing_timing_node_ids)
+    has_declared_timing = any(
+        (
+            timing.node_type in {"task", "system_task", "subprocess", "queue"}
+            and timing.node_id not in missing_ids
+        )
+        or timing.changeover_source_field is not None
+        for timing in analysis.node_timings
+    )
+    if not has_declared_timing:
+        return [], []
+
+    totals = analysis.declared_totals
+    raw_rows: list[tuple[str, str]] = [
+        ("Cycle Time", _format_timing_seconds(totals.cycle_time_seconds)),
+        ("Waiting Time", _format_timing_seconds(totals.wait_time_seconds)),
+        ("C/O Time", _format_timing_seconds(totals.changeover_time_seconds)),
+    ]
+    if analysis.modeled_lead_time_seconds is not None:
+        raw_rows.append(
+            ("Lead Time", _format_timing_seconds(analysis.modeled_lead_time_seconds))
+        )
+    elif (
+        analysis.minimum_path_lead_time_seconds is not None
+        and analysis.maximum_path_lead_time_seconds is not None
+    ):
+        raw_rows.append(
+            (
+                "Lead Time Range",
+                f"{_format_timing_seconds(analysis.minimum_path_lead_time_seconds)} "
+                f"to {_format_timing_seconds(analysis.maximum_path_lead_time_seconds)}",
+            )
+        )
+    else:
+        raw_rows.append(("Lead Time", "Unavailable"))
+
+    rows = [
+        row
+        for label, value in raw_rows
+        if (row := _footer_metric_row(label=label, value=value, options=options))
+        is not None
+    ]
+    notes: list[str] = []
+    if analysis.diagnostics:
+        note = _format_sppm_publication_text(
+            "Timing diagnostics available; run flo inspect for details.",
+            options=options,
+            max_len=options.sppm_max_label_step_name,
+        )
+        if note:
+            notes.append(note)
+    return rows, notes
+
+
+def _analysis_matches_visible_process(
+    analysis: ProcessTimingAnalysis,
+    *,
+    visible_nodes: list[dict[str, Any]],
+) -> bool:
+    analyzed_ids = {timing.node_id for timing in analysis.node_timings}
+    visible_ids = {
+        str(node.get("id") or "").strip()
+        for node in visible_nodes
+        if str(node.get("id") or "").strip()
+    }
+    return bool(analyzed_ids) and visible_ids == analyzed_ids
+
+
+def _format_timing_seconds(seconds: float) -> str:
+    if seconds == 0:
+        return "0 min"
+    if seconds % 60 == 0:
+        return f"{_format_timing_number(seconds / 60)} min"
+    return f"{_format_timing_number(seconds)} s"
+
+
+def _format_timing_number(value: float) -> str:
+    if value.is_integer():
+        return str(int(value))
+    return f"{value:.3f}".rstrip("0").rstrip(".")
+
+
+def _merge_footer_metric_rows(
+    rows: list[tuple[str, str] | None],
 ) -> list[tuple[str, str]]:
-    """Auto-aggregate wait time and crossover time metrics from process nodes.
-
-    Collects WT and CO values from all nodes and sums them for footer display.
-    This helps visualize total process delays in a diagnostic way.
-    """
-    rows: list[tuple[str, str]] = []
-    total_wt: float = 0.0
-    total_co: float = 0.0
-
-    for node in nodes:
-        metadata = node.get("metadata") or {}
-        if not isinstance(metadata, dict):
+    """Allow later explicit rows to replace generated defaults by label."""
+    merged: list[tuple[str, str]] = []
+    index_by_label: dict[str, int] = {}
+    for row in rows:
+        if row is None:
             continue
-
-        wt_minutes = get_metadata_wait_time_minutes(metadata)
-        if wt_minutes and wt_minutes > 0:
-            total_wt += wt_minutes
-
-        co_value = get_metadata_crossover_time(metadata)
-        if co_value is not None and co_value.numeric_value > 0:
-            total_co += co_value.numeric_value
-
-    if total_wt > 0:
-        wt_row = _footer_metric_row(
-            label="Waiting Time",
-            value=f"{int(total_wt) if total_wt == int(total_wt) else total_wt} min",
-            options=options,
-        )
-        if wt_row is not None:
-            rows.append(wt_row)
-
-    if total_co > 0:
-        co_row = _footer_metric_row(
-            label="Changeover Time",
-            value=f"{int(total_co) if total_co == int(total_co) else total_co} min",
-            options=options,
-        )
-        if co_row is not None:
-            rows.append(co_row)
-
-    return rows
+        label_key = normalize_space(row[0]).casefold()
+        existing_index = index_by_label.get(label_key)
+        if existing_index is None:
+            index_by_label[label_key] = len(merged)
+            merged.append(row)
+        else:
+            merged[existing_index] = row
+    return merged
 
 
 def _footer_metric_rows_from_metadata(
@@ -310,6 +381,7 @@ def _build_sppm_publication_canvas(
             row_count=len(header_rows),
             note_count=0,
             minimum_height_px=_SPPM_HEADER_BAND_HEIGHT_PX,
+            scale=options.resolved_theme.typography_scale,
         )
         if (show_header and title)
         else 0
@@ -320,6 +392,7 @@ def _build_sppm_publication_canvas(
             row_count=len(footer_content.rows) if footer_content else 0,
             note_count=len(footer_content.notes) if footer_content else 0,
             minimum_height_px=72,
+            scale=options.resolved_theme.typography_scale,
         )
         if footer_content is not None
         else 0
@@ -347,10 +420,11 @@ def _publication_band_height(
     row_count: int,
     note_count: int,
     minimum_height_px: int,
+    scale: float = 1.0,
 ) -> int:
     content_height = 24 if title else 0
     content_height += (row_count + note_count) * 16
-    return max(minimum_height_px, content_height + 32)
+    return int(round(max(minimum_height_px, content_height + 32) * scale))
 
 
 def _publication_diagnostics(

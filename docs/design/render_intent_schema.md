@@ -72,10 +72,16 @@ For each resolved render option:
 1. Explicit CLI option value
 2. View-level source intent (`process.metadata.render.views.<view_id>`)
 3. Process-level source defaults (`process.metadata.render.defaults`)
-4. Existing output profile defaults (for example `book`, `print`, `web`)
-5. Renderer hard defaults
+4. Repository `diagrams.toml` defaults
+5. Existing output profile defaults (for example `book`, `print`, `web`)
+6. Selected named-theme value
+7. Renderer safety fallback
 
 This keeps source reproducible while preserving fast local iteration.
+Theme-name selection follows the same ordering. Theme definitions themselves
+live in the central registry described by `docs/specs/render_themes.md`; render
+intent selects a theme or overrides resolved style properties but does not
+define a second theme registry.
 
 ## Render intent structure
 
@@ -155,6 +161,36 @@ Notes:
 - A renderer-specific subtree must agree with the resolved `diagram`; unrelated
   renderer subtrees are rejected or warned according to validation mode.
 - Existing metadata aliases can remain supported during migration.
+
+## 0.3 theming extension
+
+Render defaults and named views may select a registered theme and provide a
+small explicit style delta:
+
+```yaml
+process:
+  metadata:
+    render:
+      defaults:
+        theme: white_belt
+        style:
+          canvas:
+            background: "#fffdf8"
+          typography:
+            font_family: ["Source Sans 3", "Arial", "sans-serif"]
+            scale: 1.05
+
+      views:
+        monochrome_print:
+          diagram: sppm
+          theme: monochrome
+```
+
+The source-level `style` block is intentionally limited to the shared typed
+contract. It does not permit arbitrary SVG properties or per-node overrides.
+New reusable themes are authored once under top-level `[themes.<name>]` in
+`diagrams.toml`, may extend one parent, and resolve through the same central
+registry as built-ins.
 
 ## Accepted vocabulary
 

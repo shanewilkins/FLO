@@ -46,14 +46,24 @@ def test_importlinter_contracts_are_configured_and_nonempty() -> None:
         assert isinstance(contract.get("name"), str) and contract["name"].strip(), (
             f"contract #{idx + 1} requires a non-empty name"
         )
-        assert contract.get("type") == "forbidden", (
-            f"contract #{idx + 1} currently must use type='forbidden'"
+        contract_type = contract.get("type")
+        assert contract_type in {"forbidden", "acyclic_siblings"}, (
+            f"contract #{idx + 1} uses unsupported type {contract_type!r}"
         )
-        source_modules = contract.get("source_modules")
-        forbidden_modules = contract.get("forbidden_modules")
-        assert isinstance(source_modules, list) and source_modules, (
-            f"contract #{idx + 1} requires non-empty source_modules"
-        )
-        assert isinstance(forbidden_modules, list) and forbidden_modules, (
-            f"contract #{idx + 1} requires non-empty forbidden_modules"
-        )
+        if contract_type == "forbidden":
+            source_modules = contract.get("source_modules")
+            forbidden_modules = contract.get("forbidden_modules")
+            assert isinstance(source_modules, list) and source_modules, (
+                f"contract #{idx + 1} requires non-empty source_modules"
+            )
+            assert isinstance(forbidden_modules, list) and forbidden_modules, (
+                f"contract #{idx + 1} requires non-empty forbidden_modules"
+            )
+        else:
+            ancestors = contract.get("ancestors")
+            assert isinstance(ancestors, list) and ancestors, (
+                f"contract #{idx + 1} requires non-empty ancestors"
+            )
+            assert isinstance(contract.get("depth"), int), (
+                f"contract #{idx + 1} requires an explicit cycle-check depth"
+            )

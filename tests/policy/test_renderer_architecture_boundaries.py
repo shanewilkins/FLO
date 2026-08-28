@@ -34,10 +34,23 @@ def test_backend_neutral_renderer_core_does_not_import_backend_modules() -> None
     root = _find_repo_root()
     shared_files = [
         root / "src" / "flo" / "render" / "_publication.py",
+        root / "src" / "flo" / "render" / "_artifact.py",
+        root / "src" / "flo" / "render" / "_diagnostics.py",
+        root / "src" / "flo" / "render" / "capability_matrix.py",
+        root / "src" / "flo" / "render" / "themes.py",
+        root / "src" / "flo" / "render" / "layout_core" / "elk_contracts.py",
+        root / "src" / "flo" / "render" / "layout_core" / "elk_errors.py",
+        root / "src" / "flo" / "render" / "layout_core" / "models.py",
+        root / "src" / "flo" / "render" / "layout_core" / "placement.py",
+        root / "src" / "flo" / "render" / "layout_core" / "ports.py",
+        root / "src" / "flo" / "render" / "layout_core" / "rework_geometry.py",
+        root / "src" / "flo" / "render" / "layout_core" / "rework_semantics.py",
+        root / "src" / "flo" / "render" / "layout_core" / "routing.py",
     ]
 
     offenders: list[str] = []
     for file_path in shared_files:
+        assert file_path.exists(), f"Registered neutral module is missing: {file_path}"
         imports = _import_modules_for_file(file_path)
         backend_imports = [
             module

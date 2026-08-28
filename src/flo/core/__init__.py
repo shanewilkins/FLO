@@ -25,9 +25,11 @@ from flo.compiler import compile_adapter
 from flo.compiler.ir import validate_ir, IR
 from flo.compiler.ir import ensure_schema_aligned
 from flo.compiler.analysis import scc_condense
+from flo.compiler.analysis import analyze_process_timing
 from flo.render import RenderArtifact, render_artifact_and_contract, RenderOptions
+from flo.render.themes import ThemeValidationError
 from flo.export import export_ir
-from flo.core._flo_config import merge_diagrams_toml_sppm_defaults
+from flo.core._flo_config import merge_diagrams_toml_render_defaults
 from flo.core._option_validation import (
     validate_sppm_numeric_render_options,
     ensure_render_options_compatible_with_output,
@@ -35,6 +37,7 @@ from flo.core._option_validation import (
 from flo.core._capability_validation import ensure_render_projection_supported
 from flo.core.render_intent import RenderIntentResolver
 from flo.services.io import write_output
+from flo.core.inspect import format_timing_analysis
 
 _FAIL_OPEN_SCC_PREFIX = "fail-open postprocess: scc_condense failed"
 
@@ -55,11 +58,42 @@ def run_content(
     if command == "validate":
         return EXIT_SUCCESS, "", ""
 
+    if command == "inspect":
+        return _run_inspect_output(ir=ir, options=options)
+
     output_format = _resolve_output_format(command=command, options=options)
     if output_format in {"json", "ingredients", "movement"}:
         return _run_export_output(ir=ir, options=options, output_format=output_format)
 
     return _run_render_output(ir=ir, options=options, output_format=output_format)
+
+
+def _run_inspect_output(
+    *,
+    ir: IR,
+    options: dict | None,
+) -> tuple[int, str, str]:
+    analysis = (options or {}).get("analysis", "timing")
+    output_format = (options or {}).get("format", "text")
+    if analysis != "timing":
+        raise CLIError(
+            f"Unsupported inspect analysis: {analysis}",
+            code=EXIT_USAGE,
+            error_stage="option_validation",
+        )
+    if output_format not in {"text", "json"}:
+        raise CLIError(
+            f"Unsupported inspect format: {output_format}",
+            code=EXIT_USAGE,
+            error_stage="option_validation",
+        )
+
+    result = analyze_process_timing(ir)
+    return (
+        EXIT_SUCCESS,
+        format_timing_analysis(result, output_format=str(output_format)),
+        "",
+    )
 
 
 def _resolve_source_path(options: dict | None) -> str | None:
@@ -102,7 +136,7 @@ def _run_render_output(
     options: dict | None,
     output_format: str,
 ) -> tuple[int, str, str]:
-    resolved_options = merge_diagrams_toml_sppm_defaults(options=options)
+    resolved_options = merge_diagrams_toml_render_defaults(options=options)
     validate_sppm_numeric_render_options(options=resolved_options)
     render_to: str | None = (resolved_options or {}).get("render_to")
 
@@ -219,7 +253,12 @@ def _resolve_output_format(command: str, options: dict | None) -> str:
 def _resolve_render_options_for_output(
     *, resolved_options: dict | None, output_format: str
 ) -> RenderOptions:
-    render_options = RenderOptions.from_mapping(resolved_options)
+    try:
+        render_options = RenderOptions.from_mapping(resolved_options)
+    except ThemeValidationError as exc:
+        raise CLIError(
+            str(exc), code=EXIT_USAGE, error_stage="option_validation"
+        ) from exc
     explicit_backend = (resolved_options or {}).get("render_backend")
 
     if output_format == "svg":
@@ -246,6 +285,10 @@ def _merge_view_intent_options(
     if not isinstance(render_metadata, dict):
         return merged
 
+    config_keys = set(merged.pop("__diagrams_config_keys__", ()) or ())
+    cli_overrides = {
+        key: value for key, value in merged.items() if key not in config_keys
+    }
     profile_raw = merged.get("profile")
     profile = str(profile_raw).strip().lower() if profile_raw is not None else "default"
     view_raw = merged.get("view")
@@ -253,13 +296,13 @@ def _merge_view_intent_options(
 
     resolved_intent = RenderIntentResolver.resolve(
         render_metadata=render_metadata,
-        cli_overrides=merged,
+        cli_overrides=cli_overrides,
         profile=profile or "default",
         view_name=view_name or "default",
     )
     baseline_intent = RenderIntentResolver.resolve(
         render_metadata=None,
-        cli_overrides=merged,
+        cli_overrides=cli_overrides,
         profile=profile or "default",
         view_name=view_name or "default",
     )
@@ -269,6 +312,9 @@ def _merge_view_intent_options(
         baseline_intent=baseline_intent,
     )
     merged.update(intent_overrides)
+    merged.update(cli_overrides)
+    if "sppm_theme" in cli_overrides and "theme" not in cli_overrides:
+        merged["theme"] = cli_overrides["sppm_theme"]
     return merged
 
 
@@ -312,6 +358,10 @@ def _collect_changed_value_overrides(
         ("sppm_node_numbering", "sppm_step_numbering"),
         ("spaghetti_channel", "spaghetti_channel"),
         ("spaghetti_people_mode", "spaghetti_people_mode"),
+        ("theme", "theme"),
+        ("background_color", "background_color"),
+        ("font_family", "font_family"),
+        ("typography_scale", "typography_scale"),
     )
     for intent_field, option_field in mappings:
         value = getattr(resolved_intent, intent_field)

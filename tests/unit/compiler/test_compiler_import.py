@@ -181,6 +181,50 @@ def test_compile_promotes_top_level_resources_to_process_metadata():
     assert ir.process_metadata["process_name"] == "Process"
 
 
+def test_compile_preserves_integer_process_version() -> None:
+    parsed = {
+        "spec_version": "0.1",
+        "process": {"id": "p", "name": "Process", "version": 7},
+        "steps": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+    }
+
+    ir = compile_adapter(parsed)
+
+    assert ir.process_version == 7
+
+
+def test_compile_preserves_string_process_version() -> None:
+    parsed = {
+        "spec_version": "0.1",
+        "process": {"id": "p", "name": "Process", "version": "2026.1"},
+        "steps": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+    }
+
+    ir = compile_adapter(parsed)
+
+    assert ir.process_version == "2026.1"
+
+
+def test_compile_rejects_non_scalar_process_version() -> None:
+    parsed = {
+        "spec_version": "0.1",
+        "process": {"id": "p", "name": "Process", "version": [2026, 1]},
+        "steps": [
+            {"id": "start", "kind": "start", "name": "Start"},
+            {"id": "end", "kind": "end", "name": "End"},
+        ],
+    }
+
+    with pytest.raises(ValueError, match=r"process\.version"):
+        compile_adapter(parsed)
+
+
 def test_compile_promotes_grouped_materials_to_process_metadata():
     parsed = {
         "spec_version": "0.1",

@@ -26,9 +26,9 @@ The 0.4 MVP is cumulative across the 0.2 through 0.4 release path. It includes:
   `lss4py`
 - maintained direct-SVG SPPM, swimlane, spaghetti, and value-stream-map
   surfaces
-- static analysis for handoffs, rework, path length, and step classification
+- static analysis for timing, handoffs, rework, path length, and step classification
 - the minimum telemetry event schema, model-to-trace identity rules,
-  trace-alignment prototypes, and conformance fixtures
+  canonical trace import, trace-alignment prototypes, and conformance fixtures
 - a concise onboarding path and maintained reference documentation
 
 MVP acceptance includes an observed first-run journey: a representative
@@ -136,6 +136,13 @@ Before 1.0, FLO will document:
   diagrams.
 - Produce analysis-oriented diagnostics and reports.
 - Stabilize the analysis output schema and representative fixture corpus.
+- Deliver unit-aware static timing analysis for cycle, queue-wait, setup or
+  changeover, and modeled path lead time without guessing through incomplete,
+  cyclic, or parallel flow.
+- [Implemented] Add one central, extensible theme registry for maintained SVG diagrams;
+  resolve deterministic publication background, typography family/scale, and
+  semantic visual roles through the shared render-intent precedence; and
+  protect built-in and configured themes with representative goldens.
 - Deliver the maintained `value_stream` SVG renderer using the shared analysis
   primitives.
 - Represent material and information flow distinctly, and diagnose partial
@@ -144,6 +151,10 @@ Before 1.0, FLO will document:
   and partial-map notices, while retaining strict failure on request.
 - Add capability-matrix support, deterministic fixtures, renderer tests, and
   user documentation as one release change.
+- Deliver the White Belt book's compact wash-and-fold SVG as a dedicated
+  deterministic SPPM corpus case using the maintained explicit-queue model;
+  reject broken row-boundary routing and protect the book-consumed artifact
+  from hand edits or baseline drift.
 
 ### 0.4: Telemetry Model And MVP
 
@@ -153,8 +164,9 @@ Before 1.0, FLO will document:
   process-improvement user and a fresh environment.
 - Publish and validate `schema/flo_trace.json` and the normative event
   semantics.
-- Deliver local, explicit trace import, deterministic model-to-trace alignment,
-  and conformance fixtures without mutating canonical IR.
+- Deliver local, explicit canonical trace import, deterministic
+  observed-event-to-model alignment, and conformance fixtures without mutating
+  canonical designed-process IR.
 - Enforce the telemetry privacy defaults for validation, alignment, logging,
   runtime spans, and persisted outputs.
 - Demonstrate the cumulative MVP acceptance boundary defined above.
@@ -171,6 +183,9 @@ Before 1.0, FLO will document:
 - Complete the accepted multi-page SPPM publication boundary, including Typst
   composition, stable step references, continuation anchors, child maps,
   deterministic warnings, and strict-mode failures.
+- Resolve and implement the proposed exact and bounded render-geometry contract,
+  including unit-bearing width and height, page orientation, margins, scaling,
+  and explicit overflow behavior, before multi-page publication acceptance.
 - Move SPPM, swimlane, spaghetti, and value stream maps to the stable renderer
   tier.
 - Add visual-invariant coverage for node-label legibility, overlap, clipping, and
@@ -184,6 +199,16 @@ Before 1.0, FLO will document:
 ### 0.7: Language, IR, And CLI Freeze Candidate
 
 - Freeze the proposed 1.0 language, canonical IR, schema, and CLI contracts.
+- Introduce the separate object-capable observed-event IR and deterministic
+  TraceView projection; ingest CSV, XES, and OCEL 2 JSON through replaceable
+  adapters without expanding canonical designed-process IR.
+- Deliver initial conformance analysis and keep observed trace variants,
+  candidate structural variants, and declared process-family variants
+  explicitly distinct.
+- Resolve the proposed process-family and first-class variant identity,
+  resolution, selection, public API, and source-writer contract before the
+  language and IR freeze; unresolved variant semantics do not enter canonical
+  graphs.
 - Freeze the supported Python API and structured diagnostic model.
 - Deliver the deterministic `.flo` writer with semantic round-trip tests.
 - Deliver an idempotent, comment-preserving formatter in check, stream, and
@@ -198,12 +223,18 @@ Before 1.0, FLO will document:
 ### 0.8: Ecosystem And Operational Hardening
 
 - Verify Python 3.14 support in CI and distribution artifacts.
+- Add OCEL 2 XML and SQLite adapters through the 0.7 observed-event boundary.
+- Deliver deterministic process discovery into provenance-bearing candidate
+  process IR; require explicit acceptance or export before a candidate becomes
+  authored process truth.
 - Require wheel and source-distribution installation smoke tests.
 - Complete dependency automation, security reporting, contributor guidance, release process, and support policy.
 - Add reproducibility and upgrade-path tests for public artifacts.
 - Publish the versioned source-authoring schema, maintained snippets, and basic
   schema-aware editor setup.
 - Deliver dry-run, diffable, non-destructive source-version migration tooling.
+- If the process-family contract is accepted, complete its authoring-schema,
+  editor-validation, migration, and deterministic comparison surfaces.
 - Test the complete end-user workflow from installed artifacts on supported
   platforms without a source checkout.
 

@@ -6,7 +6,7 @@ from dataclasses import replace
 from typing import Any
 
 from ._diagnostics import RenderDiagnostic
-from ._sppm_rework_graph import infer_rework_row_ids, translate_edge_points
+from .layout_core.rework_geometry import infer_rework_row_ids, translate_edge_points
 from .layout_core.models import LayoutBounds, LayoutPoint
 
 _MIN_MAINLINE_REWORK_GAP_PX = 56.0

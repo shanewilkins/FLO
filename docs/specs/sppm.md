@@ -46,6 +46,18 @@ An SPPM in FLO must satisfy the following characteristics:
 5. Optional metrics as annotations
    - Summary metrics may be shown when supplied or derivable from approved FLO
      analysis surfaces, but the SPPM does not redefine process semantics.
+   - Work-step cards show declared active processing as `CT` and declared setup
+     or changeover as the distinct `C/O` metric. Queue shapes show declared
+     queue delay as `WT`.
+   - When timing is declared for the complete visible process, the publication
+     footer consumes the typed static timing result for cycle, waiting,
+     changeover, and lead time. It must not independently sum raw metadata.
+   - One complete path may show one lead time. Complete alternatives show a
+     lead-time range. Incomplete, cyclic, or parallel timing shows an unavailable
+     lead time and directs the reader to `flo inspect` diagnostics.
+   - A partial projection does not reuse whole-process timing totals. If no
+     timing is declared, FLO does not add an empty timing footer. Explicit
+     footer metrics may replace generated rows with the same label.
 
 6. Publication composition is adjacent, not defining
    - Headers, footers, captions, and other page furniture may accompany an
@@ -59,14 +71,21 @@ An SPPM in FLO must satisfy the following characteristics:
      not inferred from renderer-side geometry mutation.
 
 8. Mainline and rework row semantics
-   - The primary path from start to stop must flow left-to-right on one
-     dominant mainline row.
+   - An unwrapped primary path from start to stop must flow left-to-right on
+     one dominant mainline row.
+   - A linear LR process may be split into ordered publication rows. Every row
+     flows left-to-right, and each row boundary uses an explicit orthogonal
+     bottom-to-top continuation corridor without changing canonical graph
+     order. Branching or rework graphs are not automatically row-wrapped.
    - Rework paths must be rendered on a secondary row below the mainline,
      flowing right-to-left for return movement back toward the mainline.
 
 9. Start/end horizontal boundary contract
-   - No node may be placed to the left of the start node centroid.
-   - No node may be placed to the right of the stop/end node centroid.
+   - On an unwrapped dominant row, no node may be placed to the left of the
+     start node centroid or to the right of the stop/end node centroid.
+   - On a wrapped linear map, the start and stop bound their respective first
+     and last continuation rows; global horizontal bounds do not imply process
+     order across rows.
 
 10. Orthogonal edge routing
   SPPM connectors must route as orthogonal polylines (horizontal/vertical
@@ -99,6 +118,11 @@ An SPPM is not:
 The canonical SPPM corpus manifest is
 `examples/conformance/sppm_corpus.json`. Accepted normalized layout and SVG
 artifacts live under `tests/golden/sppm/` and must never be hand-edited.
+The `washnfold_white_belt` case is the release-blocking book-profile artifact
+for the White Belt material. `scripts/build_white_belt_book_artifact.py` is the
+only supported copy/check path for the book-consumed `washnfold.svg`.
+The `simple_decision_book` case is the compact book-profile acceptance artifact
+for a decision diamond with two labeled, spatially distinct branches.
 
 Every change that can affect SPPM geometry or diagnostics must pass:
 

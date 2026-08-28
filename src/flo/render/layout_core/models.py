@@ -10,7 +10,7 @@ from flo.render._diagnostics import (
     RenderDiagnosticsReport,
     build_render_diagnostics_report,
 )
-from flo.render._sppm_rework_semantics import SppmReworkVariant
+from .rework_semantics import ReworkRouteVariant
 
 AlignMode = Literal["start", "center", "end"]
 OrientationMode = Literal["lr", "tb"]
@@ -104,7 +104,7 @@ class RoutedEdgePath:
     source_port_side: str | None = None
     target_port_side: str | None = None
     is_rework: bool = False
-    rework_variant: SppmReworkVariant | None = None
+    rework_variant: ReworkRouteVariant | None = None
     callout_lines: tuple[str, ...] = ()
     callout_near_source: bool = False
     outgoing_token: str | None = None

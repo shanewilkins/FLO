@@ -60,6 +60,22 @@
       }
     },
     {
+      "id": "washnfold_white_belt",
+      "input": "examples/reference/washnfold.flo",
+      "options": {
+        "sppm_output_profile": "book",
+        "layout_target_columns": 4
+      }
+    },
+    {
+      "id": "simple_decision_book",
+      "input": "examples/yb/simple_decision.flo",
+      "options": {
+        "sppm_output_profile": "book",
+        "publication_page_format": "letter"
+      }
+    },
+    {
       "id": "bakery_setup_vs_queue_lr",
       "input": "examples/reference/bakery_setup_vs_queue.flo",
       "options": {
@@ -68,7 +84,7 @@
     },
     {
       "id": "cookies_process_lr",
-      "input": "examples/reference/chocolate_chip_cookies/process.flo",
+      "input": "examples/reference/chocolate_chip_cookies.flo",
       "options": {
         "orientation": "lr"
       }

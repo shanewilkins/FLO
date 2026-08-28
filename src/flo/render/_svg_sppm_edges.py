@@ -14,6 +14,8 @@ from ._svg_sppm_edge_segments import (
     _longest_segment_index,
 )
 from .layout_core.models import LayoutBounds, LayoutPoint
+from .options import RenderOptions
+from .themes import DEFAULT_THEME
 
 _LANE_HEADER_AVOID_HEIGHT_PX = 34.0
 _SPPM_SYNTHETIC_ROW_PREFIX = "__sppm_row_"
@@ -30,6 +32,7 @@ class _LabelPlacement:
 def _edge_svg(
     edge_path: Any,
     *,
+    options: RenderOptions | None = None,
     source_bounds: LayoutBounds | None = None,
     target_bounds: LayoutBounds | None = None,
     source_kind: str = "task",
@@ -39,6 +42,7 @@ def _edge_svg(
     diagnostics: list[RenderDiagnostic] | None = None,
     render_as_rework_style: bool = False,
 ) -> tuple[list[str], tuple[LayoutBounds, ...]]:
+    options = options or RenderOptions(diagram="sppm")
     rework_edge = bool(edge_path.is_rework or render_as_rework_style)
     original_points = _normalize_rework_edge_points(
         edge_path.points,
@@ -63,6 +67,12 @@ def _edge_svg(
         edge_path,
         render_as_rework_style=render_as_rework_style,
     )
+    if rework_edge:
+        themed_rework = options.resolved_theme.role("nva")
+        if themed_rework != DEFAULT_THEME.role("nva"):
+            stroke = themed_rework.border
+    else:
+        stroke = options.resolved_theme.role("connector").border
     dash_attrs = f' stroke-dasharray="{dash_pattern}"' if dash_pattern else ""
     annotation_bounds: list[LayoutBounds] = []
     parts = [
@@ -72,55 +82,20 @@ def _edge_svg(
             f'stroke-width="{stroke_width:.1f}" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)"{dash_attrs} />'
         ),
     ]
-    if edge_path.label:
-        label_width = max(28.0, float(len(edge_path.label) * 7.0))
-        label_point = getattr(edge_path, "label_point", None)
-        if rework_edge:
-            placement = _rework_label_placement(points, rework_variant=rework_variant)
-            placement = _clamp_placement_to_canvas(
-                placement,
-                box_width=label_width,
-                box_height=18.0,
-                canvas_bounds=canvas_bounds,
-            )
-        elif label_point is not None:
-            placement = _clamp_placement_to_canvas(
-                _LabelPlacement(x=float(label_point.x_px), y=float(label_point.y_px)),
-                box_width=label_width,
-                box_height=18.0,
-                canvas_bounds=canvas_bounds,
-            )
-        else:
-            placement = _label_placement(
-                points,
-                avoid_near_source=bool(
-                    edge_path.callout_lines and edge_path.callout_near_source
-                ),
-                prefer_near_source=source_kind.lower() == "decision",
-                avoid_bounds=avoid_bounds,
-                box_width=label_width,
-                box_height=18.0,
-                canvas_bounds=canvas_bounds,
-                diagnostics=diagnostics,
-                diagnostic_context={
-                    "annotation_kind": "edge_label",
-                    "edge": f"{edge_path.edge[0]}->{edge_path.edge[1]}",
-                },
-            )
-        label_text = escape(edge_path.label)
-        parts.append(
-            f'<rect x="{placement.x - (label_width / 2.0):.1f}" y="{placement.y - 12.0:.1f}" width="{label_width:.1f}" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />'
-        )
-        parts.append(
-            f'<text x="{placement.x:.1f}" y="{placement.y + 1.0:.1f}" text-anchor="{placement.anchor}" font-family="Helvetica" font-size="12" fill="#0f172a">{label_text}</text>'
-        )
-        annotation_bounds.append(
-            _annotation_bounds_for_placement(
-                placement,
-                box_width=label_width,
-                box_height=18.0,
-            )
-        )
+    label_parts, label_bounds = _edge_label_svg(
+        edge_path=edge_path,
+        points=points,
+        options=options,
+        rework_edge=rework_edge,
+        rework_variant=rework_variant,
+        source_kind=source_kind,
+        avoid_bounds=avoid_bounds,
+        canvas_bounds=canvas_bounds,
+        diagnostics=diagnostics,
+    )
+    parts.extend(label_parts)
+    if label_bounds is not None:
+        annotation_bounds.append(label_bounds)
     if edge_path.callout_lines:
         callout_parts, callout_bounds = _edge_callout_svg(
             points=points,
@@ -135,6 +110,7 @@ def _edge_svg(
                 "annotation_kind": "edge_callout",
                 "edge": f"{edge_path.edge[0]}->{edge_path.edge[1]}",
             },
+            options=options,
         )
         parts.extend(callout_parts)
         annotation_bounds.extend(callout_bounds)
@@ -144,6 +120,7 @@ def _edge_svg(
                 points=points,
                 token=str(edge_path.outgoing_token),
                 near_source=True,
+                options=options,
             )
         )
     if edge_path.incoming_token:
@@ -152,10 +129,99 @@ def _edge_svg(
                 points=points,
                 token=str(edge_path.incoming_token),
                 near_source=False,
+                options=options,
             )
         )
     parts.append("</g>")
     return parts, tuple(annotation_bounds)
+
+
+def _edge_label_svg(
+    *,
+    edge_path: Any,
+    points: tuple[LayoutPoint, ...],
+    options: RenderOptions,
+    rework_edge: bool,
+    rework_variant: str,
+    source_kind: str,
+    avoid_bounds: tuple[Any, ...],
+    canvas_bounds: Any | None,
+    diagnostics: list[RenderDiagnostic] | None,
+) -> tuple[list[str], LayoutBounds | None]:
+    if not edge_path.label:
+        return [], None
+
+    label_width = max(28.0, float(len(edge_path.label) * 7.0))
+    placement = _resolve_edge_label_placement(
+        edge_path=edge_path,
+        points=points,
+        rework_edge=rework_edge,
+        rework_variant=rework_variant,
+        source_kind=source_kind,
+        avoid_bounds=avoid_bounds,
+        label_width=label_width,
+        canvas_bounds=canvas_bounds,
+        diagnostics=diagnostics,
+    )
+    annotation_role = options.resolved_theme.role("annotation")
+    label_text = escape(edge_path.label)
+    parts = [
+        f'<rect x="{placement.x - (label_width / 2.0):.1f}" y="{placement.y - 12.0:.1f}" width="{label_width:.1f}" height="18.0" rx="7" fill="{annotation_role.fill}" fill-opacity="0.95" />',
+        f'<text x="{placement.x:.1f}" y="{placement.y + 1.0:.1f}" text-anchor="{placement.anchor}" font-family="Helvetica" font-size="12" fill="{annotation_role.title_text}">{label_text}</text>',
+    ]
+    return parts, _annotation_bounds_for_placement(
+        placement,
+        box_width=label_width,
+        box_height=18.0,
+    )
+
+
+def _resolve_edge_label_placement(
+    *,
+    edge_path: Any,
+    points: tuple[LayoutPoint, ...],
+    rework_edge: bool,
+    rework_variant: str,
+    source_kind: str,
+    avoid_bounds: tuple[Any, ...],
+    label_width: float,
+    canvas_bounds: Any | None,
+    diagnostics: list[RenderDiagnostic] | None,
+) -> _LabelPlacement:
+    if rework_edge:
+        placement = _rework_label_placement(points, rework_variant=rework_variant)
+        return _clamp_placement_to_canvas(
+            placement,
+            box_width=label_width,
+            box_height=18.0,
+            canvas_bounds=canvas_bounds,
+        )
+
+    label_point = getattr(edge_path, "label_point", None)
+    if label_point is not None:
+        return _clamp_placement_to_canvas(
+            _LabelPlacement(x=float(label_point.x_px), y=float(label_point.y_px)),
+            box_width=label_width,
+            box_height=18.0,
+            canvas_bounds=canvas_bounds,
+        )
+
+    return _label_placement(
+        points,
+        avoid_near_source=bool(
+            edge_path.callout_lines and edge_path.callout_near_source
+        ),
+        prefer_near_source=source_kind.lower() == "decision",
+        avoid_bounds=avoid_bounds,
+        box_width=label_width,
+        box_height=18.0,
+        canvas_bounds=canvas_bounds,
+        diagnostics=diagnostics,
+        diagnostic_context={
+            "annotation_kind": "edge_label",
+            "edge": f"{edge_path.edge[0]}->{edge_path.edge[1]}",
+        },
+    )
 
 
 def _label_placement(
@@ -224,6 +290,7 @@ def _label_placement(
 
 def _edge_callout_svg(
     *,
+    options: RenderOptions,
     points: Any,
     lines: tuple[str, ...],
     near_source: bool,
@@ -251,8 +318,9 @@ def _edge_callout_svg(
     )
     x = placement.x - (width / 2.0)
     y = placement.y - 12.0
+    role = options.resolved_theme.role("callout")
     parts = [
-        f'<rect x="{x:.1f}" y="{y:.1f}" width="{width:.1f}" height="{height:.1f}" rx="7" fill="#ffffff" stroke="#666666" stroke-width="1" fill-opacity="0.96" />'
+        f'<rect x="{x:.1f}" y="{y:.1f}" width="{width:.1f}" height="{height:.1f}" rx="7" fill="{role.fill}" stroke="{role.border}" stroke-width="1" fill-opacity="0.96" />'
     ]
     parts.extend(
         _text_lines_svg(
@@ -261,9 +329,10 @@ def _edge_callout_svg(
             lines=lines,
             size_px=10,
             weight="400",
-            fill="#0f172a",
+            fill=role.title_text,
             line_gap_px=14.0,
             anchor="middle",
+            scale=options.resolved_theme.typography_scale,
         )
     )
     return parts, (
@@ -551,15 +620,23 @@ def _annotation_bounds_for_placement(
     )
 
 
-def _edge_token_svg(*, points: Any, token: str, near_source: bool) -> list[str]:
+def _edge_token_svg(
+    *,
+    points: Any,
+    token: str,
+    near_source: bool,
+    options: RenderOptions | None = None,
+) -> list[str]:
+    options = options or RenderOptions(diagram="sppm")
     placement = _edge_token_placement(points, near_source=near_source)
     token_width = max(42.0, float(len(token) * 7.2) + 16.0)
     x = placement.x - (token_width / 2.0)
     y = placement.y - 11.0
+    role = options.resolved_theme.role("token")
     return [
         f'<g data-edge-token="{escape(token)}" data-edge-token-position="{"source" if near_source else "target"}">',
-        f'<rect x="{x:.1f}" y="{y:.1f}" width="{token_width:.1f}" height="22.0" rx="11" fill="#ffffff" stroke="#455A64" stroke-width="1.2" />',
-        f'<text x="{placement.x:.1f}" y="{placement.y + 3.0:.1f}" text-anchor="middle" font-family="Helvetica" font-size="9" font-weight="600" fill="#455A64">{escape(token)}</text>',
+        f'<rect x="{x:.1f}" y="{y:.1f}" width="{token_width:.1f}" height="22.0" rx="11" fill="{role.fill}" stroke="{role.border}" stroke-width="1.2" />',
+        f'<text x="{placement.x:.1f}" y="{placement.y + 3.0:.1f}" text-anchor="middle" font-family="Helvetica" font-size="9" font-weight="600" fill="{role.detail_text}">{escape(token)}</text>',
         "</g>",
     ]
 
@@ -843,15 +920,11 @@ def _queue_triangle_edge_point(
     if cardinalize:
         dx, dy = _cardinal_direction(dx=dx, dy=dy)
     triangle = (
+        LayoutPoint(x_px=float(bounds.x_px), y_px=float(bounds.y_px)),
+        LayoutPoint(x_px=float(bounds.x_px + bounds.width_px), y_px=float(bounds.y_px)),
         LayoutPoint(
-            x_px=float(bounds.x_px), y_px=float(bounds.y_px + bounds.height_px)
-        ),
-        LayoutPoint(
-            x_px=float(bounds.x_px + bounds.width_px),
+            x_px=float(bounds.x_px + (bounds.width_px / 2.0)),
             y_px=float(bounds.y_px + bounds.height_px),
-        ),
-        LayoutPoint(
-            x_px=float(bounds.x_px + (bounds.width_px / 2.0)), y_px=float(bounds.y_px)
         ),
     )
 

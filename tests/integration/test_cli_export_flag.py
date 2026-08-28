@@ -40,6 +40,33 @@ def test_default_path_export_json_emits_canonical_ir_contract() -> None:
     assert "target" in first_edge
 
 
+def test_default_path_export_json_preserves_process_version(tmp_path) -> None:
+    model = tmp_path / "versioned.flo"
+    model.write_text(
+        yaml.safe_dump(
+            {
+                "spec_version": "0.1",
+                "process": {
+                    "id": "versioned_process",
+                    "name": "Versioned Process",
+                    "version": "2026.1",
+                },
+                "steps": [
+                    {"id": "start", "kind": "start", "name": "Start"},
+                    {"id": "end", "kind": "end", "name": "End"},
+                ],
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(cli, ["render", str(model), "--export", "json"])
+
+    assert result.exit_code == 0
+    assert json.loads(result.output)["process"]["version"] == "2026.1"
+
+
 def test_default_path_exports_json_to_file(tmp_path):
     runner = CliRunner()
     out = tmp_path / "linear.json"

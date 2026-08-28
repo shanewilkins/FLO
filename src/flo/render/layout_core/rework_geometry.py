@@ -1,10 +1,10 @@
-"""Shared graph helpers for SPPM rework row inference and edge translation."""
+"""Layout-owned helpers for rework row inference and edge translation."""
 
 from __future__ import annotations
 
 from typing import Iterable
 
-from .layout_core.models import LayoutPoint
+from .models import LayoutPoint
 
 
 def infer_rework_row_ids(

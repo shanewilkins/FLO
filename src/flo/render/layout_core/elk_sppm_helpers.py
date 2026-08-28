@@ -22,7 +22,10 @@ def _sppm_port_id(node_id: str, side: str) -> str:
 
 
 def _root_layout_options(request: ElkLayoutRequest) -> dict[str, str]:
-    options = {"elk.algorithm": "layered", "elk.direction": request.direction}
+    root_direction = (
+        "DOWN" if _wrapped_sppm_rows(request=request) else request.direction
+    )
+    options = {"elk.algorithm": "layered", "elk.direction": root_direction}
     if request.diagram == "sppm":
         options["elk.layered.considerModelOrder.strategy"] = "NODES_AND_EDGES"
         options["elk.layered.crossingMinimization.forceNodeModelOrder"] = "true"
@@ -95,6 +98,12 @@ def _synthetic_sppm_rows(*, request: ElkLayoutRequest) -> bool:
         "__sppm_row_mainline",
         "__sppm_row_rework",
     }.issubset(lane_ids)
+
+
+def _wrapped_sppm_rows(*, request: ElkLayoutRequest) -> bool:
+    return request.diagram == "sppm" and any(
+        lane.id.startswith("__sppm_row_wrap_") for lane in request.lanes
+    )
 
 
 def _node_kind_map(nodes: list[dict[str, Any]]) -> dict[str, str]:

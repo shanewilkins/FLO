@@ -7,7 +7,6 @@ import statistics
 from typing import Any, Callable
 
 from flo.render._diagnostics import RenderDiagnostic, RenderDiagnosticSeverity
-from flo.render._sppm_rework_graph import infer_rework_row_ids, translate_edge_points
 from .elk_contracts import (
     ElkDirection,
     ElkLayoutEdge,
@@ -39,6 +38,8 @@ from .elk_sppm_helpers import (
     _sppm_synthetic_row_lanes,
 )
 from .sppm_strategy import should_emit_sppm_branch_anchors
+from .rework_geometry import infer_rework_row_ids, translate_edge_points
+from .wrap import build_wrap_plan
 from .models import (
     LayoutBounds,
     LayoutLaneFrame,
@@ -66,7 +67,7 @@ def build_swimlane_elk_layout_request(
         diagram="swimlane",
         direction=_elk_direction(render_options),
         lanes=lane_specs(process=process, nodes=nodes),
-        nodes=ordered_nodes(nodes),
+        nodes=ordered_nodes(nodes, options=render_options),
         edges=ordered_edges(
             edges,
             node_kinds=_node_kind_map(nodes),
@@ -99,7 +100,30 @@ def build_sppm_elk_layout_request(
     )
     sppm_nodes = ordered_sppm_nodes(nodes, options=render_options)
     direction = _elk_direction(render_options)
-    if direction == "DOWN":
+    wrap_plan = build_wrap_plan(nodes, render_options, planner="placement")
+    if (
+        direction == "RIGHT"
+        and wrap_plan.chunks
+        and _is_linear_sppm_sequence(nodes=nodes, edges=edge_specs)
+    ):
+        lanes = tuple(
+            ElkLayoutLane(
+                id=f"__sppm_row_wrap_{row_index}",
+                label="",
+                node_ids=tuple(chunk),
+            )
+            for row_index, chunk in enumerate(wrap_plan.chunks)
+        )
+        partition_overrides = {
+            node_id: display_index
+            for chunk in wrap_plan.chunks
+            for display_index, node_id in enumerate(chunk)
+        }
+        edge_specs = _sppm_apply_wrap_boundary_ports(
+            edges=edge_specs,
+            boundary_edges=wrap_plan.boundary_edges,
+        )
+    elif direction == "DOWN":
         lanes = lane_specs(
             process=process,
             nodes=nodes,
@@ -139,6 +163,36 @@ def build_sppm_elk_layout_request(
     )
     validate_elk_request_namespaces(request)
     return request
+
+
+def _sppm_apply_wrap_boundary_ports(
+    *,
+    edges: tuple[ElkLayoutEdge, ...],
+    boundary_edges: set[tuple[str, str]],
+) -> tuple[ElkLayoutEdge, ...]:
+    """Route row-boundary sequence edges through the inter-row corridor."""
+    return tuple(
+        replace(edge, source_port_side="SOUTH", target_port_side="NORTH")
+        if (edge.source_id, edge.target_id) in boundary_edges and not edge.is_rework
+        else edge
+        for edge in edges
+    )
+
+
+def _is_linear_sppm_sequence(
+    *, nodes: list[dict[str, Any]], edges: tuple[ElkLayoutEdge, ...]
+) -> bool:
+    """Return whether wrapping can preserve one unambiguous authored sequence."""
+    node_ids = [str(node.get("id") or "") for node in nodes]
+    if not node_ids or any(not node_id for node_id in node_ids):
+        return False
+    expected_edges = set(zip(node_ids, node_ids[1:]))
+    actual_edges = {(edge.source_id, edge.target_id) for edge in edges}
+    return (
+        len(edges) == len(expected_edges)
+        and actual_edges == expected_edges
+        and not any(edge.is_rework for edge in edges)
+    )
 
 
 def normalize_elk_layout_result(
@@ -223,6 +277,12 @@ def normalize_elk_layout_result(
             node_bounds=node_bounds,
             edge_paths=edge_paths,
         )
+        if _has_sppm_wrap_rows(request=request):
+            root_bounds, lane_frames = _apply_sppm_wrap_rows(
+                request=request,
+                node_bounds=node_bounds,
+                edge_paths=edge_paths,
+            )
 
     return LayoutResult(
         orientation="tb" if request.direction == "DOWN" else "lr",
@@ -234,6 +294,231 @@ def normalize_elk_layout_result(
         ),
         diagnostics=tuple(diagnostics),
     )
+
+
+def _has_sppm_wrap_rows(*, request: ElkLayoutRequest) -> bool:
+    return any(lane.id.startswith("__sppm_row_wrap_") for lane in request.lanes)
+
+
+def _apply_sppm_wrap_rows(
+    *,
+    request: ElkLayoutRequest,
+    node_bounds: dict[str, LayoutBounds],
+    edge_paths: dict[tuple[str, str], RoutedEdgePath],
+) -> tuple[LayoutBounds, dict[str, LayoutLaneFrame]]:
+    """Place wrapped SPPM rows and route cross-row edges through clear corridors."""
+    margin_px = 12.0
+    row_index_by_node, lane_frames = _place_sppm_wrap_rows(
+        request=request,
+        node_bounds=node_bounds,
+        margin_px=margin_px,
+        horizontal_gap_px=56.0,
+        vertical_gap_px=84.0,
+    )
+    _route_sppm_wrap_edges(
+        request=request,
+        node_bounds=node_bounds,
+        edge_paths=edge_paths,
+        row_index_by_node=row_index_by_node,
+    )
+    return (
+        _wrapped_layout_bounds(
+            node_bounds=node_bounds,
+            edge_paths=edge_paths,
+            margin_px=margin_px,
+        ),
+        lane_frames,
+    )
+
+
+def _place_sppm_wrap_rows(
+    *,
+    request: ElkLayoutRequest,
+    node_bounds: dict[str, LayoutBounds],
+    margin_px: float,
+    horizontal_gap_px: float,
+    vertical_gap_px: float,
+) -> tuple[dict[str, int], dict[str, LayoutLaneFrame]]:
+    y_px = margin_px
+    row_index_by_node: dict[str, int] = {}
+    lane_frames: dict[str, LayoutLaneFrame] = {}
+
+    for row_index, lane in enumerate(request.lanes):
+        row_node_ids = tuple(
+            node_id for node_id in lane.node_ids if node_id in node_bounds
+        )
+        if not row_node_ids:
+            continue
+        row_height = max(node_bounds[node_id].height_px for node_id in row_node_ids)
+        x_px = margin_px
+        for node_id in row_node_ids:
+            bounds = node_bounds[node_id]
+            node_bounds[node_id] = LayoutBounds(
+                x_px=x_px,
+                y_px=y_px + ((row_height - bounds.height_px) / 2.0),
+                width_px=bounds.width_px,
+                height_px=bounds.height_px,
+            )
+            row_index_by_node[node_id] = row_index
+            x_px += bounds.width_px + horizontal_gap_px
+        row_width = x_px - horizontal_gap_px + margin_px
+        lane_frames[lane.id] = LayoutLaneFrame(
+            id=lane.id,
+            label=lane.label,
+            bounds=LayoutBounds(
+                x_px=0.0,
+                y_px=max(0.0, y_px - margin_px),
+                width_px=row_width,
+                height_px=row_height + (margin_px * 2.0),
+            ),
+            node_ids=row_node_ids,
+        )
+        y_px += row_height + vertical_gap_px
+    return row_index_by_node, lane_frames
+
+
+def _route_sppm_wrap_edges(
+    *,
+    request: ElkLayoutRequest,
+    node_bounds: dict[str, LayoutBounds],
+    edge_paths: dict[tuple[str, str], RoutedEdgePath],
+    row_index_by_node: dict[str, int],
+) -> None:
+    edge_by_key = {(edge.source_id, edge.target_id): edge for edge in request.edges}
+    node_kind_by_id = {node.id: node.kind for node in request.nodes}
+    for edge_key in sorted(edge_by_key):
+        source_id, target_id = edge_key
+        source_bounds = node_bounds.get(source_id)
+        target_bounds = node_bounds.get(target_id)
+        if source_bounds is None or target_bounds is None:
+            continue
+        edge_spec = edge_by_key[edge_key]
+        points, source_side, target_side = _wrapped_sppm_edge_points(
+            source_bounds=source_bounds,
+            target_bounds=target_bounds,
+            source_kind=node_kind_by_id.get(source_id, "task"),
+            target_kind=node_kind_by_id.get(target_id, "task"),
+            source_row=row_index_by_node.get(source_id),
+            target_row=row_index_by_node.get(target_id),
+            is_rework=edge_spec.is_rework,
+        )
+        edge_paths[edge_key] = RoutedEdgePath(
+            edge=edge_key,
+            points=points,
+            label=edge_spec.label,
+            label_point=None,
+            source_port_side=source_side,
+            target_port_side=target_side,
+            is_rework=edge_spec.is_rework,
+            rework_variant=edge_spec.rework_variant,
+            callout_lines=edge_spec.callout_lines,
+            callout_near_source=edge_spec.callout_near_source,
+            outgoing_token=edge_spec.outgoing_token,
+            incoming_token=edge_spec.incoming_token,
+        )
+
+
+def _wrapped_layout_bounds(
+    *,
+    node_bounds: dict[str, LayoutBounds],
+    edge_paths: dict[tuple[str, str], RoutedEdgePath],
+    margin_px: float,
+) -> LayoutBounds:
+    max_x = max(
+        (bounds.x_px + bounds.width_px for bounds in node_bounds.values()),
+        default=margin_px,
+    )
+    max_y = max(
+        (bounds.y_px + bounds.height_px for bounds in node_bounds.values()),
+        default=margin_px,
+    )
+    for path in edge_paths.values():
+        for point in path.points:
+            max_x = max(max_x, point.x_px)
+            max_y = max(max_y, point.y_px)
+    return LayoutBounds(
+        x_px=0.0,
+        y_px=0.0,
+        width_px=max_x + margin_px,
+        height_px=max_y + margin_px,
+    )
+
+
+def _wrapped_sppm_edge_points(
+    *,
+    source_bounds: LayoutBounds,
+    target_bounds: LayoutBounds,
+    source_kind: str,
+    target_kind: str,
+    source_row: int | None,
+    target_row: int | None,
+    is_rework: bool,
+) -> tuple[tuple[LayoutPoint, ...], str, str]:
+    if source_row == target_row and source_bounds.x_px < target_bounds.x_px:
+        source = _wrapped_sppm_anchor(
+            bounds=source_bounds,
+            kind=source_kind,
+            side="EAST",
+        )
+        target = _wrapped_sppm_anchor(
+            bounds=target_bounds,
+            kind=target_kind,
+            side="WEST",
+        )
+        mid_x = (source.x_px + target.x_px) / 2.0
+        return (
+            (
+                source,
+                LayoutPoint(x_px=mid_x, y_px=source.y_px),
+                LayoutPoint(x_px=mid_x, y_px=target.y_px),
+                target,
+            ),
+            "EAST",
+            "WEST",
+        )
+
+    source = _wrapped_sppm_anchor(
+        bounds=source_bounds,
+        kind=source_kind,
+        side="SOUTH",
+    )
+    target = _wrapped_sppm_anchor(
+        bounds=target_bounds,
+        kind=target_kind,
+        side="NORTH",
+    )
+    if source_row is not None and target_row is not None and target_row > source_row:
+        corridor_y = (source.y_px + target.y_px) / 2.0
+    else:
+        corridor_y = max(source.y_px, target.y_px) + (56.0 if is_rework else 40.0)
+    return (
+        (
+            source,
+            LayoutPoint(x_px=source.x_px, y_px=corridor_y),
+            LayoutPoint(x_px=target.x_px, y_px=corridor_y),
+            target,
+        ),
+        "SOUTH",
+        "NORTH",
+    )
+
+
+def _wrapped_sppm_anchor(*, bounds: LayoutBounds, kind: str, side: str) -> LayoutPoint:
+    center_x = bounds.x_px + (bounds.width_px / 2.0)
+    center_y = bounds.y_px + (bounds.height_px / 2.0)
+    if side == "NORTH":
+        return LayoutPoint(x_px=center_x, y_px=bounds.y_px)
+    if side == "SOUTH":
+        return LayoutPoint(x_px=center_x, y_px=bounds.y_px + bounds.height_px)
+    if side == "EAST":
+        x_px = bounds.x_px + bounds.width_px
+        if kind == "queue":
+            x_px = bounds.x_px + (bounds.width_px * 0.75)
+        return LayoutPoint(x_px=x_px, y_px=center_y)
+    x_px = bounds.x_px
+    if kind == "queue":
+        x_px = bounds.x_px + (bounds.width_px * 0.25)
+    return LayoutPoint(x_px=x_px, y_px=center_y)
 
 
 def _balance_sppm_queue_task_gaps(

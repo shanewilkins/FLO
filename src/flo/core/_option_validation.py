@@ -8,7 +8,7 @@ any invalid combination so the caller gets a clean, actionable message.
 from __future__ import annotations
 
 from flo.core.render_option_schema import render_option_keys
-from flo.render._publication import resolve_publication_page_format
+from flo.render import resolve_publication_page_format
 from flo.render.options import parse_dimension
 from flo.services.errors import CLIError, EXIT_USAGE
 

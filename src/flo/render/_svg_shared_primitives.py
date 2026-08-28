@@ -11,23 +11,25 @@ from .layout_core.models import LayoutBounds
 from .options import RenderOptions
 
 
-def standard_svg_defs() -> list[str]:
+def standard_svg_defs(options: RenderOptions | None = None) -> list[str]:
     """Return the shared arrow marker definitions for direct SVG renderers."""
+    resolved = options or RenderOptions()
     return [
         "<defs>",
         '<marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">',
-        '<path d="M0,0 L8,3 L0,6 z" fill="#475569" />',
+        f'<path d="M0,0 L8,3 L0,6 z" fill="{resolved.resolved_theme.role("connector").border}" />',
         "</marker>",
         "</defs>",
     ]
 
 
-def standard_lane_svg(lane: Any) -> list[str]:
+def standard_lane_svg(lane: Any, options: RenderOptions | None = None) -> list[str]:
     """Render a lane frame using the shared direct-SVG style."""
+    role = (options or RenderOptions()).resolved_theme.role("lane")
     return [
         f'<g data-lane-id="{escape(str(lane.id))}">',
-        f'<rect x="{lane.bounds.x_px:.1f}" y="{lane.bounds.y_px:.1f}" width="{lane.bounds.width_px:.1f}" height="{lane.bounds.height_px:.1f}" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />',
-        f'<text x="{lane.bounds.x_px + 8.0:.1f}" y="{lane.bounds.y_px - 6.0:.1f}" font-family="Helvetica" font-size="12" font-weight="700" fill="#334155">{escape(str(lane.label))}</text>',
+        f'<rect x="{lane.bounds.x_px:.1f}" y="{lane.bounds.y_px:.1f}" width="{lane.bounds.width_px:.1f}" height="{lane.bounds.height_px:.1f}" rx="18" fill="{role.fill}" stroke="{role.border}" stroke-width="1.5" />',
+        f'<text x="{lane.bounds.x_px + 8.0:.1f}" y="{lane.bounds.y_px - 6.0:.1f}" font-family="Helvetica" font-size="12" font-weight="700" fill="{role.title_text}">{escape(str(lane.label))}</text>',
         "</g>",
     ]
 
@@ -65,6 +67,7 @@ def standard_edge_svg(
     canvas_bounds: LayoutBounds,
     diagnostics: list[Any],
     render_as_rework_style: bool = False,
+    options: RenderOptions | None = None,
 ) -> tuple[list[str], tuple[LayoutBounds, ...]]:
     """Render one edge using the shared SPPM-developed edge primitive."""
     return _edge_svg(
@@ -77,6 +80,7 @@ def standard_edge_svg(
         canvas_bounds=canvas_bounds,
         diagnostics=diagnostics,
         render_as_rework_style=render_as_rework_style,
+        options=options,
     )
 
 

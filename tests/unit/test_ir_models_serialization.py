@@ -26,6 +26,16 @@ def test_ir_to_from_dict_and_json(tmp_path: Path, ir_factory, node_factory):
     assert any(n.id == "n1" for n in loaded.nodes)
 
 
+def test_process_version_roundtrips_through_internal_shape(node_factory) -> None:
+    ir = IR(name="versioned", nodes=[node_factory("n1")], process_version="2026.1")
+
+    data = ir_to_internal_dict(ir)
+    loaded = ir_from_internal_dict(data)
+
+    assert data["process_version"] == "2026.1"
+    assert loaded.process_version == "2026.1"
+
+
 def test_ir_edge_optional_fields_roundtrip(tmp_path: Path):
     ir = IR(
         name="edges",

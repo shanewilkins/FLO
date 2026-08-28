@@ -14,8 +14,8 @@ from pathlib import Path
 from flo.services.errors import CLIError, EXIT_USAGE
 
 
-def merge_diagrams_toml_sppm_defaults(options: dict | None) -> dict:
-    """Merge diagrams.toml SPPM config into *options*, returning a new dict.
+def merge_diagrams_toml_render_defaults(options: dict | None) -> dict:
+    """Merge shared and legacy diagrams.toml config into a new options dict.
 
     CLI-provided values always take precedence over file-based defaults.
     """
@@ -29,12 +29,12 @@ def merge_diagrams_toml_sppm_defaults(options: dict | None) -> dict:
     except (tomllib.TOMLDecodeError, OSError) as exc:
         raise CLIError(f"Failed to read diagrams.toml: {exc}", code=EXIT_USAGE)
 
+    resolved: dict[str, object] = dict(opts)
     sppm_section = data.get("sppm")
     if not isinstance(sppm_section, dict):
-        return opts
-
-    resolved: dict[str, object] = dict(opts)
+        sppm_section = {}
     config_options = _flatten_sppm_config_options(sppm_section)
+    config_options.update(_flatten_shared_render_config_options(data))
 
     profile_name = (
         str(
@@ -57,7 +57,56 @@ def merge_diagrams_toml_sppm_defaults(options: dict | None) -> dict:
         if key not in resolved:
             resolved[key] = value
 
+    config_keys = sorted(key for key in config_options if key not in opts)
+    if config_keys:
+        resolved["__diagrams_config_keys__"] = tuple(config_keys)
+
     return resolved
+
+
+def merge_diagrams_toml_sppm_defaults(options: dict | None) -> dict:
+    """Compatibility alias for the pre-shared-theme config entry point."""
+    return merge_diagrams_toml_render_defaults(options)
+
+
+def _flatten_shared_render_config_options(data: dict) -> dict[str, object]:
+    """Flatten central render defaults and the shared theme registry."""
+    mapped: dict[str, object] = {}
+    themes = data.get("themes")
+    if isinstance(themes, dict):
+        mapped["themes"] = themes
+
+    render = data.get("render")
+    if not isinstance(render, dict):
+        return mapped
+    _apply_shared_style_options(mapped, render)
+    style = render.get("style")
+    if isinstance(style, dict):
+        _apply_shared_style_options(mapped, style)
+    return mapped
+
+
+def _apply_shared_style_options(
+    mapped: dict[str, object], source: dict[str, object]
+) -> None:
+    for key in ("theme", "background_color", "font_family", "typography_scale"):
+        if key in source:
+            mapped[key] = source[key]
+    canvas = source.get("canvas")
+    if isinstance(canvas, dict) and "background" in canvas:
+        mapped["background_color"] = canvas["background"]
+    typography = source.get("typography")
+    if isinstance(typography, dict):
+        _apply_typography_options(mapped, typography)
+
+
+def _apply_typography_options(
+    mapped: dict[str, object], typography: dict[str, object]
+) -> None:
+    if "font_family" in typography:
+        mapped["font_family"] = typography["font_family"]
+    if "scale" in typography:
+        mapped["typography_scale"] = typography["scale"]
 
 
 def _resolve_diagrams_toml_path(options: dict) -> Path | None:

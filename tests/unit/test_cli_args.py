@@ -205,6 +205,30 @@ def test_parse_args_accepts_custom_sppm_theme_name(services):
     assert options["sppm_theme"] == "sunrise"
 
 
+def test_parse_args_accepts_shared_theme_and_style_overrides(services):
+    path, command, options, _, _ = parse_args(
+        [
+            "file.flo",
+            "--theme",
+            "white_belt",
+            "--background-color",
+            "#F4F0FF",
+            "--font-family",
+            "Source Sans 3,Arial,sans-serif",
+            "--typography-scale",
+            "1.1",
+        ],
+        services,
+    )
+
+    assert path == "file.flo"
+    assert command == "render"
+    assert options["theme"] == "white_belt"
+    assert options["background_color"] == "#F4F0FF"
+    assert options["font_family"] == "Source Sans 3,Arial,sans-serif"
+    assert options["typography_scale"] == 1.1
+
+
 def _assert_expected_options(
     options: dict[str, object], expected: dict[str, object]
 ) -> None:

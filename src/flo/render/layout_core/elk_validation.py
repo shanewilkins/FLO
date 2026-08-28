@@ -55,6 +55,9 @@ def _synthetic_lane_ids(request: ElkLayoutRequest) -> set[str]:
     node_lane_by_id = {node.id: node.lane_id for node in request.nodes}
     synthetic: set[str] = set()
     for lane in request.lanes:
+        if lane.id.startswith("__sppm_row_wrap_"):
+            synthetic.add(lane.id)
+            continue
         if lane.id not in {"unassigned", "unassigned_start", "unassigned_end"}:
             continue
         if lane.node_ids and all(

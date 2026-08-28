@@ -1,4 +1,4 @@
-"""Orientation-aware wrap planning shared across DOT renderers.
+"""Orientation-aware wrap planning owned by the layout layer.
 
 API convention (v0.1): expose one public planner entrypoint,
 `build_wrap_plan(...)`, and keep strategy implementations private.
@@ -12,20 +12,16 @@ from dataclasses import dataclass
 from statistics import fmean
 from typing import Any, Literal
 
-from .layout_core import (
-    NodeMeasure,
-    PlacementConstraints,
-    PlacementPlan,
-    build_placement_plan,
-)
-from .options import RenderOptions
-from ._sppm_metadata_schema import (
+from .models import NodeMeasure, PlacementConstraints, PlacementPlan
+from .placement import build_placement_plan
+from ..options import RenderOptions
+from .._sppm_metadata_schema import (
     get_metadata_description,
     get_metadata_cycle_time,
     get_metadata_wait_time_minutes,
     get_metadata_crossover_time,
 )
-from ._sppm_text import (
+from .._sppm_text import (
     apply_density_filter,
     abbreviate_workers,
     format_text_field,
@@ -480,9 +476,9 @@ def _estimate_sppm_node_width_px(
     )
     co_spec = get_metadata_crossover_time(metadata)
     co_line = _format_time_width_field_from_spec(
-        prefix="CO",
+        prefix="C/O",
         spec=co_spec,
-        suffix=" crossover",
+        suffix="",
         options=options,
         require_positive=True,
     )

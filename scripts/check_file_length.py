@@ -26,6 +26,11 @@ EXCLUDED_FILES = {
 
 
 def _normalized(path: pathlib.Path) -> str:
+    repo_root = pathlib.Path(__file__).resolve().parents[1]
+    try:
+        path = path.resolve().relative_to(repo_root)
+    except ValueError:
+        pass
     return path.as_posix().lstrip("./")
 
 

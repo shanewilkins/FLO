@@ -28,3 +28,6 @@ Current ADRs:
 - `language_primitive_taxonomy.md`
 - `render_stack_elk_svg_typst.md`
 - `governance_v2.md`
+- `process_variants.md` (proposed)
+- `observed_event_mining.md`
+- `package_dependency_direction.md`

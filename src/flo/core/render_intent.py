@@ -36,6 +36,12 @@ class RenderIntent:
     publication_header_enabled: Optional[bool] = None
     publication_footer_enabled: Optional[bool] = None
 
+    # Shared presentation theme
+    theme: Optional[str] = None
+    background_color: Optional[str] = None
+    font_family: Any = None
+    typography_scale: Optional[float] = None
+
     # Layout config
     layout_wrap: Optional[str] = None
     layout_max_width: Optional[int] = None
@@ -161,19 +167,18 @@ class RenderIntentResolver:
         if not render_metadata or not isinstance(render_metadata, dict):
             return {}
 
-        # Try the specific view first
+        intent: dict[str, Any] = {}
+        defaults = render_metadata.get("defaults")
+        if defaults and isinstance(defaults, dict):
+            intent.update(cls._flatten_view_structure(defaults))
+
+        # A named view overrides process render defaults field by field.
         views = render_metadata.get("views", {})
         if isinstance(views, dict):
             view = views.get(view_name)
             if view and isinstance(view, dict):
-                return cls._flatten_view_structure(view)
-
-        # Fall back to defaults if specific view not found
-        defaults = render_metadata.get("defaults")
-        if defaults and isinstance(defaults, dict):
-            return cls._flatten_view_structure(defaults)
-
-        return {}
+                intent.update(cls._flatten_view_structure(view))
+        return intent
 
     @classmethod
     def _extract_cli_intent(
@@ -196,6 +201,10 @@ class RenderIntentResolver:
             )
         if "layout_max_width_px" in cli_overrides:
             intent["layout_max_width"] = cli_overrides.get("layout_max_width_px")
+
+        for key in ("theme", "background_color", "font_family", "typography_scale"):
+            if key in cli_overrides:
+                intent[key] = cli_overrides.get(key)
 
         # Layout config
         if "layout_wrap" in cli_overrides:
@@ -225,6 +234,30 @@ class RenderIntentResolver:
         # Top-level diagram
         if "diagram" in view:
             intent["diagram"] = view.get("diagram")
+        for key in ("theme", "background_color", "font_family", "typography_scale"):
+            if key in view:
+                intent[key] = view.get(key)
+
+        canvas = view.get("canvas")
+        if isinstance(canvas, dict) and "background" in canvas:
+            intent["background_color"] = canvas.get("background")
+        typography = view.get("typography")
+        if isinstance(typography, dict):
+            if "font_family" in typography:
+                intent["font_family"] = typography.get("font_family")
+            if "scale" in typography:
+                intent["typography_scale"] = typography.get("scale")
+        style = view.get("style")
+        if isinstance(style, dict):
+            canvas = style.get("canvas")
+            if isinstance(canvas, dict) and "background" in canvas:
+                intent["background_color"] = canvas.get("background")
+            typography = style.get("typography")
+            if isinstance(typography, dict):
+                if "font_family" in typography:
+                    intent["font_family"] = typography.get("font_family")
+                if "scale" in typography:
+                    intent["typography_scale"] = typography.get("scale")
 
         # Configuration sections
         intent.update(cls._extract_publication_config(view.get("publication")))
@@ -340,6 +373,10 @@ class RenderIntentResolver:
             publication_margins_left=resolved.get("publication_margins_left"),
             publication_header_enabled=resolved.get("publication_header_enabled"),
             publication_footer_enabled=resolved.get("publication_footer_enabled"),
+            theme=resolved.get("theme"),
+            background_color=resolved.get("background_color"),
+            font_family=resolved.get("font_family"),
+            typography_scale=resolved.get("typography_scale"),
             layout_wrap=resolved.get("layout_wrap"),
             layout_max_width=resolved.get("layout_max_width"),
             layout_target_columns=resolved.get("layout_target_columns"),

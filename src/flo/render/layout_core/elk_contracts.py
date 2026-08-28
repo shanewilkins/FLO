@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from flo.render._sppm_rework_semantics import SppmReworkVariant
+from .rework_semantics import ReworkRouteVariant
 
 ElkDirection = Literal["RIGHT", "DOWN"]
 
@@ -41,7 +41,7 @@ class ElkLayoutEdge:
     target_id: str
     label: str | None = None
     is_rework: bool = False
-    rework_variant: SppmReworkVariant | None = None
+    rework_variant: ReworkRouteVariant | None = None
     callout_lines: tuple[str, ...] = ()
     callout_near_source: bool = False
     outgoing_token: str | None = None

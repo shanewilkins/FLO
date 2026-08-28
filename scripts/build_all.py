@@ -218,12 +218,11 @@ def _extra_render_variants_for_example(
     if example_file.stem.lower() == "washnfold":
         return [
             (
-                "_sppm_wrap800",
+                "_white_belt",
                 {
                     "diagram": "sppm",
-                    "orientation": "lr",
-                    "layout_wrap": "auto",
-                    "layout_max_width_px": "800",
+                    "sppm_output_profile": "book",
+                    "layout_target_columns": "4",
                 },
             ),
         ]

@@ -50,6 +50,12 @@ def _validate_process(adapter: dict[str, Any]) -> None:
     if not isinstance(process_name, str) or not process_name.strip():
         raise ValueError("process.name must be a non-empty string")
 
+    process_version = process_raw.get("version")
+    if process_version is not None and (
+        not isinstance(process_version, (int, str)) or isinstance(process_version, bool)
+    ):
+        raise ValueError("process.version must be an integer or string when provided")
+
 
 def _validate_steps(adapter: dict[str, Any]) -> None:
     if "nodes" in adapter:
@@ -94,6 +100,16 @@ def resolve_process_name(adapter: dict[str, Any]) -> str:
     return str(
         process.get("id") or process.get("name") or adapter.get("name") or "unnamed"
     )
+
+
+def resolve_process_version(adapter: dict[str, Any]) -> int | str | None:
+    """Resolve the authored process version without coercing its scalar type."""
+    process_raw = adapter.get("process")
+    process: dict[str, Any] = process_raw if isinstance(process_raw, dict) else {}
+    version = process.get("version")
+    if isinstance(version, (int, str)) and not isinstance(version, bool):
+        return version
+    return None
 
 
 def resolve_process_metadata(adapter: dict[str, Any]) -> dict[str, Any] | None:

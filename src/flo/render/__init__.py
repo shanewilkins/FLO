@@ -7,7 +7,9 @@ from typing import Any
 
 from ._artifact import RenderArtifact
 from ._backend_selector import render_with_selected_backend
+from ._publication import resolve_publication_page_format
 from .options import RenderOptions
+from .themes import BUILTIN_THEMES, RenderTheme, ThemeRole
 
 
 def render_artifact(
@@ -48,4 +50,8 @@ __all__ = [
     "render_artifact_and_contract",
     "RenderArtifact",
     "RenderOptions",
+    "RenderTheme",
+    "ThemeRole",
+    "BUILTIN_THEMES",
+    "resolve_publication_page_format",
 ]

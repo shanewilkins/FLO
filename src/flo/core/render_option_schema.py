@@ -91,6 +91,27 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
         "Color theme for SPPM diagrams (built-in or config-defined)",
     ),
     RenderOptionSpec(
+        "theme",
+        "--theme",
+        "Shared render theme for maintained diagram types",
+    ),
+    RenderOptionSpec(
+        "background_color",
+        "--background-color",
+        "Override the resolved canvas background color",
+    ),
+    RenderOptionSpec(
+        "font_family",
+        "--font-family",
+        "Override the ordered SVG font fallback list (comma-separated)",
+    ),
+    RenderOptionSpec(
+        "typography_scale",
+        "--typography-scale",
+        "Scale renderer-owned text from 0.75 through 1.5",
+        value_type=float,
+    ),
+    RenderOptionSpec(
         "layout_wrap",
         "--layout-wrap",
         "Shared autoformat wrapping mode (orientation-aware)",

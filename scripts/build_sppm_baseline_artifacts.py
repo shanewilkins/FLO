@@ -67,9 +67,7 @@ def main() -> int:
     for case in cases:
         _build_case(case=case, outdir=outdir, debug_dir=debug_dir)
 
-    print(
-        f"Built {len(cases)} SPPM baseline cases into {outdir.relative_to(REPO_ROOT)}"
-    )
+    print(f"Built {len(cases)} SPPM baseline cases into {_display_path(outdir)}")
     return 0
 
 
@@ -122,6 +120,8 @@ def _build_case(
     *, case: dict[str, Any], outdir: Path, debug_dir: Path | None = None
 ) -> None:
     from flo.adapters import parse_adapter
+    from flo.compiler import compile_adapter
+    from flo.compiler.analysis import analyze_process_timing
     from flo.render._svg_sppm import render_sppm_svg_artifact_from_layout
     from flo.render.layout_core import (
         build_sppm_elk_layout_request,
@@ -144,6 +144,11 @@ def _build_case(
     model = parse_adapter(
         source_path.read_text(encoding="utf-8"), source_path=str(source_path)
     )
+    timing_analysis = (
+        analyze_process_timing(compile_adapter(model))
+        if model.get("spec_version") == "0.1"
+        else None
+    )
     request = build_sppm_elk_layout_request(model, options=options)
     request_payload = serialize_elk_layout_request(request)
     response_payload = run_elkjs_layout(request_payload)
@@ -154,6 +159,7 @@ def _build_case(
         options=options,
         request=request,
         result=normalized_layout,
+        timing_analysis=timing_analysis,
     )
     case_dir = outdir / case_id
     case_dir.mkdir(parents=True, exist_ok=True)

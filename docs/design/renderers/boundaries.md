@@ -12,7 +12,17 @@ future renderer work to SPPM-only semantics.
 ### Backend-neutral renderer core
 
 - `src/flo/render/_publication.py`
-  Renderer-independent publication contracts and page/band model.
+- `src/flo/render/_artifact.py`
+- `src/flo/render/_diagnostics.py`
+- `src/flo/render/capability_matrix.py`
+- `src/flo/render/themes.py`
+- the registered contract, model, placement, routing, and geometry helpers in
+  `src/flo/render/layout_core/`
+
+These modules own renderer-independent artifact, diagnostic, publication,
+theme, capability, and layout contracts. The executable registration lives in
+`tests/policy/test_renderer_architecture_boundaries.py`; adding a new shared
+module requires adding it to that gate in the same change.
 
 Rule: backend-neutral modules must not import SVG or SPPM renderer modules.
 

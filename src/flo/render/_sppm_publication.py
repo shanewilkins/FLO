@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from flo.compiler.analysis import ProcessTimingAnalysis, analyze_process_timing
+from flo.compiler.ir.models import IR
+
 from ._process_header import extract_process_header_context
 from ._publication import (
     PublicationBandContent,
@@ -32,6 +35,7 @@ def build_sppm_publication_plan(
     nodes: list[dict[str, Any]],
     edges: list[dict[str, Any]],
     projection: SppmProjectionContext | None = None,
+    timing_analysis: ProcessTimingAnalysis | None = None,
 ) -> PublicationPlan:
     """Build a renderer-independent single-page publication plan for SPPM output."""
     context = extract_process_header_context(process)
@@ -56,7 +60,18 @@ def build_sppm_publication_plan(
             diagnostics=diagnostics,
         )
     footer_content = (
-        _build_sppm_footer_content(context=context, options=options, nodes=nodes)
+        _build_sppm_footer_content(
+            context=context,
+            options=options,
+            nodes=nodes,
+            timing_analysis=(
+                timing_analysis
+                if timing_analysis is not None
+                else analyze_process_timing(process)
+                if isinstance(process, IR)
+                else None
+            ),
+        )
         if show_footer
         else None
     )

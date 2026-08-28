@@ -3,6 +3,7 @@
 import pytest
 
 from flo.core.render_intent import RenderIntent, RenderIntentResolver
+from flo.core import _merge_view_intent_options
 
 
 class TestRenderIntent:
@@ -624,3 +625,63 @@ class TestRenderIntentResolverEdgeCases:
         )
         assert intent.diagram == "sppm"
         # No exception, unknown fields safely ignored
+
+
+def test_shared_theme_intent_merges_defaults_view_and_cli_field_by_field():
+    metadata = {
+        "defaults": {
+            "theme": "book_house",
+            "style": {
+                "canvas": {"background": "#FFFDF8"},
+                "typography": {
+                    "font_family": ["Avenir Next", "Arial"],
+                    "scale": 1.05,
+                },
+            },
+        },
+        "views": {
+            "print": {
+                "theme": "print",
+                "style": {"canvas": {"background": "#FFFFFF"}},
+            }
+        },
+    }
+
+    intent = RenderIntentResolver.resolve(
+        render_metadata=metadata,
+        cli_overrides={"typography_scale": 1.1},
+        view_name="print",
+    )
+
+    assert intent.theme == "print"
+    assert intent.background_color == "#FFFFFF"
+    assert intent.font_family == ["Avenir Next", "Arial"]
+    assert intent.typography_scale == 1.1
+
+
+def test_diagrams_config_sits_below_named_view_and_explicit_cli() -> None:
+    merged = _merge_view_intent_options(
+        render_metadata={
+            "defaults": {"theme": "source_default"},
+            "views": {
+                "book": {
+                    "theme": "source_view",
+                    "style": {
+                        "canvas": {"background": "#EEEEEE"},
+                        "typography": {"scale": 1.05},
+                    },
+                }
+            },
+        },
+        options={
+            "view": "book",
+            "theme": "config_theme",
+            "background_color": "#DDDDDD",
+            "typography_scale": 1.1,
+            "__diagrams_config_keys__": ("theme", "background_color"),
+        },
+    )
+
+    assert merged["theme"] == "source_view"
+    assert merged["background_color"] == "#EEEEEE"
+    assert merged["typography_scale"] == 1.1

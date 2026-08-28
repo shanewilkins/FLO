@@ -123,10 +123,37 @@
           "type": "string",
           "enum": ["sppm","swimlane","spaghetti"]
         },
+        "theme": { "type": "string", "minLength": 1 },
+        "style": { "$ref": "#/definitions/render_style_config" },
         "publication": { "$ref": "#/definitions/publication_config" },
         "layout": { "$ref": "#/definitions/layout_config" },
         "sppm": { "$ref": "#/definitions/sppm_config" },
         "spaghetti": { "$ref": "#/definitions/spaghetti_config" }
+      },
+      "additionalProperties": false
+    },
+    "render_style_config": {
+      "type": "object",
+      "properties": {
+        "canvas": {
+          "type": "object",
+          "properties": {
+            "background": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        "typography": {
+          "type": "object",
+          "properties": {
+            "font_family": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "scale": { "type": "number", "minimum": 0.75, "maximum": 1.5 }
+          },
+          "additionalProperties": false
+        }
       },
       "additionalProperties": false
     },
@@ -211,4 +238,3 @@
   },
   "additionalProperties": false
 }
-

@@ -7,6 +7,26 @@ on:
     branches: [ master ]
 
 jobs:
+  package-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+
+      - name: Build and smoke-test installed wheel imports
+        run: |
+          python -m pip install uv
+          uv build --wheel
+          python -m venv .tmp/ci-wheel-smoke
+          .tmp/ci-wheel-smoke/bin/python -m pip install dist/*.whl
+          .tmp/ci-wheel-smoke/bin/python scripts/smoke_installed_imports.py
+          .tmp/ci-wheel-smoke/bin/flo --help
+
   sppm-determinism:
     runs-on: ubuntu-latest
     steps:
@@ -82,4 +102,3 @@ jobs:
 
       - name: Run test suite with coverage
         run: uv run pytest --cov=src/flo --cov-report=term-missing --cov-fail-under=90
-

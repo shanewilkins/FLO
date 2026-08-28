@@ -5,6 +5,7 @@ from __future__ import annotations
 from html import escape
 from typing import Any
 
+from flo.compiler.analysis import ProcessTimingAnalysis
 from flo.services.errors import RenderError
 
 from ._artifact import RenderArtifact
@@ -27,6 +28,7 @@ from ._svg_shared_primitives import (
     standard_svg_defs,
 )
 from ._svg_sppm_rows import _display_canvas_bounds
+from ._svg_theme import apply_svg_typography
 from ._svg_sppm_rows import _enforce_sppm_row_alignment
 from ._svg_sppm_rows import _sppm_row_ids
 from ._svg_sppm_rows import rework_alignment_diagnostics
@@ -78,6 +80,7 @@ def render_sppm_svg_artifact_from_layout(
     options: RenderOptions,
     request: Any,
     result: Any,
+    timing_analysis: ProcessTimingAnalysis | None = None,
 ) -> tuple[RenderArtifact, None]:
     """Render SPPM SVG using a precomputed ELK request/result pair."""
     display_node_bounds, display_edge_paths = _enforce_sppm_row_alignment(
@@ -109,6 +112,7 @@ def render_sppm_svg_artifact_from_layout(
         process=process,
         options=options,
         request=request,
+        timing_analysis=timing_analysis,
     )
     publication_page = publication_plan.primary_series().pages[0]
     header_band = publication_page.band("header")
@@ -135,9 +139,9 @@ def render_sppm_svg_artifact_from_layout(
             f'data-sppm-publication-page-id="{escape(publication_page.page_id)}"'
             ">"
         ),
-        '<rect width="100%" height="100%" fill="#fffdf8" />',
+        f'<rect width="100%" height="100%" fill="{options.resolved_theme.canvas_background}" />',
     ]
-    parts[1:1] = standard_svg_defs()
+    parts[1:1] = standard_svg_defs(options)
 
     parts.extend(
         _publication_band_svg(
@@ -145,6 +149,7 @@ def render_sppm_svg_artifact_from_layout(
             x=_PADDING,
             y=_PADDING,
             width=width - (_PADDING * 2.0),
+            options=options,
         )
     )
 
@@ -154,7 +159,7 @@ def render_sppm_svg_artifact_from_layout(
         lane for lane in result.lanes if not _is_synthetic_sppm_lane(lane.id)
     )
     for lane in visible_lanes:
-        parts.extend(standard_lane_svg(lane))
+        parts.extend(standard_lane_svg(lane, options))
 
     avoid_bounds = tuple(display_node_bounds.values()) + _lane_header_avoid_bounds(
         visible_lanes
@@ -183,6 +188,7 @@ def render_sppm_svg_artifact_from_layout(
             render_as_rework_style=(
                 source_id in rework_ids and target_id in rework_ids
             ),
+            options=options,
         )
         parts.extend(edge_parts)
         occupied_annotation_bounds.extend(annotation_bounds)
@@ -225,13 +231,14 @@ def render_sppm_svg_artifact_from_layout(
             x=_PADDING,
             y=content_top + display_canvas_bounds.height_px,
             width=width - (_PADDING * 2.0),
+            options=options,
         )
     )
     parts.append("</svg>")
     return (
         RenderArtifact(
             kind="svg",
-            content="\n".join(parts),
+            content=apply_svg_typography("\n".join(parts), options),
             backend="svg",
             metadata={
                 "render_diagnostics": serialize_render_diagnostics(diagnostics),
@@ -274,7 +281,11 @@ def _raw_node_lookup(
 
 
 def _build_sppm_publication_plan(
-    *, process: dict[str, Any] | Any, options: RenderOptions, request: Any
+    *,
+    process: dict[str, Any] | Any,
+    options: RenderOptions,
+    request: Any,
+    timing_analysis: ProcessTimingAnalysis | None = None,
 ) -> Any:
     source_nodes, source_edges = extract_nodes_and_edges(process)
     visible_node_ids = {str(node.id) for node in request.nodes}
@@ -292,34 +303,37 @@ def _build_sppm_publication_plan(
         options=options,
         nodes=nodes,
         edges=edges,
+        timing_analysis=timing_analysis,
     )
 
 
 def _publication_band_svg(
-    *, band: Any | None, x: float, y: float, width: float
+    *, band: Any | None, x: float, y: float, width: float, options: RenderOptions
 ) -> list[str]:
     if band is None:
         return []
     content = band.content
-    line_y = y + 24.0
+    scale = options.resolved_theme.typography_scale
+    line_y = y + (24.0 * scale)
+    role = options.resolved_theme.role("publication")
     parts = [
         f'<g data-sppm-publication-band="{escape(band.name)}">',
-        f'<line x1="{x:.1f}" y1="{y:.1f}" x2="{x + width:.1f}" y2="{y:.1f}" stroke="#cbd5e1" stroke-width="1" />',
+        f'<line x1="{x:.1f}" y1="{y:.1f}" x2="{x + width:.1f}" y2="{y:.1f}" stroke="{role.border}" stroke-width="1" />',
     ]
     if content.title:
         parts.append(
-            f'<text x="{x:.1f}" y="{line_y:.1f}" font-family="Helvetica" font-size="22" font-weight="700" fill="#0f172a">{escape(content.title)}</text>'
+            f'<text x="{x:.1f}" y="{line_y:.1f}" font-family="Helvetica" font-size="22" font-weight="700" fill="{role.title_text}">{escape(content.title)}</text>'
         )
-        line_y += 24.0
+        line_y += 24.0 * scale
     for label, value in (*content.rows, *content.context_rows):
         parts.append(
-            f'<text x="{x:.1f}" y="{line_y:.1f}" font-family="Helvetica" font-size="12" fill="#334155">{escape(label)}: {escape(value)}</text>'
+            f'<text x="{x:.1f}" y="{line_y:.1f}" font-family="Helvetica" font-size="12" fill="{role.detail_text}">{escape(label)}: {escape(value)}</text>'
         )
-        line_y += 16.0
+        line_y += 16.0 * scale
     for note in content.notes:
         parts.append(
-            f'<text x="{x:.1f}" y="{line_y:.1f}" font-family="Helvetica" font-size="12" fill="#334155">{escape(note)}</text>'
+            f'<text x="{x:.1f}" y="{line_y:.1f}" font-family="Helvetica" font-size="12" fill="{role.detail_text}">{escape(note)}</text>'
         )
-        line_y += 16.0
+        line_y += 16.0 * scale
     parts.append("</g>")
     return parts
