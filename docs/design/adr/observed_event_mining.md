@@ -2,6 +2,8 @@
 
 Status: accepted
 
+Implementation boundary refined by: `simplified_package_architecture.md`
+
 ## Context
 
 FLO needs to ingest CSV, XES, and OCEL 2 event logs, compare observed behavior

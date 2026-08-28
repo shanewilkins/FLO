@@ -30,4 +30,5 @@ Current ADRs:
 - `governance_v2.md`
 - `process_variants.md` (proposed)
 - `observed_event_mining.md`
-- `package_dependency_direction.md`
+- `package_dependency_direction.md` (superseded)
+- `simplified_package_architecture.md`

@@ -1,6 +1,8 @@
 # ADR: Package Dependency Direction
 
-Status: accepted
+Status: superseded
+
+Superseded by: `simplified_package_architecture.md`
 
 ## Context
 
