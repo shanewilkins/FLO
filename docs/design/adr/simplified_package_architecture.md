@@ -140,6 +140,13 @@ new internal code.
 
 ## Migration
 
+Implementation status (2026-08-29): steps 1–5 are complete. The checked-in
+substantive packages are `flo.process`, `flo.source`, `flo.render`, and
+`flo.app`, with `flo.errors` as a leaf module. Transitional packages and the
+unused duplicate `flo.pipeline` orchestration path have been removed. Step 6
+remains intentionally deferred until the first mining slice; no empty
+`flo.pm4py_bridge` package is created in advance of that pressure.
+
 The intended sequence is:
 
 1. Move the architecture-neutral error implementation to `flo.errors` and make

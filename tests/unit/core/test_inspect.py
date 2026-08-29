@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from flo.core import run_content
-from flo.services.errors import CLIError, EXIT_USAGE
+from flo.app import run_content
+from flo.errors import CLIError, EXIT_USAGE
 
 
 WASHNFOLD = Path(__file__).parents[3] / "examples" / "reference" / "washnfold.flo"

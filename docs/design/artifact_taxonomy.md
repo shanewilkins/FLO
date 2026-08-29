@@ -43,7 +43,7 @@ Ownership:
 
 - language semantics: `docs/specs/core_language.md`
 - serialized structure: `schema/flo_ir.json`
-- compiler and validation behavior: `src/flo/compiler/`
+- process-domain and validation behavior: `src/flo/process/`
 
 Canonicality:
 
@@ -80,7 +80,7 @@ Ownership:
 
 - artifact meaning: `docs/specs/`
 - renderer design and backend strategy: `docs/design/`
-- implementation: `src/flo/render/` and `src/flo/export/`
+- implementation: `src/flo/render/` and `src/flo/process/export/`
 
 Canonicality:
 
@@ -197,7 +197,7 @@ Contributors should use this decision order:
 | Artifact family | Primary owner | Typical location |
 |---|---|---|
 | canonical model semantics | specs + schema | `docs/specs/`, `schema/` |
-| renderer and export behavior | specs + design + code | `docs/specs/`, `docs/design/`, `src/flo/render/`, `src/flo/export/` |
+| renderer and export behavior | specs + design + code | `docs/specs/`, `docs/design/`, `src/flo/render/`, `src/flo/process/export/` |
 | publication composition | design + future implementation | `docs/design/`, `src/flo/publish/` |
 | observed process data and analysis | schema + spec + policy + future implementation | `schema/flo_trace.json`, `docs/specs/`, `docs/policy/` |
 | fixtures and regression assets | examples + tests + scripts | `examples/`, `tests/`, `renders/`, `scripts/` |

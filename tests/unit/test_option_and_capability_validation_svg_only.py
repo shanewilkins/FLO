@@ -1,11 +1,11 @@
 import pytest
 
-from flo.core._capability_validation import ensure_render_projection_supported
-from flo.core._option_validation import (
+from flo.app._capability_validation import ensure_render_projection_supported
+from flo.app._option_validation import (
     ensure_render_options_compatible_with_output,
     validate_sppm_numeric_render_options,
 )
-from flo.services.errors import CLIError
+from flo.errors import CLIError
 
 
 class _RenderOptionsLike:

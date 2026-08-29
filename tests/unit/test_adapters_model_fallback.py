@@ -1,4 +1,4 @@
-import flo.adapters.models as models
+import flo.source.models as models
 
 
 def test_adapter_model_validate_and_dump(adapter_data):

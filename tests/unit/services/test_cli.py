@@ -2,8 +2,8 @@ import importlib
 import sys
 
 
-fm_core = importlib.import_module("flo.core")
-fm_cli = importlib.import_module("flo.core.cli")
+fm_core = importlib.import_module("flo.app")
+fm_cli = importlib.import_module("flo.app.cli")
 
 
 def test_run_returns_message_and_no_error():

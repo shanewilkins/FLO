@@ -156,29 +156,7 @@ Before 1.0, FLO will document:
   reject broken row-boundary routing and protect the book-consumed artifact
   from hand edits or baseline drift.
 
-### 0.4: Telemetry Model And MVP
-
-- Deliver the end-user installation, scaffold/template, diagnostic, default
-  rendering, and public Python API baseline required by the MVP journey.
-- Validate the first-run time-to-model acceptance boundary with a representative
-  process-improvement user and a fresh environment.
-- Publish and validate `schema/flo_trace.json` and the normative event
-  semantics.
-- Deliver local, explicit canonical trace import, deterministic
-  observed-event-to-model alignment, and conformance fixtures without mutating
-  canonical designed-process IR.
-- Enforce the telemetry privacy defaults for validation, alignment, logging,
-  runtime spans, and persisted outputs.
-- Demonstrate the cumulative MVP acceptance boundary defined above.
-
-### 0.5: Telemetry Analysis
-
-- Support trace-derived transition frequencies, dwell or wait measures, and rework rates.
-- Publish telemetry import and alignment report contracts.
-- Complete aggregate and row-level report privacy modes, redaction,
-  pseudonymization, and fail-closed verification.
-
-### 0.6: Renderer Stabilization
+### 0.4: Renderer Stabilization
 
 - Complete the accepted multi-page SPPM publication boundary, including Typst
   composition, stable step references, continuation anchors, child maps,
@@ -195,6 +173,30 @@ Before 1.0, FLO will document:
   and legibility criteria to stable renderer promotion.
 - Deliver a deterministic review bundle containing selected visuals, canonical
   JSON, provenance, model identity, and warnings.
+
+### 0.5: Telemetry Model And MVP
+
+- Deliver the end-user installation, scaffold/template, diagnostic, default
+  rendering, and public Python API baseline required by the MVP journey.
+- Validate the first-run time-to-model acceptance boundary with a representative
+  process-improvement user and a fresh environment.
+- Publish and validate `schema/flo_trace.json` and the normative event
+  semantics.
+- Deliver local, explicit canonical trace import, deterministic
+  observed-event-to-model alignment, and conformance fixtures without mutating
+  canonical designed-process IR.
+- Enforce the telemetry privacy defaults for validation, alignment, logging,
+  runtime spans, and persisted outputs.
+- Demonstrate the cumulative MVP acceptance boundary defined above.
+
+### 0.6: Telemetry Analysis
+
+- Support trace-derived transition frequencies, dwell or wait measures, and rework rates.
+- Publish telemetry import and alignment report contracts.
+- Complete aggregate and row-level report privacy modes, redaction,
+  pseudonymization, and fail-closed verification.
+
+
 
 ### 0.7: Language, IR, And CLI Freeze Candidate
 

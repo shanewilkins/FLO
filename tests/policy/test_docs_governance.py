@@ -47,3 +47,29 @@ def test_roadmap_release_claims_report_unknown_requirement():
     )
 
     assert warnings == ["docs/ROADMAP.md: release claim references unknown UR-999"]
+
+
+def test_foundational_executable_evidence_is_complete_and_resolvable():
+    warnings: list[str] = []
+
+    _MODULE._warn_executable_evidence(warnings)
+
+    assert warnings == []
+
+
+def test_test_evidence_ref_reports_missing_symbol(tmp_path, monkeypatch):
+    test_file = tmp_path / "test_contract.py"
+    test_file.write_text("def test_present():\n    pass\n", encoding="utf-8")
+    monkeypatch.setattr(_MODULE, "REPO_ROOT", tmp_path)
+    warnings: list[str] = []
+
+    _MODULE._warn_test_evidence_ref(
+        ref="test_contract.py::test_missing",
+        row_number=2,
+        warnings=warnings,
+    )
+
+    assert warnings == [
+        "docs/requirements/executable_evidence.csv:2: "
+        "test symbol does not exist: test_contract.py::test_missing"
+    ]

@@ -65,5 +65,8 @@ def test_sppm_svg_omits_disabled_publication_bands():
     )
 
     assert "data-sppm-publication-band" not in artifact.content
-    assert "Operations Review" not in artifact.content
+    assert (
+        '<title id="flo-svg-title">Operations Review — SPPM</title>' in artifact.content
+    )
+    assert ">Process: ops_review</text>" not in artifact.content
     assert "Draft for review" not in artifact.content

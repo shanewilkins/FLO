@@ -1,4 +1,4 @@
-from flo.core.source_diagnostics import source_aware_message
+from flo.source.diagnostics import source_aware_message
 
 
 def test_validation_message_points_to_node_field():

@@ -1,6 +1,6 @@
 from typing import Any
 
-from flo.compiler.ir.models import Edge, IR, Node
+from flo.process.ir.models import Edge, IR, Node
 from flo.render._publication import (
     PublicationBandContent,
     PublicationBounds,
@@ -18,7 +18,7 @@ from flo.render._publication import (
 from flo.render._sppm_projection import project_sppm_subprocess_view
 from flo.render._sppm_publication import build_sppm_publication_plan
 from flo.render.options import RenderOptions
-from flo.services.errors import RenderError
+from flo.errors import RenderError
 
 
 def test_build_publication_canvas_keeps_margins_outside_content_regions():

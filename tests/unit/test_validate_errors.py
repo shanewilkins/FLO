@@ -1,7 +1,7 @@
 import pytest
-from flo.compiler.ir.validate import validate_ir
-from flo.compiler.ir.models import IR, Node, Edge
-from flo.services.errors import ValidationError
+from flo.process.ir.validate import validate_ir
+from flo.process.ir.models import IR, Node, Edge
+from flo.errors import ValidationError
 
 
 def test_validate_ir_wrong_type():

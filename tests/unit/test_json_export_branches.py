@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 
-from flo.compiler.ir.models import Edge, IR, Node
-from flo.export.json_export import ir_to_schema_dict, ir_to_schema_json
+from flo.process.ir.models import Edge, IR, Node
+from flo.process.export.json_export import ir_to_schema_dict, ir_to_schema_json
 
 
 def test_schema_dict_defaults_generated_process_name():

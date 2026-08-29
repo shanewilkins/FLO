@@ -1,4 +1,4 @@
-from flo.compiler.ir import enums
+from flo.process.ir import enums
 
 
 def test_enums_have_values():

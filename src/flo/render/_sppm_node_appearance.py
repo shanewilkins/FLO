@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from flo.compiler.ir.enums import ProcessValueClass
+from flo.process.ir.enums import ProcessValueClass
 
 from ._sppm_metadata_schema import get_metadata_value_class
 from ._sppm_themes import SppmNodeStyle

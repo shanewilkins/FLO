@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from flo.adapters import parse_adapter
-from flo.compiler import compile_adapter
+from flo.source import parse_adapter
+from flo.source import compile_adapter
 from flo.render import RenderOptions, render_artifact_and_contract
 from flo.render.layout_core import (
     LayoutBounds,

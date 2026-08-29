@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Report the current SPPM refactor baseline.
 
-This wrapper keeps the reusable implementation in `src/flo/core/` while
+This wrapper keeps the reusable implementation in `src/flo/app/` while
 providing a simple script entrypoint for issue tracking and local reuse.
 """
 
@@ -18,7 +18,7 @@ if str(SRC_ROOT) not in sys.path:
 
 def main(argv: list[str]) -> int:
     """Run the reusable SPPM baseline reporter."""
-    from flo.core._sppm_refactor_baseline import main as run_main
+    from flo.app._sppm_refactor_baseline import main as run_main
 
     return run_main(argv)
 

@@ -1,6 +1,6 @@
 import pytest
 
-from flo.adapters.yaml_loader import load_adapter_from_yaml
+from flo.source.yaml_loader import load_adapter_from_yaml
 
 
 def test_load_adapter_valid():

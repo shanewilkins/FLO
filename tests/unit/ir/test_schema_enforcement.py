@@ -1,9 +1,9 @@
 import pytest
 
-from flo.compiler.ir.validate import ensure_schema_aligned
-from flo.compiler.ir.models import IR, Node
-from flo.services.errors import ValidationError
-from flo.core import run_content
+from flo.process.ir.validate import ensure_schema_aligned
+from flo.process.ir.models import IR, Node
+from flo.errors import ValidationError
+from flo.app import run_content
 
 
 def test_ensure_schema_aligned_non_ir_raises():
@@ -32,13 +32,13 @@ def test_ensure_schema_aligned_schema_invalid_raises():
 def test_run_content_compiled_schema_invalid_raises(monkeypatch):
     # parse returns a valid IR; compile returns an IR that fails schema export validation
     monkeypatch.setattr(
-        "flo.core.parse_adapter",
+        "flo.app.parse_adapter",
         lambda c, source_path=None: IR(name="t", nodes=[Node(id="n", type="task")]),
     )
     monkeypatch.setattr(
-        "flo.core.compile_adapter",
+        "flo.app.compile_adapter",
         lambda a: IR(name="t", nodes=[Node(id="n", type="process")]),
     )
-    monkeypatch.setattr("flo.core.validate_ir", lambda i: None)
+    monkeypatch.setattr("flo.app.validate_ir", lambda i: None)
     with pytest.raises(ValidationError):
         run_content("some content")

@@ -11,11 +11,13 @@ from ._diagnostics import (
     serialize_render_diagnostics_report,
 )
 from ._svg_shared_primitives import (
+    SVG_ACCESSIBILITY_ATTRIBUTES,
     raw_node_lookup,
     standard_edge_svg,
     standard_lane_svg,
     standard_node_svg,
     standard_svg_defs,
+    svg_accessibility_elements,
 )
 from .layout_core import build_swimlane_elk_layout_request, execute_elk_layout
 from .layout_core.elk_runtime import run_elkjs_layout
@@ -49,8 +51,10 @@ def render_swimlane_svg_artifact(
             f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:.0f}" '
             f'height="{height:.0f}" viewBox="0 0 {width:.0f} {height:.0f}" '
             'data-flo-artifact-kind="svg" data-flo-backend="svg" '
-            'data-flo-diagram="swimlane" data-flo-layout-engine="elk">'
+            'data-flo-diagram="swimlane" data-flo-layout-engine="elk" '
+            f"{SVG_ACCESSIBILITY_ATTRIBUTES}>"
         ),
+        *svg_accessibility_elements(process, diagram_name="swimlane"),
         f'<rect width="100%" height="100%" fill="{options.resolved_theme.canvas_background}" />',
         f'<g transform="translate({_PADDING:.1f},{_PADDING:.1f})">',
     ]

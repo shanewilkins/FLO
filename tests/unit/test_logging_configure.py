@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from flo.services.logging import configure_logging
+from flo.app.logging import configure_logging
 
 
 def test_configure_logging_sets_handler_and_level(monkeypatch):

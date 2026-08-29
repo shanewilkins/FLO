@@ -1,16 +1,16 @@
 from types import SimpleNamespace
 
-import flo.core.cli as cli_mod
-from flo.core._cli_contract import ParsedArgs
-from flo.services.errors import CLIError
-from flo.services.errors import EXIT_INTERNAL_ERROR, EXIT_USAGE
+import flo.app.cli as cli_mod
+from flo.app._cli_contract import ParsedArgs
+from flo.errors import CLIError
+from flo.errors import EXIT_INTERNAL_ERROR, EXIT_USAGE
 
 
 def test_console_main_uses_sys_argv_when_argv_is_none(monkeypatch):
     """Verify sys.argv is used as fallback when argv is None."""
     monkeypatch.setattr(cli_mod.sys, "argv", ["flo", "from_sys.flo"])
     monkeypatch.setattr(
-        "flo.core._cli_contract.parse_cli_args",
+        "flo.app._cli_contract.parse_cli_args",
         lambda argv: ParsedArgs(path="from_sys.flo", command="render", options={}),
     )
     monkeypatch.setattr(cli_mod, "_execute_request", lambda _request: 0)
@@ -23,9 +23,9 @@ def test_console_main_maps_clierror_from_execute(monkeypatch):
     errors = []
     services = SimpleNamespace(error_handler=lambda msg: errors.append(msg))
 
-    monkeypatch.setattr("flo.services.get_services", lambda verbose=False: services)
+    monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
     monkeypatch.setattr(
-        "flo.core._cli_contract.parse_cli_args",
+        "flo.app._cli_contract.parse_cli_args",
         lambda argv: ParsedArgs(path="input.flo", command="render", options={}),
     )
 
@@ -44,9 +44,9 @@ def test_console_main_maps_unexpected_error_from_execute(monkeypatch):
     errors = []
     services = SimpleNamespace(error_handler=lambda msg: errors.append(msg))
 
-    monkeypatch.setattr("flo.services.get_services", lambda verbose=False: services)
+    monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
     monkeypatch.setattr(
-        "flo.core._cli_contract.parse_cli_args",
+        "flo.app._cli_contract.parse_cli_args",
         lambda argv: ParsedArgs(path="input.flo", command="render", options={}),
     )
     monkeypatch.setattr(
@@ -63,12 +63,12 @@ def test_console_main_maps_unexpected_error_from_execute(monkeypatch):
 def test_console_main_maps_parse_args_systemexit_to_usage(monkeypatch):
     """Verify SystemExit from parse_cli_args returns EXIT_USAGE."""
     services = SimpleNamespace(error_handler=lambda _msg: None)
-    monkeypatch.setattr("flo.services.get_services", lambda verbose=False: services)
+    monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
 
     def fail_parse(_argv):
         raise SystemExit("bad args")
 
-    monkeypatch.setattr("flo.core._cli_contract.parse_cli_args", fail_parse)
+    monkeypatch.setattr("flo.app._cli_contract.parse_cli_args", fail_parse)
 
     rc = cli_mod.console_main(["--bad-flag"])
     assert rc == EXIT_USAGE

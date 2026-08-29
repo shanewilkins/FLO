@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from flo.services.telemetry import (
+from flo.app.telemetry import (
     init_telemetry,
     get_tracer,
     shutdown,

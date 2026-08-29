@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from flo.core import _resolve_render_options_for_output
+from flo.app import _resolve_render_options_for_output
 from flo.render._sppm_themes import SPPM_THEMES
 from flo.render._svg_spaghetti import render_spaghetti_svg_artifact
 from flo.render._svg_sppm_nodes import _node_svg
@@ -20,7 +20,7 @@ from flo.render.themes import (
     resolve_render_theme,
     theme_contrast_risks,
 )
-from flo.services.errors import CLIError, EXIT_USAGE
+from flo.errors import CLIError, EXIT_USAGE
 
 _GOLDEN = Path("tests/golden/themes/configured_theme_signatures.json")
 

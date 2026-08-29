@@ -14,7 +14,7 @@ from pathlib import Path
 from statistics import fmean
 from typing import Any, Iterator
 
-from flo.adapters import parse_adapter
+from flo.source import parse_adapter
 from flo.render._diagnostics import RenderDiagnosticsReport
 from flo.render.layout_core import (
     ElkLayoutRequest,

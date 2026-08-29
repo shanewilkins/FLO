@@ -1,6 +1,6 @@
 from pathlib import Path
-from flo.compiler.ir.models import Edge, IR
-from flo.compiler.ir._internal_shape import (
+from flo.process.ir.models import Edge, IR
+from flo.process.ir._internal_shape import (
     ir_from_internal_dict,
     ir_to_internal_dict,
     ir_to_internal_json,
@@ -34,6 +34,22 @@ def test_process_version_roundtrips_through_internal_shape(node_factory) -> None
 
     assert data["process_version"] == "2026.1"
     assert loaded.process_version == "2026.1"
+
+
+def test_process_context_roundtrips_through_internal_shape(node_factory) -> None:
+    ir = IR(
+        name="context",
+        nodes=[node_factory("n1")],
+        process_owner={"id": "owner", "name": "Owner"},
+        business_units=[{"id": "ops", "name": "Operations"}],
+        lanes=[{"id": "ops", "name": "Operations", "type": "team"}],
+    )
+
+    loaded = ir_from_internal_dict(ir_to_internal_dict(ir))
+
+    assert loaded.process_owner == {"id": "owner", "name": "Owner"}
+    assert loaded.business_units == [{"id": "ops", "name": "Operations"}]
+    assert loaded.lanes == [{"id": "ops", "name": "Operations", "type": "team"}]
 
 
 def test_ir_edge_optional_fields_roundtrip(tmp_path: Path):

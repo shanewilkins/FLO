@@ -38,6 +38,60 @@ class DriftSummary:
         return bool(self.missing_files or self.extra_files or self.changed_files)
 
 
+def diagnostic_budget_violations(
+    *, case: dict[str, object], diagnostics: Sequence[dict[str, object]]
+) -> tuple[str, ...]:
+    """Return deterministic violations of one case's reviewed warning budget."""
+    case_id = str(case.get("id", "unknown"))
+    raw_budget = case.get("diagnostic_budget")
+    budget = raw_budget if isinstance(raw_budget, dict) else {}
+    allowed_raw = budget.get("allowed")
+    allowed = allowed_raw if isinstance(allowed_raw, dict) else {}
+    violations: list[str] = []
+
+    if diagnostics and not str(budget.get("rationale", "")).strip():
+        violations.append(f"{case_id}: diagnostics require a reviewed rationale")
+
+    by_code: dict[str, list[dict[str, object]]] = {}
+    for diagnostic in diagnostics:
+        code = str(diagnostic.get("code", "unknown"))
+        by_code.setdefault(code, []).append(diagnostic)
+
+    for code in sorted(by_code):
+        code_budget = allowed.get(code)
+        if not isinstance(code_budget, dict):
+            violations.append(f"{case_id}: unexpected diagnostic code {code}")
+            continue
+        max_count = code_budget.get("max_count")
+        if not isinstance(max_count, int) or max_count < 0:
+            violations.append(f"{case_id}: {code} budget needs max_count >= 0")
+        elif len(by_code[code]) > max_count:
+            violations.append(
+                f"{case_id}: {code} count {len(by_code[code])} exceeds {max_count}"
+            )
+
+        max_values = code_budget.get("max_values", {})
+        if not isinstance(max_values, dict):
+            violations.append(f"{case_id}: {code} max_values must be an object")
+            continue
+        for field, ceiling in sorted(max_values.items()):
+            if not isinstance(ceiling, (int, float)) or isinstance(ceiling, bool):
+                violations.append(f"{case_id}: {code}.{field} ceiling must be numeric")
+                continue
+            observed = [
+                value
+                for entry in by_code[code]
+                if isinstance((value := entry.get(field)), (int, float))
+                and not isinstance(value, bool)
+            ]
+            if observed and max(observed) > float(ceiling):
+                violations.append(
+                    f"{case_id}: {code}.{field} {max(observed):.2f} exceeds {float(ceiling):.2f}"
+                )
+
+    return tuple(violations)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(prog="check_sppm_baseline_drift.py")
     parser.add_argument(
@@ -68,13 +122,23 @@ def main() -> int:
     with tempfile.TemporaryDirectory(prefix="flo-sppm-baseline-") as temp_dir:
         generated_dir = Path(temp_dir) / "generated"
         generated_dir.mkdir(parents=True, exist_ok=True)
+        budget_violations: list[str] = []
         for case in cases:
-            _build_case(case=case, outdir=generated_dir)
+            diagnostics = _build_case(case=case, outdir=generated_dir)
+            budget_violations.extend(
+                diagnostic_budget_violations(case=case, diagnostics=diagnostics)
+            )
         drift = compare_baseline_dirs(
             expected_dir=baseline_dir,
             actual_dir=generated_dir,
             case_ids=case_ids,
         )
+
+    if budget_violations:
+        print("SPPM diagnostic budget exceeded.")
+        for violation in budget_violations:
+            print(f"  - {violation}")
+        raise SystemExit(1)
 
     if drift.has_drift:
         _print_drift(drift)

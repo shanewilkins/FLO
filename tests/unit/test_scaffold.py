@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from flo.core.scaffold import create_model, render_template, stable_id
+from flo.app.scaffold import create_model, render_template, stable_id
 
 
 @pytest.mark.parametrize(

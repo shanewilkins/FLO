@@ -1,6 +1,6 @@
 import pytest
 
-from flo.compiler import compile_adapter
+from flo.source import compile_adapter
 
 
 def test_compile_adapter_rejects_missing_steps() -> None:

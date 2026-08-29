@@ -128,7 +128,9 @@ Supported include keys:
 - `includes`: list of file paths
 - `include`: single file path (alias)
 
-Paths are resolved relative to the current file.
+Paths are resolved relative to the current file. The entry file's directory is
+the trust root: absolute paths, `..` traversal, and symlinks are accepted only
+when their resolved target remains inside that directory.
 
 ```yaml
 spec_version: "0.1"
@@ -144,6 +146,10 @@ Composition behavior:
 - Includes are loaded first, then the current file is merged last.
 - Duplicate step IDs across included files are rejected.
 - Include cycles are rejected.
+- A source file is limited to 1,000,000 UTF-8 bytes; composition is limited to
+  256 included files, 32 include levels, and 8,000,000 total source bytes.
+- FLO does not retrieve includes over the network. These boundaries support
+  trusted local authoring, not arbitrary hosted uploads.
 
 ## 4.2) Step Kinds and Canonical Step Fields
 

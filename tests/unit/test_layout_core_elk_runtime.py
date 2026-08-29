@@ -19,8 +19,8 @@ from flo.render.layout_core import (
     serialize_layout_result,
 )
 from flo.render.options import RenderOptions
-from flo.services.logging import configure_logging
-from flo.services.errors import RenderError
+from flo.app.logging import configure_logging
+from flo.errors import RenderError
 
 
 def _build_generic_elk_layout_request(

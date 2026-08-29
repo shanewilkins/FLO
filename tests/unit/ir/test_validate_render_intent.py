@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from flo.compiler.ir.models import IR, Node, Edge
-from flo.compiler.ir.validate import ensure_schema_aligned, validate_ir
-from flo.compiler.ir.validate_render_intent import validate_render_intent
-from flo.services.errors import ValidationError
+from flo.process.ir.models import IR, Node, Edge
+from flo.process.ir.validate import ensure_schema_aligned, validate_ir
+from flo.process.ir.validate_render_intent import validate_render_intent
+from flo.errors import ValidationError
 
 
 def _base_ir_with_render(render_payload: object) -> IR:

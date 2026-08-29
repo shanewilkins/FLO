@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from flo.adapters import parse_adapter
-from flo.compiler import compile_adapter
-from flo.compiler.analysis import analyze_process_timing
-from flo.compiler.ir.models import Edge, IR, Node
-from flo.compiler.ir.validate import validate_ir
+from flo.source import parse_adapter
+from flo.source import compile_adapter
+from flo.process.analysis import analyze_process_timing
+from flo.process.ir.models import Edge, IR, Node
+from flo.process.ir.validate import validate_ir
 
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]

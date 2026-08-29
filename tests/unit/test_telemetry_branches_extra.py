@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-import flo.services.telemetry as telemetry_mod
+import flo.app.telemetry as telemetry_mod
 
 
 def _fake_trace():

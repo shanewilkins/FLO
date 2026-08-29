@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-import flo.adapters.composition as composition
+import flo.source.composition as composition
 
 
 def test_normalize_include_entries_supports_empty_string_string_and_list():

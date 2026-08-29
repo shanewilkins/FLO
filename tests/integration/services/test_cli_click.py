@@ -3,7 +3,7 @@ import json
 from click.testing import CliRunner
 from pathlib import Path
 
-from flo.core.cli import cli
+from flo.app.cli import cli
 
 
 def test_cli_new_creates_valid_starter_model():

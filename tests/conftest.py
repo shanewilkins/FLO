@@ -10,8 +10,8 @@ __all__ = ["tmp_flo_file", "adapter_model_from_example", "repo_root"]
 
 import pytest
 from typing import Callable
-from flo.compiler.ir.models import Node, IR
-from flo.services import get_services
+from flo.process.ir.models import Node, IR
+from flo.app import get_services
 
 
 @pytest.fixture

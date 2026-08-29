@@ -1,4 +1,4 @@
-from flo.services.telemetry import init_telemetry, get_tracer
+from flo.app.telemetry import init_telemetry, get_tracer
 
 
 def test_init_telemetry_noop():

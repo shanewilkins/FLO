@@ -14,6 +14,8 @@ Start here: `docs/Quickstart.md`
 
 Complete reference: `docs/User_Manual.md`
 
+Supported platforms and trust assumptions: `docs/SUPPORT.md`
+
 ------------------------------------------------------------------------
 
 ## Development Workflow (uv)

@@ -1,8 +1,8 @@
 import pytest
 
-from flo.compiler.ir import validate_ir
-from flo.compiler.ir.models import Edge
-from flo.services.errors import ValidationError
+from flo.process.ir import validate_ir
+from flo.process.ir.models import Edge
+from flo.errors import ValidationError
 
 
 def test_validate_valid_ir(ir_factory, node_factory):

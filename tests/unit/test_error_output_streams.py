@@ -2,8 +2,8 @@ import logging
 
 import structlog
 
-from flo.services.errors import handle_error
-from flo.services.logging import configure_logging
+from flo.errors import handle_error
+from flo.app.logging import configure_logging
 
 
 def test_handle_error_emits_to_stderr(capsys):

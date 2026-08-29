@@ -2,7 +2,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 
-import flo.services.telemetry as telemetry_mod
+import flo.app.telemetry as telemetry_mod
 
 
 def _make_fake_trace(tracer_obj=None):
@@ -120,8 +120,8 @@ def test_console_main_handles_clierror_and_telemetry_shutdown_is_suppressed(
     monkeypatch,
 ):
     # Import here to get the console_main function
-    from flo.core.cli import console_main
-    from flo.services.errors import CLIError
+    from flo.app.cli import console_main
+    from flo.errors import CLIError
 
     # Fake services object
     services = SimpleNamespace()
@@ -135,20 +135,20 @@ def test_console_main_handles_clierror_and_telemetry_shutdown_is_suppressed(
     # Monkeypatch get_services to return our services (console_main imports this)
     import importlib as _il
 
-    services_mod = _il.import_module("flo.services")
+    services_mod = _il.import_module("flo.app")
     monkeypatch.setattr(services_mod, "get_services", lambda verbose=False: services)
 
     # Monkeypatch parse_cli_args (imported inside console_main)
-    cli_contract_mod = _il.import_module("flo.core._cli_contract")
+    cli_contract_mod = _il.import_module("flo.app._cli_contract")
 
     def fake_parse_cli_args(_argv):
         return cli_contract_mod.ParsedArgs(path="-", command="render", options={})
 
     monkeypatch.setattr(cli_contract_mod, "parse_cli_args", fake_parse_cli_args)
 
-    # read_input / run_content / write_output come from flo.io and flo.core
-    io_mod = _il.import_module("flo.services.io")
-    core_mod = _il.import_module("flo.core")
+    # read_input / run_content / write_output come from flo.io and flo.app
+    io_mod = _il.import_module("flo.app.io")
+    core_mod = _il.import_module("flo.app")
     monkeypatch.setattr(io_mod, "read_input", lambda p: (0, "content", ""))
 
     # run_content will raise a CLIError on first subtest and later return ok

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from flo.schema.render_metadata import (
+from flo.process.schema.render_metadata import (
     PROCESS_HEADER_METADATA_FIELDS,
     PROCESS_METADATA_PROCESS_ID_KEY,
     PROCESS_METADATA_PROCESS_NAME_KEY,

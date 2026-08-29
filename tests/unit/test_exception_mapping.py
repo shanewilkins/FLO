@@ -1,4 +1,4 @@
-from flo.services import errors
+import flo.errors as errors
 
 
 def test_map_domain_exception_to_rc():

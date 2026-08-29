@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from flo.adapters.models import AdapterModel
+from flo.source.models import AdapterModel
 
 
 def repo_root(start: Path | None = None) -> Path:

@@ -1,4 +1,4 @@
-from flo.adapters.models import AdapterModel
+from flo.source.models import AdapterModel
 
 
 def test_adapter_model_fallback_from_dict(adapter_data):

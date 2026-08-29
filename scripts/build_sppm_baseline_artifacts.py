@@ -90,13 +90,21 @@ def _load_cases(manifest_path: Path) -> list[dict[str, Any]]:
         case_id = raw_case.get("id")
         input_path = raw_case.get("input")
         options = raw_case.get("options", {})
+        diagnostic_budget = raw_case.get("diagnostic_budget")
         if not isinstance(case_id, str) or not case_id.strip():
             raise ValueError(f"Case at index {index} has invalid id")
         if not isinstance(input_path, str) or not input_path.strip():
             raise ValueError(f"Case '{case_id}' has invalid input path")
         if not isinstance(options, dict):
             raise ValueError(f"Case '{case_id}' options must be an object")
-        cases.append({"id": case_id.strip(), "input": input_path, "options": options})
+        if diagnostic_budget is not None and not isinstance(diagnostic_budget, dict):
+            raise ValueError(
+                f"Case '{case_id}' diagnostic_budget must be an object"
+            )
+        case = {"id": case_id.strip(), "input": input_path, "options": options}
+        if diagnostic_budget is not None:
+            case["diagnostic_budget"] = diagnostic_budget
+        cases.append(case)
     return cases
 
 
@@ -118,10 +126,10 @@ def _filter_cases(
 
 def _build_case(
     *, case: dict[str, Any], outdir: Path, debug_dir: Path | None = None
-) -> None:
-    from flo.adapters import parse_adapter
-    from flo.compiler import compile_adapter
-    from flo.compiler.analysis import analyze_process_timing
+) -> tuple[dict[str, Any], ...]:
+    from flo.source import parse_adapter
+    from flo.source import compile_adapter
+    from flo.process.analysis import analyze_process_timing
     from flo.render._svg_sppm import render_sppm_svg_artifact_from_layout
     from flo.render.layout_core import (
         build_sppm_elk_layout_request,
@@ -176,6 +184,10 @@ def _build_case(
         _write_json(debug_case_dir / "elk_response.json", response_payload)
 
     print(f"Built: {_display_path(case_dir)}")
+    diagnostics = svg_artifact.metadata.get("render_diagnostics", [])
+    if not isinstance(diagnostics, list):
+        return ()
+    return tuple(entry for entry in diagnostics if isinstance(entry, dict))
 
 
 def _layout_result_to_jsonable(result: Any) -> dict[str, Any]:

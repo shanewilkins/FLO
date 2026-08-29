@@ -1,8 +1,7 @@
 """Policy test: ensure `src/flo/` only contains approved subpackages.
 
-This test fails if unexpected directories appear directly under
-`src/flo/`. The approved physical directories correspond to our
-conceptual layers (compiler may include `ir/` and `analysis/`).
+This test fails if unexpected substantive directories appear directly under
+`src/flo/`. The approved physical directories are the accepted four packages.
 """
 
 from __future__ import annotations
@@ -11,13 +10,10 @@ from pathlib import Path
 
 
 APPROVED_SUBDIRS = {
-    "adapters",
-    "compiler",
-    "export",
+    "app",
+    "process",
     "render",
-    "services",
-    "core",  # Pseudo-layer for CLI scaffolding and orchestration; not a real package
-    "schema",  # Packaged JSON schemas required by runtime IR validation
+    "source",
 }
 
 
@@ -40,6 +36,8 @@ def test_src_flo_only_has_approved_subdirs():
             continue
         name = entry.name
         if name == "__pycache__":
+            continue
+        if not (entry / "__init__.py").is_file():
             continue
         if name not in APPROVED_SUBDIRS:
             unexpected.append(name)

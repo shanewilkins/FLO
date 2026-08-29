@@ -9,9 +9,9 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from flo.adapters import parse_adapter
-from flo.compiler import compile_adapter
-from flo.compiler.ir import ensure_schema_aligned
+from flo.source import parse_adapter
+from flo.source import compile_adapter
+from flo.process.ir import ensure_schema_aligned
 
 
 def main() -> int:

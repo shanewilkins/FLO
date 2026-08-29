@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-import flo.services.telemetry as telemetry_mod
+import flo.app.telemetry as telemetry_mod
 
 
 def test_shutdown_no_provider_returns(monkeypatch):

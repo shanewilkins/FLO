@@ -65,8 +65,13 @@ FLO's normative source-authoring model is process-first rather than graph-first.
 
 3. Include resolution
    - Include paths are resolved relative to the current source file.
+   - The entry file's parent directory is the source trust root. Resolved
+     absolute paths, parent traversal, and symlinks may not escape it.
    - Include cycles are invalid.
    - Duplicate step identifiers introduced by composition are invalid.
+   - Composition enforces the deterministic file-size, include-count,
+     include-depth, and expanded-byte limits in
+     `docs/policy/source_trust.md`.
 
 ## Canonical authored primitives
 
@@ -316,6 +321,18 @@ serialization.
 - Implementations may use typed objects internally.
 - JSON output is a serialization of the canonical compiled model, not a
    separate source of semantic truth.
+
+Current process-context fields have the following lossless canonical mapping:
+
+| Authored field | Canonical IR field | Serialized JSON field |
+| --- | --- | --- |
+| `process.owner` | `IR.process_owner` | `process.owner` |
+| `process.business_units` | `IR.business_units` | `process.business_units` |
+| ordered `lanes` entries, including `id`, `name`, `type`, and additional metadata | `IR.lanes` in authored order | top-level `lanes` in the same order |
+| a node nested under a subprocess | `Node.subprocess_parent` | `nodes[*].subprocess_parent` |
+
+Compilation must preserve these values exactly. A source form that cannot be
+represented by this mapping is rejected rather than silently dropped.
 
 ## Scope boundaries
 

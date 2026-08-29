@@ -48,7 +48,7 @@ from .models import (
     RoutedEdgePath,
 )
 from flo.render.options import RenderOptions
-from flo.services.errors import RenderError
+from flo.errors import RenderError
 
 
 def build_swimlane_elk_layout_request(

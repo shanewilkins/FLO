@@ -62,7 +62,7 @@ inspectable and testable.
 
 - `src/flo/render/_svg_spaghetti.py`
   Direct-SVG projection and artifact emission.
-- `flo.compiler.analysis`
+- `flo.process.analysis`
   Movement inference and aggregation.
 - `src/flo/render/_svg_shared_primitives.py`
   Shared SVG definitions where the semantics are renderer-neutral.

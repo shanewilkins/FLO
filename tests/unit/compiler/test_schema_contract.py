@@ -1,10 +1,11 @@
 import json
 from pathlib import Path
 
-from flo.compiler.compile import compile_adapter
-from flo.compiler.ir.validate import validate_against_schema
-from flo.compiler.ir.models import IR, Node, Edge
-from flo.services.errors import ValidationError
+from flo.source.compile import compile_adapter
+from flo.process.ir.schema_projection import ir_to_schema_dict
+from flo.process.ir.validate import validate_against_schema
+from flo.process.ir.models import IR, Node, Edge
+from flo.errors import ValidationError
 
 
 def test_compile_emits_schema_and_validates() -> None:
@@ -57,7 +58,9 @@ def test_schema_accepts_parallel_kinds_and_handoff_field() -> None:
 def test_repo_and_packaged_ir_schema_are_in_sync() -> None:
     repo_root = Path(__file__).resolve().parents[3]
     schema_path = repo_root / "schema" / "flo_ir.json"
-    packaged_schema_path = repo_root / "src" / "flo" / "schema" / "flo_ir.json"
+    packaged_schema_path = (
+        repo_root / "src" / "flo" / "process" / "schema" / "flo_ir.json"
+    )
 
     with schema_path.open("r", encoding="utf-8") as fh:
         repo_schema = json.load(fh)
@@ -88,3 +91,84 @@ def test_flo_types_schema_includes_phase2_canonical_keys() -> None:
         "location",
         "mixed",
     ]
+
+
+def test_canonical_entity_identity_and_kind_contracts_match_ir_schema() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+    with (repo_root / "schema" / "flo_types.json").open(encoding="utf-8") as fh:
+        typed = json.load(fh)["definitions"]
+    with (repo_root / "schema" / "flo_ir.json").open(encoding="utf-8") as fh:
+        ir_defs = json.load(fh)["definitions"]
+
+    for entity_name in ("canonical_item", "canonical_resource"):
+        assert ir_defs[entity_name]["required"] == typed[entity_name]["required"]
+        typed_kind_ref = typed[entity_name]["properties"]["kind"]["$ref"]
+        typed_kind_name = typed_kind_ref.rsplit("/", 1)[-1]
+        assert (
+            ir_defs[entity_name]["properties"]["kind"]["enum"]
+            == typed[typed_kind_name]["enum"]
+        )
+
+
+def test_compile_preserves_first_class_process_context_and_hierarchy() -> None:
+    adapter = {
+        "spec_version": "0.1",
+        "process": {
+            "id": "context",
+            "name": "Context",
+            "version": 2,
+            "owner": {"id": "owner", "name": "Process Owner"},
+            "business_units": [
+                {"id": "ops", "name": "Operations"},
+            ],
+        },
+        "lanes": [
+            {
+                "id": "operations",
+                "name": "Operations",
+                "type": "team",
+                "metadata": {"color_hint": "blue"},
+            },
+            {"id": "quality", "name": "Quality", "type": "team"},
+        ],
+        "steps": [
+            {"id": "start", "kind": "start", "lane": "operations"},
+            {
+                "id": "work",
+                "kind": "subprocess",
+                "lane": "operations",
+                "subnodes": [
+                    {"id": "child", "kind": "task", "lane": "operations"},
+                ],
+            },
+            {"id": "end", "kind": "end", "lane": "operations"},
+        ],
+        "transitions": [
+            {"source": "start", "target": "work"},
+            {"source": "work", "target": "child"},
+            {"source": "child", "target": "end"},
+        ],
+    }
+
+    projected = ir_to_schema_dict(compile_adapter(adapter))
+
+    assert projected["process"]["owner"] == {
+        "id": "owner",
+        "name": "Process Owner",
+    }
+    assert projected["process"]["business_units"] == [
+        {"id": "ops", "name": "Operations"}
+    ]
+    assert projected["lanes"] == [
+        {
+            "id": "operations",
+            "name": "Operations",
+            "type": "team",
+            "metadata": {"color_hint": "blue"},
+        },
+        {"id": "quality", "name": "Quality", "type": "team"},
+    ]
+    child = next(node for node in projected["nodes"] if node["id"] == "child")
+    assert child["subprocess_parent"] == "work"
+
+    validate_against_schema(compile_adapter(adapter))

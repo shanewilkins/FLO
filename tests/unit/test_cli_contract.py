@@ -2,7 +2,7 @@
 
 import pytest
 
-from flo.core._cli_contract import ParsedArgs, parse_cli_args
+from flo.app._cli_contract import ParsedArgs, parse_cli_args
 
 
 def test_parsed_args_contract_stores_components():

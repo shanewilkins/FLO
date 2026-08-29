@@ -1,6 +1,6 @@
 import pytest
 
-from flo.compiler import compile_adapter
+from flo.source import compile_adapter
 
 
 def test_compile_requires_spec_version_process_and_steps() -> None:

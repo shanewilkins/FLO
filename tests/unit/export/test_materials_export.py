@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-import flo.export.ingredients_export as ingredients_export
-import flo.export.materials_export as materials_export
+import flo.process.export.ingredients_export as ingredients_export
+import flo.process.export.materials_export as materials_export
 
 
 def test_materials_export_returns_none_when_metadata_missing():

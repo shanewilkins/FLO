@@ -1,13 +1,13 @@
 from typing import cast
 
-from flo.core._capability_validation import ensure_render_projection_supported
+from flo.app._capability_validation import ensure_render_projection_supported
 from flo.render.capability_matrix import (
     RENDER_CAPABILITY_MATRIX,
     supported_backends_for_diagram,
 )
 from flo.render.options import RenderOptions
 from flo.render.options import DiagramType
-from flo.services.errors import CLIError
+from flo.errors import CLIError
 
 
 def test_render_capability_matrix_covers_known_diagrams() -> None:

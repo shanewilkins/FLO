@@ -1,5 +1,5 @@
-from flo.compiler.ir import IR, Node
-from flo.compiler.ir.schema_projection import ir_to_schema_dict
+from flo.process.ir import IR, Node
+from flo.process.ir.schema_projection import ir_to_schema_dict
 
 
 def test_ir_schema_projection_emits_required_top_level_keys():

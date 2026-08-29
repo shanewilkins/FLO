@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any
 
-from flo.adapters import parse_adapter
+from flo.source import parse_adapter
 import pytest
 from flo.render._sppm_node_content import build_sppm_node_content
 from flo.render.layout_core import (
@@ -10,7 +10,7 @@ from flo.render.layout_core import (
     serialize_elk_layout_request,
 )
 from flo.render.options import RenderOptions
-from flo.services.errors import RenderError
+from flo.errors import RenderError
 
 
 def _collect_nodes_with_ports(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:

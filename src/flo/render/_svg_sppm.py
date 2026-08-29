@@ -5,8 +5,8 @@ from __future__ import annotations
 from html import escape
 from typing import Any
 
-from flo.compiler.analysis import ProcessTimingAnalysis
-from flo.services.errors import RenderError
+from flo.process.analysis import ProcessTimingAnalysis
+from flo.errors import RenderError
 
 from ._artifact import RenderArtifact
 from ._diagnostics import (
@@ -21,11 +21,13 @@ from ._svg_sppm_edges import _is_synthetic_sppm_lane
 from ._svg_sppm_edges import _label_placement
 from ._svg_sppm_edges import _lane_header_avoid_bounds
 from ._svg_shared_primitives import (
+    SVG_ACCESSIBILITY_ATTRIBUTES,
     raw_node_lookup,
     standard_edge_svg,
     standard_lane_svg,
     standard_node_svg,
     standard_svg_defs,
+    svg_accessibility_elements,
 )
 from ._svg_sppm_rows import _display_canvas_bounds
 from ._svg_theme import apply_svg_typography
@@ -136,9 +138,11 @@ def render_sppm_svg_artifact_from_layout(
             f'height="{height:.0f}" viewBox="0 0 {width:.0f} {height:.0f}" '
             'data-flo-artifact-kind="svg" data-flo-backend="svg" '
             'data-flo-diagram="sppm" data-flo-layout-engine="elk" '
+            f"{SVG_ACCESSIBILITY_ATTRIBUTES} "
             f'data-sppm-publication-page-id="{escape(publication_page.page_id)}"'
             ">"
         ),
+        *svg_accessibility_elements(process, diagram_name="SPPM"),
         f'<rect width="100%" height="100%" fill="{options.resolved_theme.canvas_background}" />',
     ]
     parts[1:1] = standard_svg_defs(options)

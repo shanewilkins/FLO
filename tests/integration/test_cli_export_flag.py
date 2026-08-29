@@ -2,7 +2,7 @@ from click.testing import CliRunner
 import json
 import yaml
 
-from flo.core.cli import cli
+from flo.app.cli import cli
 
 
 def test_default_path_accepts_export_json_flag():

@@ -6,7 +6,7 @@ import hashlib
 from html import escape
 from typing import Any
 
-from flo.compiler.analysis import (
+from flo.process.analysis import (
     aggregate_material_movements,
     aggregate_people_movements,
     aggregate_people_movements_by_worker,
@@ -17,6 +17,10 @@ from flo.compiler.analysis import (
 )
 
 from ._artifact import RenderArtifact
+from ._svg_shared_primitives import (
+    SVG_ACCESSIBILITY_ATTRIBUTES,
+    svg_accessibility_elements,
+)
 from .options import RenderOptions
 from ._svg_theme import apply_svg_typography
 
@@ -54,8 +58,10 @@ def render_spaghetti_svg_artifact(
         (
             f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:.0f}" '
             f'height="{height:.0f}" viewBox="0 0 {width:.0f} {height:.0f}" '
-            'data-flo-artifact-kind="svg" data-flo-backend="svg">'
+            'data-flo-artifact-kind="svg" data-flo-backend="svg" '
+            f'data-flo-diagram="spaghetti" {SVG_ACCESSIBILITY_ATTRIBUTES}>'
         ),
+        *svg_accessibility_elements(process, diagram_name="spaghetti map"),
         f'<rect width="100%" height="100%" fill="{options.resolved_theme.canvas_background}" />',
     ]
 

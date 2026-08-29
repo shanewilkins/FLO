@@ -4,7 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from flo.adapters import parse_adapter
+from flo.source import parse_adapter
+import flo.source as adapters
+import flo.source.composition as composition
 
 
 def _write(path: Path, content: str) -> None:
@@ -100,4 +102,69 @@ includes:
     )
 
     with pytest.raises(ValueError, match="duplicate step id"):
+        parse_adapter(root.read_text(encoding="utf-8"), source_path=str(root))
+
+
+def test_parse_adapter_rejects_parent_traversal_outside_source_root(tmp_path: Path):
+    source_root = tmp_path / "model"
+    root = source_root / "process.flo"
+    outside = tmp_path / "outside.flo"
+    _write(outside, "steps: []")
+    _write(root, 'includes: ["../outside.flo"]')
+
+    with pytest.raises(ValueError, match="include path escapes source root"):
+        parse_adapter(root.read_text(encoding="utf-8"), source_path=str(root))
+
+
+def test_parse_adapter_rejects_symlink_escape(tmp_path: Path):
+    source_root = tmp_path / "model"
+    root = source_root / "process.flo"
+    outside = tmp_path / "outside.flo"
+    link = source_root / "linked.flo"
+    _write(outside, "steps: []")
+    source_root.mkdir(parents=True, exist_ok=True)
+    link.symlink_to(outside)
+    _write(root, 'includes: ["linked.flo"]')
+
+    with pytest.raises(ValueError, match="include path escapes source root"):
+        parse_adapter(root.read_text(encoding="utf-8"), source_path=str(root))
+
+
+def test_parse_adapter_enforces_include_depth_and_count_limits(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    root = tmp_path / "root.flo"
+    first = tmp_path / "first.flo"
+    second = tmp_path / "second.flo"
+    _write(root, 'includes: ["first.flo"]')
+    _write(first, 'includes: ["second.flo"]')
+    _write(second, "steps: []")
+
+    monkeypatch.setattr(composition, "MAX_INCLUDE_DEPTH", 1)
+    with pytest.raises(ValueError, match="include depth exceeds limit of 1"):
+        parse_adapter(root.read_text(encoding="utf-8"), source_path=str(root))
+
+    monkeypatch.setattr(composition, "MAX_INCLUDE_DEPTH", 32)
+    monkeypatch.setattr(composition, "MAX_INCLUDE_FILES", 1)
+    with pytest.raises(ValueError, match="include count exceeds limit of 1"):
+        parse_adapter(root.read_text(encoding="utf-8"), source_path=str(root))
+
+
+def test_parse_adapter_enforces_source_and_expanded_byte_limits(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    root = tmp_path / "root.flo"
+    include_file = tmp_path / "included.flo"
+    _write(root, 'includes: ["included.flo"]')
+    _write(include_file, "description: " + ("x" * 80))
+
+    monkeypatch.setattr(adapters, "MAX_SOURCE_BYTES", 10)
+    with pytest.raises(ValueError, match="FLO source exceeds 10 byte limit"):
+        parse_adapter(root.read_text(encoding="utf-8"), source_path=str(root))
+
+    monkeypatch.setattr(adapters, "MAX_SOURCE_BYTES", composition.MAX_SOURCE_BYTES)
+    monkeypatch.setattr(composition, "MAX_EXPANDED_SOURCE_BYTES", 50)
+    with pytest.raises(ValueError, match="expanded FLO source exceeds 50 byte limit"):
         parse_adapter(root.read_text(encoding="utf-8"), source_path=str(root))

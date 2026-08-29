@@ -7,7 +7,7 @@ from statistics import fmean
 
 import pytest
 
-from flo.adapters import parse_adapter
+from flo.source import parse_adapter
 from flo.render.layout_core import (
     ElkLayoutEdge,
     ElkLayoutNode,

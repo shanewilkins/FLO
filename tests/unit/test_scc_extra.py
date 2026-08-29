@@ -1,4 +1,4 @@
-from flo.compiler.analysis.scc import scc_condense, condense_scc
+from flo.process.analysis.scc import scc_condense, condense_scc
 import pytest
 
 

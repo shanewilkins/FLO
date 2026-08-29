@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from flo.schema.render_metadata import (
+from flo.process.schema.render_metadata import (
     SPPM_CONTINUATION_INCOMING_METADATA_KEYS,
     SPPM_CONTINUATION_OUTGOING_METADATA_KEYS,
     first_present_metadata_value,

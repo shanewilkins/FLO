@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from flo.schema.subprocess_refs import resolve_subprocess_detail_map_reference
+from flo.process.schema.subprocess_refs import resolve_subprocess_detail_map_reference
 
 from ._sppm_metadata_schema import (
     get_metadata_crossover_time,

@@ -68,6 +68,23 @@ REQUIREMENT_FILES: dict[Path, dict[str, Any]] = {
     },
 }
 
+FOUNDATIONAL_EVIDENCE_IDS = {
+    "UR-002",
+    "UR-003",
+    "UR-008",
+    "UR-009",
+    "UR-010",
+    "UR-012",
+    "TR-006",
+    "TR-007",
+    "TR-008",
+    "TR-012",
+    "TR-022",
+    "TR-023",
+    "TR-024",
+}
+EVIDENCE_FILE = Path("docs/requirements/executable_evidence.csv")
+
 
 def _repo_relative(path: Path) -> Path:
     try:
@@ -86,9 +103,9 @@ def _iter_targets(raw_paths: list[str]) -> list[Path]:
         "docs/requirements/*.csv",
         "examples/**/*.flo",
         "schema/*.json",
-        "src/flo/schema/*.json",
+        "src/flo/process/schema/*.json",
         "README.md",
-        "src/flo/services/errors.py",
+        "src/flo/errors.py",
     ):
         targets.extend(sorted(REPO_ROOT.glob(pattern)))
     return targets
@@ -236,6 +253,75 @@ def _warn_requirement_catalogs(warnings: list[str]) -> None:
             )
 
 
+def _warn_executable_evidence(warnings: list[str]) -> None:
+    """Require resolvable named tests for foundational implemented contracts."""
+    path = REPO_ROOT / EVIDENCE_FILE
+    try:
+        with path.open(encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle)
+            if reader.fieldnames != ["Requirement_ID", "Evidence_Refs"]:
+                warnings.append(
+                    f"{EVIDENCE_FILE}: headers must be Requirement_ID,Evidence_Refs"
+                )
+                return
+            rows = list(reader)
+    except (OSError, csv.Error) as exc:
+        warnings.append(f"{EVIDENCE_FILE}: cannot parse CSV: {exc}")
+        return
+
+    evidence_by_id: dict[str, list[str]] = {}
+    for row_number, row in enumerate(rows, start=2):
+        requirement_id = (row.get("Requirement_ID") or "").strip()
+        if requirement_id in evidence_by_id:
+            warnings.append(
+                f"{EVIDENCE_FILE}:{row_number}: duplicate evidence row for {requirement_id}"
+            )
+            continue
+        refs = [
+            ref.strip()
+            for ref in (row.get("Evidence_Refs") or "").split(";")
+            if ref.strip()
+        ]
+        evidence_by_id[requirement_id] = refs
+        for ref in refs:
+            _warn_test_evidence_ref(
+                ref=ref,
+                row_number=row_number,
+                warnings=warnings,
+            )
+
+    for requirement_id in sorted(FOUNDATIONAL_EVIDENCE_IDS - evidence_by_id.keys()):
+        warnings.append(
+            f"{EVIDENCE_FILE}: missing executable evidence for {requirement_id}"
+        )
+
+
+def _warn_test_evidence_ref(
+    *, ref: str, row_number: int, warnings: list[str]
+) -> None:
+    path_text, separator, symbol = ref.partition("::")
+    if not separator or not symbol:
+        warnings.append(
+            f"{EVIDENCE_FILE}:{row_number}: evidence must use path::test_name: {ref}"
+        )
+        return
+    test_path = REPO_ROOT / path_text
+    if not test_path.is_file():
+        warnings.append(
+            f"{EVIDENCE_FILE}:{row_number}: evidence file does not exist: {path_text}"
+        )
+        return
+    try:
+        source = test_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        warnings.append(f"{EVIDENCE_FILE}:{row_number}: cannot read {path_text}: {exc}")
+        return
+    if re.search(rf"^def {re.escape(symbol)}\b", source, re.MULTILINE) is None:
+        warnings.append(
+            f"{EVIDENCE_FILE}:{row_number}: test symbol does not exist: {ref}"
+        )
+
+
 def _warn_current_user_guidance(targets: Iterable[Path], warnings: list[str]) -> None:
     current_user_docs = {
         Path("README.md"),
@@ -267,7 +353,7 @@ def _warn_schema_copies(targets: Iterable[Path], warnings: list[str]) -> None:
     rels = {_repo_relative(path) for path in targets}
     for name in ("flo_trace.json",):
         root_rel = Path("schema") / name
-        packaged_rel = Path("src/flo/schema") / name
+        packaged_rel = Path("src/flo/process/schema") / name
         if root_rel not in rels and packaged_rel not in rels:
             continue
         root_path = REPO_ROOT / root_rel
@@ -428,6 +514,7 @@ def main() -> int:
     _warn_adr_status(targets, warnings)
     _warn_markdown_fences(targets, warnings)
     _warn_requirement_catalogs(warnings)
+    _warn_executable_evidence(warnings)
     _warn_current_user_guidance(targets, warnings)
     _warn_known_files(targets, warnings)
     _warn_schema_copies(targets, warnings)

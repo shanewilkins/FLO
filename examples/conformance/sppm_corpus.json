@@ -19,6 +19,15 @@
       "input": "examples/reference/rework_loop.flo",
       "options": {
         "orientation": "lr"
+      },
+      "diagnostic_budget": {
+        "rationale": "Known LR rework endpoint correction is visually reviewed; increases fail the gate.",
+        "allowed": {
+          "sppm-attachment-miss-distance": {
+            "max_count": 1,
+            "max_values": {"miss_distance_px": 71}
+          }
+        }
       }
     },
     {
@@ -26,6 +35,19 @@
       "input": "examples/reference/rework_loop.flo",
       "options": {
         "orientation": "tb"
+      },
+      "diagnostic_budget": {
+        "rationale": "Known TB rework alignment and endpoint corrections are visually reviewed; increases fail the gate.",
+        "allowed": {
+          "sppm-attachment-miss-distance": {
+            "max_count": 5,
+            "max_values": {"miss_distance_px": 102}
+          },
+          "sppm-branch-alignment-delta": {
+            "max_count": 1,
+            "max_values": {"alignment_delta_px": 420}
+          }
+        }
       }
     },
     {
@@ -50,6 +72,19 @@
       "input": "examples/reference/sppm_long_label_stress.flo",
       "options": {
         "orientation": "lr"
+      },
+      "diagnostic_budget": {
+        "rationale": "The long-label stress case intentionally retains one return-alignment and one endpoint warning; increases fail the gate.",
+        "allowed": {
+          "sppm-attachment-miss-distance": {
+            "max_count": 1,
+            "max_values": {"miss_distance_px": 145}
+          },
+          "sppm-return-alignment-delta": {
+            "max_count": 1,
+            "max_values": {"alignment_delta_px": 633}
+          }
+        }
       }
     },
     {

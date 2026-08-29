@@ -1,9 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="970" height="875" viewBox="0 0 970 875" data-flo-artifact-kind="svg" data-flo-backend="svg" data-flo-diagram="sppm" data-flo-layout-engine="elk" data-sppm-publication-page-id="main-p1">
+<svg xmlns="http://www.w3.org/2000/svg" width="970" height="875" viewBox="0 0 970 875" data-flo-artifact-kind="svg" data-flo-backend="svg" data-flo-diagram="sppm" data-flo-layout-engine="elk" role="img" aria-labelledby="flo-svg-title flo-svg-description" data-sppm-publication-page-id="main-p1">
 <defs>
 <marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
 <path d="M0,0 L8,3 L0,6 z" fill="#475569" />
 </marker>
 </defs>
+<title id="flo-svg-title">Invoice Review (with rework) — SPPM</title>
+<desc id="flo-svg-description">SPPM diagram for Invoice Review (with rework). Read node and transition labels for process details.</desc>
 <rect width="100%" height="100%" fill="#fffdf8" />
 <g data-sppm-publication-band="header">
 <line x1="28.0" y1="28.0" x2="942.0" y2="28.0" stroke="#cbd5e1" stroke-width="1" />

@@ -1,4 +1,4 @@
-from flo.compiler.ir.models import IR, Node
+from flo.process.ir.models import IR, Node
 from flo.render._process_header import (
     build_process_header_rows,
     extract_process_header_context,

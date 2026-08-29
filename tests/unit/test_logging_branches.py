@@ -4,7 +4,7 @@ import logging
 import sys
 import types
 
-from flo.services.logging import (
+from flo.app.logging import (
     _add_otel_trace_info,
     _add_service_name,
     configure_logging,

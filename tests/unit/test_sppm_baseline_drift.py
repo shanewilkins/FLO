@@ -82,3 +82,46 @@ def test_committed_golden_cases_contain_only_canonical_artifacts() -> None:
     for case_dir in case_dirs:
         artifacts = {path.name for path in case_dir.iterdir() if path.is_file()}
         assert artifacts == {"layout_result.json", "render.svg"}
+
+
+def test_diagnostic_budget_rejects_unexpected_codes_and_threshold_growth() -> None:
+    case = {
+        "id": "reviewed",
+        "diagnostic_budget": {
+            "rationale": "Reviewed known geometry correction.",
+            "allowed": {
+                "known": {
+                    "max_count": 1,
+                    "max_values": {"distance_px": 10},
+                }
+            },
+        },
+    }
+    diagnostics = (
+        {"code": "known", "distance_px": 12},
+        {"code": "known", "distance_px": 9},
+        {"code": "new-warning"},
+    )
+
+    violations = _drift.diagnostic_budget_violations(
+        case=case,
+        diagnostics=diagnostics,
+    )
+
+    assert violations == (
+        "reviewed: known count 2 exceeds 1",
+        "reviewed: known.distance_px 12.00 exceeds 10.00",
+        "reviewed: unexpected diagnostic code new-warning",
+    )
+
+
+def test_diagnostic_budget_requires_rationale_for_accepted_warning() -> None:
+    violations = _drift.diagnostic_budget_violations(
+        case={"id": "unreviewed"},
+        diagnostics=({"code": "warning"},),
+    )
+
+    assert violations == (
+        "unreviewed: diagnostics require a reviewed rationale",
+        "unreviewed: unexpected diagnostic code warning",
+    )

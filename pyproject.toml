@@ -27,7 +27,7 @@ module-name = "flo"
 module-root = "src"
 
 [project.scripts]
-flo = "flo.core.cli:main"
+flo = "flo.app.cli:main"
 
 [dependency-groups]
 dev = [
@@ -48,22 +48,22 @@ dev = [
 root_package = "flo"
 
 [[tool.importlinter.contracts]]
-name = "Domain layers do not import core"
+name = "Process domain is independent of outer packages"
 type = "forbidden"
-source_modules = ["flo.adapters", "flo.compiler", "flo.render", "flo.services"]
-forbidden_modules = ["flo.core"]
+source_modules = ["flo.process"]
+forbidden_modules = ["flo.source", "flo.render", "flo.app"]
 
 [[tool.importlinter.contracts]]
-name = "Compiler and adapters avoid logging internals"
+name = "Source imports only process and leaf contracts"
 type = "forbidden"
-source_modules = ["flo.compiler", "flo.adapters"]
-forbidden_modules = ["flo.services.logging"]
+source_modules = ["flo.source"]
+forbidden_modules = ["flo.render", "flo.app"]
 
 [[tool.importlinter.contracts]]
-name = "Compiler IR is independent of higher-level packages"
+name = "Render is independent of source and application"
 type = "forbidden"
-source_modules = ["flo.compiler.ir"]
-forbidden_modules = ["flo.core", "flo.adapters", "flo.render", "flo.services"]
+source_modules = ["flo.render"]
+forbidden_modules = ["flo.source", "flo.app"]
 
 [[tool.importlinter.contracts]]
 name = "FLO package siblings are acyclic"
@@ -71,26 +71,8 @@ type = "acyclic_siblings"
 ancestors = ["flo"]
 depth = 3
 
-[[tool.importlinter.contracts]]
-name = "Static analysis avoids outer application and presentation layers"
-type = "forbidden"
-source_modules = ["flo.compiler.analysis"]
-forbidden_modules = ["flo.adapters", "flo.core", "flo.export", "flo.render", "flo.services"]
-
-[[tool.importlinter.contracts]]
-name = "Input adapters avoid compiler and output layers"
-type = "forbidden"
-source_modules = ["flo.adapters"]
-forbidden_modules = ["flo.compiler", "flo.core", "flo.export", "flo.render", "flo.services"]
-
-[[tool.importlinter.contracts]]
-name = "Schema helpers avoid behavior and infrastructure layers"
-type = "forbidden"
-source_modules = ["flo.schema"]
-forbidden_modules = ["flo.adapters", "flo.compiler", "flo.core", "flo.export", "flo.render", "flo.services"]
-
 [tool.coverage.report]
 omit = [
     "src/flo/main.py",
-    "src/flo/core/_sppm_refactor_baseline.py",
+    "src/flo/app/_sppm_refactor_baseline.py",
 ]

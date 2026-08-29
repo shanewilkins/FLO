@@ -5,7 +5,7 @@ stream/output behavior for FLO commands.
 
 ## Error class hierarchy
 
-Implemented in `src/flo/services/errors.py`:
+Implemented in `src/flo/errors.py`:
 
 - `DomainError`
   - Base class for expected domain-level errors.
@@ -51,7 +51,7 @@ Current mappings:
 - Renderers and exporters are separate concerns and use separate registries.
   - Renderers (human-readable visualization) live under `src/flo/render`.
   - Exporters (machine-readable or report-style projections) live under
-    `src/flo/export`.
+    `src/flo/process/export`.
 - `--diagram` supports `swimlane`, `spaghetti`, and `sppm` for render output.
 - `--profile`, `--detail`, `--orientation {lr,tb}`, `--show-notes`,
   `--subprocess-view`, shared autoformat controls (`--layout-wrap`,
@@ -102,6 +102,6 @@ Unsupported diagram/backend projection requests are usage errors and must:
 - Core language semantics live in `docs/specs/core_language.md`.
 - Diagram meaning lives in the other files under `docs/specs/`.
 - This contract is the normative CLI/interface companion to the implementation
-  in `src/flo/services/errors.py`.
+  in `src/flo/errors.py`.
 - Process-event semantics live in `docs/specs/telemetry_events.md`; privacy and
   disclosure rules live in `docs/policy/telemetry_privacy.md`.

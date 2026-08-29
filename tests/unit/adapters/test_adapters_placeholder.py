@@ -1,4 +1,4 @@
-from flo.adapters import parse_adapter
+from flo.source import parse_adapter
 
 
 def test_parse_adapter_returns_mapping_for_yaml_document():

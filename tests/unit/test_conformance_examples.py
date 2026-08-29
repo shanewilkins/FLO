@@ -2,10 +2,10 @@ from pathlib import Path
 
 import pytest
 
-from flo.adapters import parse_adapter
-from flo.compiler import compile_adapter
-from flo.compiler.ir import validate_ir
-from flo.services.errors import ValidationError
+from flo.source import parse_adapter
+from flo.source import compile_adapter
+from flo.process.ir import validate_ir
+from flo.errors import ValidationError
 from tests.fixtures.sample_fixtures import repo_root
 
 

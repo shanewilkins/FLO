@@ -1,8 +1,8 @@
 import pytest
 
-from flo.compiler.ir.models import Edge, IR, Node
-from flo.compiler.ir.validate import validate_ir
-from flo.services.errors import ValidationError
+from flo.process.ir.models import Edge, IR, Node
+from flo.process.ir.validate import validate_ir
+from flo.errors import ValidationError
 
 
 def test_validate_ir_accepts_consumes_produces_when_items_declared():
@@ -26,9 +26,9 @@ def test_validate_ir_accepts_consumes_produces_when_items_declared():
         ],
         process_metadata={
             "items": [
-                {"id": "flour", "kind": "material"},
-                {"id": "water", "kind": "material"},
-                {"id": "dough", "kind": "material"},
+                {"id": "flour", "name": "Flour", "kind": "material"},
+                {"id": "water", "name": "Water", "kind": "material"},
+                {"id": "dough", "name": "Dough", "kind": "material"},
             ]
         },
     )
@@ -50,7 +50,7 @@ def test_validate_ir_rejects_consumes_with_undeclared_item():
         ],
         process_metadata={
             "items": [
-                {"id": "water", "kind": "material"},
+                {"id": "water", "name": "Water", "kind": "material"},
             ]
         },
     )
@@ -163,8 +163,8 @@ def test_validate_ir_accepts_resource_relations_with_matching_kinds():
         ],
         process_metadata={
             "resources": [
-                {"id": "baker", "kind": "person"},
-                {"id": "mixer", "kind": "equipment"},
+                {"id": "baker", "name": "Baker", "kind": "person"},
+                {"id": "mixer", "name": "Mixer", "kind": "equipment"},
             ]
         },
     )
@@ -186,7 +186,7 @@ def test_validate_ir_rejects_resource_relations_with_unknown_resource():
         ],
         process_metadata={
             "resources": [
-                {"id": "mixer", "kind": "equipment"},
+                {"id": "mixer", "name": "Mixer", "kind": "equipment"},
             ]
         },
     )
@@ -209,7 +209,7 @@ def test_validate_ir_rejects_resource_relations_with_wrong_kind():
         ],
         process_metadata={
             "resources": [
-                {"id": "baker", "kind": "person"},
+                {"id": "baker", "name": "Baker", "kind": "person"},
             ]
         },
     )

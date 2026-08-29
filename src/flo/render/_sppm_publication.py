@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from flo.compiler.analysis import ProcessTimingAnalysis, analyze_process_timing
-from flo.compiler.ir.models import IR
+from flo.process.analysis import ProcessTimingAnalysis, analyze_process_timing
+from flo.process.ir.models import IR
 
 from ._process_header import extract_process_header_context
 from ._publication import (

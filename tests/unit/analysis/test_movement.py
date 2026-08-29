@@ -1,11 +1,11 @@
-from flo.compiler.analysis import (
+from flo.process.analysis import (
     infer_material_movements,
     infer_people_movements,
     aggregate_people_movements,
     aggregate_people_movements_by_worker,
     extract_location_spatial_index,
 )
-from flo.compiler.ir.models import Edge, IR
+from flo.process.ir.models import Edge, IR
 
 
 def test_infer_people_movements_requires_shared_workers_and_location_change(

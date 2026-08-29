@@ -89,10 +89,10 @@ def _resolve_include_ref(current_path: Path, include_ref: str) -> Path:
 def _build_one(
     example_file: Path, examples_dir: Path, renders_dir: Path
 ) -> tuple[bool, str]:
-    from flo.adapters import parse_adapter
-    from flo.compiler import compile_adapter
-    from flo.compiler.ir import ensure_schema_aligned, validate_ir
-    from flo.export import export_ir
+    from flo.source import parse_adapter
+    from flo.source import compile_adapter
+    from flo.process.ir import ensure_schema_aligned, validate_ir
+    from flo.process.export import export_ir
     from flo.render import render_artifact
 
     rel = example_file.relative_to(examples_dir)

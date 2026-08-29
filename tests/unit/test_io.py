@@ -1,8 +1,8 @@
 import io
 import sys
 
-from flo.services.io import read_input, write_output
-from flo.services.errors import EXIT_RENDER_ERROR
+from flo.app.io import read_input, write_output
+from flo.errors import EXIT_RENDER_ERROR
 
 
 def test_read_input_file(tmp_path):

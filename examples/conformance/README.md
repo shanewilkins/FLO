@@ -20,8 +20,8 @@ Current coverage intent:
   declarations, consumes/produces, handoff-bearing edges, parallel
   split/join structure, and rework-plus-handoff coexistence.
 - `invalid/` should include narrow fixtures for undeclared references, invalid
-  item/resource kinds, malformed handoff values, malformed parallel structure,
-  and malformed rework metadata.
+  or incomplete canonical entities, duplicate entity identity, malformed
+  handoff values, malformed parallel structure, and malformed rework metadata.
 
 Authoring rule:
 

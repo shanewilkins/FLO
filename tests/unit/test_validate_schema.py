@@ -3,9 +3,9 @@ import io
 import pytest
 from pathlib import Path
 
-import flo.compiler.ir.validate as validate_mod
-from flo.compiler.ir.models import IR
-from flo.services.errors import ValidationError
+import flo.process.ir.validate as validate_mod
+from flo.process.ir.models import IR
+from flo.errors import ValidationError
 
 
 def test_validate_against_schema_missing_schema(monkeypatch, node_factory):

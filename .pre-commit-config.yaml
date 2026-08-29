@@ -66,7 +66,13 @@ repos:
         entry: uv run python scripts/check_docs_governance.py --strict
         language: system
         pass_filenames: false
-        files: "^(docs/|examples/|schema/|README\\.md|src/flo/services/errors\\.py)"
+        files: "^(docs/|examples/|schema/|README\\.md|src/flo/errors\\.py)"
+      - id: svg-accessibility-check
+        name: SVG accessibility metadata (via uv)
+        entry: uv run python scripts/check_svg_accessibility.py
+        language: system
+        pass_filenames: false
+        files: "^(src/flo/render/|tests/golden/sppm/|scripts/check_svg_accessibility\\.py)"
       - id: pytest-check
         name: pytest (via uv)
         entry: uv run pytest --cov=src/flo --cov-report=term-missing --cov-fail-under=90

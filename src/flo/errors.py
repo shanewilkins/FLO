@@ -1,7 +1,7 @@
 """Shared error types and helpers used across FLO layers.
 
 This module is the architecture-neutral home for domain error contracts.
-Compatibility imports remain available from ``flo.services.errors``.
+Compatibility imports remain available from ``flo.errors``.
 """
 
 from typing import Optional, cast

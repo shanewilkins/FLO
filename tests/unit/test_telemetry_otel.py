@@ -83,7 +83,7 @@ def test_init_telemetry_with_fake_otel(monkeypatch):
     ].ConsoleSpanExporter = ConsoleSpanExporter
 
     # Reload telemetry module to pick up fake opentelemetry
-    import flo.services.telemetry as tel
+    import flo.app.telemetry as tel
 
     importlib.reload(tel)
 

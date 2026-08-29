@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flo.services.errors import RenderError
+from flo.errors import RenderError
 
 from .elk_contracts import ElkLayoutRequest
 from .elk_sppm_helpers import _sppm_branch_anchor_helpers

@@ -2,7 +2,7 @@
 
 Keep the package import lightweight: importing the top-level package should
 not import CLI-related heavy dependencies (like `click`). Use the console
-entrypoint (`flo`) or import from `flo.core.cli` explicitly where needed,
+entrypoint (`flo`) or import from `flo.app.cli` explicitly where needed,
 instead of exposing CLI modules at package import time.
 """
 

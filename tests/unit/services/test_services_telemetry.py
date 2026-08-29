@@ -3,7 +3,7 @@ import importlib
 
 def test_init_telemetry_no_otel(monkeypatch):
     # Ensure module behaves correctly when OpenTelemetry is unavailable
-    mod = importlib.import_module("flo.services.telemetry")
+    mod = importlib.import_module("flo.app.telemetry")
 
     # Force the module into the "not available" state
     monkeypatch.setattr(mod, "OTEL_AVAILABLE", False)
@@ -21,7 +21,7 @@ def test_init_telemetry_no_otel(monkeypatch):
 
 
 def test_shutdown_no_provider(monkeypatch):
-    mod = importlib.import_module("flo.services.telemetry")
+    mod = importlib.import_module("flo.app.telemetry")
     # Ensure provider is None and shutting down is fine
     monkeypatch.setattr(mod, "_provider", None)
     # Should not raise

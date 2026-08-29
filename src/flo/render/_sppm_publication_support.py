@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from flo.compiler.analysis import ProcessTimingAnalysis
-from flo.schema.render_metadata import (
+from flo.process.analysis import ProcessTimingAnalysis
+from flo.process.schema.render_metadata import (
     SPPM_FOOTER_METRIC_METADATA_KEYS,
     SPPM_FOOTER_NOTES_METADATA_KEYS,
     first_present_metadata_value,
 )
-from flo.schema.subprocess_refs import resolve_subprocess_detail_map_reference
-from flo.services.errors import RenderError
+from flo.process.schema.subprocess_refs import resolve_subprocess_detail_map_reference
+from flo.errors import RenderError
 
 from ._process_header import build_process_header_rows
 from ._publication import (

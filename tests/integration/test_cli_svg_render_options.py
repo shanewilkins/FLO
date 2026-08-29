@@ -1,7 +1,7 @@
 from click.testing import CliRunner
 import yaml
 
-from flo.core.cli import cli
+from flo.app.cli import cli
 
 
 def _write_spaghetti_svg_model(tmp_path, *, include_io: bool = False):

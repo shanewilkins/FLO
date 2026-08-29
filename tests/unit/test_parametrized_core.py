@@ -2,8 +2,8 @@ import pytest
 
 from pathlib import Path
 
-from flo.core import run_content
-from flo.services.errors import EXIT_SUCCESS
+from flo.app import run_content
+from flo.errors import CompileError, EXIT_SUCCESS
 from tests.fixtures.sample_fixtures import repo_root
 
 
@@ -21,8 +21,6 @@ def test_run_content_with_example_file(example_file: Path):
     assert err == ""
 
 
-def test_run_content_empty_returns_placeholder():
-    rc, out, err = run_content("")
-    assert rc == EXIT_SUCCESS
-    assert out == ""
-    assert err == ""
+def test_run_content_empty_is_rejected():
+    with pytest.raises(CompileError, match="spec_version must be present"):
+        run_content("")

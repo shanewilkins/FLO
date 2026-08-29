@@ -1,8 +1,8 @@
 import pytest
 
-from flo.compiler.ir.models import Edge, IR, Node
-from flo.compiler.ir.validate import validate_ir
-from flo.services.errors import ValidationError
+from flo.process.ir.models import Edge, IR, Node
+from flo.process.ir.validate import validate_ir
+from flo.errors import ValidationError
 
 
 def test_validate_ir_rejects_unknown_subprocess_parent():

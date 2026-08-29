@@ -35,6 +35,7 @@ Supporting documents:
 
 - `Quickstart.md`: shortest end-to-end user path
 - `User_Manual.md`: complete user reference
+- `SUPPORT.md`: supported platforms, runtimes, and trust assumptions
 - `ROADMAP.md`: milestone themes, MVP meaning, and release gates
 - `CHANGELOG.md`: released changes
 - `FLO_Manifesto.md`: product and modeling principles

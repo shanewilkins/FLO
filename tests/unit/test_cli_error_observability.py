@@ -2,8 +2,8 @@ from types import SimpleNamespace
 
 from structlog.contextvars import get_contextvars
 
-import flo.core.cli as cli_mod
-from flo.services.errors import (
+import flo.app.cli as cli_mod
+from flo.errors import (
     CLIError,
     CompileError,
     ParseError,
@@ -23,10 +23,10 @@ def test_execute_emits_domain_error_event_fields(monkeypatch):
         error_handler=error_handler,
     )
 
-    monkeypatch.setattr("flo.services.get_services", lambda verbose=False: services)
-    monkeypatch.setattr("flo.services.io.read_input", lambda path: (0, "content", ""))
+    monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
+    monkeypatch.setattr("flo.app.io.read_input", lambda path: (0, "content", ""))
     monkeypatch.setattr(
-        "flo.core.run_content",
+        "flo.app.run_content",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(CLIError("bad flags", code=3)),
     )
 
@@ -55,10 +55,10 @@ def test_execute_emits_internal_error_event_fields(monkeypatch):
         error_handler=error_handler,
     )
 
-    monkeypatch.setattr("flo.services.get_services", lambda verbose=False: services)
-    monkeypatch.setattr("flo.services.io.read_input", lambda path: (0, "content", ""))
+    monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
+    monkeypatch.setattr("flo.app.io.read_input", lambda path: (0, "content", ""))
     monkeypatch.setattr(
-        "flo.core.run_content",
+        "flo.app.run_content",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("boom")),
     )
 
@@ -87,17 +87,17 @@ def test_execute_emits_verbose_diagnostic_on_fail_open_fallback(monkeypatch):
         error_handler=error_handler,
     )
 
-    monkeypatch.setattr("flo.services.get_services", lambda verbose=False: services)
-    monkeypatch.setattr("flo.services.io.read_input", lambda path: (0, "content", ""))
+    monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
+    monkeypatch.setattr("flo.app.io.read_input", lambda path: (0, "content", ""))
     monkeypatch.setattr(
-        "flo.core.run_content",
+        "flo.app.run_content",
         lambda *_args, **_kwargs: (
             0,
             "<svg />",
             "fail-open postprocess: scc_condense failed: boom",
         ),
     )
-    monkeypatch.setattr("flo.services.io.write_output", lambda out, path: (0, ""))
+    monkeypatch.setattr("flo.app.io.write_output", lambda out, path: (0, ""))
 
     rc = cli_mod._execute("input.flo", "render", {"verbose": True})
 
@@ -122,14 +122,14 @@ def test_execute_emits_write_output_error_fields_on_export_json(monkeypatch):
         error_handler=error_handler,
     )
 
-    monkeypatch.setattr("flo.services.get_services", lambda verbose=False: services)
-    monkeypatch.setattr("flo.services.io.read_input", lambda path: (0, "content", ""))
+    monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
+    monkeypatch.setattr("flo.app.io.read_input", lambda path: (0, "content", ""))
     monkeypatch.setattr(
-        "flo.core.run_content",
+        "flo.app.run_content",
         lambda *_args, **_kwargs: (0, '{"process":{},"nodes":[],"edges":[]}', ""),
     )
     monkeypatch.setattr(
-        "flo.services.io.write_output",
+        "flo.app.io.write_output",
         lambda out, path: (5, "I/O error writing out.json: boom"),
     )
 
@@ -158,10 +158,10 @@ def test_execute_maps_compile_error_stage_granularity(monkeypatch):
         error_handler=error_handler,
     )
 
-    monkeypatch.setattr("flo.services.get_services", lambda verbose=False: services)
-    monkeypatch.setattr("flo.services.io.read_input", lambda path: (0, "content", ""))
+    monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
+    monkeypatch.setattr("flo.app.io.read_input", lambda path: (0, "content", ""))
     monkeypatch.setattr(
-        "flo.core.run_content",
+        "flo.app.run_content",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(
             CompileError("compile failed", error_stage="compile")
         ),
@@ -188,10 +188,10 @@ def test_execute_maps_parse_error_stage_granularity(monkeypatch):
         error_handler=error_handler,
     )
 
-    monkeypatch.setattr("flo.services.get_services", lambda verbose=False: services)
-    monkeypatch.setattr("flo.services.io.read_input", lambda path: (0, "content", ""))
+    monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
+    monkeypatch.setattr("flo.app.io.read_input", lambda path: (0, "content", ""))
     monkeypatch.setattr(
-        "flo.core.run_content",
+        "flo.app.run_content",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(
             ParseError("parse failed", error_stage="parse")
         ),
@@ -248,9 +248,9 @@ def test_execute_emits_render_intent_validation_stage_from_real_pipeline(monkeyp
         ]
     )
 
-    monkeypatch.setattr("flo.services.get_services", lambda verbose=False: services)
+    monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
     monkeypatch.setattr(
-        "flo.services.io.read_input",
+        "flo.app.io.read_input",
         lambda path: (0, invalid_render_intent, ""),
     )
 

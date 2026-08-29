@@ -21,7 +21,7 @@ def test_adapters_models_pydantic_branch(monkeypatch):
     orig = sys.modules.get("pydantic")
     sys.modules["pydantic"] = fake_pyd
     try:
-        import flo.adapters.models as models
+        import flo.source.models as models
 
         importlib.reload(models)
         AdapterModel = models.AdapterModel
@@ -34,4 +34,4 @@ def test_adapters_models_pydantic_branch(monkeypatch):
             sys.modules["pydantic"] = orig
         else:
             del sys.modules["pydantic"]
-        importlib.reload(sys.modules["flo.adapters.models"])
+        importlib.reload(sys.modules["flo.source.models"])

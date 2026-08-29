@@ -2,13 +2,13 @@ from pathlib import Path
 
 import pytest
 
-from flo.core._flo_config import (
+from flo.app._flo_config import (
     _extract_sppm_preset_options,
     _flatten_sppm_config_options,
     _resolve_diagrams_toml_path,
     merge_diagrams_toml_sppm_defaults,
 )
-from flo.services.errors import CLIError, EXIT_USAGE
+from flo.errors import CLIError, EXIT_USAGE
 
 
 def test_merge_diagrams_toml_returns_original_when_file_missing(tmp_path, monkeypatch):
