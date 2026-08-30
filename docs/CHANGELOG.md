@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0 - 2026-08-30
+
 - Split SPPM, swimlane, spaghetti, and value stream into independent renderer
   packages; give ELK-backed renderers owned request builders and presentation
   policy, derive capabilities from the executable registry, remove global SCC

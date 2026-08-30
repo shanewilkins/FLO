@@ -18,6 +18,17 @@ jobs:
         with:
           python-version: '3.14'
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+          cache: 'npm'
+
+      - name: Install and vendor ELK runtime
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          python scripts/vendor_elkjs.py
+
       - name: Build and smoke-test installed wheel imports
         run: |
           python -m pip install uv
@@ -43,6 +54,11 @@ jobs:
         with:
           node-version: '26'
           cache: 'npm'
+
+      - name: Install and vendor ELK runtime
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          python scripts/vendor_elkjs.py
 
       - name: Build and exercise installed wheel
         run: |
