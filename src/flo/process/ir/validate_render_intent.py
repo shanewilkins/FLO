@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 from flo.errors import ValidationError
+from .metadata import extract_process_field
 from .models import IR
 
 
@@ -20,11 +21,8 @@ def validate_render_intent(ir: IR) -> None:
     - Valid diagram-specific configs (sppm, spaghetti)
     - View names are identifiers
     """
-    if not ir.process_metadata:
-        return
-
-    render = ir.process_metadata.get("render")
-    if not render:
+    render = extract_process_field(ir, "render_intent")
+    if render is None:
         return
 
     if not isinstance(render, dict):

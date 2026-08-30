@@ -1,5 +1,5 @@
 from pathlib import Path
-from flo.process.ir.models import Edge, IR
+from flo.process.ir.models import Edge, IR, Node
 from flo.process.ir._internal_shape import (
     ir_from_internal_dict,
     ir_to_internal_dict,
@@ -50,6 +50,59 @@ def test_process_context_roundtrips_through_internal_shape(node_factory) -> None
     assert loaded.process_owner == {"id": "owner", "name": "Owner"}
     assert loaded.business_units == [{"id": "ops", "name": "Operations"}]
     assert loaded.lanes == [{"id": "ops", "name": "Operations", "type": "team"}]
+
+
+def test_canonical_fields_roundtrip_without_metadata_shadow_copy() -> None:
+    ir = IR(
+        name="canonical",
+        nodes=[
+            Node(id="parent", type="subprocess"),
+            Node(id="child", type="task", subprocess_parent="parent"),
+        ],
+        items=[{"id": "order", "name": "Order", "kind": "information"}],
+        resources=[{"id": "owner", "name": "Owner", "kind": "person"}],
+        locations=[{"id": "desk", "name": "Desk"}],
+        render_intent={"defaults": {"diagram": "sppm"}},
+        process_metadata={"custom": {"source_system": "erp"}},
+    )
+
+    loaded = ir_from_internal_dict(ir_to_internal_dict(ir))
+
+    assert loaded.items == ir.items
+    assert loaded.resources == ir.resources
+    assert loaded.locations == ir.locations
+    assert loaded.render_intent == ir.render_intent
+    assert loaded.nodes[1].subprocess_parent == "parent"
+    assert loaded.nodes[1].attrs == {}
+    assert loaded.process_metadata == {"custom": {"source_system": "erp"}}
+
+
+def test_legacy_metadata_fields_promote_once_at_ir_boundary() -> None:
+    ir = IR(
+        name="legacy-constructor",
+        nodes=[
+            Node(
+                id="child",
+                type="task",
+                attrs={"subprocess_parent": "parent", "name": "Child"},
+            )
+        ],
+        process_metadata={
+            "items": [{"id": "order", "name": "Order", "kind": "information"}],
+            "resources": [{"id": "owner", "name": "Owner", "kind": "person"}],
+            "locations": [{"id": "desk", "name": "Desk"}],
+            "render": {"defaults": {"diagram": "sppm"}},
+            "custom": True,
+        },
+    )
+
+    assert ir.items is not None
+    assert ir.resources is not None
+    assert ir.locations is not None
+    assert ir.render_intent == {"defaults": {"diagram": "sppm"}}
+    assert ir.process_metadata == {"custom": True}
+    assert ir.nodes[0].subprocess_parent == "parent"
+    assert ir.nodes[0].attrs == {"name": "Child"}
 
 
 def test_ir_edge_optional_fields_roundtrip(tmp_path: Path):

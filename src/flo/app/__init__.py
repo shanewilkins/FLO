@@ -171,11 +171,8 @@ def _run_render_output(
 
 def _merge_render_intent_options(*, ir: IR, options: dict | None) -> dict | None:
     # Extract view-aware render intent from compiled IR (wires resolver into pipeline)
-    render_metadata = None
-    if isinstance(ir.process_metadata, dict):
-        render_metadata = ir.process_metadata.get("render")
     return _merge_view_intent_options(
-        render_metadata=render_metadata,
+        render_metadata=ir.render_intent,
         options=options,
     )
 

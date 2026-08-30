@@ -320,18 +320,17 @@ def _validate_node_time_metadata_value(node_id: str, key: str, value: Any) -> No
 
 def _validate_process_resources(obj: IR) -> None:
     process_metadata = getattr(obj, "process_metadata", None)
-    if not isinstance(process_metadata, dict):
-        return
+    metadata = process_metadata if isinstance(process_metadata, dict) else {}
 
-    for resource_key in (
-        "items",
-        "resources",
-        "locations",
-        "materials",
-        "equipment",
-        "workers",
-    ):
-        resources = process_metadata.get(resource_key)
+    collections = {
+        "items": getattr(obj, "items", None),
+        "resources": getattr(obj, "resources", None),
+        "locations": getattr(obj, "locations", None),
+        "materials": metadata.get("materials"),
+        "equipment": metadata.get("equipment"),
+        "workers": metadata.get("workers"),
+    }
+    for resource_key, resources in collections.items():
         if resources is None:
             continue
         _validate_resource_collection(

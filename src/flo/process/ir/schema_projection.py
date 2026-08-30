@@ -39,8 +39,13 @@ def ir_to_schema_dict(ir: IR) -> JsonObject:
         process["owner"] = ir.process_owner
     if ir.business_units:
         process["business_units"] = ir.business_units
-    if process_metadata:
-        process["metadata"] = process_metadata
+    serialized_metadata = dict(process_metadata)
+    _copy_explicit_metadata_field(serialized_metadata, "render", ir.render_intent)
+    _copy_explicit_metadata_field(serialized_metadata, "items", ir.items)
+    _copy_explicit_metadata_field(serialized_metadata, "resources", ir.resources)
+    _copy_explicit_metadata_field(serialized_metadata, "locations", ir.locations)
+    if serialized_metadata:
+        process["metadata"] = serialized_metadata
 
     nodes_out = [_node_to_schema(node) for node in ir.nodes]
     edges_out = _edges_to_schema(ir)
@@ -75,9 +80,8 @@ def _node_to_schema(node: Node) -> JsonObject:
         target=node_entry,
         keys=("name", "lane", "note", "location"),
     )
-    subprocess_parent = attrs.get("subprocess_parent")
-    if isinstance(subprocess_parent, str) and subprocess_parent.strip():
-        node_entry["subprocess_parent"] = subprocess_parent
+    if node.subprocess_parent is not None:
+        node_entry["subprocess_parent"] = node.subprocess_parent
     _copy_optional_lists(
         source=attrs,
         target=node_entry,
@@ -165,3 +169,10 @@ def _normalize_json_object(value: object) -> JsonObject:
     if isinstance(value, dict):
         return cast(JsonObject, value)
     return {}
+
+
+def _copy_explicit_metadata_field(
+    metadata: JsonObject, key: str, value: object
+) -> None:
+    if value is not None:
+        metadata[key] = value

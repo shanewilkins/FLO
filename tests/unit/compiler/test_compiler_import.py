@@ -140,7 +140,7 @@ def test_compile_preserves_step_location_workers_and_equipment():
     assert ir.nodes[0].attrs.get("equipment") == ["mixer"]
 
 
-def test_compile_promotes_top_level_resources_to_process_metadata():
+def test_compile_promotes_top_level_locations_to_canonical_ir():
     parsed = {
         "spec_version": "0.1",
         "process": {
@@ -175,7 +175,8 @@ def test_compile_promotes_top_level_resources_to_process_metadata():
     assert ir.process_metadata["cycle_time_seconds"]["target"] == 300
     assert ir.process_metadata["materials"][0]["id"] == "flour"
     assert ir.process_metadata["equipment"][0]["id"] == "oven"
-    assert ir.process_metadata["locations"][0]["id"] == "prep_station"
+    assert isinstance(ir.locations, list)
+    assert ir.locations[0]["id"] == "prep_station"
     assert ir.process_metadata["workers"][0]["id"] == "baker"
     assert ir.process_metadata["process_id"] == "p"
     assert ir.process_metadata["process_name"] == "Process"
@@ -299,9 +300,9 @@ def test_compile_flattens_subprocess_subnodes():
     node_ids = [node.id for node in ir.nodes]
     assert node_ids == ["start", "prep", "gather", "mix", "end"]
     by_id = {node.id: node for node in ir.nodes}
-    assert by_id["prep"].attrs.get("subprocess_parent") is None
-    assert by_id["gather"].attrs.get("subprocess_parent") == "prep"
-    assert by_id["mix"].attrs.get("subprocess_parent") == "prep"
+    assert by_id["prep"].subprocess_parent is None
+    assert by_id["gather"].subprocess_parent == "prep"
+    assert by_id["mix"].subprocess_parent == "prep"
 
 
 def test_compile_flattens_nested_subprocess_subnodes():
@@ -339,12 +340,12 @@ def test_compile_flattens_nested_subprocess_subnodes():
     node_ids = [node.id for node in ir.nodes]
     assert node_ids == ["start", "outer", "inner", "inner_task", "end"]
     by_id = {node.id: node for node in ir.nodes}
-    assert by_id["outer"].attrs.get("subprocess_parent") is None
-    assert by_id["inner"].attrs.get("subprocess_parent") == "outer"
-    assert by_id["inner_task"].attrs.get("subprocess_parent") == "inner"
+    assert by_id["outer"].subprocess_parent is None
+    assert by_id["inner"].subprocess_parent == "outer"
+    assert by_id["inner_task"].subprocess_parent == "inner"
 
 
-def test_compile_promotes_canonical_items_and_resources_to_process_metadata():
+def test_compile_promotes_canonical_items_and_resources_to_ir_fields():
     parsed = {
         "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
@@ -366,9 +367,13 @@ def test_compile_promotes_canonical_items_and_resources_to_process_metadata():
     }
 
     ir = compile_adapter(parsed)
+    assert isinstance(ir.items, list)
+    assert isinstance(ir.resources, list)
+    assert ir.items[0]["id"] == "order"
+    assert ir.resources[0]["id"] == "baker"
     assert ir.process_metadata is not None
-    assert ir.process_metadata["items"][0]["id"] == "order"
-    assert ir.process_metadata["resources"][0]["id"] == "baker"
+    assert "items" not in ir.process_metadata
+    assert "resources" not in ir.process_metadata
 
 
 def test_compile_preserves_canonical_step_relations():

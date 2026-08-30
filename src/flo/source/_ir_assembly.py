@@ -18,7 +18,15 @@ def build_nodes_from_flat_source(flat_source_nodes: list[dict[str, Any]]) -> lis
         nid = a_node["id"]
         ntype = a_node["kind"]
         attrs = normalize_node_attrs(a_node)
-        nodes.append(Node(id=str(nid), type=str(ntype), attrs=attrs))
+        subprocess_parent = attrs.pop("subprocess_parent", None)
+        nodes.append(
+            Node(
+                id=str(nid),
+                type=str(ntype),
+                attrs=attrs,
+                subprocess_parent=subprocess_parent,
+            )
+        )
     return nodes
 
 

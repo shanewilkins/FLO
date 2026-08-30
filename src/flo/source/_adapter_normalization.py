@@ -262,6 +262,28 @@ def resolve_lanes(adapter: dict[str, Any]) -> list[dict[str, Any]]:
     return [dict(lane) for lane in lanes] if isinstance(lanes, list) else []
 
 
+def resolve_items(adapter: dict[str, Any]) -> Any:
+    """Return the canonical item collection outside opaque metadata."""
+    return _resolve_canonical_process_value(adapter, "items")
+
+
+def resolve_resources(adapter: dict[str, Any]) -> Any:
+    """Return the canonical resource collection outside opaque metadata."""
+    return _resolve_canonical_process_value(adapter, "resources")
+
+
+def resolve_locations(adapter: dict[str, Any]) -> Any:
+    """Return the canonical location collection outside opaque metadata."""
+    return _resolve_canonical_process_value(adapter, "locations")
+
+
+def resolve_render_intent(adapter: dict[str, Any]) -> Any:
+    """Return FLO-typed render intent outside opaque process metadata."""
+    process = adapter.get("process")
+    metadata = process.get("metadata") if isinstance(process, dict) else None
+    return metadata.get("render") if isinstance(metadata, dict) else None
+
+
 def resolve_process_metadata(adapter: dict[str, Any]) -> dict[str, Any] | None:
     """Resolve normalized process metadata payload from adapter model."""
     process_raw = adapter.get("process")
@@ -271,6 +293,8 @@ def resolve_process_metadata(adapter: dict[str, Any]) -> dict[str, Any] | None:
     metadata: dict[str, Any] = (
         dict(metadata_raw) if isinstance(metadata_raw, dict) else {}
     )
+    for typed_key in ("items", "resources", "locations", "render"):
+        metadata.pop(typed_key, None)
 
     process_id = process.get("id")
     if isinstance(process_id, str) and process_id.strip():
@@ -281,9 +305,6 @@ def resolve_process_metadata(adapter: dict[str, Any]) -> dict[str, Any] | None:
         metadata.setdefault(PROCESS_METADATA_PROCESS_NAME_KEY, process_name)
 
     for key in (
-        "items",
-        "resources",
-        "locations",
         "materials",
         "equipment",
         "workers",
@@ -295,6 +316,18 @@ def resolve_process_metadata(adapter: dict[str, Any]) -> dict[str, Any] | None:
             metadata[key] = value
 
     return metadata or None
+
+
+def _resolve_canonical_process_value(adapter: dict[str, Any], key: str) -> Any:
+    process = adapter.get("process")
+    process_mapping = process if isinstance(process, dict) else {}
+    metadata = process_mapping.get("metadata")
+    candidates = (
+        adapter.get(key),
+        process_mapping.get(key),
+        metadata.get(key) if isinstance(metadata, dict) else None,
+    )
+    return next((value for value in candidates if value is not None), None)
 
 
 def resolve_source_nodes(adapter: dict[str, Any]) -> Any:

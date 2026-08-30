@@ -61,7 +61,8 @@ The first live adopter is SPPM.
 
 The 0.2 standalone SPPM path renders enabled header and footer bands from this
 model without changing the process layout.
-Full pagination and hierarchical child-map output remain deferred to 0.6.
+Full pagination and hierarchical child-map output belong to the 0.4 renderer
+stabilization milestone.
 
 Those later slices should build on this model rather than adding new renderer-specific layout structures.
 

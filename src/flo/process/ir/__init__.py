@@ -1,8 +1,4 @@
-"""IR package nested under the compiler layer.
-
-This package mirrors the previous `flo.ir` package but lives under
-`flo.process.ir` to keep top-level `src/flo/` tidy.
-"""
+"""Canonical process intermediate representation and validation contracts."""
 
 from .models import IR, Node
 from .validate import validate_ir, ensure_schema_aligned

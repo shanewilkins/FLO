@@ -71,6 +71,11 @@ def _validate_subprocess_parent_cycles(*, obj: IR, nodes_by_id: dict[str, Any]) 
 
 def extract_subprocess_parent(node: Any) -> str | None:
     """Return normalized subprocess_parent for a node, if present."""
+    explicit = getattr(node, "subprocess_parent", None)
+    if isinstance(explicit, str):
+        normalized = explicit.strip()
+        if normalized:
+            return normalized
     attrs = getattr(node, "attrs", None)
     if not isinstance(attrs, dict):
         return None

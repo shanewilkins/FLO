@@ -14,3 +14,33 @@ def extract_node_metadata(node: Any) -> dict[str, Any]:
     if isinstance(metadata, dict):
         return metadata
     return {}
+
+
+def extract_process_field(process: Any, field: str) -> Any:
+    """Return an explicit canonical or typed-extension process field.
+
+    Dictionary input follows the accepted serialized shape, where the current
+    entity collections and render intent remain under ``process.metadata``.
+    """
+    if not isinstance(process, dict):
+        explicit = getattr(process, field, None)
+        if explicit is not None:
+            return explicit
+        metadata = getattr(process, "process_metadata", None)
+        serialized_key = "render" if field == "render_intent" else field
+        return metadata.get(serialized_key) if isinstance(metadata, dict) else None
+
+    direct = process.get(field)
+    if direct is not None:
+        return direct
+    process_entry = process.get("process")
+    if not isinstance(process_entry, dict):
+        return None
+    nested = process_entry.get(field)
+    if nested is not None:
+        return nested
+    metadata = process_entry.get("metadata")
+    if not isinstance(metadata, dict):
+        return None
+    serialized_key = "render" if field == "render_intent" else field
+    return metadata.get(serialized_key)

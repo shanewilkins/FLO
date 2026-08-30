@@ -6,11 +6,15 @@ from ._adapter_normalization import (
     coerce_adapter_model,
     flatten_source_nodes,
     resolve_business_units,
+    resolve_items,
     resolve_lanes,
+    resolve_locations,
     resolve_process_metadata,
     resolve_process_name,
     resolve_process_owner,
     resolve_process_version,
+    resolve_render_intent,
+    resolve_resources,
     resolve_source_nodes,
     validate_adapter_contract,
 )
@@ -29,6 +33,10 @@ def compile_adapter(adapter_model: dict[str, Any]) -> IR:
     process_owner = resolve_process_owner(adapter)
     business_units = resolve_business_units(adapter)
     lanes = resolve_lanes(adapter)
+    items = resolve_items(adapter)
+    resources = resolve_resources(adapter)
+    locations = resolve_locations(adapter)
+    render_intent = resolve_render_intent(adapter)
     source_nodes = resolve_source_nodes(adapter)
 
     if not isinstance(source_nodes, list):
@@ -46,4 +54,8 @@ def compile_adapter(adapter_model: dict[str, Any]) -> IR:
         process_owner=process_owner,
         business_units=business_units,
         lanes=lanes,
+        items=items,
+        resources=resources,
+        locations=locations,
+        render_intent=render_intent,
     )

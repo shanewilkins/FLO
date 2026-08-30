@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import Any
 
 from flo.source.compile import compile_adapter
 from flo.process.ir.schema_projection import ir_to_schema_dict
@@ -121,7 +122,20 @@ def test_compile_preserves_first_class_process_context_and_hierarchy() -> None:
             "business_units": [
                 {"id": "ops", "name": "Operations"},
             ],
+            "metadata": {
+                "render": {"defaults": {"diagram": "sppm"}},
+                "custom_annotation": {"source_system": "erp"},
+            },
         },
+        "items": [
+            {"id": "order", "name": "Order", "kind": "information"},
+        ],
+        "resources": [
+            {"id": "operator", "name": "Operator", "kind": "person"},
+        ],
+        "locations": [
+            {"id": "workcell", "name": "Workcell"},
+        ],
         "lanes": [
             {
                 "id": "operations",
@@ -150,15 +164,24 @@ def test_compile_preserves_first_class_process_context_and_hierarchy() -> None:
         ],
     }
 
-    projected = ir_to_schema_dict(compile_adapter(adapter))
+    ir = compile_adapter(adapter)
+    projected = ir_to_schema_dict(ir)
 
-    assert projected["process"]["owner"] == {
+    _assert_projected_process_context(projected)
+    _assert_explicit_ir_context(ir, adapter)
+    _assert_projected_metadata(projected, adapter)
+    validate_against_schema(ir)
+
+
+def _assert_projected_process_context(projected: dict[str, Any]) -> None:
+    process = projected["process"]
+    assert isinstance(process, dict)
+
+    assert process["owner"] == {
         "id": "owner",
         "name": "Process Owner",
     }
-    assert projected["process"]["business_units"] == [
-        {"id": "ops", "name": "Operations"}
-    ]
+    assert process["business_units"] == [{"id": "ops", "name": "Operations"}]
     assert projected["lanes"] == [
         {
             "id": "operations",
@@ -171,4 +194,31 @@ def test_compile_preserves_first_class_process_context_and_hierarchy() -> None:
     child = next(node for node in projected["nodes"] if node["id"] == "child")
     assert child["subprocess_parent"] == "work"
 
-    validate_against_schema(compile_adapter(adapter))
+
+def _assert_explicit_ir_context(ir: IR, adapter: dict[str, Any]) -> None:
+    assert (
+        next(node for node in ir.nodes if node.id == "child").subprocess_parent
+        == "work"
+    )
+    assert ir.items == adapter["items"]
+    assert ir.resources == adapter["resources"]
+    assert ir.locations == adapter["locations"]
+    assert ir.render_intent == {"defaults": {"diagram": "sppm"}}
+    assert ir.process_metadata is not None
+    assert ir.process_metadata["custom_annotation"] == {"source_system": "erp"}
+    for promoted_key in ("items", "resources", "locations", "render"):
+        assert promoted_key not in ir.process_metadata
+
+
+def _assert_projected_metadata(
+    projected: dict[str, Any], adapter: dict[str, Any]
+) -> None:
+    process = projected["process"]
+    assert isinstance(process, dict)
+    serialized_metadata = process["metadata"]
+    assert isinstance(serialized_metadata, dict)
+    assert serialized_metadata["items"] == adapter["items"]
+    assert serialized_metadata["resources"] == adapter["resources"]
+    assert serialized_metadata["locations"] == adapter["locations"]
+    assert serialized_metadata["render"] == {"defaults": {"diagram": "sppm"}}
+    assert serialized_metadata["custom_annotation"] == {"source_system": "erp"}

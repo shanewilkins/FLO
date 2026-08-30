@@ -334,6 +334,21 @@ Current process-context fields have the following lossless canonical mapping:
 Compilation must preserve these values exactly. A source form that cannot be
 represented by this mapping is rejected rather than silently dropped.
 
+Canonical data follows the three-tier boundary recorded in
+`docs/design/adr/canonical_ir_metadata_and_subprocess_hierarchy.md`:
+
+- identity, referenced entities, lanes, graph structure, and subprocess
+  membership are canonical semantics;
+- render and publication intent are typed extensions that do not redefine
+  process control flow; and
+- unknown metadata is an opaque annotation that is preserved without FLO
+  assigning it implicit meaning.
+
+Subprocess containment is represented by a flat node collection and an
+optional `subprocess_parent` reference. Containment does not imply a
+control-flow edge. Rich parent, child-map, bounded-inline, continuation, and
+pagination projections are separate `0.4` presentation commitments.
+
 ## Scope boundaries
 
 FLO core language semantics cover:

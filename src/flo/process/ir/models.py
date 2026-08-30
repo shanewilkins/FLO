@@ -1,9 +1,13 @@
-"""Canonical IR models moved under compiler.ir."""
+"""Canonical process intermediate-representation models."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from copy import deepcopy
+from typing import Any, TypeAlias
+
+
+CanonicalCollection: TypeAlias = list[Any] | dict[str, Any]
 
 
 @dataclass
@@ -13,12 +17,19 @@ class Node:
     id: str
     type: str
     attrs: dict[str, Any] | None = None
+    subprocess_parent: str | None = None
 
     def __post_init__(self) -> None:
         """Normalize scalar and mapping fields after dataclass initialization."""
         self.id = str(self.id)
         self.type = str(self.type)
-        self.attrs = _normalize_object_mapping(self.attrs, default={})
+        normalized_attrs = _normalize_object_mapping(self.attrs, default={}) or {}
+        self.attrs = normalized_attrs
+        legacy_parent = normalized_attrs.pop("subprocess_parent", None)
+        parent = self.subprocess_parent
+        if parent is None:
+            parent = legacy_parent
+        self.subprocess_parent = _normalize_optional_text(parent)
 
 
 @dataclass
@@ -54,6 +65,10 @@ class IR:
     process_owner: dict[str, Any] | None = None
     business_units: list[dict[str, Any]] = field(default_factory=list)
     lanes: list[dict[str, Any]] = field(default_factory=list)
+    items: CanonicalCollection | None = None
+    resources: CanonicalCollection | None = None
+    locations: CanonicalCollection | None = None
+    render_intent: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         """Coerce nested node/edge entries and normalize optional metadata."""
@@ -68,6 +83,14 @@ class IR:
             self.process_metadata,
             default=None,
         )
+        metadata = self.process_metadata or {}
+        self.items = _promote_metadata_value(metadata, "items", self.items)
+        self.resources = _promote_metadata_value(metadata, "resources", self.resources)
+        self.locations = _promote_metadata_value(metadata, "locations", self.locations)
+        self.render_intent = _promote_metadata_value(
+            metadata, "render", self.render_intent
+        )
+        self.process_metadata = metadata or None
         self.process_owner = _normalize_object_mapping(self.process_owner, default=None)
         self.business_units = _normalize_object_list(self.business_units)
         self.lanes = _normalize_object_list(self.lanes)
@@ -81,6 +104,7 @@ def _coerce_node(value: Any) -> Node:
             id=value.get("id", ""),
             type=value.get("type", ""),
             attrs=value.get("attrs", {}),
+            subprocess_parent=value.get("subprocess_parent"),
         )
     raise TypeError(f"IR.nodes entries must be Node or dict, got {type(value)!r}")
 
@@ -109,7 +133,7 @@ def _normalize_object_mapping(
     default: dict[str, Any] | None,
 ) -> dict[str, Any] | None:
     if isinstance(value, dict):
-        return value
+        return deepcopy(value)
     return default
 
 
@@ -117,3 +141,17 @@ def _normalize_object_list(value: object) -> list[dict[str, Any]]:
     if not isinstance(value, list):
         return []
     return [dict(entry) for entry in value if isinstance(entry, dict)]
+
+
+def _promote_metadata_value(
+    metadata: dict[str, Any], key: str, explicit_value: Any
+) -> Any:
+    legacy_value = metadata.pop(key, None)
+    return deepcopy(explicit_value if explicit_value is not None else legacy_value)
+
+
+def _normalize_optional_text(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip()
+    return normalized or None

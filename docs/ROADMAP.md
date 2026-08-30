@@ -41,8 +41,8 @@ precedence over telemetry alignment. Telemetry work may move to its next
 roadmap stage rather than allowing 0.4 to meet technical component goals without
 being viable for its intended users.
 
-The 0.4 MVP does not require the 0.5 telemetry-analysis surface, complete
-multi-page SPPM publication due in 0.6, stable renderer promotion, the 1.0
+The 0.4 MVP does not require the 0.5 telemetry-analysis surface, every optional
+publication enhancement within the 0.4 renderer milestone, the 1.0
 language and CLI freeze, or the 1.0 packaging and support guarantees.
 
 ## 1.0 Outcome
@@ -130,6 +130,9 @@ Before 1.0, FLO will document:
 
 ### 0.3: Static Analytics Foundation
 
+- [Implemented] Promote typed item, resource, location, and subprocess-membership contracts
+  out of generic in-memory metadata into explicit canonical IR fields without
+  changing their accepted source or serialized names.
 - Deliver canonical IR analysis for handoffs, rework, path length, and step classification.
 - Add a stable model-inspection and readiness report covering composition,
   entities, paths, named views, and missing data for requested analyses or

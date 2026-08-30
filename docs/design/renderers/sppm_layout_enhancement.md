@@ -3,7 +3,7 @@
 Status: accepted
 
 Release ownership: 0.2 owns publication prerequisites and standalone SPPM
-hardening. 0.6 owns the complete multi-page publication acceptance boundary
+hardening. 0.4 owns the complete multi-page publication acceptance boundary
 before SPPM reaches the stable renderer tier.
 
 ## 0) Locked Decisions (May 2026)

@@ -5,7 +5,7 @@ from __future__ import annotations
 from math import sqrt
 from typing import Any, TypeGuard
 
-from .process_metadata import extract_process_metadata
+from flo.process.ir.metadata import extract_process_field
 
 
 def infer_material_movements(process: Any) -> list[dict[str, Any]]:
@@ -269,12 +269,7 @@ def _sorted_text_values(values: Any) -> tuple[str, ...]:
 
 def extract_location_spatial_index(process: Any) -> dict[str, dict[str, Any]]:
     """Return location_id -> {name, kind, x, y, unit} from process metadata locations."""
-    process_metadata = extract_process_metadata(process)
-    collection = (
-        process_metadata.get("locations")
-        if isinstance(process_metadata, dict)
-        else None
-    )
+    collection = extract_process_field(process, "locations")
 
     index: dict[str, dict[str, Any]] = {}
     for item in _iter_resource_items(collection):

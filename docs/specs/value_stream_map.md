@@ -4,8 +4,8 @@ Purpose: define what a lean-style value stream map means in FLO and which
 behavior is part of its normative contract.
 
 Lifecycle: planned for 0.3 as the maintained `value_stream` SVG renderer;
-stable-tier promotion is required by 1.0. It is not supported by the current
-0.1.x runtime.
+stable-tier promotion is required by 0.4. It is not supported by the current
+0.2.x runtime.
 
 ## Intent
 
@@ -82,7 +82,7 @@ The 0.3 release adds the value-stream-map surface as one coherent capability:
   distinction from spaghetti and control-flow views
 
 The renderer enters the maintained tier in 0.3 and must meet the stable-tier
-gates by 1.0. Implementation, tests, capability declarations, and user-facing
+gates in 0.4. Implementation, tests, capability declarations, and user-facing
 documentation ship together; the normative contract does not treat a schema
 placeholder alone as delivery.
 

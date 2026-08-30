@@ -118,6 +118,13 @@ def scc_condense(ir: IR) -> IR:
         nodes=new_nodes,
         process_version=ir.process_version,
         process_metadata=ir.process_metadata,
+        process_owner=ir.process_owner,
+        business_units=ir.business_units,
+        lanes=ir.lanes,
+        items=ir.items,
+        resources=ir.resources,
+        locations=ir.locations,
+        render_intent=ir.render_intent,
     )
 
 

@@ -20,6 +20,10 @@ def ir_to_internal_dict(ir: IR) -> dict[str, Any]:
         "process_owner": ir.process_owner,
         "business_units": ir.business_units,
         "lanes": ir.lanes,
+        "items": ir.items,
+        "resources": ir.resources,
+        "locations": ir.locations,
+        "render_intent": ir.render_intent,
     }
 
 
@@ -34,6 +38,7 @@ def ir_from_internal_dict(data: dict[str, Any]) -> IR:
                 id=node_data.get("id", ""),
                 type=node_data.get("type", ""),
                 attrs=node_data.get("attrs", {}),
+                subprocess_parent=node_data.get("subprocess_parent"),
             )
         )
 
@@ -68,6 +73,10 @@ def ir_from_internal_dict(data: dict[str, Any]) -> IR:
         process_owner=data.get("process_owner"),
         business_units=data.get("business_units", []),
         lanes=data.get("lanes", []),
+        items=data.get("items"),
+        resources=data.get("resources"),
+        locations=data.get("locations"),
+        render_intent=data.get("render_intent"),
     )
 
 
@@ -81,7 +90,14 @@ def ir_to_internal_json(ir: IR, path: Path | str | None = None) -> str:
 
 
 def _node_to_dict(node: Node) -> dict[str, Any]:
-    return {"id": node.id, "type": node.type, "attrs": node.attrs or {}}
+    output: dict[str, Any] = {
+        "id": node.id,
+        "type": node.type,
+        "attrs": node.attrs or {},
+    }
+    if node.subprocess_parent is not None:
+        output["subprocess_parent"] = node.subprocess_parent
+    return output
 
 
 def _edge_to_dict(edge: Edge) -> dict[str, Any]:

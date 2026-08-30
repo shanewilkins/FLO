@@ -4,13 +4,15 @@ from __future__ import annotations
 
 from typing import Any
 
+from flo.process.ir.metadata import extract_process_field
+
 
 def ir_to_materials_text(ir: Any) -> str:
     """Render a formatted item/resource list from process metadata."""
     process_metadata = getattr(ir, "process_metadata", None)
     metadata = process_metadata if isinstance(process_metadata, dict) else {}
-    items = metadata.get("items")
-    resources = metadata.get("resources")
+    items = extract_process_field(ir, "items")
+    resources = extract_process_field(ir, "resources")
     materials = metadata.get("materials")
     equipment = metadata.get("equipment")
 

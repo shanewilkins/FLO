@@ -149,7 +149,7 @@ Work:
 
 ### Phase C: publication composition
 
-Status: planned for 0.6
+Status: planned for 0.4
 
 Outcome:
 
@@ -171,14 +171,14 @@ Work:
 Accepted release ownership:
 
 - 0.2 owns prerequisites and standalone SPPM hardening.
-- 0.6 owns the complete multi-page SPPM publication acceptance boundary before
+- 0.4 owns the complete multi-page SPPM publication acceptance boundary before
   SPPM reaches the stable renderer tier.
 
 The normative requirement catalogs and roadmap ratify this assignment.
 
 ### Phase D: renderer stabilization
 
-Status: planned for 0.6
+Status: planned for 0.4
 
 Outcome:
 

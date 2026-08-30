@@ -26,6 +26,7 @@ Normative behavior still belongs in `docs/specs/` and governance rules belong in
 Current ADRs:
 
 - `language_primitive_taxonomy.md`
+- `canonical_ir_metadata_and_subprocess_hierarchy.md`
 - `render_stack_elk_svg_typst.md`
 - `governance_v2.md`
 - `process_variants.md` (proposed)

@@ -305,12 +305,16 @@ def _extract_from_ir_object(
             "id": getattr(node, "id", ""),
             "kind": getattr(node, "type", "task"),
         }
+        subprocess_parent = getattr(node, "subprocess_parent", None)
+        if subprocess_parent is None and isinstance(attrs, dict):
+            subprocess_parent = attrs.get("subprocess_parent")
+        if subprocess_parent is not None:
+            node_entry["subprocess_parent"] = subprocess_parent
         if isinstance(attrs, dict):
             for key in (
                 "name",
                 "lane",
                 "note",
-                "subprocess_parent",
                 "location",
                 "metadata",
             ):

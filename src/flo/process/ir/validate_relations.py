@@ -4,17 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
+from .metadata import extract_process_field
 from .models import IR
 from flo.errors import ValidationError
 
 
 def validate_item_relations(obj: IR) -> None:
     """Validate consumes/produces item references against declared process items."""
-    process_metadata = getattr(obj, "process_metadata", None)
-    if not isinstance(process_metadata, dict):
-        return
-
-    items_collection = process_metadata.get("items")
+    items_collection = extract_process_field(obj, "items")
     declared_items = _collect_declared_kinds(items_collection)
     if not declared_items:
         return
@@ -35,11 +32,7 @@ def validate_item_relations(obj: IR) -> None:
 
 def validate_resource_relations(obj: IR) -> None:
     """Validate performed_by/uses references against declared typed resources."""
-    process_metadata = getattr(obj, "process_metadata", None)
-    if not isinstance(process_metadata, dict):
-        return
-
-    resources_collection = process_metadata.get("resources")
+    resources_collection = extract_process_field(obj, "resources")
     declared_resources = _collect_declared_kinds(resources_collection)
     if not declared_resources:
         return
