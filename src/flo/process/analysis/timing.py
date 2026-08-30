@@ -9,6 +9,7 @@ from typing import Any, Iterable, Literal, cast
 from flo.process.ir.metadata import extract_node_metadata
 from flo.process.ir.models import IR, Node
 
+from .graph import build_adjacency, enumerate_paths, has_cycle
 from .process_metadata import extract_process_metadata
 
 
@@ -391,8 +392,8 @@ def _analyze_paths(
         )
         return ()
 
-    adjacency = _adjacency(process)
-    if _has_cycle(adjacency):
+    adjacency = build_adjacency(process)
+    if has_cycle(adjacency):
         diagnostics.append(
             TimingDiagnostic(
                 code="timing-cycle-unsupported",
@@ -419,7 +420,7 @@ def _analyze_paths(
         )
         return ()
 
-    raw_paths, truncated = _enumerate_paths(
+    raw_paths, truncated = enumerate_paths(
         start_id=start_ids[0],
         end_ids=end_ids,
         adjacency=adjacency,
@@ -464,60 +465,6 @@ def _analyze_paths(
             )
         )
     return paths
-
-
-def _adjacency(process: IR) -> dict[str, tuple[str, ...]]:
-    targets: dict[str, set[str]] = {node.id: set() for node in process.nodes}
-    for edge in process.edges:
-        if edge.source in targets:
-            targets[edge.source].add(edge.target)
-    return {
-        node_id: tuple(sorted(node_targets))
-        for node_id, node_targets in sorted(targets.items())
-    }
-
-
-def _has_cycle(adjacency: dict[str, tuple[str, ...]]) -> bool:
-    visited: set[str] = set()
-    active: set[str] = set()
-
-    def visit(node_id: str) -> bool:
-        if node_id in active:
-            return True
-        if node_id in visited:
-            return False
-        active.add(node_id)
-        for target_id in adjacency.get(node_id, ()):
-            if visit(target_id):
-                return True
-        active.remove(node_id)
-        visited.add(node_id)
-        return False
-
-    return any(
-        visit(node_id) for node_id in sorted(adjacency) if node_id not in visited
-    )
-
-
-def _enumerate_paths(
-    *,
-    start_id: str,
-    end_ids: set[str],
-    adjacency: dict[str, tuple[str, ...]],
-    limit: int,
-) -> tuple[tuple[tuple[str, ...], ...], bool]:
-    paths: list[tuple[str, ...]] = []
-    stack: list[tuple[str, tuple[str, ...]]] = [(start_id, (start_id,))]
-    while stack:
-        node_id, path = stack.pop()
-        if node_id in end_ids:
-            paths.append(path)
-            if len(paths) > limit:
-                return (), True
-            continue
-        for target_id in reversed(adjacency.get(node_id, ())):
-            stack.append((target_id, (*path, target_id)))
-    return tuple(paths), False
 
 
 def _build_timing_path(

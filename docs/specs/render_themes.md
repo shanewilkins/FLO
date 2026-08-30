@@ -75,7 +75,8 @@ The central theme contract contains:
 - registered renderer extensions for genuinely renderer-specific roles
 
 Registered renderer extensions include spaghetti route, boundary, and location
-roles. Renderer extensions remain part of the central schema and registry. A
+roles plus value-stream information and material route roles. Renderer
+extensions remain part of the central schema and registry. A
 renderer may adapt resolved semantic roles to its shapes, but it may not create
 an independent theme registry or require users to edit renderer source.
 

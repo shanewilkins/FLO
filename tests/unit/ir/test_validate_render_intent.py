@@ -107,6 +107,10 @@ def test_validate_render_intent_rejects_invalid_view_entries(
             {"spaghetti": {"people_mode": "team"}},
             r"render.defaults.spaghetti.people_mode='team' not supported",
         ),
+        (
+            {"spaghetti": {"strict_spatial": "yes"}},
+            r"render.defaults.spaghetti.strict_spatial must be boolean",
+        ),
     ],
 )
 def test_validate_render_intent_rejects_invalid_defaults_fragments(
@@ -130,7 +134,11 @@ def test_validate_render_intent_accepts_valid_defaults_and_views() -> None:
                 },
                 "layout": {"wrap": "auto", "max_width": 1200, "target_columns": 4},
                 "sppm": {"label_density": "compact", "node_numbering": "visible"},
-                "spaghetti": {"channel": "people", "people_mode": "aggregate"},
+                "spaghetti": {
+                    "channel": "people",
+                    "people_mode": "aggregate",
+                    "strict_spatial": True,
+                },
             },
             "views": {
                 "overview": {
@@ -150,6 +158,12 @@ def test_validate_render_intent_rejects_unsupported_diagram() -> None:
 
     with pytest.raises(ValidationError, match=r"diagram='unsupported' not supported"):
         validate_render_intent(ir)
+
+
+def test_validate_render_intent_accepts_value_stream_diagram() -> None:
+    ir = _base_ir_with_render({"defaults": {"diagram": "value_stream"}})
+
+    validate_render_intent(ir)
 
 
 def test_ensure_schema_aligned_invokes_render_intent_validation() -> None:

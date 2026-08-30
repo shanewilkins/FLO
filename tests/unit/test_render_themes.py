@@ -11,9 +11,11 @@ from flo.render._sppm_themes import SPPM_THEMES
 from flo.render._svg_spaghetti import render_spaghetti_svg_artifact
 from flo.render._svg_sppm_nodes import _node_svg
 from flo.render._svg_swimlane import render_swimlane_svg_artifact
+from flo.render._svg_value_stream import render_value_stream_svg_artifact
 from flo.render._svg_theme import apply_svg_typography
 from flo.render.layout_core.models import LayoutBounds, LayoutLaneFrame, LayoutResult
 from flo.render.options import RenderOptions
+from flo.process.ir.models import Edge, IR, Node
 from flo.render.themes import (
     BUILTIN_THEMES,
     ThemeValidationError,
@@ -42,6 +44,7 @@ def _theme_definitions() -> dict:
                     "title_text": "#241A5A",
                 },
                 "material_route": {"border": "#A33A20"},
+                "information_route": {"border": "#235789"},
                 "location_storage": {"fill": "#FFF0C2", "border": "#9A6700"},
             },
         }
@@ -256,6 +259,32 @@ def test_configured_theme_cross_renderer_golden(
     assert spaghetti.content == spaghetti_rerun.content
     assert sppm == sppm_rerun
 
+    value_stream_process = IR(
+        name="Themed value stream",
+        items=[
+            {"id": "order", "name": "Order", "kind": "information"},
+            {"id": "part", "name": "Part", "kind": "material"},
+        ],
+        nodes=[
+            Node("start", "start"),
+            Node(
+                "work",
+                "task",
+                {"name": "Do work", "consumes": ["order", "part"]},
+            ),
+            Node("end", "end"),
+        ],
+        edges=[Edge("start", "work"), Edge("work", "end")],
+    )
+    value_stream, _ = render_value_stream_svg_artifact(
+        value_stream_process, _options("value_stream")
+    )
+    value_stream_rerun, _ = render_value_stream_svg_artifact(
+        value_stream_process, _options("value_stream")
+    )
+
+    assert value_stream.content == value_stream_rerun.content
+
     signature = {
         "spaghetti": {
             "background": 'width="100%" height="100%" fill="#F4F0FF"'
@@ -277,6 +306,14 @@ def test_configured_theme_cross_renderer_golden(
             "font_size": 'font-size="13.2"' in swimlane.content,
             "lane": 'fill="#EEE9FF" stroke="#6D5BD0"' in swimlane.content,
             "va": 'fill="#B8E6C1"' in swimlane.content,
+        },
+        "value_stream": {
+            "background": 'width="100%" height="100%" fill="#F4F0FF"'
+            in value_stream.content,
+            "font": 'font-family="Avenir Next, Arial, sans-serif"'
+            in value_stream.content,
+            "information_route": 'stroke="#235789"' in value_stream.content,
+            "material_route": 'stroke="#A33A20"' in value_stream.content,
         },
     }
     expected = json.loads(_GOLDEN.read_text(encoding="utf-8"))

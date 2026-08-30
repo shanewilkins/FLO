@@ -37,6 +37,12 @@ RENDER_CAPABILITY_MATRIX: Final[RenderCapabilityMatrix] = {
             "note": "Direct SVG renderer is supported.",
         },
     },
+    "value_stream": {
+        "svg": {
+            "supported": True,
+            "note": "Direct SVG renderer is supported.",
+        },
+    },
 }
 
 

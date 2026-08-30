@@ -110,7 +110,7 @@ steps:
 
 -   Deterministic compilation to FLO IR\
 -   Structural and semantic validation\
--   Graph projections: swimlane, spaghetti map, and SPPM\
+-   Graph projections: swimlane, spaghetti map, SPPM, and value stream map\
 -   SVG and JSON exports\
 -   Ingredients list and movement report exports\
 -   Stable foundation for analytics

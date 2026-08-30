@@ -1,4 +1,4 @@
-"""Analysis package nested under the compiler layer."""
+"""Deterministic analyses over canonical process IR."""
 
 from .scc import scc_condense
 from .movement import (
@@ -18,6 +18,31 @@ from .timing import (
     TimingTotals,
     analyze_process_timing,
 )
+from .structure import (
+    HandoffFinding,
+    ProcessStructuralAnalysis,
+    ReworkFinding,
+    StepClassification,
+    StructuralDiagnostic,
+    StructuralPath,
+    analyze_process_structure,
+)
+from .inspection import (
+    EntitySummary,
+    ModelInspectionReport,
+    NamedViewSummary,
+    ProjectionReadiness,
+    ReadinessFinding,
+    SourceCompositionSummary,
+    inspect_process_model,
+)
+from .value_stream import (
+    ValueStreamDiagnostic,
+    ValueStreamFlow,
+    ValueStreamNode,
+    ValueStreamProjection,
+    project_value_stream,
+)
 
 __all__ = [
     "scc_condense",
@@ -34,4 +59,23 @@ __all__ = [
     "TimingPath",
     "TimingTotals",
     "analyze_process_timing",
+    "HandoffFinding",
+    "ProcessStructuralAnalysis",
+    "ReworkFinding",
+    "StepClassification",
+    "StructuralDiagnostic",
+    "StructuralPath",
+    "analyze_process_structure",
+    "EntitySummary",
+    "ModelInspectionReport",
+    "NamedViewSummary",
+    "ProjectionReadiness",
+    "ReadinessFinding",
+    "SourceCompositionSummary",
+    "inspect_process_model",
+    "ValueStreamDiagnostic",
+    "ValueStreamFlow",
+    "ValueStreamNode",
+    "ValueStreamProjection",
+    "project_value_stream",
 ]

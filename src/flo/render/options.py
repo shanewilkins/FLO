@@ -10,7 +10,7 @@ from typing import Any, Literal, Mapping, cast
 from ._sppm_themes import SppmTheme, parse_custom_sppm_themes
 from .themes import DEFAULT_THEME, RenderTheme, resolve_render_theme
 
-DiagramType = Literal["swimlane", "spaghetti", "sppm"]
+DiagramType = Literal["swimlane", "spaghetti", "sppm", "value_stream"]
 RenderProfile = Literal["default", "analysis"]
 DetailLevel = Literal["summary", "standard", "verbose"]
 Orientation = Literal["lr", "tb"]
@@ -138,6 +138,7 @@ class RenderOptions:
     sppm_focus_subprocess: str | None = None
     spaghetti_channel: SpaghettiChannel = "both"
     spaghetti_people_mode: SpaghettiPeopleMode = "aggregate"
+    spaghetti_strict_spatial: bool = False
     sppm_theme: SppmThemeName = "default"
     sppm_themes: dict[str, SppmTheme] = field(default_factory=dict)
     theme: str | None = None
@@ -210,6 +211,9 @@ class RenderOptions:
             spaghetti_channel=_parse_spaghetti_channel(effective_options),
             spaghetti_people_mode=_parse_spaghetti_people_mode(
                 effective_options, profile=profile
+            ),
+            spaghetti_strict_spatial=_parse_bool(
+                effective_options.get("spaghetti_strict_spatial", False)
             ),
             sppm_theme=_parse_sppm_theme(effective_options),
             sppm_themes=_parse_sppm_themes(effective_options),
@@ -292,6 +296,8 @@ def _parse_diagram(options: Mapping[str, Any]) -> DiagramType:
         return "spaghetti"
     if diagram_raw == "sppm":
         return "sppm"
+    if diagram_raw == "value_stream":
+        return "value_stream"
     return "swimlane"
 
 

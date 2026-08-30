@@ -40,16 +40,34 @@ def render_spaghetti_svg_artifact(
     people_routes = _spaghetti_people_routes(people_movements, options)
     locations = extract_location_spatial_index(process)
     include_material, include_people = _spaghetti_channels(options)
+    selected_material = material_routes if include_material else []
+    selected_people = people_routes if include_people else []
+    selected_routes = [*selected_material, *selected_people]
+    if not selected_routes:
+        raise ValueError(
+            "spaghetti-no-renderable-routes: no movement routes were available "
+            "for the selected channel"
+        )
 
-    routes_for_locations: list[dict[str, Any]] = []
-    if include_material:
-        routes_for_locations.extend(material_routes)
-    if include_people:
-        routes_for_locations.extend(people_routes)
+    renderable_material, omitted_material = _partition_spatial_routes(
+        selected_material, locations=locations
+    )
+    renderable_people, omitted_people = _partition_spatial_routes(
+        selected_people, locations=locations
+    )
+    omitted_routes = [*omitted_material, *omitted_people]
+    missing_location_ids = _missing_route_location_ids(
+        omitted_routes, locations=locations
+    )
+    warning = _resolve_partial_spaghetti_warning(
+        omitted_route_count=len(omitted_routes),
+        missing_location_ids=missing_location_ids,
+        renderable_route_count=len(renderable_material) + len(renderable_people),
+        strict=options.spaghetti_strict_spatial,
+    )
 
+    routes_for_locations = [*renderable_material, *renderable_people]
     location_ids = _ordered_location_ids(locations, routes_for_locations)
-    if location_ids:
-        _ensure_spatial_coordinates(locations=locations, location_ids=location_ids)
 
     boundary = _extract_spaghetti_boundary(process)
     width, height, project = _projection(locations=locations, boundary=boundary)
@@ -65,6 +83,14 @@ def render_spaghetti_svg_artifact(
         f'<rect width="100%" height="100%" fill="{options.resolved_theme.canvas_background}" />',
     ]
 
+    if warning is not None:
+        parts.extend(
+            _partial_map_notice(
+                omitted_route_count=len(omitted_routes),
+                missing_location_count=len(missing_location_ids),
+            )
+        )
+
     if boundary is not None:
         boundary_svg = _boundary_svg(
             boundary=boundary, project=project, options=options
@@ -73,7 +99,7 @@ def render_spaghetti_svg_artifact(
             parts.extend(boundary_svg)
 
     if include_material:
-        for route in material_routes:
+        for route in renderable_material:
             parts.extend(
                 _route_svg(
                     route=route,
@@ -84,7 +110,7 @@ def render_spaghetti_svg_artifact(
                 )
             )
     if include_people:
-        for route in people_routes:
+        for route in renderable_people:
             parts.extend(
                 _route_svg(
                     route=route,
@@ -112,25 +138,95 @@ def render_spaghetti_svg_artifact(
             kind="svg",
             content=apply_svg_typography("\n".join(parts), options),
             backend="svg",
+            metadata={"warning": warning} if warning is not None else {},
         ),
         None,
     )
 
 
-def _ensure_spatial_coordinates(
-    *, locations: dict[str, dict[str, Any]], location_ids: list[str]
-) -> None:
-    missing = [
-        location_id
-        for location_id in location_ids
-        if not _has_spatial_coords(locations.get(location_id, {}))
-    ]
-    if missing:
-        joined = ", ".join(sorted(missing))
-        raise ValueError(
-            "Direct SVG spaghetti rendering requires explicit spatial metadata "
-            f"for all rendered locations. Missing: {joined}"
+def _partition_spatial_routes(
+    routes: list[dict[str, Any]],
+    *,
+    locations: dict[str, dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    renderable: list[dict[str, Any]] = []
+    omitted: list[dict[str, Any]] = []
+    for route in routes:
+        destination = (
+            renderable if _route_has_spatial_coords(route, locations) else omitted
         )
+        destination.append(route)
+    return renderable, omitted
+
+
+def _route_has_spatial_coords(
+    route: dict[str, Any], locations: dict[str, dict[str, Any]]
+) -> bool:
+    source = str(route.get("from_location") or "")
+    target = str(route.get("to_location") or "")
+    return bool(
+        source
+        and target
+        and _has_spatial_coords(locations.get(source, {}))
+        and _has_spatial_coords(locations.get(target, {}))
+    )
+
+
+def _missing_route_location_ids(
+    routes: list[dict[str, Any]],
+    *,
+    locations: dict[str, dict[str, Any]],
+) -> tuple[str, ...]:
+    return tuple(
+        sorted(
+            {
+                location_id
+                for route in routes
+                for key in ("from_location", "to_location")
+                if (location_id := str(route.get(key) or ""))
+                and not _has_spatial_coords(locations.get(location_id, {}))
+            }
+        )
+    )
+
+
+def _resolve_partial_spaghetti_warning(
+    *,
+    omitted_route_count: int,
+    missing_location_ids: tuple[str, ...],
+    renderable_route_count: int,
+    strict: bool,
+) -> str | None:
+    if not omitted_route_count:
+        return None
+    joined = ", ".join(missing_location_ids)
+    message = (
+        "spaghetti-missing-spatial: omitted "
+        f"{omitted_route_count} route(s) across "
+        f"{len(missing_location_ids)} unpositioned location(s): {joined}"
+    )
+    if strict:
+        raise ValueError(message)
+    if renderable_route_count == 0:
+        raise ValueError(f"{message}; no selected route remains renderable")
+    return message
+
+
+def _partial_map_notice(
+    *, omitted_route_count: int, missing_location_count: int
+) -> list[str]:
+    text = (
+        "Partial map — omitted "
+        f"{omitted_route_count} route(s) across "
+        f"{missing_location_count} unpositioned location(s)"
+    )
+    return [
+        '<g data-flo-notice="partial-map" role="note">',
+        '<rect x="12" y="12" width="430" height="28" rx="5" '
+        'fill="#fff3cd" stroke="#8a6d3b" />',
+        f'<text x="24" y="31" font-size="13" fill="#5f4b20">{escape(text)}</text>',
+        "</g>",
+    ]
 
 
 def _has_spatial_coords(info: dict[str, Any]) -> bool:

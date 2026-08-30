@@ -8,6 +8,7 @@ from ._artifact import RenderArtifact
 from ._svg_sppm import render_sppm_svg_artifact
 from ._svg_spaghetti import render_spaghetti_svg_artifact
 from ._svg_swimlane import render_swimlane_svg_artifact
+from ._svg_value_stream import render_value_stream_svg_artifact
 from .options import RenderOptions
 
 _ArtifactRenderer = Callable[[Any, RenderOptions], tuple[RenderArtifact, Any]]
@@ -31,5 +32,7 @@ def _select_artifact_renderer(render_options: RenderOptions) -> _ArtifactRendere
         return render_spaghetti_svg_artifact
     if backend == "svg" and diagram == "sppm":
         return render_sppm_svg_artifact
+    if backend == "svg" and diagram == "value_stream":
+        return render_value_stream_svg_artifact
 
     raise ValueError(f"Unsupported render backend '{backend}' for diagram '{diagram}'")

@@ -55,6 +55,7 @@ class RenderIntent:
     # Spaghetti config
     spaghetti_channel: Optional[str] = None
     spaghetti_people_mode: Optional[str] = None
+    spaghetti_strict_spatial: Optional[bool] = None
 
 
 class RenderIntentResolver:
@@ -223,6 +224,10 @@ class RenderIntentResolver:
             intent["spaghetti_channel"] = cli_overrides.get("spaghetti_channel")
         if "spaghetti_people_mode" in cli_overrides:
             intent["spaghetti_people_mode"] = cli_overrides.get("spaghetti_people_mode")
+        if "spaghetti_strict_spatial" in cli_overrides:
+            intent["spaghetti_strict_spatial"] = cli_overrides.get(
+                "spaghetti_strict_spatial"
+            )
 
         return intent
 
@@ -358,6 +363,8 @@ class RenderIntentResolver:
             intent["spaghetti_channel"] = spaghetti.get("channel")
         if "people_mode" in spaghetti:
             intent["spaghetti_people_mode"] = spaghetti.get("people_mode")
+        if "strict_spatial" in spaghetti:
+            intent["spaghetti_strict_spatial"] = spaghetti.get("strict_spatial")
 
         return intent
 
@@ -385,4 +392,5 @@ class RenderIntentResolver:
             sppm_edge_numbering=resolved.get("sppm_edge_numbering"),
             spaghetti_channel=resolved.get("spaghetti_channel"),
             spaghetti_people_mode=resolved.get("spaghetti_people_mode"),
+            spaghetti_strict_spatial=resolved.get("spaghetti_strict_spatial"),
         )

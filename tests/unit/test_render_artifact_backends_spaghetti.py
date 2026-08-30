@@ -475,7 +475,7 @@ def test_render_artifact_svg_spaghetti_rejects_missing_spatial_metadata():
 
     with pytest.raises(
         ValueError,
-        match=r"Direct SVG spaghetti rendering requires explicit spatial metadata .* Missing: bench",
+        match=r"spaghetti-missing-spatial: omitted 1 route.*bench.*no selected route remains renderable",
     ):
         render_artifact(
             ir_like,
@@ -485,6 +485,88 @@ def test_render_artifact_svg_spaghetti_rejects_missing_spatial_metadata():
                 "spaghetti_channel": "material",
             },
         )
+
+
+def test_render_artifact_svg_spaghetti_partial_mode_omits_incomplete_routes():
+    artifact = render_artifact(
+        _partial_spaghetti_process(),
+        options={
+            "diagram": "spaghetti",
+            "render_backend": "svg",
+            "spaghetti_channel": "material",
+        },
+    )
+
+    assert 'data-flo-notice="partial-map"' in artifact.content
+    assert "Partial map — omitted 1 route(s)" in artifact.content
+    assert 'data-from="pantry" data-to="oven"' in artifact.content
+    assert 'data-to="bench"' not in artifact.content
+    assert artifact.metadata["warning"] == (
+        "spaghetti-missing-spatial: omitted 1 route(s) across "
+        "1 unpositioned location(s): bench"
+    )
+
+
+def test_render_artifact_svg_spaghetti_strict_mode_rejects_partial_map():
+    with pytest.raises(
+        ValueError,
+        match=r"spaghetti-missing-spatial: omitted 1 route.*bench",
+    ):
+        render_artifact(
+            _partial_spaghetti_process(),
+            options={
+                "diagram": "spaghetti",
+                "render_backend": "svg",
+                "spaghetti_channel": "material",
+                "spaghetti_strict_spatial": True,
+            },
+        )
+
+
+def _partial_spaghetti_process():
+    return {
+        "nodes": [
+            {
+                "id": "gather",
+                "kind": "task",
+                "location": "pantry",
+                "outputs": ["item"],
+            },
+            {
+                "id": "cook",
+                "kind": "task",
+                "location": "oven",
+                "inputs": ["item"],
+            },
+            {
+                "id": "mix",
+                "kind": "task",
+                "location": "bench",
+                "inputs": ["item"],
+            },
+        ],
+        "edges": [
+            {"source": "gather", "target": "cook"},
+            {"source": "gather", "target": "mix"},
+        ],
+        "process": {
+            "metadata": {
+                "locations": [
+                    {
+                        "id": "pantry",
+                        "name": "Pantry",
+                        "metadata": {"spatial": {"x": 0, "y": 0}},
+                    },
+                    {
+                        "id": "oven",
+                        "name": "Oven",
+                        "metadata": {"spatial": {"x": 3, "y": 1}},
+                    },
+                    {"id": "bench", "name": "Bench"},
+                ]
+            }
+        },
+    }
 
 
 def test_render_artifact_svg_spaghetti_aggregates_multi_route_hops_and_counts():

@@ -133,28 +133,30 @@ Before 1.0, FLO will document:
 - [Implemented] Promote typed item, resource, location, and subprocess-membership contracts
   out of generic in-memory metadata into explicit canonical IR fields without
   changing their accepted source or serialized names.
-- Deliver canonical IR analysis for handoffs, rework, path length, and step classification.
-- Add a stable model-inspection and readiness report covering composition,
+- [Implemented] Deliver canonical IR analysis for handoffs, rework, path length,
+  and step classification.
+- [Implemented] Add a stable model-inspection and readiness report covering composition,
   entities, paths, named views, and missing data for requested analyses or
   diagrams.
-- Produce analysis-oriented diagnostics and reports.
-- Stabilize the analysis output schema and representative fixture corpus.
-- Deliver unit-aware static timing analysis for cycle, queue-wait, setup or
+- [Implemented] Produce analysis-oriented diagnostics and reports.
+- [Implemented] Stabilize the analysis output schema and representative fixture
+  corpus.
+- [Implemented] Deliver unit-aware static timing analysis for cycle, queue-wait, setup or
   changeover, and modeled path lead time without guessing through incomplete,
   cyclic, or parallel flow.
 - [Implemented] Add one central, extensible theme registry for maintained SVG diagrams;
   resolve deterministic publication background, typography family/scale, and
   semantic visual roles through the shared render-intent precedence; and
   protect built-in and configured themes with representative goldens.
-- Deliver the maintained `value_stream` SVG renderer using the shared analysis
+- [Implemented] Deliver the maintained `value_stream` SVG renderer using the shared analysis
   primitives.
-- Represent material and information flow distinctly, and diagnose partial
+- [Implemented] Represent material and information flow distinctly, and diagnose partial
   data without implying that an absent flow surface exists.
-- Implement default partial spaghetti rendering with deterministic warnings
+- [Implemented] Implement default partial spaghetti rendering with deterministic warnings
   and partial-map notices, while retaining strict failure on request.
-- Add capability-matrix support, deterministic fixtures, renderer tests, and
+- [Implemented] Add capability-matrix support, deterministic fixtures, renderer tests, and
   user documentation as one release change.
-- Deliver the White Belt book's compact wash-and-fold SVG as a dedicated
+- [Implemented] Deliver the White Belt book's compact wash-and-fold SVG as a dedicated
   deterministic SPPM corpus case using the maintained explicit-queue model;
   reject broken row-boundary routing and protect the book-consumed artifact
   from hand edits or baseline drift.

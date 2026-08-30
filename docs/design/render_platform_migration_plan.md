@@ -123,7 +123,7 @@ Exit criteria:
 
 ### Phase B: 0.3 value-stream-map delivery
 
-Status: planned for 0.3
+Status: implemented for 0.3
 
 Outcome:
 
@@ -137,8 +137,9 @@ Work:
 
 1. Define a backend-neutral value-stream diagram model over canonical process,
    item, timing, queue, and approved analysis data.
-2. Add ELK layout where algorithmic placement is required and emit FLO-owned
-   SVG.
+2. Use deterministic renderer-owned placement for the initial linear process
+   band and emit FLO-owned SVG; retain ELK as an option when later topology
+   requires general graph layout.
 3. Add capability-matrix support, CLI routing, full and partial-flow fixtures,
    deterministic artifact tests, and user documentation together.
 4. Promote the renderer to maintained in 0.3 and complete stable-tier gates by

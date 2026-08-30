@@ -26,7 +26,7 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
         "diagram",
         "--diagram",
         "Diagram type for rendered diagram output",
-        choices=("swimlane", "spaghetti", "sppm"),
+        choices=("swimlane", "spaghetti", "sppm", "value_stream"),
     ),
     RenderOptionSpec(
         "render_backend",
@@ -84,6 +84,12 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
         "--spaghetti-people-mode",
         "People trace mode for spaghetti diagrams",
         choices=("worker", "aggregate"),
+    ),
+    RenderOptionSpec(
+        "spaghetti_strict_spatial",
+        "--spaghetti-strict-spatial",
+        "Fail instead of rendering a partial spaghetti map",
+        is_flag=True,
     ),
     RenderOptionSpec(
         "sppm_theme",

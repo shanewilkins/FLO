@@ -20,13 +20,16 @@ from flo.errors import (
     RenderError,
 )
 
-from flo.source import parse_adapter
+from flo.source import SourceComposition, parse_adapter, pop_source_composition
 from flo.source import compile_adapter
 from flo.process.ir import validate_ir, IR
 from flo.process.ir import ensure_schema_aligned
 from flo.process.analysis import scc_condense
 from flo.process.analysis import analyze_process_timing
+from flo.process.analysis import analyze_process_structure
+from flo.process.analysis import inspect_process_model
 from flo.render import RenderArtifact, render_artifact_and_contract, RenderOptions
+from flo.render.capability_matrix import RENDER_CAPABILITY_MATRIX
 from flo.render.themes import ThemeValidationError
 from flo.process.export import export_ir
 from flo.app._flo_config import merge_diagrams_toml_render_defaults
@@ -37,7 +40,11 @@ from flo.app._option_validation import (
 from flo.app._capability_validation import ensure_render_projection_supported
 from flo.app.render_intent import RenderIntentResolver
 from flo.app.io import write_output
-from flo.app.inspect import format_timing_analysis
+from flo.app.inspect import (
+    format_model_inspection,
+    format_structural_analysis,
+    format_timing_analysis,
+)
 from flo.app.runtime_services import Services as Services
 from flo.app.runtime_services import get_services as get_services
 
@@ -52,13 +59,13 @@ def run_content(
     Returns a tuple of (exit_code, output, error_message).
     """
     source_path = _resolve_source_path(options)
-    ir = _parse_compile_validate(content, source_path=source_path)
+    ir, composition = _parse_compile_validate(content, source_path=source_path)
 
     if command == "validate":
         return EXIT_SUCCESS, "", ""
 
     if command == "inspect":
-        return _run_inspect_output(ir=ir, options=options)
+        return _run_inspect_output(ir=ir, options=options, composition=composition)
 
     output_format = _resolve_output_format(command=command, options=options)
     if output_format in {"json", "ingredients", "movement"}:
@@ -71,10 +78,48 @@ def _run_inspect_output(
     *,
     ir: IR,
     options: dict | None,
+    composition: SourceComposition,
 ) -> tuple[int, str, str]:
-    analysis = (options or {}).get("analysis", "timing")
-    output_format = (options or {}).get("format", "text")
-    if analysis != "timing":
+    analysis, output_format, for_analysis, for_diagram = _resolve_inspect_request(
+        options
+    )
+    if analysis == "model":
+        report = inspect_process_model(
+            ir,
+            entry_source=composition.entry_source,
+            included_sources=composition.included_sources,
+            requested_analysis=for_analysis,
+            requested_diagram=for_diagram,
+            supported_diagrams=_supported_svg_diagrams(),
+        )
+        return (
+            EXIT_SUCCESS,
+            format_model_inspection(report, output_format=output_format),
+            "",
+        )
+
+    if analysis == "structure":
+        structural_result = analyze_process_structure(ir)
+        return (
+            EXIT_SUCCESS,
+            format_structural_analysis(structural_result, output_format=output_format),
+            "",
+        )
+
+    result = analyze_process_timing(ir)
+    return (
+        EXIT_SUCCESS,
+        format_timing_analysis(result, output_format=output_format),
+        "",
+    )
+
+
+def _resolve_inspect_request(
+    options: dict | None,
+) -> tuple[str, str, str | None, str | None]:
+    analysis = str((options or {}).get("analysis", "timing"))
+    output_format = str((options or {}).get("format", "text"))
+    if analysis not in {"timing", "structure", "model"}:
         raise CLIError(
             f"Unsupported inspect analysis: {analysis}",
             code=EXIT_USAGE,
@@ -87,12 +132,35 @@ def _run_inspect_output(
             error_stage="option_validation",
         )
 
-    result = analyze_process_timing(ir)
-    return (
-        EXIT_SUCCESS,
-        format_timing_analysis(result, output_format=str(output_format)),
-        "",
-    )
+    raw_for_analysis = (options or {}).get("for_analysis")
+    raw_for_diagram = (options or {}).get("for_diagram")
+    for_analysis = str(raw_for_analysis) if raw_for_analysis is not None else None
+    for_diagram = str(raw_for_diagram) if raw_for_diagram is not None else None
+    if analysis != "model" and (for_analysis or for_diagram):
+        raise CLIError(
+            "--for-analysis and --for-diagram require --analysis model",
+            code=EXIT_USAGE,
+            error_stage="option_validation",
+        )
+    if for_analysis not in {None, "timing", "structure"}:
+        raise CLIError(
+            f"Unsupported readiness analysis: {for_analysis}",
+            code=EXIT_USAGE,
+            error_stage="option_validation",
+        )
+    if for_diagram not in {
+        None,
+        "sppm",
+        "swimlane",
+        "spaghetti",
+        "value_stream",
+    }:
+        raise CLIError(
+            f"Unsupported readiness diagram: {for_diagram}",
+            code=EXIT_USAGE,
+            error_stage="option_validation",
+        )
+    return analysis, output_format, for_analysis, for_diagram
 
 
 def _resolve_source_path(options: dict | None) -> str | None:
@@ -177,7 +245,9 @@ def _merge_render_intent_options(*, ir: IR, options: dict | None) -> dict | None
     )
 
 
-def _parse_compile_validate(content: str, source_path: str | None = None) -> IR:
+def _parse_compile_validate(
+    content: str, source_path: str | None = None
+) -> tuple[IR, SourceComposition]:
     from flo.source.diagnostics import source_aware_message
 
     try:
@@ -191,6 +261,13 @@ def _parse_compile_validate(content: str, source_path: str | None = None) -> IR:
         )
         raise ParseError(message, error_stage="parse") from exc
 
+    composition = (
+        pop_source_composition(adapter_model, source_path=source_path)
+        if isinstance(adapter_model, dict)
+        else SourceComposition(
+            entry_source="<stdin>" if source_path == "-" else "<memory>"
+        )
+    )
     try:
         ir = compile_adapter(adapter_model)
     except Exception as exc:
@@ -221,7 +298,17 @@ def _parse_compile_validate(content: str, source_path: str | None = None) -> IR:
         except Exception as exc:
             raise ValidationError(str(exc), error_stage="schema_validate") from exc
 
-    return ir
+    return ir, composition
+
+
+def _supported_svg_diagrams() -> tuple[str, ...]:
+    return tuple(
+        sorted(
+            diagram
+            for diagram, backends in RENDER_CAPABILITY_MATRIX.items()
+            if bool((backends.get("svg") or {}).get("supported"))
+        )
+    )
 
 
 def _raise_with_stage(exc: CLIError, *, stage: str) -> None:
@@ -354,6 +441,7 @@ def _collect_changed_value_overrides(
         ("sppm_node_numbering", "sppm_step_numbering"),
         ("spaghetti_channel", "spaghetti_channel"),
         ("spaghetti_people_mode", "spaghetti_people_mode"),
+        ("spaghetti_strict_spatial", "spaghetti_strict_spatial"),
         ("theme", "theme"),
         ("background_color", "background_color"),
         ("font_family", "font_family"),
@@ -402,6 +490,11 @@ def _render_artifact_with_postprocess(
     except Exception as e:
         raise RenderError(str(e))
 
+    artifact_warning = artifact.metadata.get("warning")
+    if isinstance(artifact_warning, str) and artifact_warning.strip():
+        warning = "\n".join(
+            item for item in (warning, artifact_warning.strip()) if item
+        )
     return artifact, contract, warning
 
 

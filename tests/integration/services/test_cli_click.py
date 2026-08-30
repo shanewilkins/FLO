@@ -87,6 +87,83 @@ def test_cli_inspect_json_from_stdin_is_pure_json():
     assert payload["modeled_lead_time_seconds"] == 12000.0
 
 
+def test_cli_inspect_structure_json_from_stdin_is_pure_json():
+    runner = CliRunner()
+    content = Path("examples/reference/washnfold.flo").read_text(encoding="utf-8")
+
+    result = runner.invoke(
+        cli,
+        ["inspect", "-", "--analysis", "structure", "--format", "json"],
+        input=content,
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["process"]["id"] == "wash_n_fold"
+    assert payload["path_summary"]["path_count"] == 1
+
+
+def test_cli_inspect_model_reports_portable_composition() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("parts").mkdir()
+        Path("parts/flow.flo").write_text(
+            """
+steps:
+  - id: start
+    kind: start
+  - id: end
+    kind: end
+transitions:
+  - source: start
+    target: end
+""".strip(),
+            encoding="utf-8",
+        )
+        Path("process.flo").write_text(
+            """
+spec_version: "0.1"
+process:
+  id: composed
+  name: Composed
+includes:
+  - parts/flow.flo
+""".strip(),
+            encoding="utf-8",
+        )
+
+        result = runner.invoke(
+            cli,
+            ["inspect", "process.flo", "--analysis", "model", "--format", "json"],
+        )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["composition"] == {
+        "composed": True,
+        "entry_source": "process.flo",
+        "included_sources": ["parts/flow.flo"],
+        "source_count": 2,
+    }
+    assert payload["process"]["id"] == "composed"
+
+
+def test_cli_inspect_model_from_stdin_reports_portable_entry() -> None:
+    runner = CliRunner()
+    content = Path("examples/reference/washnfold.flo").read_text(encoding="utf-8")
+
+    result = runner.invoke(
+        cli,
+        ["inspect", "-", "--analysis", "model", "--format", "json"],
+        input=content,
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["composition"]["entry_source"] == "<stdin>"
+    assert payload["composition"]["included_sources"] == []
+
+
 def test_cli_inspect_can_write_json_to_file():
     runner = CliRunner()
     source = Path("examples/reference/washnfold.flo")
@@ -113,5 +190,9 @@ def test_cli_inspect_help_describes_defaults():
 
     assert result.exit_code == 0
     assert "deterministic static analysis" in result.output
+    assert "structure" in result.output
+    assert "model" in result.output
+    assert "--for-analysis" in result.output
+    assert "--for-diagram" in result.output
     assert "[default: timing]" in result.output
     assert "[default: text]" in result.output

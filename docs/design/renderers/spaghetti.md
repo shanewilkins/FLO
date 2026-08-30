@@ -41,7 +41,7 @@ The current direct-SVG implementation fails with an actionable render error if
 any rendered location lacks coordinates. Rectangle and polygon boundaries are
 optional and affect the canvas when supplied.
 
-The 0.3 planned implementation partitions selected movement routes into
+The implemented 0.3 behavior partitions selected movement routes into
 renderable and omitted sets. Default mode emits the renderable set, a stable
 stderr warning, and a visible partial-map notice. Strict mode fails when the
 omitted set is non-empty. Default mode also fails when the renderable set is
@@ -78,7 +78,7 @@ Artifact-contract tests cover:
 - rectangle and polygon boundaries
 - deterministic missing-spatial failure
 
-The target 0.3 implementation coverage adds:
+The 0.3 implementation coverage includes:
 
 - mixed positioned and unpositioned endpoints in default partial mode
 - stable omitted location and route counts
@@ -90,5 +90,5 @@ The target 0.3 implementation coverage adds:
 
 - Keep movement inference outside the renderer.
 - Keep explicit spatial semantics separate from graph layout.
-- Implement the accepted partial and strict missing-spatial policy in 0.3.
+- Preserve the accepted partial and strict missing-spatial policy.
 - Do not add deprecated backend dependencies.

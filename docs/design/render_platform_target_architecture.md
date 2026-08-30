@@ -279,9 +279,9 @@ that happens to be split into pages.
 
 ### Value stream map
 
-Primary target for the planned 0.3 renderer:
+Implemented 0.3 path:
 
-- Canonical and analysis-backed diagram model -> ELK -> FLO SVG
+- Canonical IR -> typed value-stream projection -> deterministic FLO SVG
 
 Information flow and material flow remain distinct semantic surfaces. Partial
 data produces explicit diagnostics; the renderer must not infer that an absent

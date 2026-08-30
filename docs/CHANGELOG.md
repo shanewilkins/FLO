@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Add the maintained `value_stream` direct-SVG renderer with typed
+  analysis projection, distinct information and material surfaces, declared
+  timing annotations, external-boundary flows, and honest partial-data notices.
+- Add deterministic model inspection covering composition, entities, paths,
+  named views, diagnostics, and requested analysis or diagram readiness.
+- Render spatially complete spaghetti routes by default when other routes lack
+  coordinates, with stable warnings and visible partial notices; add strict
+  all-routes-positioned mode.
 - Preserve authored integer or string `process.version` values through canonical
   IR, internal serialization, schema projection, validation, and JSON export.
 - Activate deterministic direct-SVG row wrapping for linear LR SPPM sequences,

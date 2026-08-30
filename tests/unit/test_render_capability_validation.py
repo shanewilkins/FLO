@@ -15,6 +15,7 @@ def test_render_capability_matrix_covers_known_diagrams() -> None:
         "swimlane",
         "spaghetti",
         "sppm",
+        "value_stream",
     }
 
 
@@ -28,6 +29,12 @@ def test_projection_validator_accepts_supported_pair() -> None:
 
 def test_projection_validator_accepts_swimlane_svg() -> None:
     ensure_render_projection_supported(RenderOptions(diagram="swimlane", backend="svg"))
+
+
+def test_projection_validator_accepts_value_stream_svg() -> None:
+    ensure_render_projection_supported(
+        RenderOptions(diagram="value_stream", backend="svg")
+    )
 
 
 def test_projection_validator_rejects_unknown_diagram() -> None:

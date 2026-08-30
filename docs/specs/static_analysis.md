@@ -4,6 +4,34 @@ This specification defines deterministic analysis derived from validated
 canonical FLO IR. Static analysis describes the authored model; it does not
 execute, simulate, schedule, or statistically infer process behavior.
 
+## Structural analysis
+
+The structural result is versioned as `0.1` and reports designed process
+structure without telemetry:
+
+- explicit handoff edges, including declared type and endpoint lanes;
+- unmarked cross-lane edges as separately labeled handoff candidates, never as
+  canonical handoffs;
+- explicit rework edges and deterministic source-order back-edge inferences,
+  with explicit `rework: false` or an ordinary `edge_type` suppressing
+  inference;
+- deterministic non-rework start-to-end paths with node, edge, and interior
+  step counts; and
+- every node's canonical kind, declared Lean `value_class`, aggregate counts,
+  and IDs of classifiable work or wait steps without a declared value class.
+
+Path length means edge count. Structural analysis also publishes node and
+interior-step counts so consumers do not need to guess which convention was
+used. Identified rework edges are excluded from path enumeration because one
+traversal is not an iteration policy. The initial analyzer refuses to report
+path lengths when remaining non-rework flow is cyclic, uses parallel
+split/join semantics, lacks valid start/end boundaries, has no complete path,
+or exceeds 256 paths. Other structural findings remain available.
+
+Handoff candidates and inferred rework are analysis findings, not mutations of
+canonical process semantics. Identical validated IR produces byte-identical
+sorted JSON, and analysis never mutates the input.
+
 ## Timing analysis
 
 The initial timing result is versioned as `0.1` and preserves three categories:
@@ -69,6 +97,15 @@ Renderer and report surfaces should consume typed analysis results rather than
 reimplement timing arithmetic. User-facing inspect reports and derived SPPM
 footers are presentation surfaces over this contract.
 
+## Value-stream projection
+
+The versioned `0.1` value-stream projection is a backend-neutral derived model
+over canonical nodes, edges, typed items, and static timing. It separates
+information and material item flows, connects consumers only to reachable
+producers, represents external inputs and outputs explicitly, and emits stable
+diagnostics when either flow surface is absent. It does not mutate canonical IR
+or infer item movement from control flow alone.
+
 ## SPPM publication consumption
 
 The SPPM renderer consumes this typed result for its derived timing footer. It
@@ -81,14 +118,13 @@ footer when the model declares no timing.
 
 ## Inspect command
 
-`flo inspect <path>` runs the timing analysis after the ordinary parse,
+`flo inspect <path>` runs the selected analysis after the ordinary parse,
 compile, and validation pipeline. Its default `--format text` report is a
 concise user-facing summary. `--format json` emits the analysis result as
 deterministic, sorted, indented JSON with a trailing newline. The same input and
 analysis options must produce byte-identical JSON.
 
-The initial command surface accepts `--analysis timing`; the option is explicit
-so later static analyses do not require changing the command shape. Input may
-come from a path or stdin, and `-o/--output` may write either report format to a
-file. Analysis diagnostics remain in the report payload and do not contaminate
-machine-readable stdout.
+The command surface accepts `--analysis timing` and `--analysis structure`.
+Input may come from a path or stdin, and `-o/--output` may write either report
+format to a file. Analysis diagnostics remain in the report payload and do not
+contaminate machine-readable stdout.

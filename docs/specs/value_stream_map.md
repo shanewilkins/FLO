@@ -3,9 +3,8 @@
 Purpose: define what a lean-style value stream map means in FLO and which
 behavior is part of its normative contract.
 
-Lifecycle: planned for 0.3 as the maintained `value_stream` SVG renderer;
-stable-tier promotion is required by 0.4. It is not supported by the current
-0.2.x runtime.
+Lifecycle: implemented in 0.3 as the maintained `value_stream` SVG renderer;
+stable-tier promotion is required by 0.4.
 
 ## Intent
 
@@ -85,6 +84,24 @@ The renderer enters the maintained tier in 0.3 and must meet the stable-tier
 gates in 0.4. Implementation, tests, capability declarations, and user-facing
 documentation ship together; the normative contract does not treat a schema
 placeholder alone as delivery.
+
+## Projection rules
+
+The backend-neutral projection uses validated canonical IR only. Items whose
+kind is `information` or `material` are separated into their corresponding
+surface. For each declared consumer, the projection chooses the nearest
+producer that can reach it through canonical process edges. A consumer with no
+reachable producer is connected to the external input boundary; a producer
+with no reachable consumer is connected to the external output boundary.
+
+The projection does not infer item flow from control flow alone and does not
+coerce unknown item kinds into either surface. Canonical work, queue,
+subprocess, system-task, and decision nodes anchor the map. Timing annotations
+consume the typed static timing result; absent timing remains visibly absent.
+
+An absent information or material surface produces a stable
+`value-stream-*-absent` diagnostic, a `value-stream-partial` CLI warning, and a
+visible partial-map notice in the artifact.
 
 ## Relationship to other documents
 

@@ -270,6 +270,7 @@ class TestRenderIntentResolverViewIntent:
                     "spaghetti": {
                         "channel": "people",
                         "people_mode": "individual",
+                        "strict_spatial": True,
                     }
                 }
             }
@@ -282,6 +283,7 @@ class TestRenderIntentResolverViewIntent:
         )
         assert intent.spaghetti_channel == "people"
         assert intent.spaghetti_people_mode == "individual"
+        assert intent.spaghetti_strict_spatial is True
 
 
 class TestRenderIntentResolverCliPrecedence:

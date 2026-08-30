@@ -21,6 +21,18 @@ class _IncludeContext:
     root_dir: Path
     include_count: int = 0
     expanded_bytes: int = 0
+    included_paths: list[Path] | None = None
+
+
+@dataclass(frozen=True)
+class SourceComposition:
+    """Portable source-composition context for inspection reports."""
+
+    entry_source: str
+    included_sources: tuple[str, ...] = ()
+
+
+_COMPOSITION_CONTEXT_KEY = "__flo_composition_context__"
 
 
 def resolve_includes(
@@ -28,6 +40,7 @@ def resolve_includes(
     source_path: str | None = None,
     *,
     root_source_bytes: int = 0,
+    capture_composition: bool = False,
 ) -> dict[str, Any]:
     """Resolve include directives and return a composed mapping.
 
@@ -38,14 +51,47 @@ def resolve_includes(
     """
     root_path = Path(source_path).resolve() if source_path else None
     root_dir = root_path.parent if root_path is not None else Path.cwd().resolve()
-    context = _IncludeContext(root_dir=root_dir, expanded_bytes=root_source_bytes)
+    context = _IncludeContext(
+        root_dir=root_dir,
+        expanded_bytes=root_source_bytes,
+        included_paths=[],
+    )
     _enforce_expanded_byte_limit(context)
-    return _compose_document(
+    composed = _compose_document(
         document=document,
         current_path=root_path,
         include_stack=[],
         context=context,
         depth=0,
+    )
+    if capture_composition and context.included_paths:
+        composed[_COMPOSITION_CONTEXT_KEY] = {
+            "included_sources": _portable_include_paths(context),
+        }
+    return composed
+
+
+def pop_source_composition(
+    document: dict[str, Any], *, source_path: str | None
+) -> SourceComposition:
+    """Remove and return parser-owned source composition context."""
+    raw_context = document.pop(_COMPOSITION_CONTEXT_KEY, None)
+    included_sources: tuple[str, ...] = ()
+    if isinstance(raw_context, dict):
+        raw_includes = raw_context.get("included_sources")
+        if isinstance(raw_includes, list):
+            included_sources = tuple(
+                sorted(
+                    {
+                        entry.strip()
+                        for entry in raw_includes
+                        if isinstance(entry, str) and entry.strip()
+                    }
+                )
+            )
+    return SourceComposition(
+        entry_source=_portable_entry_source(source_path),
+        included_sources=included_sources,
     )
 
 
@@ -147,6 +193,8 @@ def _load_include_mapping(
 
     active_context = context or _IncludeContext(root_dir=include_path.parent)
     active_context.include_count += 1
+    if active_context.included_paths is not None:
+        active_context.included_paths.append(include_path)
     if active_context.include_count > MAX_INCLUDE_FILES:
         raise ValueError(f"include count exceeds limit of {MAX_INCLUDE_FILES}")
 
@@ -175,6 +223,19 @@ def _load_include_mapping(
         raise ValueError(f"include file '{include_path}' must contain a YAML mapping")
 
     return parsed
+
+
+def _portable_include_paths(context: _IncludeContext) -> list[str]:
+    paths = context.included_paths or []
+    return sorted({path.relative_to(context.root_dir).as_posix() for path in paths})
+
+
+def _portable_entry_source(source_path: str | None) -> str:
+    if source_path == "-":
+        return "<stdin>"
+    if isinstance(source_path, str) and source_path.strip():
+        return Path(source_path).name
+    return "<memory>"
 
 
 def _enforce_expanded_byte_limit(context: _IncludeContext) -> None:

@@ -195,8 +195,7 @@ registry as built-ins.
 ## Accepted vocabulary
 
 After flowchart removal, maintained diagram identifiers are `sppm`,
-`swimlane`, and `spaghetti`. The 0.3 value-stream-map release adds
-`value_stream` when that renderer becomes available.
+`swimlane`, `spaghetti`, and `value_stream`.
 
 Spaghetti intent uses:
 

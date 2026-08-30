@@ -144,12 +144,17 @@ def _handle_degraded_success(
     _safe_set_span_attr(root_span, "flo.degraded", True)
     _safe_set_span_attr(root_span, "flo.degraded_reason", err)
     _safe_add_span_event(root_span, "flo.degraded", {"flo.degraded_reason": err})
-    if options.get("verbose"):
+    user_visible_partial = err.startswith(
+        ("spaghetti-missing-spatial:", "value-stream-partial:")
+    )
+    if options.get("verbose") or user_visible_partial:
         _emit_error(
             services,
             f"Warning: {err}",
             error_kind="diagnostic",
-            error_stage="fail_open_fallback",
+            error_stage=(
+                "partial_render" if user_visible_partial else "fail_open_fallback"
+            ),
             exit_code=0,
             internal=False,
             command=command,
@@ -234,8 +239,7 @@ def _execute_span_body(
     _safe_set_span_attr(root_span, "flo.input.bytes", len(content or ""))
 
     run_options = dict(options)
-    if path and path != "-":
-        run_options.setdefault("source_path", path)
+    run_options.setdefault("source_path", effective_path)
     _safe_set_span_attr(root_span, "flo.options.count", len(run_options))
 
     try:
@@ -367,6 +371,7 @@ def _build_render_opts(
     sppm_focus_subprocess: Optional[str],
     spaghetti_channel: Optional[str],
     spaghetti_people_mode: Optional[str],
+    spaghetti_strict_spatial: bool,
     sppm_theme: Optional[str],
     theme: Optional[str],
     background_color: Optional[str],
@@ -421,6 +426,8 @@ def _build_render_opts(
     ):
         if value is not None:
             opts[key] = value
+    if spaghetti_strict_spatial:
+        opts["spaghetti_strict_spatial"] = True
     for key, value in (
         ("layout_max_width_px", layout_max_width_px),
         ("layout_target_columns", layout_target_columns),
@@ -509,6 +516,7 @@ def render_cmd(
     sppm_focus_subprocess: Optional[str],
     spaghetti_channel: Optional[str],
     spaghetti_people_mode: Optional[str],
+    spaghetti_strict_spatial: bool,
     sppm_theme: Optional[str],
     theme: Optional[str],
     background_color: Optional[str],
@@ -551,6 +559,7 @@ def render_cmd(
         sppm_focus_subprocess=sppm_focus_subprocess,
         spaghetti_channel=spaghetti_channel,
         spaghetti_people_mode=spaghetti_people_mode,
+        spaghetti_strict_spatial=spaghetti_strict_spatial,
         sppm_theme=sppm_theme,
         theme=theme,
         background_color=background_color,
@@ -612,6 +621,7 @@ def export_cmd(
     sppm_focus_subprocess: Optional[str],
     spaghetti_channel: Optional[str],
     spaghetti_people_mode: Optional[str],
+    spaghetti_strict_spatial: bool,
     sppm_theme: Optional[str],
     theme: Optional[str],
     background_color: Optional[str],
@@ -652,6 +662,7 @@ def export_cmd(
         sppm_focus_subprocess=sppm_focus_subprocess,
         spaghetti_channel=spaghetti_channel,
         spaghetti_people_mode=spaghetti_people_mode,
+        spaghetti_strict_spatial=spaghetti_strict_spatial,
         sppm_theme=sppm_theme,
         theme=theme,
         background_color=background_color,

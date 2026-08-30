@@ -17,5 +17,11 @@
     "font_size": true,
     "lane": true,
     "va": true
+  },
+  "value_stream": {
+    "background": true,
+    "font": true,
+    "information_route": true,
+    "material_route": true
   }
 }

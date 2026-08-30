@@ -34,10 +34,20 @@ def register_model_commands(
     @click.argument("path", required=False)
     @click.option(
         "--analysis",
-        type=click.Choice(["timing"]),
+        type=click.Choice(["timing", "structure", "model"]),
         default="timing",
         show_default=True,
         help="Static analysis to run.",
+    )
+    @click.option(
+        "--for-analysis",
+        type=click.Choice(["timing", "structure"]),
+        help="Report readiness for this analysis when --analysis model is selected.",
+    )
+    @click.option(
+        "--for-diagram",
+        type=click.Choice(["sppm", "swimlane", "spaghetti", "value_stream"]),
+        help="Report readiness for this diagram when --analysis model is selected.",
     )
     @click.option(
         "--format",
@@ -52,6 +62,8 @@ def register_model_commands(
     def inspect_cmd(
         path: Optional[str],
         analysis: str,
+        for_analysis: Optional[str],
+        for_diagram: Optional[str],
         output_format: str,
         verbose: bool,
         output: Optional[str],
@@ -65,6 +77,8 @@ def register_model_commands(
                 command="inspect",
                 options={
                     "analysis": analysis,
+                    "for_analysis": for_analysis,
+                    "for_diagram": for_diagram,
                     "format": output_format,
                     "verbose": verbose,
                     "output": output,

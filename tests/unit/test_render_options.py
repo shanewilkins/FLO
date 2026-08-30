@@ -3,6 +3,12 @@ import pytest
 from flo.render.options import RenderOptions
 
 
+def test_value_stream_is_a_public_diagram_option() -> None:
+    assert RenderOptions.from_mapping({"diagram": "value_stream"}).diagram == (
+        "value_stream"
+    )
+
+
 def test_sppm_output_profile_book_applies_defaults():
     options = RenderOptions.from_mapping(
         {
@@ -116,6 +122,16 @@ def test_layout_spacing_compact_is_respected():
         }
     )
     assert options.layout_spacing == "compact"
+
+
+def test_spaghetti_strict_spatial_is_explicit_and_defaults_false():
+    assert RenderOptions().spaghetti_strict_spatial is False
+    assert (
+        RenderOptions.from_mapping(
+            {"spaghetti_strict_spatial": True}
+        ).spaghetti_strict_spatial
+        is True
+    )
 
 
 def test_layout_spacing_tight_alias_maps_to_compact():

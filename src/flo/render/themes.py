@@ -31,6 +31,7 @@ ROLE_NAMES = (
     "token",
     "boundary",
     "material_route",
+    "information_route",
     "people_route",
     "location_storage",
     "location_transit",
@@ -101,6 +102,9 @@ def _roles(**overrides: ThemeRole) -> Mapping[str, ThemeRole]:
         "token": ThemeRole("#ffffff", "#455A64", "#455A64", "#455A64"),
         "boundary": ThemeRole("#FFFFFF", "gray", "gray", "gray"),
         "material_route": ThemeRole("#FFFFFF", "tomato", "tomato", "tomato"),
+        "information_route": ThemeRole(
+            "#FFFFFF", "royalblue", "royalblue", "royalblue"
+        ),
         "people_route": ThemeRole("#FFFFFF", "royalblue", "royalblue", "royalblue"),
         "location_storage": ThemeRole("lemonchiffon", "goldenrod"),
         "location_transit": ThemeRole("mintcream", "slategray"),

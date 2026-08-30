@@ -7,7 +7,12 @@ import yaml
 
 
 from .yaml_loader import load_adapter_from_yaml
-from .composition import MAX_SOURCE_BYTES, resolve_includes
+from .composition import (
+    MAX_SOURCE_BYTES,
+    SourceComposition,
+    pop_source_composition,
+    resolve_includes,
+)
 from .compile import compile_adapter
 
 
@@ -35,6 +40,7 @@ def parse_adapter(content: str, source_path: str | None = None) -> Dict[str, Any
                 parsed,
                 source_path=source_path,
                 root_source_bytes=source_bytes,
+                capture_composition=True,
             )
             return _normalize_compiler_contract_payload(resolved)
         return {"name": "parsed", "content": content}
@@ -59,4 +65,10 @@ def _normalize_compiler_contract_payload(payload: Dict[str, Any]) -> Dict[str, A
     return normalized
 
 
-__all__ = ["compile_adapter", "load_adapter_from_yaml", "parse_adapter"]
+__all__ = [
+    "SourceComposition",
+    "compile_adapter",
+    "load_adapter_from_yaml",
+    "parse_adapter",
+    "pop_source_composition",
+]

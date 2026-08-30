@@ -16,7 +16,7 @@ def validate_render_intent(ir: IR) -> None:
     """Validate render-intent structure in process metadata.
 
     Enforces:
-    - Valid diagram types (sppm, swimlane, spaghetti)
+    - Valid diagram types (sppm, swimlane, spaghetti, value_stream)
     - Valid page formats (letter, a4, legal, tabloid)
     - Valid diagram-specific configs (sppm, spaghetti)
     - View names are identifiers
@@ -67,7 +67,7 @@ def _validate_render_view(view: dict[str, Any], path: str) -> None:
 
 def _validate_render_diagram(view: dict[str, Any], path: str) -> None:
     """Validate diagram type in render view."""
-    _VALID_DIAGRAMS = {"sppm", "swimlane", "spaghetti"}
+    _VALID_DIAGRAMS = {"sppm", "swimlane", "spaghetti", "value_stream"}
     diagram = view.get("diagram")
     if diagram is not None:
         if not isinstance(diagram, str):
@@ -190,3 +190,7 @@ def _validate_render_spaghetti_config(view: dict[str, Any], path: str) -> None:
             _raise_render_intent_error(
                 f"{path}.spaghetti.people_mode='{mode}' not supported"
             )
+
+    strict_spatial = spaghetti.get("strict_spatial")
+    if strict_spatial is not None and not isinstance(strict_spatial, bool):
+        _raise_render_intent_error(f"{path}.spaghetti.strict_spatial must be boolean")

@@ -191,7 +191,7 @@
       "properties": {
         "diagram": {
           "type": "string",
-          "enum": ["sppm","swimlane","spaghetti"]
+          "enum": ["sppm","swimlane","spaghetti","value_stream"]
         },
         "theme": { "type": "string", "minLength": 1 },
         "style": { "$ref": "#/definitions/render_style_config" },
@@ -301,7 +301,8 @@
         "people_mode": {
           "type": "string",
           "enum": ["aggregate","individual"]
-        }
+        },
+        "strict_spatial": { "type": "boolean" }
       },
       "additionalProperties": false
     }

@@ -25,7 +25,7 @@ FLO provides:
 - Structural and semantic validation
 - Schema-shaped JSON export for downstream tools
 - Human-readable ingredient and movement exports
-- Swimlane, spaghetti-map, and SPPM diagram rendering
+- Swimlane, spaghetti-map, SPPM, and value-stream-map diagram rendering
 
 FLO does not provide:
 
@@ -486,11 +486,11 @@ For spatial analysis and spaghetti-map rendering, locations can include optional
 - `metadata.spatial.unit`: optional unit (`mm|cm|m|in|ft`)
 - `kind`: optional semantic location kind used for spaghetti-map shape styling
 
-Current 0.2 direct-SVG spaghetti rendering requires coordinates for every
-rendered location and fails actionably when any are absent. The accepted 0.3
-contract is deterministic partial rendering by default with a visible warning,
-plus strict failure on request; implementation is tracked as `TR-042` in the
-technical requirements catalog.
+Spaghetti rendering uses deterministic partial mode by default: routes whose
+two endpoints are positioned are rendered, incomplete routes are omitted, and
+both stderr and the SVG identify the result as partial. Use
+`--spaghetti-strict-spatial` to reject any selected route with an unpositioned
+endpoint. FLO never invents coordinates or substitutes graph layout.
 
 Recommended domain-neutral kinds:
 
@@ -686,6 +686,27 @@ FLO can render a process model as several different diagram types, each suited t
 | Swimlane | `--diagram swimlane` | Handoff analysis — requires `lane` on steps |
 | Spaghetti map | `--diagram spaghetti` | Movement/travel path analysis — requires `location` on steps |
 | SPPM | `--diagram sppm` | Lean process performance — uses `value_class`, `cycle_time`, queue `wait_time`, and `performed_by` |
+| Value stream map | `--diagram value_stream` | Material, information, waiting, and modeled lead-time relationships |
+
+### Value stream map
+
+The maintained value-stream renderer reads canonical item relations and kinds:
+
+- items with `kind: information` form a dashed information-flow surface;
+- items with `kind: material` form a solid material-flow surface;
+- `consumes` and `produces` anchor each item to process steps; and
+- declared cycle, queue-wait, and changeover timing appears on process cards.
+
+For each consumer, FLO links the nearest reachable producer through canonical
+process structure. A consume without an upstream producer enters from the
+external boundary; a produce without a downstream consumer exits to it. FLO
+does not treat control-flow edges alone as item movement.
+
+If either information or material flow is absent, the renderer still emits the
+known surface and process cards, but stderr and a visible `Partial map` notice
+name the missing surface. Missing optional timing is shown as unavailable; it
+is never replaced with zero. Use a spaghetti map instead when the question is
+physical travel between positioned locations.
 
 ### SPPM (Standard Process Performance Map)
 
@@ -721,7 +742,7 @@ Alternative themes:
 - `--sppm-theme <name>` — any custom theme defined under `[sppm.themes.<name>]` in `diagrams.toml`
 
 The preferred 0.3 interface is the shared `--theme <name>` option. It applies
-one central theme to SPPM, swimlane, and spaghetti SVG output. Built-ins are
+one central theme to SPPM, swimlane, spaghetti, and value-stream SVG output. Built-ins are
 `default`, `flatly`, `print`, and `monochrome`. Direct session overrides are
 `--background-color`, `--font-family` (a comma-separated fallback list), and
 `--typography-scale` (`0.75` through `1.5`).
@@ -819,8 +840,8 @@ FLO has four main output families.
 
 1. Static analysis reports.
 
-  `flo inspect` emits a concise timing report by default, or deterministic JSON
-  with `--format json`.
+  `flo inspect` emits concise timing, structural, or model-readiness reports,
+  or deterministic JSON with `--format json`.
 
 Canonical JSON example:
 
@@ -873,19 +894,38 @@ uv run flo validate path/to/model.flo
 
 ## 5.3 Inspect
 
-Inspect declared process timing after parsing, compilation, and validation.
-The default text report keeps cycle, queue-wait, and changeover time separate,
-and reports modeled lead time only when the graph semantics support it.
+Inspect a validated process using deterministic static analysis. Timing is the
+default; structural analysis reports handoffs, handoff candidates, rework,
+non-rework path lengths, node kinds, and Lean value-class coverage. Model
+inspection summarizes composition, entities, paths, named views, and requested
+analysis or diagram readiness.
 
 ```bash
 uv run flo inspect path/to/model.flo
 uv run flo inspect path/to/model.flo --format json -o timing.json
+uv run flo inspect path/to/model.flo --analysis structure
+uv run flo inspect path/to/model.flo --analysis structure --format json -o structure.json
+uv run flo inspect path/to/model.flo --analysis model
+uv run flo inspect path/to/model.flo --analysis model --for-analysis timing
+uv run flo inspect path/to/model.flo --analysis model --for-diagram spaghetti --format json
 ```
 
-The initial supported analysis is `--analysis timing`. Deterministic JSON uses
-seconds as the canonical unit and includes per-node contributions, path
-summaries, timing coverage, and explicit diagnostics. Cyclic and parallel
-models do not receive a guessed lead time.
+Timing JSON uses seconds as the canonical unit and includes per-node
+contributions, path summaries, timing coverage, and explicit diagnostics.
+Cyclic and parallel models do not receive a guessed lead time.
+
+Structural analysis treats explicit handoffs as authoritative and reports an
+unmarked lane change only as a candidate. It reports explicit rework separately
+from inferred backward edges. Path length means edge count and excludes
+identified rework edges; unresolved ordinary cycles and parallel flow produce
+diagnostics instead of misleading path-length claims.
+
+Model inspection runs only after successful validation. Readiness reports
+`ready`, `partial`, or `unavailable` and distinguishes missing required data,
+missing optional data, semantic limitations, and unsupported capabilities.
+Entry filenames and includes are portable rather than absolute checkout paths.
+`--for-analysis` and `--for-diagram` are accepted only with
+`--analysis model`.
 
 ## 5.4 Export
 
@@ -915,10 +955,11 @@ Inspect options:
 
 Diagram render options:
 
-- `--diagram {swimlane,spaghetti,sppm}`
+- `--diagram {swimlane,spaghetti,sppm,value_stream}`
 - `--render-backend {svg}`
 - `--spaghetti-channel {both,material,people}`
 - `--spaghetti-people-mode {worker,aggregate}`
+- `--spaghetti-strict-spatial`
 - `--sppm-theme {default,print,monochrome}` or a config-defined theme name
 - `--theme <name>`
 - `--background-color <color>`
@@ -1135,10 +1176,12 @@ uv run flo validate path/to/model.flo
 uv run flo render path/to/model.flo --export svg --render-to review.svg --diagram sppm
 ```
 
-## 12.3 Inspect declared timing before interpreting a diagram
+## 12.3 Inspect declared timing or structure before interpreting a diagram
 
 ```bash
 uv run flo inspect path/to/model.flo
+uv run flo inspect path/to/model.flo --analysis structure
+uv run flo inspect path/to/model.flo --analysis model --for-diagram spaghetti
 ```
 
 ## 12.4 Generate machine-readable JSON for downstream tooling

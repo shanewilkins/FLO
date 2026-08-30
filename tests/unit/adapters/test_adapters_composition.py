@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from flo.source import parse_adapter
+from flo.source import parse_adapter, pop_source_composition
 import flo.source as adapters
 import flo.source.composition as composition
 
@@ -54,10 +54,16 @@ includes:
     )
 
     parsed = parse_adapter(root.read_text(encoding="utf-8"), source_path=str(root))
+    source_composition = pop_source_composition(parsed, source_path=str(root))
     assert parsed["process"]["id"] == "cookie"
     assert parsed["materials"][0]["id"] == "flour"
     assert [step["id"] for step in parsed["steps"]] == ["start", "end"]
     assert parsed["transitions"][0]["source"] == "start"
+    assert source_composition.entry_source == "process.flo"
+    assert source_composition.included_sources == (
+        "parts/flow.yaml",
+        "parts/resources.yaml",
+    )
 
 
 def test_parse_adapter_rejects_include_cycles(tmp_path: Path):
