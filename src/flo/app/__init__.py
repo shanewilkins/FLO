@@ -24,7 +24,6 @@ from flo.source import SourceComposition, parse_adapter, pop_source_composition
 from flo.source import compile_adapter
 from flo.process.ir import validate_ir, IR
 from flo.process.ir import ensure_schema_aligned
-from flo.process.analysis import scc_condense
 from flo.process.analysis import analyze_process_timing
 from flo.process.analysis import analyze_process_structure
 from flo.process.analysis import inspect_process_model
@@ -47,8 +46,6 @@ from flo.app.inspect import (
 )
 from flo.app.runtime_services import Services as Services
 from flo.app.runtime_services import get_services as get_services
-
-_FAIL_OPEN_SCC_PREFIX = "fail-open postprocess: scc_condense failed"
 
 
 def run_content(
@@ -214,7 +211,7 @@ def _run_render_output(
     )
     ensure_render_projection_supported(render_options)
 
-    artifact, contract, warning = _render_artifact_with_postprocess(
+    artifact, contract, warning = _render_artifact_with_diagnostics(
         ir,
         render_options=render_options,
     )
@@ -469,27 +466,16 @@ def _collect_changed_inverted_boolean_overrides(
             overrides[option_field] = not bool(value)
 
 
-def _render_artifact_with_postprocess(
+def _render_artifact_with_diagnostics(
     ir: IR, render_options: RenderOptions
 ) -> tuple[RenderArtifact, None, str | None]:
-    """SCC-condense then render, returning (artifact, backend contract)."""
-    processed = ir
-    warning: str | None = None
-
+    """Render untouched canonical IR and return any artifact-owned warning."""
     try:
-        processed = scc_condense(processed)
-    except Exception as exc:
-        # Explicit fail-open policy: when SCC postprocess fails, continue with
-        # original IR and surface a deterministic warning for diagnostics.
-        warning = f"{_FAIL_OPEN_SCC_PREFIX}: {exc}"
-
-    try:
-        artifact, contract = render_artifact_and_contract(
-            processed, options=render_options
-        )
+        artifact, contract = render_artifact_and_contract(ir, options=render_options)
     except Exception as e:
         raise RenderError(str(e))
 
+    warning: str | None = None
     artifact_warning = artifact.metadata.get("warning")
     if isinstance(artifact_warning, str) and artifact_warning.strip():
         warning = "\n".join(

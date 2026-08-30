@@ -7,9 +7,9 @@ from typing import Any
 
 from flo.process.ir.enums import ProcessValueClass
 
-from ._sppm_metadata_schema import get_metadata_value_class
-from ._sppm_themes import SppmNodeStyle
-from .options import RenderOptions
+from .metadata import get_metadata_value_class
+from .themes import SppmNodeStyle
+from ..options import RenderOptions
 
 
 @dataclass(frozen=True)

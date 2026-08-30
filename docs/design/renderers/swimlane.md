@@ -93,16 +93,18 @@ placement, lane layout takes precedence without changing transition semantics.
 
 ## Current Module Layout
 
-- `src/flo/render/_svg_swimlane.py`
+- `src/flo/render/swimlane/renderer.py`
    Direct-SVG swimlane artifact entrypoint.
+- `src/flo/render/swimlane/layout.py`
+   Swimlane-owned ELK request construction and layout adapter.
+- `src/flo/render/swimlane/primitives.py`
+   Swimlane-owned lanes, nodes, edges, markers, and definitions.
 - `src/flo/render/layout_core/elk.py`
-   Swimlane ELK request building, request serialization, execution, and result
-   normalization.
+   Shared request serialization, execution, and result normalization.
 - `src/flo/render/layout_core/elk_support.py`
-   Shared node, edge, lane, and subprocess projection helpers for ELK-backed
-   diagram families.
-- `src/flo/render/_svg_shared_primitives.py`
-   Shared SVG lane, node, edge, marker, and definition primitives.
+   Shared graph extraction and renderer-neutral ELK helpers.
+- `src/flo/render/shared/svg.py`
+   Renderer-neutral accessibility mechanics only.
 
 ## Edge Cases and Policies
 

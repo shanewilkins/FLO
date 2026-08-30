@@ -15,8 +15,8 @@ from flo.render._publication import (
     PublicationPageSpec,
     resolve_publication_page_format,
 )
-from flo.render._sppm_projection import project_sppm_subprocess_view
-from flo.render._sppm_publication import build_sppm_publication_plan
+from flo.render.sppm.projection import project_sppm_subprocess_view
+from flo.render.sppm.publication import build_sppm_publication_plan
 from flo.render.options import RenderOptions
 from flo.errors import RenderError
 

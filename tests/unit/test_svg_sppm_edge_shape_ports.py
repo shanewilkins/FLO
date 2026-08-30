@@ -1,4 +1,4 @@
-from flo.render._svg_sppm_edges import _shape_edge_point
+from flo.render.sppm.edges import _shape_edge_point
 from flo.render.layout_core.models import LayoutBounds, LayoutPoint
 
 

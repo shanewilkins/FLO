@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 
-from flo.render._svg_shared_primitives import standard_edge_svg, standard_node_svg
-from flo.render._svg_sppm_edges import _label_placement
+from flo.render.swimlane.primitives import edge_svg, node_svg
+from flo.render.sppm.edges import _label_placement
 from flo.render.layout_core.models import LayoutBounds
 from flo.render.options import RenderOptions
 
@@ -11,7 +11,7 @@ def _p(x: float, y: float) -> SimpleNamespace:
 
 
 def test_node_svg_renders_decision_and_endpoint_shapes():
-    decision = standard_node_svg(
+    decision = node_svg(
         node=SimpleNamespace(id="d", kind="decision", label="Decide"),
         raw_node={},
         options=RenderOptions(diagram="swimlane"),
@@ -22,7 +22,7 @@ def test_node_svg_renders_decision_and_endpoint_shapes():
     )
     assert any("<polygon" in line for line in decision)
 
-    endpoint = standard_node_svg(
+    endpoint = node_svg(
         node=SimpleNamespace(id="e", kind="end", label="Done"),
         raw_node={},
         options=RenderOptions(diagram="swimlane"),
@@ -50,7 +50,7 @@ def test_edge_svg_without_label_emits_polyline_only():
         incoming_token=None,
     )
 
-    lines, _bounds = standard_edge_svg(
+    lines, _bounds = edge_svg(
         edge_path=edge,
         source_bounds=None,
         target_bounds=None,
@@ -59,6 +59,7 @@ def test_edge_svg_without_label_emits_polyline_only():
         avoid_bounds=(),
         canvas_bounds=LayoutBounds(x_px=0.0, y_px=0.0, width_px=10.0, height_px=10.0),
         diagnostics=[],
+        options=RenderOptions(diagram="swimlane"),
     )
 
     assert any("<polyline" in line for line in lines)

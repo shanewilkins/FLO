@@ -2,13 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
-from flo.render._sppm_continuation_tokens import (
-    resolve_explicit_sppm_continuation_tokens,
-)
-from flo.render._sppm_node_content import measure_sppm_node
-from flo.render._sppm_rework_content import build_sppm_rework_metadata_lines
 from flo.render.options import RenderOptions
 
 from .elk_contracts import ElkLayoutEdge, ElkLayoutNode
@@ -18,24 +13,24 @@ from .sppm_strategy import sppm_port_constraints_value
 _DEFAULT_NODE_WIDTH_PX = 140
 _DEFAULT_NODE_HEIGHT_PX = 52
 
+NodeSizeResolver = Callable[[dict[str, Any], RenderOptions], tuple[int, int]]
+EdgeDecorator = Callable[[ElkLayoutEdge, dict[str, Any]], ElkLayoutEdge]
+
 
 def ordered_nodes(
-    nodes: list[dict[str, Any]], *, options: RenderOptions | None = None
+    nodes: list[dict[str, Any]],
+    *,
+    options: RenderOptions | None = None,
+    size_resolver: NodeSizeResolver | None = None,
 ) -> tuple[ElkLayoutNode, ...]:
     """Convert process nodes into ordered ELK nodes with lane membership."""
     return tuple(
-        _elk_node(node, options=options, partition_index=index)
-        for index, node in enumerate(nodes)
-        if str(node.get("id") or "")
-    )
-
-
-def ordered_sppm_nodes(
-    nodes: list[dict[str, Any]], *, options: RenderOptions
-) -> tuple[ElkLayoutNode, ...]:
-    """Convert SPPM nodes into ELK nodes with richer measured dimensions."""
-    return tuple(
-        _elk_node(node, options=options, diagram="sppm", partition_index=index)
+        _elk_node(
+            node,
+            options=options,
+            size_resolver=size_resolver,
+            partition_index=index,
+        )
         for index, node in enumerate(nodes)
         if str(node.get("id") or "")
     )
@@ -47,6 +42,7 @@ def ordered_edges(
     node_kinds: dict[str, str] | None = None,
     diagram: str | None = None,
     direction: str | None = None,
+    decorator: EdgeDecorator | None = None,
 ) -> tuple[ElkLayoutEdge, ...]:
     """Convert process edges into ordered ELK edges."""
     return tuple(
@@ -56,6 +52,7 @@ def ordered_edges(
             node_kinds=node_kinds or {},
             diagram=diagram,
             direction=direction,
+            decorator=decorator,
         )
         for index, edge in enumerate(edges)
         if str(edge.get("source") or "") and str(edge.get("target") or "")
@@ -187,24 +184,14 @@ def _elk_node(
     node: dict[str, Any],
     *,
     options: RenderOptions | None = None,
-    diagram: str | None = None,
+    size_resolver: NodeSizeResolver | None = None,
     partition_index: int | None = None,
 ) -> ElkLayoutNode:
     node_id = str(node.get("id") or "")
     width_px = _DEFAULT_NODE_WIDTH_PX
     height_px = _DEFAULT_NODE_HEIGHT_PX
-    if diagram == "sppm" and options is not None:
-        measure = measure_sppm_node(
-            node_id=node_id,
-            kind=str(node.get("kind") or ""),
-            name=str(node.get("name") or node_id),
-            metadata=node.get("metadata") or {},
-            workers=node.get("workers") or [],
-            note=str(node.get("note") or ""),
-            options=options,
-        )
-        width_px = measure.width_px
-        height_px = measure.height_px
+    if size_resolver is not None and options is not None:
+        width_px, height_px = size_resolver(node, options)
     elif options is not None:
         scale = options.resolved_theme.typography_scale
         width_px = int(round(width_px * scale))
@@ -227,18 +214,13 @@ def _elk_edge(
     node_kinds: dict[str, str],
     diagram: str | None = None,
     direction: str | None = None,
+    decorator: EdgeDecorator | None = None,
 ) -> ElkLayoutEdge:
     source_id = str(edge.get("source") or "")
     target_id = str(edge.get("target") or "")
     label = edge_label(edge)
     source_kind = str(node_kinds.get(source_id) or "task")
     rework_variant = resolve_rework_route_variant(edge, source_kind=source_kind)
-    outgoing_token, incoming_token = resolve_explicit_sppm_continuation_tokens(edge)
-    callout_lines = (
-        build_sppm_rework_metadata_lines(edge.get("metadata"))
-        if rework_variant is not None
-        else ()
-    )
     source_port_side: str | None = None
     target_port_side: str | None = None
     if diagram == "sppm":
@@ -254,20 +236,17 @@ def _elk_edge(
         else:
             source_port_side = "EAST"
             target_port_side = "WEST"
-    return ElkLayoutEdge(
+    layout_edge = ElkLayoutEdge(
         id=f"e{index}:{source_id}->{target_id}",
         source_id=source_id,
         target_id=target_id,
         label=label,
         is_rework=rework_variant is not None,
         rework_variant=rework_variant,
-        callout_lines=callout_lines,
-        callout_near_source=bool(callout_lines and label),
-        outgoing_token=outgoing_token,
-        incoming_token=incoming_token,
         source_port_side=source_port_side,
         target_port_side=target_port_side,
     )
+    return decorator(layout_edge, edge) if decorator is not None else layout_edge
 
 
 def _port_id(node_id: str, side: str) -> str:

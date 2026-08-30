@@ -16,13 +16,13 @@ from flo.process.analysis import (
     infer_people_movements,
 )
 
-from ._artifact import RenderArtifact
-from ._svg_shared_primitives import (
+from .._artifact import RenderArtifact
+from ..shared.svg import (
     SVG_ACCESSIBILITY_ATTRIBUTES,
     svg_accessibility_elements,
 )
-from .options import RenderOptions
-from ._svg_theme import apply_svg_typography
+from ..options import RenderOptions
+from .._svg_theme import apply_svg_typography
 
 _PADDING = 40.0
 _SCALE = 80.0

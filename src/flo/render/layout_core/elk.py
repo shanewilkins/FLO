@@ -15,31 +15,19 @@ from .elk_contracts import (
     ElkLayoutRequest,
 )
 from .elk_errors import ElkEngineProtocolError
-from .elk_validation import validate_elk_request_namespaces
 from .elk_support import (
-    extract_nodes_and_edges,
-    ordered_edges,
-    ordered_nodes,
-    ordered_sppm_nodes,
-    project_parent_only_subprocess_view,
     serialize_edge,
     serialize_node,
 )
-from .lane_support import lane_specs
 from .elk_sppm_helpers import (
-    _node_kind_map,
     _sppm_branch_anchor_helpers,
     _root_layout_options,
-    _sppm_apply_secondary_row_edge_ports,
     _sppm_lane_direction,
-    _sppm_partition_indexes_for_synthetic_rows,
     _sppm_port_id,
     _sppm_spacing_layout_options,
-    _sppm_synthetic_row_lanes,
 )
 from .sppm_strategy import should_emit_sppm_branch_anchors
 from .rework_geometry import infer_rework_row_ids, translate_edge_points
-from .wrap import build_wrap_plan
 from .models import (
     LayoutBounds,
     LayoutLaneFrame,
@@ -47,152 +35,7 @@ from .models import (
     LayoutResult,
     RoutedEdgePath,
 )
-from flo.render.options import RenderOptions
 from flo.errors import RenderError
-
-
-def build_swimlane_elk_layout_request(
-    process: dict[str, Any] | Any, options: RenderOptions | None = None
-) -> ElkLayoutRequest:
-    """Build the first ELK layout request slice for swimlane diagrams."""
-    render_options = options or RenderOptions(diagram="swimlane")
-    if render_options.diagram != "swimlane":
-        raise ValueError("Swimlane ELK request builder requires diagram='swimlane'.")
-
-    nodes, edges = extract_nodes_and_edges(process)
-    if render_options.subprocess_view == "parent_only":
-        nodes, edges = project_parent_only_subprocess_view(nodes, edges)
-
-    request = ElkLayoutRequest(
-        diagram="swimlane",
-        direction=_elk_direction(render_options),
-        lanes=lane_specs(process=process, nodes=nodes),
-        nodes=ordered_nodes(nodes, options=render_options),
-        edges=ordered_edges(
-            edges,
-            node_kinds=_node_kind_map(nodes),
-            diagram="swimlane",
-            direction=_elk_direction(render_options),
-        ),
-        strict_diagnostics=render_options.layout_fit == "fit-strict",
-    )
-    validate_elk_request_namespaces(request)
-    return request
-
-
-def build_sppm_elk_layout_request(
-    process: dict[str, Any] | Any, options: RenderOptions | None = None
-) -> ElkLayoutRequest:
-    """Build the first ELK layout request slice for SPPM diagrams."""
-    render_options = options or RenderOptions(diagram="sppm")
-    if render_options.diagram != "sppm":
-        raise ValueError("SPPM ELK request builder requires diagram='sppm'.")
-
-    nodes, edges = extract_nodes_and_edges(process)
-    if render_options.subprocess_view == "parent_only":
-        nodes, edges = project_parent_only_subprocess_view(nodes, edges)
-
-    edge_specs = ordered_edges(
-        edges,
-        node_kinds=_node_kind_map(nodes),
-        diagram="sppm",
-        direction=_elk_direction(render_options),
-    )
-    sppm_nodes = ordered_sppm_nodes(nodes, options=render_options)
-    direction = _elk_direction(render_options)
-    wrap_plan = build_wrap_plan(nodes, render_options, planner="placement")
-    if (
-        direction == "RIGHT"
-        and wrap_plan.chunks
-        and _is_linear_sppm_sequence(nodes=nodes, edges=edge_specs)
-    ):
-        lanes = tuple(
-            ElkLayoutLane(
-                id=f"__sppm_row_wrap_{row_index}",
-                label="",
-                node_ids=tuple(chunk),
-            )
-            for row_index, chunk in enumerate(wrap_plan.chunks)
-        )
-        partition_overrides = {
-            node_id: display_index
-            for chunk in wrap_plan.chunks
-            for display_index, node_id in enumerate(chunk)
-        }
-        edge_specs = _sppm_apply_wrap_boundary_ports(
-            edges=edge_specs,
-            boundary_edges=wrap_plan.boundary_edges,
-        )
-    elif direction == "DOWN":
-        lanes = lane_specs(
-            process=process,
-            nodes=nodes,
-            separate_process_boundaries=False,
-        )
-        partition_overrides: dict[str, int] = {}
-    else:
-        # LR SPPM is a process-flow surface, not a responsibility-lane surface.
-        # Business lanes previously became invisible ELK hierarchy containers,
-        # which could place unlaned start/end nodes after the mainline.
-        synthetic_rows = _sppm_synthetic_row_lanes(nodes=nodes, edges=edge_specs)
-        lanes = ()
-        partition_overrides = _sppm_partition_indexes_for_synthetic_rows(
-            node_ids=[node.id for node in sppm_nodes],
-            lanes=synthetic_rows,
-            edges=edge_specs,
-        )
-        edge_specs = _sppm_apply_secondary_row_edge_ports(
-            edges=edge_specs,
-            synthetic_rows=synthetic_rows,
-            root_direction=direction,
-        )
-
-    request = ElkLayoutRequest(
-        diagram="sppm",
-        direction=_elk_direction(render_options),
-        lanes=lanes,
-        nodes=tuple(
-            replace(
-                node,
-                partition_index=partition_overrides.get(node.id, node.partition_index),
-            )
-            for node in sppm_nodes
-        ),
-        edges=edge_specs,
-        strict_diagnostics=render_options.layout_fit == "fit-strict",
-    )
-    validate_elk_request_namespaces(request)
-    return request
-
-
-def _sppm_apply_wrap_boundary_ports(
-    *,
-    edges: tuple[ElkLayoutEdge, ...],
-    boundary_edges: set[tuple[str, str]],
-) -> tuple[ElkLayoutEdge, ...]:
-    """Route row-boundary sequence edges through the inter-row corridor."""
-    return tuple(
-        replace(edge, source_port_side="SOUTH", target_port_side="NORTH")
-        if (edge.source_id, edge.target_id) in boundary_edges and not edge.is_rework
-        else edge
-        for edge in edges
-    )
-
-
-def _is_linear_sppm_sequence(
-    *, nodes: list[dict[str, Any]], edges: tuple[ElkLayoutEdge, ...]
-) -> bool:
-    """Return whether wrapping can preserve one unambiguous authored sequence."""
-    node_ids = [str(node.get("id") or "") for node in nodes]
-    if not node_ids or any(not node_id for node_id in node_ids):
-        return False
-    expected_edges = set(zip(node_ids, node_ids[1:]))
-    actual_edges = {(edge.source_id, edge.target_id) for edge in edges}
-    return (
-        len(edges) == len(expected_edges)
-        and actual_edges == expected_edges
-        and not any(edge.is_rework for edge in edges)
-    )
 
 
 def normalize_elk_layout_result(
@@ -912,10 +755,6 @@ def execute_elk_layout(
     return result
 
 
-def _elk_direction(options: RenderOptions) -> ElkDirection:
-    return "DOWN" if options.orientation == "tb" else "RIGHT"
-
-
 def _collect_child_geometry(
     *,
     graph: dict[str, Any],
@@ -1373,8 +1212,6 @@ __all__ = [
     "ElkLayoutLane",
     "ElkLayoutNode",
     "ElkLayoutRequest",
-    "build_sppm_elk_layout_request",
-    "build_swimlane_elk_layout_request",
     "execute_elk_layout",
     "normalize_elk_layout_result",
     "serialize_elk_layout_request",

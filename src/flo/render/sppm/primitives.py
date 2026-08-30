@@ -5,11 +5,11 @@ from __future__ import annotations
 from html import escape
 from typing import Any
 
-from ._svg_sppm_edges import _edge_svg
-from ._svg_sppm_nodes import _node_svg
-from ._process_header import extract_process_header_context
-from .layout_core.models import LayoutBounds
-from .options import RenderOptions
+from .edges import _edge_svg
+from .nodes import _node_svg
+from .._process_header import extract_process_header_context
+from ..layout_core.models import LayoutBounds
+from ..options import RenderOptions
 
 SVG_ACCESSIBILITY_ATTRIBUTES = (
     'role="img" aria-labelledby="flo-svg-title flo-svg-description"'
@@ -108,7 +108,7 @@ def raw_node_lookup(
     process: dict[str, Any] | Any, *, options: RenderOptions
 ) -> dict[str, dict[str, Any]]:
     """Return raw node payloads keyed by node id for direct SVG rendering."""
-    from .layout_core.elk_support import (
+    from ..layout_core.elk_support import (
         extract_nodes_and_edges,
         project_parent_only_subprocess_view,
     )

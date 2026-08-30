@@ -21,11 +21,11 @@ from flo.render.layout_core import (
     LayoutBounds,
     LayoutPoint,
     LayoutResult,
-    build_sppm_elk_layout_request,
     execute_elk_layout,
     run_elkjs_layout,
     serialize_layout_result,
 )
+from flo.render.sppm.layout import build_sppm_elk_layout_request
 from flo.render.options import RenderOptions
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

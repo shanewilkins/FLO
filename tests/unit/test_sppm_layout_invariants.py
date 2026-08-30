@@ -17,11 +17,11 @@ from flo.render.layout_core import (
     LayoutPoint,
     LayoutResult,
     RoutedEdgePath,
-    build_sppm_elk_layout_request,
     execute_elk_layout,
     run_elkjs_layout,
 )
 from flo.render.options import RenderOptions
+from flo.render.sppm.layout import build_sppm_elk_layout_request
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _CORPUS_PATH = _REPO_ROOT / "examples" / "conformance" / "sppm_corpus.json"

@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from flo.render._diagnostics import RenderDiagnostic
-from flo.render._svg_sppm_edges import (
+from flo.render.sppm.edges import (
     _attachment_miss_warn_px,
     _clip_edge_points_to_node_bounds,
     _edge_stroke,

@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from flo.render._svg_sppm_nodes import _node_svg
+from flo.render.sppm.nodes import _node_svg
 from flo.render.options import RenderOptions
 
 

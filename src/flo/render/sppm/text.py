@@ -5,7 +5,7 @@ from __future__ import annotations
 import textwrap
 from typing import Iterable
 
-from ._text import normalize_space
+from .._text import normalize_space
 
 
 def abbreviate_workers(workers: Iterable[str], max_items: int = 3) -> str:

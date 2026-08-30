@@ -4,25 +4,19 @@ from __future__ import annotations
 
 from typing import Any
 
-from ._artifact import RenderArtifact
-from ._diagnostics import (
+from .._artifact import RenderArtifact
+from .._diagnostics import (
     log_render_diagnostics,
     serialize_render_diagnostics,
     serialize_render_diagnostics_report,
 )
-from ._svg_shared_primitives import (
-    SVG_ACCESSIBILITY_ATTRIBUTES,
-    raw_node_lookup,
-    standard_edge_svg,
-    standard_lane_svg,
-    standard_node_svg,
-    standard_svg_defs,
-    svg_accessibility_elements,
-)
-from .layout_core import build_swimlane_elk_layout_request, execute_elk_layout
-from .layout_core.elk_runtime import run_elkjs_layout
-from .options import RenderOptions
-from ._svg_theme import apply_svg_typography
+from ..layout_core.elk import execute_elk_layout
+from ..layout_core.elk_runtime import run_elkjs_layout
+from ..options import RenderOptions
+from ..shared.svg import SVG_ACCESSIBILITY_ATTRIBUTES, svg_accessibility_elements
+from .._svg_theme import apply_svg_typography
+from .primitives import edge_svg, lane_svg, node_svg, raw_node_lookup, svg_defs
+from .layout import build_swimlane_elk_layout_request
 
 _PADDING = 24.0
 
@@ -58,14 +52,14 @@ def render_swimlane_svg_artifact(
         f'<rect width="100%" height="100%" fill="{options.resolved_theme.canvas_background}" />',
         f'<g transform="translate({_PADDING:.1f},{_PADDING:.1f})">',
     ]
-    parts[1:1] = standard_svg_defs(options)
+    parts[1:1] = svg_defs(options)
 
     for lane in result.lanes:
-        parts.extend(standard_lane_svg(lane, options))
+        parts.extend(lane_svg(lane, options))
 
     for edge_key in sorted(result.edge_paths.keys()):
         source_id, target_id = edge_key
-        edge_parts, _annotation_bounds = standard_edge_svg(
+        edge_parts, _annotation_bounds = edge_svg(
             edge_path=result.edge_paths[edge_key],
             source_bounds=result.node_bounds.get(source_id),
             target_bounds=result.node_bounds.get(target_id),
@@ -89,7 +83,7 @@ def render_swimlane_svg_artifact(
         if bounds is None or node is None:
             continue
         parts.extend(
-            standard_node_svg(
+            node_svg(
                 node=node,
                 raw_node=raw_node_by_id.get(node.id, {}),
                 options=options,

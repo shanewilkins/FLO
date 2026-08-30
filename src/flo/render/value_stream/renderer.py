@@ -8,12 +8,12 @@ from typing import Any
 from flo.process.analysis import ValueStreamFlow, project_value_stream
 from flo.process.ir.models import IR
 
-from ._artifact import RenderArtifact
-from ._svg_shared_primitives import (
+from .._artifact import RenderArtifact
+from ..shared.svg import (
     SVG_ACCESSIBILITY_ATTRIBUTES,
     svg_accessibility_elements,
 )
-from .options import RenderOptions
+from ..options import RenderOptions
 
 
 _CARD_WIDTH = 170.0

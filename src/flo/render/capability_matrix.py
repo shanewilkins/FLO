@@ -5,7 +5,9 @@ Defines which diagram and backend combinations are currently supported.
 
 from __future__ import annotations
 
-from typing import Final, TypedDict
+from typing import Final, TypedDict, cast
+
+from .registry import capability_matrix
 
 
 class BackendCapability(TypedDict):
@@ -18,32 +20,9 @@ class BackendCapability(TypedDict):
 RenderCapabilityMatrix = dict[str, dict[str, BackendCapability]]
 
 
-RENDER_CAPABILITY_MATRIX: Final[RenderCapabilityMatrix] = {
-    "swimlane": {
-        "svg": {
-            "supported": True,
-            "note": "Direct SVG renderer is supported.",
-        },
-    },
-    "spaghetti": {
-        "svg": {
-            "supported": True,
-            "note": "Direct SVG renderer is supported.",
-        },
-    },
-    "sppm": {
-        "svg": {
-            "supported": True,
-            "note": "Direct SVG renderer is supported.",
-        },
-    },
-    "value_stream": {
-        "svg": {
-            "supported": True,
-            "note": "Direct SVG renderer is supported.",
-        },
-    },
-}
+RENDER_CAPABILITY_MATRIX: Final[RenderCapabilityMatrix] = cast(
+    RenderCapabilityMatrix, capability_matrix()
+)
 
 
 def supported_backends_for_diagram(diagram: str) -> tuple[str, ...]:

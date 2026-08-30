@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from flo.render._sppm_task_card import build_sppm_task_card_layout
+from flo.render.sppm.task_card import build_sppm_task_card_layout
 from flo.render.layout_core.sppm_strategy import current_sppm_layout_strategy
 
 

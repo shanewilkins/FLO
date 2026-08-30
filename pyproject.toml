@@ -66,6 +66,57 @@ source_modules = ["flo.render"]
 forbidden_modules = ["flo.source", "flo.app"]
 
 [[tool.importlinter.contracts]]
+name = "Renderer-neutral shared code is independent of renderer packages"
+type = "forbidden"
+source_modules = ["flo.render.shared"]
+forbidden_modules = [
+    "flo.render.sppm",
+    "flo.render.swimlane",
+    "flo.render.spaghetti",
+    "flo.render.value_stream",
+]
+
+[[tool.importlinter.contracts]]
+name = "SPPM does not import other renderers"
+type = "forbidden"
+source_modules = ["flo.render.sppm"]
+forbidden_modules = [
+    "flo.render.swimlane",
+    "flo.render.spaghetti",
+    "flo.render.value_stream",
+]
+
+[[tool.importlinter.contracts]]
+name = "Swimlane does not import other renderers"
+type = "forbidden"
+source_modules = ["flo.render.swimlane"]
+forbidden_modules = [
+    "flo.render.sppm",
+    "flo.render.spaghetti",
+    "flo.render.value_stream",
+]
+
+[[tool.importlinter.contracts]]
+name = "Spaghetti does not import other renderers"
+type = "forbidden"
+source_modules = ["flo.render.spaghetti"]
+forbidden_modules = [
+    "flo.render.sppm",
+    "flo.render.swimlane",
+    "flo.render.value_stream",
+]
+
+[[tool.importlinter.contracts]]
+name = "Value stream does not import other renderers"
+type = "forbidden"
+source_modules = ["flo.render.value_stream"]
+forbidden_modules = [
+    "flo.render.sppm",
+    "flo.render.swimlane",
+    "flo.render.spaghetti",
+]
+
+[[tool.importlinter.contracts]]
 name = "FLO package siblings are acyclic"
 type = "acyclic_siblings"
 ancestors = ["flo"]

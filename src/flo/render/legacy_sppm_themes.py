@@ -1,4 +1,10 @@
-"""SPPM color themes for value-class node styling."""
+"""Legacy SPPM theme model retained at the render-options boundary.
+
+The renderer-neutral theme system accepts these values for configuration
+compatibility. Keeping the compatibility model outside the SPPM renderer
+package prevents every renderer that consumes :class:`RenderOptions` from
+depending on the SPPM implementation.
+"""
 
 from __future__ import annotations
 

@@ -6,9 +6,9 @@ from dataclasses import replace
 from typing import Any
 
 from ._artifact import RenderArtifact
-from ._backend_selector import render_with_selected_backend
 from ._publication import resolve_publication_page_format
 from .options import RenderOptions
+from .registry import render_registered
 from .themes import BUILTIN_THEMES, RenderTheme, ThemeRole
 
 
@@ -29,7 +29,7 @@ def render_artifact_and_contract(
 ) -> tuple[RenderArtifact, None]:
     """Render an artifact and return no backend postprocess contract."""
     render_options = _coerce_render_options(options)
-    return render_with_selected_backend(ir, render_options)
+    return render_registered(ir, render_options)
 
 
 def _coerce_render_options(

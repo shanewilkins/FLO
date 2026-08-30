@@ -19,11 +19,11 @@ except Exception:  # pragma: no cover - optional dev dependency
 
 
 DEFAULT_SPPM_REFACTOR_BASELINE_FILES: tuple[str, ...] = (
-    "src/flo/render/_sppm_publication.py",
-    "src/flo/render/_svg_sppm.py",
-    "src/flo/render/_svg_sppm_edges.py",
-    "src/flo/render/_svg_sppm_nodes.py",
-    "src/flo/render/_svg_sppm_rows.py",
+    "src/flo/render/sppm/publication.py",
+    "src/flo/render/sppm/renderer.py",
+    "src/flo/render/sppm/edges.py",
+    "src/flo/render/sppm/nodes.py",
+    "src/flo/render/sppm/rows.py",
     "src/flo/render/layout_core/elk_sppm_helpers.py",
 )
 

@@ -7,19 +7,19 @@ from typing import Any
 
 from flo.process.schema.subprocess_refs import resolve_subprocess_detail_map_reference
 
-from ._sppm_metadata_schema import (
+from .metadata import (
     get_metadata_crossover_time,
     get_metadata_cycle_time,
     get_metadata_description,
     get_metadata_wait_time_minutes,
 )
-from ._sppm_text import (
+from .text import (
     abbreviate_workers,
     apply_density_filter,
     format_text_field,
     normalize_space,
 )
-from .options import RenderOptions
+from ..options import RenderOptions
 
 _TASK_MIN_WIDTH_PX = 160
 _TASK_MAX_WIDTH_PX = 320

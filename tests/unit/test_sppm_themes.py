@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from flo.render._sppm_themes import (
+from flo.render.sppm.themes import (
     SPPM_THEMES,
     SppmNodeStyle,
     SppmTheme,

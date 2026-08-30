@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Split SPPM, swimlane, spaghetti, and value stream into independent renderer
+  packages; give ELK-backed renderers owned request builders and presentation
+  policy, derive capabilities from the executable registry, remove global SCC
+  preprocessing and legacy flat renderer modules, and enforce the dependency
+  direction with Import Linter and policy tests.
 - Add the maintained `value_stream` direct-SVG renderer with typed
   analysis projection, distinct information and material surfaces, declared
   timing annotations, external-boundary flows, and honest partial-data notices.

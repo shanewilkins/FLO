@@ -3,13 +3,13 @@ from typing import Any
 
 from flo.source import parse_adapter
 import pytest
-from flo.render._sppm_node_content import build_sppm_node_content
+from flo.render.sppm.content import build_sppm_node_content
 from flo.render.layout_core import (
-    build_sppm_elk_layout_request,
-    build_swimlane_elk_layout_request,
     serialize_elk_layout_request,
 )
 from flo.render.options import RenderOptions
+from flo.render.sppm.layout import build_sppm_elk_layout_request
+from flo.render.swimlane.layout import build_swimlane_elk_layout_request
 from flo.errors import RenderError
 
 

@@ -1,4 +1,4 @@
-from flo.render._sppm_text import (
+from flo.render.sppm.text import (
     _enforce_max_length,
     _initials,
     _wrap_text,

@@ -7,15 +7,15 @@ from typing import Any
 from flo.process.analysis import ProcessTimingAnalysis, analyze_process_timing
 from flo.process.ir.models import IR
 
-from ._process_header import extract_process_header_context
-from ._publication import (
+from .._process_header import extract_process_header_context
+from .._publication import (
     PublicationBandContent,
     PublicationPlan,
     materialize_publication_series,
     PublicationPageSpec,
 )
-from ._sppm_projection import SppmProjectionContext
-from ._sppm_publication_support import (
+from .projection import SppmProjectionContext
+from .publication_support import (
     _build_sppm_child_slots,
     _build_sppm_footer_content,
     _build_sppm_header_rows,
@@ -24,8 +24,8 @@ from ._sppm_publication_support import (
     _raise_for_publication_errors,
     _serialize_diagnostics,
 )
-from ._sppm_text import normalize_space
-from .options import RenderOptions
+from .text import normalize_space
+from ..options import RenderOptions
 
 
 def build_sppm_publication_plan(

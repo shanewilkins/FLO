@@ -1,4 +1,4 @@
-"""Backend-neutral rework edge content helpers for SPPM rendering."""
+"""SPPM rework-edge content helpers."""
 
 from __future__ import annotations
 

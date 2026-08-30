@@ -17,7 +17,7 @@ DEFAULT_WARN_LINES = 500
 DEFAULT_FAIL_LINES = 750
 EXCLUDED_FILES = {
     "src/flo/render/layout_core/elk.py",
-    "src/flo/render/_svg_sppm_edges.py",
+    "src/flo/render/sppm/edges.py",
     "tests/integration/test_cli_render_options.py",
     "tests/unit/test_layout_core_elk_requests.py",
     "tests/unit/test_layout_core_elk_runtime.py",

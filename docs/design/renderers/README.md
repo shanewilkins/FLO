@@ -15,3 +15,4 @@ Current renderer notes:
 - `sppm.md`
 - `sppm_layout_enhancement.md`
 - `swimlane.md`
+- `value_stream.md`

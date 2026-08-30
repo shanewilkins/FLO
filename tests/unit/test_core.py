@@ -79,8 +79,9 @@ def test_run_content_render_error(monkeypatch, ir_factory, node_factory):
         run_content("some content")
 
 
-def test_postprocess_nonfatal(monkeypatch, ir_factory, node_factory):
-    # ensure scc_condense exceptions are ignored and run_content still succeeds
+def test_renderer_receives_unmodified_canonical_ir(
+    monkeypatch, ir_factory, node_factory
+):
     monkeypatch.setattr(
         "flo.app.parse_adapter",
         lambda c, source_path=None: ir_factory(name="t", nodes=[node_factory("n")]),
@@ -90,22 +91,20 @@ def test_postprocess_nonfatal(monkeypatch, ir_factory, node_factory):
         lambda a: ir_factory(name="t", nodes=[node_factory("n")]),
     )
     monkeypatch.setattr("flo.app.validate_ir", lambda i: None)
-    monkeypatch.setattr(
-        "flo.app.render_artifact_and_contract",
-        lambda i, options=None: (
-            RenderArtifact(kind="svg", content="<svg>ok</svg>", backend="svg"),
-            None,
-        ),
-    )
+    compiled = ir_factory(name="t", nodes=[node_factory("n")])
+    monkeypatch.setattr("flo.app.compile_adapter", lambda _adapter: compiled)
+    received = []
 
-    def bad_scc(ir):
-        raise Exception("scc oops")
+    def fake_render(ir, options=None):
+        received.append(ir)
+        return RenderArtifact(kind="svg", content="<svg>ok</svg>", backend="svg"), None
 
-    monkeypatch.setattr("flo.app.scc_condense", bad_scc)
+    monkeypatch.setattr("flo.app.render_artifact_and_contract", fake_render)
     rc, out, err = run_content("ok content")
     assert rc == 0
     assert out == "<svg>ok</svg>"
-    assert err.startswith("fail-open postprocess: scc_condense failed:")
+    assert err == ""
+    assert received == [compiled]
 
 
 def test_run_wrapper():
@@ -126,7 +125,6 @@ def test_run_content_returns_svg_artifact_content(
         lambda a: ir_factory(name="t", nodes=[node_factory("n")]),
     )
     monkeypatch.setattr("flo.app.validate_ir", lambda i: None)
-    monkeypatch.setattr("flo.app.scc_condense", lambda i: i)
     monkeypatch.setattr(
         "flo.app.render_artifact_and_contract",
         lambda i, options=None: (
@@ -156,7 +154,6 @@ def test_run_content_render_to_writes_svg_directly(
         lambda a: ir_factory(name="t", nodes=[node_factory("n")]),
     )
     monkeypatch.setattr("flo.app.validate_ir", lambda i: None)
-    monkeypatch.setattr("flo.app.scc_condense", lambda i: i)
     monkeypatch.setattr(
         "flo.app.render_artifact_and_contract",
         lambda i, options=None: (
@@ -194,7 +191,6 @@ def test_run_content_render_to_rejects_non_svg_target_for_svg_artifact(
         lambda a: ir_factory(name="t", nodes=[node_factory("n")]),
     )
     monkeypatch.setattr("flo.app.validate_ir", lambda i: None)
-    monkeypatch.setattr("flo.app.scc_condense", lambda i: i)
     monkeypatch.setattr(
         "flo.app.render_artifact_and_contract",
         lambda i, options=None: (
@@ -259,7 +255,6 @@ def test_run_content_applies_render_metadata_defaults_to_render_options(
     monkeypatch.setattr("flo.app.parse_adapter", lambda c, source_path=None: ir)
     monkeypatch.setattr("flo.app.compile_adapter", lambda a: ir)
     monkeypatch.setattr("flo.app.validate_ir", lambda i: None)
-    monkeypatch.setattr("flo.app.scc_condense", lambda i: i)
 
     captured = {}
 
@@ -301,7 +296,6 @@ def test_run_content_cli_options_override_render_metadata_defaults(
     monkeypatch.setattr("flo.app.parse_adapter", lambda c, source_path=None: ir)
     monkeypatch.setattr("flo.app.compile_adapter", lambda a: ir)
     monkeypatch.setattr("flo.app.validate_ir", lambda i: None)
-    monkeypatch.setattr("flo.app.scc_condense", lambda i: i)
 
     captured = {}
 
@@ -337,7 +331,6 @@ def test_run_content_without_render_metadata_keeps_default_diagram(
     monkeypatch.setattr("flo.app.parse_adapter", lambda c, source_path=None: ir)
     monkeypatch.setattr("flo.app.compile_adapter", lambda a: ir)
     monkeypatch.setattr("flo.app.validate_ir", lambda i: None)
-    monkeypatch.setattr("flo.app.scc_condense", lambda i: i)
 
     captured = {}
 

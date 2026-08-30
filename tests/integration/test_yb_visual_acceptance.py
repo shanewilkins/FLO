@@ -10,11 +10,11 @@ from flo.source import compile_adapter
 from flo.render import RenderOptions, render_artifact_and_contract
 from flo.render.layout_core import (
     LayoutBounds,
-    build_sppm_elk_layout_request,
-    build_swimlane_elk_layout_request,
     execute_elk_layout,
     run_elkjs_layout,
 )
+from flo.render.sppm.layout import build_sppm_elk_layout_request
+from flo.render.swimlane.layout import build_swimlane_elk_layout_request
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

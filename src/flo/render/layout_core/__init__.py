@@ -3,7 +3,6 @@
 from flo.render._diagnostics import RenderDiagnostic
 
 from .corridors import CorridorAnchor, CorridorLane, CorridorPlan, build_corridor_plan
-from .elk_adapter import ElkEngine, layout_sppm_with_elk, layout_swimlane_with_elk
 from .elk_errors import (
     ElkEngineError,
     ElkEngineProtocolError,
@@ -16,8 +15,6 @@ from .elk import (
     ElkLayoutLane,
     ElkLayoutNode,
     ElkLayoutRequest,
-    build_sppm_elk_layout_request,
-    build_swimlane_elk_layout_request,
     execute_elk_layout,
     normalize_elk_layout_result,
     serialize_elk_layout_request,
@@ -49,7 +46,6 @@ __all__ = [
     "CorridorLane",
     "CorridorAnchor",
     "CorridorPlan",
-    "ElkEngine",
     "ElkEngineError",
     "ElkRuntimeUnavailableError",
     "ElkEngineSubprocessError",
@@ -59,7 +55,6 @@ __all__ = [
     "ElkLayoutNode",
     "ElkLayoutEdge",
     "ElkLayoutRequest",
-    "build_sppm_elk_layout_request",
     "execute_elk_layout",
     "PortSpec",
     "EdgeRoute",
@@ -76,9 +71,6 @@ __all__ = [
     "LinePlacement",
     "PlacementPlan",
     "build_corridor_plan",
-    "build_swimlane_elk_layout_request",
-    "layout_sppm_with_elk",
-    "layout_swimlane_with_elk",
     "normalize_elk_layout_result",
     "run_elkjs_layout",
     "serialize_elk_layout_request",

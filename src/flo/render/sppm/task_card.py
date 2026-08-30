@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ._sppm_node_content import SppmNodeContent
+from .content import SppmNodeContent
 
 _SPPM_TASK_MAX_WIDTH = 220
 _SPPM_TASK_MIN_WIDTH = 80

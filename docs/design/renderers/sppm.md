@@ -29,25 +29,28 @@ reintroduced as layout or publication fallbacks.
 
 ## Current module layout
 
-- `src/flo/render/_svg_sppm.py`
+- `src/flo/render/sppm/renderer.py`
   Direct-SVG entrypoint and final artifact assembly.
+- `src/flo/render/sppm/layout.py`
+  SPPM-owned ELK request construction, node measurement, continuation-token
+  decoration, rework callouts, wrapping, and layout adapter.
 - `src/flo/render/layout_core/`
-  ELK contracts, request construction, runtime adapter, normalized layout
-  results, ports, corridors, routing, and the locked SPPM strategy.
-- `src/flo/render/_svg_sppm_nodes.py`
+  ELK contracts, execution, normalized layout results, ports, corridors,
+  routing, and geometry strategies.
+- `src/flo/render/sppm/nodes.py`
   SPPM node presentation.
-- `src/flo/render/_svg_sppm_edges.py`
+- `src/flo/render/sppm/edges.py`
   Edge, label, and callout presentation.
-- `src/flo/render/_svg_sppm_rows.py`
+- `src/flo/render/sppm/rows.py`
   Mainline and rework-row display alignment and diagnostics.
-- `src/flo/render/_sppm_projection.py`
+- `src/flo/render/sppm/projection.py`
   Top-level, child-map, and inline projection behavior.
-- `src/flo/render/_sppm_publication.py` and
-  `src/flo/render/_sppm_publication_support.py`
+- `src/flo/render/sppm/publication.py` and
+  `src/flo/render/sppm/publication_support.py`
   SPPM publication-plan integration.
-- `src/flo/render/_sppm_node_content.py`, `_sppm_text.py`, and
-  `_sppm_themes.py`
-  Content, text, and theme policy.
+- `src/flo/render/sppm/content.py` and `src/flo/render/sppm/text.py`
+  SPPM content and text policy. Shared resolved themes remain outside the
+  renderer package; the legacy SPPM theme model is compatibility input only.
 
 ## Ownership rules
 
@@ -82,7 +85,7 @@ separate report rather than an ever-growing footer.
 
 - Keep the public entrypoint thin.
 - Add shared behavior to backend-neutral contracts or SVG primitives.
-- Keep SPPM-only semantics in `_sppm_*` and `_svg_sppm*` modules.
+- Keep SPPM-only semantics inside `src/flo/render/sppm/`.
 - Preserve deterministic layout diagnostics and golden-artifact gates.
 - Route multi-page publication work toward the shared publication model and
   Typst composition, not SVG-page emulation.

@@ -6,16 +6,16 @@ from dataclasses import dataclass
 from html import escape
 from typing import Any
 
-from ._diagnostics import RenderDiagnostic
-from ._svg_sppm_nodes import _text_lines_svg
-from ._svg_sppm_edge_segments import (
+from .._diagnostics import RenderDiagnostic
+from .nodes import _text_lines_svg
+from .edge_segments import (
     _candidate_segment_indexes,
     _first_rightward_horizontal_segment_index,
     _longest_segment_index,
 )
-from .layout_core.models import LayoutBounds, LayoutPoint
-from .options import RenderOptions
-from .themes import DEFAULT_THEME
+from ..layout_core.models import LayoutBounds, LayoutPoint
+from ..options import RenderOptions
+from ..themes import DEFAULT_THEME
 
 _LANE_HEADER_AVOID_HEIGHT_PX = 34.0
 _SPPM_SYNTHETIC_ROW_PREFIX = "__sppm_row_"

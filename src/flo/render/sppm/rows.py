@@ -5,9 +5,9 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Any
 
-from ._diagnostics import RenderDiagnostic
-from .layout_core.rework_geometry import infer_rework_row_ids, translate_edge_points
-from .layout_core.models import LayoutBounds, LayoutPoint
+from .._diagnostics import RenderDiagnostic
+from ..layout_core.rework_geometry import infer_rework_row_ids, translate_edge_points
+from ..layout_core.models import LayoutBounds, LayoutPoint
 
 _MIN_MAINLINE_REWORK_GAP_PX = 56.0
 _MAX_REWORK_ALIGNMENT_DELTA_PX = 48.0

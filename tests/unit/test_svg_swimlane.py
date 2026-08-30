@@ -1,4 +1,4 @@
-from flo.render._svg_swimlane import render_swimlane_svg_artifact
+from flo.render.swimlane import render_swimlane_svg_artifact
 from flo.render.layout_core.models import LayoutBounds, LayoutLaneFrame, LayoutPoint
 from flo.render.layout_core.models import LayoutResult, RoutedEdgePath
 from flo.render.options import RenderOptions
@@ -44,7 +44,7 @@ def test_render_swimlane_svg_artifact_renders_lanes_nodes_and_edges(monkeypatch)
         )
 
     monkeypatch.setattr(
-        "flo.render._svg_swimlane.execute_elk_layout", fake_execute_elk_layout
+        "flo.render.swimlane.renderer.execute_elk_layout", fake_execute_elk_layout
     )
 
     process = {
@@ -124,7 +124,7 @@ def test_render_swimlane_svg_artifact_keeps_unlaned_nodes_renderable(monkeypatch
         )
 
     monkeypatch.setattr(
-        "flo.render._svg_swimlane.execute_elk_layout", fake_execute_elk_layout
+        "flo.render.swimlane.renderer.execute_elk_layout", fake_execute_elk_layout
     )
 
     artifact, contract = render_swimlane_svg_artifact(

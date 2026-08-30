@@ -5,8 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from .layout_core.elk_support import project_parent_only_subprocess_view
-from .options import RenderOptions
+from ..layout_core.elk_support import project_parent_only_subprocess_view
+from ..options import RenderOptions
 
 
 @dataclass(frozen=True)

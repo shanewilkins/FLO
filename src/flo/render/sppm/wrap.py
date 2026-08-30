@@ -1,4 +1,4 @@
-"""Orientation-aware wrap planning owned by the layout layer.
+"""Orientation-aware wrap planning for SPPM diagrams.
 
 API convention (v0.1): expose one public planner entrypoint,
 `build_wrap_plan(...)`, and keep strategy implementations private.
@@ -12,16 +12,16 @@ from dataclasses import dataclass
 from statistics import fmean
 from typing import Any, Literal
 
-from .models import NodeMeasure, PlacementConstraints, PlacementPlan
-from .placement import build_placement_plan
+from ..layout_core.models import NodeMeasure, PlacementConstraints, PlacementPlan
+from ..layout_core.placement import build_placement_plan
 from ..options import RenderOptions
-from .._sppm_metadata_schema import (
+from .metadata import (
     get_metadata_description,
     get_metadata_cycle_time,
     get_metadata_wait_time_minutes,
     get_metadata_crossover_time,
 )
-from .._sppm_text import (
+from .text import (
     apply_density_filter,
     abbreviate_workers,
     format_text_field,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from flo.render._svg_sppm_rows import (
+from flo.render.sppm.rows import (
     rework_alignment_diagnostics,
     row_gap_diagnostics,
 )

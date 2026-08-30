@@ -7,7 +7,7 @@ import math
 import re
 from typing import Any, Literal, Mapping, cast
 
-from ._sppm_themes import SppmTheme, parse_custom_sppm_themes
+from .legacy_sppm_themes import SppmTheme, parse_custom_sppm_themes
 from .themes import DEFAULT_THEME, RenderTheme, resolve_render_theme
 
 DiagramType = Literal["swimlane", "spaghetti", "sppm", "value_stream"]

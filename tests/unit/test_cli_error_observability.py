@@ -94,7 +94,7 @@ def test_execute_emits_verbose_diagnostic_on_fail_open_fallback(monkeypatch):
         lambda *_args, **_kwargs: (
             0,
             "<svg />",
-            "fail-open postprocess: scc_condense failed: boom",
+            "renderer degraded: boom",
         ),
     )
     monkeypatch.setattr("flo.app.io.write_output", lambda out, path: (0, ""))
@@ -103,7 +103,7 @@ def test_execute_emits_verbose_diagnostic_on_fail_open_fallback(monkeypatch):
 
     assert rc == 0
     msg, event = captured[-1]
-    assert msg.startswith("Warning: fail-open postprocess: scc_condense failed:")
+    assert msg == "Warning: renderer degraded: boom"
     assert event["error_kind"] == "diagnostic"
     assert event["error_stage"] == "fail_open_fallback"
     assert event["exit_code"] == 0

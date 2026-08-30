@@ -5,10 +5,10 @@ from __future__ import annotations
 from html import escape
 from typing import Any
 
-from ._sppm_node_appearance import resolve_sppm_node_appearance
-from ._sppm_node_content import build_sppm_node_content
-from ._sppm_task_card import build_sppm_task_card_layout
-from .options import RenderOptions
+from .appearance import resolve_sppm_node_appearance
+from .content import build_sppm_node_content
+from .task_card import build_sppm_task_card_layout
+from ..options import RenderOptions
 
 
 def _node_svg(

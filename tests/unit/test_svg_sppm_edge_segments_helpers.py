@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from flo.render._svg_sppm_edge_segments import (
+from flo.render.sppm.edge_segments import (
     _candidate_segment_indexes,
     _first_rightward_horizontal_segment_index,
     _longest_segment_index,

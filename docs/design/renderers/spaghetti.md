@@ -60,12 +60,12 @@ inspectable and testable.
 
 ## Current module boundaries
 
-- `src/flo/render/_svg_spaghetti.py`
+- `src/flo/render/spaghetti/renderer.py`
   Direct-SVG projection and artifact emission.
 - `flo.process.analysis`
   Movement inference and aggregation.
-- `src/flo/render/_svg_shared_primitives.py`
-  Shared SVG definitions where the semantics are renderer-neutral.
+- `src/flo/render/shared/svg.py`
+  Shared SVG mechanics where the semantics are renderer-neutral.
 
 ## Verification
 

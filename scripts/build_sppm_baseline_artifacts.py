@@ -98,9 +98,7 @@ def _load_cases(manifest_path: Path) -> list[dict[str, Any]]:
         if not isinstance(options, dict):
             raise ValueError(f"Case '{case_id}' options must be an object")
         if diagnostic_budget is not None and not isinstance(diagnostic_budget, dict):
-            raise ValueError(
-                f"Case '{case_id}' diagnostic_budget must be an object"
-            )
+            raise ValueError(f"Case '{case_id}' diagnostic_budget must be an object")
         case = {"id": case_id.strip(), "input": input_path, "options": options}
         if diagnostic_budget is not None:
             case["diagnostic_budget"] = diagnostic_budget
@@ -130,9 +128,9 @@ def _build_case(
     from flo.source import parse_adapter
     from flo.source import compile_adapter
     from flo.process.analysis import analyze_process_timing
-    from flo.render._svg_sppm import render_sppm_svg_artifact_from_layout
+    from flo.render.sppm.layout import build_sppm_elk_layout_request
+    from flo.render.sppm.renderer import render_sppm_svg_artifact_from_layout
     from flo.render.layout_core import (
-        build_sppm_elk_layout_request,
         normalize_elk_layout_result,
         run_elkjs_layout,
         serialize_elk_layout_request,

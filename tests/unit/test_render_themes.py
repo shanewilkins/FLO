@@ -7,11 +7,11 @@ from types import SimpleNamespace
 import pytest
 
 from flo.app import _resolve_render_options_for_output
-from flo.render._sppm_themes import SPPM_THEMES
-from flo.render._svg_spaghetti import render_spaghetti_svg_artifact
-from flo.render._svg_sppm_nodes import _node_svg
-from flo.render._svg_swimlane import render_swimlane_svg_artifact
-from flo.render._svg_value_stream import render_value_stream_svg_artifact
+from flo.render.sppm.themes import SPPM_THEMES
+from flo.render.spaghetti import render_spaghetti_svg_artifact
+from flo.render.sppm.nodes import _node_svg
+from flo.render.swimlane import render_swimlane_svg_artifact
+from flo.render.value_stream import render_value_stream_svg_artifact
 from flo.render._svg_theme import apply_svg_typography
 from flo.render.layout_core.models import LayoutBounds, LayoutLaneFrame, LayoutResult
 from flo.render.options import RenderOptions
@@ -162,7 +162,7 @@ def test_configured_theme_cross_renderer_golden(
             diagnostics=(),
         )
 
-    monkeypatch.setattr("flo.render._svg_swimlane.execute_elk_layout", fake_layout)
+    monkeypatch.setattr("flo.render.swimlane.renderer.execute_elk_layout", fake_layout)
     swimlane_process = {
         "lanes": [{"id": "ops", "name": "Operations"}],
         "nodes": [

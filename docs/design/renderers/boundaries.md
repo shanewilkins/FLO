@@ -4,71 +4,89 @@ Status: accepted
 
 ## Purpose
 
-Define where renderer features must live so SPPM can evolve without coupling
-future renderer work to SPPM-only semantics.
+Keep SPPM, swimlane, spaghetti, and value stream as four independent
+renderers while allowing them to consume a small renderer-neutral platform.
 
-## Boundary Map
+## Package map
 
-### Backend-neutral renderer core
+Each diagram owns an explicit package and artifact entrypoint:
 
-- `src/flo/render/_publication.py`
-- `src/flo/render/_artifact.py`
-- `src/flo/render/_diagnostics.py`
-- `src/flo/render/capability_matrix.py`
-- `src/flo/render/themes.py`
-- the registered contract, model, placement, routing, and geometry helpers in
-  `src/flo/render/layout_core/`
+- `src/flo/render/sppm/`
+- `src/flo/render/swimlane/`
+- `src/flo/render/spaghetti/`
+- `src/flo/render/value_stream/`
 
-These modules own renderer-independent artifact, diagnostic, publication,
-theme, capability, and layout contracts. The executable registration lives in
-`tests/policy/test_renderer_architecture_boundaries.py`; adding a new shared
-module requires adding it to that gate in the same change.
+SPPM and swimlane also own their ELK request builders in `layout.py`. Shared
+ELK code accepts measured node sizes and edge decorations through callbacks;
+it does not import a renderer package. Spaghetti and value stream own their
+direct spatial projection and SVG emission end to end.
 
-Rule: backend-neutral modules must not import SVG or SPPM renderer modules.
+Renderer-neutral infrastructure consists of:
 
-### SPPM-specific renderer modules
+- artifact and diagnostic contracts
+- resolved render options and themes
+- `src/flo/render/shared/` for truly shared SVG mechanics
+- `src/flo/render/layout_core/` for layout contracts, execution,
+  normalization, placement, routing, and geometry
+- `src/flo/render/registry.py` for executable registration and dispatch
 
-- `src/flo/render/_svg_sppm.py`
-- `src/flo/render/_sppm_*.py`
+`src/flo/render/capability_matrix.py` is a compatibility view generated from
+the executable registry; it is not a second registration table.
 
-Examples of SPPM-only semantics:
+## Dependency direction
 
-- SPPM rework conventions and anchor token derivation
-- SPPM publication conventions (step numbering, SPPM-specific footer content)
+```mermaid
+flowchart TD
+    API[render public API] --> REG[renderer registry]
+    REG --> SPPM[SPPM package]
+    REG --> SWIM[swimlane package]
+    REG --> SPAG[spaghetti package]
+    REG --> VSM[value-stream package]
 
-### Swimlane-specific responsibilities
+    SPPM --> CORE[renderer-neutral contracts and layout core]
+    SWIM --> CORE
+    SPAG --> CORE
+    VSM --> CORE
 
-- `src/flo/render/_svg_swimlane.py`
-  Swimlane lane presentation and swimlane-specific SVG layout behavior.
+    SPPM --> SHARED[shared SVG mechanics]
+    SWIM --> SHARED
+    SPAG --> SHARED
+    VSM --> SHARED
+```
 
-Swimlane should consume shared routing/label/publication primitives where
-possible and own only lane grouping, lane frames, and lane-aware placement.
+The arrows do not run back from shared code to renderer packages, and renderer
+packages do not import one another. Swimlane therefore owns its shapes and
+edges rather than inheriting SPPM presentation behavior.
 
-Swimlane inherits shared SPPM process-node shapes, typography, themes, detail
-behavior, and edge/rework conventions through the SVG shared primitives.
+## Ownership rules
 
-## Feature Placement Rules
+1. Put behavior in a renderer package when its semantics or visual convention
+   belongs to one diagram family.
+2. Put code in `shared/` only when it is renderer-neutral and already useful
+   across diagram families.
+3. Keep layout contracts and execution in `layout_core/`; inject
+   renderer-owned measurement and decoration policy through narrow callbacks.
+4. Register each supported diagram/backend pair once in `registry.py`.
+5. Do not preprocess canonical IR globally for renderer convenience. A
+   renderer-specific projection belongs inside that renderer.
+6. Do not restore flat `_svg_*`, `_sppm_*`, backend-selector, Graphviz, or DOT
+   renderer modules.
 
-Use this decision order for new renderer work:
+## Enforcement
 
-1. If behavior is backend-neutral and valid for more than one renderer,
-  implement in backend-neutral shared core.
-2. If behavior is specific to SPPM semantics, implement in `_sppm_*` modules.
-3. If behavior is specific to swimlane visual semantics, implement in
-  `_svg_swimlane.py` (or a swimlane-only helper).
-4. If uncertain, prefer shared contracts and thin renderer adapters over
-   copy/paste.
-
-## Migration Notes
-
-- Keep extracting renderer-agnostic placement/label policy into shared modules.
-- Keep renderer entrypoints thin and orchestration-focused.
-- Do not reintroduce Graphviz or DOT renderer modules.
-- Add or update policy tests whenever a new shared module is introduced.
+- Import Linter forbids shared-to-renderer and renderer-to-renderer imports and
+  checks sibling cycles recursively.
+- `tests/policy/test_renderer_architecture_boundaries.py` requires all four
+  package entrypoints, rejects legacy flat modules, and rejects global render
+  preprocessing.
+- Focused artifact and layout tests prove SPPM and swimlane retain independent
+  behavior across the shared ELK seam.
 
 ## References
 
 - `docs/design/renderers/sppm.md`
+- `docs/design/renderers/swimlane.md`
+- `docs/design/renderers/spaghetti.md`
+- `docs/design/renderers/value_stream.md`
 - `docs/design/adr/render_stack_elk_svg_typst.md`
-- `docs/design/render_platform_target_architecture.md`
-- `.roadmap/issues/renderer-platform-completeness/d4183d06-renderer-architecture-boundary-shared-core-vs-sppm-specific-vs-swimlane-specific.md`
+- `docs/design/adr/simplified_package_architecture.md`

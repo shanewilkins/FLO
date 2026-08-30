@@ -117,6 +117,7 @@ owns each artifact family.
 - `renderers/sppm.md`
 - `renderers/sppm_layout_enhancement.md`
 - `renderers/swimlane.md`
+- `renderers/value_stream.md`
 
 ### Active Cross-Cutting Design
 

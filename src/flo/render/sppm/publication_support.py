@@ -13,8 +13,8 @@ from flo.process.schema.render_metadata import (
 from flo.process.schema.subprocess_refs import resolve_subprocess_detail_map_reference
 from flo.errors import RenderError
 
-from ._process_header import build_process_header_rows
-from ._publication import (
+from .._process_header import build_process_header_rows
+from .._publication import (
     PublicationArtifactSlot,
     PublicationBandContent,
     PublicationBounds,
@@ -24,9 +24,9 @@ from ._publication import (
     build_publication_canvas_for_format,
     evaluate_publication_fallback,
 )
-from ._sppm_projection import SppmProjectionContext
-from ._sppm_text import format_text_field, normalize_space
-from .options import RenderOptions
+from .projection import SppmProjectionContext
+from .text import format_text_field, normalize_space
+from ..options import RenderOptions
 
 _DEFAULT_SPPM_PUBLICATION_WIDTH_PX = 1200
 _DEFAULT_SPPM_PUBLICATION_MARGINS = PublicationMargins(

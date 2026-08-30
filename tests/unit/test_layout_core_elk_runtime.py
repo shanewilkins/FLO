@@ -2,23 +2,28 @@ import logging
 
 import pytest
 
-import flo.render.layout_core.elk_adapter as elk_adapter
+import flo.render.sppm.layout as sppm_layout
+import flo.render.swimlane.layout as swimlane_layout
 from flo.render._diagnostics import RenderDiagnostic
 from flo.render.layout_core import (
-    build_sppm_elk_layout_request,
-    build_swimlane_elk_layout_request,
     execute_elk_layout,
     LayoutBounds,
     LayoutPoint,
     LayoutResult,
-    layout_sppm_with_elk,
-    layout_swimlane_with_elk,
     normalize_elk_layout_result,
     RoutedEdgePath,
     serialize_elk_layout_request,
     serialize_layout_result,
 )
 from flo.render.options import RenderOptions
+from flo.render.sppm.layout import (
+    build_sppm_elk_layout_request,
+    layout_sppm_with_elk,
+)
+from flo.render.swimlane.layout import (
+    build_swimlane_elk_layout_request,
+    layout_swimlane_with_elk,
+)
 from flo.app.logging import configure_logging
 from flo.errors import RenderError
 
@@ -1025,7 +1030,9 @@ def test_layout_swimlane_with_elk_logs_render_diagnostics(monkeypatch, capsys):
     try:
         root.handlers.clear()
         configure_logging(level=logging.INFO)
-        monkeypatch.setattr(elk_adapter, "execute_elk_layout", fake_execute_elk_layout)
+        monkeypatch.setattr(
+            swimlane_layout, "execute_elk_layout", fake_execute_elk_layout
+        )
 
         result = layout_swimlane_with_elk(
             {
@@ -1093,7 +1100,7 @@ def test_layout_sppm_with_elk_logs_render_diagnostics(monkeypatch, capsys):
     try:
         root.handlers.clear()
         configure_logging(level=logging.INFO)
-        monkeypatch.setattr(elk_adapter, "execute_elk_layout", fake_execute_elk_layout)
+        monkeypatch.setattr(sppm_layout, "execute_elk_layout", fake_execute_elk_layout)
 
         result = layout_sppm_with_elk(
             {
