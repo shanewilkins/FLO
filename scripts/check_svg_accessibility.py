@@ -28,13 +28,17 @@ def accessibility_violations(path: Path) -> tuple[str, ...]:
 
     labelled_by = root.get("aria-labelledby", "").split()
     if labelled_by != ["flo-svg-title", "flo-svg-description"]:
-        violations.append("root SVG must reference deterministic title and description ids")
+        violations.append(
+            "root SVG must reference deterministic title and description ids"
+        )
 
     expected = {
         "flo-svg-title": f"{{{SVG_NAMESPACE}}}title",
         "flo-svg-description": f"{{{SVG_NAMESPACE}}}desc",
     }
-    id_index = {element.get("id"): element for element in root.iter() if element.get("id")}
+    id_index = {
+        element.get("id"): element for element in root.iter() if element.get("id")
+    }
     for element_id, tag in expected.items():
         element = id_index.get(element_id)
         if element is None or element.tag != tag:

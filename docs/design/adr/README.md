@@ -27,6 +27,9 @@ Current ADRs:
 
 - `language_primitive_taxonomy.md`
 - `canonical_ir_metadata_and_subprocess_hierarchy.md`
+- `measurement_profiles_and_evidence.md`
+- `measurement_projection_and_analysis.md`
+- `observed_branch_and_rework_frequency.md`
 - `render_stack_elk_svg_typst.md`
 - `governance_v2.md`
 - `process_variants.md` (proposed)

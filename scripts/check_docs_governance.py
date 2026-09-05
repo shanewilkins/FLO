@@ -296,9 +296,7 @@ def _warn_executable_evidence(warnings: list[str]) -> None:
         )
 
 
-def _warn_test_evidence_ref(
-    *, ref: str, row_number: int, warnings: list[str]
-) -> None:
+def _warn_test_evidence_ref(*, ref: str, row_number: int, warnings: list[str]) -> None:
     path_text, separator, symbol = ref.partition("::")
     if not separator or not symbol:
         warnings.append(

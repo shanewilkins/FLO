@@ -163,6 +163,12 @@ Before 1.0, FLO will document:
 
 ### 0.4: Renderer Stabilization
 
+- Preserve omitted, invalid, unavailable, and measured-zero timing as distinct
+  states across validation, static analysis, and maintained renderers; remove
+  missing-data defaults that turn absent queue waits into zero.
+- Publish the accepted measurement-profile, projection, and observed-frequency
+  architecture decisions, and define compact, detail, machine, and print-safe
+  capability boundaries without requiring the later profile implementation.
 - Complete the accepted multi-page SPPM publication boundary, including Typst
   composition, stable step references, continuation anchors, child maps,
   deterministic warnings, and strict-mode failures.
@@ -172,7 +178,7 @@ Before 1.0, FLO will document:
 - Move SPPM, swimlane, spaghetti, and value stream maps to the stable renderer
   tier.
 - Add visual-invariant coverage for node-label legibility, overlap, clipping, and
-	lane-frame containment on top of the established deterministic and golden-artifact gates.
+  lane-frame containment on top of the established deterministic and golden-artifact gates.
 - Publish the renderer capability matrix and renderer compatibility guarantees.
 - Add color-safe and monochrome accessibility gates, non-color semantic cues,
   and legibility criteria to stable renderer promotion.
@@ -181,6 +187,12 @@ Before 1.0, FLO will document:
 
 ### 0.5: Telemetry Model And MVP
 
+- Replace scalar duration metadata with the producer-neutral measurement-profile
+  contract across source, canonical IR, schema, validation, deterministic JSON,
+  the source writer, and the supported public Python API.
+- Deliver explicit primary-display and modeled-analysis selectors plus compact
+  and lossless machine-readable profile projections; do not infer a preferred
+  statistic or retrieve referenced evidence.
 - Deliver the end-user installation, scaffold/template, diagnostic, default
   rendering, and public Python API baseline required by the MVP journey.
 - Validate the first-run time-to-model acceptance boundary with a representative
@@ -197,15 +209,24 @@ Before 1.0, FLO will document:
 ### 0.6: Telemetry Analysis
 
 - Support trace-derived transition frequencies, dwell or wait measures, and rework rates.
+- Allow approved telemetry and downstream analytics adapters to emit
+  provenance-bearing measurement profiles without mutating canonical designed
+  process IR.
+- Deliver structured branch and rework frequency profiles that distinguish
+  affected work units, repeated occurrences, and denominator populations.
+- Add detailed measurement projections for interactive hosts and equivalent
+  print or composed-publication surfaces without making interaction part of
+  the semantic contract.
 - Publish telemetry import and alignment report contracts.
 - Complete aggregate and row-level report privacy modes, redaction,
   pseudonymization, and fail-closed verification.
 
-
-
 ### 0.7: Language, IR, And CLI Freeze Candidate
 
 - Freeze the proposed 1.0 language, canonical IR, schema, and CLI contracts.
+- Freeze measurement-profile basis, method identifiers and parameters, sample
+  and evidence context, extension namespaces, selectors, branch-frequency
+  semantics, public API types, writer behavior, and migration rules.
 - Introduce the separate object-capable observed-event IR and deterministic
   TraceView projection; ingest CSV, XES, and OCEL 2 JSON through replaceable
   adapters without expanding canonical designed-process IR.
@@ -223,7 +244,7 @@ Before 1.0, FLO will document:
 - Finalize namespaced extension metadata and deterministic preservation through
   compile, JSON export, and source emission.
 - Finalize the standard and verbose node-content policy, including approved
-	queue-detail fields and layout requirements for verbose rendering.
+  queue-detail fields and layout requirements for verbose rendering.
 - Remove or migrate legacy authoring aliases according to documented deprecation policy.
 - Expand conformance coverage for stable contracts and supported migration paths.
 

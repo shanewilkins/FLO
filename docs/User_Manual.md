@@ -211,6 +211,60 @@ Time-related node metadata fields (for example `cycle_time`, `wait_time`, `lead_
 - `value`: number >= 0
 - `unit`: one of `s`, `min`, `hr`, `d` (`m` is still accepted for backwards compatibility)
 
+This scalar form is the current executable contract.
+FLO must preserve an omitted or invalid timing field separately from a valid measured zero; a missing queue wait does not mean zero minutes.
+
+### Accepted future measurement-profile contract
+
+FLO 0.5 will replace the scalar form through a deliberate pre-1.0 breaking change.
+The accepted profile contract will preserve multiple externally calculated statistics without making FLO the event repository or statistical-computation system.
+
+The planned shape is conceptually:
+
+```yaml
+cycle_time:
+  basis: observed
+  primary: mean
+  analysis_input: mean
+  sample:
+    count: 39
+    unit: order_activity_occurrence
+    cohort_ref: representative-friday-orders
+    window:
+      start: 2026-08-01T00:00:00Z
+      end: 2026-08-31T23:59:59Z
+  evidence_ref: representative-friday-91
+  statistics:
+    - method: mean
+      value: 30.4
+      unit: min
+    - method: median
+      value: 30.3
+      unit: min
+    - method: percentile
+      parameters:
+        percentile: 90
+        interpolation: linear
+      value: 33.8
+      unit: min
+```
+
+This example documents an accepted direction, not syntax accepted by the current parser.
+The implementing release will publish the exact schema and migration procedure.
+
+`basis` will distinguish observed, simulated, estimated, planned, and target profiles.
+`primary` will select the compact display result.
+`analysis_input` will separately select the numeric result available to modeled static timing.
+FLO will not infer either selector or assume that an unlabeled duration is an average.
+
+Core methods will include count, sum, minimum, maximum, mean, median, mode, percentile, and standard deviation.
+Parameterized methods will record definitions such as percentile interpolation and sample or population standard deviation.
+Namespaced methods such as `lss4py:trimmed_mean` will allow producer-specific extensions without expanding FLO's core method vocabulary.
+
+FLO will validate, preserve, and project supplied profiles.
+Packages such as `lss4py`, governed worksheets, or other analytics systems will calculate them and retain the authoritative event or row-level evidence.
+An `evidence_ref` will identify that external evidence without causing FLO to fetch or embed it.
+
 The `value_class` field classifies a step by its Lean value contribution:
 
 - `VA` — value-adding
@@ -729,6 +783,14 @@ SPPM-relevant fields per step:
 - `performed_by`: shown as the performer line in the info box
 - `uses`: available for equipment-aware examples and downstream summaries
 
+The current renderer shows one scalar value for each available timing field.
+Under the accepted measurement-profile contract, compact output will show the explicitly selected primary statistic and identify its method, such as `Avg CT`, `Median WT`, or `P90 C/O`.
+Detailed output will preserve all supported statistics, sample context, basis, and evidence identity.
+Machine-readable output will preserve the complete profile even when the selected renderer cannot display every result.
+
+Detailed measurement meaning will not depend on clicking or hovering.
+An interactive host may open detail from a process box, while print and composed publication output will provide an equivalent table, callout, appendix, or companion artifact.
+
 The default theme uses stoplight colors. Themes use Bootstrap-compatible semantic
 roles: `success` for VA, `warning` for RNVA and queues, `danger` for NVA, and
 `primary` for decision control points. FLO owns these tokens and does not import
@@ -1070,6 +1132,12 @@ SPPM time semantics:
   cycle, waiting, C/O, and modeled lead time from the same static-analysis
   result used by `flo inspect`. Alternative paths show a range; unresolved
   timing shows `Unavailable` and points to inspect diagnostics.
+- Under the accepted future profile contract, static timing will consume only
+  an explicit numeric `analysis_input`; it will not calculate descriptive
+  statistics or use the primary display result implicitly.
+- Arithmetic over selected node statistics remains a modeled timing result and
+  is never labeled as an empirical end-to-end mean, median, minimum, maximum,
+  or percentile.
 
 ## 7) Input and Output Streams
 
