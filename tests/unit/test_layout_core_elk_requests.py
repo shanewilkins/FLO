@@ -1,16 +1,17 @@
 from pathlib import Path
 from typing import Any
 
-from flo.source import parse_adapter
 import pytest
-from flo.render.sppm.content import build_sppm_node_content
+
+from flo.errors import RenderError
 from flo.render.layout_core import (
     serialize_elk_layout_request,
 )
 from flo.render.options import RenderOptions
+from flo.render.sppm.content import build_sppm_node_content
 from flo.render.sppm.layout import build_sppm_elk_layout_request
 from flo.render.swimlane.layout import build_swimlane_elk_layout_request
-from flo.errors import RenderError
+from flo.source import parse_adapter
 
 
 def _collect_nodes_with_ports(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:

@@ -1,7 +1,7 @@
 import json
 
-from flo.process.ir.models import Edge, IR, Node
 from flo.process.export import export_ir
+from flo.process.ir.models import IR, Edge, Node
 
 
 def test_export_ir_defaults_to_json_projection():

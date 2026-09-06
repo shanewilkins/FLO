@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from typing import List, Dict, Any, Tuple
+from typing import Any
+
 from flo.process.ir.models import IR, Node
 
 
-def _build_adjacency(ir: IR) -> Tuple[Dict[str, Node], Dict[str, List[str]], bool]:
-    id_to_node: Dict[str, Node] = {n.id: n for n in ir.nodes}
-    adj: Dict[str, List[str]] = {}
+def _build_adjacency(ir: IR) -> tuple[dict[str, Node], dict[str, list[str]], bool]:
+    id_to_node: dict[str, Node] = {n.id: n for n in ir.nodes}
+    adj: dict[str, list[str]] = {}
     has_edges = False
     for n in ir.nodes:
         if n.attrs and isinstance(n.attrs, dict) and "edges" in n.attrs:
@@ -23,13 +24,13 @@ def _build_adjacency(ir: IR) -> Tuple[Dict[str, Node], Dict[str, List[str]], boo
     return id_to_node, adj, has_edges
 
 
-def _tarjan_scc(adj: Dict[str, List[str]]) -> List[List[str]]:
+def _tarjan_scc(adj: dict[str, list[str]]) -> list[list[str]]:
     index = 0
-    index_map: Dict[str, int] = {}
-    lowlink: Dict[str, int] = {}
-    stack: List[str] = []
-    onstack: Dict[str, bool] = {}
-    sccs: List[List[str]] = []
+    index_map: dict[str, int] = {}
+    lowlink: dict[str, int] = {}
+    stack: list[str] = []
+    onstack: dict[str, bool] = {}
+    sccs: list[list[str]] = []
 
     def strongconnect(v: str) -> None:
         nonlocal index
@@ -47,7 +48,7 @@ def _tarjan_scc(adj: Dict[str, List[str]]) -> List[List[str]]:
                 lowlink[v] = min(lowlink[v], index_map[w])
 
         if lowlink[v] == index_map[v]:
-            comp: List[str] = []
+            comp: list[str] = []
             while True:
                 w = stack.pop()
                 onstack[w] = False
@@ -63,10 +64,10 @@ def _tarjan_scc(adj: Dict[str, List[str]]) -> List[List[str]]:
 
 
 def _build_condensed_nodes(
-    sccs: List[List[str]], id_to_node: Dict[str, Node]
-) -> Tuple[List[Node], Dict[str, str]]:
-    new_nodes: List[Node] = []
-    scc_map: Dict[str, str] = {}
+    sccs: list[list[str]], id_to_node: dict[str, Node]
+) -> tuple[list[Node], dict[str, str]]:
+    new_nodes: list[Node] = []
+    scc_map: dict[str, str] = {}
     for i, comp in enumerate(sccs):
         if len(comp) == 1:
             nid = comp[0]
@@ -83,11 +84,11 @@ def _build_condensed_nodes(
 
 
 def _rebuild_edges(
-    new_nodes: List[Node], adj: Dict[str, List[str]], scc_map: Dict[str, str]
+    new_nodes: list[Node], adj: dict[str, list[str]], scc_map: dict[str, str]
 ) -> None:
     for node in new_nodes:
         if node.attrs and node.attrs.get("members"):
-            outs: List[str] = []
+            outs: list[str] = []
             for member in node.attrs["members"]:
                 for tgt in adj.get(member, []):
                     tgt_rep = scc_map.get(tgt, tgt)

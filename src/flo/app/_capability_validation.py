@@ -5,12 +5,12 @@ Ensures requested diagram/backend combinations are supported before render.
 
 from __future__ import annotations
 
+from flo.errors import EXIT_USAGE, CLIError
 from flo.render.capability_matrix import (
     RENDER_CAPABILITY_MATRIX,
     supported_backends_for_diagram,
 )
 from flo.render.options import RenderOptions
-from flo.errors import CLIError, EXIT_USAGE
 
 
 def ensure_render_projection_supported(render_options: RenderOptions) -> None:

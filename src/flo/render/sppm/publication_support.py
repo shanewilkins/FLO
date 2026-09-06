@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from flo.errors import RenderError
 from flo.process.analysis import ProcessTimingAnalysis
 from flo.process.schema.render_metadata import (
     SPPM_FOOTER_METRIC_METADATA_KEYS,
@@ -11,7 +12,6 @@ from flo.process.schema.render_metadata import (
     first_present_metadata_value,
 )
 from flo.process.schema.subprocess_refs import resolve_subprocess_detail_map_reference
-from flo.errors import RenderError
 
 from .._process_header import build_process_header_rows
 from .._publication import (
@@ -24,9 +24,9 @@ from .._publication import (
     build_publication_canvas_for_format,
     evaluate_publication_fallback,
 )
+from ..options import RenderOptions
 from .projection import SppmProjectionContext
 from .text import format_text_field, normalize_space
-from ..options import RenderOptions
 
 _DEFAULT_SPPM_PUBLICATION_WIDTH_PX = 1200
 _DEFAULT_SPPM_PUBLICATION_MARGINS = PublicationMargins(
@@ -424,7 +424,7 @@ def _publication_band_height(
 ) -> int:
     content_height = 24 if title else 0
     content_height += (row_count + note_count) * 16
-    return int(round(max(minimum_height_px, content_height + 32) * scale))
+    return round(max(minimum_height_px, content_height + 32) * scale)
 
 
 def _publication_diagnostics(

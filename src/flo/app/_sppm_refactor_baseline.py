@@ -8,9 +8,10 @@ quality-gate tooling.
 from __future__ import annotations
 
 import ast
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Sequence, cast
+from typing import Any, cast
 
 try:
     from radon.complexity import cc_visit
@@ -478,8 +479,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 __all__ = [
-    "BaselineReport",
     "DEFAULT_SPPM_REFACTOR_BASELINE_FILES",
+    "BaselineReport",
     "collect_sppm_refactor_baseline",
     "format_sppm_refactor_baseline_report",
     "main",

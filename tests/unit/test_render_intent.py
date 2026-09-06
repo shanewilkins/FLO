@@ -2,8 +2,8 @@
 
 import pytest
 
-from flo.app.render_intent import RenderIntent, RenderIntentResolver
 from flo.app import _merge_view_intent_options
+from flo.app.render_intent import RenderIntent, RenderIntentResolver
 
 
 class TestRenderIntent:

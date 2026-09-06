@@ -1,24 +1,24 @@
 from typing import Any
 
-from flo.process.ir.models import Edge, IR, Node
+from flo.errors import RenderError
+from flo.process.ir.models import IR, Edge, Node
 from flo.render._publication import (
     PublicationBandContent,
     PublicationBounds,
-    build_publication_band_context,
     PublicationDiagnostic,
     PublicationMargins,
-    build_publication_canvas_for_format,
+    PublicationPageSpec,
+    build_publication_band_context,
     build_publication_bands,
     build_publication_canvas,
+    build_publication_canvas_for_format,
     evaluate_publication_fallback,
     materialize_publication_series,
-    PublicationPageSpec,
     resolve_publication_page_format,
 )
+from flo.render.options import RenderOptions
 from flo.render.sppm.projection import project_sppm_subprocess_view
 from flo.render.sppm.publication import build_sppm_publication_plan
-from flo.render.options import RenderOptions
-from flo.errors import RenderError
 
 
 def test_build_publication_canvas_keeps_margins_outside_content_regions():

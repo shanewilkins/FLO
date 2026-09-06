@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import math
 import re
-from typing import Any, Literal, Mapping, cast
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+from typing import Any, Literal, cast
 
 from .legacy_sppm_themes import SppmTheme, parse_custom_sppm_themes
 from .themes import DEFAULT_THEME, RenderTheme, resolve_render_theme
@@ -184,7 +185,7 @@ class RenderOptions:
         )
 
     @classmethod
-    def from_mapping(cls, options: Mapping[str, Any] | None) -> "RenderOptions":
+    def from_mapping(cls, options: Mapping[str, Any] | None) -> RenderOptions:
         """Create normalized render options from a generic options mapping."""
         if not options:
             return cls()

@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
+import itertools
 import statistics
-from typing import Any, Callable
+from collections.abc import Callable
+from dataclasses import replace
+from typing import Any
 
+from flo.errors import RenderError
 from flo.render._diagnostics import RenderDiagnostic, RenderDiagnosticSeverity
+
 from .elk_contracts import (
     ElkDirection,
     ElkLayoutEdge,
@@ -15,19 +19,17 @@ from .elk_contracts import (
     ElkLayoutRequest,
 )
 from .elk_errors import ElkEngineProtocolError
-from .elk_support import (
-    serialize_edge,
-    serialize_node,
-)
 from .elk_sppm_helpers import (
-    _sppm_branch_anchor_helpers,
     _root_layout_options,
+    _sppm_branch_anchor_helpers,
     _sppm_lane_direction,
     _sppm_port_id,
     _sppm_spacing_layout_options,
 )
-from .sppm_strategy import should_emit_sppm_branch_anchors
-from .rework_geometry import infer_rework_row_ids, translate_edge_points
+from .elk_support import (
+    serialize_edge,
+    serialize_node,
+)
 from .models import (
     LayoutBounds,
     LayoutLaneFrame,
@@ -35,7 +37,8 @@ from .models import (
     LayoutResult,
     RoutedEdgePath,
 )
-from flo.errors import RenderError
+from .rework_geometry import infer_rework_row_ids, translate_edge_points
+from .sppm_strategy import should_emit_sppm_branch_anchors
 
 
 def normalize_elk_layout_result(
@@ -497,7 +500,7 @@ def _normalize_sppm_mainline_horizontal_spacing(
         return
 
     gaps: list[float] = []
-    for left_id, right_id in zip(ordered, ordered[1:]):
+    for left_id, right_id in itertools.pairwise(ordered):
         left_bounds = node_bounds[left_id]
         right_bounds = node_bounds[right_id]
         gap = right_bounds.x_px - (left_bounds.x_px + left_bounds.width_px)
@@ -512,7 +515,7 @@ def _normalize_sppm_mainline_horizontal_spacing(
 
     shifts: dict[str, tuple[float, float]] = {}
     propagated_dx = 0.0
-    for left_id, right_id in zip(ordered, ordered[1:]):
+    for left_id, right_id in itertools.pairwise(ordered):
         left_dx = shifts.get(left_id, (0.0, 0.0))[0]
         right_dx, right_dy = shifts.get(right_id, (0.0, 0.0))
         left_right = node_bounds[left_id].x_px + left_dx + node_bounds[left_id].width_px
@@ -604,7 +607,7 @@ def _edge_metadata_maps(
         for edge in request.edges
         if edge.callout_lines
     }
-    edge_rework = {
+    edge_rework: dict[tuple[str, str], tuple[bool, str | None]] = {
         (edge.source_id, edge.target_id): (edge.is_rework, edge.rework_variant)
         for edge in request.edges
         if edge.is_rework or edge.rework_variant is not None
@@ -921,7 +924,7 @@ def _route_raw_edge_path(
             code="elk-edge-geometry-missing",
             severity=_recovery_severity(strict),
             message=(
-                f"ELK response did not provide usable geometry for edge '{str(raw_edge.get('id') or '')}'."
+                f"ELK response did not provide usable geometry for edge '{raw_edge.get('id') or ''!s}'."
             ),
             edge_id=str(raw_edge.get("id") or ""),
             source_id=source_id,
@@ -1046,7 +1049,7 @@ def _edge_origin(
             code="elk-edge-container-unknown",
             severity=_recovery_severity(strict),
             message=(
-                f"ELK response referenced unknown edge container '{container_id}' for edge '{str(raw_edge.get('id') or '')}'."
+                f"ELK response referenced unknown edge container '{container_id}' for edge '{raw_edge.get('id') or ''!s}'."
             ),
             edge_id=str(raw_edge.get("id") or ""),
             container_id=container_id,

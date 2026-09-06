@@ -1,5 +1,5 @@
 from flo.process.analysis import inspect_process_model, project_value_stream
-from flo.process.ir.models import Edge, IR, Node
+from flo.process.ir.models import IR, Edge, Node
 
 
 def test_value_stream_projection_separates_item_kinds_and_reuses_timing() -> None:

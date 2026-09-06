@@ -11,7 +11,7 @@ from __future__ import annotations
 import tomllib
 from pathlib import Path
 
-from flo.errors import CLIError, EXIT_USAGE
+from flo.errors import EXIT_USAGE, CLIError
 
 
 def merge_diagrams_toml_render_defaults(options: dict | None) -> dict:
@@ -27,7 +27,7 @@ def merge_diagrams_toml_render_defaults(options: dict | None) -> dict:
     try:
         data = tomllib.loads(diagrams_toml.read_text(encoding="utf-8"))
     except (tomllib.TOMLDecodeError, OSError) as exc:
-        raise CLIError(f"Failed to read diagrams.toml: {exc}", code=EXIT_USAGE)
+        raise CLIError(f"Failed to read diagrams.toml: {exc}", code=EXIT_USAGE) from exc
 
     resolved: dict[str, object] = dict(opts)
     sppm_section = data.get("sppm")

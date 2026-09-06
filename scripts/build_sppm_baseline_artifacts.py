@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import asdict
 import json
-from pathlib import Path
 import shutil
 import sys
+from dataclasses import asdict
+from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -125,17 +125,16 @@ def _filter_cases(
 def _build_case(
     *, case: dict[str, Any], outdir: Path, debug_dir: Path | None = None
 ) -> tuple[dict[str, Any], ...]:
-    from flo.source import parse_adapter
-    from flo.source import compile_adapter
     from flo.process.analysis import analyze_process_timing
-    from flo.render.sppm.layout import build_sppm_elk_layout_request
-    from flo.render.sppm.renderer import render_sppm_svg_artifact_from_layout
     from flo.render.layout_core import (
         normalize_elk_layout_result,
         run_elkjs_layout,
         serialize_elk_layout_request,
     )
     from flo.render.options import RenderOptions
+    from flo.render.sppm.layout import build_sppm_elk_layout_request
+    from flo.render.sppm.renderer import render_sppm_svg_artifact_from_layout
+    from flo.source import compile_adapter, parse_adapter
 
     case_id = str(case["id"])
     source_path = _resolve_repo_path(Path(str(case["input"])))

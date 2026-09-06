@@ -7,12 +7,11 @@ canonical location for IO code in the services layer.
 from __future__ import annotations
 
 import sys
-from typing import Tuple
 
 from flo.errors import EXIT_RENDER_ERROR
 
 
-def read_input(path: str) -> Tuple[int, str, str]:
+def read_input(path: str) -> tuple[int, str, str]:
     """Read input from `path` or stdin when `path == '-'`.
 
     Returns a tuple `(rc, content, err)` where `rc` is 0 on success.
@@ -21,14 +20,14 @@ def read_input(path: str) -> Tuple[int, str, str]:
         if path == "-":
             content = sys.stdin.read()
         else:
-            with open(path, "r", encoding="utf-8") as fh:
+            with open(path, encoding="utf-8") as fh:
                 content = fh.read()
     except OSError as e:
         return EXIT_RENDER_ERROR, "", f"I/O error reading {path}: {e}"
     return 0, content, ""
 
 
-def write_output(out: str, path: str | None) -> Tuple[int, str]:
+def write_output(out: str, path: str | None) -> tuple[int, str]:
     """Write `out` to `path` or stdout when `path` is None.
 
     Returns `(rc, err)` where `rc` is 0 on success.

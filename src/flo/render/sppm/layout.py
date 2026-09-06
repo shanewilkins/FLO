@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import itertools
+from collections.abc import Callable
 from dataclasses import replace
-from typing import Any, Callable
+from typing import Any
 
 from flo.render._diagnostics import log_render_diagnostics
 
@@ -196,7 +198,7 @@ def _is_linear_sppm_sequence(
     node_ids = [str(node.get("id") or "") for node in nodes]
     if not node_ids or any(not node_id for node_id in node_ids):
         return False
-    expected_edges = set(zip(node_ids, node_ids[1:]))
+    expected_edges = set(itertools.pairwise(node_ids))
     actual_edges = {(edge.source_id, edge.target_id) for edge in edges}
     return (
         len(edges) == len(expected_edges)

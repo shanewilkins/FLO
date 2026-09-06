@@ -2,19 +2,18 @@
 
 from __future__ import annotations
 
-from typing import Tuple
+from structlog.stdlib import BoundLogger
 
+from flo.app import Services, get_services
 from flo.app.render_option_schema import (
     add_argparse_render_options,
     build_render_options_from_namespace,
 )
-from flo.app import get_services, Services
-from structlog.stdlib import BoundLogger
 
 
 def parse_args(
     argv: list | None, services: Services
-) -> Tuple[str | None, str, dict, Services, BoundLogger]:
+) -> tuple[str | None, str, dict, Services, BoundLogger]:
     """Parse CLI arguments and return (path, command, options, services, logger).
 
     This is a thin wrapper around argparse that returns normalized

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import flo.process.ir as compiler_ir
 import flo.process.export as export_api
+import flo.process.ir as compiler_ir
 
 
 def test_compiler_ir_package_does_not_expose_schema_export_projection() -> None:

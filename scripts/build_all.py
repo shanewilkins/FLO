@@ -8,10 +8,10 @@ FLO's parser/compiler/validator pipeline, and writes direct SVG artifacts into
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import sys
-import yaml
+from pathlib import Path
 
+import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = REPO_ROOT / "src"
@@ -89,11 +89,10 @@ def _resolve_include_ref(current_path: Path, include_ref: str) -> Path:
 def _build_one(
     example_file: Path, examples_dir: Path, renders_dir: Path
 ) -> tuple[bool, str]:
-    from flo.source import parse_adapter
-    from flo.source import compile_adapter
-    from flo.process.ir import ensure_schema_aligned, validate_ir
     from flo.process.export import export_ir
+    from flo.process.ir import ensure_schema_aligned, validate_ir
     from flo.render import render_artifact
+    from flo.source import compile_adapter, parse_adapter
 
     rel = example_file.relative_to(examples_dir)
     base_out = (renders_dir / rel).with_suffix("")

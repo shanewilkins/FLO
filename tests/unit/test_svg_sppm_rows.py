@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+from flo.render.layout_core.models import LayoutBounds, LayoutPoint, RoutedEdgePath
 from flo.render.sppm.rows import (
     rework_alignment_diagnostics,
     row_gap_diagnostics,
 )
-from flo.render.layout_core.models import LayoutBounds, LayoutPoint, RoutedEdgePath
 
 
 def test_row_gap_diagnostics_warns_when_rows_are_too_close() -> None:

@@ -1,5 +1,5 @@
-from flo.render.sppm.edges import _shape_edge_point
 from flo.render.layout_core.models import LayoutBounds, LayoutPoint
+from flo.render.sppm.edges import _shape_edge_point
 
 
 def test_start_end_ports_snap_to_side_midpoints_not_rounded_corners():

@@ -4,8 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from flo.render.sppm.nodes import _node_svg
 from flo.render.options import RenderOptions
+from flo.render.sppm.nodes import _node_svg
 
 
 @pytest.mark.parametrize(

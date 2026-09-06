@@ -16,7 +16,7 @@ def test_read_input_file(tmp_path):
 
 def test_read_input_stdin(monkeypatch):
     monkeypatch.setattr(sys, "stdin", io.StringIO("stdin content"))
-    rc, content, err = read_input("-")
+    rc, content, _err = read_input("-")
     assert rc == 0
     assert content == "stdin content"
 

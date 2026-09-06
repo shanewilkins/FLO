@@ -1,10 +1,10 @@
 from types import SimpleNamespace
 
 from flo.app.telemetry import (
-    init_telemetry,
     get_tracer,
-    shutdown,
+    init_telemetry,
     record_span_success,
+    shutdown,
 )
 
 

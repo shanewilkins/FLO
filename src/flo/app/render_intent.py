@@ -9,7 +9,7 @@ Implements strict precedence: CLI override > view intent > profile defaults > ha
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, ClassVar
 
 
 @dataclass(frozen=True)
@@ -25,37 +25,37 @@ class RenderIntent:
     """
 
     # Diagram type
-    diagram: Optional[str] = None
+    diagram: str | None = None
 
     # Publication config
-    publication_page_format: Optional[str] = None
-    publication_margins_top: Optional[int] = None
-    publication_margins_right: Optional[int] = None
-    publication_margins_bottom: Optional[int] = None
-    publication_margins_left: Optional[int] = None
-    publication_header_enabled: Optional[bool] = None
-    publication_footer_enabled: Optional[bool] = None
+    publication_page_format: str | None = None
+    publication_margins_top: int | None = None
+    publication_margins_right: int | None = None
+    publication_margins_bottom: int | None = None
+    publication_margins_left: int | None = None
+    publication_header_enabled: bool | None = None
+    publication_footer_enabled: bool | None = None
 
     # Shared presentation theme
-    theme: Optional[str] = None
-    background_color: Optional[str] = None
+    theme: str | None = None
+    background_color: str | None = None
     font_family: Any = None
-    typography_scale: Optional[float] = None
+    typography_scale: float | None = None
 
     # Layout config
-    layout_wrap: Optional[str] = None
-    layout_max_width: Optional[int] = None
-    layout_target_columns: Optional[int] = None
+    layout_wrap: str | None = None
+    layout_max_width: int | None = None
+    layout_target_columns: int | None = None
 
     # SPPM config
-    sppm_label_density: Optional[str] = None
-    sppm_node_numbering: Optional[str] = None
-    sppm_edge_numbering: Optional[str] = None
+    sppm_label_density: str | None = None
+    sppm_node_numbering: str | None = None
+    sppm_edge_numbering: str | None = None
 
     # Spaghetti config
-    spaghetti_channel: Optional[str] = None
-    spaghetti_people_mode: Optional[str] = None
-    spaghetti_strict_spatial: Optional[bool] = None
+    spaghetti_channel: str | None = None
+    spaghetti_people_mode: str | None = None
+    spaghetti_strict_spatial: bool | None = None
 
 
 class RenderIntentResolver:
@@ -71,7 +71,7 @@ class RenderIntentResolver:
     """
 
     # Hard defaults (library-defined fallbacks)
-    _HARD_DEFAULTS = {
+    _HARD_DEFAULTS: ClassVar[dict[str, str | None]] = {
         "diagram": "sppm",
         "publication_page_format": None,
         "layout_wrap": "none",
@@ -81,7 +81,7 @@ class RenderIntentResolver:
     }
 
     # Profile defaults (user-facing styles)
-    _PROFILE_DEFAULTS: dict[str, dict[str, Any]] = {
+    _PROFILE_DEFAULTS: ClassVar[dict[str, dict[str, Any]]] = {
         "default": {
             "diagram": "sppm",
             "publication_page_format": None,
@@ -99,8 +99,8 @@ class RenderIntentResolver:
     @classmethod
     def resolve(
         cls,
-        render_metadata: Optional[dict[str, Any]],
-        cli_overrides: Optional[dict[str, Any]],
+        render_metadata: dict[str, Any] | None,
+        cli_overrides: dict[str, Any] | None,
         profile: str = "default",
         view_name: str = "default",
     ) -> RenderIntent:
@@ -137,7 +137,7 @@ class RenderIntentResolver:
     @classmethod
     def resolve_view(
         cls,
-        render_metadata: Optional[dict[str, Any]],
+        render_metadata: dict[str, Any] | None,
         view_name: str = "default",
     ) -> RenderIntent:
         """Resolve RenderIntent for a view without CLI overrides.
@@ -161,7 +161,7 @@ class RenderIntentResolver:
     @classmethod
     def _extract_view_intent(
         cls,
-        render_metadata: Optional[dict[str, Any]],
+        render_metadata: dict[str, Any] | None,
         view_name: str,
     ) -> dict[str, Any]:
         """Extract intent from IR.process.metadata.render.views[view_name]."""
@@ -183,7 +183,7 @@ class RenderIntentResolver:
 
     @classmethod
     def _extract_cli_intent(
-        cls, cli_overrides: Optional[dict[str, Any]]
+        cls, cli_overrides: dict[str, Any] | None
     ) -> dict[str, Any]:
         """Extract intent from CLI arguments, mapping UI names to intent keys."""
         if not cli_overrides or not isinstance(cli_overrides, dict):

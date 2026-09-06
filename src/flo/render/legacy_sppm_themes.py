@@ -8,8 +8,9 @@ depending on the SPPM implementation.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Literal, Mapping
+from typing import Any, Literal
 
 SppmThemeName = Literal["default", "flatly", "print", "monochrome"]
 
@@ -190,10 +191,10 @@ def _parse_node_style(value: Mapping[str, Any]) -> SppmNodeStyle | None:
 
 
 __all__ = [
-    "SppmThemeName",
+    "SPPM_THEMES",
     "SppmNodeStyle",
     "SppmTheme",
-    "SPPM_THEMES",
+    "SppmThemeName",
     "parse_custom_sppm_themes",
     "resolve_sppm_theme",
     "resolve_sppm_theme_with_custom",

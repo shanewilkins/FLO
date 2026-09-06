@@ -1,7 +1,12 @@
-from flo.render.swimlane import render_swimlane_svg_artifact
-from flo.render.layout_core.models import LayoutBounds, LayoutLaneFrame, LayoutPoint
-from flo.render.layout_core.models import LayoutResult, RoutedEdgePath
+from flo.render.layout_core.models import (
+    LayoutBounds,
+    LayoutLaneFrame,
+    LayoutPoint,
+    LayoutResult,
+    RoutedEdgePath,
+)
 from flo.render.options import RenderOptions
+from flo.render.swimlane import render_swimlane_svg_artifact
 
 
 def test_render_swimlane_svg_artifact_renders_lanes_nodes_and_edges(monkeypatch):

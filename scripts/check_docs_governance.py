@@ -6,9 +6,9 @@ from __future__ import annotations
 import argparse
 import csv
 import re
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
-
+from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ADR_STATUSES = {"proposed", "accepted", "superseded"}

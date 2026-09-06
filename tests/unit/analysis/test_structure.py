@@ -6,7 +6,7 @@ import pytest
 
 from flo.process.analysis import analyze_process_structure
 from flo.process.ir._internal_shape import ir_to_internal_dict
-from flo.process.ir.models import Edge, IR, Node
+from flo.process.ir.models import IR, Edge, Node
 
 
 def test_structure_reports_handoffs_paths_and_step_classification() -> None:

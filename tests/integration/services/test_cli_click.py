@@ -1,7 +1,7 @@
 import json
+from pathlib import Path
 
 from click.testing import CliRunner
-from pathlib import Path
 
 from flo.app.cli import cli
 

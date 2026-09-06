@@ -26,9 +26,9 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
-      - id: pyright-check
-        name: pyright (via uv)
-        entry: uv run pyright src
+      - id: ty-check
+        name: ty (via uv)
+        entry: uv run ty check src
         language: system
         types: [python]
         pass_filenames: false

@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 
 import flo.app.cli as cli_mod
-from flo.errors import CLIError, EXIT_INTERNAL_ERROR
+from flo.errors import EXIT_INTERNAL_ERROR, CLIError
 
 
 def test_execute_shuts_down_telemetry_on_read_error(monkeypatch):

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from flo.process.ir.models import Edge, IR
+from flo.process.ir.models import IR, Edge
 
 
 def build_adjacency(

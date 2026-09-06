@@ -8,7 +8,7 @@ from flo.app._flo_config import (
     _resolve_diagrams_toml_path,
     merge_diagrams_toml_sppm_defaults,
 )
-from flo.errors import CLIError, EXIT_USAGE
+from flo.errors import EXIT_USAGE, CLIError
 
 
 def test_merge_diagrams_toml_returns_original_when_file_missing(tmp_path, monkeypatch):

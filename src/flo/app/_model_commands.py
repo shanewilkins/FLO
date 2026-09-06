@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 import click
 
@@ -16,7 +17,7 @@ def register_model_commands(
     @click.argument("path", required=False)
     @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
     def validate_cmd(
-        path: Optional[str], verbose: bool
+        path: str | None, verbose: bool
     ) -> None:  # pragma: no cover - integration
         """Validate FLO input and return non-zero on parse/validation errors."""
         from flo.app._cli_contract import CLIExecutionRequest
@@ -60,13 +61,13 @@ def register_model_commands(
     @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
     @click.option("-o", "--output", help="Write output to file")
     def inspect_cmd(
-        path: Optional[str],
+        path: str | None,
         analysis: str,
-        for_analysis: Optional[str],
-        for_diagram: Optional[str],
+        for_analysis: str | None,
+        for_diagram: str | None,
         output_format: str,
         verbose: bool,
-        output: Optional[str],
+        output: str | None,
     ) -> None:  # pragma: no cover - integration
         """Inspect validated FLO input with deterministic static analysis."""
         from flo.app._cli_contract import CLIExecutionRequest

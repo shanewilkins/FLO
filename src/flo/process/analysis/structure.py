@@ -8,11 +8,10 @@ from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
 from flo.process.ir.metadata import extract_node_metadata
-from flo.process.ir.models import Edge, IR, Node
+from flo.process.ir.models import IR, Edge, Node
 
 from .graph import build_adjacency, enumerate_paths, has_cycle
 from .process_metadata import extract_process_metadata
-
 
 StructuralSeverity = Literal["info", "warning"]
 HandoffClassification = Literal["explicit", "candidate"]

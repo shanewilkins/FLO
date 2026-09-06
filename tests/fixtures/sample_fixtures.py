@@ -1,7 +1,8 @@
 """Test fixtures providing temporary files used in integration tests."""
 
-import tempfile
+import contextlib
 import pathlib
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -39,10 +40,8 @@ def tmp_flo_file():
         fh.flush()
         yield pathlib.Path(fh.name)
 
-    try:
+    with contextlib.suppress(Exception):
         pathlib.Path(fh.name).unlink()
-    except Exception:
-        pass
 
 
 @pytest.fixture

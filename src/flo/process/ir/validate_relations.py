@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from flo.errors import ValidationError
+
 from .metadata import extract_process_field
 from .models import IR
-from flo.errors import ValidationError
 
 
 def validate_item_relations(obj: IR) -> None:

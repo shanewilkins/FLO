@@ -5,10 +5,12 @@ This module owns canonical IR object assembly from normalized adapter data.
 
 from __future__ import annotations
 
+import itertools
 from typing import Any
 
-from ._adapter_normalization import normalize_node_attrs, resolve_explicit_transitions
 from flo.process.ir.models import Edge, Node
+
+from ._adapter_normalization import normalize_node_attrs, resolve_explicit_transitions
 
 
 def build_nodes_from_flat_source(flat_source_nodes: list[dict[str, Any]]) -> list[Node]:
@@ -143,7 +145,7 @@ def _build_sequential_edges(nodes: list[Node]) -> list[Edge]:
     if len(nodes) < 2:
         return edges
 
-    for current, nxt in zip(nodes, nodes[1:]):
+    for current, nxt in itertools.pairwise(nodes):
         current_type = (current.type or "").lower()
         if current_type == "end":
             continue

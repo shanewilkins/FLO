@@ -1,7 +1,6 @@
 import importlib.util
 from pathlib import Path
 
-
 _SCRIPT_PATH = Path("scripts/check_docs_governance.py")
 _SPEC = importlib.util.spec_from_file_location("check_docs_governance", _SCRIPT_PATH)
 assert _SPEC is not None

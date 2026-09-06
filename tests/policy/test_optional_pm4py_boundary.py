@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import ast
-from pathlib import Path
 import tomllib
-
+from pathlib import Path
 
 _ALLOWED_IMPORTER = "flo.pm4py_bridge"
 

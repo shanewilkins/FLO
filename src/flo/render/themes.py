@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import re
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from html import escape
-import re
 from types import MappingProxyType
-from typing import Any, Mapping
+from typing import Any
 
 _COLOR_RE = re.compile(r"^(?:#[0-9a-fA-F]{3}|#[0-9a-fA-F]{6}|#[0-9a-fA-F]{8})$")
 _NAMED_COLORS = {"black", "white", "transparent"}
@@ -79,7 +80,7 @@ class RenderTheme:
         """Return a stable SVG font-size token after applying the theme scale."""
         value = base_px * self.typography_scale
         if abs(value - round(value)) < 0.000_001:
-            return str(int(round(value)))
+            return str(round(value))
         return f"{value:.2f}".rstrip("0").rstrip(".")
 
 

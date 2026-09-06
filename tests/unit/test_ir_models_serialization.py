@@ -1,10 +1,11 @@
 from pathlib import Path
-from flo.process.ir.models import Edge, IR, Node
+
 from flo.process.ir._internal_shape import (
     ir_from_internal_dict,
     ir_to_internal_dict,
     ir_to_internal_json,
 )
+from flo.process.ir.models import IR, Edge, Node
 
 
 def test_ir_to_from_dict_and_json(tmp_path: Path, ir_factory, node_factory):

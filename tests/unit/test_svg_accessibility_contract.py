@@ -3,7 +3,6 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-
 _SCRIPT = Path("scripts/check_svg_accessibility.py")
 _SPEC = importlib.util.spec_from_file_location("check_svg_accessibility", _SCRIPT)
 assert _SPEC is not None and _SPEC.loader is not None

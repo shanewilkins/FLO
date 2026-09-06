@@ -7,6 +7,7 @@ from typing import Any
 
 from flo.process.schema.subprocess_refs import resolve_subprocess_detail_map_reference
 
+from ..options import RenderOptions
 from .metadata import (
     get_metadata_crossover_time,
     get_metadata_cycle_time,
@@ -19,7 +20,6 @@ from .text import (
     format_text_field,
     normalize_space,
 )
-from ..options import RenderOptions
 
 _TASK_MIN_WIDTH_PX = 160
 _TASK_MAX_WIDTH_PX = 320
@@ -118,8 +118,8 @@ def measure_sppm_node(
     def scaled(measure: SppmNodeMeasure) -> SppmNodeMeasure:
         scale = options.resolved_theme.typography_scale
         return SppmNodeMeasure(
-            width_px=int(round(measure.width_px * scale)),
-            height_px=int(round(measure.height_px * scale)),
+            width_px=round(measure.width_px * scale),
+            height_px=round(measure.height_px * scale),
         )
 
     if normalized_kind == "decision":

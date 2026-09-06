@@ -6,37 +6,38 @@ returned so callers can always call `shutdown()` safely.
 
 from __future__ import annotations
 
-from contextlib import contextmanager
+from collections.abc import Callable
+from contextlib import contextmanager, suppress
 from dataclasses import dataclass
-from typing import Any, Callable, Optional
+from typing import Any
 
 try:
     # Optional OpenTelemetry SDK imports
     from opentelemetry import trace
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider as SDKTracerProvider
-    from opentelemetry.sdk.trace.export import SimpleSpanProcessor, ConsoleSpanExporter
+    from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
 
     OTEL_AVAILABLE = True
 except Exception:  # pragma: no cover - optional dependency
     trace = None  # type: ignore
     Resource = None  # type: ignore
     SDKTracerProvider = None  # type: ignore
-    SimpleSpanProcessor = None  # type: ignore
-    ConsoleSpanExporter = None  # type: ignore
+    SimpleSpanProcessor = None
+    ConsoleSpanExporter = None  # ty: ignore[invalid-assignment]
     OTEL_AVAILABLE = False
 
 
 class _NoOpSpan:
     """No-op span returned when OpenTelemetry is not installed."""
 
-    def __enter__(self) -> "_NoOpSpan":
+    def __enter__(self) -> _NoOpSpan:
         return self
 
     def __exit__(self, _exc_type: Any, _exc: Any, _tb: Any) -> None:
         return None
 
-    def set_attribute(self, key: str, value: Any) -> None:  # noqa: ARG002
+    def set_attribute(self, key: str, value: Any) -> None:
         """No-op attribute setter."""
         return None
 
@@ -46,12 +47,12 @@ class _NoOpSpan:
         _ = _unused
         return None
 
-    def set_status(self, status: Any, description: str = "") -> None:  # noqa: ARG002
+    def set_status(self, status: Any, description: str = "") -> None:
         """No-op status setter."""
         _ = (status, description)
         return None
 
-    def add_event(self, name: str, attributes: Any = None, **kwargs: Any) -> None:  # noqa: ARG002
+    def add_event(self, name: str, attributes: Any = None, **kwargs: Any) -> None:
         """No-op event adder."""
         _unused = (name, attributes, kwargs)
         _ = _unused
@@ -65,7 +66,7 @@ class _NoOpTracer:
 
 
 # module-level provider state
-_provider: Optional[object] = None
+_provider: object | None = None
 
 
 @dataclass
@@ -75,7 +76,7 @@ class Telemetry:
     `tracer` may be `None` when OpenTelemetry SDK isn't available.
     """
 
-    tracer: Optional[object]
+    tracer: object | None
     shutdown: Callable[[], None]
 
 
@@ -200,16 +201,12 @@ def record_span_error(span: Any, message: str = "") -> None:
     # stack context even when callers only provide message text.
     record_exception = getattr(span, "record_exception", None)
     if callable(record_exception):
-        try:
+        with suppress(Exception):
             record_exception(RuntimeError(message or "span error"))
-        except Exception:
-            pass
     add_event = getattr(span, "add_event", None)
     if callable(add_event):
-        try:
+        with suppress(Exception):
             add_event("error", {"error.message": message})
-        except Exception:
-            pass
 
 
 def record_span_success(
@@ -245,7 +242,5 @@ def record_span_success(
 
     add_event = getattr(span, "add_event", None)
     if callable(add_event):
-        try:
+        with suppress(Exception):
             add_event(event_name, payload or None)
-        except Exception:
-            pass

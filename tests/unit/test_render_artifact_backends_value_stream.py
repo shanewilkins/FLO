@@ -1,5 +1,4 @@
 from flo.render import render_artifact
-
 from tests.unit.analysis.test_value_stream import _dual_flow_process
 
 

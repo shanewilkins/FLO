@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from flo.process.ir.models import Edge, IR, Node
-from flo.process.ir.validate import validate_ir
 from flo.errors import ValidationError
+from flo.process.ir.models import IR, Edge, Node
+from flo.process.ir.validate import validate_ir
 
 
 def _ir_with_metadata(metadata: dict[str, object]) -> IR:

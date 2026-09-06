@@ -5,8 +5,8 @@ from __future__ import annotations
 from html import escape
 from typing import Any
 
-from flo.process.analysis import ProcessTimingAnalysis
 from flo.errors import RenderError
+from flo.process.analysis import ProcessTimingAnalysis
 
 from .._artifact import RenderArtifact
 from .._diagnostics import (
@@ -15,11 +15,20 @@ from .._diagnostics import (
     serialize_render_diagnostics,
     serialize_render_diagnostics_report,
 )
-from .edges import _annotation_bounds_for_placement
-from .edges import _edge_callout_placement
-from .edges import _is_synthetic_sppm_lane
-from .edges import _label_placement
-from .edges import _lane_header_avoid_bounds
+from .._svg_theme import apply_svg_typography
+from ..layout_core.elk import execute_elk_layout
+from ..layout_core.elk_runtime import run_elkjs_layout
+from ..layout_core.elk_support import extract_nodes_and_edges
+from ..layout_core.models import LayoutBounds
+from ..options import RenderOptions
+from .edges import (
+    _annotation_bounds_for_placement,
+    _edge_callout_placement,
+    _is_synthetic_sppm_lane,
+    _label_placement,
+    _lane_header_avoid_bounds,
+)
+from .layout import build_sppm_elk_layout_request
 from .primitives import (
     SVG_ACCESSIBILITY_ATTRIBUTES,
     raw_node_lookup,
@@ -29,19 +38,14 @@ from .primitives import (
     standard_svg_defs,
     svg_accessibility_elements,
 )
-from .rows import _display_canvas_bounds
-from .._svg_theme import apply_svg_typography
-from .rows import _enforce_sppm_row_alignment
-from .rows import _sppm_row_ids
-from .rows import rework_alignment_diagnostics
-from .rows import row_gap_diagnostics
-from ..layout_core.elk import execute_elk_layout
-from ..layout_core.elk_support import extract_nodes_and_edges
-from ..layout_core.elk_runtime import run_elkjs_layout
-from ..layout_core.models import LayoutBounds
-from ..options import RenderOptions
 from .publication import build_sppm_publication_plan
-from .layout import build_sppm_elk_layout_request
+from .rows import (
+    _display_canvas_bounds,
+    _enforce_sppm_row_alignment,
+    _sppm_row_ids,
+    rework_alignment_diagnostics,
+    row_gap_diagnostics,
+)
 
 _PADDING = 28.0
 _STRICT_POSTPROCESS_CODES = {
@@ -52,12 +56,12 @@ _STRICT_POSTPROCESS_CODES = {
 }
 
 __all__ = [
-    "render_sppm_svg_artifact",
-    "render_sppm_svg_artifact_from_layout",
     "_annotation_bounds_for_placement",
     "_edge_callout_placement",
     "_label_placement",
     "_lane_header_avoid_bounds",
+    "render_sppm_svg_artifact",
+    "render_sppm_svg_artifact_from_layout",
     "rework_alignment_diagnostics",
     "row_gap_diagnostics",
 ]

@@ -2,21 +2,21 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
+
 import yaml
 
-
-from .yaml_loader import load_adapter_from_yaml
+from .compile import compile_adapter
 from .composition import (
     MAX_SOURCE_BYTES,
     SourceComposition,
     pop_source_composition,
     resolve_includes,
 )
-from .compile import compile_adapter
+from .yaml_loader import load_adapter_from_yaml
 
 
-def parse_adapter(content: str, source_path: str | None = None) -> Dict[str, Any]:
+def parse_adapter(content: str, source_path: str | None = None) -> dict[str, Any]:
     """Parse adapter content and return a validated mapping.
 
     This dispatcher currently supports YAML input via
@@ -57,9 +57,9 @@ def parse_adapter(content: str, source_path: str | None = None) -> Dict[str, Any
         return _normalize_compiler_contract_payload(payload)
 
 
-def _normalize_compiler_contract_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
+def _normalize_compiler_contract_payload(payload: dict[str, Any]) -> dict[str, Any]:
     """Normalize parser output to strict compiler contract keys."""
-    normalized: Dict[str, Any] = dict(payload)
+    normalized: dict[str, Any] = dict(payload)
     if "transitions" not in normalized and "edges" in normalized:
         normalized["transitions"] = normalized.pop("edges")
     return normalized

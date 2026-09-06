@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 from .models import LayoutPoint
 
@@ -75,7 +75,7 @@ def translate_edge_points(
         )
 
     translated: list[LayoutPoint] = []
-    for point, distance in zip(points, distances):
+    for point, distance in zip(points, distances, strict=False):
         ratio = distance / total
         dx = (sx * (1.0 - ratio)) + (tx * ratio)
         dy = (sy * (1.0 - ratio)) + (ty * ratio)

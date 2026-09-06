@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
-from pathlib import Path
 import sys
 import tempfile
-from typing import Sequence
-
+from collections.abc import Sequence
+from dataclasses import dataclass
+from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
@@ -22,7 +21,6 @@ from build_sppm_baseline_artifacts import (  # noqa: E402
     _load_cases,
     _resolve_repo_path,
 )
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -186,7 +184,7 @@ def _tracked_files_for_cases(
     *,
     case_ids: Sequence[str] | None = None,
 ) -> dict[str, Path]:
-    wanted = {case_id for case_id in case_ids or ()}
+    wanted = set(case_ids or ())
     tracked: dict[str, Path] = {}
     if not root_dir.exists():
         return tracked

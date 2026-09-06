@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import json
 
-from flo.process.ir.schema_projection import ir_to_schema_dict
 from flo.process.ir.models import IR
+from flo.process.ir.schema_projection import ir_to_schema_dict
 
 
 def ir_to_schema_json(ir: IR, *, indent: int | None = 2) -> str:

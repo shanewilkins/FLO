@@ -11,7 +11,6 @@ from flo.process.ir.models import IR, Node
 from .process_metadata import extract_process_metadata
 from .timing import analyze_process_timing
 
-
 FlowKind = Literal["information", "material"]
 _VISIBLE_NODE_TYPES = frozenset(
     {"task", "system_task", "subprocess", "queue", "decision"}

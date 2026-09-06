@@ -17,12 +17,12 @@ from flo.process.analysis import (
 )
 
 from .._artifact import RenderArtifact
+from .._svg_theme import apply_svg_typography
+from ..options import RenderOptions
 from ..shared.svg import (
     SVG_ACCESSIBILITY_ATTRIBUTES,
     svg_accessibility_elements,
 )
-from ..options import RenderOptions
-from .._svg_theme import apply_svg_typography
 
 _PADDING = 40.0
 _SCALE = 80.0
@@ -632,9 +632,15 @@ def _rectangle_bounds(
     origin_y = _as_number(boundary.get("y"))
     width = _as_number(boundary.get("width"))
     height = _as_number(boundary.get("height"))
-    if origin_x is not None and origin_y is not None and width and height:
-        if width > 0 and height > 0:
-            return origin_x, origin_y, origin_x + width, origin_y + height
+    if (
+        origin_x is not None
+        and origin_y is not None
+        and width
+        and height
+        and width > 0
+        and height > 0
+    ):
+        return origin_x, origin_y, origin_x + width, origin_y + height
 
     min_x = _as_number(boundary.get("min_x"))
     min_y = _as_number(boundary.get("min_y"))

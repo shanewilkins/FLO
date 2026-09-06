@@ -7,7 +7,7 @@ configuration is defensive and safe when OTEL isn't installed.
 
 import logging
 import sys
-from typing import Optional
+from typing import Any
 
 import structlog
 
@@ -37,7 +37,7 @@ def _add_otel_trace_info(logger, _method_name: str, event_dict: dict) -> dict:
     return event_dict
 
 
-def _add_service_name(name: Optional[str]):
+def _add_service_name(name: str | None):
     def _processor(logger, _method_name: str, event_dict: dict) -> dict:
         if name:
             event_dict.setdefault("service", name)
@@ -47,7 +47,7 @@ def _add_service_name(name: Optional[str]):
 
 
 def configure_logging(
-    level: int = logging.INFO, service_name: Optional[str] = None
+    level: int = logging.INFO, service_name: str | None = None
 ) -> None:
     """Configure structlog + stdlib logging for CLI usage.
 
@@ -68,7 +68,7 @@ def configure_logging(
     root.addHandler(handler)
     root.setLevel(level)
 
-    processors = [
+    processors: list[Any] = [
         structlog.processors.TimeStamper(fmt="iso"),
         structlog.processors.add_log_level,
         structlog.contextvars.merge_contextvars,
@@ -79,7 +79,7 @@ def configure_logging(
         structlog.processors.KeyValueRenderer(key_order=["event", "message"]),
     ]
 
-    structlog.configure(  # pyright: ignore[reportArgumentType]
+    structlog.configure(
         processors=processors,
         logger_factory=structlog.stdlib.LoggerFactory(),
         wrapper_class=structlog.stdlib.BoundLogger,

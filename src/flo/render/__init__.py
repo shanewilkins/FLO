@@ -46,12 +46,12 @@ def _coerce_render_options(
 
 
 __all__ = [
-    "render_artifact",
-    "render_artifact_and_contract",
+    "BUILTIN_THEMES",
     "RenderArtifact",
     "RenderOptions",
     "RenderTheme",
     "ThemeRole",
-    "BUILTIN_THEMES",
+    "render_artifact",
+    "render_artifact_and_contract",
     "resolve_publication_page_format",
 ]

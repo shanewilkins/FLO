@@ -7,22 +7,22 @@ from types import SimpleNamespace
 import pytest
 
 from flo.app import _resolve_render_options_for_output
-from flo.render.sppm.themes import SPPM_THEMES
-from flo.render.spaghetti import render_spaghetti_svg_artifact
-from flo.render.sppm.nodes import _node_svg
-from flo.render.swimlane import render_swimlane_svg_artifact
-from flo.render.value_stream import render_value_stream_svg_artifact
+from flo.errors import EXIT_USAGE, CLIError
+from flo.process.ir.models import IR, Edge, Node
 from flo.render._svg_theme import apply_svg_typography
 from flo.render.layout_core.models import LayoutBounds, LayoutLaneFrame, LayoutResult
 from flo.render.options import RenderOptions
-from flo.process.ir.models import Edge, IR, Node
+from flo.render.spaghetti import render_spaghetti_svg_artifact
+from flo.render.sppm.nodes import _node_svg
+from flo.render.sppm.themes import SPPM_THEMES
+from flo.render.swimlane import render_swimlane_svg_artifact
 from flo.render.themes import (
     BUILTIN_THEMES,
     ThemeValidationError,
     resolve_render_theme,
     theme_contrast_risks,
 )
-from flo.errors import CLIError, EXIT_USAGE
+from flo.render.value_stream import render_value_stream_svg_artifact
 
 _GOLDEN = Path("tests/golden/themes/configured_theme_signatures.json")
 

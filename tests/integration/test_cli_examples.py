@@ -1,5 +1,6 @@
-from click.testing import CliRunner
 import json
+
+from click.testing import CliRunner
 
 from flo.app.cli import cli
 from tests.fixtures.sample_fixtures import repo_root

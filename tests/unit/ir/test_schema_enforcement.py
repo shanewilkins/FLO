@@ -1,9 +1,9 @@
 import pytest
 
-from flo.process.ir.validate import ensure_schema_aligned
-from flo.process.ir.models import IR, Node
-from flo.errors import ValidationError
 from flo.app import run_content
+from flo.errors import ValidationError
+from flo.process.ir.models import IR, Node
+from flo.process.ir.validate import ensure_schema_aligned
 
 
 def test_ensure_schema_aligned_non_ir_raises():

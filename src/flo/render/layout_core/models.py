@@ -10,6 +10,7 @@ from flo.render._diagnostics import (
     RenderDiagnosticsReport,
     build_render_diagnostics_report,
 )
+
 from .rework_semantics import ReworkRouteVariant
 
 AlignMode = Literal["start", "center", "end"]

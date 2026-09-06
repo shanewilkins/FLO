@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
+from flo.errors import ValidationError
 from flo.process.schema.subprocess_refs import (
     iter_subprocess_detail_map_reference_values,
 )
 
-from .models import IR
 from .metadata import extract_node_metadata
-from flo.errors import ValidationError
+from .models import IR
 
 
 def validate_subprocess_metadata(obj: IR) -> None:

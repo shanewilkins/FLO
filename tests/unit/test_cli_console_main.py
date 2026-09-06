@@ -2,8 +2,7 @@ from types import SimpleNamespace
 
 import flo.app.cli as cli_mod
 from flo.app._cli_contract import ParsedArgs
-from flo.errors import CLIError
-from flo.errors import EXIT_INTERNAL_ERROR, EXIT_USAGE
+from flo.errors import EXIT_INTERNAL_ERROR, EXIT_USAGE, CLIError
 
 
 def test_console_main_uses_sys_argv_when_argv_is_none(monkeypatch):

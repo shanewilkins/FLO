@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import itertools
 from dataclasses import replace
 from typing import Any
 
 from .._diagnostics import RenderDiagnostic
-from ..layout_core.rework_geometry import infer_rework_row_ids, translate_edge_points
 from ..layout_core.models import LayoutBounds, LayoutPoint
+from ..layout_core.rework_geometry import infer_rework_row_ids, translate_edge_points
 
 _MIN_MAINLINE_REWORK_GAP_PX = 56.0
 _MAX_REWORK_ALIGNMENT_DELTA_PX = 48.0
@@ -264,9 +265,7 @@ def _initial_row_shifts(
     mainline_ids: set[str],
     rework_ids: set[str],
 ) -> dict[str, tuple[float, float]]:
-    shifts: dict[str, tuple[float, float]] = {
-        node_id: (0.0, 0.0) for node_id in node_bounds
-    }
+    shifts: dict[str, tuple[float, float]] = dict.fromkeys(node_bounds, (0.0, 0.0))
     mainline_center_y = sum(
         node_bounds[node_id].y_px + (node_bounds[node_id].height_px / 2.0)
         for node_id in mainline_ids
@@ -589,7 +588,7 @@ def _enforce_mainline_min_horizontal_gap(
 
     min_gap_px = 56.0
     propagated_dx = 0.0
-    for prev_id, current_id in zip(ordered_mainline, ordered_mainline[1:]):
+    for prev_id, current_id in itertools.pairwise(ordered_mainline):
         prev_dx, _ = shifts.get(prev_id, (0.0, 0.0))
         current_dx, current_dy = shifts.get(current_id, (0.0, 0.0))
         prev_right = node_bounds[prev_id].x_px + prev_dx + node_bounds[prev_id].width_px

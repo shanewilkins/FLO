@@ -4,14 +4,13 @@ Run this script from the repository root. It requires `jsonschema` to be
 installed in the environment (CI will install it).
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from flo.source import parse_adapter
-from flo.source import compile_adapter
 from flo.process.ir import ensure_schema_aligned
+from flo.source import compile_adapter, parse_adapter
 
 
 def main() -> int:

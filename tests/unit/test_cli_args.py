@@ -1,6 +1,7 @@
+import pytest
+
 from flo.app import get_services
 from flo.app.cli_args import parse_args
-import pytest
 
 
 @pytest.fixture
@@ -9,7 +10,7 @@ def services():
 
 
 def test_parse_args_none_returns_defaults(services):
-    path, command, options, services_out, logger = parse_args(None, services)
+    path, command, options, services_out, _logger = parse_args(None, services)
     assert path is None
     assert command == "render"
     assert isinstance(options, dict)
@@ -28,7 +29,7 @@ def test_parse_args_none_returns_defaults(services):
     ],
 )
 def test_parse_args_with_flags(services, args, expected_command, expected_output):
-    path, command, options, services_out, logger = parse_args(args, services)
+    path, command, options, _services_out, _logger = parse_args(args, services)
     assert path == (args[0] if args else None)
     assert command == expected_command
     if expected_output:
@@ -46,7 +47,7 @@ def test_parse_args_with_flags(services, args, expected_command, expected_output
     ],
 )
 def test_parse_args_export_flag(services, extra_args: list[str], expected_export: str):
-    path, command, options, _, _ = parse_args(["file.flo"] + extra_args, services)
+    path, command, options, _, _ = parse_args(["file.flo", *extra_args], services)
     assert path == "file.flo"
     assert command == "render"
     assert options["export"] == expected_export

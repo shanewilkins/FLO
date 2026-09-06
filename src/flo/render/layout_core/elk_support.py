@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable
+import itertools
+from collections.abc import Callable
+from typing import Any
 
 from flo.render.options import RenderOptions
 
@@ -194,8 +196,8 @@ def _elk_node(
         width_px, height_px = size_resolver(node, options)
     elif options is not None:
         scale = options.resolved_theme.typography_scale
-        width_px = int(round(width_px * scale))
-        height_px = int(round(height_px * scale))
+        width_px = round(width_px * scale)
+        height_px = round(height_px * scale)
     return ElkLayoutNode(
         id=node_id,
         label=str(node.get("name") or node_id),
@@ -442,7 +444,7 @@ def _normalize_outcome_value(value: Any) -> str | None:
 
 def _sequential_edges(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
     edges: list[dict[str, Any]] = []
-    for current, nxt in zip(nodes, nodes[1:]):
+    for current, nxt in itertools.pairwise(nodes):
         if str(current.get("kind") or "").lower() == "end":
             continue
         outcomes = current.get("outcomes")

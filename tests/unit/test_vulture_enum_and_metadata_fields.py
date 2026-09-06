@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from flo.render.sppm.task_card import build_sppm_task_card_layout
 from flo.render.layout_core.sppm_strategy import current_sppm_layout_strategy
+from flo.render.sppm.task_card import build_sppm_task_card_layout
 
 
 def test_current_sppm_layout_strategy_exposes_all_strategy_fields():

@@ -1,9 +1,9 @@
-import pytest
-
 from pathlib import Path
 
+import pytest
+
 from flo.app import run_content
-from flo.errors import CompileError, EXIT_SUCCESS
+from flo.errors import EXIT_SUCCESS, CompileError
 from tests.fixtures.sample_fixtures import repo_root
 
 

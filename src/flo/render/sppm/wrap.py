@@ -16,14 +16,14 @@ from ..layout_core.models import NodeMeasure, PlacementConstraints, PlacementPla
 from ..layout_core.placement import build_placement_plan
 from ..options import RenderOptions
 from .metadata import (
-    get_metadata_description,
-    get_metadata_cycle_time,
-    get_metadata_wait_time_minutes,
     get_metadata_crossover_time,
+    get_metadata_cycle_time,
+    get_metadata_description,
+    get_metadata_wait_time_minutes,
 )
 from .text import (
-    apply_density_filter,
     abbreviate_workers,
+    apply_density_filter,
     format_text_field,
     normalize_space,
 )
@@ -368,7 +368,7 @@ def _resolve_width_based_chunk_size(
 
 def _representative_node_width_px(*, widths: list[int], options: RenderOptions) -> int:
     sorted_widths = sorted(widths)
-    mean_width = int(round(fmean(sorted_widths)))
+    mean_width = round(fmean(sorted_widths))
     percentile_index = min(len(sorted_widths) - 1, int(len(sorted_widths) * 0.75))
     percentile_width = sorted_widths[percentile_index]
     if options.layout_fit == "fit-strict":

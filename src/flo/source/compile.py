@@ -2,6 +2,8 @@
 
 from typing import Any
 
+from flo.process.ir.models import IR
+
 from ._adapter_normalization import (
     coerce_adapter_model,
     flatten_source_nodes,
@@ -19,7 +21,6 @@ from ._adapter_normalization import (
     validate_adapter_contract,
 )
 from ._ir_assembly import build_edges, build_nodes_from_flat_source
-from flo.process.ir.models import IR
 
 
 def compile_adapter(adapter_model: dict[str, Any]) -> IR:

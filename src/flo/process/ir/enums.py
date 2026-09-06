@@ -35,4 +35,4 @@ class ProcessValueClass(Enum):
     UNKNOWN = "unknown"
 
 
-__all__ = ["NodeKind", "LaneType", "ValueClass", "ProcessValueClass"]
+__all__ = ["LaneType", "NodeKind", "ProcessValueClass", "ValueClass"]

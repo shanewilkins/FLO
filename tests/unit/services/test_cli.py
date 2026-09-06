@@ -1,7 +1,6 @@
 import importlib
 import sys
 
-
 fm_core = importlib.import_module("flo.app")
 fm_cli = importlib.import_module("flo.app.cli")
 
@@ -16,7 +15,7 @@ def test_run_returns_message_and_no_error():
 
 def test_main_returns_zero():
     # Ensure the programmatic run returns the expected exit code
-    rc, out, err = fm_core.run()
+    rc, _out, _err = fm_core.run()
     assert rc == 0
 
 

@@ -1,23 +1,24 @@
 """Deterministic analyses over canonical process IR."""
 
-from .scc import scc_condense
+from .inspection import (
+    EntitySummary,
+    ModelInspectionReport,
+    NamedViewSummary,
+    ProjectionReadiness,
+    ReadinessFinding,
+    SourceCompositionSummary,
+    inspect_process_model,
+)
 from .movement import (
-    infer_material_movements,
     aggregate_material_movements,
-    infer_people_movements,
     aggregate_people_movements,
     aggregate_people_movements_by_worker,
     extract_location_spatial_index,
+    infer_material_movements,
+    infer_people_movements,
 )
 from .process_metadata import extract_process_metadata
-from .timing import (
-    NodeTiming,
-    ProcessTimingAnalysis,
-    TimingDiagnostic,
-    TimingPath,
-    TimingTotals,
-    analyze_process_timing,
-)
+from .scc import scc_condense
 from .structure import (
     HandoffFinding,
     ProcessStructuralAnalysis,
@@ -27,14 +28,13 @@ from .structure import (
     StructuralPath,
     analyze_process_structure,
 )
-from .inspection import (
-    EntitySummary,
-    ModelInspectionReport,
-    NamedViewSummary,
-    ProjectionReadiness,
-    ReadinessFinding,
-    SourceCompositionSummary,
-    inspect_process_model,
+from .timing import (
+    NodeTiming,
+    ProcessTimingAnalysis,
+    TimingDiagnostic,
+    TimingPath,
+    TimingTotals,
+    analyze_process_timing,
 )
 from .value_stream import (
     ValueStreamDiagnostic,
@@ -45,37 +45,37 @@ from .value_stream import (
 )
 
 __all__ = [
-    "scc_condense",
-    "infer_material_movements",
-    "aggregate_material_movements",
-    "infer_people_movements",
-    "aggregate_people_movements",
-    "aggregate_people_movements_by_worker",
-    "extract_location_spatial_index",
-    "extract_process_metadata",
-    "NodeTiming",
-    "ProcessTimingAnalysis",
-    "TimingDiagnostic",
-    "TimingPath",
-    "TimingTotals",
-    "analyze_process_timing",
+    "EntitySummary",
     "HandoffFinding",
+    "ModelInspectionReport",
+    "NamedViewSummary",
+    "NodeTiming",
     "ProcessStructuralAnalysis",
+    "ProcessTimingAnalysis",
+    "ProjectionReadiness",
+    "ReadinessFinding",
     "ReworkFinding",
+    "SourceCompositionSummary",
     "StepClassification",
     "StructuralDiagnostic",
     "StructuralPath",
-    "analyze_process_structure",
-    "EntitySummary",
-    "ModelInspectionReport",
-    "NamedViewSummary",
-    "ProjectionReadiness",
-    "ReadinessFinding",
-    "SourceCompositionSummary",
-    "inspect_process_model",
+    "TimingDiagnostic",
+    "TimingPath",
+    "TimingTotals",
     "ValueStreamDiagnostic",
     "ValueStreamFlow",
     "ValueStreamNode",
     "ValueStreamProjection",
+    "aggregate_material_movements",
+    "aggregate_people_movements",
+    "aggregate_people_movements_by_worker",
+    "analyze_process_structure",
+    "analyze_process_timing",
+    "extract_location_spatial_index",
+    "extract_process_metadata",
+    "infer_material_movements",
+    "infer_people_movements",
+    "inspect_process_model",
     "project_value_stream",
+    "scc_condense",
 ]

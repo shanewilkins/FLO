@@ -1,6 +1,7 @@
 import types
+
 from flo.app import telemetry as tel
-from flo.app.telemetry import init_telemetry, get_tracer, shutdown
+from flo.app.telemetry import get_tracer, init_telemetry, shutdown
 
 
 def make_dummy_trace():

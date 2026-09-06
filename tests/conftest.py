@@ -1,17 +1,20 @@
 """conftest fixtures re-exports for pytest discovery."""
 
 from tests.fixtures.sample_fixtures import (
-    tmp_flo_file,
     adapter_model_from_example,
     repo_root,
+    tmp_flo_file,
 )  # re-export fixtures
 
-__all__ = ["tmp_flo_file", "adapter_model_from_example", "repo_root"]
+__all__ = ["adapter_model_from_example", "repo_root", "tmp_flo_file"]
+
+import contextlib
+from collections.abc import Callable
 
 import pytest
-from typing import Callable
-from flo.process.ir.models import Node, IR
+
 from flo.app import get_services
+from flo.process.ir.models import IR, Node
 
 
 @pytest.fixture
@@ -46,7 +49,5 @@ def services():
     try:
         yield svc
     finally:
-        try:
+        with contextlib.suppress(Exception):
             svc.telemetry.shutdown()
-        except Exception:
-            pass

@@ -10,13 +10,13 @@ from .._diagnostics import (
     serialize_render_diagnostics,
     serialize_render_diagnostics_report,
 )
+from .._svg_theme import apply_svg_typography
 from ..layout_core.elk import execute_elk_layout
 from ..layout_core.elk_runtime import run_elkjs_layout
 from ..options import RenderOptions
 from ..shared.svg import SVG_ACCESSIBILITY_ATTRIBUTES, svg_accessibility_elements
-from .._svg_theme import apply_svg_typography
-from .primitives import edge_svg, lane_svg, node_svg, raw_node_lookup, svg_defs
 from .layout import build_swimlane_elk_layout_request
+from .primitives import edge_svg, lane_svg, node_svg, raw_node_lookup, svg_defs
 
 _PADDING = 24.0
 

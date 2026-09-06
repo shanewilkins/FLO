@@ -5,11 +5,11 @@ from __future__ import annotations
 from html import escape
 from typing import Any
 
-from .edges import _edge_svg
-from .nodes import _node_svg
 from .._process_header import extract_process_header_context
 from ..layout_core.models import LayoutBounds
 from ..options import RenderOptions
+from .edges import _edge_svg
+from .nodes import _node_svg
 
 SVG_ACCESSIBILITY_ATTRIBUTES = (
     'role="img" aria-labelledby="flo-svg-title flo-svg-description"'

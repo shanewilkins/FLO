@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import re
-
+from pathlib import Path
 
 SIMPLE_PROCESS_TEMPLATE = """spec_version: "0.1"
 

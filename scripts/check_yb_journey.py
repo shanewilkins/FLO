@@ -5,12 +5,11 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import shutil
 import subprocess
 import tempfile
 import time
-
+from pathlib import Path
 
 MAX_JOURNEY_SECONDS = 600.0
 

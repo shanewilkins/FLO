@@ -8,49 +8,53 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
-from typing import Any, Tuple
+from typing import Any
 
-from flo.errors import (
-    CLIError,
-    EXIT_SUCCESS,
-    EXIT_USAGE,
-    ParseError,
-    CompileError,
-    ValidationError,
-    RenderError,
-)
-
-from flo.source import SourceComposition, parse_adapter, pop_source_composition
-from flo.source import compile_adapter
-from flo.process.ir import validate_ir, IR
-from flo.process.ir import ensure_schema_aligned
-from flo.process.analysis import analyze_process_timing
-from flo.process.analysis import analyze_process_structure
-from flo.process.analysis import inspect_process_model
-from flo.render import RenderArtifact, render_artifact_and_contract, RenderOptions
-from flo.render.capability_matrix import RENDER_CAPABILITY_MATRIX
-from flo.render.themes import ThemeValidationError
-from flo.process.export import export_ir
+from flo.app._capability_validation import ensure_render_projection_supported
 from flo.app._flo_config import merge_diagrams_toml_render_defaults
 from flo.app._option_validation import (
-    validate_sppm_numeric_render_options,
     ensure_render_options_compatible_with_output,
+    validate_sppm_numeric_render_options,
 )
-from flo.app._capability_validation import ensure_render_projection_supported
-from flo.app.render_intent import RenderIntentResolver
-from flo.app.io import write_output
 from flo.app.inspect import (
     format_model_inspection,
     format_structural_analysis,
     format_timing_analysis,
 )
+from flo.app.io import write_output
+from flo.app.render_intent import RenderIntentResolver
 from flo.app.runtime_services import Services as Services
 from flo.app.runtime_services import get_services as get_services
+from flo.errors import (
+    EXIT_SUCCESS,
+    EXIT_USAGE,
+    CLIError,
+    CompileError,
+    ParseError,
+    RenderError,
+    ValidationError,
+)
+from flo.process.analysis import (
+    analyze_process_structure,
+    analyze_process_timing,
+    inspect_process_model,
+)
+from flo.process.export import export_ir
+from flo.process.ir import IR, ensure_schema_aligned, validate_ir
+from flo.render import RenderArtifact, RenderOptions, render_artifact_and_contract
+from flo.render.capability_matrix import RENDER_CAPABILITY_MATRIX
+from flo.render.themes import ThemeValidationError
+from flo.source import (
+    SourceComposition,
+    compile_adapter,
+    parse_adapter,
+    pop_source_composition,
+)
 
 
 def run_content(
     content: str, command: str = "render", options: dict | None = None
-) -> Tuple[int, str, str]:
+) -> tuple[int, str, str]:
     """Run the content through parse -> compile -> validate -> render.
 
     Returns a tuple of (exit_code, output, error_message).
@@ -324,9 +328,12 @@ def _resolve_output_format(command: str, options: dict | None) -> str:
     }:
         return str(output_format)
     render_to = (options or {}).get("render_to")
-    if output_format is None and isinstance(render_to, str):
-        if Path(render_to).suffix.lower() == ".svg":
-            return "svg"
+    if (
+        output_format is None
+        and isinstance(render_to, str)
+        and Path(render_to).suffix.lower() == ".svg"
+    ):
+        return "svg"
     return "svg"
 
 
@@ -472,8 +479,8 @@ def _render_artifact_with_diagnostics(
     """Render untouched canonical IR and return any artifact-owned warning."""
     try:
         artifact, contract = render_artifact_and_contract(ir, options=render_options)
-    except Exception as e:
-        raise RenderError(str(e))
+    except Exception as exc:
+        raise RenderError(str(exc)) from exc
 
     warning: str | None = None
     artifact_warning = artifact.metadata.get("warning")
@@ -517,6 +524,6 @@ def _render_artifact_for_stdout(
     raise RenderError(f"Unsupported render artifact kind: {artifact.kind or 'unknown'}")
 
 
-def run() -> Tuple[int, str, str]:
+def run() -> tuple[int, str, str]:
     """Return the no-input programmatic placeholder result."""
     return EXIT_SUCCESS, "", ""

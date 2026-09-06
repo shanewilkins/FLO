@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from flo.render._diagnostics import RenderDiagnostic
+from flo.render.layout_core.models import LayoutBounds, LayoutPoint
 from flo.render.sppm.edges import (
     _attachment_miss_warn_px,
     _clip_edge_points_to_node_bounds,
@@ -12,12 +13,11 @@ from flo.render.sppm.edges import (
     _edge_svg,
     _edge_token_svg,
     _is_synthetic_sppm_lane,
-    _lane_header_avoid_bounds,
     _label_placement,
+    _lane_header_avoid_bounds,
     _normalize_rework_edge_points,
     _placement_overlaps_bounds,
 )
-from flo.render.layout_core.models import LayoutBounds, LayoutPoint
 
 
 @pytest.mark.parametrize(

@@ -8,10 +8,10 @@ Designed for use in pre-commit and CI.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import pathlib
 import sys
 from collections.abc import Sequence
-
 
 DEFAULT_WARN_LINES = 500
 DEFAULT_FAIL_LINES = 750
@@ -27,10 +27,8 @@ EXCLUDED_FILES = {
 
 def _normalized(path: pathlib.Path) -> str:
     repo_root = pathlib.Path(__file__).resolve().parents[1]
-    try:
+    with contextlib.suppress(ValueError):
         path = path.resolve().relative_to(repo_root)
-    except ValueError:
-        pass
     return path.as_posix().lstrip("./")
 
 

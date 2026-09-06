@@ -8,9 +8,9 @@ any invalid combination so the caller gets a clean, actionable message.
 from __future__ import annotations
 
 from flo.app.render_option_schema import render_option_keys
+from flo.errors import EXIT_USAGE, CLIError
 from flo.render import resolve_publication_page_format
 from flo.render.options import parse_dimension
-from flo.errors import CLIError, EXIT_USAGE
 
 
 def validate_sppm_numeric_render_options(options: dict | None) -> None:

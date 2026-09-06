@@ -7,17 +7,18 @@ layer needs to own the transformation.
 
 from __future__ import annotations
 
-from typing import Any, TypeAlias, cast
+from typing import Any, cast
 
-from .models import IR, Edge, Node
 from flo.process.schema.render_metadata import (
     PROCESS_METADATA_PROCESS_ID_KEY,
     PROCESS_METADATA_PROCESS_NAME_KEY,
 )
 
-JsonValue: TypeAlias = Any
-JsonObject: TypeAlias = dict[str, JsonValue]
-JsonArray: TypeAlias = list[JsonObject]
+from .models import IR, Edge, Node
+
+type JsonValue = Any
+type JsonObject = dict[str, JsonValue]
+type JsonArray = list[JsonObject]
 
 
 def ir_to_schema_dict(ir: IR) -> JsonObject:

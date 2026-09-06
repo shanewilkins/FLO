@@ -1,17 +1,20 @@
+import itertools
 import logging
 
 import pytest
 
 import flo.render.sppm.layout as sppm_layout
 import flo.render.swimlane.layout as swimlane_layout
+from flo.app.logging import configure_logging
+from flo.errors import RenderError
 from flo.render._diagnostics import RenderDiagnostic
 from flo.render.layout_core import (
-    execute_elk_layout,
     LayoutBounds,
     LayoutPoint,
     LayoutResult,
-    normalize_elk_layout_result,
     RoutedEdgePath,
+    execute_elk_layout,
+    normalize_elk_layout_result,
     serialize_elk_layout_request,
     serialize_layout_result,
 )
@@ -24,8 +27,6 @@ from flo.render.swimlane.layout import (
     build_swimlane_elk_layout_request,
     layout_swimlane_with_elk,
 )
-from flo.app.logging import configure_logging
-from flo.errors import RenderError
 
 
 def _build_generic_elk_layout_request(
@@ -445,7 +446,7 @@ def test_normalize_elk_layout_result_equalizes_mainline_horizontal_gaps():
         key=lambda node_id: result.node_bounds[node_id].x_px,
     )
     gaps = []
-    for left_id, right_id in zip(ordered_ids, ordered_ids[1:]):
+    for left_id, right_id in itertools.pairwise(ordered_ids):
         left = result.node_bounds[left_id]
         right = result.node_bounds[right_id]
         gaps.append(right.x_px - (left.x_px + left.width_px))

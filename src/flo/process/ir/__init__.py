@@ -1,16 +1,16 @@
 """Canonical process intermediate representation and validation contracts."""
 
+from .enums import LaneType, NodeKind, ProcessValueClass, ValueClass
 from .models import IR, Node
-from .validate import validate_ir, ensure_schema_aligned
-from .enums import NodeKind, LaneType, ValueClass, ProcessValueClass
+from .validate import ensure_schema_aligned, validate_ir
 
 __all__ = [
     "IR",
-    "Node",
-    "validate_ir",
-    "ensure_schema_aligned",
-    "NodeKind",
     "LaneType",
-    "ValueClass",
+    "Node",
+    "NodeKind",
     "ProcessValueClass",
+    "ValueClass",
+    "ensure_schema_aligned",
+    "validate_ir",
 ]

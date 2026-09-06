@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import sys
-from typing import Callable
+from collections.abc import Callable
+from dataclasses import dataclass
 
 import structlog
 
 from .logging import configure_logging
-from .telemetry import init_telemetry, Telemetry
+from .telemetry import Telemetry, init_telemetry
 
 
 @dataclass

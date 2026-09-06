@@ -441,7 +441,7 @@ def _chain_partition_value(
     if strategy_partition_mode == "chain_progressive":
         if end is not None and chain_len > 1:
             ratio = offset / float(chain_len - 1)
-            return max(0, int(round((start * (1.0 - ratio)) + (end * ratio))))
+            return max(0, round((start * (1.0 - ratio)) + (end * ratio)))
         return max(0, start - offset)
 
     # branch_aligned keeps branch targets anchored under the branch source,

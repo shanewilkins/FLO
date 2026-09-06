@@ -52,8 +52,8 @@ def parse_cli_args(argv: list[str] | None) -> CLIExecutionRequest:
     Raises:
         SystemExit: On parsing errors (for argparse compatibility).
     """
-    from flo.app.cli_args import parse_args as argparse_parse_args
     from flo.app import get_services
+    from flo.app.cli_args import parse_args as argparse_parse_args
 
     if argv is None:
         return CLIExecutionRequest(path=None, command="render", options={})

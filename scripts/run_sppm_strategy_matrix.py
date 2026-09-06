@@ -3,18 +3,18 @@
 from __future__ import annotations
 
 import argparse
-from contextlib import contextmanager
-from dataclasses import asdict, dataclass
 import hashlib
 import itertools
 import json
 import math
 import os
+from collections.abc import Iterator
+from contextlib import contextmanager
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from statistics import fmean
-from typing import Any, Iterator
+from typing import Any
 
-from flo.source import parse_adapter
 from flo.render._diagnostics import RenderDiagnosticsReport
 from flo.render.layout_core import (
     ElkLayoutRequest,
@@ -25,8 +25,9 @@ from flo.render.layout_core import (
     run_elkjs_layout,
     serialize_layout_result,
 )
-from flo.render.sppm.layout import build_sppm_elk_layout_request
 from flo.render.options import RenderOptions
+from flo.render.sppm.layout import build_sppm_elk_layout_request
+from flo.source import parse_adapter
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -547,9 +548,7 @@ def _segments_intersect(
         return True
     if o3 == 0 and _on_segment(b1, a1, b2):
         return True
-    if o4 == 0 and _on_segment(b1, a2, b2):
-        return True
-    return False
+    return bool(o4 == 0 and _on_segment(b1, a2, b2))
 
 
 def _edge_geometry_metrics(result: LayoutResult) -> tuple[int, float]:
@@ -589,8 +588,8 @@ def _percentile(values: list[float], percentile: float) -> float:
         return values[0]
     ordered = sorted(values)
     rank = (len(ordered) - 1) * percentile
-    lower = int(math.floor(rank))
-    upper = int(math.ceil(rank))
+    lower = math.floor(rank)
+    upper = math.ceil(rank)
     if lower == upper:
         return ordered[lower]
     ratio = rank - lower

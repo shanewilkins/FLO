@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from flo.source import parse_adapter, pop_source_composition
 import flo.source as adapters
 import flo.source.composition as composition
+from flo.source import parse_adapter, pop_source_composition
 
 
 def _write(path: Path, content: str) -> None:

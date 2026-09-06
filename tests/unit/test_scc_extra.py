@@ -1,5 +1,6 @@
-from flo.process.analysis.scc import scc_condense, condense_scc
 import pytest
+
+from flo.process.analysis.scc import condense_scc, scc_condense
 
 
 def test_scc_no_edges_returns_same(ir_factory, node_factory):

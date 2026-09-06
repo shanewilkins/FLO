@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from copy import deepcopy
-from typing import Any, TypeAlias
+from dataclasses import dataclass, field
+from typing import Any
 
-
-CanonicalCollection: TypeAlias = list[Any] | dict[str, Any]
+type CanonicalCollection = list[Any] | dict[str, Any]
 
 
 @dataclass

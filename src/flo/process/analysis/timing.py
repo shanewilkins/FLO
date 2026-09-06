@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from math import fsum
-from typing import Any, Iterable, Literal, cast
+from typing import Any, Literal, cast
 
 from flo.process.ir.metadata import extract_node_metadata
 from flo.process.ir.models import IR, Node
 
 from .graph import build_adjacency, enumerate_paths, has_cycle
 from .process_metadata import extract_process_metadata
-
 
 TimingSeverity = Literal["info", "warning"]
 

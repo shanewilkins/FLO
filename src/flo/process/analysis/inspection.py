@@ -17,7 +17,6 @@ from .structure import ProcessStructuralAnalysis, analyze_process_structure
 from .timing import ProcessTimingAnalysis, analyze_process_timing
 from .value_stream import project_value_stream
 
-
 ReadinessStatus = Literal["ready", "partial", "unavailable"]
 ReadinessFindingKind = Literal[
     "missing_required", "missing_optional", "limitation", "unsupported"

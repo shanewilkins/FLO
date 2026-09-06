@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-from copy import deepcopy
 import json
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
 
-from flo.source import parse_adapter
-from flo.source import compile_adapter
 from flo.process.analysis import analyze_process_timing
-from flo.process.ir.models import Edge, IR, Node
+from flo.process.ir.models import IR, Edge, Node
 from flo.process.ir.validate import validate_ir
-
+from flo.source import compile_adapter, parse_adapter
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 

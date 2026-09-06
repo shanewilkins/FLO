@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Literal, Mapping
+from typing import Any, Literal
 
 ExportFormat = Literal["json", "ingredients", "movement"]
 ExportProfile = Literal["default"]
@@ -22,13 +23,12 @@ class ExportOptions:
     indent: int = 2
 
     @classmethod
-    def from_mapping(cls, options: Mapping[str, Any] | None) -> "ExportOptions":
+    def from_mapping(cls, options: Mapping[str, Any] | None) -> ExportOptions:
         """Create normalized export options from CLI/core option mappings."""
         if not options:
             return cls()
 
         export_format_raw = str(options.get("export") or "json").strip().lower()
-        profile_raw = str(options.get("export_profile") or "default").strip().lower()
         indent_raw = options.get("json_indent", 2)
 
         if export_format_raw == "ingredients":
@@ -37,7 +37,7 @@ class ExportOptions:
             export_format = "movement"
         else:
             export_format = "json"
-        profile: ExportProfile = "default" if profile_raw == "default" else "default"
+        profile: ExportProfile = "default"
 
         try:
             indent = int(indent_raw)

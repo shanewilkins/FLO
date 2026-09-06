@@ -1,3 +1,4 @@
+import contextlib
 import importlib
 import sys
 import types
@@ -40,10 +41,8 @@ def test_init_telemetry_with_fake_otel(monkeypatch):
         def shutdown(self):
             # simulate clean shutdown
             for sp in list(self._processors):
-                try:
+                with contextlib.suppress(Exception):
                     sp.shutdown()
-                except Exception:
-                    pass
 
     sdk_trace.TracerProvider = TracerProvider
 

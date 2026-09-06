@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from .models import IR
-from ._graph_utils import build_adjacency_maps, traverse
 from flo.errors import ValidationError
+
+from ._graph_utils import build_adjacency_maps, traverse
+from .models import IR
 
 
 def validate_parallel_structure(

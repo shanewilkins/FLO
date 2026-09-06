@@ -1,15 +1,15 @@
 import pytest
 
-from flo.app import run_content, run
-from flo.process.ir.models import IR
-from flo.render import RenderArtifact
+from flo.app import run, run_content
 from flo.errors import (
     CLIError,
-    ParseError,
     CompileError,
-    ValidationError,
+    ParseError,
     RenderError,
+    ValidationError,
 )
+from flo.process.ir.models import IR
+from flo.render import RenderArtifact
 
 
 def test_run_content_empty_is_rejected():
@@ -108,7 +108,7 @@ def test_renderer_receives_unmodified_canonical_ir(
 
 
 def test_run_wrapper():
-    rc, out, err = run()
+    rc, out, _err = run()
     assert rc == 0
     assert out == ""
 

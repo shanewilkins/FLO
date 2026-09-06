@@ -4,11 +4,11 @@ from structlog.contextvars import get_contextvars
 
 import flo.app.cli as cli_mod
 from flo.errors import (
+    EXIT_INTERNAL_ERROR,
+    EXIT_VALIDATION_ERROR,
     CLIError,
     CompileError,
     ParseError,
-    EXIT_INTERNAL_ERROR,
-    EXIT_VALIDATION_ERROR,
 )
 
 

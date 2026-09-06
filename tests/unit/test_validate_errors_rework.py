@@ -1,8 +1,8 @@
 import pytest
 
-from flo.process.ir.models import Edge, IR, Node
-from flo.process.ir.validate import validate_ir
 from flo.errors import ValidationError
+from flo.process.ir.models import IR, Edge, Node
+from flo.process.ir.validate import validate_ir
 
 
 def test_validate_ir_accepts_valid_rework_edge_metadata():

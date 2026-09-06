@@ -1,11 +1,12 @@
-import json
 import io
-import pytest
+import json
 from pathlib import Path
 
+import pytest
+
 import flo.process.ir.validate as validate_mod
-from flo.process.ir.models import IR
 from flo.errors import ValidationError
+from flo.process.ir.models import IR
 
 
 def test_validate_against_schema_missing_schema(monkeypatch, node_factory):

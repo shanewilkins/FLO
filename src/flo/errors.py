@@ -4,7 +4,7 @@ This module is the architecture-neutral home for domain error contracts.
 Compatibility imports remain available from ``flo.errors``.
 """
 
-from typing import Optional, cast
+from typing import cast
 
 import structlog
 from structlog.stdlib import BoundLogger
@@ -131,7 +131,7 @@ def map_exception_to_rc(exc: BaseException) -> tuple[int, str, bool, str | None]
     return EXIT_INTERNAL_ERROR, msg, True, None
 
 
-def handle_error(err: str, logger: Optional[BoundLogger] = None) -> None:
+def handle_error(err: str, logger: BoundLogger | None = None) -> None:
     """Handle an error string by logging it via structlog.
 
     Kept separate so tests can stub or inspect behavior independently.
@@ -145,9 +145,6 @@ def handle_error(err: str, logger: Optional[BoundLogger] = None) -> None:
 
 
 __all__ = [
-    "CLIError",
-    "CompileError",
-    "DomainError",
     "EXIT_COMPILE_ERROR",
     "EXIT_INTERNAL_ERROR",
     "EXIT_PARSE_ERROR",
@@ -155,6 +152,9 @@ __all__ = [
     "EXIT_SUCCESS",
     "EXIT_USAGE",
     "EXIT_VALIDATION_ERROR",
+    "CLIError",
+    "CompileError",
+    "DomainError",
     "ParseError",
     "RenderError",
     "ValidationError",

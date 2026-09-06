@@ -1,6 +1,7 @@
-from click.testing import CliRunner
 import json
+
 import yaml
+from click.testing import CliRunner
 
 from flo.app.cli import cli
 

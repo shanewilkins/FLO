@@ -5,10 +5,10 @@ from __future__ import annotations
 from typing import Any
 
 from flo.process.analysis import (
-    infer_material_movements,
     aggregate_material_movements,
-    infer_people_movements,
     aggregate_people_movements,
+    infer_material_movements,
+    infer_people_movements,
 )
 
 

@@ -1,5 +1,5 @@
-from flo.render.sppm.wrap import build_wrap_plan
 from flo.render.options import RenderOptions
+from flo.render.sppm.wrap import build_wrap_plan
 
 
 def test_chunked_wrap_plan_exposes_shared_overflow_policy_for_generic_renderers():

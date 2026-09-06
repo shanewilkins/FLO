@@ -1,7 +1,6 @@
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-
 import flo.app.telemetry as telemetry_mod
 
 
@@ -65,7 +64,7 @@ def test_init_telemetry_with_console_processor_and_provider_shutdown(monkeypatch
     t.shutdown()
     # provider should have been asked to shutdown and then cleared
     assert getattr(prov, "shutdown_called", False) is True
-    assert getattr(telemetry_mod, "_provider") is None
+    assert telemetry_mod._provider is None
 
 
 def test_shutdown_falls_back_to_span_processors_when_provider_shutdown_raises(
@@ -104,7 +103,7 @@ def test_shutdown_falls_back_to_span_processors_when_provider_shutdown_raises(
     # Good processor should have been called
     assert getattr(pg, "called", False) is True
     # provider cleared
-    assert getattr(telemetry_mod, "_provider") is None
+    assert telemetry_mod._provider is None
 
 
 def test_get_tracer_returns_noop_when_otel_missing(monkeypatch):

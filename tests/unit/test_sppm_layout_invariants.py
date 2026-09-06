@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from functools import lru_cache
 import json
+from functools import cache
 from pathlib import Path
 from statistics import fmean
 
 import pytest
 
-from flo.source import parse_adapter
 from flo.render.layout_core import (
     ElkLayoutEdge,
     ElkLayoutNode,
@@ -22,6 +21,7 @@ from flo.render.layout_core import (
 )
 from flo.render.options import RenderOptions
 from flo.render.sppm.layout import build_sppm_elk_layout_request
+from flo.source import parse_adapter
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _CORPUS_PATH = _REPO_ROOT / "examples" / "conformance" / "sppm_corpus.json"
@@ -43,7 +43,7 @@ def _load_corpus() -> dict[str, dict[str, object]]:
 _CORPUS_BY_ID = _load_corpus()
 
 
-@lru_cache(maxsize=None)
+@cache
 def _request_and_result(case_id: str) -> tuple[ElkLayoutRequest, LayoutResult]:
     case = _CORPUS_BY_ID[case_id]
     source_rel = str(case["input"])
@@ -331,7 +331,7 @@ def _assert_white_belt_boundary_paths(
         assert path is not None
         assert all(
             first.x_px == second.x_px or first.y_px == second.y_px
-            for first, second in zip(path.points, path.points[1:])
+            for first, second in zip(path.points, path.points[1:], strict=False)
         ), f"White Belt edge is not orthogonal: {edge.source_id}->{edge.target_id}"
         if row_by_node[edge.source_id] != row_by_node[edge.target_id]:
             boundary_paths.append(path)
@@ -360,7 +360,7 @@ def test_simple_decision_book_has_distinct_labeled_branches():
         assert target_bounds is not None
         assert all(
             first.x_px == second.x_px or first.y_px == second.y_px
-            for first, second in zip(path.points, path.points[1:])
+            for first, second in zip(path.points, path.points[1:], strict=False)
         ), f"Decision edge is not orthogonal: {edge.source_id}->{edge.target_id}"
         target_centers.append(target_bounds.y_px + (target_bounds.height_px / 2.0))
 

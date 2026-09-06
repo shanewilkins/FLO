@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from pathlib import Path
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
-from flo.source import parse_adapter
-from flo.source import compile_adapter
 from flo.process.ir import ensure_schema_aligned, validate_ir
 from flo.render import render_artifact
+from flo.source import compile_adapter, parse_adapter
 
 
 def test_reference_swimlane_svg_artifact_is_deterministic():

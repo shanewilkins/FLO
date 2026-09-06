@@ -10,10 +10,11 @@ from flo.process.ir.models import IR
 from .._process_header import extract_process_header_context
 from .._publication import (
     PublicationBandContent,
+    PublicationPageSpec,
     PublicationPlan,
     materialize_publication_series,
-    PublicationPageSpec,
 )
+from ..options import RenderOptions
 from .projection import SppmProjectionContext
 from .publication_support import (
     _build_sppm_child_slots,
@@ -25,7 +26,6 @@ from .publication_support import (
     _serialize_diagnostics,
 )
 from .text import normalize_space
-from ..options import RenderOptions
 
 
 def build_sppm_publication_plan(

@@ -6,7 +6,7 @@ import pytest
 
 from flo.process.analysis import inspect_process_model
 from flo.process.ir._internal_shape import ir_to_internal_dict
-from flo.process.ir.models import Edge, IR, Node
+from flo.process.ir.models import IR, Edge, Node
 
 
 def test_model_inspection_summarizes_context_entities_paths_and_views() -> None:

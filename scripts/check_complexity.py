@@ -7,9 +7,9 @@ Designed to be run from pre-commit or CI.
 
 from __future__ import annotations
 
-import sys
 import pathlib
-from typing import Sequence
+import sys
+from collections.abc import Sequence
 
 try:
     from radon.complexity import cc_visit
@@ -57,7 +57,7 @@ def check_files(files: Sequence[pathlib.Path]) -> int:
                 problems.append((p, b.name, b.lineno, b.complexity))
 
     if problems:
-        print("Complexity threshold exceeded (>{}). Detected:".format(THRESHOLD))
+        print(f"Complexity threshold exceeded (>{THRESHOLD}). Detected:")
         for p, name, lineno, complexity in problems:
             print(f"{p}:{lineno}: {name} complexity={complexity}")
         return 2
@@ -76,7 +76,7 @@ def gather_files(args: Sequence[str]) -> list[pathlib.Path]:
         return [path for path in files if not _is_excluded(path)]
     # default: check all project python files under src
     base = REPO_ROOT / "src"
-    return [p for p in base.rglob("*.py")]
+    return list(base.rglob("*.py"))
 
 
 def main(argv: Sequence[str] | None = None) -> int:

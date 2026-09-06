@@ -2,11 +2,11 @@ import json
 from pathlib import Path
 from typing import Any
 
-from flo.source.compile import compile_adapter
+from flo.errors import ValidationError
+from flo.process.ir.models import IR, Edge, Node
 from flo.process.ir.schema_projection import ir_to_schema_dict
 from flo.process.ir.validate import validate_against_schema
-from flo.process.ir.models import IR, Node, Edge
-from flo.errors import ValidationError
+from flo.source.compile import compile_adapter
 
 
 def test_compile_emits_schema_and_validates() -> None:

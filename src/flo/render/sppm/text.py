@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import textwrap
-from typing import Iterable
+from collections.abc import Iterable
 
 from .._text import normalize_space
 

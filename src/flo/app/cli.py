@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
+import contextlib
 import sys
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 import click
-from flo.app.render_option_schema import iter_render_option_specs
 from structlog.contextvars import bind_contextvars, unbind_contextvars
 
+from flo.app.render_option_schema import iter_render_option_specs
 
 # ---------------------------------------------------------------------------
 # Shared execution helper (used by both Click handlers and console_main)
@@ -26,16 +27,14 @@ def _emit_error(services: Any, message: str, **event_fields: object) -> None:
     try:
         bind_contextvars(**{key: event_fields[key] for key in bound_keys})
     except Exception:
-        bound_keys = tuple()
+        bound_keys = ()
 
     try:
         services.error_handler(message)
     finally:
         if bound_keys:
-            try:
+            with contextlib.suppress(Exception):
                 unbind_contextvars(*bound_keys)
-            except Exception:
-                pass
 
 
 def _get_flo_version() -> str:  # pragma: no cover - importlib optional
@@ -51,10 +50,8 @@ def _get_flo_version() -> str:  # pragma: no cover - importlib optional
 def _safe_set_span_attr(span: Any, key: str, value: object) -> None:
     setter = getattr(span, "set_attribute", None)
     if callable(setter):
-        try:
+        with contextlib.suppress(Exception):
             setter(key, value)
-        except Exception:
-            pass
 
 
 def _safe_add_span_event(
@@ -62,10 +59,8 @@ def _safe_add_span_event(
 ) -> None:
     add_event = getattr(span, "add_event", None)
     if callable(add_event):
-        try:
+        with contextlib.suppress(Exception):
             add_event(event_name, attributes)
-        except Exception:
-            pass
 
 
 def _handle_run_content_exception(
@@ -77,8 +72,8 @@ def _handle_run_content_exception(
     command_id: str,
     effective_path: str,
 ) -> int:
-    from flo.errors import map_exception_to_rc
     from flo.app.telemetry import record_span_error
+    from flo.errors import map_exception_to_rc
 
     mapped_rc, msg, internal, error_stage = map_exception_to_rc(exc)
     stage = error_stage or "run_content"
@@ -348,50 +343,48 @@ def _execute_request(request: Any) -> int:  # pragma: no cover - integration
                 )
             return rc
     finally:
-        try:
+        with contextlib.suppress(Exception):
             telemetry.shutdown()
-        except Exception:
-            pass
 
 
 def _build_render_opts(
     verbose: bool,
-    output: Optional[str],
-    export_fmt: Optional[str],
-    diagram: Optional[str],
-    render_backend: Optional[str],
-    profile: Optional[str],
-    detail: Optional[str],
-    orientation: Optional[str],
+    output: str | None,
+    export_fmt: str | None,
+    diagram: str | None,
+    render_backend: str | None,
+    profile: str | None,
+    detail: str | None,
+    orientation: str | None,
     show_notes: bool,
     no_header: bool,
     no_footer: bool,
-    subprocess_view: Optional[str],
-    sppm_projection: Optional[str],
-    sppm_focus_subprocess: Optional[str],
-    spaghetti_channel: Optional[str],
-    spaghetti_people_mode: Optional[str],
+    subprocess_view: str | None,
+    sppm_projection: str | None,
+    sppm_focus_subprocess: str | None,
+    spaghetti_channel: str | None,
+    spaghetti_people_mode: str | None,
     spaghetti_strict_spatial: bool,
-    sppm_theme: Optional[str],
-    theme: Optional[str],
-    background_color: Optional[str],
-    font_family: Optional[str],
-    typography_scale: Optional[float],
-    layout_wrap: Optional[str],
-    layout_fit: Optional[str],
-    layout_spacing: Optional[str],
-    publication_page_format: Optional[str],
-    sppm_step_numbering: Optional[str],
-    sppm_label_density: Optional[str],
-    sppm_wrap_strategy: Optional[str],
-    sppm_truncation_policy: Optional[str],
-    sppm_output_profile: Optional[str],
-    render_to: Optional[str],
-    layout_max_width_px: Optional[str],
-    layout_target_columns: Optional[int],
-    sppm_max_label_step_name: Optional[int],
-    sppm_max_label_workers: Optional[int],
-    sppm_max_label_ctwt: Optional[int],
+    sppm_theme: str | None,
+    theme: str | None,
+    background_color: str | None,
+    font_family: str | None,
+    typography_scale: float | None,
+    layout_wrap: str | None,
+    layout_fit: str | None,
+    layout_spacing: str | None,
+    publication_page_format: str | None,
+    sppm_step_numbering: str | None,
+    sppm_label_density: str | None,
+    sppm_wrap_strategy: str | None,
+    sppm_truncation_policy: str | None,
+    sppm_output_profile: str | None,
+    render_to: str | None,
+    layout_max_width_px: str | None,
+    layout_target_columns: int | None,
+    sppm_max_label_step_name: int | None,
+    sppm_max_label_workers: int | None,
+    sppm_max_label_ctwt: int | None,
 ) -> dict:  # pragma: no cover - thin helper
     """Build a normalized options dict from Click-parsed render parameters."""
     opts: dict = {"verbose": verbose, "output": output}
@@ -477,7 +470,6 @@ def _apply_render_click_options(*, include_render_to: bool) -> Any:
 @click.group()
 def cli() -> None:  # pragma: no cover - thin CLI layer
     """Manage plain-text process models from authoring through export."""
-    pass
 
 
 from flo.app.scaffold_cli import new_cmd  # noqa: E402
@@ -498,45 +490,45 @@ cli.add_command(new_cmd)
 )
 @_apply_render_click_options(include_render_to=True)
 def render_cmd(
-    path: Optional[str],
+    path: str | None,
     validate: bool,
     verbose: bool,
-    output: Optional[str],
-    export_fmt: Optional[str],
-    diagram: Optional[str],
-    render_backend: Optional[str],
-    profile: Optional[str],
-    detail: Optional[str],
-    orientation: Optional[str],
+    output: str | None,
+    export_fmt: str | None,
+    diagram: str | None,
+    render_backend: str | None,
+    profile: str | None,
+    detail: str | None,
+    orientation: str | None,
     show_notes: bool,
     no_header: bool,
     no_footer: bool,
-    subprocess_view: Optional[str],
-    sppm_projection: Optional[str],
-    sppm_focus_subprocess: Optional[str],
-    spaghetti_channel: Optional[str],
-    spaghetti_people_mode: Optional[str],
+    subprocess_view: str | None,
+    sppm_projection: str | None,
+    sppm_focus_subprocess: str | None,
+    spaghetti_channel: str | None,
+    spaghetti_people_mode: str | None,
     spaghetti_strict_spatial: bool,
-    sppm_theme: Optional[str],
-    theme: Optional[str],
-    background_color: Optional[str],
-    font_family: Optional[str],
-    typography_scale: Optional[float],
-    layout_wrap: Optional[str],
-    layout_fit: Optional[str],
-    layout_spacing: Optional[str],
-    publication_page_format: Optional[str],
-    sppm_step_numbering: Optional[str],
-    sppm_label_density: Optional[str],
-    sppm_wrap_strategy: Optional[str],
-    sppm_truncation_policy: Optional[str],
-    layout_max_width_px: Optional[str],
-    layout_target_columns: Optional[int],
-    sppm_max_label_step_name: Optional[int],
-    sppm_max_label_workers: Optional[int],
-    sppm_max_label_ctwt: Optional[int],
-    sppm_output_profile: Optional[str],
-    render_to: Optional[str],
+    sppm_theme: str | None,
+    theme: str | None,
+    background_color: str | None,
+    font_family: str | None,
+    typography_scale: float | None,
+    layout_wrap: str | None,
+    layout_fit: str | None,
+    layout_spacing: str | None,
+    publication_page_format: str | None,
+    sppm_step_numbering: str | None,
+    sppm_label_density: str | None,
+    sppm_wrap_strategy: str | None,
+    sppm_truncation_policy: str | None,
+    layout_max_width_px: str | None,
+    layout_target_columns: int | None,
+    sppm_max_label_step_name: int | None,
+    sppm_max_label_workers: int | None,
+    sppm_max_label_ctwt: int | None,
+    sppm_output_profile: str | None,
+    render_to: str | None,
 ) -> None:  # pragma: no cover - integration
     """Render a FLO diagram as SVG by default."""
     from flo.app._cli_contract import CLIExecutionRequest
@@ -604,43 +596,43 @@ validate_cmd, inspect_cmd = register_model_commands(cli, _execute_request)
 @click.option("-o", "--output", help="Write output to file")
 @_apply_render_click_options(include_render_to=False)
 def export_cmd(
-    path: Optional[str],
+    path: str | None,
     export_fmt: str,
     verbose: bool,
-    output: Optional[str],
-    diagram: Optional[str],
-    render_backend: Optional[str],
-    profile: Optional[str],
-    detail: Optional[str],
-    orientation: Optional[str],
+    output: str | None,
+    diagram: str | None,
+    render_backend: str | None,
+    profile: str | None,
+    detail: str | None,
+    orientation: str | None,
     show_notes: bool,
     no_header: bool,
     no_footer: bool,
-    subprocess_view: Optional[str],
-    sppm_projection: Optional[str],
-    sppm_focus_subprocess: Optional[str],
-    spaghetti_channel: Optional[str],
-    spaghetti_people_mode: Optional[str],
+    subprocess_view: str | None,
+    sppm_projection: str | None,
+    sppm_focus_subprocess: str | None,
+    spaghetti_channel: str | None,
+    spaghetti_people_mode: str | None,
     spaghetti_strict_spatial: bool,
-    sppm_theme: Optional[str],
-    theme: Optional[str],
-    background_color: Optional[str],
-    font_family: Optional[str],
-    typography_scale: Optional[float],
-    layout_wrap: Optional[str],
-    layout_fit: Optional[str],
-    layout_spacing: Optional[str],
-    publication_page_format: Optional[str],
-    sppm_step_numbering: Optional[str],
-    sppm_label_density: Optional[str],
-    sppm_wrap_strategy: Optional[str],
-    sppm_truncation_policy: Optional[str],
-    layout_max_width_px: Optional[str],
-    layout_target_columns: Optional[int],
-    sppm_max_label_step_name: Optional[int],
-    sppm_max_label_workers: Optional[int],
-    sppm_max_label_ctwt: Optional[int],
-    sppm_output_profile: Optional[str],
+    sppm_theme: str | None,
+    theme: str | None,
+    background_color: str | None,
+    font_family: str | None,
+    typography_scale: float | None,
+    layout_wrap: str | None,
+    layout_fit: str | None,
+    layout_spacing: str | None,
+    publication_page_format: str | None,
+    sppm_step_numbering: str | None,
+    sppm_label_density: str | None,
+    sppm_wrap_strategy: str | None,
+    sppm_truncation_policy: str | None,
+    layout_max_width_px: str | None,
+    layout_target_columns: int | None,
+    sppm_max_label_step_name: int | None,
+    sppm_max_label_workers: int | None,
+    sppm_max_label_ctwt: int | None,
+    sppm_output_profile: str | None,
 ) -> None:  # pragma: no cover - integration
     """Export FLO input as SVG, JSON, or text summaries."""
     from flo.app._cli_contract import CLIExecutionRequest

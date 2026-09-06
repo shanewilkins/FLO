@@ -2,31 +2,32 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
-from .models import IR
+from flo.errors import ValidationError
+
+from ._graph_utils import build_adjacency_maps, traverse
 from .enums import ProcessValueClass
+from .metadata import extract_node_metadata
+from .models import IR
 from .schema_projection import ir_to_schema_dict
 from .validate_relations import validate_item_relations, validate_resource_relations
+from .validate_render_intent import validate_render_intent
 from .validate_structure import validate_parallel_structure
 from .validate_subprocess import validate_subprocess_metadata
-from .validate_render_intent import validate_render_intent
-from ._graph_utils import build_adjacency_maps, traverse
-from .metadata import extract_node_metadata
-from flo.errors import ValidationError
-from pathlib import Path
-import json
 
 _MEASURE_UNITS = {"mg", "g", "kg", "ml", "l", "mm", "cm", "m"}
 _TIME_UNITS = {"s", "m", "min", "hr", "d"}
 _SPATIAL_UNITS = {"mm", "cm", "m", "in", "ft"}
 
 try:
-    import jsonschema  # type: ignore
+    import jsonschema
 
     _JSONSCHEMA_AVAILABLE = True
 except Exception:  # pragma: no cover - optional
-    jsonschema = None  # type: ignore
+    jsonschema = None
     _JSONSCHEMA_AVAILABLE = False
 
 
@@ -83,8 +84,8 @@ def _build_edge_degree_maps(
     obj: IR, ids: list[str]
 ) -> tuple[dict[str, int], dict[str, int]]:
     known_ids = set(ids)
-    incoming_counts: dict[str, int] = {node_id: 0 for node_id in known_ids}
-    outgoing_counts: dict[str, int] = {node_id: 0 for node_id in known_ids}
+    incoming_counts: dict[str, int] = dict.fromkeys(known_ids, 0)
+    outgoing_counts: dict[str, int] = dict.fromkeys(known_ids, 0)
     for edge in obj.edges:
         if edge.target in incoming_counts:
             incoming_counts[edge.target] += 1
@@ -288,10 +289,8 @@ def _is_node_time_metadata_key(key: Any) -> bool:
         # Existing second-based scalar keys remain supported.
         return False
 
-    return (
-        normalized in {"time", "duration"}
-        or normalized.endswith("_time")
-        or normalized.endswith("_duration")
+    return normalized in {"time", "duration"} or normalized.endswith(
+        ("_time", "_duration")
     )
 
 
@@ -417,14 +416,10 @@ def _validate_resource_item(
         raise ValidationError(f"E1220: {path}.name must be a non-empty string")
 
     resource_kind = resource.get("kind")
-    if resource_key == "items":
-        if resource_kind not in {"material", "information"}:
-            raise ValidationError(
-                f"E1217: {path}.kind must be 'material' or 'information'"
-            )
-    if resource_key == "resources":
-        if resource_kind not in {"person", "equipment"}:
-            raise ValidationError(f"E1218: {path}.kind must be 'person' or 'equipment'")
+    if resource_key == "items" and resource_kind not in {"material", "information"}:
+        raise ValidationError(f"E1217: {path}.kind must be 'material' or 'information'")
+    if resource_key == "resources" and resource_kind not in {"person", "equipment"}:
+        raise ValidationError(f"E1218: {path}.kind must be 'person' or 'equipment'")
 
     if resource_key == "locations":
         _validate_location_spatial(path=path, resource=resource)
@@ -602,15 +597,14 @@ def _validate_rework_edge_metadata(*, edge: Any, metadata: dict[str, Any]) -> No
     edge_path = f"edge '{edge.source}' -> '{edge.target}'"
 
     rate = metadata.get("rate")
-    if rate is not None:
-        if (
-            not isinstance(rate, (int, float))
-            or isinstance(rate, bool)
-            or not (0 <= float(rate) <= 1)
-        ):
-            raise ValidationError(
-                f"E1401: {edge_path} metadata.rate must be a number between 0 and 1"
-            )
+    if rate is not None and (
+        not isinstance(rate, (int, float))
+        or isinstance(rate, bool)
+        or not (0 <= float(rate) <= 1)
+    ):
+        raise ValidationError(
+            f"E1401: {edge_path} metadata.rate must be a number between 0 and 1"
+        )
 
     for key in ("reason", "frequency", "note"):
         value = metadata.get(key)
@@ -655,8 +649,8 @@ def validate_against_schema(ir: IR) -> None:
 
     try:
         validate_fn(instance=instance, schema=schema)
-    except Exception as e:
-        raise ValidationError(f"schema validation failed: {e}")
+    except Exception as exc:
+        raise ValidationError(f"schema validation failed: {exc}") from exc
 
 
 def ensure_schema_aligned(ir: object) -> None:

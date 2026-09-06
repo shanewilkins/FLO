@@ -5,8 +5,6 @@ from pathlib import Path
 
 import pytest
 
-from flo.source import parse_adapter
-from flo.source import compile_adapter
 from flo.render import RenderOptions, render_artifact_and_contract
 from flo.render.layout_core import (
     LayoutBounds,
@@ -15,7 +13,7 @@ from flo.render.layout_core import (
 )
 from flo.render.sppm.layout import build_sppm_elk_layout_request
 from flo.render.swimlane.layout import build_swimlane_elk_layout_request
-
+from flo.source import compile_adapter, parse_adapter
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 YB_ROOT = REPO_ROOT / "examples" / "yb"
