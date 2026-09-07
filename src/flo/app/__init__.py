@@ -43,6 +43,9 @@ from flo.process.export import export_ir
 from flo.process.ir import IR, ensure_schema_aligned, validate_ir
 from flo.render import RenderArtifact, RenderOptions, render_artifact_and_contract
 from flo.render.capability_matrix import RENDER_CAPABILITY_MATRIX
+from flo.render.sppm.publication_artifact import (
+    render_sppm_typst_publication_artifact,
+)
 from flo.render.themes import ThemeValidationError
 from flo.source import (
     SourceComposition,
@@ -71,6 +74,8 @@ def run_content(
     output_format = _resolve_output_format(command=command, options=options)
     if output_format in {"json", "ingredients", "movement"}:
         return _run_export_output(ir=ir, options=options, output_format=output_format)
+    if output_format == "typst":
+        return _run_typst_publication_output(ir=ir, options=options)
 
     return _run_render_output(ir=ir, options=options, output_format=output_format)
 
@@ -238,6 +243,27 @@ def _run_render_output(
     )
 
 
+def _run_typst_publication_output(
+    *, ir: IR, options: dict | None
+) -> tuple[int, str, str]:
+    resolved_options = merge_diagrams_toml_render_defaults(options=options)
+    validate_sppm_numeric_render_options(options=resolved_options)
+    resolved_options = _merge_render_intent_options(ir=ir, options=resolved_options)
+    render_options = RenderOptions.from_mapping(resolved_options)
+    if render_options.diagram != "sppm":
+        raise CLIError(
+            "Typst publication output is currently supported only for --diagram sppm.",
+            code=EXIT_USAGE,
+            error_stage="option_validation",
+        )
+    artifact = render_sppm_typst_publication_artifact(ir, render_options)
+    render_to = (resolved_options or {}).get("render_to")
+    if isinstance(render_to, str) and render_to:
+        _write_render_artifact(artifact=artifact, render_to=render_to, contract=None)
+        return EXIT_SUCCESS, "", ""
+    return EXIT_SUCCESS, artifact.content, ""
+
+
 def _merge_render_intent_options(*, ir: IR, options: dict | None) -> dict | None:
     # Extract view-aware render intent from compiled IR (wires resolver into pipeline)
     return _merge_view_intent_options(
@@ -347,6 +373,7 @@ def _resolve_output_format(command: str, options: dict | None) -> str:
         "ingredients",
         "movement",
         "svg",
+        "typst",
     }:
         return str(output_format)
     render_to = (options or {}).get("render_to")
@@ -534,7 +561,39 @@ def _write_render_artifact(
         if write_rc != 0:
             raise RenderError(write_err)
         return
+    if kind == "typst":
+        if Path(render_to).suffix.lower() != ".typ":
+            raise RenderError("Typst publication output requires a .typ output path.")
+        _write_typst_publication_assets(artifact=artifact, render_to=render_to)
+        write_rc, write_err = write_output(content, render_to)
+        if write_rc != 0:
+            raise RenderError(write_err)
+        return
     raise RenderError(f"Unsupported render artifact kind: {kind or 'unknown'}")
+
+
+def _write_typst_publication_assets(
+    *, artifact: RenderArtifact, render_to: str
+) -> None:
+    assets = artifact.metadata.get("page_svg_assets", ())
+    if not isinstance(assets, tuple):
+        return
+    output_directory = Path(render_to).parent
+    for asset in assets:
+        if not isinstance(asset, dict):
+            continue
+        asset_path = asset.get("asset_path")
+        content = asset.get("content")
+        if not isinstance(asset_path, str) or not isinstance(content, str):
+            continue
+        relative_path = Path(asset_path)
+        if relative_path.name != asset_path:
+            raise RenderError("Typst publication SVG asset paths must be file names.")
+        write_rc, write_err = write_output(
+            content, str(output_directory / relative_path)
+        )
+        if write_rc != 0:
+            raise RenderError(write_err)
 
 
 def _render_artifact_for_stdout(
@@ -545,6 +604,8 @@ def _render_artifact_for_stdout(
 ) -> str:
     """Materialize the requested stdout format from a backend-neutral artifact."""
     if artifact.kind == "svg":
+        return artifact.content
+    if artifact.kind == "typst" and output_format == "typst":
         return artifact.content
     raise RenderError(f"Unsupported render artifact kind: {artifact.kind or 'unknown'}")
 

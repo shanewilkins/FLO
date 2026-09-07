@@ -10,6 +10,7 @@ from flo.process.ir.models import IR
 from .._process_header import extract_process_header_context
 from .._publication import (
     PublicationBandContent,
+    PublicationFigureRef,
     PublicationPageSpec,
     PublicationPlan,
     materialize_publication_series,
@@ -82,30 +83,21 @@ def build_sppm_publication_plan(
         options=options,
         show_header=show_header,
     )
+    page_specs = _build_sppm_page_specs(
+        canvas=canvas,
+        title=title,
+        header_rows=header_rows,
+        footer_content=footer_content,
+        nodes=nodes,
+        options=options,
+        projection=projection_context,
+        diagnostics=diagnostics,
+    )
     series = materialize_publication_series(
         series_id="main",
         title=title or "SPPM Publication",
         kind="map",
-        page_specs=(
-            PublicationPageSpec(
-                page_key="p1",
-                canvas=canvas,
-                header_content=PublicationBandContent(
-                    title=title, rows=tuple(header_rows)
-                )
-                if (show_header and title)
-                else None,
-                footer_content=footer_content,
-                metadata={
-                    "diagram": "sppm",
-                    "publication_diagnostics": _serialize_diagnostics(diagnostics),
-                    "page_format": options.publication_page_format,
-                    "projection_mode": projection_context.effective_mode,
-                    "requested_projection_mode": projection_context.requested_mode,
-                    "focus_subprocess": projection_context.focus_subprocess,
-                },
-            ),
-        ),
+        page_specs=page_specs,
         metadata={
             "diagram": "sppm",
             "publication_diagnostics": _serialize_diagnostics(diagnostics),
@@ -134,4 +126,72 @@ def build_sppm_publication_plan(
             "publication_diagnostics": _serialize_diagnostics(diagnostics),
             "page_format": options.publication_page_format,
         },
+    )
+
+
+def _build_sppm_page_specs(
+    *,
+    canvas: Any,
+    title: str,
+    header_rows: list[tuple[str, str]],
+    footer_content: PublicationBandContent | None,
+    nodes: list[dict[str, Any]],
+    options: RenderOptions,
+    projection: SppmProjectionContext,
+    diagnostics: tuple[Any, ...],
+) -> tuple[PublicationPageSpec, ...]:
+    node_id_pages = _sppm_page_node_ids(nodes, options=options)
+    page_specs: list[PublicationPageSpec] = []
+    page_count = len(node_id_pages)
+    for page_number, node_ids in enumerate(node_id_pages, start=1):
+        page_id = f"main-p{page_number}"
+        metadata: dict[str, Any] = {
+            "diagram": "sppm",
+            "publication_diagnostics": _serialize_diagnostics(diagnostics),
+            "page_format": options.publication_page_format,
+            "projection_mode": projection.effective_mode,
+            "requested_projection_mode": projection.requested_mode,
+            "focus_subprocess": projection.focus_subprocess,
+            "node_ids": node_ids,
+        }
+        if page_number > 1:
+            metadata["continuation_from"] = f"main-p{page_number - 1}"
+        if page_number < page_count:
+            metadata["continuation_to"] = f"main-p{page_number + 1}"
+        page_specs.append(
+            PublicationPageSpec(
+                page_key=f"p{page_number}",
+                canvas=canvas,
+                header_content=PublicationBandContent(
+                    title=title, rows=tuple(header_rows)
+                )
+                if (options.sppm_show_header and title)
+                else None,
+                footer_content=footer_content,
+                figures=(
+                    PublicationFigureRef(
+                        figure_id=f"{page_id}-figure",
+                        asset_path=f"{page_id}.svg",
+                        alt_text=f"{title or 'SPPM publication'} map page {page_number}",
+                        source_node_ids=node_ids,
+                    ),
+                ),
+                metadata=metadata,
+            )
+        )
+    return tuple(page_specs)
+
+
+def _sppm_page_node_ids(
+    nodes: list[dict[str, Any]], *, options: RenderOptions
+) -> tuple[tuple[str, ...], ...]:
+    node_ids = tuple(
+        node_id for node in nodes if (node_id := str(node.get("id") or "").strip())
+    )
+    page_size = options.layout_target_columns or len(node_ids) or 1
+    if options.layout_overflow != "paginate" or len(node_ids) <= page_size:
+        return (node_ids,)
+    return tuple(
+        node_ids[start : start + page_size]
+        for start in range(0, len(node_ids), page_size)
     )

@@ -18,7 +18,9 @@ from flo.render._publication import (
 )
 from flo.render.options import RenderOptions
 from flo.render.sppm.projection import project_sppm_subprocess_view
-from flo.render.sppm.publication import build_sppm_publication_plan
+from flo.render.sppm.publication import (
+    build_sppm_publication_plan,
+)
 
 
 def test_build_publication_canvas_keeps_margins_outside_content_regions():

@@ -134,6 +134,16 @@ class PublicationBand:
 
 
 @dataclass(frozen=True)
+class PublicationFigureRef:
+    """A page-local graphic asset reference with stable source-step identity."""
+
+    figure_id: str
+    asset_path: str
+    alt_text: str
+    source_node_ids: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class PublicationPageSpec:
     """Declarative page input used to materialize a publication series."""
 
@@ -141,6 +151,7 @@ class PublicationPageSpec:
     canvas: PublicationCanvas
     header_content: PublicationBandContent | None = None
     footer_content: PublicationBandContent | None = None
+    figures: tuple[PublicationFigureRef, ...] = ()
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -153,6 +164,7 @@ class PublicationPage:
     series_id: str
     canvas: PublicationCanvas
     bands: tuple[PublicationBand, ...] = ()
+    figures: tuple[PublicationFigureRef, ...] = ()
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def band(self, name: PublicationBandName) -> PublicationBand | None:
@@ -244,6 +256,7 @@ def materialize_publication_series(
                         spec.footer_content, band_context
                     ),
                 ),
+                figures=spec.figures,
                 metadata=page_metadata,
             )
         )

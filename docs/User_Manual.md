@@ -991,7 +991,7 @@ Entry filenames and includes are portable rather than absolute checkout paths.
 
 ## 5.4 Export
 
-Export as JSON by default, or choose SVG, ingredients text, or movement text.
+Export as JSON by default, or choose SVG, Typst publication source, ingredients text, or movement text.
 
 ```bash
 uv run flo export path/to/model.flo
@@ -1008,7 +1008,7 @@ Common options:
 
 - `-o, --output <file>`: write text or JSON output to file
 - `-v, --verbose`: verbose logging
-- `--export {svg,json,ingredients,movement}`: choose output format
+- `--export {svg,typst,json,ingredients,movement}`: choose output format
 
 Inspect options:
 
@@ -1053,6 +1053,7 @@ Diagram render options:
 `--render-to` behavior:
 
 - With `--export svg`, FLO writes maintained direct SVG to the target `.svg` file.
+- With `--export typst --diagram sppm`, FLO writes Typst source to the target `.typ` file and page-local SVG figure assets beside it.
 - Raster and PDF output are not emitted directly by FLO; convert SVG with an external tool if needed.
 
 Examples:
@@ -1063,6 +1064,7 @@ uv run flo render examples/reference/new_semantics.flo --export json
 uv run flo render examples/reference/chocolate_chip_cookies.flo --export ingredients
 uv run flo render examples/reference/chocolate_chip_cookies.flo --export movement
 uv run flo render examples/reference/washnfold.flo --export svg --render-to washnfold_sppm.svg --diagram sppm --sppm-output-profile book --layout-target-columns 4
+uv run flo render examples/reference/washnfold.flo --export typst --render-to washnfold.typ --diagram sppm --layout-overflow paginate --layout-target-columns 4
 ```
 
 Important:

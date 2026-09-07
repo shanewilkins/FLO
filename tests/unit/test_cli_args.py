@@ -41,6 +41,7 @@ def test_parse_args_with_flags(services, args, expected_command, expected_output
     [
         ([], "svg"),
         (["--export", "svg"], "svg"),
+        (["--export", "typst"], "typst"),
         (["--export", "json"], "json"),
         (["--export", "ingredients"], "ingredients"),
         (["--export", "movement"], "movement"),
