@@ -87,7 +87,9 @@ def test_init_telemetry_shutdown_closure_falls_back_to_span_processors(monkeypat
     t.shutdown()
 
     assert provider is not None
-    assert provider.span_processors[0].called is True
+    span_processors = getattr(provider, "span_processors", None)
+    assert span_processors is not None
+    assert span_processors[0].called is True
     assert telemetry_mod._provider is None
 
 

@@ -17,14 +17,14 @@ class _RenderOptionsLike:
 def test_capability_validation_rejects_unknown_backend_for_supported_diagram():
     with pytest.raises(CLIError, match="Unsupported render backend"):
         ensure_render_projection_supported(
-            _RenderOptionsLike(diagram="swimlane", backend="bogus")
+            _RenderOptionsLike(diagram="swimlane", backend="bogus")  # type: ignore[arg-type]
         )
 
 
 def test_capability_validation_rejects_unknown_diagram():
     with pytest.raises(CLIError, match="Unsupported diagram"):
         ensure_render_projection_supported(
-            _RenderOptionsLike(diagram="bogus", backend="svg")
+            _RenderOptionsLike(diagram="bogus", backend="svg")  # type: ignore[arg-type]
         )
 
 

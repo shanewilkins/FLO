@@ -82,25 +82,27 @@ def _parse_time_spec(time_spec: Any) -> SppmMetadataValue | None:
     return SppmMetadataValue(value=value, unit=unit)
 
 
-def get_metadata_wait_time_minutes(metadata: dict[str, Any] | None) -> Any:
-    """Extract wait_time (queue delay) from metadata, defaulting to 0.
+def get_metadata_wait_time_minutes(
+    metadata: dict[str, Any] | None,
+) -> int | float | None:
+    """Extract wait_time (queue delay) from metadata without inventing a value.
 
     Wait time represents queue/idle delay caused by unavailability of the next
     resource or step. This is distinct from changeover/setup time, which is
     reconfiguration time within a step itself.
 
     Returns the raw numeric value (int or float) to preserve formatting,
-    or 0 if absent/invalid.
+    or None if absent or invalid.
     """
     time_spec = get_metadata_field(metadata, "wait_time", expected_type=dict)
     if not isinstance(time_spec, dict):
-        return 0
+        return None
     value = time_spec.get("value")
     if value is None:
-        return 0
+        return None
     if isinstance(value, (int, float)):
         return value
-    return 0
+    return None
 
 
 def get_metadata_cycle_time(

@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import contextlib
+import json
 import sys
 import uuid
+from dataclasses import asdict
 from typing import Any
 
 import click
@@ -71,11 +73,15 @@ def _handle_run_content_exception(
     command: str,
     command_id: str,
     effective_path: str,
+    diagnostic_format: str = "text",
 ) -> int:
     from flo.app.telemetry import record_span_error
     from flo.errors import map_exception_to_rc
 
     mapped_rc, msg, internal, error_stage = map_exception_to_rc(exc)
+    diagnostic = getattr(exc, "diagnostic", None)
+    if diagnostic_format == "json" and diagnostic is not None:
+        msg = json.dumps(asdict(diagnostic), sort_keys=True)
     stage = error_stage or "run_content"
     _safe_set_span_attr(root_span, "flo.exit_code", mapped_rc)
     _safe_set_span_attr(root_span, "flo.error.stage", stage)
@@ -247,6 +253,7 @@ def _execute_span_body(
             command=command,
             command_id=command_id,
             effective_path=effective_path,
+            diagnostic_format=str(options.get("diagnostic_format", "text")),
         )
 
     if rc != 0:
@@ -373,6 +380,9 @@ def _build_render_opts(
     layout_wrap: str | None,
     layout_fit: str | None,
     layout_spacing: str | None,
+    layout_width: str | None,
+    layout_height: str | None,
+    layout_overflow: str | None,
     publication_page_format: str | None,
     sppm_step_numbering: str | None,
     sppm_label_density: str | None,
@@ -409,6 +419,9 @@ def _build_render_opts(
         ("layout_wrap", layout_wrap),
         ("layout_fit", layout_fit),
         ("layout_spacing", layout_spacing),
+        ("layout_width", layout_width),
+        ("layout_height", layout_height),
+        ("layout_overflow", layout_overflow),
         ("publication_page_format", publication_page_format),
         ("sppm_step_numbering", sppm_step_numbering),
         ("sppm_label_density", sppm_label_density),
@@ -517,6 +530,9 @@ def render_cmd(
     layout_wrap: str | None,
     layout_fit: str | None,
     layout_spacing: str | None,
+    layout_width: str | None,
+    layout_height: str | None,
+    layout_overflow: str | None,
     publication_page_format: str | None,
     sppm_step_numbering: str | None,
     sppm_label_density: str | None,
@@ -560,6 +576,9 @@ def render_cmd(
         layout_wrap=layout_wrap,
         layout_fit=layout_fit,
         layout_spacing=layout_spacing,
+        layout_width=layout_width,
+        layout_height=layout_height,
+        layout_overflow=layout_overflow,
         publication_page_format=publication_page_format,
         sppm_step_numbering=sppm_step_numbering,
         sppm_label_density=sppm_label_density,
@@ -622,6 +641,9 @@ def export_cmd(
     layout_wrap: str | None,
     layout_fit: str | None,
     layout_spacing: str | None,
+    layout_width: str | None,
+    layout_height: str | None,
+    layout_overflow: str | None,
     publication_page_format: str | None,
     sppm_step_numbering: str | None,
     sppm_label_density: str | None,
@@ -663,6 +685,9 @@ def export_cmd(
         layout_wrap=layout_wrap,
         layout_fit=layout_fit,
         layout_spacing=layout_spacing,
+        layout_width=layout_width,
+        layout_height=layout_height,
+        layout_overflow=layout_overflow,
         publication_page_format=publication_page_format,
         sppm_step_numbering=sppm_step_numbering,
         sppm_label_density=sppm_label_density,
@@ -699,13 +724,7 @@ def console_main(argv: list | None = None) -> int:
 
 
 def main(argv: list | None = None) -> int:
-    """Programmatic CLI entrypoint.
-
-    Explicit commands use Click's command-specific help. The historical
-    `flo <path>` shorthand continues to use the compatibility parser.
-
-    Returns an integer exit code suitable for `sys.exit`.
-    """
+    """Run the programmatic CLI entrypoint and return its exit code."""
     args = list(sys.argv[1:] if argv is None else argv)
     explicit_commands = {"new", "render", "validate", "inspect", "export"}
     use_click = (

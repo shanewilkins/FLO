@@ -15,9 +15,17 @@ def register_model_commands(
 
     @cli.command("validate")
     @click.argument("path", required=False)
+    @click.option(
+        "--format",
+        "diagnostic_format",
+        type=click.Choice(["text", "json"]),
+        default="text",
+        show_default=True,
+        help="Diagnostic output format.",
+    )
     @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
     def validate_cmd(
-        path: str | None, verbose: bool
+        path: str | None, diagnostic_format: str, verbose: bool
     ) -> None:  # pragma: no cover - integration
         """Validate FLO input and return non-zero on parse/validation errors."""
         from flo.app._cli_contract import CLIExecutionRequest
@@ -26,7 +34,7 @@ def register_model_commands(
             CLIExecutionRequest(
                 path=path,
                 command="validate",
-                options={"verbose": verbose},
+                options={"diagnostic_format": diagnostic_format, "verbose": verbose},
             )
         )
         raise SystemExit(rc)

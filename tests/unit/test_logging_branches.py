@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import sys
 import types
+from typing import Any, cast
 
 from flo.app.logging import (
     _add_otel_trace_info,
@@ -36,7 +37,7 @@ def test_add_otel_trace_info_adds_ids_when_span_present(monkeypatch):
             return SpanContext()
 
     trace_mod = types.ModuleType("opentelemetry.trace")
-    trace_mod.get_current_span = lambda: Span()
+    cast(Any, trace_mod).get_current_span = lambda: Span()
     monkeypatch.setitem(sys.modules, "opentelemetry.trace", trace_mod)
 
     out = _add_otel_trace_info(None, "info", {"event": "x"})
@@ -46,7 +47,9 @@ def test_add_otel_trace_info_adds_ids_when_span_present(monkeypatch):
 
 def test_add_otel_trace_info_swallows_errors(monkeypatch):
     trace_mod = types.ModuleType("opentelemetry.trace")
-    trace_mod.get_current_span = lambda: (_ for _ in ()).throw(RuntimeError("boom"))
+    cast(Any, trace_mod).get_current_span = lambda: (_ for _ in ()).throw(
+        RuntimeError("boom")
+    )
     monkeypatch.setitem(sys.modules, "opentelemetry.trace", trace_mod)
 
     event = {"event": "x"}

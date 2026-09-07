@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Any
 
-type CanonicalCollection = list[Any] | dict[str, Any]
+type CanonicalCollection = list[Any]
 
 
 @dataclass
@@ -15,7 +16,7 @@ class Node:
 
     id: str
     type: str
-    attrs: dict[str, Any] | None = None
+    attrs: Any = None
     subprocess_parent: str | None = None
 
     def __post_init__(self) -> None:
@@ -43,7 +44,7 @@ class Edge:
     edge_type: str | None = None
     handoff: bool | None = None
     rework: bool | None = None
-    metadata: dict[str, Any] | None = None
+    metadata: Any = None
 
     def __post_init__(self) -> None:
         """Normalize endpoint identifiers and optional metadata mapping."""
@@ -52,7 +53,7 @@ class Edge:
         self.metadata = _normalize_object_mapping(self.metadata, default=None)
 
 
-@dataclass
+@dataclass(init=False)
 class IR:
     """Represents a FLO intermediate representation (IR)."""
 
@@ -68,6 +69,39 @@ class IR:
     resources: CanonicalCollection | None = None
     locations: CanonicalCollection | None = None
     render_intent: dict[str, Any] | None = None
+
+    def __init__(
+        self,
+        name: str,
+        nodes: Sequence[Any],
+        edges: Sequence[Any] | None = None,
+        *,
+        process_metadata: Any = None,
+        process_version: int | str | None = None,
+        process_owner: dict[str, Any] | None = None,
+        business_units: Sequence[dict[str, Any]] | None = None,
+        lanes: Sequence[dict[str, Any]] | None = None,
+        items: CanonicalCollection | None = None,
+        resources: CanonicalCollection | None = None,
+        locations: CanonicalCollection | None = None,
+        render_intent: dict[str, Any] | None = None,
+    ) -> None:
+        """Normalize all constructor inputs to the canonical node/edge model."""
+        self.name = str(name)
+        self.nodes = [_coerce_node(value) for value in nodes]
+        self.edges = [_coerce_edge(value) for value in (edges or [])]
+        self.process_metadata = _normalize_object_mapping(
+            process_metadata, default=None
+        )
+        self.process_version = process_version
+        self.process_owner = _normalize_object_mapping(process_owner, default=None)
+        self.business_units = _normalize_object_list(list(business_units or []))
+        self.lanes = _normalize_object_list(list(lanes or []))
+        self.items = items
+        self.resources = resources
+        self.locations = locations
+        self.render_intent = render_intent
+        self.__post_init__()
 
     def __post_init__(self) -> None:
         """Coerce nested node/edge entries and normalize optional metadata."""

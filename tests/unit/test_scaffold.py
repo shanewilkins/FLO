@@ -2,7 +2,14 @@ from pathlib import Path
 
 import pytest
 
-from flo.app.scaffold import create_model, render_template, stable_id
+from flo.app.scaffold import (
+    SUPPORTED_TEMPLATES,
+    create_model,
+    render_template,
+    stable_id,
+)
+from flo.process.ir.validate import validate_ir
+from flo.source import compile_adapter, parse_adapter
 
 
 @pytest.mark.parametrize(
@@ -29,6 +36,17 @@ def test_render_simple_process_template_has_explicit_stable_ids():
     assert "- id: receive_request" in content
     assert "- id: complete_work" in content
     assert "- id: finish" in content
+
+
+@pytest.mark.parametrize("template", SUPPORTED_TEMPLATES)
+def test_templates_compile_to_valid_models(template: str):
+    content = render_template(template=template, process_name="Purchase Request")
+
+    process = compile_adapter(parse_adapter(content))
+
+    validate_ir(process)
+    assert process.process_metadata is not None
+    assert process.process_metadata["process_id"] == "purchase_request"
 
 
 def test_create_model_adds_flo_suffix_and_refuses_overwrite(tmp_path: Path):

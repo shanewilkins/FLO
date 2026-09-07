@@ -243,12 +243,21 @@ def _sample_sppm_config() -> dict:
 def test_flatten_helper_maps_nested_text_options():
     sppm = _sample_sppm_config()
 
-    flattened = _flatten_sppm_config_options(sppm)
+    flattened = dict(_flatten_sppm_config_options(sppm))
+    _assert_flattened_layout_options(flattened)
+    _assert_flattened_text_options(flattened)
+    _assert_flattened_theme_options(flattened)
+
+
+def _assert_flattened_layout_options(flattened):
     assert flattened["layout_max_width_px"] == 1200
     assert flattened["layout_target_columns"] == 7
     assert flattened["layout_wrap"] == "auto"
     assert flattened["layout_spacing"] == "compact"
     assert flattened["sppm_step_numbering"] == "node"
+
+
+def _assert_flattened_text_options(flattened):
     assert flattened["sppm_label_density"] == "compact"
     assert flattened["sppm_output_profile"] == "book"
     assert flattened["sppm_wrap_strategy"] == "balanced"
@@ -256,8 +265,13 @@ def test_flatten_helper_maps_nested_text_options():
     assert flattened["sppm_max_label_step_name"] == 48
     assert flattened["sppm_max_label_workers"] == 24
     assert flattened["sppm_max_label_ctwt"] == 18
-    assert flattened["sppm_themes"]["sunrise"]["va"]["fill"] == "#FFF3B0"
-    assert flattened["sppm_themes"]["sunrise"]["decision"]["border"] == "#B28704"
+
+
+def _assert_flattened_theme_options(flattened):
+    themes = flattened["sppm_themes"]
+    assert isinstance(themes, dict)
+    assert themes["sunrise"]["va"]["fill"] == "#FFF3B0"
+    assert themes["sunrise"]["decision"]["border"] == "#B28704"
 
 
 def test_preset_helper_maps_profile_specific_options():

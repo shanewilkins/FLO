@@ -183,8 +183,9 @@ Status: planned for 0.4
 
 Outcome:
 
-- SPPM, swimlane, spaghetti, and value stream maps meet the stable
-  renderer-tier criteria
+- SPPM, swimlane, and spaghetti meet the stable renderer-tier criteria
+- Value stream remains maintained in 0.4; its stable-tier style, accessibility,
+  and release-corpus promotion follows in 0.5
 
 Work:
 

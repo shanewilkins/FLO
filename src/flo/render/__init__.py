@@ -6,6 +6,7 @@ from dataclasses import replace
 from typing import Any
 
 from ._artifact import RenderArtifact
+from ._geometry import resolve_svg_geometry
 from ._publication import resolve_publication_page_format
 from .options import RenderOptions
 from .registry import render_registered
@@ -29,7 +30,8 @@ def render_artifact_and_contract(
 ) -> tuple[RenderArtifact, None]:
     """Render an artifact and return no backend postprocess contract."""
     render_options = _coerce_render_options(options)
-    return render_registered(ir, render_options)
+    artifact, contract = render_registered(ir, render_options)
+    return resolve_svg_geometry(artifact, render_options), contract
 
 
 def _coerce_render_options(

@@ -2,6 +2,7 @@ import contextlib
 import importlib
 import sys
 import types
+from typing import Any, cast
 
 
 def test_init_telemetry_with_fake_otel(monkeypatch):
@@ -62,24 +63,25 @@ def test_init_telemetry_with_fake_otel(monkeypatch):
     sdk_trace.export.ConsoleSpanExporter = ConsoleSpanExporter
 
     # Install fake modules
-    sys.modules["opentelemetry"] = types.ModuleType("opentelemetry")
-    sys.modules["opentelemetry"].trace = fake_trace
-    sys.modules["opentelemetry.sdk"] = types.ModuleType("opentelemetry.sdk")
-    sys.modules["opentelemetry.sdk.resources"] = types.ModuleType(
-        "opentelemetry.sdk.resources"
-    )
-    sys.modules["opentelemetry.sdk.resources"].Resource = Resource
-    sys.modules["opentelemetry.sdk.trace"] = types.ModuleType("opentelemetry.sdk.trace")
-    sys.modules["opentelemetry.sdk.trace"].TracerProvider = TracerProvider
-    sys.modules["opentelemetry.sdk.trace.export"] = types.ModuleType(
-        "opentelemetry.sdk.trace.export"
-    )
-    sys.modules[
-        "opentelemetry.sdk.trace.export"
-    ].SimpleSpanProcessor = SimpleSpanProcessor
-    sys.modules[
-        "opentelemetry.sdk.trace.export"
-    ].ConsoleSpanExporter = ConsoleSpanExporter
+    opentelemetry = types.ModuleType("opentelemetry")
+    cast(Any, opentelemetry).trace = fake_trace
+    sys.modules["opentelemetry"] = opentelemetry
+
+    sdk = types.ModuleType("opentelemetry.sdk")
+    sys.modules["opentelemetry.sdk"] = sdk
+
+    sdk_resources = types.ModuleType("opentelemetry.sdk.resources")
+    cast(Any, sdk_resources).Resource = Resource
+    sys.modules["opentelemetry.sdk.resources"] = sdk_resources
+
+    sdk_trace = types.ModuleType("opentelemetry.sdk.trace")
+    cast(Any, sdk_trace).TracerProvider = TracerProvider
+    sys.modules["opentelemetry.sdk.trace"] = sdk_trace
+
+    sdk_trace_export = types.ModuleType("opentelemetry.sdk.trace.export")
+    cast(Any, sdk_trace_export).SimpleSpanProcessor = SimpleSpanProcessor
+    cast(Any, sdk_trace_export).ConsoleSpanExporter = ConsoleSpanExporter
+    sys.modules["opentelemetry.sdk.trace.export"] = sdk_trace_export
 
     # Reload telemetry module to pick up fake opentelemetry
     import flo.app.telemetry as tel

@@ -46,6 +46,9 @@ class RenderIntent:
     layout_wrap: str | None = None
     layout_max_width: int | None = None
     layout_target_columns: int | None = None
+    layout_width: Any = None
+    layout_height: Any = None
+    layout_overflow: str | None = None
 
     # SPPM config
     sppm_label_density: str | None = None
@@ -75,6 +78,7 @@ class RenderIntentResolver:
         "diagram": "sppm",
         "publication_page_format": None,
         "layout_wrap": "none",
+        "layout_overflow": "error",
         "sppm_label_density": "full",
         "spaghetti_channel": "material",
         "spaghetti_people_mode": "aggregate",
@@ -100,7 +104,7 @@ class RenderIntentResolver:
     def resolve(
         cls,
         render_metadata: dict[str, Any] | None,
-        cli_overrides: dict[str, Any] | None,
+        cli_overrides: Any,
         profile: str = "default",
         view_name: str = "default",
     ) -> RenderIntent:
@@ -189,47 +193,41 @@ class RenderIntentResolver:
         if not cli_overrides or not isinstance(cli_overrides, dict):
             return {}
 
-        intent = {}
-
-        # Diagram type
-        if "diagram" in cli_overrides:
-            intent["diagram"] = cli_overrides.get("diagram")
-
-        # Publication config
-        if "publication_page_format" in cli_overrides:
-            intent["publication_page_format"] = cli_overrides.get(
-                "publication_page_format"
-            )
-        if "layout_max_width_px" in cli_overrides:
-            intent["layout_max_width"] = cli_overrides.get("layout_max_width_px")
-
-        for key in ("theme", "background_color", "font_family", "typography_scale"):
-            if key in cli_overrides:
-                intent[key] = cli_overrides.get(key)
-
-        # Layout config
-        if "layout_wrap" in cli_overrides:
-            intent["layout_wrap"] = cli_overrides.get("layout_wrap")
-        if "layout_target_columns" in cli_overrides:
-            intent["layout_target_columns"] = cli_overrides.get("layout_target_columns")
-
-        # SPPM config
-        if "sppm_label_density" in cli_overrides:
-            intent["sppm_label_density"] = cli_overrides.get("sppm_label_density")
-        if "sppm_step_numbering" in cli_overrides:
-            intent["sppm_node_numbering"] = cli_overrides.get("sppm_step_numbering")
-
-        # Spaghetti config
-        if "spaghetti_channel" in cli_overrides:
-            intent["spaghetti_channel"] = cli_overrides.get("spaghetti_channel")
-        if "spaghetti_people_mode" in cli_overrides:
-            intent["spaghetti_people_mode"] = cli_overrides.get("spaghetti_people_mode")
-        if "spaghetti_strict_spatial" in cli_overrides:
-            intent["spaghetti_strict_spatial"] = cli_overrides.get(
-                "spaghetti_strict_spatial"
-            )
-
+        intent: dict[str, Any] = {}
+        cls._copy_cli_intent_values(
+            cli_overrides,
+            {
+                "diagram": "diagram",
+                "publication_page_format": "publication_page_format",
+                "layout_max_width_px": "layout_max_width",
+                "layout_width": "layout_width",
+                "layout_height": "layout_height",
+                "layout_overflow": "layout_overflow",
+                "theme": "theme",
+                "background_color": "background_color",
+                "font_family": "font_family",
+                "typography_scale": "typography_scale",
+                "layout_wrap": "layout_wrap",
+                "layout_target_columns": "layout_target_columns",
+                "sppm_label_density": "sppm_label_density",
+                "sppm_step_numbering": "sppm_node_numbering",
+                "spaghetti_channel": "spaghetti_channel",
+                "spaghetti_people_mode": "spaghetti_people_mode",
+                "spaghetti_strict_spatial": "spaghetti_strict_spatial",
+            },
+            intent,
+        )
         return intent
+
+    @staticmethod
+    def _copy_cli_intent_values(
+        cli_overrides: dict[str, Any],
+        key_mapping: dict[str, str],
+        intent: dict[str, Any],
+    ) -> None:
+        for source_key, intent_key in key_mapping.items():
+            if source_key in cli_overrides:
+                intent[intent_key] = cli_overrides.get(source_key)
 
     @classmethod
     def _flatten_view_structure(cls, view: dict[str, Any]) -> dict[str, Any]:
@@ -333,6 +331,9 @@ class RenderIntentResolver:
             intent["layout_max_width"] = layout.get("max_width")
         if "target_columns" in layout:
             intent["layout_target_columns"] = layout.get("target_columns")
+        for key in ("width", "height", "overflow"):
+            if key in layout:
+                intent[f"layout_{key}"] = layout.get(key)
 
         return intent
 
@@ -387,6 +388,9 @@ class RenderIntentResolver:
             layout_wrap=resolved.get("layout_wrap"),
             layout_max_width=resolved.get("layout_max_width"),
             layout_target_columns=resolved.get("layout_target_columns"),
+            layout_width=resolved.get("layout_width"),
+            layout_height=resolved.get("layout_height"),
+            layout_overflow=resolved.get("layout_overflow"),
             sppm_label_density=resolved.get("sppm_label_density"),
             sppm_node_numbering=resolved.get("sppm_node_numbering"),
             sppm_edge_numbering=resolved.get("sppm_edge_numbering"),

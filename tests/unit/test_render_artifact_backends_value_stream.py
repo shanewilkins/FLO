@@ -26,7 +26,11 @@ def test_value_stream_svg_is_deterministic_and_distinguishes_both_flows() -> Non
 
 def test_value_stream_svg_marks_information_only_output_as_partial() -> None:
     process = _dual_flow_process()
-    process.items = [item for item in process.items if item["kind"] == "information"]
+    process.items = [
+        item
+        for item in process.items or []
+        if isinstance(item, dict) and item.get("kind") == "information"
+    ]
 
     artifact = render_artifact(process, options={"diagram": "value_stream"})
     rerun = render_artifact(process, options={"diagram": "value_stream"})
@@ -44,7 +48,11 @@ def test_value_stream_svg_marks_information_only_output_as_partial() -> None:
 
 def test_value_stream_svg_marks_material_only_output_as_partial() -> None:
     process = _dual_flow_process()
-    process.items = [item for item in process.items if item["kind"] == "material"]
+    process.items = [
+        item
+        for item in process.items or []
+        if isinstance(item, dict) and item.get("kind") == "material"
+    ]
 
     artifact = render_artifact(process, options={"diagram": "value_stream"})
     rerun = render_artifact(process, options={"diagram": "value_stream"})

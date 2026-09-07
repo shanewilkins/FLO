@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from typing import Any, cast
 
 import pytest
 
@@ -183,7 +184,7 @@ def test_path_enumeration_is_bounded() -> None:
 
 def test_structure_requires_canonical_ir() -> None:
     with pytest.raises(TypeError, match="requires canonical IR"):
-        analyze_process_structure({})  # type: ignore[arg-type]
+        analyze_process_structure(cast(Any, {}))
 
 
 def _branched_process() -> IR:

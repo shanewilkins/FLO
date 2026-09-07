@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 import pytest
 
 from flo.errors import ValidationError
@@ -134,12 +136,12 @@ def test_validate_ir_rejects_non_boolean_handoff():
             Node(id="end", type="end"),
         ],
         edges=[
-            Edge(source="start", target="end", handoff="yes"),
+            Edge(source="start", target="end", handoff=cast(Any, "yes")),
         ],
     )
 
     with pytest.raises(ValidationError, match="E1410"):
-        validate_ir(ir)
+        validate_ir(cast(Any, ir))
 
 
 def test_validate_ir_accepts_resource_relations_with_matching_kinds():

@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from flo.errors import ValidationError
 
 from .metadata import extract_process_field
 from .models import IR
+
+_DIMENSION_RE = re.compile(r"^(?:\d+(?:\.\d+)?|\.\d+)\s*(?:px|in|cm|mm)?$")
 
 
 def _raise_render_intent_error(message: str) -> None:
@@ -128,20 +131,58 @@ def _validate_render_layout(view: dict[str, Any], path: str) -> None:
     if not isinstance(layout, dict):
         _raise_render_intent_error(f"{path}.layout must be object")
 
-    # Validate wrap
+    _validate_layout_wrap(layout, path)
+    _validate_layout_integers(layout, path)
+    _validate_layout_dimensions(layout, path)
+    _validate_layout_overflow(layout, path)
+
+
+def _validate_layout_wrap(layout: dict[str, Any], path: str) -> None:
     wrap = layout.get("wrap")
     if wrap is not None:
-        _VALID_WRAPS = {"none", "auto", "manual"}
-        if wrap not in _VALID_WRAPS:
+        valid_wraps = {"none", "auto", "manual"}
+        if wrap not in valid_wraps:
             _raise_render_intent_error(
-                f"{path}.layout.wrap='{wrap}' not supported; must be one of {sorted(_VALID_WRAPS)}"
+                f"{path}.layout.wrap='{wrap}' not supported; must be one of {sorted(valid_wraps)}"
             )
 
-    # Validate numeric fields
+
+def _validate_layout_integers(layout: dict[str, Any], path: str) -> None:
     for key in {"max_width", "target_columns"}:
         val = layout.get(key)
         if val is not None and (not isinstance(val, int) or val < 1):
             _raise_render_intent_error(f"{path}.layout.{key} must be positive integer")
+
+
+def _validate_layout_dimensions(layout: dict[str, Any], path: str) -> None:
+    for key in ("width", "height"):
+        value = layout.get(key)
+        if value is None:
+            continue
+        if isinstance(value, bool) or (
+            not isinstance(value, (int, float, str))
+            or (isinstance(value, (int, float)) and value <= 0)
+            or (
+                isinstance(value, str)
+                and not _DIMENSION_RE.fullmatch(value.strip().lower())
+            )
+        ):
+            _raise_render_intent_error(
+                f"{path}.layout.{key} must be a positive dimension using px, in, cm, or mm"
+            )
+
+
+def _validate_layout_overflow(layout: dict[str, Any], path: str) -> None:
+    overflow = layout.get("overflow")
+    if overflow is not None and overflow not in {
+        "error",
+        "expand",
+        "scale",
+        "paginate",
+    }:
+        _raise_render_intent_error(
+            f"{path}.layout.overflow='{overflow}' not supported; must be one of ['error', 'expand', 'paginate', 'scale']"
+        )
 
 
 def _validate_render_sppm_config(view: dict[str, Any], path: str) -> None:

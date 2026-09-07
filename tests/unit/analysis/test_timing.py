@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from copy import deepcopy
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 
@@ -361,4 +362,4 @@ def test_analysis_shape_is_json_compatible_and_input_must_be_ir() -> None:
     assert json.loads(json.dumps(payload, sort_keys=True)) == payload
     assert process == original
     with pytest.raises(TypeError, match="canonical IR"):
-        analyze_process_timing({})  # type: ignore[arg-type]
+        analyze_process_timing(cast(Any, {}))

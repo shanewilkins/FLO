@@ -130,6 +130,22 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
         choices=("fit-preferred", "fit-strict"),
     ),
     RenderOptionSpec(
+        "layout_width",
+        "--layout-width",
+        "Requested artifact width (supports px, in, cm, mm)",
+    ),
+    RenderOptionSpec(
+        "layout_height",
+        "--layout-height",
+        "Requested artifact height (supports px, in, cm, mm)",
+    ),
+    RenderOptionSpec(
+        "layout_overflow",
+        "--layout-overflow",
+        "Behavior when exact requested bounds cannot contain the natural diagram",
+        choices=("error", "expand", "scale", "paginate"),
+    ),
+    RenderOptionSpec(
         "layout_spacing",
         "--layout-spacing",
         "Shared graph spacing profile",
@@ -169,7 +185,7 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
     RenderOptionSpec(
         "layout_max_width_px",
         "--layout-max-width-px",
-        "Max layout width hint for autoformat wrapping (supports px, in, cm)",
+        "Max layout width hint for autoformat wrapping (supports px, in, cm, mm)",
     ),
     RenderOptionSpec(
         "layout_target_columns",

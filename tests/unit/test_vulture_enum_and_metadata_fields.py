@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 from flo.render.layout_core.sppm_strategy import current_sppm_layout_strategy
 from flo.render.sppm.task_card import build_sppm_task_card_layout
 
@@ -23,7 +25,7 @@ def test_task_card_layout_exposes_padding_metrics():
         },
     )()
 
-    layout = build_sppm_task_card_layout(content)
+    layout = build_sppm_task_card_layout(cast(Any, content))
 
     assert layout.header_padding_px > 0
     assert layout.body_padding_px > 0

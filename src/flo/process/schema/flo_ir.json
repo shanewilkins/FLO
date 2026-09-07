@@ -268,6 +268,22 @@
           "type": "string",
           "enum": ["none","auto","manual"]
         },
+        "width": {
+          "oneOf": [
+            { "type": "number", "exclusiveMinimum": 0 },
+            { "type": "string", "pattern": "^(?:[0-9]+(?:\\.[0-9]+)?|\\.[0-9]+)\\s*(?:px|in|cm|mm)?$" }
+          ]
+        },
+        "height": {
+          "oneOf": [
+            { "type": "number", "exclusiveMinimum": 0 },
+            { "type": "string", "pattern": "^(?:[0-9]+(?:\\.[0-9]+)?|\\.[0-9]+)\\s*(?:px|in|cm|mm)?$" }
+          ]
+        },
+        "overflow": {
+          "type": "string",
+          "enum": ["error","expand","scale","paginate"]
+        },
         "max_width": { "type": "integer", "minimum": 1 },
         "target_columns": { "type": "integer", "minimum": 1 }
       },

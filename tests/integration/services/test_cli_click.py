@@ -20,6 +20,30 @@ def test_cli_new_creates_valid_starter_model():
         assert "id: purchase_request" in target.read_text(encoding="utf-8")
 
 
+def test_cli_new_lists_maintained_templates():
+    result = CliRunner().invoke(cli, ["new", "--list-templates"])
+
+    assert result.exit_code == 0
+    assert result.output.splitlines() == [
+        "simple-process",
+        "linear-flow",
+        "decision",
+        "handoff",
+        "rework",
+        "value-stream",
+    ]
+
+
+def test_cli_new_dry_run_previews_normalized_target_without_writing():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(cli, ["new", "purchase-request", "--dry-run"])
+
+        assert result.exit_code == 0
+        assert result.output == "Would create purchase-request.flo\n"
+        assert not Path("purchase-request.flo").exists()
+
+
 def test_cli_new_refuses_to_overwrite_existing_file():
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -31,6 +55,20 @@ def test_cli_new_refuses_to_overwrite_existing_file():
         assert Path("existing.flo").read_text(encoding="utf-8") == "keep me"
 
 
+def test_cli_new_force_explicitly_replaces_existing_file():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("existing.flo").write_text("replace me", encoding="utf-8")
+        result = runner.invoke(
+            cli,
+            ["new", "existing.flo", "--force", "--name", "Replacement"],
+        )
+
+        assert result.exit_code == 0
+        assert "Created existing.flo" in result.output
+        assert "id: replacement" in Path("existing.flo").read_text(encoding="utf-8")
+
+
 def test_cli_render_cmd_using_click(tmp_flo_file):
     runner = CliRunner()
     result = runner.invoke(cli, ["render", str(tmp_flo_file)])
@@ -39,6 +77,69 @@ def test_cli_render_cmd_using_click(tmp_flo_file):
     print("DEBUG EXC:\n", repr(result.exception))
     assert result.exit_code == 0
     assert "<svg" in result.output
+
+
+def test_cli_render_fails_when_exact_geometry_overflows(tmp_flo_file):
+    result = CliRunner().invoke(
+        cli,
+        ["render", str(tmp_flo_file), "--layout-width", "1px"],
+    )
+
+    assert result.exit_code == 5
+    assert "exceeds requested bounds" in result.output
+
+
+def test_cli_render_expand_writes_natural_width_when_request_is_too_narrow(
+    tmp_flo_file,
+    tmp_path: Path,
+):
+    output_path = tmp_path / "expanded.svg"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "render",
+            str(tmp_flo_file),
+            "--layout-width",
+            "1px",
+            "--layout-overflow",
+            "expand",
+            "--render-to",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    content = output_path.read_text(encoding="utf-8")
+    assert 'width="1"' not in content
+    assert 'viewBox="0 0 1 ' not in content
+
+
+def test_cli_render_scale_writes_requested_canvas_and_natural_viewbox(
+    tmp_flo_file,
+    tmp_path: Path,
+):
+    output_path = tmp_path / "scaled.svg"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "render",
+            str(tmp_flo_file),
+            "--layout-width",
+            "1px",
+            "--layout-overflow",
+            "scale",
+            "--render-to",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    content = output_path.read_text(encoding="utf-8")
+    assert 'width="1"' in content
+    assert 'preserveAspectRatio="xMidYMid meet"' in content
+    assert 'viewBox="0 0 1 ' not in content
 
 
 def test_cli_render_help_marks_svg_as_primary_render_output():

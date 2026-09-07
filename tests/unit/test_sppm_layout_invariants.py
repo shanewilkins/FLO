@@ -48,7 +48,9 @@ def _request_and_result(case_id: str) -> tuple[ElkLayoutRequest, LayoutResult]:
     case = _CORPUS_BY_ID[case_id]
     source_rel = str(case["input"])
     source_path = _REPO_ROOT / source_rel
-    options_map = {"diagram": "sppm", **dict(case.get("options", {}))}
+    raw_options = case.get("options", {})
+    option_overrides = raw_options if isinstance(raw_options, dict) else {}
+    options_map = {"diagram": "sppm", **option_overrides}
     options = RenderOptions.from_mapping(options_map)
 
     model = parse_adapter(

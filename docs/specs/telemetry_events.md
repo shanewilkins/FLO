@@ -3,8 +3,9 @@
 Purpose: define the normative semantic contract for observed process events and
 their alignment to canonical FLO models.
 
-Lifecycle: accepted for the 0.4 telemetry-model and MVP boundary. Aggregate
-observed-process analysis remains scheduled for 0.5.
+Lifecycle: accepted as telemetry groundwork. Local trace import, validation,
+alignment, and aggregate observed-process analysis are scheduled for 0.5 and
+are not part of the 0.4 authoring MVP.
 
 ## Authority and ownership
 
@@ -110,16 +111,17 @@ The alignment report must identify at least:
 
 ## Release boundary
 
-The 0.4 contract includes:
+The 0.5 contract includes:
 
 - structural and semantic validation
 - local, explicit trace import
 - deterministic model alignment
 - conformance fixtures and alignment reports
 
-The 0.5 contract adds aggregate transition frequency, dwell or wait, and rework
-analysis. Those analyses consume aligned observations and must not feed inferred
-values back into canonical IR without a separate explicit export/import action.
+The 0.5 contract also includes aggregate transition frequency, dwell or wait,
+and rework analysis. Those analyses consume aligned observations and must not
+feed inferred values back into canonical IR without a separate explicit
+export/import action.
 
 ## Example
 

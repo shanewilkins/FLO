@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from itertools import combinations
 from pathlib import Path
+from typing import Literal, cast
 
 import pytest
 
@@ -47,7 +48,9 @@ def test_yb_acceptance_models_render_complete_nonoverlapping_svg(
     source_name: str, diagram: str
 ):
     ir = _compile(source_name)
-    options = RenderOptions(diagram=diagram)
+    options = RenderOptions(
+        diagram=cast(Literal["swimlane", "spaghetti", "sppm", "value_stream"], diagram)
+    )
     builder = (
         build_sppm_elk_layout_request
         if diagram == "sppm"

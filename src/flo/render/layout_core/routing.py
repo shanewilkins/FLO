@@ -36,9 +36,12 @@ class RoutePlan:
     routes: dict[tuple[str, str], EdgeRoute]
     conflicts: tuple[RouteConflict, ...]
 
-    def route_for(self, source: str, target: str) -> EdgeRoute | None:
-        """Return the resolved route for a source-target edge pair, if any."""
-        return self.routes.get((source, target))
+    def route_for(self, source: str, target: str) -> EdgeRoute:
+        """Return the resolved route for a source-target edge pair, raising if missing."""
+        route = self.routes.get((source, target))
+        if route is None:
+            raise KeyError(f"No route for {source}->{target}")
+        return route
 
 
 def build_route_plan(

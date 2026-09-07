@@ -192,7 +192,7 @@ def _queue_content(
             html_break="\n",
         )
     wait_minutes = get_metadata_wait_time_minutes(metadata)
-    info_lines = (f"WT: {wait_minutes:g} min",) if wait_minutes else ()
+    info_lines = (f"WT: {wait_minutes:g} min",) if wait_minutes is not None else ()
     return SppmNodeContent(title=title or "Q", info_lines=info_lines)
 
 

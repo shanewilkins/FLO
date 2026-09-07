@@ -241,7 +241,9 @@ def test_materialize_publication_series_builds_stable_multi_page_ids_and_metadat
     assert series.pages[0].page_number == 1
     assert series.pages[0].metadata["page_count"] == 2
     assert series.pages[0].metadata["section"] == "alpha"
-    assert series.pages[0].band("header").content.context_rows == (
+    header_band = series.pages[0].band("header")
+    assert header_band is not None
+    assert header_band.content.context_rows == (
         ("Page", "1/2"),
         ("Series", "main"),
     )
@@ -356,7 +358,9 @@ def test_build_sppm_publication_plan_records_non_strict_readability_warning():
     diagnostics = plan.metadata["publication_diagnostics"]
     assert diagnostics[0]["severity"] == "warning"
     assert diagnostics[0]["fallback_reason"] == "inline-budget-exceeded"
-    header_rows = plan.primary_series().pages[0].band("header").content.rows
+    header_band = plan.primary_series().pages[0].band("header")
+    assert header_band is not None
+    header_rows = header_band.content.rows
     assert any(
         label == "Readability Warning" and "inline budget exceeded" in value
         for label, value in header_rows

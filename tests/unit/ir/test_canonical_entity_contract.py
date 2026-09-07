@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 from flo.errors import ValidationError
@@ -9,7 +11,7 @@ from flo.process.ir.models import IR, Edge, Node
 from flo.process.ir.validate import validate_ir
 
 
-def _ir_with_metadata(metadata: dict[str, object]) -> IR:
+def _ir_with_metadata(metadata: dict[str, Any]) -> IR:
     return IR(
         name="entity_contract",
         nodes=[Node(id="start", type="start"), Node(id="end", type="end")],

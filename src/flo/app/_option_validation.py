@@ -16,22 +16,33 @@ from flo.render.options import parse_dimension
 def validate_sppm_numeric_render_options(options: dict | None) -> None:
     """Raise ``CLIError`` if any SPPM numeric option is invalid."""
     opts = options or {}
-    if (
-        "layout_max_width_px" in opts
-        and parse_dimension(opts.get("layout_max_width_px")) is None
-    ):
-        raise CLIError(
-            "Invalid value for --layout-max-width-px: expected a positive dimension using px, in, or cm.",
-            code=EXIT_USAGE,
-        )
-    if "publication_page_format" in opts:
-        try:
-            resolve_publication_page_format(
-                str(opts.get("publication_page_format") or "")
-            )
-        except ValueError as exc:
-            raise CLIError(str(exc), code=EXIT_USAGE) from exc
+    _validate_dimensions(opts)
+    _validate_page_format(opts)
+    _validate_positive_integer_options(opts)
 
+
+def _validate_dimensions(options: dict) -> None:
+    for option_name in ("layout_max_width_px", "layout_width", "layout_height"):
+        if option_name in options and parse_dimension(options.get(option_name)) is None:
+            cli_flag = f"--{option_name.replace('_', '-')}"
+            raise CLIError(
+                f"Invalid value for {cli_flag}: expected a positive dimension using px, in, cm, or mm.",
+                code=EXIT_USAGE,
+            )
+
+
+def _validate_page_format(options: dict) -> None:
+    if "publication_page_format" not in options:
+        return
+    try:
+        resolve_publication_page_format(
+            str(options.get("publication_page_format") or "")
+        )
+    except ValueError as exc:
+        raise CLIError(str(exc), code=EXIT_USAGE) from exc
+
+
+def _validate_positive_integer_options(options: dict) -> None:
     numeric_flags = (
         "layout_target_columns",
         "sppm_max_label_step_name",
@@ -40,23 +51,16 @@ def validate_sppm_numeric_render_options(options: dict | None) -> None:
     )
 
     for flag in numeric_flags:
-        if flag not in opts:
+        if flag not in options:
             continue
-        raw_value = opts.get(flag)
+        raw_value = options.get(flag)
         if raw_value is None:
             parsed = 0
-            if parsed <= 0:
-                cli_flag = f"--{flag.replace('_', '-')}"
-                raise CLIError(
-                    f"Invalid value for {cli_flag}: expected a positive integer.",
-                    code=EXIT_USAGE,
-                )
-            continue
-        try:
-            parsed = int(raw_value)
-        except TypeError, ValueError:
-            parsed = 0
-
+        else:
+            try:
+                parsed = int(raw_value)
+            except TypeError, ValueError:
+                parsed = 0
         if parsed <= 0:
             cli_flag = f"--{flag.replace('_', '-')}"
             raise CLIError(

@@ -249,18 +249,20 @@ def _merge_render_intent_options(*, ir: IR, options: dict | None) -> dict | None
 def _parse_compile_validate(
     content: str, source_path: str | None = None
 ) -> tuple[IR, SourceComposition]:
-    from flo.source.diagnostics import source_aware_message
+    from flo.source.diagnostics import source_diagnostic
 
     try:
         adapter_model = parse_adapter(content, source_path=source_path)
     except Exception as exc:
-        message = source_aware_message(
+        diagnostic = source_diagnostic(
             str(exc),
             content=content,
             source_path=source_path,
             cause=exc,
         )
-        raise ParseError(message, error_stage="parse") from exc
+        error = ParseError(diagnostic.render(), error_stage="parse")
+        error.diagnostic = diagnostic
+        raise error from exc
 
     composition = (
         pop_source_composition(adapter_model, source_path=source_path)
@@ -272,32 +274,52 @@ def _parse_compile_validate(
     try:
         ir = compile_adapter(adapter_model)
     except Exception as exc:
-        raise CompileError(str(exc), error_stage="compile") from exc
+        diagnostic = source_diagnostic(
+            str(exc), content=content, source_path=source_path, cause=exc
+        )
+        error = CompileError(diagnostic.render(), error_stage="compile")
+        error.diagnostic = diagnostic
+        raise error from exc
 
     try:
         validate_ir(ir)
     except ValidationError as exc:
-        if getattr(exc, "error_stage", None) is None:
-            exc.error_stage = "validate"
-        message = source_aware_message(
+        error_stage = getattr(exc, "error_stage", None) or "validate"
+        diagnostic = source_diagnostic(
             str(exc),
             content=content,
             source_path=source_path,
             cause=exc,
         )
-        raise ValidationError(message, error_stage=exc.error_stage) from exc
+        error = ValidationError(diagnostic.render(), error_stage=error_stage)
+        error.diagnostic = diagnostic
+        raise error from exc
     except Exception as exc:
-        raise ValidationError(str(exc), error_stage="validate") from exc
+        diagnostic = source_diagnostic(
+            str(exc), content=content, source_path=source_path, cause=exc
+        )
+        error = ValidationError(diagnostic.render(), error_stage="validate")
+        error.diagnostic = diagnostic
+        raise error from exc
 
     if isinstance(ir, IR):
         try:
             ensure_schema_aligned(ir)
         except ValidationError as exc:
-            if getattr(exc, "error_stage", None) is None:
-                exc.error_stage = "schema_validate"
-            raise
+            error_stage = getattr(exc, "error_stage", None) or "schema_validate"
+            diagnostic = source_diagnostic(
+                str(exc), content=content, source_path=source_path, cause=exc
+            )
+            error = ValidationError(diagnostic.render(), error_stage=error_stage)
+            error.diagnostic = diagnostic
+            raise error from exc
         except Exception as exc:
-            raise ValidationError(str(exc), error_stage="schema_validate") from exc
+            diagnostic = source_diagnostic(
+                str(exc), content=content, source_path=source_path, cause=exc
+            )
+            error = ValidationError(diagnostic.render(), error_stage="schema_validate")
+            error.diagnostic = diagnostic
+            raise error from exc
 
     return ir, composition
 
@@ -441,6 +463,9 @@ def _collect_changed_value_overrides(
         ("layout_wrap", "layout_wrap"),
         ("layout_max_width", "layout_max_width_px"),
         ("layout_target_columns", "layout_target_columns"),
+        ("layout_width", "layout_width"),
+        ("layout_height", "layout_height"),
+        ("layout_overflow", "layout_overflow"),
         ("sppm_label_density", "sppm_label_density"),
         ("sppm_node_numbering", "sppm_step_numbering"),
         ("spaghetti_channel", "spaghetti_channel"),

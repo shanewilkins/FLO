@@ -89,6 +89,14 @@ def test_validate_render_intent_rejects_invalid_view_entries(
             {"layout": {"max_width": 0}},
             "render.defaults.layout.max_width must be positive integer",
         ),
+        (
+            {"layout": {"width": "12pt"}},
+            "render.defaults.layout.width must be a positive dimension",
+        ),
+        (
+            {"layout": {"overflow": "clip"}},
+            "render.defaults.layout.overflow='clip' not supported",
+        ),
         ({"sppm": "bad"}, "render.defaults.sppm must be object"),
         (
             {"sppm": {"label_density": "ultra"}},
@@ -132,7 +140,14 @@ def test_validate_render_intent_accepts_valid_defaults_and_views() -> None:
                     "page_format": "letter",
                     "margins": {"top": 10, "right": 10, "bottom": 10, "left": 10},
                 },
-                "layout": {"wrap": "auto", "max_width": 1200, "target_columns": 4},
+                "layout": {
+                    "wrap": "auto",
+                    "width": "210mm",
+                    "height": "11in",
+                    "overflow": "error",
+                    "max_width": 1200,
+                    "target_columns": 4,
+                },
                 "sppm": {"label_density": "compact", "node_numbering": "visible"},
                 "spaghetti": {
                     "channel": "people",

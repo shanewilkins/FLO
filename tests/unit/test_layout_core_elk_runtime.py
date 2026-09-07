@@ -1,5 +1,6 @@
 import itertools
 import logging
+from typing import Literal, cast
 
 import pytest
 
@@ -38,7 +39,9 @@ def _build_generic_elk_layout_request(
     return build_sppm_elk_layout_request(
         process,
         options=RenderOptions(
-            diagram="sppm", orientation=orientation, layout_fit=layout_fit
+            diagram="sppm",
+            orientation=cast(Literal["lr", "tb"], orientation),
+            layout_fit=cast(Literal["fit-preferred", "fit-strict"], layout_fit),
         ),
     )
 

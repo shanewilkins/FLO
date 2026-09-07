@@ -85,6 +85,37 @@ def test_layout_max_width_cm_dimension_rounds_consistently():
     assert options.layout_max_width_px == 378
 
 
+def test_layout_max_width_mm_dimension_rounds_consistently():
+    options = RenderOptions.from_mapping(
+        {
+            "diagram": "sppm",
+            "layout_max_width_px": "210mm",
+        }
+    )
+
+    assert options.layout_max_width is not None
+    assert options.layout_max_width.unit == "mm"
+    assert options.layout_max_width_px == 794
+
+
+def test_geometry_dimensions_and_overflow_policy_normalize_from_mapping():
+    options = RenderOptions.from_mapping(
+        {
+            "layout_width": "210mm",
+            "layout_height": "11in",
+            "layout_overflow": "scale",
+        }
+    )
+
+    assert options.layout_width_px == 794
+    assert options.layout_height_px == 1056
+    assert options.layout_overflow == "scale"
+
+
+def test_geometry_overflow_defaults_to_error():
+    assert RenderOptions().layout_overflow == "error"
+
+
 @pytest.mark.parametrize("value", ["0cm", "12pt", "wide"])
 def test_layout_max_width_rejects_invalid_dimensions(value: str):
     with pytest.raises(ValueError, match="layout_max_width_px"):

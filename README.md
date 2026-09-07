@@ -18,6 +18,36 @@ Supported platforms and trust assumptions: `docs/SUPPORT.md`
 
 ------------------------------------------------------------------------
 
+## Vision: From Process Documentation To Organizational Observability
+
+FLO's MVP is a way to represent a process clearly: define it in plain text,
+compile it into a canonical graph, validate it, and generate diagrams and
+analysis artifacts. Process models are explicit, versioned, diffable, and
+usable by both people and tools.
+
+Over time, FLO is intended to become a layer of organizational observability.
+The goal is not to replace an ERP, CRM, HRIS, spreadsheet, or the people who
+operate an organization. Those remain the implementation. FLO makes the
+architecture legible around them.
+
+That longer-term model could connect processes to organizational capabilities,
+interfaces, dependencies, ownership, and contracts—making it possible to
+query how work is structured, analyze dependencies and impact, and understand
+how a change may propagate through the organization. In that sense, the
+direction is from documenting individual processes to making the system
+discoverable and organizational change safer.
+
+The principle is:
+
+> Don't build another ERP. Build the layer that makes the organization
+> observable.
+
+The current language and FLO IR are the foundation for that direction. The
+vision is deliberately broader than the current v0.x implementation; current
+capabilities and non-goals are described below.
+
+------------------------------------------------------------------------
+
 ## Development Workflow (uv)
 
 FLO uses `uv` as the canonical developer tool for environment management,

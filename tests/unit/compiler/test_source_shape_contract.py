@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 import pytest
 
 from flo.source import compile_adapter
 
 
-def _model(steps: list[object]) -> dict[str, object]:
+def _model(steps: list[Any]) -> dict[str, Any]:
     return {
         "spec_version": "0.1",
         "process": {"id": "shape_contract", "name": "Shape Contract"},
@@ -32,11 +34,9 @@ def _model(steps: list[object]) -> dict[str, object]:
         ),
     ],
 )
-def test_compile_rejects_malformed_step_shape(
-    steps: list[object], message: str
-) -> None:
+def test_compile_rejects_malformed_step_shape(steps: list[Any], message: str) -> None:
     with pytest.raises(ValueError, match=message):
-        compile_adapter(_model(steps))
+        compile_adapter(cast(Any, _model(steps)))
 
 
 def test_compile_rejects_duplicate_ids_across_subprocess_hierarchy() -> None:
@@ -50,7 +50,7 @@ def test_compile_rejects_duplicate_ids_across_subprocess_hierarchy() -> None:
     ]
 
     with pytest.raises(ValueError, match="duplicate step id 'work'"):
-        compile_adapter(_model(steps))
+        compile_adapter(cast(Any, _model(steps)))
 
 
 def test_compile_rejects_nested_steps_on_non_subprocess() -> None:
@@ -63,4 +63,4 @@ def test_compile_rejects_nested_steps_on_non_subprocess() -> None:
     ]
 
     with pytest.raises(ValueError, match="only for kind 'subprocess'"):
-        compile_adapter(_model(steps))
+        compile_adapter(cast(Any, _model(steps)))

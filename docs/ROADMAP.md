@@ -27,8 +27,6 @@ The 0.4 MVP is cumulative across the 0.2 through 0.4 release path. It includes:
 - maintained direct-SVG SPPM, swimlane, spaghetti, and value-stream-map
   surfaces
 - static analysis for timing, handoffs, rework, path length, and step classification
-- the minimum telemetry event schema, model-to-trace identity rules,
-  canonical trace import, trace-alignment prototypes, and conformance fixtures
 - a concise onboarding path and maintained reference documentation
 
 MVP acceptance includes an observed first-run journey: a representative
@@ -36,12 +34,12 @@ process-improvement professional can install FLO, create a valid three-to-five
 step process, validate it, render a readable SVG, and export canonical JSON in
 about ten minutes using only the maintained onboarding path.
 
-If 0.4 capacity forces a scope tradeoff, this complete authoring journey takes
-precedence over telemetry alignment. Telemetry work may move to its next
-roadmap stage rather than allowing 0.4 to meet technical component goals without
-being viable for its intended users.
+If release capacity creates a tradeoff, this complete authoring journey takes
+precedence over telemetry work. Process telemetry is therefore deferred to its
+0.5 operational workflow rather than becoming a partial 0.4 MVP surface.
 
-The 0.4 MVP does not require the 0.5 telemetry-analysis surface, every optional
+The 0.4 MVP does not require process-telemetry import, alignment, or analysis;
+those operational workflows begin in 0.5. It also does not require every optional
 publication enhancement within the 0.4 renderer milestone, the 1.0
 language and CLI freeze, or the 1.0 packaging and support guarantees.
 
@@ -161,7 +159,31 @@ Before 1.0, FLO will document:
   reject broken row-boundary routing and protect the book-consumed artifact
   from hand edits or baseline drift.
 
-### 0.4: Renderer Stabilization
+### 0.4: Completed Increments
+
+- [Implemented] Preserve omitted queue-wait timing as absent and render an
+  explicitly measured zero queue wait as `WT: 0 min` in maintained SPPM output.
+- [Implemented] Provide a maintained scaffold command with linear-flow,
+  decision, handoff, rework, and value-stream templates; explicit stable IDs;
+  template listing; target preview; and explicit overwrite acknowledgement.
+- [Implemented] Add typed source diagnostics for parser, compiler, and
+  validator failures, with stable codes, source excerpts, field paths, targeted
+  repair suggestions where available, composition include chains, and `flo
+  validate --format json` output generated from the same record as
+  human-readable diagnostics.
+- [Implemented] Document the isolated `uv tool install flo-lang` first-run path
+  and rehearse scaffold, validation, default SVG render, and canonical JSON
+  export in an isolated temporary workspace.
+- [Implemented] Expose the lightweight `flo` Python facade with exception-free
+  typed results for parse, compile, validate, inspect, and export operations.
+- [Implemented] Resolve direct-SVG geometry requests with inspectable natural,
+  requested, and final bounds; fail overflowing exact requests by default and
+  support explicit canvas expansion without rescaling or clipping diagram
+  coordinates.
+- [Implemented] Support explicit direct-SVG scale-down-to-fit with uniform
+  aspect preservation; scaling never enlarges a smaller natural diagram.
+
+### 0.4: Remaining Renderer Stabilization And MVP Delivery
 
 - Preserve omitted, invalid, unavailable, and measured-zero timing as distinct
   states across validation, static analysis, and maintained renderers; remove
@@ -172,11 +194,12 @@ Before 1.0, FLO will document:
 - Complete the accepted multi-page SPPM publication boundary, including Typst
   composition, stable step references, continuation anchors, child maps,
   deterministic warnings, and strict-mode failures.
-- Resolve and implement the proposed exact and bounded render-geometry contract,
+- Implement the accepted exact and bounded render-geometry contract,
   including unit-bearing width and height, page orientation, margins, scaling,
   and explicit overflow behavior, before multi-page publication acceptance.
-- Move SPPM, swimlane, spaghetti, and value stream maps to the stable renderer
-  tier.
+- Move SPPM, swimlane, and spaghetti maps to the stable renderer tier.
+- Retain value stream as a maintained direct-SVG renderer; defer its stable-tier
+  style, accessibility, and release-corpus promotion work to 0.5.
 - Add visual-invariant coverage for node-label legibility, overlap, clipping, and
   lane-frame containment on top of the established deterministic and golden-artifact gates.
 - Publish the renderer capability matrix and renderer compatibility guarantees.
@@ -185,7 +208,7 @@ Before 1.0, FLO will document:
 - Deliver a deterministic review bundle containing selected visuals, canonical
   JSON, provenance, model identity, and warnings.
 
-### 0.5: Telemetry Model And MVP
+### 0.5: Telemetry Foundation And Measurement Model
 
 - Replace scalar duration metadata with the producer-neutral measurement-profile
   contract across source, canonical IR, schema, validation, deterministic JSON,
@@ -193,18 +216,20 @@ Before 1.0, FLO will document:
 - Deliver explicit primary-display and modeled-analysis selectors plus compact
   and lossless machine-readable profile projections; do not infer a preferred
   statistic or retrieve referenced evidence.
-- Deliver the end-user installation, scaffold/template, diagnostic, default
-  rendering, and public Python API baseline required by the MVP journey.
-- Validate the first-run time-to-model acceptance boundary with a representative
-  process-improvement user and a fresh environment.
+- Complete value-stream-map stable-tier style, accessibility, and release-corpus
+  promotion while retaining its established material, information, and
+  partial-data semantics.
 - Publish and validate `schema/flo_trace.json` and the normative event
   semantics.
 - Deliver local, explicit canonical trace import, deterministic
   observed-event-to-model alignment, and conformance fixtures without mutating
   canonical designed-process IR.
-- Enforce the telemetry privacy defaults for validation, alignment, logging,
-  runtime spans, and persisted outputs.
-- Demonstrate the cumulative MVP acceptance boundary defined above.
+- Enforce the telemetry privacy defaults for trace validation, import, and
+  alignment, including local-first operation, no default network egress, no raw
+  attributes in diagnostics or ordinary artifacts, explicit persistence
+  destinations, and fail-closed privacy modes.
+- Deliver aggregate transition frequency, dwell or wait, and rework analysis
+  over aligned observations without feeding inferred values into canonical IR.
 
 ### 0.6: Telemetry Analysis
 

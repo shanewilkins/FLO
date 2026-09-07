@@ -13,7 +13,7 @@ class TestRenderIntent:
         """RenderIntent should be frozen (immutable)."""
         intent = RenderIntent(diagram="sppm")
         with pytest.raises(AttributeError):
-            intent.diagram = "spaghetti"
+            intent.diagram = "spaghetti"  # ty: ignore[invalid-assignment]
 
     def test_render_intent_all_fields_optional(self):
         """RenderIntent should support partial initialization."""
@@ -238,6 +238,25 @@ class TestRenderIntentResolverViewIntent:
         assert intent.layout_wrap == "manual"
         assert intent.layout_max_width == 1200
         assert intent.layout_target_columns == 8
+
+    def test_geometry_layout_config_and_cli_overrides_resolve(self):
+        intent = RenderIntentResolver.resolve(
+            render_metadata={
+                "defaults": {
+                    "layout": {
+                        "width": "210mm",
+                        "height": "11in",
+                        "overflow": "expand",
+                    }
+                }
+            },
+            cli_overrides={"layout_width": "8.5in", "layout_overflow": "scale"},
+            profile="default",
+        )
+
+        assert intent.layout_width == "8.5in"
+        assert intent.layout_height == "11in"
+        assert intent.layout_overflow == "scale"
 
     def test_nested_sppm_config_flattened(self):
         """Should flatten nested SPPM config."""

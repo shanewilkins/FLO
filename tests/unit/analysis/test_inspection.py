@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from typing import Any, cast
 
 import pytest
 
@@ -129,7 +130,7 @@ def test_spaghetti_readiness_checks_inferred_routes_and_spatial_data(
 
 def test_inspection_requires_canonical_ir() -> None:
     with pytest.raises(TypeError, match="requires canonical IR"):
-        inspect_process_model({})  # type: ignore[arg-type]
+        inspect_process_model(cast(Any, {}))  # type: ignore[arg-type]
 
 
 def _inspectable_process() -> IR:

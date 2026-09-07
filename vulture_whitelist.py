@@ -3,9 +3,11 @@
 Keep this file minimal and remove entries as soon as code no longer needs them.
 """
 
-_ = object()
+from typing import Any
 
-_.decorator_list  # unused attribute (ast node normalization assignment)
-_.returns  # unused attribute (ast node normalization assignment)
-_.inspect_cmd  # Click registers this command through a decorator
-_.start_end  # dataclass field is consumed through dynamic theme adaptation
+_dummy: Any = object()
+
+_dummy.decorator_list  # noqa: B018 - unused attribute (ast node normalization assignment)
+_dummy.returns  # noqa: B018 - unused attribute (ast node normalization assignment)
+_dummy.inspect_cmd  # noqa: B018 - Click registers this command through a decorator
+_dummy.start_end  # noqa: B018 - dataclass field is consumed through dynamic theme adaptation

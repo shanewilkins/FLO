@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any, cast
 
 import pytest
 
@@ -67,7 +68,8 @@ def test_theme_inheritance_is_partial_and_immutable() -> None:
     assert theme.role("va").fill == "#B8E6C1"
     assert theme.role("rnva").fill == "#FFF176"
     with pytest.raises(TypeError):
-        theme.roles["va"] = theme.role("rnva")  # type: ignore[index]
+        roles = cast(Any, theme.roles)
+        roles["va"] = theme.role("rnva")
 
 
 @pytest.mark.parametrize(

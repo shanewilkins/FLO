@@ -1,6 +1,7 @@
 import importlib
 import sys
 import types
+from typing import Any, cast
 
 
 def test_adapters_models_pydantic_branch(monkeypatch):
@@ -16,7 +17,7 @@ def test_adapters_models_pydantic_branch(monkeypatch):
         def model_validate(cls, data):
             return cls(**data)
 
-    fake_pyd.BaseModel = FakeBaseModel
+    cast(Any, fake_pyd).BaseModel = FakeBaseModel
 
     orig = sys.modules.get("pydantic")
     sys.modules["pydantic"] = fake_pyd

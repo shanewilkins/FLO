@@ -179,6 +179,37 @@ def test_node_svg_queue_renders_wait_time_line() -> None:
     assert svg.index('data-node-queue-color-band="true"') < svg.index("Prep Queue")
 
 
+def test_node_svg_queue_distinguishes_missing_and_zero_wait_time() -> None:
+    node = SimpleNamespace(id="q1", kind="queue", label="Prep Queue")
+    options = RenderOptions(diagram="sppm")
+
+    missing_svg = "".join(
+        _node_svg(
+            node=node,
+            raw_node={"metadata": {}},
+            options=options,
+            x=20.0,
+            y=30.0,
+            width=160.0,
+            height=160.0,
+        )
+    )
+    zero_svg = "".join(
+        _node_svg(
+            node=node,
+            raw_node={"metadata": {"wait_time": {"value": 0, "unit": "min"}}},
+            options=options,
+            x=20.0,
+            y=30.0,
+            width=160.0,
+            height=160.0,
+        )
+    )
+
+    assert "WT:" not in missing_svg
+    assert "WT: 0 min" in zero_svg
+
+
 def test_node_svg_task_uses_larger_body_text() -> None:
     node = SimpleNamespace(id="t1", kind="task", label="Mix Dough")
     raw_node = {

@@ -26,7 +26,11 @@ def test_value_stream_projection_separates_item_kinds_and_reuses_timing() -> Non
 
 def test_value_stream_projection_reports_absent_surface_without_inventing_it() -> None:
     process = _dual_flow_process()
-    process.items = [item for item in process.items if item["kind"] == "material"]
+    process.items = [
+        item
+        for item in (process.items or [])
+        if isinstance(item, dict) and item.get("kind") == "material"
+    ]
 
     projection = project_value_stream(process)
 
@@ -46,7 +50,11 @@ def test_value_stream_inspection_readiness_tracks_projection_surfaces() -> None:
         requested_diagram="value_stream",
         supported_diagrams=("value_stream",),
     )
-    process.items = [item for item in process.items if item["kind"] == "material"]
+    process.items = [
+        item
+        for item in (process.items or [])
+        if isinstance(item, dict) and item.get("kind") == "material"
+    ]
     partial = inspect_process_model(
         process,
         requested_diagram="value_stream",

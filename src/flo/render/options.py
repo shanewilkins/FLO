@@ -23,22 +23,24 @@ SppmThemeName = str
 LayoutWrap = Literal["auto", "off"]
 LayoutFit = Literal["fit-preferred", "fit-strict"]
 LayoutSpacing = Literal["standard", "compact"]
+LayoutOverflow = Literal["error", "expand", "scale", "paginate"]
 SppmStepNumbering = Literal["off", "node", "edge"]
 SppmLabelDensity = Literal["full", "compact", "teaching"]
 SppmWrapStrategy = Literal["word", "balanced", "hard"]
 SppmTruncationPolicy = Literal["ellipsis", "clip", "none"]
 SppmOutputProfile = Literal["default", "book", "web", "print", "slide"]
 PublicationPageFormatName = Literal["letter", "a4", "legal", "tabloid"]
-DimensionUnit = Literal["px", "in", "cm"]
+DimensionUnit = Literal["px", "in", "cm", "mm"]
 RenderBackend = Literal["svg"]
 
 _DIMENSION_TO_PX: dict[str, float] = {
     "px": 1.0,
     "in": 96.0,
     "cm": 96.0 / 2.54,
+    "mm": 96.0 / 25.4,
 }
 _DIMENSION_RE = re.compile(
-    r"^(?P<value>(?:\d+(?:\.\d+)?|\.\d+))\s*(?P<unit>px|in|cm)?$"
+    r"^(?P<value>(?:\d+(?:\.\d+)?|\.\d+))\s*(?P<unit>px|in|cm|mm)?$"
 )
 
 _SPPM_PROFILE_DEFAULTS: dict[str, dict[str, Any]] = {
@@ -95,7 +97,7 @@ class Dimension:
 
 
 def parse_dimension(value: Any) -> Dimension | None:
-    """Parse a positive dimension in px, in, or cm."""
+    """Parse a positive dimension in px, in, cm, or mm."""
     if value is None or isinstance(value, bool):
         return None
     if isinstance(value, Dimension):
@@ -151,6 +153,7 @@ class RenderOptions:
     layout_wrap: LayoutWrap = "off"
     layout_fit: LayoutFit = "fit-preferred"
     layout_spacing: LayoutSpacing = "standard"
+    layout_overflow: LayoutOverflow = "error"
     sppm_step_numbering: SppmStepNumbering = "off"
     sppm_label_density: SppmLabelDensity = "full"
     sppm_wrap_strategy: SppmWrapStrategy = "word"
@@ -159,6 +162,10 @@ class RenderOptions:
     sppm_show_header: bool = True
     sppm_show_footer: bool = True
     publication_page_format: PublicationPageFormatName | None = None
+    layout_width: Dimension | None = None
+    layout_height: Dimension | None = None
+    layout_width_px: int | None = None
+    layout_height_px: int | None = None
     layout_max_width: Dimension | None = None
     layout_max_width_px: int | None = None
     layout_target_columns: int | None = None
@@ -196,6 +203,12 @@ class RenderOptions:
             "layout_max_width_px",
             effective_options.get("layout_max_width_px"),
         )
+        layout_width = _parse_dimension_option(
+            "layout_width", effective_options.get("layout_width")
+        )
+        layout_height = _parse_dimension_option(
+            "layout_height", effective_options.get("layout_height")
+        )
 
         return cls(
             diagram=_parse_diagram(effective_options),
@@ -232,6 +245,7 @@ class RenderOptions:
             layout_wrap=_parse_layout_wrap(effective_options),
             layout_fit=_parse_layout_fit(effective_options),
             layout_spacing=_parse_layout_spacing(effective_options),
+            layout_overflow=_parse_layout_overflow(effective_options),
             sppm_step_numbering=_parse_sppm_step_numbering(effective_options),
             sppm_label_density=_parse_sppm_label_density(effective_options),
             sppm_wrap_strategy=_parse_sppm_wrap_strategy(effective_options),
@@ -246,6 +260,10 @@ class RenderOptions:
                 or _parse_bool(effective_options.get("sppm_no_footer", False))
             ),
             publication_page_format=_parse_publication_page_format(effective_options),
+            layout_width=layout_width,
+            layout_height=layout_height,
+            layout_width_px=layout_width.to_px() if layout_width else None,
+            layout_height_px=layout_height.to_px() if layout_height else None,
             layout_max_width=layout_max_width,
             layout_max_width_px=layout_max_width.to_px() if layout_max_width else None,
             layout_target_columns=_parse_positive_int(
@@ -451,6 +469,13 @@ def _parse_layout_spacing(options: Mapping[str, Any]) -> LayoutSpacing:
     return "standard"
 
 
+def _parse_layout_overflow(options: Mapping[str, Any]) -> LayoutOverflow:
+    raw = _normalized_option(options, "layout_overflow", "error")
+    if raw in {"expand", "scale", "paginate"}:
+        return cast(LayoutOverflow, raw)
+    return "error"
+
+
 def _parse_sppm_step_numbering(options: Mapping[str, Any]) -> SppmStepNumbering:
     raw = _normalized_option(options, "sppm_step_numbering", "off")
     if raw in {"node", "nodes"}:
@@ -536,7 +561,7 @@ def _parse_dimension_option(option_name: str, value: Any) -> Dimension | None:
     parsed = parse_dimension(value)
     if parsed is None:
         raise ValueError(
-            f"Invalid value for {option_name}: expected a positive dimension using px, in, or cm."
+            f"Invalid value for {option_name}: expected a positive dimension using px, in, cm, or mm."
         )
     return parsed
 

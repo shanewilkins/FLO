@@ -29,6 +29,7 @@ class DomainError(Exception):
     """
 
     exit_code: int = EXIT_USAGE
+    diagnostic: object | None = None
 
     def __init__(
         self,

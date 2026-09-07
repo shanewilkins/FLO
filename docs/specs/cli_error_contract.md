@@ -88,6 +88,10 @@ Human stderr and machine-readable output must be generated from the same typed
 record so automation does not need to scrape prose. Sensitive telemetry input
 and raw attributes remain excluded under the telemetry privacy policy.
 
+`flo validate --format json` emits this record as deterministic JSON through
+the diagnostic stream. The default `--format text` renders the same record in
+the compiler-style source excerpt format.
+
 ## Projection capability diagnostics
 
 Unsupported diagram/backend projection requests are usage errors and must:

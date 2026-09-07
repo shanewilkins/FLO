@@ -35,6 +35,15 @@ class SourceComposition:
 _COMPOSITION_CONTEXT_KEY = "__flo_composition_context__"
 
 
+class IncludeError(ValueError):
+    """Include-resolution failure with the attempted source chain."""
+
+    def __init__(self, message: str, *, include_chain: tuple[str, ...]) -> None:
+        """Create an include error with the source chain that was attempted."""
+        super().__init__(f"E0002: {message}")
+        self.include_chain = include_chain
+
+
 def resolve_includes(
     document: dict[str, Any],
     source_path: str | None = None,
@@ -60,7 +69,7 @@ def resolve_includes(
     composed = _compose_document(
         document=document,
         current_path=root_path,
-        include_stack=[],
+        include_stack=[root_path] if root_path is not None else [],
         context=context,
         depth=0,
     )
@@ -106,17 +115,28 @@ def _compose_document(
     composed: dict[str, Any] = {}
 
     for include_ref in include_paths:
-        include_path = _resolve_include_path(
-            include_ref=include_ref,
-            current_path=current_path,
-            root_dir=context.root_dir,
-        )
-        include_doc = _load_include_mapping(
-            include_path=include_path,
-            include_stack=include_stack,
-            context=context,
-            depth=depth + 1,
-        )
+        include_chain = tuple(str(path) for path in include_stack)
+        try:
+            include_path = _resolve_include_path(
+                include_ref=include_ref,
+                current_path=current_path,
+                root_dir=context.root_dir,
+            )
+        except ValueError as exc:
+            raise IncludeError(
+                str(exc), include_chain=(*include_chain, include_ref)
+            ) from exc
+        try:
+            include_doc = _load_include_mapping(
+                include_path=include_path,
+                include_stack=include_stack,
+                context=context,
+                depth=depth + 1,
+            )
+        except ValueError as exc:
+            raise IncludeError(
+                str(exc), include_chain=(*include_chain, str(include_path))
+            ) from exc
         nested = _compose_document(
             document=include_doc,
             current_path=include_path,

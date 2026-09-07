@@ -544,9 +544,7 @@ def _format_time_width_field_from_minutes(
     require_positive: bool = False,
 ) -> str:
     """Format time field from numeric minutes (wait_time)."""
-    if not isinstance(minutes, (int, float)) or minutes <= 0:
-        return ""
-    if require_positive and minutes <= 0:
+    if not isinstance(minutes, (int, float)) or (require_positive and minutes < 0):
         return ""
     # Format as int if it's a whole number, otherwise as float
     value_str = (
