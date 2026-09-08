@@ -100,7 +100,9 @@ def test_build_publication_band_context_supports_page_parent_child_and_continuat
             "parent_series_id": "main",
             "source_node_id": "prep",
             "continuation_from": "main-p1",
+            "continuation_from_step": "review",
             "continuation_to": "child-series-p3",
+            "continuation_to_step": "approve",
         }
     )
 
@@ -110,7 +112,9 @@ def test_build_publication_band_context_supports_page_parent_child_and_continuat
         ("Parent Map", "main"),
         ("Child Map", "prep"),
         ("Continues From", "main-p1"),
+        ("Continues From Step", "review"),
         ("Continues To", "child-series-p3"),
+        ("Continues To Step", "approve"),
     )
 
 
@@ -523,6 +527,47 @@ def test_build_sppm_publication_plan_uses_typed_timing_analysis_for_footer():
         ("Lead Time", "16 min"),
     )
     assert footer.content.notes == ()
+
+
+def test_build_sppm_publication_footer_omits_absent_categories_and_keeps_zero():
+    process = IR(
+        name="Measured Zero Queue",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(
+                id="work",
+                type="task",
+                attrs={"metadata": {"cycle_time": {"value": 2, "unit": "min"}}},
+            ),
+            Node(
+                id="queue",
+                type="queue",
+                attrs={"metadata": {"wait_time": {"value": 0, "unit": "min"}}},
+            ),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="work"),
+            Edge(source="work", target="queue"),
+            Edge(source="queue", target="end"),
+        ],
+    )
+    nodes = [{"id": node.id, "kind": node.type} for node in process.nodes]
+
+    plan = build_sppm_publication_plan(
+        process=process,
+        options=RenderOptions(diagram="sppm"),
+        nodes=nodes,
+        edges=[],
+    )
+
+    footer = plan.primary_series().pages[0].band("footer")
+    assert footer is not None
+    assert footer.content.rows == (
+        ("Cycle Time", "2 min"),
+        ("Waiting Time", "0 min"),
+        ("Lead Time", "2 min"),
+    )
 
 
 def test_build_sppm_publication_plan_reports_alternative_lead_time_range():

@@ -353,6 +353,12 @@ def build_publication_band_context(
     source_node_id = _normalized_context_value(metadata.get("source_node_id"))
     continuation_from = _normalized_context_value(metadata.get("continuation_from"))
     continuation_to = _normalized_context_value(metadata.get("continuation_to"))
+    continuation_from_step = _normalized_context_value(
+        metadata.get("continuation_from_step")
+    )
+    continuation_to_step = _normalized_context_value(
+        metadata.get("continuation_to_step")
+    )
 
     if page_number is not None and page_count is not None and page_count > 1:
         rows.append(("Page", f"{page_number}/{page_count}"))
@@ -364,8 +370,12 @@ def build_publication_band_context(
         rows.append(("Child Map", source_node_id))
     if continuation_from:
         rows.append(("Continues From", continuation_from))
+    if continuation_from_step:
+        rows.append(("Continues From Step", continuation_from_step))
     if continuation_to:
         rows.append(("Continues To", continuation_to))
+    if continuation_to_step:
+        rows.append(("Continues To Step", continuation_to_step))
     return tuple(rows)
 
 

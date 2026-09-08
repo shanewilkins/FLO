@@ -257,11 +257,13 @@ def _run_typst_publication_output(
             error_stage="option_validation",
         )
     artifact = render_sppm_typst_publication_artifact(ir, render_options)
+    warning = artifact.metadata.get("warning")
+    warning_text = warning.strip() if isinstance(warning, str) else ""
     render_to = (resolved_options or {}).get("render_to")
     if isinstance(render_to, str) and render_to:
         _write_render_artifact(artifact=artifact, render_to=render_to, contract=None)
-        return EXIT_SUCCESS, "", ""
-    return EXIT_SUCCESS, artifact.content, ""
+        return EXIT_SUCCESS, "", warning_text
+    return EXIT_SUCCESS, artifact.content, warning_text
 
 
 def _merge_render_intent_options(*, ir: IR, options: dict | None) -> dict | None:

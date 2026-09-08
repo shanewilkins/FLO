@@ -1,5 +1,8 @@
 from typing import Any
 
+import pytest
+
+from flo.errors import RenderError
 from flo.render._publication import (
     PublicationBandContent,
     PublicationBounds,
@@ -101,13 +104,116 @@ def test_build_sppm_publication_plan_paginates_with_stable_figure_references():
     ]
     assert pages[0].figures[0].source_node_ids == ("start", "prep", "a")
     assert pages[1].metadata["continuation_from"] == "main-p1"
+    assert pages[1].metadata["continuation_from_step"] == "a"
     assert pages[1].metadata["continuation_to"] == "main-p3"
+    assert pages[1].metadata["continuation_to_step"] == "e"
     assert pages[2].figures[0].source_node_ids == ("e", "end")
     typst = emit_typst_publication(plan)
     assert typst.count("#pagebreak()") == 2
     assert 'asset_path: "main-p2.svg"' in typst
     assert "*Steps:* start, prep, a" in typst
     assert "*Continues From:* main-p1" in typst
+    assert "*Continues From Step:* a" in typst
+    assert "*Continues To Step:* e" in typst
+
+
+def test_sppm_pagination_uses_semantic_path_order_not_declaration_order():
+    process, nodes, edges = _publication_process()
+    reordered_nodes = [nodes[index] for index in (5, 0, 3, 7, 1, 6, 2, 4)]
+
+    plan = build_sppm_publication_plan(
+        process=process,
+        options=RenderOptions.from_mapping(
+            {
+                "diagram": "sppm",
+                "layout_overflow": "paginate",
+                "layout_target_columns": 3,
+            }
+        ),
+        nodes=reordered_nodes,
+        edges=edges,
+    )
+
+    assert [page.metadata["node_ids"] for page in plan.primary_series().pages] == [
+        ("start", "prep", "a"),
+        ("b", "c", "d"),
+        ("e", "end"),
+    ]
+
+
+def test_non_linear_pagination_falls_back_with_warning():
+    nodes = [
+        {"id": "start", "kind": "start"},
+        {"id": "choice", "kind": "decision"},
+        {"id": "left", "kind": "task"},
+        {"id": "right", "kind": "task"},
+        {"id": "end", "kind": "end"},
+    ]
+    edges = [
+        {"source": "start", "target": "choice"},
+        {"source": "choice", "target": "left"},
+        {"source": "choice", "target": "right"},
+        {"source": "left", "target": "end"},
+        {"source": "right", "target": "end"},
+    ]
+
+    plan = build_sppm_publication_plan(
+        process={"process": {"id": "branch", "name": "Branch"}},
+        options=RenderOptions.from_mapping(
+            {
+                "diagram": "sppm",
+                "layout_overflow": "paginate",
+                "layout_target_columns": 2,
+            }
+        ),
+        nodes=nodes,
+        edges=edges,
+    )
+
+    assert len(plan.primary_series().pages) == 1
+    assert plan.metadata["publication_diagnostics"] == (
+        {
+            "code": "publication-pagination-fallback",
+            "severity": "warning",
+            "message": (
+                "Requested publication pagination fell back to a single page "
+                "because cross-page continuation is ambiguous for non-linear flow."
+            ),
+            "requested_mode": "paginate",
+            "effective_mode": "single_page",
+            "fallback_reason": "ambiguous-non-linear-continuation",
+            "strict": False,
+        },
+    )
+
+
+def test_non_linear_pagination_fails_in_strict_mode():
+    nodes = [
+        {"id": "start", "kind": "start"},
+        {"id": "choice", "kind": "decision"},
+        {"id": "left", "kind": "end"},
+        {"id": "right", "kind": "end"},
+    ]
+    edges = [
+        {"source": "start", "target": "choice"},
+        {"source": "choice", "target": "left"},
+        {"source": "choice", "target": "right"},
+    ]
+
+    with pytest.raises(RenderError, match="ambiguous for non-linear flow"):
+        build_sppm_publication_plan(
+            process={"process": {"id": "branch", "name": "Branch"}},
+            options=RenderOptions.from_mapping(
+                {
+                    "diagram": "sppm",
+                    "layout_overflow": "paginate",
+                    "layout_target_columns": 2,
+                    "layout_fit": "fit-strict",
+                }
+            ),
+            nodes=nodes,
+            edges=edges,
+        )
 
 
 def test_render_sppm_typst_publication_artifact_exposes_plan_identity():

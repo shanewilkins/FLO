@@ -188,8 +188,8 @@ def _format_modeled_lead_time(result: ProcessTimingAnalysis) -> str:
     return "unavailable"
 
 
-def _format_duration(seconds: float) -> str:
-    if not isfinite(seconds):
+def _format_duration(seconds: float | None) -> str:
+    if seconds is None or not isfinite(seconds):
         return "unavailable"
     if seconds == 0:
         return "0 min"

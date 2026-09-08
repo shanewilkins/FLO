@@ -39,7 +39,7 @@ def test_washnfold_timing_has_complete_single_path_lead_time() -> None:
     assert result.process_name == "Wash n' Fold"
     assert result.declared_totals.cycle_time_seconds == 105 * 60
     assert result.declared_totals.wait_time_seconds == 95 * 60
-    assert result.declared_totals.changeover_time_seconds == 0
+    assert result.declared_totals.changeover_time_seconds is None
     assert result.modeled_lead_time_seconds == 200 * 60
     assert result.minimum_path_lead_time_seconds == 200 * 60
     assert result.maximum_path_lead_time_seconds == 200 * 60
@@ -217,6 +217,55 @@ def test_missing_expected_timing_marks_path_incomplete() -> None:
     assert [diagnostic.code for diagnostic in result.diagnostics] == [
         "timing-incomplete"
     ]
+
+
+def test_timing_distinguishes_omitted_wait_from_measured_zero() -> None:
+    def timing_result(wait_time: dict[str, int | str] | None):
+        metadata = {} if wait_time is None else {"wait_time": wait_time}
+        process = IR(
+            name="queue timing",
+            nodes=[
+                Node(id="start", type="start"),
+                Node(id="queue", type="queue", attrs={"metadata": metadata}),
+                Node(id="end", type="end"),
+            ],
+            edges=[
+                Edge(source="start", target="queue"),
+                Edge(source="queue", target="end"),
+            ],
+        )
+        validate_ir(process)
+        return analyze_process_timing(process)
+
+    omitted = timing_result(None)
+    measured_zero = timing_result({"value": 0, "unit": "min"})
+
+    assert omitted.declared_totals.wait_time_seconds is None
+    assert measured_zero.declared_totals.wait_time_seconds == 0
+
+
+def test_complete_paths_without_timing_evidence_have_no_lead_time_range() -> None:
+    process = IR(
+        name="untimed alternatives",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="choice", type="decision"),
+            Node(id="left", type="end"),
+            Node(id="right", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="choice"),
+            Edge(source="choice", target="left"),
+            Edge(source="choice", target="right"),
+        ],
+    )
+
+    result = analyze_process_timing(process)
+
+    assert all(path.complete for path in result.paths)
+    assert result.modeled_lead_time_seconds is None
+    assert result.minimum_path_lead_time_seconds is None
+    assert result.maximum_path_lead_time_seconds is None
 
 
 def test_ambiguous_changeover_aliases_use_documented_precedence() -> None:

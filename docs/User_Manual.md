@@ -1054,6 +1054,10 @@ Diagram render options:
 
 - With `--export svg`, FLO writes maintained direct SVG to the target `.svg` file.
 - With `--export typst --diagram sppm`, FLO writes Typst source to the target `.typ` file and page-local SVG figure assets beside it.
+- Typst pagination currently splits only one unambiguous linear path. Page bands
+  identify both the adjacent page and boundary step. A branching, cyclic, or
+  otherwise non-linear map stays on one page with a warning under
+  `fit-preferred`; `--layout-fit fit-strict` rejects the ambiguous request.
 - Raster and PDF output are not emitted directly by FLO; convert SVG with an external tool if needed.
 
 Examples:

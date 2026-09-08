@@ -24,8 +24,8 @@ The 0.4 MVP is cumulative across the 0.2 through 0.4 release path. It includes:
   workflow
 - a supported public Python integration baseline for downstream tools such as
   `lss4py`
-- maintained direct-SVG SPPM, swimlane, spaghetti, and value-stream-map
-  surfaces
+- a maintained direct-SVG SPPM surface, with swimlane and spaghetti retained
+  for Yellow Belt material and value stream retained for Green Belt material
 - static analysis for timing, handoffs, rework, path length, and step classification
 - a concise onboarding path and maintained reference documentation
 
@@ -58,8 +58,7 @@ At 1.0, the following public contracts are stable:
   namespaces, and version-migration behavior.
 - Direct SVG and JSON artifact reproducibility on the supported CI platform.
 - Telemetry event schema and model-to-trace alignment workflow.
-- Stable renderer contracts for SPPM, swimlane, spaghetti, and value stream
-  maps.
+- The stable SPPM renderer contract.
 
 For direct FLO outputs, the same canonical input, options, renderer version, and supported platform must produce byte-stable SVG and JSON artifacts.
 Determinism is verified with release-blocking regression tests.
@@ -67,7 +66,9 @@ Determinism is verified with release-blocking regression tests.
 ## Renderer Tiers
 
 FLO may describe renderer maturity using `experimental`, `maintained`, and `stable` tiers before 1.0.
-All maintained 1.0 renderers must reach the `stable` tier.
+SPPM is the only renderer intended to reach the `stable` tier.
+Swimlane and spaghetti remain maintained Yellow Belt material, and value stream
+remains maintained Green Belt material.
 
 A stable renderer provides:
 
@@ -77,7 +78,7 @@ A stable renderer provides:
 - Actionable diagnostics for incomplete or degraded output.
 - Visual invariants for supported corpus artifacts, including no incoherent overlaps, clipped labels, missing edge endpoints, or broken routing.
 
-SPPM, swimlane, spaghetti, and value stream maps must all be stable by 1.0.
+SPPM must be stable by 1.0.
 Flowchart direct SVG rendering is removed in 0.2.0.
 
 ## Compatibility And Deprecation
@@ -163,6 +164,9 @@ Before 1.0, FLO will document:
 
 - [Implemented] Preserve omitted queue-wait timing as absent and render an
   explicitly measured zero queue wait as `WT: 0 min` in maintained SPPM output.
+- [Implemented] Preserve omitted timing categories as absent through static
+  timing analysis, inspection JSON, and SPPM publication totals rather than
+  supplying an implicit zero.
 - [Implemented] Provide a maintained scaffold command with linear-flow,
   decision, handoff, rework, and value-stream templates; explicit stable IDs;
   template listing; target preview; and explicit overwrite acknowledgement.
@@ -182,12 +186,16 @@ Before 1.0, FLO will document:
   coordinates.
 - [Implemented] Support explicit direct-SVG scale-down-to-fit with uniform
   aspect preservation; scaling never enlarges a smaller natural diagram.
+- [Implemented] Emit page-aware SPPM Typst source with deterministic sibling SVG
+  figures, semantic-order pagination for linear flows, page-and-step continuation
+  references, and explicit warning-or-error behavior when non-linear
+  continuation would be ambiguous.
 
 ### 0.4: Remaining Renderer Stabilization And MVP Delivery
 
-- Preserve omitted, invalid, unavailable, and measured-zero timing as distinct
-  states across validation, static analysis, and maintained renderers; remove
-  missing-data defaults that turn absent queue waits into zero.
+- Complete invalid and unavailable timing-state preservation across validation,
+  static analysis, and maintained renderers, including focused end-to-end
+  coverage alongside the implemented omitted-versus-measured-zero behavior.
 - Publish the accepted measurement-profile, projection, and observed-frequency
   architecture decisions, and define compact, detail, machine, and print-safe
   capability boundaries without requiring the later profile implementation.
@@ -197,14 +205,15 @@ Before 1.0, FLO will document:
 - Implement the accepted exact and bounded render-geometry contract,
   including unit-bearing width and height, page orientation, margins, scaling,
   and explicit overflow behavior, before multi-page publication acceptance.
-- Move SPPM, swimlane, and spaghetti maps to the stable renderer tier.
-- Retain value stream as a maintained direct-SVG renderer; defer its stable-tier
-  style, accessibility, and release-corpus promotion work to 0.5.
+- Move SPPM to the stable renderer tier.
+- Retain swimlane and spaghetti as maintained Yellow Belt material and value
+  stream as maintained Green Belt material; no stable-tier promotion is planned
+  for these renderer families.
 - Add visual-invariant coverage for node-label legibility, overlap, clipping, and
   lane-frame containment on top of the established deterministic and golden-artifact gates.
 - Publish the renderer capability matrix and renderer compatibility guarantees.
 - Add color-safe and monochrome accessibility gates, non-color semantic cues,
-  and legibility criteria to stable renderer promotion.
+  and legibility criteria to SPPM stable renderer promotion.
 - Deliver a deterministic review bundle containing selected visuals, canonical
   JSON, provenance, model identity, and warnings.
 
@@ -216,9 +225,8 @@ Before 1.0, FLO will document:
 - Deliver explicit primary-display and modeled-analysis selectors plus compact
   and lossless machine-readable profile projections; do not infer a preferred
   statistic or retrieve referenced evidence.
-- Complete value-stream-map stable-tier style, accessibility, and release-corpus
-  promotion while retaining its established material, information, and
-  partial-data semantics.
+- Retain value-stream-map Green Belt material with its established material,
+  information, and partial-data semantics.
 - Publish and validate `schema/flo_trace.json` and the normative event
   semantics.
 - Deliver local, explicit canonical trace import, deterministic
@@ -319,8 +327,7 @@ FLO does not release 1.0 until all of the following are true:
 - The public Python API, structured diagnostics, deterministic `.flo` writer,
   semantic round trip, comment-preserving formatter, extension namespaces, and
   migration workflow are documented and covered by conformance tests.
-- SPPM, swimlane, spaghetti, and value stream maps meet the stable
-  renderer-tier criteria.
+- SPPM meets the stable renderer-tier criteria.
 - Direct SVG and JSON outputs are byte-stable on the supported CI platform for the release corpus.
 - The supported Python 3.14 installation path passes wheel and source-distribution smoke tests.
 - Static analysis, test, coverage, determinism, artifact, fuzz or property, and security gates pass without unresolved release-blocking exceptions.

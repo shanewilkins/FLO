@@ -39,6 +39,14 @@ def render_sppm_typst_publication_artifact(
         edges=edges,
         projection=projection,
     )
+    serialized_diagnostics = tuple(plan.metadata.get("publication_diagnostics", ()))
+    warnings = tuple(
+        str(diagnostic.get("message") or "").strip()
+        for diagnostic in serialized_diagnostics
+        if isinstance(diagnostic, dict)
+        and diagnostic.get("severity") == "warning"
+        and str(diagnostic.get("message") or "").strip()
+    )
     return RenderArtifact(
         kind="typst",
         content=emit_typst_publication(plan),
@@ -50,6 +58,8 @@ def render_sppm_typst_publication_artifact(
                 "page_format": plan.metadata.get("page_format"),
             },
             "artifact_slots": tuple(slot.slot_id for slot in plan.artifact_slots),
+            "publication_diagnostics": serialized_diagnostics,
+            "warning": "\n".join(warnings),
             "page_svg_assets": _render_sppm_page_svg_assets(
                 process=process,
                 options=publication_options,

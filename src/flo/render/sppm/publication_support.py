@@ -168,58 +168,78 @@ def _footer_content_from_timing_analysis(
         analysis, visible_nodes=visible_nodes
     ):
         return [], []
+    if not _has_declared_timing(analysis):
+        return [], []
+
+    raw_rows = [*_declared_timing_rows(analysis), _lead_time_row(analysis)]
+    return (
+        _format_timing_rows(raw_rows, options=options),
+        _timing_diagnostic_notes(analysis, options=options),
+    )
+
+
+def _has_declared_timing(analysis: ProcessTimingAnalysis) -> bool:
     missing_ids = set(analysis.missing_timing_node_ids)
-    has_declared_timing = any(
-        (
-            timing.node_type in {"task", "system_task", "subprocess", "queue"}
-            and timing.node_id not in missing_ids
-        )
+    timed_node_types = {"task", "system_task", "subprocess", "queue"}
+    return any(
+        (timing.node_type in timed_node_types and timing.node_id not in missing_ids)
         or timing.changeover_source_field is not None
         for timing in analysis.node_timings
     )
-    if not has_declared_timing:
-        return [], []
 
+
+def _declared_timing_rows(
+    analysis: ProcessTimingAnalysis,
+) -> list[tuple[str, str]]:
     totals = analysis.declared_totals
-    raw_rows: list[tuple[str, str]] = [
-        ("Cycle Time", _format_timing_seconds(totals.cycle_time_seconds)),
-        ("Waiting Time", _format_timing_seconds(totals.wait_time_seconds)),
-        ("C/O Time", _format_timing_seconds(totals.changeover_time_seconds)),
+    values = (
+        ("Cycle Time", totals.cycle_time_seconds),
+        ("Waiting Time", totals.wait_time_seconds),
+        ("C/O Time", totals.changeover_time_seconds),
+    )
+    return [
+        (label, _format_timing_seconds(seconds))
+        for label, seconds in values
+        if seconds is not None
     ]
-    if analysis.modeled_lead_time_seconds is not None:
-        raw_rows.append(
-            ("Lead Time", _format_timing_seconds(analysis.modeled_lead_time_seconds))
-        )
-    elif (
-        analysis.minimum_path_lead_time_seconds is not None
-        and analysis.maximum_path_lead_time_seconds is not None
-    ):
-        raw_rows.append(
-            (
-                "Lead Time Range",
-                f"{_format_timing_seconds(analysis.minimum_path_lead_time_seconds)} "
-                f"to {_format_timing_seconds(analysis.maximum_path_lead_time_seconds)}",
-            )
-        )
-    else:
-        raw_rows.append(("Lead Time", "Unavailable"))
 
-    rows = [
-        row
-        for label, value in raw_rows
-        if (row := _footer_metric_row(label=label, value=value, options=options))
+
+def _lead_time_row(analysis: ProcessTimingAnalysis) -> tuple[str, str]:
+    modeled = analysis.modeled_lead_time_seconds
+    if modeled is not None:
+        return ("Lead Time", _format_timing_seconds(modeled))
+    minimum = analysis.minimum_path_lead_time_seconds
+    maximum = analysis.maximum_path_lead_time_seconds
+    if minimum is None or maximum is None:
+        return ("Lead Time", "Unavailable")
+    return (
+        "Lead Time Range",
+        f"{_format_timing_seconds(minimum)} to {_format_timing_seconds(maximum)}",
+    )
+
+
+def _format_timing_rows(
+    rows: list[tuple[str, str]], *, options: RenderOptions
+) -> list[tuple[str, str]]:
+    return [
+        formatted
+        for label, value in rows
+        if (formatted := _footer_metric_row(label=label, value=value, options=options))
         is not None
     ]
-    notes: list[str] = []
-    if analysis.diagnostics:
-        note = _format_sppm_publication_text(
-            "Timing diagnostics available; run flo inspect for details.",
-            options=options,
-            max_len=options.sppm_max_label_step_name,
-        )
-        if note:
-            notes.append(note)
-    return rows, notes
+
+
+def _timing_diagnostic_notes(
+    analysis: ProcessTimingAnalysis, *, options: RenderOptions
+) -> list[str]:
+    if not analysis.diagnostics:
+        return []
+    note = _format_sppm_publication_text(
+        "Timing diagnostics available; run flo inspect for details.",
+        options=options,
+        max_len=options.sppm_max_label_step_name,
+    )
+    return [note] if note else []
 
 
 def _analysis_matches_visible_process(

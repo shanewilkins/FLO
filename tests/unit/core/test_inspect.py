@@ -28,7 +28,7 @@ def test_inspect_timing_text_reports_washnfold_totals() -> None:
         "Declared totals:\n"
         "  Cycle time: 105 min\n"
         "  Wait time: 95 min\n"
-        "  Changeover time: 0 min\n"
+        "  Changeover time: unavailable\n"
         "  Elapsed subtotal: 200 min\n"
         "\n"
         "Modeled lead time: 200 min\n"
@@ -64,7 +64,7 @@ def test_inspect_timing_json_is_stable_and_machine_readable() -> None:
         "version": 1,
     }
     assert payload["declared_totals"] == {
-        "changeover_time_seconds": 0.0,
+        "changeover_time_seconds": None,
         "cycle_time_seconds": 6300.0,
         "elapsed_time_seconds": 12000.0,
         "wait_time_seconds": 5700.0,

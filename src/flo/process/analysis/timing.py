@@ -43,22 +43,25 @@ class TimingDiagnostic:
 class TimingTotals:
     """Normalized timing category totals in seconds."""
 
-    cycle_time_seconds: float = 0.0
-    wait_time_seconds: float = 0.0
-    changeover_time_seconds: float = 0.0
+    cycle_time_seconds: float | None = None
+    wait_time_seconds: float | None = None
+    changeover_time_seconds: float | None = None
 
     @property
-    def elapsed_time_seconds(self) -> float:
+    def elapsed_time_seconds(self) -> float | None:
         """Return the modeled elapsed subtotal represented by these categories."""
-        return fsum(
-            (
+        values = tuple(
+            value
+            for value in (
                 self.cycle_time_seconds,
                 self.wait_time_seconds,
                 self.changeover_time_seconds,
             )
+            if value is not None
         )
+        return fsum(values) if values else None
 
-    def as_dict(self) -> dict[str, float]:
+    def as_dict(self) -> dict[str, float | None]:
         """Return a stable JSON-compatible representation."""
         return {
             "cycle_time_seconds": self.cycle_time_seconds,
@@ -138,14 +141,20 @@ class ProcessTimingAnalysis:
         """Return the minimum lead time when every enumerated path is complete."""
         if not self.paths or not all(path.complete for path in self.paths):
             return None
-        return min(path.totals.elapsed_time_seconds for path in self.paths)
+        elapsed_times = tuple(path.totals.elapsed_time_seconds for path in self.paths)
+        if any(value is None for value in elapsed_times):
+            return None
+        return min(value for value in elapsed_times if value is not None)
 
     @property
     def maximum_path_lead_time_seconds(self) -> float | None:
         """Return the maximum lead time when every enumerated path is complete."""
         if not self.paths or not all(path.complete for path in self.paths):
             return None
-        return max(path.totals.elapsed_time_seconds for path in self.paths)
+        elapsed_times = tuple(path.totals.elapsed_time_seconds for path in self.paths)
+        if any(value is None for value in elapsed_times):
+            return None
+        return max(value for value in elapsed_times if value is not None)
 
     def as_dict(self) -> dict[str, Any]:
         """Return the initial stable, JSON-compatible timing analysis shape."""
@@ -280,12 +289,12 @@ def _duration_seconds(
     node_id: str,
     field: str,
     diagnostics: list[TimingDiagnostic],
-) -> float:
+) -> float | None:
     if raw is None:
-        return 0.0
+        return None
     if not isinstance(raw, dict):
         _append_invalid_duration_diagnostic(diagnostics, node_id=node_id, field=field)
-        return 0.0
+        return None
     duration = cast(dict[str, object], raw)
     value = duration.get("value")
     unit = duration.get("unit")
@@ -297,7 +306,7 @@ def _duration_seconds(
         or unit.strip().lower() not in _SECONDS_PER_UNIT
     ):
         _append_invalid_duration_diagnostic(diagnostics, node_id=node_id, field=field)
-        return 0.0
+        return None
     return float(value) * _SECONDS_PER_UNIT[unit.strip().lower()]
 
 
@@ -492,10 +501,17 @@ def _build_timing_path(
 def _sum_totals(values: Iterable[TimingTotals]) -> TimingTotals:
     totals = tuple(values)
     return TimingTotals(
-        cycle_time_seconds=fsum(item.cycle_time_seconds for item in totals),
-        wait_time_seconds=fsum(item.wait_time_seconds for item in totals),
-        changeover_time_seconds=fsum(item.changeover_time_seconds for item in totals),
+        cycle_time_seconds=_sum_category(item.cycle_time_seconds for item in totals),
+        wait_time_seconds=_sum_category(item.wait_time_seconds for item in totals),
+        changeover_time_seconds=_sum_category(
+            item.changeover_time_seconds for item in totals
+        ),
     )
+
+
+def _sum_category(values: Iterable[float | None]) -> float | None:
+    declared_values = tuple(value for value in values if value is not None)
+    return fsum(declared_values) if declared_values else None
 
 
 __all__ = [

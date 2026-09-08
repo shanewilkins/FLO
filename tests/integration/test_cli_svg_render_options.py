@@ -337,6 +337,55 @@ def test_run_sppm_typst_export_writes_page_svg_assets(tmp_path):
     assert 'data-node-id="second"' in second_page_svg
 
 
+def test_run_sppm_typst_non_linear_pagination_warns_without_dropping_flow(tmp_path):
+    model = tmp_path / "sppm_typst_branch.flo"
+    model.write_text(
+        yaml.safe_dump(
+            {
+                "spec_version": "0.1",
+                "process": {"id": "sppm_branch", "name": "SPPM Branch"},
+                "steps": [
+                    {"id": "start", "kind": "start"},
+                    {"id": "choice", "kind": "decision"},
+                    {"id": "left", "kind": "task"},
+                    {"id": "right", "kind": "task"},
+                    {"id": "finish", "kind": "end"},
+                ],
+                "edges": [
+                    {"source": "start", "target": "choice"},
+                    {"source": "choice", "target": "left"},
+                    {"source": "choice", "target": "right"},
+                    {"source": "left", "target": "finish"},
+                    {"source": "right", "target": "finish"},
+                ],
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "render",
+            str(model),
+            "--export",
+            "typst",
+            "--diagram",
+            "sppm",
+            "--layout-overflow",
+            "paginate",
+            "--layout-target-columns",
+            "2",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert result.output.count("#pagebreak()") == 0
+    assert "ambiguous for non-linear flow" in result.output
+    assert "*Steps:* start, choice, left, right, finish" in result.output
+
+
 def test_run_sppm_svg_export_emits_svg(tmp_path):
     model = tmp_path / "sppm_svg.flo"
     payload = {
