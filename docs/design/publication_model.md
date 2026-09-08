@@ -61,8 +61,9 @@ The first live adopter is SPPM.
 
 The 0.2 standalone SPPM path renders enabled header and footer bands from this
 model without changing the process layout.
-Full pagination and hierarchical child-map output belong to the 0.4 renderer
-stabilization milestone.
+Full pagination and hierarchical child-map output belong to the 0.5 Yellow
+Belt milestone. White Belt 0.4 requires deterministic sized single-page SPPM
+output but does not require multi-page composition.
 
 Those later slices should build on this model rather than adding new renderer-specific layout structures.
 

@@ -1,7 +1,8 @@
-# Yellow Belt First-Run Observation
+# White Belt First-Run Observation
 
-This protocol evaluates the 0.4 MVP authoring journey without coaching the
-participant through individual commands.
+This protocol evaluates the 0.4 White Belt MVP authoring journey without
+coaching the participant through individual commands. The established `yb_`
+file and script names are retained only for release-automation compatibility.
 
 ## Participant
 
@@ -23,7 +24,7 @@ Within ten minutes, the participant should:
 2. Change at least one task name to match a familiar business process.
 3. Validate the model.
 4. Correct one validation error using the diagnostic alone.
-5. Render a readable SVG.
+5. Render a readable single-page SPPM SVG.
 6. Export canonical JSON.
 
 Record elapsed time, requests for help, failed commands, diagnostic

@@ -24,7 +24,8 @@ Parsing, canonical IR, analysis, and rendering must preserve that distinction.
 ## Decision
 
 FLO will replace scalar time-duration metadata with a measurement-profile
-contract before the 0.7 language and IR freeze.
+contract before the 1.0 language and IR freeze. A belt release owns that
+migration only if its accepted specification requires measurement profiles.
 
 A profile contains:
 

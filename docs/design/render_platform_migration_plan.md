@@ -150,7 +150,7 @@ Work:
 
 ### Phase C: publication composition
 
-Status: planned for 0.4
+Status: planned for 0.5
 
 Outcome:
 
@@ -172,20 +172,22 @@ Work:
 Accepted release ownership:
 
 - 0.2 owns prerequisites and standalone SPPM hardening.
-- 0.4 owns the complete multi-page SPPM publication acceptance boundary before
-  SPPM reaches the stable renderer tier.
+- 0.4 owns stable sized single-page SPPM for White Belt.
+- 0.5 owns the complete multi-page and child-map SPPM publication acceptance
+  boundary for Yellow Belt.
 
 The normative requirement catalogs and roadmap ratify this assignment.
 
 ### Phase D: renderer stabilization
 
-Status: planned for 0.4
+Status: planned for 0.4 through 0.6
 
 Outcome:
 
-- SPPM, swimlane, and spaghetti meet the stable renderer-tier criteria
-- Value stream remains maintained in 0.4; its stable-tier style, accessibility,
-  and release-corpus promotion follows in 0.5
+- SPPM meets the stable renderer-tier criteria for the White Belt single-page
+  surface in 0.4.
+- Swimlane and spaghetti receive maintained Yellow Belt acceptance in 0.5.
+- Value stream receives maintained Green Belt acceptance in 0.6.
 
 Work:
 

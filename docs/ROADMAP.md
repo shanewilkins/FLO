@@ -35,13 +35,39 @@ step process, validate it, render a readable SVG, and export canonical JSON in
 about ten minutes using only the maintained onboarding path.
 
 If release capacity creates a tradeoff, this complete authoring journey takes
-precedence over telemetry work. Process telemetry is therefore deferred to its
-0.5 operational workflow rather than becoming a partial 0.4 MVP surface.
+precedence over telemetry work. Process telemetry is therefore deferred to a
+later ratified belt or 1.0 workflow rather than becoming a partial 0.4 MVP
+surface.
 
 The 0.4 MVP does not require process-telemetry import, alignment, or analysis;
-those operational workflows begin in 0.5. It also does not require every optional
-publication enhancement within the 0.4 renderer milestone, the 1.0
-language and CLI freeze, or the 1.0 packaging and support guarantees.
+those operational workflows belong to later belt or 1.0 scope. It also does not
+require multi-page publication, Yellow Belt swimlane or spaghetti acceptance,
+Green Belt value-stream-map acceptance, the 1.0 language and CLI freeze, or the
+1.0 packaging and support guarantees.
+
+## Belt-Aligned Delivery Sequence
+
+The modern process-improvement book is an immediate customer of both the FLO
+language and the renderer. Pre-1.0 releases therefore unlock the book in belt
+order:
+
+- 0.4 unlocks White Belt and targets the September 15, 2026 book deadline.
+- 0.5 unlocks Yellow Belt.
+- 0.6 unlocks Green Belt.
+- 0.7 unlocks Black Belt.
+- 0.8 unlocks Master Black Belt.
+
+Each belt release includes only the language semantics, validation, exchange,
+and rendering capabilities needed by that belt's accepted specification.
+Later-belt presentation features do not block an earlier release. Semantic and
+validation work that prevents the compiler from accepting or emitting nonsense
+may move earlier regardless of the belt where the affected concept is taught.
+
+Completed work keeps its actual implementation milestone even when it arrived
+ahead of the belt that will first depend on it. Early implementation does not
+make later-belt acceptance a prerequisite for an earlier release. Black Belt and
+Master Black Belt scope remains provisional until their book and language
+specifications are accepted.
 
 ## 1.0 Outcome
 
@@ -191,113 +217,86 @@ Before 1.0, FLO will document:
   references, and explicit warning-or-error behavior when non-linear
   continuation would be ambiguous.
 
-### 0.4: Remaining Renderer Stabilization And MVP Delivery
+### 0.4: Remaining White Belt Delivery
 
 - Complete invalid and unavailable timing-state preservation across validation,
-  static analysis, and maintained renderers, including focused end-to-end
+  static analysis, canonical exchange, and SPPM, including focused end-to-end
   coverage alongside the implemented omitted-versus-measured-zero behavior.
-- Publish the accepted measurement-profile, projection, and observed-frequency
-  architecture decisions, and define compact, detail, machine, and print-safe
-  capability boundaries without requiring the later profile implementation.
-- Complete the accepted multi-page SPPM publication boundary, including Typst
-  composition, stable step references, continuation anchors, child maps,
-  deterministic warnings, and strict-mode failures.
-- Implement the accepted exact and bounded render-geometry contract,
-  including unit-bearing width and height, page orientation, margins, scaling,
-  and explicit overflow behavior, before multi-page publication acceptance.
-- Move SPPM to the stable renderer tier.
-- Retain swimlane and spaghetti as maintained Yellow Belt material and value
-  stream as maintained Green Belt material; no stable-tier promotion is planned
-  for these renderer families.
+- Audit the White Belt authoring and compiler path so accepted source always
+  produces schema-valid canonical IR and invalid identities, references,
+  timing values, or graph structure fail with actionable diagnostics rather
+  than being repaired or guessed by a renderer.
+- Complete deterministic single-page SPPM width and height control with
+  unit-bearing dimensions, inspectable natural and final bounds, explicit safe
+  fit or overflow behavior, and no clipping or unreadable forced scaling.
+- Move the single-page SPPM surface needed by White Belt to the stable renderer
+  tier without making multi-page or child-map publication part of the 0.4 gate.
 - Add visual-invariant coverage for node-label legibility, overlap, clipping, and
   lane-frame containment on top of the established deterministic and golden-artifact gates.
 - Publish the renderer capability matrix and renderer compatibility guarantees.
 - Add color-safe and monochrome accessibility gates, non-color semantic cues,
   and legibility criteria to SPPM stable renderer promotion.
-- Deliver a deterministic review bundle containing selected visuals, canonical
-  JSON, provenance, model identity, and warnings.
+- Rehearse the complete White Belt install, author, validate, render, size, and
+  canonical-export journey and regenerate the book-consumed reference artifact
+  from a clean checkout.
 
-### 0.5: Telemetry Foundation And Measurement Model
+The 0.4 gate explicitly excludes multi-page publication, automatic child maps,
+Yellow Belt swimlane and spaghetti acceptance, and Green Belt value-stream-map
+acceptance.
 
-- Replace scalar duration metadata with the producer-neutral measurement-profile
-  contract across source, canonical IR, schema, validation, deterministic JSON,
-  the source writer, and the supported public Python API.
-- Deliver explicit primary-display and modeled-analysis selectors plus compact
-  and lossless machine-readable profile projections; do not infer a preferred
-  statistic or retrieve referenced evidence.
-- Retain value-stream-map Green Belt material with its established material,
-  information, and partial-data semantics.
-- Publish and validate `schema/flo_trace.json` and the normative event
-  semantics.
-- Deliver local, explicit canonical trace import, deterministic
-  observed-event-to-model alignment, and conformance fixtures without mutating
-  canonical designed-process IR.
-- Enforce the telemetry privacy defaults for trace validation, import, and
-  alignment, including local-first operation, no default network egress, no raw
-  attributes in diagnostics or ordinary artifacts, explicit persistence
-  destinations, and fail-closed privacy modes.
-- Deliver aggregate transition frequency, dwell or wait, and rework analysis
-  over aligned observations without feeding inferred values into canonical IR.
+### 0.5: Yellow Belt Delivery
 
-### 0.6: Telemetry Analysis
+- Complete the accepted multi-page SPPM publication boundary, including Typst
+  composition, stable step references, continuation anchors, child maps,
+  deterministic warnings, and strict-mode failures.
+- Make first-class authored locations and optional spatial geometry complete and
+  well-validated for Yellow Belt source, canonical IR, JSON, and public API use.
+- Deliver Yellow Belt acceptance for swimlane maps and for material, people,
+  aggregate, and worker-level spaghetti maps, including deterministic partial
+  rendering and strict missing-spatial behavior.
+- Provide the deterministic review bundle needed for multi-page and multi-view
+  review, with canonical JSON, provenance, model identity, and warnings.
+- Keep telemetry, measurement-profile migration, and value-stream-map belt
+  acceptance out of the 0.5 release gate.
 
-- Support trace-derived transition frequencies, dwell or wait measures, and rework rates.
-- Allow approved telemetry and downstream analytics adapters to emit
-  provenance-bearing measurement profiles without mutating canonical designed
-  process IR.
-- Deliver structured branch and rework frequency profiles that distinguish
-  affected work units, repeated occurrences, and denominator populations.
-- Add detailed measurement projections for interactive hosts and equivalent
-  print or composed-publication surfaces without making interaction part of
-  the semantic contract.
-- Publish telemetry import and alignment report contracts.
-- Complete aggregate and row-level report privacy modes, redaction,
-  pseudonymization, and fail-closed verification.
+### 0.6: Green Belt Delivery
 
-### 0.7: Language, IR, And CLI Freeze Candidate
+- Ratify the Green Belt language and book specification before adding new
+  release-blocking scope.
+- Complete formal Green Belt acceptance for the maintained value-stream-map
+  renderer, including explicit material and information flows and honest
+  partial-data behavior.
+- Add Green Belt book fixtures, documentation, and deterministic render checks
+  without promoting value stream to the stable SPPM tier.
+- Preserve the 0.3 value-stream implementation as early groundwork rather than
+  rewriting its implementation history.
 
-- Freeze the proposed 1.0 language, canonical IR, schema, and CLI contracts.
-- Freeze measurement-profile basis, method identifiers and parameters, sample
-  and evidence context, extension namespaces, selectors, branch-frequency
-  semantics, public API types, writer behavior, and migration rules.
-- Introduce the separate object-capable observed-event IR and deterministic
-  TraceView projection; ingest CSV, XES, and OCEL 2 JSON through replaceable
-  adapters without expanding canonical designed-process IR.
-- Deliver initial conformance analysis and keep observed trace variants,
-  candidate structural variants, and declared process-family variants
-  explicitly distinct.
-- Resolve the proposed process-family and first-class variant identity,
-  resolution, selection, public API, and source-writer contract before the
-  language and IR freeze; unresolved variant semantics do not enter canonical
-  graphs.
-- Freeze the supported Python API and structured diagnostic model.
-- Deliver the deterministic `.flo` writer with semantic round-trip tests.
-- Deliver an idempotent, comment-preserving formatter in check, stream, and
-  explicit write modes.
-- Finalize namespaced extension metadata and deterministic preservation through
-  compile, JSON export, and source emission.
-- Finalize the standard and verbose node-content policy, including approved
-  queue-detail fields and layout requirements for verbose rendering.
-- Remove or migrate legacy authoring aliases according to documented deprecation policy.
-- Expand conformance coverage for stable contracts and supported migration paths.
+### 0.7: Black Belt Delivery
 
-### 0.8: Ecosystem And Operational Hardening
+- Ratify the Black Belt book, language, and rendering specification before its
+  candidate features become release gates.
+- Treat measurement profiles, observed frequencies, trace import and alignment,
+  conformance, process families and variants, and richer source exchange as
+  provisional Black Belt candidates rather than inferred curriculum scope.
+- Preserve the accepted architecture boundaries for those candidates so later
+  work cannot mutate canonical designed-process truth or leak analytical
+  methodology into the core compiler.
+- Schedule the formal language, IR, public API, and CLI freeze after Black Belt
+  and Master Black Belt semantics are known.
 
-- Verify Python 3.14 support in CI and distribution artifacts.
-- Add OCEL 2 XML and SQLite adapters through the 0.7 observed-event boundary.
-- Deliver deterministic process discovery into provenance-bearing candidate
-  process IR; require explicit acceptance or export before a candidate becomes
-  authored process truth.
-- Require wheel and source-distribution installation smoke tests.
-- Complete dependency automation, security reporting, contributor guidance, release process, and support policy.
-- Add reproducibility and upgrade-path tests for public artifacts.
-- Publish the versioned source-authoring schema, maintained snippets, and basic
-  schema-aware editor setup.
-- Deliver dry-run, diffable, non-destructive source-version migration tooling.
-- If the process-family contract is accepted, complete its authoring-schema,
-  editor-validation, migration, and deterministic comparison surfaces.
-- Test the complete end-user workflow from installed artifacts on supported
-  platforms without a source checkout.
+### 0.8: Master Black Belt Delivery
+
+- Ratify the Master Black Belt book, language, and rendering specification
+  before its candidate features become release gates.
+- Treat object-centric event import, process discovery, advanced conformance,
+  and process-mining reproducibility as provisional Master Black Belt
+  candidates rather than assumed curriculum requirements.
+- Retain ecosystem and operational hardening work that is independently needed
+  for 1.0, including installed-distribution smoke tests, source-authoring schema,
+  migration tooling, dependency and security automation, reproducibility, and
+  support policy.
+- Do not let provisional advanced-analysis work weaken or bypass canonical IR
+  validation.
 
 ### 0.9: Release Candidate Hardening
 

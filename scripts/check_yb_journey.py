@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Rehearse FLO's first-run Yellow Belt authoring journey."""
+"""Rehearse FLO's first-run White Belt authoring journey.
+
+The established script name is retained for release-automation compatibility.
+"""
 
 from __future__ import annotations
 

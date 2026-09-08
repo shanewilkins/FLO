@@ -43,10 +43,10 @@ CSV, XES, and OCEL 2 parsers are replaceable inbound adapters. They normalize
 into `ObservedEventIR` through typed ports. Downstream projection, alignment,
 conformance, and discovery code does not depend on parser-specific types.
 
-The staged delivery is:
-
-- 0.7: CSV, XES, and OCEL 2 JSON
-- 0.8: OCEL 2 XML and SQLite through the same port
+The accepted architecture remains a 1.0 concern. Its earlier 0.7/0.8 staging
+has been retired by the belt-aligned roadmap: no import format becomes a Black
+Belt or Master Black Belt release gate unless the corresponding accepted belt
+specification requires it.
 
 CSV uses an explicit or recorded mapping profile. XES uses a documented
 semantic profile. FLO does not guess ambiguous columns, classifiers, identity,

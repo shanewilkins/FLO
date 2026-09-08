@@ -100,7 +100,7 @@ typed semantic rules. A successful command exits with code `0`.
 
 ## 4. Render an SVG
 
-Create the default readable SVG:
+Create the default readable SPPM SVG used by the White Belt journey:
 
 ```bash
 flo render onboarding.flo --render-to onboarding.svg

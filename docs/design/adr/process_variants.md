@@ -169,7 +169,8 @@ Existing requirements amended for cross-cutting compatibility: `UR-008`,
 
 ## Release Posture
 
-The identity, resolution, CLI, public API, and source-writer contract should be
-resolved before the 0.7 language and IR freeze candidate. Source-schema,
-editor, migration, and comparison hardening may complete in 0.8. Accepted
-variant behavior must meet the 1.0 compatibility and determinism gates.
+The identity, resolution, CLI, public API, source-writer, source-schema, editor,
+migration, and comparison contracts remain proposed 1.0 work. They become
+Black Belt or Master Black Belt release gates only if the corresponding
+accepted belt specification requires them. Any accepted variant behavior must
+meet the 1.0 compatibility and determinism gates.

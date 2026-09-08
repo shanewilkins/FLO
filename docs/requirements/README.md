@@ -11,6 +11,12 @@ The catalogs include the full path through 1.0. Rows marked
 implementation commitments. Committed post-1.0 boundaries may also be recorded
 when the product direction is explicit.
 
+Pre-1.0 product delivery follows the modern process-improvement book: 0.4
+unlocks White Belt, 0.5 Yellow Belt, 0.6 Green Belt, 0.7 Black Belt, and 0.8
+Master Black Belt. Later-belt features do not gate earlier releases, and Black
+Belt or Master Black Belt candidates are not binding until the corresponding
+book, language, and rendering specifications are accepted.
+
 Governance, identifier stability, and change rules are defined in
 `docs/GOVERNANCE.md`.
 
