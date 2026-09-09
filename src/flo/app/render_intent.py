@@ -78,7 +78,7 @@ class RenderIntentResolver:
         "diagram": "sppm",
         "publication_page_format": None,
         "layout_wrap": "none",
-        "layout_overflow": "error",
+        "layout_overflow": "safe-fit",
         "sppm_label_density": "full",
         "spaghetti_channel": "material",
         "spaghetti_people_mode": "aggregate",

@@ -507,7 +507,7 @@ def test_serialize_sppm_elk_layout_request_activates_partitioning_and_preserves_
     ] == ["0", "1", "2", "3"]
 
 
-def test_serialize_sppm_elk_layout_request_sets_start_end_layer_constraints():
+def test_serialize_sppm_elk_layout_request_preserves_safe_terminal_constraints():
     request = build_sppm_elk_layout_request(
         {
             "nodes": [
@@ -534,6 +534,36 @@ def test_serialize_sppm_elk_layout_request_sets_start_end_layer_constraints():
         children["end"]["layoutOptions"]["elk.layered.layering.layerConstraint"]
         == "LAST"
     )
+    assert children["start"]["layoutOptions"]["elk.partitioning.partition"] == "0"
+    assert children["end"]["layoutOptions"]["elk.partitioning.partition"] == "2"
+
+
+def test_serialize_sppm_elk_layout_request_omits_unsafe_multi_end_constraints():
+    request = build_sppm_elk_layout_request(
+        {
+            "nodes": [
+                {"id": "start", "kind": "start", "name": "Start"},
+                {"id": "decision", "kind": "decision", "name": "Choose"},
+                {"id": "left", "kind": "end", "name": "Left"},
+                {"id": "right", "kind": "end", "name": "Right"},
+            ],
+            "edges": [
+                {"source": "start", "target": "decision"},
+                {"source": "decision", "target": "left", "outcome": "left"},
+                {"source": "decision", "target": "right", "outcome": "right"},
+            ],
+        },
+        options=RenderOptions(diagram="sppm", orientation="lr"),
+    )
+
+    payload = serialize_elk_layout_request(request)
+    children = {child["id"]: child for child in payload["children"]}
+
+    for node_id in ("start", "left", "right"):
+        assert (
+            "elk.layered.layering.layerConstraint"
+            not in children[node_id]["layoutOptions"]
+        )
 
 
 def test_serialize_sppm_elk_layout_request_emits_cardinal_ports_and_port_attached_edges(

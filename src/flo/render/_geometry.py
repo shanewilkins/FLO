@@ -9,9 +9,33 @@ from typing import Any
 from flo.errors import RenderError
 
 from ._artifact import RenderArtifact
-from .options import RenderOptions
+from .options import Dimension, RenderOptions
 
 _SVG_DIMENSION_RE = re.compile(r'\b{attribute}="(?P<value>\d+(?:\.\d+)?)"')
+_SPPM_HORIZONTAL_PADDING_PX = 56
+_MIN_SAFE_SCALE = 0.75
+
+
+def prepare_svg_layout(options: RenderOptions) -> RenderOptions:
+    """Use requested SPPM geometry as a deterministic reflow constraint."""
+    if (
+        options.diagram != "sppm"
+        or options.orientation != "lr"
+        or options.layout_width_px is None
+    ):
+        return options
+    if options.layout_target_columns is not None:
+        return replace(options, layout_wrap="auto")
+    if options.layout_max_width_px is not None:
+        return replace(options, layout_wrap="auto")
+
+    layout_budget = max(200, options.layout_width_px - _SPPM_HORIZONTAL_PADDING_PX)
+    return replace(
+        options,
+        layout_wrap="auto",
+        layout_max_width=Dimension(value=float(layout_budget), unit="px"),
+        layout_max_width_px=layout_budget,
+    )
 
 
 def resolve_svg_geometry(
@@ -52,12 +76,40 @@ def resolve_svg_geometry(
                 requested_width=requested_width,
                 requested_height=requested_height,
             )
+        if options.layout_overflow == "safe-fit":
+            return _safe_fit_svg(
+                artifact=artifact,
+                geometry=geometry,
+                requested_width=requested_width,
+                requested_height=requested_height,
+            )
         _raise_for_overflow(geometry=geometry, policy=options.layout_overflow)
-    geometry["final_width_px"] = requested_width or natural_width
-    geometry["final_height_px"] = requested_height or natural_height
+
+    final_width, final_height = _requested_canvas_bounds(
+        natural_width=natural_width,
+        natural_height=natural_height,
+        requested_width=requested_width,
+        requested_height=requested_height,
+    )
+    geometry["final_width_px"] = final_width
+    geometry["final_height_px"] = final_height
     geometry["expanded"] = False
-    geometry["scale"] = 1.0
-    return replace(artifact, metadata={**artifact.metadata, "geometry": geometry})
+    geometry["scale"] = min(
+        final_width / natural_width,
+        final_height / natural_height,
+    )
+    return replace(
+        artifact,
+        content=_replace_svg_root_geometry(
+            artifact.content,
+            width=final_width,
+            height=final_height,
+            view_box_width=natural_width,
+            view_box_height=natural_height,
+            preserve_aspect_ratio="xMidYMid meet",
+        ),
+        metadata={**artifact.metadata, "geometry": geometry},
+    )
 
 
 def _natural_svg_dimensions(content: str) -> tuple[int, int]:
@@ -81,11 +133,45 @@ def _raise_for_overflow(*, geometry: dict[str, Any], policy: str) -> None:
     if policy == "error":
         raise RenderError(
             f"Natural SVG geometry {natural} exceeds requested bounds {requested}; "
-            "select --layout-overflow expand, scale, or paginate explicitly."
+            "increase the bounds or select --layout-overflow expand, scale, or "
+            "paginate explicitly."
         )
     raise RenderError(
         f"Requested --layout-overflow {policy} for natural SVG geometry {natural} "
         f"and bounds {requested}, but that policy is not implemented yet."
+    )
+
+
+def _safe_fit_svg(
+    *,
+    artifact: RenderArtifact,
+    geometry: dict[str, Any],
+    requested_width: int | None,
+    requested_height: int | None,
+) -> RenderArtifact:
+    natural_width = geometry["natural_width_px"]
+    natural_height = geometry["natural_height_px"]
+    final_width, final_height = _requested_canvas_bounds(
+        natural_width=natural_width,
+        natural_height=natural_height,
+        requested_width=requested_width,
+        requested_height=requested_height,
+    )
+    scale = min(final_width / natural_width, final_height / natural_height)
+    if scale < _MIN_SAFE_SCALE:
+        raise RenderError(
+            f"Natural SVG geometry {natural_width}x{natural_height}px requires "
+            f"scale {scale:.2f} to fit requested bounds "
+            f"{final_width}x{final_height}px after reflow, below the safe "
+            f"readability floor {_MIN_SAFE_SCALE:.2f}; increase the bounds or "
+            "select --layout-overflow scale or expand explicitly."
+        )
+    geometry["safe_scale_floor"] = _MIN_SAFE_SCALE
+    return _scale_svg_to_fit(
+        artifact=artifact,
+        geometry=geometry,
+        requested_width=requested_width,
+        requested_height=requested_height,
     )
 
 

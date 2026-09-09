@@ -9,12 +9,20 @@ and canonical JSON. For the complete language and CLI reference, use
 Install the released FLO package without cloning the repository:
 
 - Python 3.14+
+- Node.js 26
 - `uv`
 
 ```bash
+python3.14 --version
+node --version
+uv --version
 uv tool install flo-lang
 flo --version
 ```
+
+FLO ships its pinned ELK JavaScript bundle in the Python package and executes
+that bundle with the local Node.js runtime. End users do not need `npm`, an
+`npm install`, or a repository checkout.
 
 The following commands use the installed `flo` tool and work from any directory.
 
@@ -105,6 +113,37 @@ Create the default readable SPPM SVG used by the White Belt journey:
 ```bash
 flo render onboarding.flo --render-to onboarding.svg
 ```
+
+Geometry is optional and belongs to each render command. For example, request
+an image that is exactly 6 inches wide and 4 inches tall:
+
+```bash
+flo render onboarding.flo \
+  --layout-width 6in \
+  --layout-height 4in \
+  --render-to onboarding-6x4.svg
+```
+
+FLO accepts `px`, `in`, `cm`, and `mm`. When both dimensions are present, they
+define the exact SVG canvas. When only one is present, FLO derives the other
+from the rendered aspect ratio. Omitting both keeps the renderer's natural
+size. These choices apply only to that render unless saved separately as render
+intent.
+
+For the White Belt PDF, the same controls request an exact US Letter canvas:
+
+```bash
+flo render onboarding.flo \
+  --layout-width 8.5in \
+  --layout-height 11in \
+  --render-to onboarding-letter.svg
+```
+
+For responsive HTML, retain the SVG `viewBox` and set its displayed width in
+the page stylesheet. SPPM reflows before scaling, preserves aspect ratio, and
+fails rather than shrinking below its `0.75` legibility floor. Use
+`--layout-overflow scale` only when deliberate unrestricted shrinking is
+acceptable, or `--layout-overflow expand` when the canvas may grow.
 
 Use an explicit diagram when a particular review surface is needed:
 

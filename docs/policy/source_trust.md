@@ -2,7 +2,7 @@
 
 Status: current
 
-FLO `0.2.x` processes local source files. The supported boundary is a trusted local entry file plus included files contained beneath the entry file's parent directory. This is not an authorization boundary for a hosted upload service.
+FLO `0.4.x` processes local source files. The supported boundary is a trusted local entry file plus included files contained beneath the entry file's parent directory. This is not an authorization boundary for a hosted upload service.
 
 ## Path boundary
 

@@ -638,13 +638,18 @@ def serialize_elk_layout_request(request: ElkLayoutRequest) -> dict[str, Any]:
     node_by_id = {node.id: node for node in request.nodes}
     helper_nodes: list[dict[str, Any]] = []
     helper_edges: list[dict[str, Any]] = []
+    constrain_terminal_layers = _terminal_layer_constraints_are_safe(request)
 
     if request.diagram == "sppm" and should_emit_sppm_branch_anchors(
         has_lanes=bool(request.lanes)
     ):
         helper_nodes, helper_edges = _sppm_branch_anchor_helpers(request=request)
 
-    children = _serialize_lane_children(request=request, node_by_id=node_by_id)
+    children = _serialize_lane_children(
+        request=request,
+        node_by_id=node_by_id,
+        constrain_terminal_layers=constrain_terminal_layers,
+    )
 
     assigned_node_ids = {
         node_id
@@ -656,6 +661,7 @@ def serialize_elk_layout_request(request: ElkLayoutRequest) -> dict[str, Any]:
         _serialize_unassigned_nodes(
             request=request,
             assigned_node_ids=assigned_node_ids,
+            constrain_terminal_layers=constrain_terminal_layers,
         )
     )
 
@@ -678,6 +684,7 @@ def _serialize_lane_children(
     *,
     request: ElkLayoutRequest,
     node_by_id: dict[str, ElkLayoutNode],
+    constrain_terminal_layers: bool,
 ) -> list[dict[str, Any]]:
     children: list[dict[str, Any]] = []
     for lane_index, lane in enumerate(request.lanes):
@@ -704,7 +711,11 @@ def _serialize_lane_children(
                 "labels": [{"text": lane.label}],
                 "layoutOptions": lane_layout_options,
                 "children": [
-                    serialize_node(node_by_id[node_id], diagram=request.diagram)
+                    serialize_node(
+                        node_by_id[node_id],
+                        diagram=request.diagram,
+                        constrain_terminal_layers=constrain_terminal_layers,
+                    )
                     for node_id in lane.node_ids
                     if node_id in node_by_id
                 ],
@@ -717,12 +728,31 @@ def _serialize_unassigned_nodes(
     *,
     request: ElkLayoutRequest,
     assigned_node_ids: set[str],
+    constrain_terminal_layers: bool,
 ) -> list[dict[str, Any]]:
     return [
-        serialize_node(node, diagram=request.diagram)
+        serialize_node(
+            node,
+            diagram=request.diagram,
+            constrain_terminal_layers=constrain_terminal_layers,
+        )
         for node in request.nodes
         if node.id not in assigned_node_ids
     ]
+
+
+def _terminal_layer_constraints_are_safe(request: ElkLayoutRequest) -> bool:
+    if request.diagram != "sppm":
+        return True
+
+    start_ids = [node.id for node in request.nodes if node.kind == "start"]
+    end_ids = [node.id for node in request.nodes if node.kind == "end"]
+    if len(start_ids) != 1 or len(end_ids) != 1:
+        return False
+
+    incoming_ids = {edge.target_id for edge in request.edges}
+    outgoing_ids = {edge.source_id for edge in request.edges}
+    return start_ids[0] not in incoming_ids and end_ids[0] not in outgoing_ids
 
 
 def _serialize_request_edges(

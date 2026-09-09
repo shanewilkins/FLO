@@ -62,7 +62,10 @@ def ordered_edges(
 
 
 def serialize_node(
-    node: ElkLayoutNode, *, diagram: str | None = None
+    node: ElkLayoutNode,
+    *,
+    diagram: str | None = None,
+    constrain_terminal_layers: bool = True,
 ) -> dict[str, Any]:
     """Serialize one ELK node contract into the payload shape ELK expects."""
     out: dict[str, Any] = {
@@ -74,9 +77,9 @@ def serialize_node(
     layout_options: dict[str, str] = {}
     if node.kind:
         layout_options["flo.node.kind"] = node.kind
-    if node.kind == "start":
+    if node.kind == "start" and constrain_terminal_layers:
         layout_options["elk.layered.layering.layerConstraint"] = "FIRST"
-    elif node.kind == "end":
+    elif node.kind == "end" and constrain_terminal_layers:
         layout_options["elk.layered.layering.layerConstraint"] = "LAST"
     if diagram == "sppm":
         layout_options["elk.portConstraints"] = sppm_port_constraints_value()

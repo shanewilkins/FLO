@@ -25,13 +25,17 @@ def test_geometry_metadata_records_natural_and_requested_bounds():
         "natural_height_px": 480,
         "requested_width_px": 768,
         "requested_height_px": 576,
-        "overflow_policy": "error",
+        "overflow_policy": "safe-fit",
         "overflows_requested_bounds": False,
         "final_width_px": 768,
         "final_height_px": 576,
         "expanded": False,
-        "scale": 1.0,
+        "scale": 768 / 720,
     }
+    assert (
+        '<svg preserveAspectRatio="xMidYMid meet" width="768" height="576" '
+        'viewBox="0 0 720 480"'
+    ) in artifact.content
 
 
 def test_exact_bounds_error_on_overflow_without_returning_an_artifact():
@@ -39,7 +43,11 @@ def test_exact_bounds_error_on_overflow_without_returning_an_artifact():
         resolve_svg_geometry(
             _artifact(),
             RenderOptions.from_mapping(
-                {"layout_width": "600px", "layout_height": "400px"}
+                {
+                    "layout_width": "600px",
+                    "layout_height": "400px",
+                    "layout_overflow": "error",
+                }
             ),
         )
 
@@ -119,7 +127,7 @@ def test_scale_only_shrinks_and_preserves_natural_viewbox(
     assert artifact.metadata["geometry"]["expanded"] is False
 
 
-def test_scale_does_not_expand_smaller_diagrams():
+def test_requested_exact_canvas_is_written_when_natural_diagram_is_smaller():
     artifact = resolve_svg_geometry(
         _artifact(),
         RenderOptions.from_mapping(
@@ -131,5 +139,16 @@ def test_scale_does_not_expand_smaller_diagrams():
         ),
     )
 
-    assert artifact.content == _artifact().content
-    assert artifact.metadata["geometry"]["scale"] == 1.0
+    assert 'width="1000" height="800" viewBox="0 0 720 480"' in artifact.content
+    assert 'preserveAspectRatio="xMidYMid meet"' in artifact.content
+    assert artifact.metadata["geometry"]["scale"] == pytest.approx(1000 / 720)
+
+
+def test_safe_fit_rejects_scaling_below_the_legibility_floor():
+    with pytest.raises(RenderError, match=r"below the safe readability floor 0\.75"):
+        resolve_svg_geometry(
+            _artifact(),
+            RenderOptions.from_mapping(
+                {"layout_width": "400px", "layout_height": "240px"}
+            ),
+        )

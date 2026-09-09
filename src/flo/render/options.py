@@ -23,7 +23,7 @@ SppmThemeName = str
 LayoutWrap = Literal["auto", "off"]
 LayoutFit = Literal["fit-preferred", "fit-strict"]
 LayoutSpacing = Literal["standard", "compact"]
-LayoutOverflow = Literal["error", "expand", "scale", "paginate"]
+LayoutOverflow = Literal["safe-fit", "error", "expand", "scale", "paginate"]
 SppmStepNumbering = Literal["off", "node", "edge"]
 SppmLabelDensity = Literal["full", "compact", "teaching"]
 SppmWrapStrategy = Literal["word", "balanced", "hard"]
@@ -127,10 +127,10 @@ def parse_dimension(value: Any) -> Dimension | None:
 class RenderOptions:
     """Configuration for selecting renderer behavior.
 
-    Defaults render SVG swimlanes with standard detail and default rule profile.
+    Defaults render SVG SPPM with standard detail and safe geometry fitting.
     """
 
-    diagram: DiagramType = "swimlane"
+    diagram: DiagramType = "sppm"
     backend: RenderBackend = "svg"
     profile: RenderProfile = "default"
     detail: DetailLevel = "standard"
@@ -153,7 +153,7 @@ class RenderOptions:
     layout_wrap: LayoutWrap = "off"
     layout_fit: LayoutFit = "fit-preferred"
     layout_spacing: LayoutSpacing = "standard"
-    layout_overflow: LayoutOverflow = "error"
+    layout_overflow: LayoutOverflow = "safe-fit"
     sppm_step_numbering: SppmStepNumbering = "off"
     sppm_label_density: SppmLabelDensity = "full"
     sppm_wrap_strategy: SppmWrapStrategy = "word"
@@ -308,7 +308,7 @@ def _normalized_option(options: Mapping[str, Any], key: str, default: str) -> st
 
 
 def _parse_diagram(options: Mapping[str, Any]) -> DiagramType:
-    diagram_raw = _normalized_option(options, "diagram", "swimlane")
+    diagram_raw = _normalized_option(options, "diagram", "sppm")
     if diagram_raw == "swimlane":
         return "swimlane"
     if diagram_raw == "spaghetti":
@@ -317,7 +317,7 @@ def _parse_diagram(options: Mapping[str, Any]) -> DiagramType:
         return "sppm"
     if diagram_raw == "value_stream":
         return "value_stream"
-    return "swimlane"
+    return "sppm"
 
 
 def _parse_backend(options: Mapping[str, Any]) -> RenderBackend:
@@ -470,10 +470,10 @@ def _parse_layout_spacing(options: Mapping[str, Any]) -> LayoutSpacing:
 
 
 def _parse_layout_overflow(options: Mapping[str, Any]) -> LayoutOverflow:
-    raw = _normalized_option(options, "layout_overflow", "error")
-    if raw in {"expand", "scale", "paginate"}:
-        return cast(LayoutOverflow, raw)
-    return "error"
+    raw = _normalized_option(options, "layout_overflow", "safe-fit")
+    if raw in {"safe-fit", "error", "expand", "scale", "paginate"}:
+        return raw
+    return "safe-fit"
 
 
 def _parse_sppm_step_numbering(options: Mapping[str, Any]) -> SppmStepNumbering:

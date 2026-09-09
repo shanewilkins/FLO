@@ -144,7 +144,7 @@ def test_validate_render_intent_accepts_valid_defaults_and_views() -> None:
                     "wrap": "auto",
                     "width": "210mm",
                     "height": "11in",
-                    "overflow": "error",
+                    "overflow": "safe-fit",
                     "max_width": 1200,
                     "target_columns": 4,
                 },

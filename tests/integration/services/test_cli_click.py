@@ -5,6 +5,15 @@ from click.testing import CliRunner
 
 from flo.app.cli import cli
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
+
+def test_cli_reports_installed_version():
+    result = CliRunner().invoke(cli, ["--version"])
+
+    assert result.exit_code == 0
+    assert result.output.startswith("flo, version ")
+
 
 def test_cli_new_creates_valid_starter_model():
     runner = CliRunner()
@@ -77,16 +86,17 @@ def test_cli_render_cmd_using_click(tmp_flo_file):
     print("DEBUG EXC:\n", repr(result.exception))
     assert result.exit_code == 0
     assert "<svg" in result.output
+    assert 'data-flo-diagram="sppm"' in result.output
 
 
-def test_cli_render_fails_when_exact_geometry_overflows(tmp_flo_file):
+def test_cli_render_fails_when_safe_fit_would_be_unreadable(tmp_flo_file):
     result = CliRunner().invoke(
         cli,
         ["render", str(tmp_flo_file), "--layout-width", "1px"],
     )
 
     assert result.exit_code == 5
-    assert "exceeds requested bounds" in result.output
+    assert "below the safe readability floor 0.75" in result.output
 
 
 def test_cli_render_expand_writes_natural_width_when_request_is_too_narrow(
@@ -111,8 +121,34 @@ def test_cli_render_expand_writes_natural_width_when_request_is_too_narrow(
 
     assert result.exit_code == 0
     content = output_path.read_text(encoding="utf-8")
-    assert 'width="1"' not in content
-    assert 'viewBox="0 0 1 ' not in content
+    root = content.partition(">")[0]
+    assert 'width="1"' not in root
+    assert 'viewBox="0 0 1 ' not in root
+
+
+def test_cli_safe_fits_white_belt_map_to_exact_letter_canvas(tmp_path):
+    output_path = tmp_path / "white-belt-letter.svg"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "render",
+            str(REPO_ROOT / "examples" / "reference" / "washnfold.flo"),
+            "--layout-width",
+            "8.5in",
+            "--layout-height",
+            "11in",
+            "--render-to",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    root = output_path.read_text(encoding="utf-8").partition(">")[0]
+    assert 'width="816"' in root
+    assert 'height="1056"' in root
+    assert 'preserveAspectRatio="xMidYMid meet"' in root
+    assert 'viewBox="0 0 774 1306"' in root
 
 
 def test_cli_render_scale_writes_requested_canvas_and_natural_viewbox(

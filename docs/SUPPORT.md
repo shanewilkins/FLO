@@ -1,6 +1,6 @@
 # FLO Support Matrix
 
-FLO `0.2.x` supports local, trusted-source authoring with Python 3.14 and Node.js 26. The Python package is platform-neutral; direct SVG layout invokes the bundled ELK JavaScript through the local Node runtime.
+FLO `0.4.x` supports local, trusted-source authoring with Python 3.14 and Node.js 26. The Python package is platform-neutral; direct SVG layout invokes the bundled ELK JavaScript through the local Node runtime.
 
 | Environment | Status | Evidence |
 | --- | --- | --- |

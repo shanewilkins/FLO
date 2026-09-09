@@ -143,7 +143,7 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
         "layout_overflow",
         "--layout-overflow",
         "Behavior when exact requested bounds cannot contain the natural diagram",
-        choices=("error", "expand", "scale", "paginate"),
+        choices=("safe-fit", "error", "expand", "scale", "paginate"),
     ),
     RenderOptionSpec(
         "layout_spacing",

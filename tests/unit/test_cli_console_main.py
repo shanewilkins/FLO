@@ -91,3 +91,17 @@ def test_main_routes_explicit_command_to_click(monkeypatch):
 
     assert cli_mod.main(["render", "x.flo", "--help"]) == 0
     assert observed == [(["render", "x.flo", "--help"], "flo", False)]
+
+
+def test_main_routes_version_to_click(monkeypatch):
+    """Verify the package version flag bypasses the compatibility parser."""
+    observed = []
+
+    def fake_main(*, args, prog_name, standalone_mode):
+        observed.append((args, prog_name, standalone_mode))
+        return None
+
+    monkeypatch.setattr(cli_mod.cli, "main", fake_main)
+
+    assert cli_mod.main(["--version"]) == 0
+    assert observed == [(["--version"], "flo", False)]

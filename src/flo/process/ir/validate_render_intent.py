@@ -175,13 +175,14 @@ def _validate_layout_dimensions(layout: dict[str, Any], path: str) -> None:
 def _validate_layout_overflow(layout: dict[str, Any], path: str) -> None:
     overflow = layout.get("overflow")
     if overflow is not None and overflow not in {
+        "safe-fit",
         "error",
         "expand",
         "scale",
         "paginate",
     }:
         _raise_render_intent_error(
-            f"{path}.layout.overflow='{overflow}' not supported; must be one of ['error', 'expand', 'paginate', 'scale']"
+            f"{path}.layout.overflow='{overflow}' not supported; must be one of ['error', 'expand', 'paginate', 'safe-fit', 'scale']"
         )
 
 

@@ -4,6 +4,11 @@ This protocol evaluates the 0.4 White Belt MVP authoring journey without
 coaching the participant through individual commands. The established `yb_`
 file and script names are retained only for release-automation compatibility.
 
+The automated clean-install journey is the 0.4 release gate. On September 9,
+2026, the maintainer approved the representative-user observation as follow-up
+evidence for the 1.0 stable-promotion gate. That observation remains incomplete
+and must not be represented as completed 0.4 evidence.
+
 ## Participant
 
 A process-improvement professional who is comfortable creating a basic process
@@ -33,7 +38,7 @@ explanation.
 
 ## Acceptance
 
-The journey passes only when all artifacts are produced in ten minutes or less
-without contributor intervention. `scripts/check_yb_journey.py` is the
-automated packaging and command rehearsal; it does not substitute for this
-representative-user observation.
+The observation passes only when all artifacts are produced in ten minutes or
+less without contributor intervention. `scripts/check_yb_journey.py` is the
+0.4 automated packaging and command rehearsal; it does not substitute for the
+representative-user observation required before 1.0 stable promotion.

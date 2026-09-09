@@ -53,10 +53,13 @@ Current mappings:
   - Exporters (machine-readable or report-style projections) live under
     `src/flo/process/export`.
 - `--diagram` supports `swimlane`, `spaghetti`, and `sppm` for render output.
+- With no explicit diagram or source render default, `flo render` selects
+  `sppm`.
 - `--profile`, `--detail`, `--orientation {lr,tb}`, `--show-notes`,
   `--subprocess-view`, shared autoformat controls (`--layout-wrap`,
-  `--layout-max-width-px`, `--layout-target-columns`), and all SPPM render
-  controls are render-only options.
+  `--layout-max-width-px`, `--layout-target-columns`, `--layout-width`,
+  `--layout-height`, `--layout-overflow`), and all SPPM render controls are
+  render-only options.
 - If `--export json`, `--export ingredients`, or `--export movement` is
   selected, render-only options are rejected with usage exit code `1`.
 
@@ -66,6 +69,11 @@ Current mappings:
 - Rework classification precedence is explicit metadata first, inferred back-edge
   fallback second.
 - Explicit rework semantics override inferred classification when they differ.
+- Exact single-page SPPM bounds reflow before scaling. The default `safe-fit`
+  policy preserves aspect ratio, scales only to the `0.75` legibility floor,
+  and otherwise returns exit code `5` with requested bounds, natural bounds,
+  required scale, and the floor. `error`, `expand`, and unrestricted `scale`
+  remain explicit alternatives; `paginate` is publication-only.
 
 ## Validation diagnostics
 

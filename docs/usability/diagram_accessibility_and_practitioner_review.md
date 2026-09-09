@@ -2,7 +2,11 @@
 
 ## Status
 
-Automated prerequisites are implemented. External accessibility-specialist and practitioner sessions are pending; they must not be represented as completed release evidence until signed records are added below.
+Automated prerequisites are implemented and gate 0.4. On September 9, 2026,
+the maintainer approved the external accessibility-specialist and practitioner
+sessions as follow-up evidence for the 1.0 stable-promotion gate. Those sessions
+remain pending and must not be represented as completed evidence until signed
+records are added below.
 
 ## Automated prerequisite
 
@@ -21,7 +25,7 @@ Use the committed `washnfold_white_belt`, `simple_decision_book`, and `rework_lo
 5. color-independent identification of value class, queues, branches, and rework;
 6. print/PDF legibility at the intended book size.
 
-Each finding must be `pass`, `fail`, or `not applicable`, with artifact ID and a reproducible observation. Any failure that prevents identifying process sequence, node purpose, branch meaning, or timing is release-blocking for a publication claim.
+Each finding must be `pass`, `fail`, or `not applicable`, with artifact ID and a reproducible observation. Any failure that prevents identifying process sequence, node purpose, branch meaning, or timing blocks 1.0 stable promotion until resolved.
 
 ## Practitioner sessions
 

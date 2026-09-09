@@ -36,34 +36,49 @@ FLO does not provide:
 ## 2) Requirements
 
 - Python 3.14+
+- Node.js 26 (used by direct SVG layout)
+- `uv` (recommended installer and developer environment manager)
 
 ## 3) Install and Run
 
-From the repository root:
+Install the released command without cloning the repository:
 
 ```bash
+python3.14 --version
+node --version
+uv --version
+uv tool install flo-lang
+flo --version
+```
+
+The package contains the pinned ELK JavaScript bundle. Rendering invokes it
+through the local Node.js runtime; end users do not need `npm` or a separate
+JavaScript dependency installation.
+
+To contribute or run unreleased source, start from the repository root:
+
+```bash
+npm ci --ignore-scripts --no-audit --no-fund
 uv sync --dev
 ```
 
-Run FLO on a file.
-The default output format is direct SVG to stdout. New work should explicitly
-select a maintained diagram family.
+Run FLO on a file. The default output is an SPPM SVG written to stdout:
 
 ```bash
-uv run flo examples/reference/linear.flo --diagram sppm
+flo examples/reference/linear.flo
 ```
 
 Preferred modern entry points:
 
 ```bash
-uv run flo export examples/reference/new_semantics.flo -o new_semantics.json
-uv run flo render examples/reference/new_semantics.flo --export svg --render-to new_semantics.svg --diagram sppm
+flo export examples/reference/new_semantics.flo -o new_semantics.json
+flo render examples/reference/new_semantics.flo --export svg --render-to new_semantics.svg
 ```
 
 You can also use explicit subcommands:
 
 ```bash
-uv run flo render examples/reference/linear.flo --diagram sppm
+flo render examples/reference/linear.flo --diagram sppm
 ```
 
 Common developer commands:
@@ -1029,6 +1044,9 @@ Diagram render options:
 - `--typography-scale <0.75..1.5>`
 - `--layout-wrap {auto,off}`
 - `--layout-fit {fit-preferred,fit-strict}`
+- `--layout-width <dimension>`
+- `--layout-height <dimension>`
+- `--layout-overflow {safe-fit,error,expand,scale,paginate}`
 - `--layout-spacing {standard,compact}`
 - `--sppm-step-numbering {off,node,edge}`
 - `--sppm-label-density {full,compact,teaching}`
@@ -1070,6 +1088,36 @@ uv run flo render examples/reference/chocolate_chip_cookies.flo --export movemen
 uv run flo render examples/reference/washnfold.flo --export svg --render-to washnfold_sppm.svg --diagram sppm --sppm-output-profile book --layout-target-columns 4
 uv run flo render examples/reference/washnfold.flo --export typst --render-to washnfold.typ --diagram sppm --layout-overflow paginate --layout-target-columns 4
 ```
+
+### Direct SVG geometry
+
+`--layout-width` and `--layout-height` apply to one render. They accept positive
+values in `px`, `in`, `cm`, or `mm`; bare numbers remain pixel-compatible. Both
+dimensions declare an exact SVG canvas. One dimension preserves the natural
+aspect ratio by deriving the other, and omitting both retains natural renderer
+bounds.
+
+For example, this creates a 6-by-4-inch SVG canvas (576 by 384 pixels at FLO's
+96-pixel-per-inch conversion):
+
+```bash
+flo render process.flo \
+  --layout-width 6in \
+  --layout-height 4in \
+  --render-to process-6x4.svg
+```
+
+Requested SPPM width becomes a reflow constraint before any scaling. The
+default `safe-fit` policy preserves aspect ratio and scales only when the result
+stays at or above the `0.75` legibility floor. If readable content cannot fit,
+FLO returns a render error with the natural bounds, requested bounds, required
+scale, and floor. Choose `error` for no scaling, `expand` to let the canvas grow,
+or `scale` to allow deliberate shrinking below the floor. `paginate` applies to
+composed publication output rather than direct SVG.
+
+Fixed PDF workflows can request a physical page box such as `8.5in` by `11in`.
+Responsive HTML should retain the SVG `viewBox` and use CSS to control displayed
+width; a fixed canvas is not required for every render.
 
 Important:
 

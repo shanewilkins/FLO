@@ -1,9 +1,11 @@
 [project]
 name = "flo-lang"
-version = "0.3.0"
+version = "0.4.0"
 description = "FLO reference implementation"
 readme = "README.md"
 requires-python = ">=3.14"
+license = "MIT"
+license-files = ["LICENSE.md"]
 # Runtime dependencies
 dependencies = [
     "structlog>=22.0",
@@ -15,6 +17,12 @@ dependencies = [
     "PyYAML>=6.0",
     "jsonschema>=4.26.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/shanewilkins/FLO"
+Repository = "https://github.com/shanewilkins/FLO"
+Issues = "https://github.com/shanewilkins/FLO/issues"
+Changelog = "https://github.com/shanewilkins/FLO/blob/master/docs/CHANGELOG.md"
 
 [project.optional-dependencies]
 

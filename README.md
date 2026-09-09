@@ -46,12 +46,14 @@ The current language and FLO IR are the foundation for that direction. The
 vision is deliberately broader than the current v0.x implementation; current
 capabilities and non-goals are described below.
 
+FLO is available under the [MIT License](LICENSE.md).
+
 ------------------------------------------------------------------------
 
 ## Development Workflow (uv)
 
 FLO uses `uv` as the canonical developer tool for environment management,
-dependency sync, running commands, builds, and publish.
+dependency sync, running commands, and builds.
 
 From the repository root:
 
@@ -79,13 +81,17 @@ uv run python scripts/vendor_elkjs.py
 uv build
 ```
 
-Publish (token auth):
+Publish a release:
 
 ```bash
-uv publish dist/flo_lang-<version>*
-# username prompt: __token__
-# password prompt: pypi-<token>
+git tag v<version>
+git push origin v<version>
 ```
+
+Then publish the matching GitHub release. The release workflow reruns the
+quality gates, builds the wheel and source distribution, smoke-tests the
+installed wheel, and publishes to PyPI with trusted publishing (OIDC); routine
+releases do not use a local PyPI token.
 
 ------------------------------------------------------------------------
 

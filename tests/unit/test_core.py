@@ -346,4 +346,4 @@ def test_run_content_without_render_metadata_keeps_default_diagram(
     assert err == ""
 
     render_options = captured["options"]
-    assert render_options.diagram == "swimlane"
+    assert render_options.diagram == "sppm"

@@ -24,19 +24,21 @@ half-up rounding.
 - A named publication page format supplies exact page bounds and margins.
 - A natural render with no requested dimensions keeps renderer-owned bounds.
 
-If a natural diagram does not fit exact requested bounds, the default overflow
-policy is `error`.
-FLO emits no artifact and reports the natural and requested geometry.
-It never silently clips, scales, or paginates process content.
+For single-page SPPM, requested geometry first becomes an orientation-aware
+reflow constraint. If the reflowed diagram does not fit exact requested bounds,
+the default `safe-fit` policy preserves aspect ratio and fits it only when the
+resulting scale is at least `0.75`. A smaller scale emits no artifact and reports
+the natural geometry, requested geometry, required scale, and legibility floor.
+FLO never silently clips or paginates process content.
 
 Users select an alternative behavior explicitly:
 
+- `error` rejects any remaining overflow after reflow without scaling.
 - `expand` is supported for standalone SVG only and enlarges the final canvas
   to contain the natural diagram at its original scale.
 - `scale` fits supported standalone SVG output within the requested bounds and
-  reports the applied scale.
-  A strict readability policy rejects a scale below the renderer's documented
-  minimum text and line thresholds.
+  reports the applied scale. This explicit choice may go below the safe-fit
+  legibility floor.
 - `paginate` is supported only by composed publication outputs, initially SPPM
   via Typst.
   It preserves publication scale and creates a page series with stable step
@@ -47,8 +49,9 @@ are inspectable in the artifact or publication provenance.
 
 ## Consequences
 
-Exact dimensions are reliable for automation and publication because overflow
-is an actionable failure by default.
+Exact dimensions are reliable for automation and publication because safe
+reflow and fitting are deterministic and unreadable output is an actionable
+failure by default.
 Standalone SVG consumers may deliberately choose `expand` when natural-size
 readability matters more than a fixed canvas.
 Scaling and pagination remain visible author choices rather than renderer
@@ -59,10 +62,11 @@ reinterpret them as overflow policy.
 
 ## Alternatives Rejected
 
-### Silent scale-to-fit
+### Unbounded silent scale-to-fit
 
-Rejected because it can make labels and semantic marks unreadable without a
-visible user choice.
+Rejected because it can make labels and semantic marks unreadable. Default
+safe-fit is bounded by the documented legibility floor; smaller scaling requires
+an explicit `scale` choice.
 
 ### Silent pagination
 

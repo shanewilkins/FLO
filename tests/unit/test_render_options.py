@@ -112,8 +112,13 @@ def test_geometry_dimensions_and_overflow_policy_normalize_from_mapping():
     assert options.layout_overflow == "scale"
 
 
-def test_geometry_overflow_defaults_to_error():
-    assert RenderOptions().layout_overflow == "error"
+def test_geometry_overflow_defaults_to_safe_fit():
+    assert RenderOptions().layout_overflow == "safe-fit"
+
+
+def test_default_diagram_is_sppm():
+    assert RenderOptions().diagram == "sppm"
+    assert RenderOptions.from_mapping({}).diagram == "sppm"
 
 
 @pytest.mark.parametrize("value", ["0cm", "12pt", "wide"])

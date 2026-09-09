@@ -282,7 +282,7 @@
         },
         "overflow": {
           "type": "string",
-          "enum": ["error","expand","scale","paginate"]
+          "enum": ["safe-fit","error","expand","scale","paginate"]
         },
         "max_width": { "type": "integer", "minimum": 1 },
         "target_columns": { "type": "integer", "minimum": 1 }

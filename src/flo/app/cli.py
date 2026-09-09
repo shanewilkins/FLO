@@ -481,6 +481,7 @@ def _apply_render_click_options(*, include_render_to: bool) -> Any:
 
 
 @click.group()
+@click.version_option(version=_get_flo_version(), prog_name="flo")
 def cli() -> None:  # pragma: no cover - thin CLI layer
     """Manage plain-text process models from authoring through export."""
 
@@ -730,11 +731,7 @@ def main(argv: list | None = None) -> int:
     use_click = (
         not args
         or args[0] in explicit_commands
-        or args[0]
-        in {
-            "-h",
-            "--help",
-        }
+        or args[0] in {"-h", "--help", "--version"}
     )
     if not use_click:
         return console_main(args)

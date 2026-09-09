@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## 0.4.0 - 2026-09-09
+
+- Define the 0.4 release as the tagged, installable White Belt book gate:
+  complete White Belt language semantics, canonical JSON and public Python API,
+  and readable single-page SPPM as the default render journey. Add exact
+  unit-aware SVG sizing for US Letter and HTML use, deterministic width-driven
+  reflow, aspect-preserving safe fit with a `0.75` legibility floor, and
+  explicit error, expansion, scaling, or later publication overflow choices.
+- Align the requirements registers and belt roadmap so multi-page SPPM,
+  swimlane, and spaghetti acceptance belongs to Yellow Belt 0.5; value-stream
+  acceptance belongs to Green Belt 0.6; and unratified Black and Master Black
+  Belt features do not block earlier releases.
+- Allow valid multi-outcome and cyclic White Belt processes to use SPPM's
+  deterministic partition ordering without conflicting ELK terminal-layer
+  constraints, while retaining terminal anchoring for safe single-start,
+  single-end maps so accepted layouts remain stable.
+- Correct the installation and publication guidance for the Node.js runtime
+  dependency and GitHub trusted-publishing workflow, add MIT package metadata,
+  and include SPPM golden drift in the aggregate local release gate.
+
 ## 0.3.0 - 2026-08-30
 
 - Split SPPM, swimlane, spaghetti, and value stream into independent renderer

@@ -73,6 +73,12 @@ repos:
         language: system
         pass_filenames: false
         files: "^(src/flo/render/|tests/golden/sppm/|scripts/check_svg_accessibility\\.py)"
+      - id: sppm-golden-drift-check
+        name: SPPM golden artifact drift (via uv)
+        entry: uv run python scripts/check_sppm_baseline_drift.py
+        language: system
+        pass_filenames: false
+        files: "^(src/flo/|examples/|tests/golden/sppm/|scripts/(build|check)_sppm_baseline)"
       - id: pytest-check
         name: pytest (via uv)
         entry: uv run pytest --cov=src/flo --cov-report=term-missing --cov-fail-under=90
