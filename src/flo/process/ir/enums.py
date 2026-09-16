@@ -10,6 +10,7 @@ class NodeKind(Enum):
     WAIT = "wait"
     PROCESS = "process"
     DECISION = "decision"
+    BRANCH = "branch"
 
 
 class LaneType(Enum):

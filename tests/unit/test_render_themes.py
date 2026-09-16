@@ -10,7 +10,7 @@ import pytest
 from flo.app import _resolve_render_options_for_output
 from flo.errors import EXIT_USAGE, CLIError
 from flo.process.ir.models import IR, Edge, Node
-from flo.render._svg_theme import apply_svg_typography
+from flo.render._svg_theme import apply_svg_typography, svg_theme_metadata
 from flo.render.layout_core.models import LayoutBounds, LayoutLaneFrame, LayoutResult
 from flo.render.options import RenderOptions
 from flo.render.spaghetti import render_spaghetti_svg_artifact
@@ -114,7 +114,42 @@ def test_legacy_sppm_theme_is_adapted_into_shared_contract() -> None:
 def test_builtin_semantic_roles_meet_normal_text_contrast_floor() -> None:
     assert {
         name: theme_contrast_risks(theme) for name, theme in BUILTIN_THEMES.items()
-    } == {"default": (), "flatly": (), "print": (), "monochrome": ()}
+    } == {
+        "default": (),
+        "mpi-lms": (),
+        "flatly": (),
+        "print": (),
+        "monochrome": (),
+    }
+
+
+def test_mpi_lms_theme_uses_approved_publication_tokens() -> None:
+    theme = BUILTIN_THEMES["mpi-lms"]
+
+    assert theme.canvas_background == "#F6F7F5"
+    assert theme.font_family == ("Source Sans 3", "system-ui", "sans-serif")
+    assert theme.role("surface").fill == "#FFFFFF"
+    assert theme.role("surface").title_text == "#1F2933"
+    assert theme.role("connector").border == "#5B6870"
+    assert theme.role("rework").border == "#A43232"
+    assert theme.role("va").fill == "#0B5D5A"
+    assert theme.role("rnva").fill == "#8A5A00"
+    assert theme.role("nva").fill == "#A43232"
+    assert theme.role("decision").fill == "#1D5D88"
+    assert theme.role("queue").fill == "#F1F4F3"
+    assert theme.role("unknown").border == "#CDD5D5"
+    assert theme.role("va").border == "#CDD5D5"
+    assert theme.role("rnva").border == "#CDD5D5"
+    assert theme.role("nva").border == "#CDD5D5"
+
+
+def test_mpi_lms_resolved_tokens_are_published_as_svg_metadata() -> None:
+    metadata = svg_theme_metadata(RenderOptions(theme="mpi-lms"))
+
+    assert 'id="flo-theme-tokens" data-flo-theme="mpi-lms"' in metadata
+    assert '"background":"#F6F7F5"' in metadata
+    assert '"font_family":["Source Sans 3","system-ui","sans-serif"]' in metadata
+    assert '"fill":"#0B5D5A"' in metadata
 
 
 def test_invalid_shared_theme_is_a_usage_stage_cli_error() -> None:

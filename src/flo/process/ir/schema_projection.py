@@ -81,6 +81,9 @@ def _node_to_schema(node: Node) -> JsonObject:
         target=node_entry,
         keys=("name", "lane", "note", "location"),
     )
+    branch = attrs.get("branch")
+    if isinstance(branch, dict):
+        node_entry["branch"] = branch
     if node.subprocess_parent is not None:
         node_entry["subprocess_parent"] = node.subprocess_parent
     _copy_optional_lists(
@@ -136,6 +139,8 @@ def _edge_to_schema(edge: Edge) -> JsonObject:
         edge_entry["id"] = edge.id
     if edge.outcome is not None:
         edge_entry["outcome"] = edge.outcome
+    if edge.route is not None:
+        edge_entry["route"] = edge.route
     if edge.label is not None:
         edge_entry["label"] = edge.label
     if edge.edge_type is not None:

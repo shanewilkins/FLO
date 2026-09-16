@@ -11,3 +11,4 @@ _dummy.decorator_list  # noqa: B018 - unused attribute (ast node normalization a
 _dummy.returns  # noqa: B018 - unused attribute (ast node normalization assignment)
 _dummy.inspect_cmd  # noqa: B018 - Click registers this command through a decorator
 _dummy.start_end  # noqa: B018 - dataclass field is consumed through dynamic theme adaptation
+_dummy.BRANCH  # noqa: B018 - enum member is consumed through value-based parsing

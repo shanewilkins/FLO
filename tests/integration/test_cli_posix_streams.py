@@ -64,6 +64,7 @@ steps:
     kind: task
     metadata:
       wait_time: {value: 30, unit: min}
+      wait_before: {value: 30, unit: min}
   - id: end
     kind: end
 
@@ -76,13 +77,15 @@ transitions:
 
     result = runner.invoke(cli, ["validate", "-", "--format", "json"], input=invalid)
 
-    assert result.exit_code == 4
+    assert result.exit_code == 3
     diagnostic = json.loads(result.output)
-    assert diagnostic["code"] == "E1503"
+    assert diagnostic["code"] == "E0219"
     assert diagnostic["severity"] == "error"
     assert diagnostic["source"] == "<stdin>"
-    assert diagnostic["field_path"] == "steps.only_task.metadata.wait_time"
-    assert diagnostic["suggestion"] == "Move wait_time to a queue step."
+    assert diagnostic["field_path"] == "steps[1].metadata"
+    assert diagnostic["suggestion"] == (
+        "Keep wait_before and remove the task wait_time alias."
+    )
 
 
 def test_validate_json_includes_composition_chain():
@@ -103,6 +106,39 @@ def test_validate_json_includes_composition_chain():
     assert diagnostic["source"] == "process.flo"
     assert diagnostic["include_chain"][0].endswith("process.flo")
     assert diagnostic["include_chain"][1].endswith("parts/missing.flo")
+
+
+def test_validate_json_reports_malformed_transition_without_silent_data_loss():
+    runner = CliRunner()
+    invalid = "\n".join(
+        [
+            'spec_version: "0.1"',
+            "process:",
+            "  id: bad_rework",
+            "  name: Bad Rework",
+            "steps:",
+            "  - id: start",
+            "    kind: start",
+            "  - id: end",
+            "    kind: end",
+            "transitions:",
+            "  - source: start",
+            "    target: end",
+            '    rework: "yes"',
+            "",
+        ]
+    )
+
+    result = runner.invoke(cli, ["validate", "-", "--format", "json"], input=invalid)
+
+    assert result.exit_code == 3
+    diagnostic = json.loads(result.output)
+    assert diagnostic["code"] == "E0209"
+    assert diagnostic["field_path"] == "transitions[0].rework"
+    assert diagnostic["line"] == 13
+    assert diagnostic["suggestion"] == (
+        "Use the YAML boolean true or false without quotes."
+    )
 
 
 def test_parse_error_class_surfaces_nonzero_and_message():

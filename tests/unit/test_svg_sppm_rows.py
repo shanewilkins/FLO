@@ -4,9 +4,55 @@ from types import SimpleNamespace
 
 from flo.render.layout_core.models import LayoutBounds, LayoutPoint, RoutedEdgePath
 from flo.render.sppm.rows import (
+    _apply_edge_shifts,
     rework_alignment_diagnostics,
     row_gap_diagnostics,
 )
+
+
+def test_apply_edge_shifts_rebuilds_distinct_branch_and_return_routes() -> None:
+    node_bounds = {
+        "decision": LayoutBounds(x_px=100.0, y_px=20.0, width_px=120.0, height_px=80.0),
+        "correction": LayoutBounds(
+            x_px=110.0, y_px=180.0, width_px=100.0, height_px=60.0
+        ),
+    }
+    stale_points = (
+        LayoutPoint(x_px=40.0, y_px=100.0),
+        LayoutPoint(x_px=40.0, y_px=400.0),
+        LayoutPoint(x_px=160.0, y_px=400.0),
+    )
+    edge_paths = {
+        ("decision", "correction"): RoutedEdgePath(
+            edge=("decision", "correction"),
+            points=stale_points,
+            label="yes",
+            is_rework=False,
+            rework_variant="branch",
+        ),
+        ("correction", "decision"): RoutedEdgePath(
+            edge=("correction", "decision"),
+            points=tuple(reversed(stale_points)),
+            label="Recheck",
+            is_rework=True,
+            rework_variant="return",
+        ),
+    }
+
+    shifted = _apply_edge_shifts(
+        edge_paths=edge_paths,
+        shifts={},
+        node_bounds=node_bounds,
+    )
+
+    branch = shifted[("decision", "correction")]
+    rework_return = shifted[("correction", "decision")]
+    assert branch.is_rework is False
+    assert max(point.y_px for point in branch.points) <= 210.0
+    assert branch.points[-1] == LayoutPoint(x_px=110.0, y_px=210.0)
+    assert rework_return.is_rework is True
+    assert max(point.x_px for point in rework_return.points) > 220.0
+    assert rework_return.points[-1] == LayoutPoint(x_px=160.0, y_px=20.0)
 
 
 def test_row_gap_diagnostics_warns_when_rows_are_too_close() -> None:

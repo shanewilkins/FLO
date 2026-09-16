@@ -1,0 +1,38 @@
+spec_version: "0.1"
+
+process:
+  id: dispatch_branch
+  name: Dispatch Branch
+  metadata:
+    resources:
+      - id: worker_a
+        name: Worker A
+        kind: person
+      - id: worker_b
+        name: Worker B
+        kind: person
+
+steps:
+  - id: start
+    kind: start
+
+  - id: assign_work
+    kind: branch
+    branch:
+      mode: dispatch
+      policy: least_loaded
+      eligible_resources:
+        - worker_a
+        - worker_b
+    routes:
+      worker_a: work_a
+      worker_b: work_b
+
+  - id: work_a
+    kind: task
+
+  - id: work_b
+    kind: task
+
+  - id: finish
+    kind: end

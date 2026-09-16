@@ -52,6 +52,7 @@ def ir_from_internal_dict(data: dict[str, Any]) -> IR:
                 target=edge_data.get("target", ""),
                 id=edge_data.get("id"),
                 outcome=edge_data.get("outcome"),
+                route=edge_data.get("route"),
                 label=edge_data.get("label"),
                 edge_type=edge_data.get("edge_type"),
                 handoff=edge_data.get("handoff"),
@@ -106,6 +107,8 @@ def _edge_to_dict(edge: Edge) -> dict[str, Any]:
         output["id"] = edge.id
     if edge.outcome is not None:
         output["outcome"] = edge.outcome
+    if edge.route is not None:
+        output["route"] = edge.route
     if edge.label is not None:
         output["label"] = edge.label
     if edge.edge_type is not None:

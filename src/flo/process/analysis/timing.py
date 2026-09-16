@@ -184,8 +184,13 @@ def analyze_process_timing(process: IR) -> ProcessTimingAnalysis:
         raise TypeError("analyze_process_timing requires canonical IR")
 
     diagnostics: list[TimingDiagnostic] = []
+    projected_queue_waits = _projected_queue_wait_measurements(process)
     node_timings = tuple(
-        _analyze_node_timing(node, diagnostics=diagnostics)
+        _analyze_node_timing(
+            node,
+            diagnostics=diagnostics,
+            suppress_wait=node.id in projected_queue_waits,
+        )
         for node in sorted(process.nodes, key=lambda item: item.id)
     )
     timing_by_node = {timing.node_id: timing for timing in node_timings}
@@ -246,18 +251,21 @@ def _analyze_node_timing(
     node: Node,
     *,
     diagnostics: list[TimingDiagnostic],
+    suppress_wait: bool = False,
 ) -> NodeTiming:
     metadata = extract_node_metadata(node)
+    node_type = node.type.strip().lower()
     cycle_seconds = _duration_seconds(
         metadata.get("cycle_time"),
         node_id=node.id,
         field="cycle_time",
         diagnostics=diagnostics,
     )
+    wait_field = "wait_before" if node_type in _WORK_NODE_TYPES else "wait_time"
     wait_seconds = _duration_seconds(
-        metadata.get("wait_time"),
+        None if suppress_wait else metadata.get(wait_field),
         node_id=node.id,
-        field="wait_time",
+        field=wait_field,
         diagnostics=diagnostics,
     )
     changeover_field = _select_changeover_field(
@@ -273,13 +281,71 @@ def _analyze_node_timing(
     )
     return NodeTiming(
         node_id=node.id,
-        node_type=node.type.strip().lower(),
+        node_type=node_type,
         totals=TimingTotals(
             cycle_time_seconds=cycle_seconds,
             wait_time_seconds=wait_seconds,
             changeover_time_seconds=changeover_seconds,
         ),
         changeover_source_field=changeover_field,
+    )
+
+
+def _projected_queue_wait_measurements(process: IR) -> frozenset[str]:
+    nodes_by_id = {node.id: node for node in process.nodes}
+    task_wait_ids = {
+        measurement_id
+        for node in process.nodes
+        if (node.type or "").lower() in _WORK_NODE_TYPES
+        if isinstance(task_wait := extract_node_metadata(node).get("wait_before"), dict)
+        if (measurement_id := _duration_measurement_id(task_wait)) is not None
+    }
+    projected_queue_ids: set[str] = set()
+    for node in process.nodes:
+        if (node.type or "").lower() != "queue":
+            continue
+        queue_wait = extract_node_metadata(node).get("wait_time")
+        if not isinstance(queue_wait, dict):
+            continue
+        refs = _duration_measurement_refs(queue_wait)
+        if refs and all(reference in task_wait_ids for reference in refs):
+            projected_queue_ids.add(node.id)
+
+    for edge in process.edges:
+        source = nodes_by_id.get(edge.source)
+        target = nodes_by_id.get(edge.target)
+        if source is None or target is None:
+            continue
+        if (source.type or "").lower() != "queue" or (
+            target.type or ""
+        ).lower() not in _WORK_NODE_TYPES:
+            continue
+        queue_wait = extract_node_metadata(source).get("wait_time")
+        task_wait = extract_node_metadata(target).get("wait_before")
+        if not isinstance(queue_wait, dict) or not isinstance(task_wait, dict):
+            continue
+        queue_id = _duration_measurement_id(queue_wait)
+        task_id = _duration_measurement_id(task_wait)
+        if queue_id is not None and queue_id == task_id:
+            projected_queue_ids.add(source.id)
+    return frozenset(projected_queue_ids)
+
+
+def _duration_measurement_id(duration: dict[str, Any]) -> str | None:
+    value = duration.get("measurement_id")
+    if not isinstance(value, str) or not value.strip():
+        return None
+    return value.strip()
+
+
+def _duration_measurement_refs(duration: dict[str, Any]) -> tuple[str, ...]:
+    value = duration.get("measurement_refs")
+    if not isinstance(value, list):
+        return ()
+    return tuple(
+        reference.strip()
+        for reference in value
+        if isinstance(reference, str) and reference.strip()
     )
 
 

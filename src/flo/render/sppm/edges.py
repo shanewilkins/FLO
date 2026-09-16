@@ -9,7 +9,6 @@ from typing import Any
 from .._diagnostics import RenderDiagnostic
 from ..layout_core.models import LayoutBounds, LayoutPoint
 from ..options import RenderOptions
-from ..themes import DEFAULT_THEME
 from .edge_segments import (
     _candidate_segment_indexes,
     _first_rightward_horizontal_segment_index,
@@ -68,18 +67,17 @@ def _edge_svg(
         render_as_rework_style=render_as_rework_style,
     )
     if rework_edge:
-        themed_rework = options.resolved_theme.role("nva")
-        if themed_rework != DEFAULT_THEME.role("nva"):
-            stroke = themed_rework.border
+        stroke = options.resolved_theme.role("rework").border
     else:
         stroke = options.resolved_theme.role("connector").border
     dash_attrs = f' stroke-dasharray="{dash_pattern}"' if dash_pattern else ""
+    marker_id = "flo-sppm-rework-arrow" if rework_edge else "flo-sppm-arrow"
     annotation_bounds: list[LayoutBounds] = []
     parts = [
         f'<g data-edge-source="{escape(edge_path.edge[0])}" data-edge-target="{escape(edge_path.edge[1])}" data-edge-kind="{edge_kind}"{_edge_variant_attr(rework_variant)}>',
         (
             f'<polyline points="{polyline}" fill="none" stroke="{stroke}" '
-            f'stroke-width="{stroke_width:.1f}" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)"{dash_attrs} />'
+            f'stroke-width="{stroke_width:.1f}" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#{marker_id})"{dash_attrs} />'
         ),
     ]
     label_parts, label_bounds = _edge_label_svg(
@@ -689,7 +687,17 @@ def _normalize_rework_edge_points(
         return deduped
     start = deduped[0]
     end = deduped[-1]
-    if abs(start.x_px - end.x_px) <= 24.0 or abs(start.y_px - end.y_px) <= 24.0:
+    aligned_x = abs(start.x_px - end.x_px) <= 24.0
+    stays_near_x_axis = all(
+        min(abs(point.x_px - start.x_px), abs(point.x_px - end.x_px)) <= 24.0
+        for point in deduped
+    )
+    aligned_y = abs(start.y_px - end.y_px) <= 24.0
+    stays_near_y_axis = all(
+        min(abs(point.y_px - start.y_px), abs(point.y_px - end.y_px)) <= 24.0
+        for point in deduped
+    )
+    if (aligned_x and stays_near_x_axis) or (aligned_y and stays_near_y_axis):
         return (start, end)
     return deduped
 
@@ -702,6 +710,24 @@ def _rework_label_placement(
         return _LabelPlacement(x=0.0, y=0.0)
     if len(points) < 2:
         return _LabelPlacement(x=float(first.x_px), y=float(first.y_px))
+    if rework_variant == "return" and len(points) > 2:
+        segment_index = _longest_segment_index(
+            points,
+            segment_indexes=range(len(points) - 1),
+        )
+        if segment_index is not None:
+            segment_start = points[segment_index]
+            segment_end = points[segment_index + 1]
+            if abs(segment_end.x_px - segment_start.x_px) < 1e-6:
+                return _LabelPlacement(
+                    x=segment_start.x_px + 12.0,
+                    y=(segment_start.y_px + segment_end.y_px) / 2.0,
+                    anchor="start",
+                )
+            return _LabelPlacement(
+                x=(segment_start.x_px + segment_end.x_px) / 2.0,
+                y=segment_start.y_px - 8.0,
+            )
     source = points[0]
     target = points[-1]
     dx = float(target.x_px - source.x_px)

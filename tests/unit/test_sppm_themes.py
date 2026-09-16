@@ -134,6 +134,21 @@ def test_flatly_theme_uses_bootstrap_semantic_colors() -> None:
     assert theme.decision.border == "#2C3E50"
 
 
+def test_mpi_lms_legacy_theme_matches_shared_semantic_roles() -> None:
+    theme = SPPM_THEMES["mpi-lms"]
+
+    assert theme.va == SppmNodeStyle(
+        fill="#0B5D5A",
+        border="#CDD5D5",
+        title_fill="#FFFFFF",
+        info_fill="#5B6870",
+    )
+    assert theme.rnva.fill == "#8A5A00"
+    assert theme.nva.fill == "#A43232"
+    assert theme.decision.fill == "#1D5D88"
+    assert theme.queue.fill == "#F1F4F3"
+
+
 def test_parse_custom_sppm_themes_non_mapping_returns_empty() -> None:
     assert parse_custom_sppm_themes(None) == {}
     assert parse_custom_sppm_themes(["bad"]) == {}

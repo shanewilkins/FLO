@@ -256,8 +256,29 @@ acceptance.
   rendering and strict missing-spatial behavior.
 - Provide the deterministic review bundle needed for multi-page and multi-view
   review, with canonical JSON, provenance, model identity, and warnings.
-- Keep telemetry, measurement-profile migration, and value-stream-map belt
-  acceptance out of the 0.5 release gate.
+- Add measurement profiles and compact, detailed, and machine-readable
+  measurement projections for the Yellow Belt book, while keeping telemetry
+  and value-stream-map belt acceptance out of the 0.5 release gate.
+
+#### 0.5 Deferred Backlog
+
+These follow-up items are explicitly deferred from the 0.4.1 White Belt patch.
+They are 0.5 backlog candidates and do not become release-blocking commitments
+without promotion through the normative requirements process.
+
+- Refine SPPM decision ports, outcome-label placement, decision proportions,
+  connector clearance, and local rework-loop routing.
+- Add a first-class monochrome output profile with deliberate patterns, border
+  treatments, and non-color semantic distinctions.
+- Complete rich measurement profiles, provenance, sample counts, statistical
+  selectors, and compact/detail projections beyond the 0.4 scalar contract.
+- Add dedicated generic-branch and dispatch visualization without presenting a
+  generic branch as a decision.
+- Coordinate downstream book adoption of released themes, fixtures, and
+  semantic migrations without coupling the FLO release to the book repository.
+- Split the temporarily grandfathered validation, timing, normalization,
+  diagnostics, and theme-test modules so they satisfy the standard file-length
+  and cyclomatic-complexity gates without exclusions.
 
 ### 0.6: Green Belt Delivery
 

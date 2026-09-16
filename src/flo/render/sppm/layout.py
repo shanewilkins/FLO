@@ -59,6 +59,10 @@ def build_sppm_elk_layout_request(
         direction=direction,
         decorator=_decorate_sppm_edge,
     )
+    edge_specs = _derive_rework_branch_routes(
+        edges=edge_specs,
+        node_kinds=_node_kind_map(nodes),
+    )
     sppm_nodes = ordered_nodes(
         nodes,
         options=render_options,
@@ -177,6 +181,61 @@ def _decorate_sppm_edge(edge: ElkLayoutEdge, raw_edge: dict[str, Any]) -> ElkLay
         outgoing_token=outgoing_token,
         incoming_token=incoming_token,
     )
+
+
+def _derive_rework_branch_routes(
+    *,
+    edges: tuple[ElkLayoutEdge, ...],
+    node_kinds: dict[str, str],
+) -> tuple[ElkLayoutEdge, ...]:
+    """Mark ordinary decision paths that lead to an explicit rework return."""
+    return_sources = {
+        edge.source_id
+        for edge in edges
+        if edge.is_rework and edge.rework_variant == "return"
+    }
+    if not return_sources:
+        return edges
+
+    adjacency: dict[str, set[str]] = {}
+    for edge in edges:
+        if edge.is_rework:
+            continue
+        adjacency.setdefault(edge.source_id, set()).add(edge.target_id)
+
+    def reaches_return_source(start_id: str) -> bool:
+        visited: set[str] = set()
+        frontier = [start_id]
+        while frontier:
+            node_id = frontier.pop()
+            if node_id in visited:
+                continue
+            visited.add(node_id)
+            if node_id in return_sources:
+                return True
+            if node_id != start_id and node_kinds.get(node_id) == "decision":
+                continue
+            frontier.extend(sorted(adjacency.get(node_id, ()), reverse=True))
+        return False
+
+    derived: list[ElkLayoutEdge] = []
+    for edge in edges:
+        if (
+            not edge.is_rework
+            and node_kinds.get(edge.source_id) == "decision"
+            and reaches_return_source(edge.target_id)
+        ):
+            derived.append(
+                replace(
+                    edge,
+                    rework_variant="branch",
+                    source_port_side="SOUTH",
+                    target_port_side="NORTH",
+                )
+            )
+            continue
+        derived.append(edge)
+    return tuple(derived)
 
 
 def _apply_wrap_boundary_ports(

@@ -34,9 +34,13 @@ FLO's normative source-authoring model is process-first rather than graph-first.
        non-`end` steps.
 
 2. Branching is declared locally
-    - A branching step, usually a `decision`, should declare `outcomes` that map
-       branch labels to target step identifiers.
-    - These outcome declarations compile into directed control-flow edges in the
+    - A branch point explicitly states how one incoming flow produces or selects
+       multiple outgoing paths.
+    - A `decision` evaluates a condition and declares named `outcomes`.
+    - A generic `branch` selects one route using a declared branch mode and may
+       declare local named `routes`.
+    - A `parallel_split` activates every outgoing path and does not select one.
+    - Local outcomes and routes compile into directed control-flow edges in the
        canonical process model.
 
 3. Explicit transitions are optional
@@ -155,6 +159,7 @@ The current normative node vocabulary is:
 - `queue`
 - `wait`
 - `decision`
+- `branch`
 - `subprocess`
 - `parallel_split`
 - `parallel_join`
@@ -168,6 +173,12 @@ Current node-family intent:
 - `wait` represents an explicit hold state without implying active work.
 - `subprocess` represents a collapsible child-process boundary in the source
    model and may be projected differently by renderers.
+- `decision` evaluates a condition and selects one named outcome.
+- `branch` selects one route using a declared non-decision mechanism.
+- A `branch` must declare `branch.mode` as `dispatch`, `probabilistic`,
+   `external`, or `unspecified`.
+- Workload leveling is modeled as `branch.mode: dispatch` with a policy such as
+   `least_loaded`; it is not a decision outcome.
 - `parallel_split` starts one-to-many concurrent control flow.
 - `parallel_join` synchronizes many-to-one concurrent control flow.
 
@@ -176,8 +187,10 @@ Current node-family intent:
 FLO models several authored relations as first-class semantic surfaces.
 
 1. Control-flow relations
-   - Default sequence, decision outcomes, explicit transitions, and rework
-     edges all compile into canonical directed edges.
+    - Default sequence, decision outcomes, generic branch routes, explicit
+       transitions, and rework edges all compile into canonical directed edges.
+    - `outcome` belongs only to an edge leaving a `decision`.
+    - `route` belongs only to an edge leaving a generic `branch`.
 
 2. Handoff relation
    - `handoff` is a first-class transition relation.
@@ -209,22 +222,42 @@ different process facts and should not be collapsed into one metric.
 
 Normative timing-placement rules:
 
-1. Queue delay belongs on queue nodes
-   - `metadata.wait_time` is valid only on `queue` nodes.
+1. Queue-state duration belongs on queue nodes
+    - `metadata.wait_time` is canonical on `queue` nodes.
+    - It describes an explicitly modeled waiting or buffering state.
 
-2. Active work and setup time belong on work nodes
+2. Worksheet waiting evidence belongs on work nodes
+    - `metadata.wait_before` is canonical on `task`, `system_task`, and
+       `subprocess` nodes.
+    - It records elapsed waiting from arrival for that work step until active
+       work or setup begins.
+    - Authored task-level `metadata.wait_time` is accepted as a source
+       compatibility alias and compiles to `metadata.wait_before`.
+    - Canonical IR must not retain task-level `metadata.wait_time`.
+
+3. Promoted queue projections must identify their evidence
+    - A work-node `wait_before` may declare `measurement_id`.
+    - A queue `wait_time` that repeats or aggregates work-node waiting evidence
+       declares the corresponding IDs in `measurement_refs`.
+    - A directly preceding queue and work node may instead share one
+       `measurement_id` when they present the same measurement.
+    - Linked queue projections remain renderable but contribute no additional
+       waiting time to static totals.
+    - An unlinked queue `wait_time` remains an independent timing contribution.
+
+4. Active work and setup time belong on work nodes
    - `metadata.cycle_time`, `metadata.crossover_time`, and alias fields such as
      `transfer_time` or `changeover_time` belong on work nodes such as `task`,
      `system_task`, and `subprocess`.
 
-3. Queue nodes are delay-only nodes
+5. Queue nodes are delay-only nodes
     - Queue nodes must not carry active work or setup-time fields such as
        `cycle_time`, `crossover_time`, `transfer_time`, or `changeover_time`.
 
-4. Authors should model waiting structurally
+6. Authors should model promoted waiting structurally
    - If a process includes substantial waiting before work begins, authors
-     should represent that waiting with an explicit `queue` node rather than
-     attaching `wait_time` directly to the downstream work step.
+       may promote it to an explicit `queue` node without removing the
+       worksheet-derived `wait_before` evidence from the downstream work step.
 
 These rules preserve the semantic distinction between queueing delay and
 changeover or processing time.
@@ -259,58 +292,79 @@ An implementation of FLO must enforce these minimum semantic rules:
    - `outcomes` declarations must compile into outgoing edges from the
      declaring step to the named target steps.
 
-7. Edge endpoint validity
+7. Route-based branching synthesis
+    - `routes` declarations must compile into outgoing edges from a generic
+       `branch` to the named target steps.
+    - Named routes identify alternatives without claiming that they are evaluated
+       decision outcomes.
+
+8. Edge endpoint validity
    - Every compiled edge source and target must resolve to a declared node.
 
-8. Decision branching minimum
+9. Explicit branch-point semantics
    - Every `decision` node must have at least two outgoing compiled edges.
+    - Every generic `branch` node must have at least two outgoing compiled edges
+       and a supported `branch.mode`.
+    - Every node with multiple outgoing edges must be a `decision`, `branch`, or
+       `parallel_split`.
+    - Ordinary tasks, queues, starts, and other non-branch nodes may not fan out
+       because the path-selection semantics would be ambiguous.
 
-9. Predecessor rule
+10. Predecessor rule
    - Every non-`start` node must have at least one predecessor.
 
-10. Successor rule
+11. Successor rule
     - Every non-`end` node must have at least one successor.
 
-11. Reachability from start
+12. Reachability from start
     - Every node must be reachable from the `start` node.
 
-12. Reachability to termination
+13. Reachability to termination
     - Every node must be able to reach at least one `end` node.
 
-13. Cycles are allowed
+14. Cycles are allowed
     - Cycles are permitted in the process graph; they are not invalid solely
       because they are cyclic.
 
-14. Queue metadata validation
+15. Queue metadata validation
     - If `metadata.buffer_capacity` is present on a queue node, it must be an
       integer greater than or equal to `1`.
     - `metadata.queue_policy` is optional under the current v0.1 implementation
       and may be used by downstream analysis or future queueing models.
 
-15. Item relation integrity
+16. Item relation integrity
       - If process-level `items` are declared, every `consumes` and `produces`
          reference must resolve to a declared process item id.
 
-16. Resource relation integrity
+17. Resource relation integrity
       - If process-level `resources` are declared, every `performed_by` and
          `uses` reference must resolve to a declared process resource id.
 
-17. Resource kind compatibility
+18. Resource kind compatibility
       - `performed_by` references must resolve to resources of kind `person`.
       - `uses` references must resolve to resources of kind `equipment`.
 
-18. Explicit handoff typing and shape
+19. Explicit handoff typing and shape
       - If `handoff` is present on an edge or transition, it must be boolean in
          the canonical structural contract.
       - Optional typed handoff metadata must not contradict the structural
          meaning of the edge.
 
-19. Parallel structure validity
+20. Parallel structure validity
       - `parallel_split` nodes must have at least two outgoing edges.
       - `parallel_split` nodes must reach at least one `parallel_join` node.
       - `parallel_join` nodes must have at least two incoming edges.
       - `parallel_join` nodes must be reachable from at least one
          `parallel_split` node.
+
+   ## Rendering boundary
+
+   The canonical language distinguishes decisions, generic branches, and parallel
+   splits even when a renderer does not yet provide distinct geometry for every
+   branch-point kind.
+   The current SPPM MVP is required to render decisions and parallel structure.
+   Dedicated generic-branch and dispatch visualization is deferred and must not be
+   simulated by relabeling a generic branch as a decision.
 
 ## Serialization relationship
 

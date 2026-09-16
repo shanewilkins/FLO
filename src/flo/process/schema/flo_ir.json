@@ -35,11 +35,12 @@
         "required": ["id","kind"],
         "properties": {
           "id": { "type": "string" },
-          "kind": { "type": "string", "enum": ["start","task","system_task","queue","wait","decision","end","subprocess","parallel_split","parallel_join"] },
+          "kind": { "type": "string", "enum": ["start","task","system_task","queue","wait","decision","branch","end","subprocess","parallel_split","parallel_join"] },
           "name": { "type": "string" },
           "lane": { "type": "string" },
           "location": { "type": "string" },
           "subprocess_parent": { "type": "string", "minLength": 1 },
+          "branch": { "$ref": "#/definitions/branch_config" },
           "workers": {
             "type": "array",
             "items": { "type": "string" }
@@ -88,6 +89,7 @@
           "source": { "type": "string" },
           "target": { "type": "string" },
           "outcome": { "type": "string" },
+          "route": { "type": "string" },
           "label": { "type": "string" },
           "edge_type": { "type": "string" },
           "handoff": { "type": "boolean" },
@@ -113,6 +115,23 @@
     }
   },
   "definitions": {
+    "branch_config": {
+      "type": "object",
+      "required": ["mode"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["dispatch", "probabilistic", "external", "unspecified"]
+        },
+        "policy": { "type": "string", "minLength": 1 },
+        "eligible_resources": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": true
+    },
     "named_identity": {
       "type": "object",
       "required": ["id", "name"],

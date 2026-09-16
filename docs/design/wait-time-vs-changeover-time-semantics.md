@@ -25,37 +25,49 @@ Why this structure is intentional:
 
 Normative rule summary:
 
-- `metadata.wait_time` is valid only on `queue` nodes.
-- `metadata.cycle_time`, `metadata.crossover_time` (and aliases `transfer_time`/`changeover_time`) belong on work nodes (`task`, `system_task`, `subprocess`).
+- `metadata.wait_time` is canonical on `queue` nodes.
+- `metadata.wait_before` preserves worksheet waiting evidence on work nodes.
+- Task-level source `wait_time` is a compatibility alias normalized to
+  `wait_before` during compilation.
+- `metadata.cycle_time`, `metadata.crossover_time` (and aliases
+  `transfer_time`/`changeover_time`) belong on work nodes (`task`,
+  `system_task`, `subprocess`).
 
 The authoritative rule lives in `docs/specs/core_language.md`.
 
 ## Modeling Pattern
 
-Invalid pattern:
+Worksheet timing attached to a task:
 
 ```yaml
 - id: bake
   kind: task
   metadata:
     cycle_time: {value: 25, unit: min}
-    wait_time: {value: 120, unit: min}
+    wait_before: {value: 120, unit: min, measurement_id: bake_wait}
 ```
 
-Valid pattern:
+The same evidence may be promoted to a queue for visualization:
 
 ```yaml
 - id: oven_queue
   kind: queue
   metadata:
-    wait_time: {value: 120, unit: min}
+    wait_time:
+      value: 120
+      unit: min
+      measurement_refs: [bake_wait]
 
 - id: bake
   kind: task
   metadata:
     cycle_time: {value: 25, unit: min}
+    wait_before: {value: 120, unit: min, measurement_id: bake_wait}
     crossover_time: {value: 30, unit: min}
 ```
+
+Static timing counts the task evidence once and does not add the promoted queue
+projection again.
 
 ## Lean/Six Sigma Alignment
 

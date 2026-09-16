@@ -41,6 +41,24 @@ Theme selection is available through profiles, process render defaults, named
 views, and an explicit CLI override. The CLI remains the highest-precedence
 session override.
 
+`mpi-lms` is the built-in MPI publication and LMS color theme.
+It uses Source Sans 3 with system fallbacks, a neutral canvas and white process
+surface, narrow teal/ochre/red task accents for VA/RNVA/NVA, an information-blue
+decision role, neutral queues, and explicit muted-red rework connectors.
+
+```bash
+uv run flo render process.flo --diagram sppm --theme mpi-lms --export svg
+```
+
+SPPM SVG output includes the selected theme name and complete resolved token set
+in the `flo-theme-tokens` metadata element for deterministic downstream
+inspection and customization.
+
+The maintained approval model is
+`examples/reference/mpi_lms_theme_specimen.flo`.
+It covers RNVA, VA, queue, decision, NVA correction, ordinary flow, and an
+explicit rework return.
+
 Repository defaults use `[render]`, while reusable themes use `[themes]`:
 
 ```toml
@@ -70,7 +88,7 @@ The central theme contract contains:
 - shared publication and diagram roles for primary and secondary text,
   connectors, rules, and neutral surfaces
 - process-semantic roles for `va`, `rnva`, `nva`, `unknown`, `decision`,
-  `queue`, and `start_end`, each with typed fill, border, title-text, and
+  `queue`, `start_end`, and `rework`, each with typed fill, border, title-text, and
   detail-text colors
 - registered renderer extensions for genuinely renderer-specific roles
 

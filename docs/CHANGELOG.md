@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.4.1 - 2026-09-15
+
+- Correct decision, branch-point, outcome, route, and explicit rework semantics so ambiguous fan-out and contradictory edge declarations fail with actionable diagnostics.
+- Preserve worksheet waiting evidence as work-node `wait_before`, accept task source `wait_time` as a compatibility alias, and link promoted queue projections through measurement identities without double counting.
+- Add the built-in `mpi-lms` theme with Source Sans 3 typography, approved semantic colors, neutral task borders, accessible SVG metadata, and a dedicated dashed rework role with matching arrowheads.
+- Add controlled branch, waiting, and MPI-LMS reference fixtures; update canonical schemas and documentation; and regenerate deterministic SPPM and White Belt artifacts.
+
 ## 0.4.0 - 2026-09-09
 
 - Define the 0.4 release as the tagged, installable White Belt book gate:

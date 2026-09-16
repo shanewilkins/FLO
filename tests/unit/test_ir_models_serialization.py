@@ -116,6 +116,7 @@ def test_ir_edge_optional_fields_roundtrip(tmp_path: Path):
                 target="b",
                 id="e1",
                 outcome="yes",
+                route="worker_a",
                 label="approve",
                 edge_type="rework",
                 rework=True,
@@ -128,6 +129,7 @@ def test_ir_edge_optional_fields_roundtrip(tmp_path: Path):
     data = ir_to_internal_dict(ir)
     assert data["edges"][0]["id"] == "e1"
     assert data["edges"][0]["outcome"] == "yes"
+    assert data["edges"][0]["route"] == "worker_a"
     assert data["edges"][0]["label"] == "approve"
     assert data["edges"][0]["edge_type"] == "rework"
     assert data["edges"][0]["rework"] is True
@@ -151,6 +153,7 @@ def test_ir_from_internal_dict_defaults_for_missing_fields():
     assert ir.nodes[0].attrs == {}
     assert ir.edges[0].id is None
     assert ir.edges[0].outcome is None
+    assert ir.edges[0].route is None
 
 
 def test_ir_from_internal_dict_preserves_edge_type_and_rework():

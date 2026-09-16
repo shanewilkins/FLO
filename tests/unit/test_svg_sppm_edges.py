@@ -6,6 +6,7 @@ import pytest
 
 from flo.render._diagnostics import RenderDiagnostic
 from flo.render.layout_core.models import LayoutBounds, LayoutPoint
+from flo.render.options import RenderOptions
 from flo.render.sppm.edges import (
     _attachment_miss_warn_px,
     _clip_edge_points_to_node_bounds,
@@ -17,6 +18,7 @@ from flo.render.sppm.edges import (
     _lane_header_avoid_bounds,
     _normalize_rework_edge_points,
     _placement_overlaps_bounds,
+    _rework_label_placement,
 )
 
 
@@ -78,6 +80,42 @@ def test_normalize_rework_edge_points_keeps_non_axis_aligned_path() -> None:
         LayoutPoint(80.0, 40.0),
         LayoutPoint(110.0, 85.0),
     )
+
+
+def test_normalize_rework_edge_points_preserves_aligned_outside_corridor() -> None:
+    points = (
+        LayoutPoint(50.0, 180.0),
+        LayoutPoint(50.0, 150.0),
+        LayoutPoint(140.0, 150.0),
+        LayoutPoint(140.0, 10.0),
+        LayoutPoint(50.0, 10.0),
+        LayoutPoint(50.0, 40.0),
+    )
+
+    normalized = _normalize_rework_edge_points(
+        points,
+        is_rework=True,
+        rework_variant="return",
+    )
+
+    assert normalized == points
+
+
+def test_rework_return_label_uses_longest_corridor_segment() -> None:
+    points = (
+        LayoutPoint(50.0, 180.0),
+        LayoutPoint(50.0, 150.0),
+        LayoutPoint(140.0, 150.0),
+        LayoutPoint(140.0, 10.0),
+        LayoutPoint(50.0, 10.0),
+        LayoutPoint(50.0, 40.0),
+    )
+
+    placement = _rework_label_placement(points, rework_variant="return")
+
+    assert placement.x == 152.0
+    assert placement.y == 80.0
+    assert placement.anchor == "start"
 
 
 def test_attachment_warn_threshold_accounts_for_queue_geometry() -> None:
@@ -147,6 +185,32 @@ def test_edge_svg_emits_rework_variant_markup_and_label_bounds() -> None:
     assert 'data-edge-source="decision"' in svg
     assert 'data-edge-target="rework"' in svg
     assert len(annotation_bounds) == 1
+
+
+def test_edge_svg_uses_mpi_lms_connector_and_rework_colors() -> None:
+    options = RenderOptions(diagram="sppm", theme="mpi-lms")
+    ordinary = SimpleNamespace(
+        edge=("a", "b"),
+        points=(LayoutPoint(0.0, 0.0), LayoutPoint(100.0, 0.0)),
+        label=None,
+        label_point=None,
+        is_rework=False,
+        rework_variant=None,
+        callout_lines=(),
+        callout_near_source=False,
+        outgoing_token=None,
+        incoming_token=None,
+    )
+    rework = SimpleNamespace(**{**ordinary.__dict__, "is_rework": True})
+
+    ordinary_svg = "".join(_edge_svg(ordinary, options=options)[0])
+    rework_svg = "".join(_edge_svg(rework, options=options)[0])
+
+    assert 'stroke="#5B6870"' in ordinary_svg
+    assert 'marker-end="url(#flo-sppm-arrow)"' in ordinary_svg
+    assert 'stroke="#A43232"' in rework_svg
+    assert 'stroke-dasharray="2 6"' in rework_svg
+    assert 'marker-end="url(#flo-sppm-rework-arrow)"' in rework_svg
 
 
 def test_label_placement_shifts_to_avoid_overlapping_bounds() -> None:

@@ -34,10 +34,15 @@ def svg_accessibility_elements(process: Any, *, diagram_name: str) -> list[str]:
 def standard_svg_defs(options: RenderOptions | None = None) -> list[str]:
     """Return the shared arrow marker definitions for direct SVG renderers."""
     resolved = options or RenderOptions()
+    connector_color = resolved.resolved_theme.role("connector").border
+    rework_color = resolved.resolved_theme.role("rework").border
     return [
         "<defs>",
         '<marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">',
-        f'<path d="M0,0 L8,3 L0,6 z" fill="{resolved.resolved_theme.role("connector").border}" />',
+        f'<path d="M0,0 L8,3 L0,6 z" fill="{connector_color}" />',
+        "</marker>",
+        '<marker id="flo-sppm-rework-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">',
+        f'<path d="M0,0 L8,3 L0,6 z" fill="{rework_color}" />',
         "</marker>",
         "</defs>",
     ]

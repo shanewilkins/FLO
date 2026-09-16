@@ -54,6 +54,7 @@ steps:
     kind: task
     metadata:
       wait_time: {value: 30, unit: min}
+      wait_before: {value: 30, unit: min}
   - id: finish
     kind: end
 
@@ -68,5 +69,5 @@ transitions:
 
     assert not result.ok
     assert result.value is None
-    assert result.diagnostics[0].code == "E1503"
+    assert result.diagnostics[0].code == "E0219"
     assert result.diagnostics[0].source == "invalid.flo"

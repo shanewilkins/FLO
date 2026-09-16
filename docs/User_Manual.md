@@ -289,11 +289,17 @@ The `value_class` field classifies a step by its Lean value contribution:
 
 The `description` field is a free-text string providing a human-readable explanation of what the step does. It is displayed in the SPPM info box and is available as a pass-through field in other renderers.
 
-Queue and task timing constraint:
+Queue and task timing contract:
 
-- `wait_time` is valid only on `queue` nodes.
-- `cycle_time`, `crossover_time`, `transfer_time`, and `changeover_time` are valid on work nodes such as `task`, `system_task`, and `subprocess`.
-- If `wait_time` appears on a work node, compiler validation fails and the model must be restructured by inserting a queue node.
+- `wait_time` is canonical on `queue` nodes.
+- `wait_before` preserves worksheet waiting evidence on work nodes such as
+  `task`, `system_task`, and `subprocess`.
+- Task-level source `wait_time` remains accepted as a compatibility alias and
+  compiles to `wait_before`.
+- `cycle_time`, `crossover_time`, `transfer_time`, and `changeover_time` are
+  valid on work nodes.
+- A promoted queue uses `measurement_refs` to identify task wait measurements
+  that it repeats or aggregates, preventing double counting.
 
 The following metadata keys are recognized and validated by FLO. Other keys are
 currently preserved in IR for custom tooling. The approved requirement is to
@@ -303,16 +309,15 @@ implementation alignment is tracked in the technical requirements catalog.
 | Key | Type | Description |
 | --- | --- | --- |
 | `cycle_time` | time object | Active processing time for the step |
-| `wait_time` | time object | Queue delay before work begins — `queue` nodes only |
+| `wait_time` | time object | Duration of an explicit queue state |
+| `wait_before` | time object | Worksheet waiting interval preceding a work step |
 | `lead_time` | time object | Total elapsed time including wait |
 | `value_class` | `VA`\|`RNVA`\|`NVA`\|`unknown` | Lean value classification |
 | `description` | string | Human-readable explanation of the step |
 | `queue_policy` | string | Queue discipline (e.g. `fifo`, `lifo`) — `queue` nodes |
 | `buffer_capacity` | integer | Maximum queue depth — `queue` nodes |
 
-Pattern: task with queue delay
-
-Bad (rejected by compiler):
+Pattern: task with worksheet waiting evidence
 
 ```yaml
 steps:
@@ -323,12 +328,13 @@ steps:
       cycle_time:
         value: 30
         unit: min
-      wait_time:
+      wait_before:
         value: 18
         unit: min
+        measurement_id: wash_wait
 ```
 
-Good (queue + task split):
+The same wait may also be promoted to queue geometry:
 
 ```yaml
 steps:
@@ -339,6 +345,8 @@ steps:
       wait_time:
         value: 18
         unit: min
+        measurement_refs:
+          - wash_wait
 
   - id: wash
     kind: task
@@ -350,6 +358,10 @@ steps:
       cycle_time:
         value: 30
         unit: min
+      wait_before:
+        value: 18
+        unit: min
+        measurement_id: wash_wait
 ```
 
 Example:
@@ -382,8 +394,11 @@ FLO enforces queue/task semantics at compile time to keep process diagnostics co
 
 Core modeling rules:
 
-- Use `kind: queue` + `metadata.wait_time` for delays caused by unavailable downstream capacity.
-- Use `kind: task`/`system_task`/`subprocess` + `metadata.cycle_time` for active work duration.
+- Use `kind: queue` + `metadata.wait_time` for an explicitly modeled waiting state.
+- Use work-node `metadata.wait_before` to preserve worksheet waiting evidence.
+- Use matching `measurement_id`/`measurement_refs` when a queue projects that
+  evidence.
+- Use `metadata.cycle_time` for active work duration.
 - Use `metadata.crossover_time` for setup/changeover on work nodes.
 
 Lean alignment:
@@ -392,34 +407,39 @@ Lean alignment:
 - Queue reduction methods: pull systems, kanban, takt leveling, WIP limits.
 - Changeover reduction methods: SMED, 5S, standard work, cross-training.
 
-Restructuring guide for existing models:
+Migration guide for existing models:
 
-1. Find task-like nodes that contain `metadata.wait_time`.
-2. Insert a preceding `queue` node for each waiting segment.
-3. Move `wait_time` from the task-like node to the new queue node.
-4. Rewire transitions so flow goes through the queue node first.
-5. Re-validate: `uv run flo validate <file>.flo`.
+1. Existing task-level `metadata.wait_time` compiles to `wait_before`.
+2. Prefer spelling new task measurements as `metadata.wait_before`.
+3. Add a preceding queue only when waiting should be visible as a process state.
+4. Give the task measurement an ID and list it in the queue's
+  `measurement_refs`.
+5. Re-validate with `uv run flo validate <file>.flo`.
 
 Real-world example (before/after):
 
 ```yaml
-# Before (invalid)
+# Compatibility source
 - id: execute_service
   kind: task
   metadata:
     cycle_time: {value: 13, unit: min}
-    wait_time: {value: 6, unit: min}
+    wait_time: {value: 6, unit: min, measurement_id: service_wait}
 
-# After (valid)
+# Preferred canonical spelling with promoted queue
 - id: execute_service_wait_queue
   kind: queue
   metadata:
-    wait_time: {value: 6, unit: min}
+    wait_time:
+      value: 6
+      unit: min
+      measurement_refs: [service_wait]
 
 - id: execute_service
   kind: task
   metadata:
     cycle_time: {value: 13, unit: min}
+    wait_before: {value: 6, unit: min, measurement_id: service_wait}
 ```
 
 ## 4.3) Transition Forms
@@ -814,13 +834,14 @@ Bootstrap CSS at runtime.
 Alternative themes:
 
 - `--sppm-theme flatly` — Flatly-compatible Bootstrap semantic palette
+- `--sppm-theme mpi-lms` — MPI publication and LMS semantic palette
 - `--sppm-theme print` — high-contrast fills suitable for black-and-white printing
 - `--sppm-theme monochrome` — grayscale only
 - `--sppm-theme <name>` — any custom theme defined under `[sppm.themes.<name>]` in `diagrams.toml`
 
 The preferred 0.3 interface is the shared `--theme <name>` option. It applies
 one central theme to SPPM, swimlane, spaghetti, and value-stream SVG output. Built-ins are
-`default`, `flatly`, `print`, and `monochrome`. Direct session overrides are
+`default`, `flatly`, `mpi-lms`, `print`, and `monochrome`. Direct session overrides are
 `--background-color`, `--font-family` (a comma-separated fallback list), and
 `--typography-scale` (`0.75` through `1.5`).
 
@@ -1037,7 +1058,7 @@ Diagram render options:
 - `--spaghetti-channel {both,material,people}`
 - `--spaghetti-people-mode {worker,aggregate}`
 - `--spaghetti-strict-spatial`
-- `--sppm-theme {default,print,monochrome}` or a config-defined theme name
+- `--sppm-theme {default,flatly,mpi-lms,print,monochrome}` or a config-defined theme name
 - `--theme <name>`
 - `--background-color <color>`
 - `--font-family <family[,fallback...]>`
@@ -1240,7 +1261,9 @@ Current semantic constraints include:
 - Canonical `consumes` and `produces` references must resolve to declared `items` when `items` are present
 - Canonical `performed_by` and `uses` references must resolve to declared `resources` with the correct kind when `resources` are present
 - `handoff` must be boolean in the structural edge contract
-- `wait_time` is only valid on `queue` nodes
+- `wait_time` is canonical on queues; `wait_before` is canonical on work nodes
+- Task source `wait_time` is accepted as a compatibility alias for `wait_before`
+- Promoted queue waits must reference the work measurements they project
 - Queue nodes must not carry active work or setup-time fields such as `cycle_time` or `crossover_time`
 
 ## 10) Diagrams and Rendering

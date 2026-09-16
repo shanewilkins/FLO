@@ -428,6 +428,59 @@ def test_build_sppm_elk_layout_request_preserves_rework_callout_content():
     assert rework_edge.callout_near_source is True
 
 
+def test_build_sppm_request_derives_branch_route_for_explicit_rework_return():
+    request = build_sppm_elk_layout_request(
+        {
+            "nodes": [
+                {"id": "inspect", "kind": "decision", "name": "Defective?"},
+                {"id": "correct", "kind": "task", "name": "Correct"},
+                {"id": "done", "kind": "end", "name": "Done"},
+            ],
+            "edges": [
+                {
+                    "source": "inspect",
+                    "target": "correct",
+                    "outcome": "yes",
+                },
+                {
+                    "source": "correct",
+                    "target": "inspect",
+                    "edge_type": "rework",
+                    "rework": True,
+                    "label": "Recheck",
+                },
+                {"source": "inspect", "target": "done", "outcome": "no"},
+            ],
+        },
+        options=RenderOptions(diagram="sppm", orientation="lr"),
+    )
+
+    branch = next(
+        edge
+        for edge in request.edges
+        if (edge.source_id, edge.target_id) == ("inspect", "correct")
+    )
+    rework_return = next(
+        edge
+        for edge in request.edges
+        if (edge.source_id, edge.target_id) == ("correct", "inspect")
+    )
+    ordinary = next(
+        edge
+        for edge in request.edges
+        if (edge.source_id, edge.target_id) == ("inspect", "done")
+    )
+
+    assert branch.is_rework is False
+    assert branch.rework_variant == "branch"
+    assert branch.source_port_side == "SOUTH"
+    assert branch.target_port_side == "NORTH"
+    assert rework_return.is_rework is True
+    assert rework_return.rework_variant == "return"
+    assert ordinary.is_rework is False
+    assert ordinary.rework_variant is None
+
+
 def test_build_sppm_elk_layout_request_preserves_explicit_continuation_tokens():
     request = build_sppm_elk_layout_request(
         {

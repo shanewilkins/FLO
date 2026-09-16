@@ -54,6 +54,8 @@ def resolve_sppm_node_appearance(
         return SppmNodeAppearance(
             fill=theme.role("start_end").fill,
             border=theme.role("start_end").border,
+            title_fill=theme.role("start_end").title_text,
+            info_fill=theme.role("start_end").detail_text,
         )
     if normalized_kind == "decision":
         return SppmNodeAppearance(

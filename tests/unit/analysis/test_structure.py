@@ -66,7 +66,7 @@ def test_structure_reports_handoffs_paths_and_step_classification() -> None:
     assert ir_to_internal_dict(process) == before
 
 
-def test_structure_separates_explicit_and_inferred_rework() -> None:
+def test_structure_does_not_treat_backward_edge_as_authored_rework() -> None:
     process = IR(
         name="Rework",
         nodes=[
@@ -91,14 +91,34 @@ def test_structure_separates_explicit_and_inferred_rework() -> None:
 
     result = analyze_process_structure(process)
 
-    assert [finding.classification for finding in result.rework_edges] == [
-        "inferred",
-        "explicit",
-    ]
-    assert result.rework_edges[1].rate == 0.2
-    assert result.rework_edges[1].reason == "Incomplete"
+    assert [finding.classification for finding in result.rework_edges] == ["explicit"]
+    assert result.rework_edges[0].rate == 0.2
+    assert result.rework_edges[0].reason == "Incomplete"
     assert [path.node_ids for path in result.paths] == [("start", "review", "end")]
-    assert "structure-inferred-rework" in _diagnostic_codes(result)
+    assert "structure-ambiguous-backward-edge" in _diagnostic_codes(result)
+
+
+def test_undeclared_backward_edge_remains_an_ordinary_cycle() -> None:
+    process = IR(
+        name="Undeclared cycle",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="work", type="task"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="work"),
+            Edge(source="work", target="end"),
+            Edge(source="work", target="start"),
+        ],
+    )
+
+    result = analyze_process_structure(process)
+
+    assert result.rework_edges == ()
+    assert result.paths == ()
+    assert "structure-ambiguous-backward-edge" in _diagnostic_codes(result)
+    assert "structure-cycle-unsupported" in _diagnostic_codes(result)
 
 
 @pytest.mark.parametrize(
@@ -130,7 +150,7 @@ def test_explicit_ordinary_back_edge_suppresses_rework_inference(
     assert result.rework_edges == ()
     assert result.paths == ()
     assert "structure-cycle-unsupported" in _diagnostic_codes(result)
-    assert "structure-inferred-rework" not in _diagnostic_codes(result)
+    assert "structure-ambiguous-backward-edge" not in _diagnostic_codes(result)
 
 
 def test_explicit_false_handoff_suppresses_lane_change_candidate() -> None:

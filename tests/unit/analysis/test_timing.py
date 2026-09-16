@@ -125,6 +125,141 @@ def test_timing_normalizes_every_supported_unit(
     assert analyze_process_timing(process).modeled_lead_time_seconds == expected_seconds
 
 
+def test_task_wait_before_contributes_to_lead_time() -> None:
+    process = IR(
+        name="worksheet wait",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(
+                id="work",
+                type="task",
+                attrs={
+                    "metadata": {
+                        "cycle_time": {"value": 2, "unit": "min"},
+                        "wait_before": {"value": 3, "unit": "min"},
+                    }
+                },
+            ),
+            Node(id="end", type="end"),
+        ],
+        edges=[Edge(source="start", target="work"), Edge(source="work", target="end")],
+    )
+    validate_ir(process)
+
+    result = analyze_process_timing(process)
+
+    assert result.declared_totals.wait_time_seconds == 180
+    assert result.modeled_lead_time_seconds == 300
+
+
+def test_linked_queue_and_task_wait_measurement_is_counted_once() -> None:
+    shared_wait = {
+        "value": 5,
+        "unit": "min",
+        "measurement_id": "wash_wait",
+    }
+    process = IR(
+        name="promoted queue",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(
+                id="queue",
+                type="queue",
+                attrs={"metadata": {"wait_time": shared_wait}},
+            ),
+            Node(
+                id="work",
+                type="task",
+                attrs={
+                    "metadata": {
+                        "cycle_time": {"value": 2, "unit": "min"},
+                        "wait_before": dict(shared_wait),
+                    }
+                },
+            ),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="queue"),
+            Edge(source="queue", target="work"),
+            Edge(source="work", target="end"),
+        ],
+    )
+    validate_ir(process)
+
+    result = analyze_process_timing(process)
+    queue_timing = next(item for item in result.node_timings if item.node_id == "queue")
+    work_timing = next(item for item in result.node_timings if item.node_id == "work")
+
+    assert result.declared_totals.wait_time_seconds == 300
+    assert result.modeled_lead_time_seconds == 420
+    assert queue_timing.totals.wait_time_seconds is None
+    assert work_timing.totals.wait_time_seconds == 300
+
+
+def test_aggregate_queue_projection_is_not_counted_again() -> None:
+    process = IR(
+        name="aggregate queue projection",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(
+                id="queue",
+                type="queue",
+                attrs={
+                    "metadata": {
+                        "wait_time": {
+                            "value": 5,
+                            "unit": "min",
+                            "measurement_refs": ["wash_wait", "dry_wait"],
+                        }
+                    }
+                },
+            ),
+            Node(
+                id="wash",
+                type="task",
+                attrs={
+                    "metadata": {
+                        "cycle_time": {"value": 1, "unit": "min"},
+                        "wait_before": {
+                            "value": 4,
+                            "unit": "min",
+                            "measurement_id": "wash_wait",
+                        },
+                    }
+                },
+            ),
+            Node(
+                id="dry",
+                type="task",
+                attrs={
+                    "metadata": {
+                        "cycle_time": {"value": 1, "unit": "min"},
+                        "wait_before": {
+                            "value": 1,
+                            "unit": "min",
+                            "measurement_id": "dry_wait",
+                        },
+                    }
+                },
+            ),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="queue"),
+            Edge(source="queue", target="wash"),
+            Edge(source="wash", target="dry"),
+            Edge(source="dry", target="end"),
+        ],
+    )
+    validate_ir(process)
+
+    result = analyze_process_timing(process)
+
+    assert result.declared_totals.wait_time_seconds == 300
+    assert result.modeled_lead_time_seconds == 420
+
+
 def test_branching_process_reports_deterministic_path_range() -> None:
     process = IR(
         name="branch",

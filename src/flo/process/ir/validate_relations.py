@@ -38,6 +38,8 @@ def validate_resource_relations(obj: IR) -> None:
     if not declared_resources:
         return
 
+    _validate_branch_eligible_resources(obj, declared_resources)
+
     relation_expectations = {
         "performed_by": "person",
         "uses": "equipment",
@@ -63,6 +65,25 @@ def validate_resource_relations(obj: IR) -> None:
                     raise ValidationError(
                         f"E1314: node '{node.id}' {relation} resource '{resource_ref}' must reference kind '{expected_kind}'"
                     )
+
+
+def _validate_branch_eligible_resources(
+    obj: IR, declared_resources: dict[str, str]
+) -> None:
+    for node in obj.nodes:
+        attrs = getattr(node, "attrs", None)
+        branch = attrs.get("branch") if isinstance(attrs, dict) else None
+        eligible = (
+            branch.get("eligible_resources") if isinstance(branch, dict) else None
+        )
+        if not isinstance(eligible, list):
+            continue
+        for resource_ref in eligible:
+            if resource_ref not in declared_resources:
+                raise ValidationError(
+                    f"E1315: branch node '{node.id}' eligible resource "
+                    f"'{resource_ref}' must reference a declared process resource id"
+                )
 
 
 def _extract_relation_values(attrs: Any, relation: str) -> list[Any] | None:

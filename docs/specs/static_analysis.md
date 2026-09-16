@@ -37,7 +37,8 @@ sorted JSON, and analysis never mutates the input.
 The initial timing result is versioned as `0.1` and preserves three categories:
 
 - cycle time: active processing time from `metadata.cycle_time`
-- queue wait time: delay from `metadata.wait_time` on queue nodes
+- waiting time: work-node evidence from `metadata.wait_before` plus independent
+  queue duration from `metadata.wait_time`
 - setup or changeover time: the selected compatible setup field on work nodes
 
 Supported source units `s`, `m`, `min`, `hr`, and `d` normalize to seconds in
@@ -59,6 +60,8 @@ enumerates start-to-end paths in deterministic node-ID order.
   times, not one falsely precise lead time.
 - A work node is timing-complete when it declares valid `cycle_time`.
 - A queue node is timing-complete when it declares valid `wait_time`.
+- A queue linked to work-node waiting measurements by `measurement_refs` or a
+  shared `measurement_id` is a projection and is not counted again.
 - Missing expected timing keeps declared subtotals visible but prevents a
   complete modeled lead-time claim for the affected path.
 

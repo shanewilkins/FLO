@@ -28,6 +28,7 @@ transitions:
     outcome: approved
   - source: assess
     target: reject
+    outcome: rejected
   - source: approve
     target: end
   - source: reject

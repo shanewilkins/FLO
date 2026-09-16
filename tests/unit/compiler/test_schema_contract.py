@@ -56,6 +56,22 @@ def test_schema_accepts_parallel_kinds_and_handoff_field() -> None:
     validate_against_schema(ir)
 
 
+def test_schema_accepts_generic_branch_and_route() -> None:
+    ir = IR(
+        name="p",
+        nodes=[
+            Node(
+                id="assign",
+                type="branch",
+                attrs={"branch": {"mode": "dispatch", "policy": "least_loaded"}},
+            )
+        ],
+        edges=[Edge(source="assign", target="work", route="worker_a")],
+    )
+
+    validate_against_schema(ir)
+
+
 def test_repo_and_packaged_ir_schema_are_in_sync() -> None:
     repo_root = Path(__file__).resolve().parents[3]
     schema_path = repo_root / "schema" / "flo_ir.json"
@@ -92,6 +108,12 @@ def test_flo_types_schema_includes_phase2_canonical_keys() -> None:
         "location",
         "mixed",
     ]
+
+    duration = typed_schema["definitions"]["time_duration"]
+    assert "measurement_id" in duration["properties"]
+    assert duration["properties"]["measurement_refs"]["uniqueItems"] is True
+    node_metadata = typed_schema["properties"]["node"]
+    assert "wait_before" in node_metadata["properties"]
 
 
 def test_canonical_entity_identity_and_kind_contracts_match_ir_schema() -> None:

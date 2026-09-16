@@ -271,3 +271,41 @@ def test_node_svg_decision_uses_selected_primary_theme_colors() -> None:
     assert 'fill="#D5D8DC"' in svg
     assert 'stroke="#2C3E50"' in svg
     assert 'fill="#121920">Quality OK?' in svg
+
+
+@pytest.mark.parametrize(
+    ("kind", "metadata", "fill", "border", "title_fill"),
+    [
+        ("task", {"value_class": "VA"}, "#0B5D5A", "#CDD5D5", "#FFFFFF"),
+        ("task", {"value_class": "RNVA"}, "#8A5A00", "#CDD5D5", "#FFFFFF"),
+        ("task", {"value_class": "NVA"}, "#A43232", "#CDD5D5", "#FFFFFF"),
+        ("task", {}, "#FFFFFF", "#CDD5D5", "#1F2933"),
+        ("queue", {}, "#F1F4F3", "#1F2933", "#1F2933"),
+        ("decision", {}, "#1D5D88", "#1D5D88", "#FFFFFF"),
+        ("start", {}, "#FFFFFF", "#0B5D5A", "#1F2933"),
+    ],
+)
+def test_node_svg_uses_mpi_lms_semantic_roles(
+    kind: str,
+    metadata: dict[str, str],
+    fill: str,
+    border: str,
+    title_fill: str,
+) -> None:
+    node = SimpleNamespace(id="node", kind=kind, label="Node title")
+
+    svg = "".join(
+        _node_svg(
+            node=node,
+            raw_node={"metadata": metadata},
+            options=RenderOptions(diagram="sppm", theme="mpi-lms"),
+            x=20.0,
+            y=30.0,
+            width=160.0,
+            height=120.0,
+        )
+    )
+
+    assert f'fill="{fill}"' in svg
+    assert f'stroke="{border}"' in svg
+    assert f'fill="{title_fill}">Node title' in svg

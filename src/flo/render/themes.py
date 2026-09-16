@@ -26,6 +26,7 @@ ROLE_NAMES = (
     "surface",
     "lane",
     "connector",
+    "rework",
     "publication",
     "annotation",
     "callout",
@@ -97,6 +98,7 @@ def _roles(**overrides: ThemeRole) -> Mapping[str, ThemeRole]:
         "surface": ThemeRole("#FFFFFF", "#cbd5e1", "#0f172a", "#475569"),
         "lane": ThemeRole("#f8fafc", "#cbd5e1", "#334155", "#475569"),
         "connector": ThemeRole("#FFFFFF", "#475569", "#0f172a", "#475569"),
+        "rework": ThemeRole("#FFFFFF", "#b91c1c", "#b91c1c", "#b91c1c"),
         "publication": ThemeRole("#fffdf8", "#cbd5e1", "#0f172a", "#334155"),
         "annotation": ThemeRole("#fffdf8", "#666666", "#0f172a", "#475569"),
         "callout": ThemeRole("#ffffff", "#666666", "#0f172a", "#475569"),
@@ -136,12 +138,39 @@ def _with_roles(theme: RenderTheme, name: str, **roles: ThemeRole) -> RenderThem
 BUILTIN_THEMES: Mapping[str, RenderTheme] = MappingProxyType(
     {
         "default": DEFAULT_THEME,
+        "mpi-lms": _with_roles(
+            replace(
+                DEFAULT_THEME,
+                name="mpi-lms",
+                canvas_background="#F6F7F5",
+                font_family=("Source Sans 3", "system-ui", "sans-serif"),
+            ),
+            "mpi-lms",
+            va=ThemeRole("#0B5D5A", "#CDD5D5", "#FFFFFF", "#5B6870"),
+            rnva=ThemeRole("#8A5A00", "#CDD5D5", "#FFFFFF", "#5B6870"),
+            nva=ThemeRole("#A43232", "#CDD5D5", "#FFFFFF", "#5B6870"),
+            unknown=ThemeRole("#FFFFFF", "#CDD5D5", "#1F2933", "#5B6870"),
+            decision=ThemeRole("#1D5D88", "#1D5D88", "#FFFFFF", "#FFFFFF"),
+            queue=ThemeRole("#F1F4F3", "#1F2933", "#1F2933", "#5B6870"),
+            start_end=ThemeRole("#FFFFFF", "#0B5D5A", "#1F2933", "#5B6870"),
+            subprocess=ThemeRole("#FFFFFF", "#5B6870", "#1F2933", "#5B6870"),
+            surface=ThemeRole("#FFFFFF", "#CDD5D5", "#1F2933", "#5B6870"),
+            lane=ThemeRole("#F6F7F5", "#CDD5D5", "#1F2933", "#5B6870"),
+            connector=ThemeRole("#FFFFFF", "#5B6870", "#1F2933", "#5B6870"),
+            rework=ThemeRole("#FFFFFF", "#A43232", "#A43232", "#A43232"),
+            publication=ThemeRole("#FFFFFF", "#CDD5D5", "#1F2933", "#5B6870"),
+            annotation=ThemeRole("#FFFFFF", "#CDD5D5", "#1F2933", "#5B6870"),
+            callout=ThemeRole("#FFFFFF", "#CDD5D5", "#1F2933", "#5B6870"),
+            token=ThemeRole("#FFFFFF", "#5B6870", "#1F2933", "#5B6870"),
+            boundary=ThemeRole("#FFFFFF", "#5B6870", "#5B6870", "#5B6870"),
+        ),
         "flatly": _with_roles(
             DEFAULT_THEME,
             "flatly",
             va=ThemeRole("#D1F2EB", "#18BC9C", "#0A4B3E"),
             rnva=ThemeRole("#FDEBD0", "#F39C12", "#613E07"),
             nva=ThemeRole("#FADBD8", "#E74C3C", "#5C1E18"),
+            rework=ThemeRole("#FFFFFF", "#E74C3C", "#E74C3C", "#E74C3C"),
             decision=ThemeRole("#D5D8DC", "#2C3E50", "#121920"),
             queue=ThemeRole("#F39C12", "#C27D0E", "#2C3E50"),
             unknown=ThemeRole("#FFFFFF", "#95A5A6", "#2C3E50"),
@@ -153,6 +182,7 @@ BUILTIN_THEMES: Mapping[str, RenderTheme] = MappingProxyType(
             va=ThemeRole("#D5E8D4", "#1A5C1A"),
             rnva=ThemeRole("#DAE8FC", "#23527C"),
             nva=ThemeRole("#F8CECC", "#8B0000"),
+            rework=ThemeRole("#FFFFFF", "#8B0000", "#8B0000", "#8B0000"),
             decision=ThemeRole("#FFFFFF", "#000000"),
             queue=ThemeRole("#FFFFFF", "#000000"),
             unknown=ThemeRole("#FFFFFF", "#555555"),
@@ -164,6 +194,7 @@ BUILTIN_THEMES: Mapping[str, RenderTheme] = MappingProxyType(
             va=ThemeRole("#CCCCCC", "#333333"),
             rnva=ThemeRole("#888888", "#333333"),
             nva=ThemeRole("#444444", "#000000", "#FFFFFF", "#FFFFFF"),
+            rework=ThemeRole("#FFFFFF", "#000000", "#000000", "#000000"),
             decision=ThemeRole("#FFFFFF", "#333333"),
             queue=ThemeRole("#777777", "#000000", "#000000", "#000000"),
             unknown=ThemeRole("#FFFFFF", "#333333"),
@@ -417,6 +448,12 @@ def _adapt_legacy_sppm_theme(name: str, legacy: Any) -> RenderTheme:
             title_text=style.title_fill,
             detail_text=style.info_fill,
         )
+    roles["rework"] = ThemeRole(
+        fill="#FFFFFF",
+        border=legacy.nva.border,
+        title_text=legacy.nva.border,
+        detail_text=legacy.nva.border,
+    )
     return replace(DEFAULT_THEME, name=name, roles=MappingProxyType(roles))
 
 

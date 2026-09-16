@@ -18,10 +18,11 @@ Current coverage intent:
 
 - `valid/` should include narrow fixtures for canonical item/resource
   declarations, consumes/produces, handoff-bearing edges, parallel
-  split/join structure, and rework-plus-handoff coexistence.
+  split/join structure, dispatch branches, and rework-plus-handoff coexistence.
 - `invalid/` should include narrow fixtures for undeclared references, invalid
   or incomplete canonical entities, duplicate entity identity, malformed
-  handoff values, malformed parallel structure, and malformed rework metadata.
+  handoff values, ambiguous fan-out, malformed parallel structure, and
+  malformed rework metadata.
 
 Authoring rule:
 

@@ -12,11 +12,15 @@ from ..options import RenderOptions
 
 def svg_defs(options: RenderOptions) -> list[str]:
     """Return swimlane-specific marker definitions."""
-    color = options.resolved_theme.role("connector").border
+    connector_color = options.resolved_theme.role("connector").border
+    rework_color = options.resolved_theme.role("rework").border
     return [
         "<defs>",
         '<marker id="flo-swimlane-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">',
-        f'<path d="M0,0 L8,3 L0,6 z" fill="{color}" />',
+        f'<path d="M0,0 L8,3 L0,6 z" fill="{connector_color}" />',
+        "</marker>",
+        '<marker id="flo-swimlane-rework-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">',
+        f'<path d="M0,0 L8,3 L0,6 z" fill="{rework_color}" />',
         "</marker>",
         "</defs>",
     ]
@@ -77,12 +81,13 @@ def edge_svg(
     if len(points) < 2:
         return [], ()
     rework = bool(edge_path.is_rework)
-    role = options.resolved_theme.role("nva" if rework else "connector")
+    role = options.resolved_theme.role("rework" if rework else "connector")
+    marker_id = "flo-swimlane-rework-arrow" if rework else "flo-swimlane-arrow"
     polyline = " ".join(f"{point.x_px:.1f},{point.y_px:.1f}" for point in points)
     dash = ' stroke-dasharray="7 5"' if rework else ""
     parts = [
         f'<g data-edge-source="{escape(str(edge_path.edge[0]), quote=True)}" data-edge-target="{escape(str(edge_path.edge[1]), quote=True)}" data-edge-kind="{"rework" if rework else "direct"}">',
-        f'<polyline points="{polyline}" fill="none" stroke="{role.border}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-swimlane-arrow)"{dash} />',
+        f'<polyline points="{polyline}" fill="none" stroke="{role.border}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#{marker_id})"{dash} />',
     ]
     if edge_path.label:
         label_x, label_y = _edge_label_point(edge_path, points=points)

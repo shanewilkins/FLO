@@ -61,6 +61,23 @@ def test_validate_ir_rejects_consumes_with_undeclared_item():
         validate_ir(ir)
 
 
+def test_validate_ir_accepts_legacy_item_relation_without_item_declarations():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="mix", type="task", attrs={"produces": ["dough"]}),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="mix"),
+            Edge(source="mix", target="end"),
+        ],
+    )
+
+    validate_ir(ir)
+
+
 def test_validate_ir_accepts_canonical_item_and_resource_kinds():
     ir = IR(
         name="x",
@@ -195,6 +212,60 @@ def test_validate_ir_rejects_resource_relations_with_unknown_resource():
 
     with pytest.raises(ValidationError, match="E1313"):
         validate_ir(ir)
+
+
+def test_validate_ir_rejects_branch_with_unknown_eligible_resource():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(
+                id="assign",
+                type="branch",
+                attrs={
+                    "branch": {
+                        "mode": "dispatch",
+                        "eligible_resources": ["missing_worker"],
+                    }
+                },
+            ),
+            Node(id="left", type="task"),
+            Node(id="right", type="task"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="assign"),
+            Edge(source="assign", target="left", route="left"),
+            Edge(source="assign", target="right", route="right"),
+            Edge(source="left", target="end"),
+            Edge(source="right", target="end"),
+        ],
+        process_metadata={
+            "resources": [
+                {"id": "worker", "name": "Worker", "kind": "person"},
+            ]
+        },
+    )
+
+    with pytest.raises(ValidationError, match=r"E1315.*missing_worker"):
+        validate_ir(ir)
+
+
+def test_validate_ir_accepts_legacy_resource_relation_without_declarations():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="mix", type="task", attrs={"uses": ["mixer"]}),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="mix"),
+            Edge(source="mix", target="end"),
+        ],
+    )
+
+    validate_ir(ir)
 
 
 def test_validate_ir_rejects_resource_relations_with_wrong_kind():

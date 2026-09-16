@@ -25,7 +25,14 @@
       "required": ["value", "unit"],
       "properties": {
         "value": { "type": "number", "minimum": 0 },
-        "unit": { "$ref": "#/definitions/time_unit" }
+        "unit": { "$ref": "#/definitions/time_unit" },
+        "measurement_id": { "type": "string", "minLength": 1 },
+        "measurement_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        }
       },
       "additionalProperties": false
     },
@@ -276,6 +283,7 @@
         "sla_target_seconds": { "$ref": "#/definitions/duration_seconds" },
         "cycle_time": { "$ref": "#/definitions/time_duration" },
         "wait_time": { "$ref": "#/definitions/time_duration" },
+        "wait_before": { "$ref": "#/definitions/time_duration" },
         "changeover_time": { "$ref": "#/definitions/time_duration" },
         "lead_time": { "$ref": "#/definitions/time_duration" },
         "value_class": { "$ref": "#/definitions/value_class" },

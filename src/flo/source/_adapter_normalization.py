@@ -20,6 +20,7 @@ _SOURCE_NODE_KINDS = {
     "queue",
     "wait",
     "decision",
+    "branch",
     "end",
     "subprocess",
     "parallel_split",
@@ -108,6 +109,10 @@ def _validate_step_entry(*, step: Any, path: str, seen_ids: set[str]) -> None:
 
     _register_step_id(step=step, path=path, seen_ids=seen_ids)
     kind = _validate_step_kind(step=step, path=path)
+    _validate_step_outcomes(step=step, path=path, kind=kind)
+    _validate_step_routes(step=step, path=path, kind=kind)
+    _validate_branch_config(step=step, path=path, kind=kind)
+    _validate_step_wait_alias(step=step, path=path, kind=kind)
     nested = _nested_step_entries(step=step, kind=kind)
     if nested is None:
         return
@@ -148,6 +153,133 @@ def _nested_step_entries(*, step: dict[str, Any], kind: str) -> Any:
     if nested is None and kind == "subprocess":
         return step.get("steps")
     return nested
+
+
+def _validate_step_outcomes(*, step: dict[str, Any], path: str, kind: str) -> None:
+    if "outcomes" not in step:
+        return
+    outcomes = step.get("outcomes")
+    if kind != "decision":
+        raise ValueError(f"E0201: {path}.outcomes is only valid for kind 'decision'")
+    if not isinstance(outcomes, dict) or len(outcomes) < 2:
+        raise ValueError(
+            f"E0202: {path}.outcomes must be an object with at least two branches"
+        )
+
+    normalized_names: set[str] = set()
+    for raw_name, target_spec in outcomes.items():
+        name = _normalized_outcome_name(raw_name)
+        if name is None:
+            raise ValueError(
+                f"E0203: {path}.outcomes branch names must be non-empty strings"
+            )
+        normalized_name = name.casefold()
+        if normalized_name in normalized_names:
+            raise ValueError(
+                f"E0204: {path}.outcomes contains duplicate branch '{name}'"
+            )
+        normalized_names.add(normalized_name)
+        _validate_outcome_target(
+            target_spec=target_spec,
+            path=f"{path}.outcomes.{name}",
+        )
+
+
+def _normalized_outcome_name(value: Any) -> str | None:
+    if value is True:
+        return "yes"
+    if value is False:
+        return "no"
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return None
+
+
+def _validate_outcome_target(*, target_spec: Any, path: str) -> None:
+    if isinstance(target_spec, str) and target_spec.strip():
+        return
+    if not isinstance(target_spec, dict):
+        raise ValueError(
+            f"E0205: {path} must name a target step or define a branch object"
+        )
+    target = target_spec.get("target", target_spec.get("to"))
+    if not isinstance(target, str) or not target.strip():
+        raise ValueError(f"E0206: {path}.target must be a non-empty string")
+    _validate_transition_fields(transition=target_spec, path=path)
+
+
+def _validate_step_routes(*, step: dict[str, Any], path: str, kind: str) -> None:
+    if "routes" not in step:
+        return
+    routes = step.get("routes")
+    if kind != "branch":
+        raise ValueError(f"E0211: {path}.routes is only valid for kind 'branch'")
+    if not isinstance(routes, dict) or len(routes) < 2:
+        raise ValueError(
+            f"E0212: {path}.routes must be an object with at least two routes"
+        )
+    normalized_names: set[str] = set()
+    for raw_name, target_spec in routes.items():
+        name = _normalized_outcome_name(raw_name)
+        if name is None:
+            raise ValueError(
+                f"E0213: {path}.routes route names must be non-empty strings"
+            )
+        normalized_name = name.casefold()
+        if normalized_name in normalized_names:
+            raise ValueError(f"E0213: {path}.routes contains duplicate route '{name}'")
+        normalized_names.add(normalized_name)
+        _validate_outcome_target(
+            target_spec=target_spec,
+            path=f"{path}.routes.{name}",
+        )
+
+
+def _validate_branch_config(*, step: dict[str, Any], path: str, kind: str) -> None:
+    config = step.get("branch")
+    if kind != "branch":
+        if config is not None:
+            raise ValueError(f"E0214: {path}.branch is only valid for kind 'branch'")
+        return
+    if not isinstance(config, dict):
+        raise ValueError(f"E0215: {path}.branch must be an object")
+    mode = config.get("mode")
+    allowed_modes = {"dispatch", "probabilistic", "external", "unspecified"}
+    if mode not in allowed_modes:
+        allowed = ", ".join(sorted(allowed_modes))
+        raise ValueError(f"E0216: {path}.branch.mode must be one of: {allowed}")
+    policy = config.get("policy")
+    if policy is not None and (not isinstance(policy, str) or not policy.strip()):
+        raise ValueError(
+            f"E0217: {path}.branch.policy must be a non-empty string when provided"
+        )
+    eligible_resources = config.get("eligible_resources")
+    if eligible_resources is not None and (
+        not isinstance(eligible_resources, list)
+        or not eligible_resources
+        or any(
+            not isinstance(resource_id, str) or not resource_id.strip()
+            for resource_id in eligible_resources
+        )
+        or len(set(eligible_resources)) != len(eligible_resources)
+    ):
+        raise ValueError(
+            f"E0218: {path}.branch.eligible_resources must be a non-empty list "
+            "of unique resource IDs"
+        )
+
+
+def _validate_step_wait_alias(*, step: dict[str, Any], path: str, kind: str) -> None:
+    if kind not in {"task", "system_task", "subprocess"}:
+        return
+    metadata = step.get("metadata")
+    if not isinstance(metadata, dict):
+        return
+    if "wait_time" in metadata and "wait_before" in metadata:
+        raise ValueError(
+            f"E0219: {path}.metadata declares both wait_time and wait_before. "
+            "Use wait_before; task wait_time is only a source compatibility alias."
+        )
 
 
 def _validate_transitions(adapter: dict[str, Any]) -> None:
@@ -221,6 +353,34 @@ def _validate_transition_entry(*, idx: int, transition: Any) -> None:
         raise ValueError(f"transitions[{idx}].source must be a non-empty string")
     if not isinstance(target, str) or not target.strip():
         raise ValueError(f"transitions[{idx}].target must be a non-empty string")
+    _validate_transition_fields(transition=transition, path=f"transitions[{idx}]")
+
+
+def _validate_transition_fields(*, transition: dict[str, Any], path: str) -> None:
+    optional_text_fields = ("id", "label", "edge_type", "route")
+    for field in optional_text_fields:
+        value = transition.get(field)
+        if value is not None and (not isinstance(value, str) or not value.strip()):
+            raise ValueError(
+                f"E0207: {path}.{field} must be a non-empty string when provided"
+            )
+
+    outcome = transition.get("outcome")
+    if outcome is not None and _normalized_outcome_name(outcome) is None:
+        raise ValueError(
+            f"E0208: {path}.outcome must be a non-empty string when provided"
+        )
+
+    for field in ("handoff", "rework"):
+        value = transition.get(field)
+        if value is not None and not isinstance(value, bool):
+            raise ValueError(
+                f"E0209: {path}.{field} must be true or false when provided"
+            )
+
+    metadata = transition.get("metadata")
+    if metadata is not None and not isinstance(metadata, dict):
+        raise ValueError(f"E0210: {path}.metadata must be an object when provided")
 
 
 def resolve_process_name(adapter: dict[str, Any]) -> str:
@@ -382,12 +542,28 @@ def normalize_node_attrs(a_node: dict[str, Any]) -> dict[str, Any]:
         "inputs",
         "outputs",
         "subprocess_parent",
+        "branch",
     ):
         if key in a_node:
             normalized.setdefault(key, a_node[key])
     outcomes = a_node.get("outcomes")
     if isinstance(outcomes, dict) and "outcomes" not in normalized:
         normalized["outcomes"] = outcomes
+    routes = a_node.get("routes")
+    if isinstance(routes, dict) and "routes" not in normalized:
+        normalized["routes"] = routes
+
+    metadata = normalized.get("metadata")
+    node_kind = str(a_node.get("kind") or "").strip().lower()
+    if isinstance(metadata, dict):
+        normalized_metadata = dict(metadata)
+        if (
+            node_kind in {"task", "system_task", "subprocess"}
+            and "wait_time" in normalized_metadata
+            and "wait_before" not in normalized_metadata
+        ):
+            normalized_metadata["wait_before"] = normalized_metadata.pop("wait_time")
+        normalized["metadata"] = normalized_metadata
 
     # Canonical aliases are populated from legacy keys when explicit canonical
     # values are absent so downstream logic can consume one preferred surface.

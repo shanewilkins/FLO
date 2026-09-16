@@ -15,7 +15,7 @@ from .process_metadata import extract_process_metadata
 
 StructuralSeverity = Literal["info", "warning"]
 HandoffClassification = Literal["explicit", "candidate"]
-ReworkClassification = Literal["explicit", "inferred"]
+ReworkClassification = Literal["explicit"]
 
 _MAX_PATHS = 256
 _PARALLEL_NODE_TYPES = frozenset({"parallel_split", "parallel_join"})
@@ -63,7 +63,7 @@ class HandoffFinding:
 
 @dataclass(frozen=True)
 class ReworkFinding:
-    """An explicit rework edge or deterministic back-edge inference."""
+    """An explicitly authored rework edge."""
 
     source_id: str
     target_id: str
@@ -226,9 +226,7 @@ def analyze_process_structure(process: IR) -> ProcessStructuralAnalysis:
         diagnostics=diagnostics,
     )
     primary_edges = tuple(
-        edge
-        for edge in process.edges
-        if _rework_classification(edge, node_order=node_order) is None
+        edge for edge in process.edges if not _is_explicit_rework(edge)
     )
     paths = _analyze_paths(
         process,
@@ -339,15 +337,28 @@ def _analyze_rework(
 ) -> tuple[ReworkFinding, ...]:
     findings: list[ReworkFinding] = []
     for edge in sorted(edges, key=_edge_sort_key):
-        classification = _rework_classification(edge, node_order=node_order)
-        if classification is None:
+        if not _is_explicit_rework(edge):
+            if _is_undeclared_backward_edge(edge, node_order=node_order):
+                diagnostics.append(
+                    StructuralDiagnostic(
+                        code="structure-ambiguous-backward-edge",
+                        severity="warning",
+                        message=(
+                            "Backward edge is ordinary flow because rework was not "
+                            "declared. Add edge_type: rework or rework: true only if "
+                            "this transition returns work for correction."
+                        ),
+                        source_id=edge.source,
+                        target_id=edge.target,
+                    )
+                )
             continue
         metadata = edge.metadata or {}
         findings.append(
             ReworkFinding(
                 source_id=edge.source,
                 target_id=edge.target,
-                classification=classification,
+                classification="explicit",
                 edge_id=edge.id,
                 rate=_optional_number(metadata.get("rate")),
                 reason=_optional_text(metadata.get("reason")),
@@ -355,36 +366,25 @@ def _analyze_rework(
                 frequency=_optional_text(metadata.get("frequency")),
             )
         )
-        if classification == "inferred":
-            diagnostics.append(
-                StructuralDiagnostic(
-                    code="structure-inferred-rework",
-                    severity="info",
-                    message="Backward edge is reported as inferred rework.",
-                    source_id=edge.source,
-                    target_id=edge.target,
-                )
-            )
     return tuple(findings)
 
 
-def _rework_classification(
-    edge: Edge, *, node_order: dict[str, int]
-) -> ReworkClassification | None:
+def _is_explicit_rework(edge: Edge) -> bool:
     edge_type = (edge.edge_type or "").strip().lower()
-    if edge_type == "rework" or edge.rework is True:
-        return "explicit"
+    return edge_type == "rework" or edge.rework is True
+
+
+def _is_undeclared_backward_edge(edge: Edge, *, node_order: dict[str, int]) -> bool:
+    edge_type = (edge.edge_type or "").strip()
     if edge.rework is False or edge_type:
-        return None
+        return False
     source_order = node_order.get(edge.source)
     target_order = node_order.get(edge.target)
-    if (
+    return bool(
         source_order is not None
         and target_order is not None
         and target_order <= source_order
-    ):
-        return "inferred"
-    return None
+    )
 
 
 def _analyze_paths(
@@ -506,8 +506,14 @@ def _is_cross_lane(source_lane: str | None, target_lane: str | None) -> bool:
     return bool(source_lane and target_lane and source_lane != target_lane)
 
 
-def _edge_sort_key(edge: Edge) -> tuple[str, str, str, str]:
-    return edge.source, edge.target, edge.id or "", edge.outcome or ""
+def _edge_sort_key(edge: Edge) -> tuple[str, str, str, str, str]:
+    return (
+        edge.source,
+        edge.target,
+        edge.id or "",
+        edge.outcome or "",
+        edge.route or "",
+    )
 
 
 def _diagnostic_sort_key(

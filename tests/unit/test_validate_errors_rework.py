@@ -90,3 +90,25 @@ def test_validate_ir_rejects_blank_rework_reason():
 
     with pytest.raises(ValidationError, match="E1402"):
         validate_ir(ir)
+
+
+@pytest.mark.parametrize(
+    ("edge_type", "rework"),
+    [("rework", False), ("sequence", True)],
+)
+def test_validate_ir_rejects_conflicting_rework_declarations(edge_type, rework):
+    ir = IR(
+        name="x",
+        nodes=[Node(id="start", type="start"), Node(id="end", type="end")],
+        edges=[
+            Edge(
+                source="start",
+                target="end",
+                edge_type=edge_type,
+                rework=rework,
+            )
+        ],
+    )
+
+    with pytest.raises(ValidationError, match=r"E1404.*conflicting"):
+        validate_ir(ir)

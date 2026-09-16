@@ -24,6 +24,6 @@ def test_conformance_valid_examples_pass_validation(example_file: Path):
 def test_conformance_invalid_examples_fail_validation(example_file: Path):
     content = example_file.read_text(encoding="utf-8")
     adapter = parse_adapter(content, source_path=str(example_file))
-    ir = compile_adapter(adapter)
-    with pytest.raises(ValidationError):
+    with pytest.raises((ValueError, ValidationError)):
+        ir = compile_adapter(adapter)
         validate_ir(ir)

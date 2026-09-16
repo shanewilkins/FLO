@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import re
+from html import escape
 
 from .options import RenderOptions
 
@@ -23,4 +25,31 @@ def apply_svg_typography(content: str, options: RenderOptions) -> str:
     return _FONT_SIZE_RE.sub(scaled, content)
 
 
-__all__ = ["apply_svg_typography"]
+def svg_theme_metadata(options: RenderOptions) -> str:
+    """Serialize the resolved theme tokens into deterministic SVG metadata."""
+    theme = options.resolved_theme
+    payload = {
+        "canvas": {"background": theme.canvas_background},
+        "name": theme.name,
+        "roles": {
+            name: {
+                "border": role.border,
+                "detail_text": role.detail_text,
+                "fill": role.fill,
+                "title_text": role.title_text,
+            }
+            for name, role in sorted(theme.roles.items())
+        },
+        "typography": {
+            "font_family": list(theme.font_family),
+            "scale": theme.typography_scale,
+        },
+    }
+    serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return (
+        f'<metadata id="flo-theme-tokens" data-flo-theme="{escape(theme.name)}">'
+        f"{escape(serialized, quote=False)}</metadata>"
+    )
+
+
+__all__ = ["apply_svg_typography", "svg_theme_metadata"]

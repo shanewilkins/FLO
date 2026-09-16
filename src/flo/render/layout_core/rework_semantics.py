@@ -19,11 +19,7 @@ def is_explicit_rework_branch_out(*, edge: dict[str, Any], source_kind: str) -> 
     """Return True when edge represents outbound rework from a decision context."""
     if not is_rework_edge(edge):
         return False
-    return (
-        source_kind == "decision"
-        or edge.get("outcome") is not None
-        or edge.get("label") is not None
-    )
+    return source_kind == "decision" or edge.get("outcome") is not None
 
 
 def resolve_rework_route_variant(

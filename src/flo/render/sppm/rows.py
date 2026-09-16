@@ -48,7 +48,11 @@ def _enforce_sppm_row_alignment(
     _clamp_shifted_nodes_between_terminals(node_bounds=node_bounds, shifts=shifts)
 
     transformed_nodes = _apply_node_shifts(node_bounds=node_bounds, shifts=shifts)
-    transformed_edges = _apply_edge_shifts(edge_paths=edge_paths, shifts=shifts)
+    transformed_edges = _apply_edge_shifts(
+        edge_paths=edge_paths,
+        shifts=shifts,
+        node_bounds=transformed_nodes,
+    )
     return transformed_nodes, transformed_edges
 
 
@@ -545,19 +549,27 @@ def _apply_edge_shifts(
     *,
     edge_paths: dict[tuple[str, str], Any],
     shifts: dict[str, tuple[float, float]],
+    node_bounds: dict[str, LayoutBounds],
 ) -> dict[tuple[str, str], Any]:
     transformed_edges: dict[tuple[str, str], Any] = {}
     for edge_key, edge_path in edge_paths.items():
         source_id, target_id = edge_key
         source_shift = shifts.get(source_id, (0.0, 0.0))
         target_shift = shifts.get(target_id, (0.0, 0.0))
-        translated_points = translate_edge_points(
+        rebuilt_points = _rebuild_rework_route(
+            edge_path=edge_path,
+            source_bounds=node_bounds.get(source_id),
+            target_bounds=node_bounds.get(target_id),
+        )
+        translated_points = rebuilt_points or translate_edge_points(
             edge_path.points,
             source_shift=source_shift,
             target_shift=target_shift,
         )
         shifted_label_point = edge_path.label_point
-        if shifted_label_point is not None:
+        if rebuilt_points:
+            shifted_label_point = None
+        elif shifted_label_point is not None:
             lx = shifted_label_point.x_px + ((source_shift[0] + target_shift[0]) / 2.0)
             ly = shifted_label_point.y_px + ((source_shift[1] + target_shift[1]) / 2.0)
             shifted_label_point = LayoutPoint(x_px=lx, y_px=ly)
@@ -567,6 +579,64 @@ def _apply_edge_shifts(
             label_point=shifted_label_point,
         )
     return transformed_edges
+
+
+def _rebuild_rework_route(
+    *,
+    edge_path: Any,
+    source_bounds: LayoutBounds | None,
+    target_bounds: LayoutBounds | None,
+) -> tuple[LayoutPoint, ...] | None:
+    if source_bounds is None or target_bounds is None:
+        return None
+
+    if edge_path.rework_variant == "branch" and not edge_path.is_rework:
+        source = _bounds_anchor(source_bounds, "SOUTH")
+        target = _bounds_anchor(target_bounds, "WEST")
+        turn_y = source.y_px + max(24.0, (target.y_px - source.y_px) / 2.0)
+        approach_x = target.x_px - 24.0
+        return (
+            source,
+            LayoutPoint(x_px=source.x_px, y_px=turn_y),
+            LayoutPoint(x_px=approach_x, y_px=turn_y),
+            LayoutPoint(x_px=approach_x, y_px=target.y_px),
+            target,
+        )
+
+    if edge_path.rework_variant == "return" and edge_path.is_rework:
+        source = _bounds_anchor(source_bounds, "NORTH")
+        target = _bounds_anchor(target_bounds, "NORTH")
+        source_clearance_y = source.y_px - 24.0
+        target_clearance_y = target.y_px - 24.0
+        corridor_x = (
+            max(
+                source_bounds.x_px + source_bounds.width_px,
+                target_bounds.x_px + target_bounds.width_px,
+            )
+            + 28.0
+        )
+        return (
+            source,
+            LayoutPoint(x_px=source.x_px, y_px=source_clearance_y),
+            LayoutPoint(x_px=corridor_x, y_px=source_clearance_y),
+            LayoutPoint(x_px=corridor_x, y_px=target_clearance_y),
+            LayoutPoint(x_px=target.x_px, y_px=target_clearance_y),
+            target,
+        )
+
+    return None
+
+
+def _bounds_anchor(bounds: LayoutBounds, side: str) -> LayoutPoint:
+    center_x = bounds.x_px + (bounds.width_px / 2.0)
+    center_y = bounds.y_px + (bounds.height_px / 2.0)
+    if side == "NORTH":
+        return LayoutPoint(x_px=center_x, y_px=bounds.y_px)
+    if side == "SOUTH":
+        return LayoutPoint(x_px=center_x, y_px=bounds.y_px + bounds.height_px)
+    if side == "WEST":
+        return LayoutPoint(x_px=bounds.x_px, y_px=center_y)
+    return LayoutPoint(x_px=bounds.x_px + bounds.width_px, y_px=center_y)
 
 
 def _enforce_mainline_min_horizontal_gap(

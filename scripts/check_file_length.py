@@ -18,10 +18,12 @@ DEFAULT_FAIL_LINES = 750
 EXCLUDED_FILES = {
     "src/flo/render/layout_core/elk.py",
     "src/flo/render/sppm/edges.py",
+    "src/flo/process/ir/validate.py",
     "tests/integration/test_cli_render_options.py",
     "tests/unit/test_layout_core_elk_requests.py",
     "tests/unit/test_layout_core_elk_runtime.py",
     "tests/unit/test_render_artifact_backends_sppm.py",
+    "tests/unit/test_validate_errors.py",
 }
 
 

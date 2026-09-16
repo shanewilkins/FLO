@@ -51,6 +51,168 @@ def test_validate_ir_decision_requires_two_outgoing_edges():
         validate_ir(ir)
 
 
+def test_validate_ir_decision_requires_named_outcomes():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="gate", type="decision"),
+            Node(id="left", type="task"),
+            Node(id="right", type="task"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="gate"),
+            Edge(source="gate", target="left", outcome="yes"),
+            Edge(source="gate", target="right"),
+            Edge(source="left", target="end"),
+            Edge(source="right", target="end"),
+        ],
+    )
+
+    with pytest.raises(ValidationError, match=r"E1020.*gate.*right"):
+        validate_ir(ir)
+
+
+def test_validate_ir_decision_requires_unique_outcomes():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="gate", type="decision"),
+            Node(id="left", type="task"),
+            Node(id="right", type="task"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="gate"),
+            Edge(source="gate", target="left", outcome="Yes"),
+            Edge(source="gate", target="right", outcome="yes"),
+            Edge(source="left", target="end"),
+            Edge(source="right", target="end"),
+        ],
+    )
+
+    with pytest.raises(ValidationError, match=r"E1021.*unique outcome"):
+        validate_ir(ir)
+
+
+def test_validate_ir_rejects_outcome_from_non_decision():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="work", type="task"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="work"),
+            Edge(source="work", target="end", outcome="done"),
+        ],
+    )
+
+    with pytest.raises(ValidationError, match=r"E1022.*not a decision"):
+        validate_ir(ir)
+
+
+def test_validate_ir_accepts_dispatch_branch_with_named_routes():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(
+                id="assign",
+                type="branch",
+                attrs={"branch": {"mode": "dispatch", "policy": "least_loaded"}},
+            ),
+            Node(id="left", type="task"),
+            Node(id="right", type="task"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="assign"),
+            Edge(source="assign", target="left", route="worker_a"),
+            Edge(source="assign", target="right", route="worker_b"),
+            Edge(source="left", target="end"),
+            Edge(source="right", target="end"),
+        ],
+    )
+
+    validate_ir(ir)
+
+
+def test_validate_ir_rejects_ambiguous_fan_out_from_task():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="work", type="task"),
+            Node(id="left", type="task"),
+            Node(id="right", type="task"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="work"),
+            Edge(source="work", target="left"),
+            Edge(source="work", target="right"),
+            Edge(source="left", target="end"),
+            Edge(source="right", target="end"),
+        ],
+    )
+
+    with pytest.raises(ValidationError, match=r"E1025.*not a branch point"):
+        validate_ir(ir)
+
+
+def test_validate_ir_rejects_route_from_non_branch():
+    ir = IR(
+        name="x",
+        nodes=[Node(id="start", type="start"), Node(id="end", type="end")],
+        edges=[Edge(source="start", target="end", route="next")],
+    )
+
+    with pytest.raises(ValidationError, match=r"E1027.*not a branch"):
+        validate_ir(ir)
+
+
+def test_validate_ir_rejects_edge_entering_start_boundary():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="work", type="task"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="work"),
+            Edge(source="work", target="start"),
+            Edge(source="work", target="end"),
+        ],
+    )
+
+    with pytest.raises(ValidationError, match=r"E1023.*enters start"):
+        validate_ir(ir)
+
+
+def test_validate_ir_rejects_edge_leaving_end_boundary():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="work", type="task"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="end"),
+            Edge(source="end", target="work"),
+            Edge(source="work", target="end"),
+        ],
+    )
+
+    with pytest.raises(ValidationError, match=r"E1024.*leaves end"):
+        validate_ir(ir)
+
+
 def test_validate_ir_non_start_node_requires_predecessor():
     ir = IR(
         name="x",

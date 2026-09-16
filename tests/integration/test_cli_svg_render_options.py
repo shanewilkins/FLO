@@ -87,13 +87,20 @@ def _write_partial_spaghetti_svg_model(tmp_path):
         },
         "steps": [
             {"id": "start", "kind": "start", "location": "pantry"},
+            {
+                "id": "route_work",
+                "kind": "branch",
+                "location": "pantry",
+                "branch": {"mode": "unspecified"},
+            },
             {"id": "cook", "kind": "task", "location": "oven"},
             {"id": "mix", "kind": "task", "location": "bench"},
             {"id": "end", "kind": "end"},
         ],
         "transitions": [
-            {"source": "start", "target": "cook"},
-            {"source": "start", "target": "mix"},
+            {"source": "start", "target": "route_work"},
+            {"source": "route_work", "target": "cook", "route": "cook"},
+            {"source": "route_work", "target": "mix", "route": "mix"},
             {"source": "cook", "target": "end"},
             {"source": "mix", "target": "end"},
         ],
@@ -353,8 +360,8 @@ def test_run_sppm_typst_non_linear_pagination_warns_without_dropping_flow(tmp_pa
                 ],
                 "edges": [
                     {"source": "start", "target": "choice"},
-                    {"source": "choice", "target": "left"},
-                    {"source": "choice", "target": "right"},
+                    {"source": "choice", "target": "left", "outcome": "left"},
+                    {"source": "choice", "target": "right", "outcome": "right"},
                     {"source": "left", "target": "finish"},
                     {"source": "right", "target": "finish"},
                 ],

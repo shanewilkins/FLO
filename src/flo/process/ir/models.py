@@ -40,6 +40,7 @@ class Edge:
     target: str
     id: str | None = None
     outcome: str | None = None
+    route: str | None = None
     label: str | None = None
     edge_type: str | None = None
     handoff: bool | None = None
@@ -151,6 +152,7 @@ def _coerce_edge(value: Any) -> Edge:
             target=value.get("target", ""),
             id=value.get("id"),
             outcome=value.get("outcome"),
+            route=value.get("route"),
             label=value.get("label"),
             edge_type=value.get("edge_type"),
             handoff=value.get("handoff"),

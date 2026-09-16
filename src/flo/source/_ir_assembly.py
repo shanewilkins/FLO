@@ -39,8 +39,9 @@ def build_edges(adapter: dict[str, Any], nodes: list[Node]) -> list[Edge]:
         return _build_explicit_edges(explicit_transitions)
 
     outcome_edges = _build_outcome_edges(nodes)
+    route_edges = _build_route_edges(nodes)
     sequential_edges = _build_sequential_edges(nodes)
-    return _merge_edges(outcome_edges, sequential_edges)
+    return _merge_edges([*outcome_edges, *route_edges], sequential_edges)
 
 
 def _build_explicit_edges(explicit_edges: list[Any]) -> list[Edge]:
@@ -60,6 +61,7 @@ def _build_explicit_edges(explicit_edges: list[Any]) -> list[Edge]:
                 target=str(tgt),
                 id=str(edge.get("id")) if edge.get("id") is not None else None,
                 outcome=_normalize_outcome_value(edge.get("outcome")),
+                route=str(edge.get("route")) if edge.get("route") is not None else None,
                 label=str(edge.get("label")) if edge.get("label") is not None else None,
                 edge_type=str(edge.get("edge_type"))
                 if edge.get("edge_type") is not None
@@ -130,6 +132,36 @@ def _build_outcome_edge(*, source: str, outcome: Any, target_spec: Any) -> Edge 
     )
 
 
+def _build_route_edges(nodes: list[Node]) -> list[Edge]:
+    edges: list[Edge] = []
+    for node in nodes:
+        attrs = node.attrs or {}
+        routes = attrs.get("routes") if isinstance(attrs, dict) else None
+        if not isinstance(routes, dict):
+            continue
+        for route, target_spec in routes.items():
+            edge = _build_route_edge(
+                source=node.id,
+                route=route,
+                target_spec=target_spec,
+            )
+            if edge is not None:
+                edges.append(edge)
+    return edges
+
+
+def _build_route_edge(*, source: str, route: Any, target_spec: Any) -> Edge | None:
+    outcome_edge = _build_outcome_edge(
+        source=source,
+        outcome=None,
+        target_spec=target_spec,
+    )
+    if outcome_edge is None:
+        return None
+    outcome_edge.route = _normalize_outcome_value(route)
+    return outcome_edge
+
+
 def _normalize_outcome_value(value: Any) -> str | None:
     if value is None:
         return None
@@ -152,8 +184,11 @@ def _build_sequential_edges(nodes: list[Node]) -> list[Edge]:
 
         attrs = current.attrs or {}
         outcomes = attrs.get("outcomes") if isinstance(attrs, dict) else None
-        if isinstance(outcomes, dict) and outcomes:
-            # Decision-like nodes with explicit outcomes should not also get
+        routes = attrs.get("routes") if isinstance(attrs, dict) else None
+        if (isinstance(outcomes, dict) and outcomes) or (
+            isinstance(routes, dict) and routes
+        ):
+            # Local branching declarations should not also get
             # an implicit sequential edge.
             continue
 
@@ -164,10 +199,10 @@ def _build_sequential_edges(nodes: list[Node]) -> list[Edge]:
 
 def _merge_edges(primary: list[Edge], secondary: list[Edge]) -> list[Edge]:
     merged: list[Edge] = []
-    seen: set[tuple[str, str, str | None]] = set()
+    seen: set[tuple[str, str, str | None, str | None]] = set()
 
     for edge in [*primary, *secondary]:
-        key = (edge.source, edge.target, edge.outcome)
+        key = (edge.source, edge.target, edge.outcome, edge.route)
         if key in seen:
             continue
         seen.add(key)

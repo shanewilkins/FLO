@@ -3,9 +3,13 @@
 <marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
 <path d="M0,0 L8,3 L0,6 z" fill="#475569" />
 </marker>
+<marker id="flo-sppm-rework-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L8,3 L0,6 z" fill="#b91c1c" />
+</marker>
 </defs>
 <title id="flo-svg-title">SPPM Feature Showcase — SPPM</title>
 <desc id="flo-svg-description">SPPM diagram for SPPM Feature Showcase. Read node and transition labels for process details.</desc>
+<metadata id="flo-theme-tokens" data-flo-theme="default">{"canvas":{"background":"#fffdf8"},"name":"default","roles":{"annotation":{"border":"#666666","detail_text":"#475569","fill":"#fffdf8","title_text":"#0f172a"},"boundary":{"border":"gray","detail_text":"gray","fill":"#FFFFFF","title_text":"gray"},"callout":{"border":"#666666","detail_text":"#475569","fill":"#ffffff","title_text":"#0f172a"},"connector":{"border":"#475569","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"decision":{"border":"#285B8F","detail_text":"#475569","fill":"#E3EEF7","title_text":"#0f172a"},"information_route":{"border":"royalblue","detail_text":"royalblue","fill":"#FFFFFF","title_text":"royalblue"},"lane":{"border":"#cbd5e1","detail_text":"#475569","fill":"#f8fafc","title_text":"#334155"},"location_processing":{"border":"firebrick","detail_text":"#475569","fill":"mistyrose","title_text":"#0f172a"},"location_staging":{"border":"seagreen","detail_text":"#475569","fill":"honeydew","title_text":"#0f172a"},"location_storage":{"border":"goldenrod","detail_text":"#475569","fill":"lemonchiffon","title_text":"#0f172a"},"location_support":{"border":"deepskyblue","detail_text":"#475569","fill":"azure","title_text":"#0f172a"},"location_transit":{"border":"slategray","detail_text":"#475569","fill":"mintcream","title_text":"#0f172a"},"location_unknown":{"border":"steelblue","detail_text":"#475569","fill":"aliceblue","title_text":"#0f172a"},"material_route":{"border":"tomato","detail_text":"tomato","fill":"#FFFFFF","title_text":"tomato"},"nva":{"border":"#C62828","detail_text":"#475569","fill":"#EF9A9A","title_text":"#0f172a"},"people_route":{"border":"royalblue","detail_text":"royalblue","fill":"#FFFFFF","title_text":"royalblue"},"publication":{"border":"#cbd5e1","detail_text":"#334155","fill":"#fffdf8","title_text":"#0f172a"},"queue":{"border":"#E65100","detail_text":"#475569","fill":"#FFB74D","title_text":"#0f172a"},"rework":{"border":"#b91c1c","detail_text":"#b91c1c","fill":"#FFFFFF","title_text":"#b91c1c"},"rnva":{"border":"#F9A825","detail_text":"#475569","fill":"#FFF176","title_text":"#0f172a"},"start_end":{"border":"#333333","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"subprocess":{"border":"#607D8B","detail_text":"#475569","fill":"#F8FAFC","title_text":"#0f172a"},"surface":{"border":"#cbd5e1","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"token":{"border":"#455A64","detail_text":"#455A64","fill":"#ffffff","title_text":"#455A64"},"unknown":{"border":"#9E9E9E","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"va":{"border":"#2E7D32","detail_text":"#475569","fill":"#81C784","title_text":"#0f172a"}},"typography":{"font_family":["Helvetica"],"scale":1.0}}</metadata>
 <rect width="100%" height="100%" fill="#fffdf8" />
 <g data-sppm-publication-band="header">
 <line x1="28.0" y1="28.0" x2="4164.0" y2="28.0" stroke="#cbd5e1" stroke-width="1" />
@@ -55,7 +59,7 @@
 <text x="2659.0" y="85.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">pass</text>
 </g>
 <g data-edge-source="qa" data-edge-target="rework_quality_wait_queue" data-edge-kind="rework" data-edge-rework-variant="branch">
-<polyline points="2654.5,144.0 2654.5,258.0" fill="none" stroke="#b91c1c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" stroke-dasharray="2 6" />
+<polyline points="2654.5,144.0 2654.5,258.0" fill="none" stroke="#b91c1c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
 <rect x="2640.5" y="148.0" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
 <text x="2654.5" y="161.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">fail</text>
 <rect x="2676.5" y="173.0" width="138.6" height="40.0" rx="7" fill="#ffffff" stroke="#666666" stroke-width="1" fill-opacity="0.96" />
@@ -63,22 +67,22 @@
 <text x="2745.8" y="202.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Reason: QA defects</text>
 </g>
 <g data-edge-source="rework_intake" data-edge-target="intake" data-edge-kind="rework" data-edge-rework-variant="return">
-<polyline points="590.0,266.0 590.0,146.0" fill="none" stroke="#c2410c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" stroke-dasharray="2 6" />
-<rect x="612.0" y="184.0" width="138.6" height="40.0" rx="7" fill="#ffffff" stroke="#666666" stroke-width="1" fill-opacity="0.96" />
-<text x="681.3" y="199.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Frequency: 3/day</text>
-<text x="681.3" y="213.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Count: 12 per week</text>
+<polyline points="590.0,266.0 590.0,242.0 775.5,242.0 775.5,4.0 590.0,4.0 590.0,28.0" fill="none" stroke="#b91c1c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
+<rect x="797.5" y="101.0" width="138.6" height="40.0" rx="7" fill="#ffffff" stroke="#666666" stroke-width="1" fill-opacity="0.96" />
+<text x="866.8" y="116.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Frequency: 3/day</text>
+<text x="866.8" y="130.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Count: 12 per week</text>
 </g>
-<g data-edge-source="rework_intake_wait_queue" data-edge-target="rework_intake" data-edge-kind="rework">
-<polyline points="843.2,333.0 747.5,333.0" fill="none" stroke="#b91c1c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" stroke-dasharray="2 6" />
+<g data-edge-source="rework_intake_wait_queue" data-edge-target="rework_intake" data-edge-kind="direct">
+<polyline points="843.2,333.0 747.5,333.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
 </g>
 <g data-edge-source="rework_quality" data-edge-target="assess_scope" data-edge-kind="rework" data-edge-rework-variant="return">
-<polyline points="1711.0,266.0 1711.0,162.0" fill="none" stroke="#c2410c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" stroke-dasharray="2 6" />
-<rect x="1733.0" y="192.0" width="131.9" height="40.0" rx="7" fill="#ffffff" stroke="#666666" stroke-width="1" fill-opacity="0.96" />
-<text x="1799.0" y="207.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Frequency: 1/day</text>
-<text x="1799.0" y="221.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Count: 4 per week</text>
+<polyline points="1711.0,266.0 1711.0,242.0 1894.0,242.0 1894.0,-12.0 1711.0,-12.0 1711.0,12.0" fill="none" stroke="#b91c1c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
+<rect x="1916.0" y="93.0" width="131.9" height="40.0" rx="7" fill="#ffffff" stroke="#666666" stroke-width="1" fill-opacity="0.96" />
+<text x="1982.0" y="108.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Frequency: 1/day</text>
+<text x="1982.0" y="122.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Count: 4 per week</text>
 </g>
-<g data-edge-source="rework_quality_wait_queue" data-edge-target="rework_quality" data-edge-kind="rework">
-<polyline points="2606.0,333.0 1851.0,333.0" fill="none" stroke="#b91c1c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" stroke-dasharray="2 6" />
+<g data-edge-source="rework_quality_wait_queue" data-edge-target="rework_quality" data-edge-kind="direct">
+<polyline points="2606.0,333.0 1851.0,333.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
 </g>
 <g data-edge-source="start" data-edge-target="intake_wait_queue" data-edge-kind="direct">
 <polyline points="144.0,87.0 246.0,87.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
@@ -89,12 +93,12 @@
 <text x="890.5" y="85.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">True</text>
 </g>
 <g data-edge-source="triage" data-edge-target="rework_intake_wait_queue" data-edge-kind="rework" data-edge-rework-variant="branch">
-<polyline points="890.5,144.0 890.5,258.0" fill="none" stroke="#b91c1c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" stroke-dasharray="2 6" />
+<polyline points="890.5,144.0 861.2,144.0 861.2,238.8 912.5,238.8 912.5,225.3 866.8,225.3 866.8,373.3 895.2,373.3 895.2,365.8 849.5,365.8 849.5,185.8 918.4,185.8 918.4,167.8 890.5,167.8 890.5,258.0" fill="none" stroke="#b91c1c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
 <rect x="873.0" y="148.0" width="35.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
 <text x="890.5" y="161.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">False</text>
-<rect x="912.5" y="173.0" width="172.1" height="40.0" rx="7" fill="#ffffff" stroke="#666666" stroke-width="1" fill-opacity="0.96" />
-<text x="998.5" y="188.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Rate: 12%</text>
-<text x="998.5" y="202.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Reason: Missing details</text>
+<rect x="789.8" y="182.0" width="172.1" height="40.0" rx="7" fill="#ffffff" stroke="#666666" stroke-width="1" fill-opacity="0.96" />
+<text x="875.9" y="197.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Rate: 12%</text>
+<text x="875.9" y="211.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Reason: Missing details</text>
 </g>
 <g data-node-id="start" data-node-kind="start">
 <rect x="12.0" y="61.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />

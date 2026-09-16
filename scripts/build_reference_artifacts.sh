@@ -38,6 +38,7 @@ build_svg "examples/reference/chocolate_chip_cookies.flo" "renders/reference/cho
 build_text_export "examples/reference/chocolate_chip_cookies.flo" "renders/reference/chocolate_chip_cookies_ingredients.md"
 build_svg "examples/reference/linear.flo" "renders/reference/linear.svg" --diagram sppm --orientation lr
 build_svg "examples/reference/linear.flo" "renders/reference/linear_swimlane.svg" --diagram swimlane --render-backend svg
+build_svg "examples/reference/mpi_lms_theme_specimen.flo" "renders/reference/mpi_lms_theme_specimen.svg" --diagram sppm --orientation lr --theme mpi-lms
 build_svg "examples/reference/new_semantics.flo" "renders/reference/new_semantics.svg" --diagram sppm --orientation lr
 build_text_export "examples/reference/new_semantics.flo" "renders/reference/new_semantics_ingredients.md"
 build_svg "examples/reference/rework_loop.flo" "renders/reference/rework_loop.svg" --diagram sppm --orientation lr

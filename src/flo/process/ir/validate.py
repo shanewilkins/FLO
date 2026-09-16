@@ -49,9 +49,10 @@ def validate_ir(obj: Any) -> None:
     _validate_start_nodes(obj)
     _validate_edge_resolution(obj, ids)
     incoming_counts, outgoing_counts = _build_edge_degree_maps(obj, ids)
-    _validate_decision_nodes(obj, outgoing_counts)
+    _validate_branch_points(obj, outgoing_counts)
     _validate_queue_nodes(obj, incoming_counts, outgoing_counts)
     _validate_queue_wait_time_semantics(obj)
+    _validate_wait_measurement_links(obj)
     _validate_node_io_lists(obj)
     _validate_node_time_metadata(obj)
     _validate_node_value_class(obj)
@@ -63,6 +64,8 @@ def validate_ir(obj: Any) -> None:
     validate_parallel_structure(obj, incoming_counts, outgoing_counts)
     _validate_node_connectivity(obj, incoming_counts, outgoing_counts)
     _validate_global_reachability(obj)
+    _validate_boundary_edges(obj)
+    _validate_ambiguous_fan_out(obj, outgoing_counts)
 
 
 def _validate_start_nodes(obj: IR) -> None:
@@ -94,13 +97,114 @@ def _build_edge_degree_maps(
     return incoming_counts, outgoing_counts
 
 
-def _validate_decision_nodes(obj: IR, outgoing_counts: dict[str, int]) -> None:
+def _validate_branch_points(obj: IR, outgoing_counts: dict[str, int]) -> None:
+    node_types = {node.id: (node.type or "").lower() for node in obj.nodes}
     for node in obj.nodes:
-        if (node.type or "").lower() != "decision":
-            continue
-        if outgoing_counts.get(node.id, 0) < 2:
+        node_type = node_types[node.id]
+        outgoing_count = outgoing_counts.get(node.id, 0)
+        if node_type == "decision" and outgoing_count < 2:
             raise ValidationError(
                 f"E1005: decision node '{node.id}' must have at least two outgoing edges"
+            )
+        if node_type == "decision":
+            _validate_decision_edges(obj=obj, node_id=node.id)
+
+        if node_type == "branch":
+            if outgoing_count < 2:
+                raise ValidationError(
+                    f"E1026: branch node '{node.id}' must have at least two outgoing edges"
+                )
+            _validate_branch_node(node_id=node.id, attrs=node.attrs)
+            _validate_branch_edges(obj=obj, node_id=node.id)
+
+    for edge in obj.edges:
+        outcome = (edge.outcome or "").strip()
+        if outcome and node_types.get(edge.source) != "decision":
+            raise ValidationError(
+                f"E1022: edge '{edge.source}' -> '{edge.target}' declares outcome "
+                f"'{outcome}', but source '{edge.source}' is not a decision. "
+                "Remove the outcome or change the source to a decision."
+            )
+        route = (edge.route or "").strip()
+        if route and node_types.get(edge.source) != "branch":
+            raise ValidationError(
+                f"E1027: edge '{edge.source}' -> '{edge.target}' declares route "
+                f"'{route}', but source '{edge.source}' is not a branch. "
+                "Remove the route or change the source to a branch."
+            )
+
+
+def _validate_decision_edges(*, obj: IR, node_id: str) -> None:
+    seen_outcomes: set[str] = set()
+    for edge in (edge for edge in obj.edges if edge.source == node_id):
+        outcome = (edge.outcome or "").strip()
+        if not outcome:
+            raise ValidationError(
+                f"E1020: decision '{node_id}' has outgoing edge "
+                f"'{edge.source}' -> '{edge.target}' without an outcome. "
+                "Add a non-empty outcome to that transition or declare it "
+                "in the decision's outcomes."
+            )
+        normalized_outcome = outcome.casefold()
+        if normalized_outcome in seen_outcomes:
+            raise ValidationError(
+                f"E1021: decision '{node_id}' uses outcome '{outcome}' more than "
+                "once. Give each outgoing branch a unique outcome."
+            )
+        seen_outcomes.add(normalized_outcome)
+        if edge.route:
+            raise ValidationError(
+                f"E1028: decision edge '{edge.source}' -> '{edge.target}' declares "
+                "a route. Decision edges use outcome, not route."
+            )
+
+
+def _validate_branch_node(*, node_id: str, attrs: Any) -> None:
+    config = attrs.get("branch") if isinstance(attrs, dict) else None
+    if not isinstance(config, dict):
+        raise ValidationError(
+            f"E1029: branch node '{node_id}' must declare branch.mode."
+        )
+    mode = config.get("mode")
+    allowed_modes = {"dispatch", "probabilistic", "external", "unspecified"}
+    if mode not in allowed_modes:
+        allowed = ", ".join(sorted(allowed_modes))
+        raise ValidationError(
+            f"E1030: branch node '{node_id}' has invalid branch.mode '{mode}'. "
+            f"Expected one of: {allowed}."
+        )
+
+
+def _validate_branch_edges(*, obj: IR, node_id: str) -> None:
+    seen_routes: set[str] = set()
+    for edge in (edge for edge in obj.edges if edge.source == node_id):
+        if edge.outcome:
+            raise ValidationError(
+                f"E1031: branch edge '{edge.source}' -> '{edge.target}' declares "
+                "an outcome. Generic branch edges use route, not outcome."
+            )
+        route = (edge.route or "").strip()
+        if not route:
+            continue
+        normalized_route = route.casefold()
+        if normalized_route in seen_routes:
+            raise ValidationError(
+                f"E1032: branch '{node_id}' uses route '{route}' more than once. "
+                "Give each named route a unique name."
+            )
+        seen_routes.add(normalized_route)
+
+
+def _validate_ambiguous_fan_out(obj: IR, outgoing_counts: dict[str, int]) -> None:
+    branch_point_types = {"decision", "branch", "parallel_split"}
+    for node in obj.nodes:
+        node_type = (node.type or "").lower()
+        outgoing_count = outgoing_counts.get(node.id, 0)
+        if outgoing_count > 1 and node_type not in branch_point_types:
+            raise ValidationError(
+                f"E1025: node '{node.id}' has {outgoing_count} outgoing edges but "
+                f"kind '{node_type}' is not a branch point. Change it to decision, "
+                "branch, or parallel_split to declare how paths are selected."
             )
 
 
@@ -125,19 +229,23 @@ def _validate_queue_nodes(
 
 
 def _validate_queue_wait_time_semantics(obj: IR) -> None:
-    """Enforce queue/task semantic constraint: wait_time only on queue nodes.
+    """Enforce canonical queue and pre-task waiting field placement.
 
     - Queue nodes (kind: queue) may have wait_time (queue delays).
-    - Task nodes (task, system_task, subprocess) must NOT have wait_time.
+    - Work nodes may have wait_before but not the source-only wait_time alias.
     - Task nodes may have cycle_time and crossover_time (work duration and setup).
-    - Queue nodes must NOT have cycle_time or crossover_time.
+    - Queue nodes must NOT have wait_before, cycle_time, or crossover_time.
     """
     for node in obj.nodes:
         node_type = (node.type or "").lower()
         metadata = extract_node_metadata(node)
 
         if node_type == "queue":
-            # Queue nodes: reject cycle_time and crossover_time
+            if "wait_before" in metadata:
+                raise ValidationError(
+                    f"E1504: queue node '{node.id}' has wait_before metadata. "
+                    "Queues own wait_time; wait_before belongs on work nodes."
+                )
             if "cycle_time" in metadata:
                 raise ValidationError(
                     f"E1501: queue node '{node.id}' has cycle_time metadata. "
@@ -155,13 +263,96 @@ def _validate_queue_wait_time_semantics(obj: IR) -> None:
                     f"Setup time belongs on task nodes."
                 )
         elif node_type in {"task", "system_task", "subprocess"}:
-            # Task nodes: reject wait_time
             if "wait_time" in metadata:
                 raise ValidationError(
                     f"E1503: {node_type} node '{node.id}' has wait_time metadata. "
-                    f"wait_time is only valid on queue nodes. "
-                    f"Restructure: insert a queue node before this task to represent the delay."
+                    "Canonical work-node metadata uses wait_before. Rename the "
+                    "field, or compile authored FLO source so the compatibility "
+                    "alias is normalized."
                 )
+
+
+def _validate_wait_measurement_links(obj: IR) -> None:
+    nodes_by_id = {node.id: node for node in obj.nodes}
+    task_waits_by_id: dict[str, str] = {}
+    for node in obj.nodes:
+        if (node.type or "").lower() not in {"task", "system_task", "subprocess"}:
+            continue
+        task_wait = extract_node_metadata(node).get("wait_before")
+        if not isinstance(task_wait, dict):
+            continue
+        measurement_id = _measurement_id(task_wait)
+        if measurement_id is None:
+            continue
+        previous_node_id = task_waits_by_id.get(measurement_id)
+        if previous_node_id is not None:
+            raise ValidationError(
+                f"E1506: work nodes '{previous_node_id}' and '{node.id}' both "
+                f"declare wait measurement_id '{measurement_id}'. Give each "
+                "distinct wait measurement a unique ID."
+            )
+        task_waits_by_id[measurement_id] = node.id
+
+    for node in obj.nodes:
+        if (node.type or "").lower() != "queue":
+            continue
+        queue_wait = extract_node_metadata(node).get("wait_time")
+        if not isinstance(queue_wait, dict):
+            continue
+        for measurement_ref in _measurement_refs(queue_wait):
+            if measurement_ref not in task_waits_by_id:
+                raise ValidationError(
+                    f"E1507: queue '{node.id}' wait_time references unknown task "
+                    f"wait measurement_id '{measurement_ref}'. Correct the reference "
+                    "or add that measurement_id to a work-node wait_before."
+                )
+
+    for edge in obj.edges:
+        source = nodes_by_id.get(edge.source)
+        target = nodes_by_id.get(edge.target)
+        if source is None or target is None:
+            continue
+        if (source.type or "").lower() != "queue" or (
+            target.type or ""
+        ).lower() not in {"task", "system_task", "subprocess"}:
+            continue
+        queue_wait = extract_node_metadata(source).get("wait_time")
+        task_wait = extract_node_metadata(target).get("wait_before")
+        if not isinstance(queue_wait, dict) or not isinstance(task_wait, dict):
+            continue
+        queue_measurement_id = _measurement_id(queue_wait)
+        task_measurement_id = _measurement_id(task_wait)
+        queue_measurement_refs = _measurement_refs(queue_wait)
+        linked = task_measurement_id is not None and (
+            queue_measurement_id == task_measurement_id
+            or task_measurement_id in queue_measurement_refs
+        )
+        if not linked:
+            raise ValidationError(
+                f"E1505: queue '{source.id}' wait_time and work node '{target.id}' "
+                "wait_before describe the same queue-to-work boundary without a "
+                "measurement link. Give both duration objects the same non-empty "
+                "measurement_id, add the task measurement_id to the queue's "
+                "measurement_refs, or keep the measurement on only one node."
+            )
+
+
+def _measurement_id(duration: dict[str, Any]) -> str | None:
+    value = duration.get("measurement_id")
+    if not isinstance(value, str) or not value.strip():
+        return None
+    return value.strip()
+
+
+def _measurement_refs(duration: dict[str, Any]) -> tuple[str, ...]:
+    value = duration.get("measurement_refs")
+    if not isinstance(value, list):
+        return ()
+    return tuple(
+        reference.strip()
+        for reference in value
+        if isinstance(reference, str) and reference.strip()
+    )
 
 
 def _validate_node_connectivity(
@@ -198,6 +389,23 @@ def _validate_global_reachability(obj: IR) -> None:
     _ensure_all_nodes_can_reach_end(
         obj=obj, end_nodes=end_nodes, reverse_adjacency=reverse_adjacency
     )
+
+
+def _validate_boundary_edges(obj: IR) -> None:
+    node_types = {node.id: (node.type or "").lower() for node in obj.nodes}
+    for edge in obj.edges:
+        if node_types.get(edge.target) == "start":
+            raise ValidationError(
+                f"E1023: edge '{edge.source}' -> '{edge.target}' enters start node "
+                f"'{edge.target}'. Start is the process entry boundary; target a "
+                "process step instead."
+            )
+        if node_types.get(edge.source) == "end":
+            raise ValidationError(
+                f"E1024: edge '{edge.source}' -> '{edge.target}' leaves end node "
+                f"'{edge.source}'. End is a process termination boundary; remove "
+                "the transition or change its source."
+            )
 
 
 def _collect_node_ids_by_type(obj: IR, node_type: str) -> list[str]:
@@ -289,7 +497,7 @@ def _is_node_time_metadata_key(key: Any) -> bool:
         # Existing second-based scalar keys remain supported.
         return False
 
-    return normalized in {"time", "duration"} or normalized.endswith(
+    return normalized in {"time", "duration", "wait_before"} or normalized.endswith(
         ("_time", "_duration")
     )
 
@@ -314,6 +522,28 @@ def _validate_node_time_metadata_value(node_id: str, key: str, value: Any) -> No
     if not isinstance(unit, str) or unit.strip().lower() not in _TIME_UNITS:
         raise ValidationError(
             f"E1303: {path}.unit must be one of {sorted(_TIME_UNITS)}"
+        )
+
+    measurement_id = value.get("measurement_id")
+    if measurement_id is not None and (
+        not isinstance(measurement_id, str) or not measurement_id.strip()
+    ):
+        raise ValidationError(
+            f"E1304: {path}.measurement_id must be a non-empty string"
+        )
+
+    measurement_refs = value.get("measurement_refs")
+    if measurement_refs is not None and (
+        not isinstance(measurement_refs, list)
+        or not measurement_refs
+        or any(
+            not isinstance(reference, str) or not reference.strip()
+            for reference in measurement_refs
+        )
+        or len(set(measurement_refs)) != len(measurement_refs)
+    ):
+        raise ValidationError(
+            f"E1305: {path}.measurement_refs must be a non-empty list of unique strings"
         )
 
 
@@ -577,6 +807,18 @@ def _validate_node_value_class(obj: IR) -> None:
 
 def _validate_edge_metadata(obj: IR) -> None:
     for edge in obj.edges:
+        edge_type = str(getattr(edge, "edge_type", "") or "").strip().lower()
+        rework = getattr(edge, "rework", None)
+        if (edge_type == "rework" and rework is False) or (
+            edge_type and edge_type != "rework" and rework is True
+        ):
+            raise ValidationError(
+                f"E1404: edge '{edge.source}' -> '{edge.target}' has conflicting "
+                f"rework declarations edge_type={edge.edge_type!r} and "
+                f"rework={rework!r}. Use edge_type: rework with rework: true, "
+                "or omit both for ordinary flow."
+            )
+
         handoff_value = getattr(edge, "handoff", None)
         if handoff_value is not None and not isinstance(handoff_value, bool):
             raise ValidationError(

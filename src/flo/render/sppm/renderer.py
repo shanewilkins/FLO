@@ -15,7 +15,7 @@ from .._diagnostics import (
     serialize_render_diagnostics,
     serialize_render_diagnostics_report,
 )
-from .._svg_theme import apply_svg_typography
+from .._svg_theme import apply_svg_typography, svg_theme_metadata
 from ..layout_core.elk import execute_elk_layout
 from ..layout_core.elk_runtime import run_elkjs_layout
 from ..layout_core.elk_support import extract_nodes_and_edges
@@ -42,7 +42,6 @@ from .publication import build_sppm_publication_plan
 from .rows import (
     _display_canvas_bounds,
     _enforce_sppm_row_alignment,
-    _sppm_row_ids,
     rework_alignment_diagnostics,
     row_gap_diagnostics,
 )
@@ -148,6 +147,7 @@ def render_sppm_svg_artifact_from_layout(
             ">"
         ),
         *svg_accessibility_elements(process, diagram_name="SPPM"),
+        svg_theme_metadata(options),
         f'<rect width="100%" height="100%" fill="{options.resolved_theme.canvas_background}" />',
     ]
     parts[1:1] = standard_svg_defs(options)
@@ -177,11 +177,6 @@ def render_sppm_svg_artifact_from_layout(
     node_kind_by_id = {
         str(node.id): str(node.kind or "task").lower() for node in request.nodes
     }
-    _mainline_ids, rework_ids = _sppm_row_ids(
-        lanes=result.lanes,
-        node_bounds=display_node_bounds,
-        edge_paths=display_edge_paths,
-    )
     occupied_annotation_bounds: list[LayoutBounds] = []
     for edge_key in sorted(display_edge_paths.keys()):
         source_id, target_id = edge_key
@@ -194,9 +189,6 @@ def render_sppm_svg_artifact_from_layout(
             avoid_bounds=avoid_bounds + tuple(occupied_annotation_bounds),
             canvas_bounds=canvas_bounds,
             diagnostics=postprocess_diagnostics,
-            render_as_rework_style=(
-                source_id in rework_ids and target_id in rework_ids
-            ),
             options=options,
         )
         parts.extend(edge_parts)

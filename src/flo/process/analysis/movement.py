@@ -346,6 +346,7 @@ def _extract_edges(process: Any) -> list[dict[str, Any]]:
                     "source": getattr(edge, "source", None),
                     "target": getattr(edge, "target", None),
                     "outcome": getattr(edge, "outcome", None),
+                    "route": getattr(edge, "route", None),
                     "label": getattr(edge, "label", None),
                 }
             )

@@ -3,9 +3,13 @@
 <marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
 <path d="M0,0 L8,3 L0,6 z" fill="#475569" />
 </marker>
+<marker id="flo-sppm-rework-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L8,3 L0,6 z" fill="#b91c1c" />
+</marker>
 </defs>
 <title id="flo-svg-title">Invoice Review (with rework) — SPPM</title>
 <desc id="flo-svg-description">SPPM diagram for Invoice Review (with rework). Read node and transition labels for process details.</desc>
+<metadata id="flo-theme-tokens" data-flo-theme="default">{"canvas":{"background":"#fffdf8"},"name":"default","roles":{"annotation":{"border":"#666666","detail_text":"#475569","fill":"#fffdf8","title_text":"#0f172a"},"boundary":{"border":"gray","detail_text":"gray","fill":"#FFFFFF","title_text":"gray"},"callout":{"border":"#666666","detail_text":"#475569","fill":"#ffffff","title_text":"#0f172a"},"connector":{"border":"#475569","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"decision":{"border":"#285B8F","detail_text":"#475569","fill":"#E3EEF7","title_text":"#0f172a"},"information_route":{"border":"royalblue","detail_text":"royalblue","fill":"#FFFFFF","title_text":"royalblue"},"lane":{"border":"#cbd5e1","detail_text":"#475569","fill":"#f8fafc","title_text":"#334155"},"location_processing":{"border":"firebrick","detail_text":"#475569","fill":"mistyrose","title_text":"#0f172a"},"location_staging":{"border":"seagreen","detail_text":"#475569","fill":"honeydew","title_text":"#0f172a"},"location_storage":{"border":"goldenrod","detail_text":"#475569","fill":"lemonchiffon","title_text":"#0f172a"},"location_support":{"border":"deepskyblue","detail_text":"#475569","fill":"azure","title_text":"#0f172a"},"location_transit":{"border":"slategray","detail_text":"#475569","fill":"mintcream","title_text":"#0f172a"},"location_unknown":{"border":"steelblue","detail_text":"#475569","fill":"aliceblue","title_text":"#0f172a"},"material_route":{"border":"tomato","detail_text":"tomato","fill":"#FFFFFF","title_text":"tomato"},"nva":{"border":"#C62828","detail_text":"#475569","fill":"#EF9A9A","title_text":"#0f172a"},"people_route":{"border":"royalblue","detail_text":"royalblue","fill":"#FFFFFF","title_text":"royalblue"},"publication":{"border":"#cbd5e1","detail_text":"#334155","fill":"#fffdf8","title_text":"#0f172a"},"queue":{"border":"#E65100","detail_text":"#475569","fill":"#FFB74D","title_text":"#0f172a"},"rework":{"border":"#b91c1c","detail_text":"#b91c1c","fill":"#FFFFFF","title_text":"#b91c1c"},"rnva":{"border":"#F9A825","detail_text":"#475569","fill":"#FFF176","title_text":"#0f172a"},"start_end":{"border":"#333333","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"subprocess":{"border":"#607D8B","detail_text":"#475569","fill":"#F8FAFC","title_text":"#0f172a"},"surface":{"border":"#cbd5e1","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"token":{"border":"#455A64","detail_text":"#455A64","fill":"#ffffff","title_text":"#455A64"},"unknown":{"border":"#9E9E9E","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"va":{"border":"#2E7D32","detail_text":"#475569","fill":"#81C784","title_text":"#0f172a"}},"typography":{"font_family":["Helvetica"],"scale":1.0}}</metadata>
 <rect width="100%" height="100%" fill="#fffdf8" />
 <g data-sppm-publication-band="header">
 <line x1="28.0" y1="28.0" x2="1370.0" y2="28.0" stroke="#cbd5e1" stroke-width="1" />
@@ -22,15 +26,15 @@
 <text x="907.0" y="143.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">yes</text>
 </g>
 <g data-edge-source="decision" data-edge-target="rework" data-edge-kind="rework" data-edge-rework-variant="branch">
-<polyline points="771.0,102.0 771.0,198.0" fill="none" stroke="#b91c1c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" stroke-dasharray="2 6" />
-<rect x="757.0" y="103.4" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
-<text x="771.0" y="116.4" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">no</text>
+<polyline points="692.0,57.0 725.3,102.0 725.3,214.1 779.5,214.1 779.5,210.3 716.6,210.3 716.6,364.6 751.9,364.6 751.9,362.1 689.0,362.1 689.0,194.4 774.9,194.4 774.9,188.4 771.0,188.4 771.0,198.0" fill="none" stroke="#b91c1c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
+<rect x="689.1" y="64.7" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
+<text x="703.1" y="77.7" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">no</text>
 </g>
 <g data-edge-source="review" data-edge-target="decision" data-edge-kind="direct">
 <polyline points="636.0,57.0 692.0,57.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
 </g>
-<g data-edge-source="rework" data-edge-target="approve" data-edge-kind="rework">
-<polyline points="866.0,233.0 887.0,233.0 887.0,240.9 1113.6,240.9 1113.6,196.8 1210.0,196.8 1210.0,233.0" fill="none" stroke="#b91c1c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" stroke-dasharray="2 6" />
+<g data-edge-source="rework" data-edge-target="approve" data-edge-kind="direct">
+<polyline points="866.0,233.0 887.0,233.0 887.0,240.9 1113.6,240.9 1113.6,196.8 1210.0,196.8 1210.0,233.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
 </g>
 <g data-edge-source="start" data-edge-target="submit" data-edge-kind="direct">
 <polyline points="144.0,57.0 200.0,57.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />

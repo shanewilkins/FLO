@@ -1,7 +1,8 @@
-"""Tests for queue/task semantic constraint validation.
+"""Tests for queue/task waiting semantic validation.
 
 Enforces:
-  - wait_time ONLY on queue nodes
+    - wait_time is canonical on queue nodes
+    - wait_before is canonical on work nodes
   - cycle_time and crossover_time ONLY on task nodes
 """
 
@@ -58,6 +59,48 @@ class TestQueueWaitTimeSemantics:
         )
         # Should not raise
         validate_ir(ir)
+
+    def test_task_node_with_wait_before_valid(self) -> None:
+        """Task nodes preserve worksheet wait as canonical wait_before."""
+        ir = IR(
+            name="test_task_with_wait_before",
+            nodes=[
+                Node(id="start", type="start"),
+                Node(
+                    id="task1",
+                    type="task",
+                    attrs={"metadata": {"wait_before": {"value": 5, "unit": "min"}}},
+                ),
+                Node(id="end", type="end"),
+            ],
+            edges=[
+                Edge(source="start", target="task1"),
+                Edge(source="task1", target="end"),
+            ],
+        )
+
+        validate_ir(ir)
+
+    def test_task_node_with_null_wait_before_is_invalid(self) -> None:
+        ir = IR(
+            name="test_task_with_null_wait_before",
+            nodes=[
+                Node(id="start", type="start"),
+                Node(
+                    id="task1",
+                    type="task",
+                    attrs={"metadata": {"wait_before": None}},
+                ),
+                Node(id="end", type="end"),
+            ],
+            edges=[
+                Edge(source="start", target="task1"),
+                Edge(source="task1", target="end"),
+            ],
+        )
+
+        with pytest.raises(ValidationError, match=r"E1301.*wait_before"):
+            validate_ir(ir)
 
     def test_task_node_with_crossover_time_valid(self) -> None:
         """Task node with crossover_time metadata is valid."""
@@ -169,7 +212,118 @@ class TestQueueWaitTimeSemantics:
         with pytest.raises(ValidationError) as exc_info:
             validate_ir(ir)
         assert "E1503" in str(exc_info.value)
-        assert "wait_time is only valid on queue nodes" in str(exc_info.value)
+        assert "Canonical work-node metadata uses wait_before" in str(exc_info.value)
+
+    def test_linked_queue_and_task_wait_measurement_is_valid(self) -> None:
+        """A promoted queue and task row may project the same measurement."""
+        wait = {"value": 5, "unit": "min", "measurement_id": "wash_wait"}
+        ir = IR(
+            name="linked_wait",
+            nodes=[
+                Node(id="start", type="start"),
+                Node(id="queue", type="queue", attrs={"metadata": {"wait_time": wait}}),
+                Node(
+                    id="work",
+                    type="task",
+                    attrs={"metadata": {"wait_before": dict(wait)}},
+                ),
+                Node(id="end", type="end"),
+            ],
+            edges=[
+                Edge(source="start", target="queue"),
+                Edge(source="queue", target="work"),
+                Edge(source="work", target="end"),
+            ],
+        )
+
+        validate_ir(ir)
+
+    def test_aggregate_queue_projection_references_task_measurements(self) -> None:
+        """A promoted queue may aggregate several task-row wait measurements."""
+        ir = IR(
+            name="aggregate_wait",
+            nodes=[
+                Node(id="start", type="start"),
+                Node(
+                    id="queue",
+                    type="queue",
+                    attrs={
+                        "metadata": {
+                            "wait_time": {
+                                "value": 6,
+                                "unit": "min",
+                                "measurement_refs": ["wash_wait", "dry_wait"],
+                            }
+                        }
+                    },
+                ),
+                Node(
+                    id="wash",
+                    type="task",
+                    attrs={
+                        "metadata": {
+                            "wait_before": {
+                                "value": 5,
+                                "unit": "min",
+                                "measurement_id": "wash_wait",
+                            }
+                        }
+                    },
+                ),
+                Node(
+                    id="dry",
+                    type="task",
+                    attrs={
+                        "metadata": {
+                            "wait_before": {
+                                "value": 1,
+                                "unit": "min",
+                                "measurement_id": "dry_wait",
+                            }
+                        }
+                    },
+                ),
+                Node(id="end", type="end"),
+            ],
+            edges=[
+                Edge(source="start", target="queue"),
+                Edge(source="queue", target="wash"),
+                Edge(source="wash", target="dry"),
+                Edge(source="dry", target="end"),
+            ],
+        )
+
+        validate_ir(ir)
+
+    def test_overlapping_queue_and_task_wait_requires_measurement_identity(
+        self,
+    ) -> None:
+        """Potential duplicate waiting fails with an actionable diagnostic."""
+        ir = IR(
+            name="ambiguous_wait",
+            nodes=[
+                Node(id="start", type="start"),
+                Node(
+                    id="queue",
+                    type="queue",
+                    attrs={"metadata": {"wait_time": {"value": 5, "unit": "min"}}},
+                ),
+                Node(
+                    id="work",
+                    type="task",
+                    attrs={"metadata": {"wait_before": {"value": 5, "unit": "min"}}},
+                ),
+                Node(id="end", type="end"),
+            ],
+            edges=[
+                Edge(source="start", target="queue"),
+                Edge(source="queue", target="work"),
+                Edge(source="work", target="end"),
+            ],
+        )
+
+        with pytest.raises(ValidationError, match=r"E1505.*measurement_id"):
+            validate_ir(ir)
 
     def test_system_task_with_wait_time_invalid(self) -> None:
         """System task node with wait_time is invalid."""
@@ -399,7 +553,7 @@ class TestQueueWaitTimeSemantics:
             validate_ir(ir)
         error_msg = str(exc_info.value)
         assert "problematic_task" in error_msg
-        assert "insert a queue node before this task" in error_msg
+        assert "Canonical work-node metadata uses wait_before" in error_msg
 
     def test_error_message_is_actionable_queue_with_cycle_time(self) -> None:
         """Error message for queue with cycle_time is actionable."""
