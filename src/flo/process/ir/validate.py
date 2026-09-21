@@ -327,13 +327,16 @@ def _validate_wait_measurement_links(obj: IR) -> None:
             queue_measurement_id == task_measurement_id
             or task_measurement_id in queue_measurement_refs
         )
-        if not linked:
+        independently_identified = task_measurement_id is not None and (
+            queue_measurement_id is not None or bool(queue_measurement_refs)
+        )
+        if not linked and not independently_identified:
             raise ValidationError(
                 f"E1505: queue '{source.id}' wait_time and work node '{target.id}' "
                 "wait_before describe the same queue-to-work boundary without a "
-                "measurement link. Give both duration objects the same non-empty "
-                "measurement_id, add the task measurement_id to the queue's "
-                "measurement_refs, or keep the measurement on only one node."
+                "clear measurement relationship. Link a repeated measurement, give "
+                "independent measurements distinct non-empty measurement_id values, or "
+                "keep the measurement on only one node."
             )
 
 

@@ -106,7 +106,13 @@ def serialize_edge(
         "sources": [source_endpoint],
         "targets": [target_endpoint],
     }
-    if edge.label:
+    # SPPM places rework annotations after routing. Supplying those labels to ELK
+    # makes the router bend the connector around an invisible label box even
+    # though the SVG renderer chooses its own caption position.
+    label_affects_layout = not (
+        diagram == "sppm" and edge.rework_variant in {"branch", "return"}
+    )
+    if edge.label and label_affects_layout:
         out["labels"] = [{"text": edge.label}]
     return out
 
@@ -174,8 +180,8 @@ def _node_id_order(nodes: list[dict[str, Any]]) -> list[str]:
 
 
 def edge_label(edge: dict[str, Any]) -> str | None:
-    """Return the first non-empty outcome or label text for an edge."""
-    for key in ("outcome", "label"):
+    """Return explicit display text, falling back to the semantic outcome."""
+    for key in ("label", "outcome"):
         value = edge.get(key)
         if value is None:
             continue

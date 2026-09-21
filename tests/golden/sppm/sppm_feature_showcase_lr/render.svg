@@ -59,27 +59,27 @@
 <text x="2659.0" y="85.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">pass</text>
 </g>
 <g data-edge-source="qa" data-edge-target="rework_quality_wait_queue" data-edge-kind="rework" data-edge-rework-variant="branch">
-<polyline points="2654.5,144.0 2654.5,258.0" fill="none" stroke="#b91c1c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
-<rect x="2640.5" y="148.0" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
-<text x="2654.5" y="161.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">fail</text>
-<rect x="2676.5" y="173.0" width="138.6" height="40.0" rx="7" fill="#ffffff" stroke="#666666" stroke-width="1" fill-opacity="0.96" />
-<text x="2745.8" y="188.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Rate: 8%</text>
-<text x="2745.8" y="202.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Reason: QA defects</text>
+<polyline points="2654.5,145.0 2654.5,258.0" fill="none" stroke="#b91c1c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
+<rect x="2640.5" y="148.8" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
+<text x="2654.5" y="161.8" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">fail</text>
+<rect x="2676.5" y="173.5" width="138.6" height="40.0" rx="7" fill="#ffffff" stroke="#666666" stroke-width="1" fill-opacity="0.96" />
+<text x="2745.8" y="188.5" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Rate: 8%</text>
+<text x="2745.8" y="202.5" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Reason: QA defects</text>
 </g>
 <g data-edge-source="rework_intake" data-edge-target="intake" data-edge-kind="rework" data-edge-rework-variant="return">
-<polyline points="590.0,266.0 590.0,242.0 775.5,242.0 775.5,4.0 590.0,4.0 590.0,28.0" fill="none" stroke="#b91c1c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
-<rect x="797.5" y="101.0" width="138.6" height="40.0" rx="7" fill="#ffffff" stroke="#666666" stroke-width="1" fill-opacity="0.96" />
-<text x="866.8" y="116.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Frequency: 3/day</text>
-<text x="866.8" y="130.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Count: 12 per week</text>
+<polyline points="590.0,266.0 590.0,242.0 775.5,242.0 775.5,170.0 590.0,170.0 590.0,146.0" fill="none" stroke="#b91c1c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
+<rect x="613.5" y="208.0" width="138.6" height="40.0" rx="7" fill="#ffffff" stroke="#666666" stroke-width="1" fill-opacity="0.96" />
+<text x="682.8" y="223.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Frequency: 3/day</text>
+<text x="682.8" y="237.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Count: 12 per week</text>
 </g>
 <g data-edge-source="rework_intake_wait_queue" data-edge-target="rework_intake" data-edge-kind="direct">
 <polyline points="843.2,333.0 747.5,333.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
 </g>
 <g data-edge-source="rework_quality" data-edge-target="assess_scope" data-edge-kind="rework" data-edge-rework-variant="return">
-<polyline points="1711.0,266.0 1711.0,242.0 1894.0,242.0 1894.0,-12.0 1711.0,-12.0 1711.0,12.0" fill="none" stroke="#b91c1c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
-<rect x="1916.0" y="93.0" width="131.9" height="40.0" rx="7" fill="#ffffff" stroke="#666666" stroke-width="1" fill-opacity="0.96" />
-<text x="1982.0" y="108.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Frequency: 1/day</text>
-<text x="1982.0" y="122.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Count: 4 per week</text>
+<polyline points="1711.0,266.0 1711.0,242.0 1894.0,242.0 1894.0,186.0 1711.0,186.0 1711.0,162.0" fill="none" stroke="#b91c1c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
+<rect x="1736.5" y="208.0" width="131.9" height="40.0" rx="7" fill="#ffffff" stroke="#666666" stroke-width="1" fill-opacity="0.96" />
+<text x="1802.5" y="223.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Frequency: 1/day</text>
+<text x="1802.5" y="237.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Count: 4 per week</text>
 </g>
 <g data-edge-source="rework_quality_wait_queue" data-edge-target="rework_quality" data-edge-kind="direct">
 <polyline points="2606.0,333.0 1851.0,333.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
@@ -93,12 +93,12 @@
 <text x="890.5" y="85.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">True</text>
 </g>
 <g data-edge-source="triage" data-edge-target="rework_intake_wait_queue" data-edge-kind="rework" data-edge-rework-variant="branch">
-<polyline points="890.5,144.0 861.2,144.0 861.2,238.8 912.5,238.8 912.5,225.3 866.8,225.3 866.8,373.3 895.2,373.3 895.2,365.8 849.5,365.8 849.5,185.8 918.4,185.8 918.4,167.8 890.5,167.8 890.5,258.0" fill="none" stroke="#b91c1c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
+<polyline points="890.5,144.0 853.5,144.0 853.5,248.8 870.2,248.8 870.2,248.6 866.3,248.6 866.3,259.5 875.5,259.5 875.5,259.4 871.7,259.4 871.7,248.4 894.0,248.4 894.0,248.0 890.5,248.0 890.5,258.0" fill="none" stroke="#b91c1c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
 <rect x="873.0" y="148.0" width="35.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
 <text x="890.5" y="161.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">False</text>
-<rect x="789.8" y="182.0" width="172.1" height="40.0" rx="7" fill="#ffffff" stroke="#666666" stroke-width="1" fill-opacity="0.96" />
-<text x="875.9" y="197.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Rate: 12%</text>
-<text x="875.9" y="211.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Reason: Missing details</text>
+<rect x="786.0" y="182.0" width="172.1" height="40.0" rx="7" fill="#ffffff" stroke="#666666" stroke-width="1" fill-opacity="0.96" />
+<text x="872.0" y="197.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Rate: 12%</text>
+<text x="872.0" y="211.0" text-anchor="middle" font-family="Helvetica" font-size="10" font-weight="400" fill="#0f172a">Reason: Missing details</text>
 </g>
 <g data-node-id="start" data-node-kind="start">
 <rect x="12.0" y="61.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
@@ -192,7 +192,7 @@
 <text x="2195.0" y="114.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">CT: 13 min</text>
 </g>
 <g data-node-id="qa" data-node-kind="decision">
-<polygon points="2654.5,30.0 2756.0,87.0 2654.5,144.0 2553.0,87.0" fill="#E3EEF7" stroke="#285B8F" stroke-width="2" />
+<polygon points="2654.5,29.0 2756.0,87.0 2654.5,145.0 2553.0,87.0" fill="#E3EEF7" stroke="#285B8F" stroke-width="2" />
 <text x="2654.5" y="84.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Quality Check</text>
 <text x="2654.5" y="100.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Pass?</text>
 </g>

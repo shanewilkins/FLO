@@ -197,6 +197,54 @@ def test_linked_queue_and_task_wait_measurement_is_counted_once() -> None:
     assert work_timing.totals.wait_time_seconds == 300
 
 
+def test_distinct_adjacent_queue_and_task_wait_measurements_are_both_counted() -> None:
+    process = IR(
+        name="independent adjacent waits",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(
+                id="queue",
+                type="queue",
+                attrs={
+                    "metadata": {
+                        "wait_time": {
+                            "value": 501.7,
+                            "unit": "min",
+                            "measurement_id": "order_batch_release_wait",
+                        }
+                    }
+                },
+            ),
+            Node(
+                id="work",
+                type="task",
+                attrs={
+                    "metadata": {
+                        "wait_before": {
+                            "value": 500.9,
+                            "unit": "min",
+                            "measurement_id": "load_wash_wait",
+                        }
+                    }
+                },
+            ),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="queue"),
+            Edge(source="queue", target="work"),
+            Edge(source="work", target="end"),
+        ],
+    )
+    validate_ir(process)
+
+    result = analyze_process_timing(process)
+
+    assert result.declared_totals.wait_time_seconds == pytest.approx(
+        (501.7 + 500.9) * 60
+    )
+
+
 def test_aggregate_queue_projection_is_not_counted_again() -> None:
     process = IR(
         name="aggregate queue projection",

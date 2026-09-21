@@ -464,7 +464,10 @@ def _suggestion_for_code(message: str) -> str | None:
         "E1404": "Use edge_type: rework with rework: true, or omit both fields.",
         "E1503": "Use wait_before on work nodes; wait_time is canonical only on queues.",
         "E1504": "Use wait_time on queues; wait_before belongs on work nodes.",
-        "E1505": "Give the queue wait_time and task wait_before the same measurement_id, or keep only one measurement.",
+        "E1505": (
+            "Link repeated waiting evidence, give independent waits distinct "
+            "measurement_id values, or keep only one measurement."
+        ),
         "E1506": "Give each work-node waiting measurement a unique measurement_id.",
         "E1507": "Reference measurement_id values declared by work-node wait_before metadata.",
     }.get(code_match.group(1))

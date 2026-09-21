@@ -135,10 +135,7 @@
       "incoming_token": null,
       "is_rework": true,
       "label": "Return to intake and request revised package details immediately",
-      "label_point": {
-        "x_px": 460.0,
-        "y_px": 261.66666666666663
-      },
+      "label_point": null,
       "outgoing_token": null,
       "points": [
         {

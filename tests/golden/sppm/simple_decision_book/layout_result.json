@@ -1,6 +1,6 @@
 {
   "canvas_bounds": {
-    "height_px": 158.0,
+    "height_px": 179.0,
     "width_px": 1184.0,
     "x_px": 0.0,
     "y_px": 0.0
@@ -170,10 +170,10 @@
       "y_px": 58.0
     },
     "review_request": {
-      "height_px": 90.0,
+      "height_px": 132.0,
       "width_px": 231.0,
       "x_px": 200.0,
-      "y_px": 56.0
+      "y_px": 35.0
     },
     "start": {
       "height_px": 52.0,

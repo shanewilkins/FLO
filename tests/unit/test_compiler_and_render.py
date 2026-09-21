@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from flo.process.ir import validate_ir
@@ -40,6 +42,91 @@ def test_mpi_lms_reference_specimen_renders_complete_theme_contract():
     assert 'stroke="#5B6870"' in artifact.content
     assert 'stroke="#A43232"' in artifact.content
     assert 'marker-end="url(#flo-sppm-rework-arrow)"' in artifact.content
+
+
+def test_book_washnfold_preserves_independent_waits_and_renders_decision_rework():
+    source = repo_root() / "examples" / "reference" / "book_washnfold.flo"
+    ir = compile_adapter(parse_adapter(source.read_text(), source_path=str(source)))
+    validate_ir(ir)
+
+    node_by_id = {node.id: node for node in ir.nodes}
+    queue_wait = node_by_id["wash_release_queue"].attrs["metadata"]["wait_time"]
+    wash_wait = node_by_id["wash"].attrs["metadata"]["wait_before"]
+    assert queue_wait["measurement_id"] == "order_batch_release_wait"
+    assert wash_wait["measurement_id"] == "load_wash_wait"
+
+    artifact = render_artifact(
+        ir,
+        options={
+            "diagram": "sppm",
+            "sppm_theme": "mpi-lms",
+            "sppm_output_profile": "book",
+            "background_color": "transparent",
+            "no_header": True,
+            "no_footer": True,
+            "layout_wrap": "auto",
+            "layout_max_width_px": 800,
+        },
+    )
+
+    assert (
+        'data-node-id="packaging_check" data-node-kind="decision"' in artifact.content
+    )
+    assert (
+        'data-edge-source="packaging_check" data-edge-target="correction_queue" '
+        'data-edge-kind="rework" data-edge-rework-variant="branch"' in artifact.content
+    )
+    assert "Packaging check fails (5 of 39 orders)" in artifact.content
+    assert ">correction_required</text>" not in artifact.content
+    assert "Frequency: 5 of 39 orders" not in artifact.content
+    assert ">Count: 5</text>" not in artifact.content
+    assert (
+        'data-edge-source="fold_correction" data-edge-target="notification_queue" '
+        'data-edge-kind="rework" data-edge-rework-variant="return"' in artifact.content
+    )
+    queue_match = re.search(
+        r'<g data-node-id="notification_queue".*?'
+        r'data-node-queue-body="true" points="([^"]+)"',
+        artifact.content,
+        re.DOTALL,
+    )
+    return_match = re.search(
+        r'<g data-edge-source="fold_correction" '
+        r'data-edge-target="notification_queue".*?'
+        r'<polyline points="([^"]+)"',
+        artifact.content,
+        re.DOTALL,
+    )
+    assert queue_match is not None
+    assert return_match is not None
+    queue_south_tip = queue_match.group(1).split()[-1]
+    return_target = return_match.group(1).split()[-1]
+    assert return_target == queue_south_tip
+
+
+def test_book_washnfold_explicit_width_wraps_without_a_second_source():
+    source = repo_root() / "examples" / "reference" / "book_washnfold.flo"
+    ir = compile_adapter(parse_adapter(source.read_text(), source_path=str(source)))
+    validate_ir(ir)
+
+    artifact = render_artifact(
+        ir,
+        options={
+            "diagram": "sppm",
+            "sppm_theme": "mpi-lms",
+            "sppm_output_profile": "book",
+            "background_color": "transparent",
+            "no_header": True,
+            "no_footer": True,
+            "layout_wrap": "auto",
+            "layout_width": "1200px",
+        },
+    )
+
+    assert '<svg preserveAspectRatio="xMidYMid meet"' in artifact.content
+    assert 'width="1200"' in artifact.content
+    assert artifact.metadata["geometry"]["requested_width_px"] == 1200
+    assert artifact.metadata["geometry"]["overflows_requested_bounds"] is False
 
 
 def test_compile_and_render_preserves_rework_outcome_semantics():

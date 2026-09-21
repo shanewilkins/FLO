@@ -171,9 +171,7 @@ def _sppm_max_major_px(
     measures: list[NodeMeasure],
     options: RenderOptions,
 ) -> int | None:
-    # Convention: when target_columns is supplied, it is the primary intent and
-    # therefore takes precedence over layout_max_width_px for deriving the
-    # placement budget.
+    candidates: list[int] = []
     if options.layout_target_columns and options.layout_target_columns > 0:
         cols = options.layout_target_columns
         if options.orientation == "tb":
@@ -185,15 +183,17 @@ def _sppm_max_major_px(
             gap = _HORIZONTAL_GAP_PX
             default_dim = _DEFAULT_NODE_WIDTH_PX
         if not major_dims:
-            return cols * default_dim + max(0, cols - 1) * gap
-        dims_sorted = sorted(major_dims)
-        p75 = dims_sorted[min(len(dims_sorted) - 1, int(len(dims_sorted) * 0.75))]
-        return cols * p75 + max(0, cols - 1) * gap
+            candidates.append(cols * default_dim + max(0, cols - 1) * gap)
+        else:
+            dims_sorted = sorted(major_dims)
+            p75 = dims_sorted[min(len(dims_sorted) - 1, int(len(dims_sorted) * 0.75))]
+            candidates.append(cols * p75 + max(0, cols - 1) * gap)
     if options.layout_max_width_px and options.layout_max_width_px > 0:
         if options.layout_fit == "fit-strict":
-            return max(200, options.layout_max_width_px - _STRICT_MARGIN_PX)
-        return options.layout_max_width_px
-    return None
+            candidates.append(max(200, options.layout_max_width_px - _STRICT_MARGIN_PX))
+        else:
+            candidates.append(options.layout_max_width_px)
+    return min(candidates) if candidates else None
 
 
 def _sppm_placement_constraints(

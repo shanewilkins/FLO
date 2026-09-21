@@ -52,7 +52,8 @@ def test_apply_edge_shifts_rebuilds_distinct_branch_and_return_routes() -> None:
     assert branch.points[-1] == LayoutPoint(x_px=110.0, y_px=210.0)
     assert rework_return.is_rework is True
     assert max(point.x_px for point in rework_return.points) > 220.0
-    assert rework_return.points[-1] == LayoutPoint(x_px=160.0, y_px=20.0)
+    assert rework_return.points[-1] == LayoutPoint(x_px=160.0, y_px=100.0)
+    assert rework_return.points[-2] == LayoutPoint(x_px=160.0, y_px=124.0)
 
 
 def test_row_gap_diagnostics_warns_when_rows_are_too_close() -> None:

@@ -480,10 +480,7 @@ def _walk_rework_chain(
 
 
 def _sppm_lane_direction(*, lane_id: str, root_direction: str) -> str:
-    # Rework rows should flow opposite the mainline to express return-to-previous
-    # semantics when synthetic rows are represented as explicit lane containers.
-    if lane_id == "__sppm_row_rework" and root_direction == "RIGHT":
-        return "LEFT"
+    """Keep row direction aligned with authored flow, including rework rows."""
     return root_direction
 
 
@@ -492,6 +489,7 @@ def _sppm_apply_secondary_row_edge_ports(
     edges: tuple[ElkLayoutEdge, ...],
     synthetic_rows: tuple[ElkLayoutLane, ...],
     root_direction: str,
+    partition_indexes: dict[str, int],
 ) -> tuple[ElkLayoutEdge, ...]:
     rework_lane = next(
         (lane for lane in synthetic_rows if lane.id == "__sppm_row_rework"),
@@ -501,15 +499,29 @@ def _sppm_apply_secondary_row_edge_ports(
         return edges
 
     rework_ids = set(rework_lane.node_ids)
+    row_order = {node_id: index for index, node_id in enumerate(rework_lane.node_ids)}
     adjusted: list[ElkLayoutEdge] = []
-    direct_source_port = "NORTH" if root_direction == "DOWN" else "WEST"
-    direct_target_port = "SOUTH" if root_direction == "DOWN" else "EAST"
     for edge in edges:
         if (
             edge.source_id in rework_ids
             and edge.target_id in rework_ids
             and not edge.is_rework
         ):
+            source_rank = (
+                partition_indexes.get(edge.source_id, 0),
+                row_order.get(edge.source_id, 0),
+            )
+            target_rank = (
+                partition_indexes.get(edge.target_id, 0),
+                row_order.get(edge.target_id, 0),
+            )
+            follows_layout_order = source_rank <= target_rank
+            if root_direction == "DOWN":
+                direct_source_port = "SOUTH" if follows_layout_order else "NORTH"
+                direct_target_port = "NORTH" if follows_layout_order else "SOUTH"
+            else:
+                direct_source_port = "EAST" if follows_layout_order else "WEST"
+                direct_target_port = "WEST" if follows_layout_order else "EAST"
             adjusted.append(
                 replace(
                     edge,

@@ -325,6 +325,51 @@ class TestQueueWaitTimeSemantics:
         with pytest.raises(ValidationError, match=r"E1505.*measurement_id"):
             validate_ir(ir)
 
+    def test_adjacent_queue_and_task_waits_with_distinct_measurements_are_valid(
+        self,
+    ) -> None:
+        """Different cohorts on one boundary remain independent evidence."""
+        ir = IR(
+            name="independent_waits",
+            nodes=[
+                Node(id="start", type="start"),
+                Node(
+                    id="queue",
+                    type="queue",
+                    attrs={
+                        "metadata": {
+                            "wait_time": {
+                                "value": 501.7,
+                                "unit": "min",
+                                "measurement_id": "order_batch_release_wait",
+                            }
+                        }
+                    },
+                ),
+                Node(
+                    id="work",
+                    type="task",
+                    attrs={
+                        "metadata": {
+                            "wait_before": {
+                                "value": 500.9,
+                                "unit": "min",
+                                "measurement_id": "load_wash_wait",
+                            }
+                        }
+                    },
+                ),
+                Node(id="end", type="end"),
+            ],
+            edges=[
+                Edge(source="start", target="queue"),
+                Edge(source="queue", target="work"),
+                Edge(source="work", target="end"),
+            ],
+        )
+
+        validate_ir(ir)
+
     def test_system_task_with_wait_time_invalid(self) -> None:
         """System task node with wait_time is invalid."""
         ir = IR(

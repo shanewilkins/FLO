@@ -24,12 +24,9 @@ def prepare_svg_layout(options: RenderOptions) -> RenderOptions:
         or options.layout_width_px is None
     ):
         return options
-    if options.layout_target_columns is not None:
-        return replace(options, layout_wrap="auto")
-    if options.layout_max_width_px is not None:
-        return replace(options, layout_wrap="auto")
-
     layout_budget = max(200, options.layout_width_px - _SPPM_HORIZONTAL_PADDING_PX)
+    if options.layout_max_width_px is not None:
+        layout_budget = min(layout_budget, options.layout_max_width_px)
     return replace(
         options,
         layout_wrap="auto",

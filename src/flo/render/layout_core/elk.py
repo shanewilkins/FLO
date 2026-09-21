@@ -188,6 +188,17 @@ def _place_sppm_wrap_rows(
     y_px = margin_px
     row_index_by_node: dict[str, int] = {}
     lane_frames: dict[str, LayoutLaneFrame] = {}
+    row_width_by_lane = {
+        lane.id: sum(
+            node_bounds[node_id].width_px
+            for node_id in lane.node_ids
+            if node_id in node_bounds
+        )
+        + horizontal_gap_px
+        * max(0, sum(node_id in node_bounds for node_id in lane.node_ids) - 1)
+        for lane in request.lanes
+    }
+    max_row_width = max(row_width_by_lane.values(), default=0.0)
 
     for row_index, lane in enumerate(request.lanes):
         row_node_ids = tuple(
@@ -196,7 +207,13 @@ def _place_sppm_wrap_rows(
         if not row_node_ids:
             continue
         row_height = max(node_bounds[node_id].height_px for node_id in row_node_ids)
-        x_px = margin_px
+        row_width = row_width_by_lane.get(lane.id, 0.0)
+        row_offset = (
+            max(0.0, max_row_width - row_width)
+            if lane.id.startswith("__sppm_row_wrap_rework_")
+            else 0.0
+        )
+        x_px = margin_px + row_offset
         for node_id in row_node_ids:
             bounds = node_bounds[node_id]
             node_bounds[node_id] = LayoutBounds(
@@ -207,14 +224,14 @@ def _place_sppm_wrap_rows(
             )
             row_index_by_node[node_id] = row_index
             x_px += bounds.width_px + horizontal_gap_px
-        row_width = x_px - horizontal_gap_px + margin_px
+        framed_row_width = x_px - horizontal_gap_px + margin_px
         lane_frames[lane.id] = LayoutLaneFrame(
             id=lane.id,
             label=lane.label,
             bounds=LayoutBounds(
                 x_px=0.0,
                 y_px=max(0.0, y_px - margin_px),
-                width_px=row_width,
+                width_px=framed_row_width,
                 height_px=row_height + (margin_px * 2.0),
             ),
             node_ids=row_node_ids,
@@ -247,6 +264,7 @@ def _route_sppm_wrap_edges(
             source_row=row_index_by_node.get(source_id),
             target_row=row_index_by_node.get(target_id),
             is_rework=edge_spec.is_rework,
+            rework_variant=edge_spec.rework_variant,
         )
         edge_paths[edge_key] = RoutedEdgePath(
             edge=edge_key,
@@ -299,6 +317,7 @@ def _wrapped_sppm_edge_points(
     source_row: int | None,
     target_row: int | None,
     is_rework: bool,
+    rework_variant: str | None,
 ) -> tuple[tuple[LayoutPoint, ...], str, str]:
     if source_row == target_row and source_bounds.x_px < target_bounds.x_px:
         source = _wrapped_sppm_anchor(
@@ -321,6 +340,29 @@ def _wrapped_sppm_edge_points(
             ),
             "EAST",
             "WEST",
+        )
+
+    if rework_variant == "return":
+        source = _wrapped_sppm_anchor(
+            bounds=source_bounds,
+            kind=source_kind,
+            side="NORTH",
+        )
+        target = _wrapped_sppm_anchor(
+            bounds=target_bounds,
+            kind=target_kind,
+            side="SOUTH",
+        )
+        corridor_y = (source.y_px + target.y_px) / 2.0
+        return (
+            (
+                source,
+                LayoutPoint(x_px=source.x_px, y_px=corridor_y),
+                LayoutPoint(x_px=target.x_px, y_px=corridor_y),
+                target,
+            ),
+            "NORTH",
+            "SOUTH",
         )
 
     source = _wrapped_sppm_anchor(

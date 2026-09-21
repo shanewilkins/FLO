@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+- Allow adjacent queue and work waits to remain independent when they declare
+  distinct measurement identities, while retaining `E1505` for ambiguous
+  unlinked measurements.
+- Render an explicit transition `label` in preference to its machine-readable
+  decision `outcome` when both are present.
+- Keep labeled rework returns readable by preferring a horizontal corridor for
+  label placement instead of a longer vertical segment through mainline nodes.
+- Derive ordinary rework-row edge ports from each edge's computed layout order
+  instead of forcing every rework row to flow in one direction.
+- Route SPPM rework branches independently of their rendered captions so labels
+  cannot introduce connector detours, and give decision diamonds a moderately
+  taller aspect ratio for clearer branch attachment.
+- Attach explicit rework returns to the southern port of their reintegration
+  target, including the visible bottom tip of triangular queue symbols.
+- Honor an explicit SPPM `layout_width` ahead of profile width and column hints,
+  and use it to wrap a rework graph while keeping its secondary path below all
+  wrapped mainline rows.
+
 ## 0.4.1 - 2026-09-15
 
 - Correct decision, branch-point, outcome, route, and explicit rework semantics so ambiguous fan-out and contradictory edge declarations fail with actionable diagnostics.

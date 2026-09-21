@@ -76,9 +76,14 @@ An SPPM in FLO must satisfy the following characteristics:
    - A linear LR process may be split into ordered publication rows. Every row
      flows left-to-right, and each row boundary uses an explicit orthogonal
      bottom-to-top continuation corridor without changing canonical graph
-     order. Branching or rework graphs are not automatically row-wrapped.
-   - Rework paths must be rendered on a secondary row below the mainline,
-     flowing right-to-left for return movement back toward the mainline.
+     order. Branching or rework graphs are not automatically row-wrapped from a
+     profile hint, but an explicit requested artifact width opts them into
+     width-constrained wrapping.
+   - Rework paths must be rendered on a secondary row below the mainline.
+     Ordinary edges within that row attach according to their computed layout
+     order; an explicit rework-return edge routes from the final rework step to
+     the southern port of its declared reintegration target without imposing one
+     global row direction. For a queue, that port is the triangle's bottom tip.
 
 9. Start/end horizontal boundary contract
    - On an unwrapped dominant row, no node may be placed to the left of the
@@ -89,17 +94,24 @@ An SPPM in FLO must satisfy the following characteristics:
 
 10. Orthogonal edge routing
   SPPM connectors must route as orthogonal polylines (horizontal/vertical
-  segments), with arrowheads preserving directed process flow.
+  segments), with arrowheads preserving directed process flow. Rework captions
+  are placed after routing and must not act as layout obstacles that introduce
+  connector detours.
 
 11. Port-based connector attachment
   Connectors must originate and terminate at explicit node ports. Each node
   must expose top, right, bottom, and left ports positioned at the midpoint of
   the corresponding boundary edge. Connector attachment should prefer
-  semantically appropriate sides (for example, mainline left-to-right flow
-  uses right-to-left attachments, and rework branch/return attachments use
-  vertical or right-to-left pairings as applicable).
+  semantically appropriate sides (for example, left-to-right chains use
+  right-to-left attachments, while rework branch and return connectors use
+  the sides appropriate to their declared endpoints).
 
-12. Minimum spacing contract
+12. Decision geometry
+  Decision nodes use a moderately upright diamond whose height is at least 57%
+  of its width. Content may expand the shape, but the default must not collapse
+  into a shallow lozenge that obscures top and bottom branch attachment.
+
+13. Minimum spacing contract
   Layout must enforce non-trivial minimum horizontal and vertical separation
   between node boundaries to preserve readability under dense annotations.
 

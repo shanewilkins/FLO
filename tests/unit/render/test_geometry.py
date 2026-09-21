@@ -2,7 +2,7 @@ import pytest
 
 from flo.errors import RenderError
 from flo.render._artifact import RenderArtifact
-from flo.render._geometry import resolve_svg_geometry
+from flo.render._geometry import prepare_svg_layout, resolve_svg_geometry
 from flo.render.options import RenderOptions
 
 
@@ -12,6 +12,24 @@ def _artifact() -> RenderArtifact:
         backend="svg",
         content='<svg width="720" height="480" viewBox="0 0 720 480"></svg>',
     )
+
+
+def test_explicit_sppm_width_constrains_profile_wrap_budget():
+    options = RenderOptions.from_mapping(
+        {
+            "diagram": "sppm",
+            "sppm_output_profile": "book",
+            "layout_width": "800px",
+        }
+    )
+
+    prepared = prepare_svg_layout(options)
+
+    assert options.layout_max_width_px == 1200
+    assert prepared.layout_width_px == 800
+    assert prepared.layout_max_width_px == 744
+    assert prepared.layout_target_columns == 6
+    assert prepared.layout_wrap == "auto"
 
 
 def test_geometry_metadata_records_natural_and_requested_bounds():

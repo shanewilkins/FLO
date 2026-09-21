@@ -14,6 +14,7 @@ from ..layout_core.elk_contracts import (
     ElkDirection,
     ElkLayoutEdge,
     ElkLayoutLane,
+    ElkLayoutNode,
     ElkLayoutRequest,
 )
 from ..layout_core.elk_runtime import run_elkjs_layout
@@ -68,49 +69,14 @@ def build_sppm_elk_layout_request(
         options=render_options,
         size_resolver=_sppm_node_size,
     )
-    wrap_plan = build_wrap_plan(nodes, render_options, planner="placement")
-    if (
-        direction == "RIGHT"
-        and wrap_plan.chunks
-        and _is_linear_sppm_sequence(nodes=nodes, edges=edge_specs)
-    ):
-        lanes = tuple(
-            ElkLayoutLane(
-                id=f"__sppm_row_wrap_{row_index}",
-                label="",
-                node_ids=tuple(chunk),
-            )
-            for row_index, chunk in enumerate(wrap_plan.chunks)
-        )
-        partition_overrides = {
-            node_id: display_index
-            for chunk in wrap_plan.chunks
-            for display_index, node_id in enumerate(chunk)
-        }
-        edge_specs = _apply_wrap_boundary_ports(
-            edges=edge_specs,
-            boundary_edges=wrap_plan.boundary_edges,
-        )
-    elif direction == "DOWN":
-        lanes = lane_specs(
-            process=process,
-            nodes=nodes,
-            separate_process_boundaries=False,
-        )
-        partition_overrides = {}
-    else:
-        synthetic_rows = _sppm_synthetic_row_lanes(nodes=nodes, edges=edge_specs)
-        lanes = ()
-        partition_overrides = _sppm_partition_indexes_for_synthetic_rows(
-            node_ids=[node.id for node in sppm_nodes],
-            lanes=synthetic_rows,
-            edges=edge_specs,
-        )
-        edge_specs = _sppm_apply_secondary_row_edge_ports(
-            edges=edge_specs,
-            synthetic_rows=synthetic_rows,
-            root_direction=direction,
-        )
+    lanes, partition_overrides, edge_specs = _resolve_sppm_lanes(
+        process=process,
+        nodes=nodes,
+        sppm_nodes=sppm_nodes,
+        edges=edge_specs,
+        direction=direction,
+        options=render_options,
+    )
 
     request = ElkLayoutRequest(
         diagram="sppm",
@@ -128,6 +94,148 @@ def build_sppm_elk_layout_request(
     )
     validate_elk_request_namespaces(request)
     return request
+
+
+def _resolve_sppm_lanes(
+    *,
+    process: dict[str, Any] | Any,
+    nodes: list[dict[str, Any]],
+    sppm_nodes: tuple[ElkLayoutNode, ...],
+    edges: tuple[ElkLayoutEdge, ...],
+    direction: ElkDirection,
+    options: RenderOptions,
+) -> tuple[tuple[ElkLayoutLane, ...], dict[str, int], tuple[ElkLayoutEdge, ...]]:
+    """Resolve SPPM rows, partitions, and any wrap-boundary edge ports."""
+    synthetic_rows = (
+        _sppm_synthetic_row_lanes(nodes=nodes, edges=edges)
+        if direction == "RIGHT"
+        else ()
+    )
+    branched_wrap = _explicit_branched_wrap_lanes(
+        nodes=nodes,
+        options=options,
+        synthetic_rows=synthetic_rows,
+    )
+    if branched_wrap is not None:
+        lanes, boundary_edges = branched_wrap
+        partition_overrides = {
+            node_id: display_index
+            for lane in lanes
+            for display_index, node_id in enumerate(lane.node_ids)
+        }
+        return (
+            lanes,
+            partition_overrides,
+            _apply_wrap_boundary_ports(edges=edges, boundary_edges=boundary_edges),
+        )
+
+    wrap_plan = build_wrap_plan(nodes, options, planner="placement")
+    if (
+        direction == "RIGHT"
+        and wrap_plan.chunks
+        and _is_linear_sppm_sequence(nodes=nodes, edges=edges)
+    ):
+        lanes = tuple(
+            ElkLayoutLane(
+                id=f"__sppm_row_wrap_{row_index}",
+                label="",
+                node_ids=tuple(chunk),
+            )
+            for row_index, chunk in enumerate(wrap_plan.chunks)
+        )
+        partition_overrides = {
+            node_id: display_index
+            for chunk in wrap_plan.chunks
+            for display_index, node_id in enumerate(chunk)
+        }
+        return (
+            lanes,
+            partition_overrides,
+            _apply_wrap_boundary_ports(
+                edges=edges,
+                boundary_edges=wrap_plan.boundary_edges,
+            ),
+        )
+
+    if direction == "DOWN":
+        return (
+            lane_specs(
+                process=process,
+                nodes=nodes,
+                separate_process_boundaries=False,
+            ),
+            {},
+            edges,
+        )
+
+    partition_overrides = _sppm_partition_indexes_for_synthetic_rows(
+        node_ids=[node.id for node in sppm_nodes],
+        lanes=synthetic_rows,
+        edges=edges,
+    )
+    return (
+        (),
+        partition_overrides,
+        _sppm_apply_secondary_row_edge_ports(
+            edges=edges,
+            synthetic_rows=synthetic_rows,
+            root_direction=direction,
+            partition_indexes=partition_overrides,
+        ),
+    )
+
+
+def _explicit_branched_wrap_lanes(
+    *,
+    nodes: list[dict[str, Any]],
+    options: RenderOptions,
+    synthetic_rows: tuple[ElkLayoutLane, ...],
+) -> tuple[tuple[ElkLayoutLane, ...], set[tuple[str, str]]] | None:
+    """Wrap a rework graph only when the caller requested an exact width."""
+    if options.layout_width_px is None or len(synthetic_rows) < 2:
+        return None
+    mainline_lane = next(
+        (lane for lane in synthetic_rows if lane.id == "__sppm_row_mainline"),
+        None,
+    )
+    rework_lane = next(
+        (lane for lane in synthetic_rows if lane.id == "__sppm_row_rework"),
+        None,
+    )
+    if mainline_lane is None or rework_lane is None:
+        return None
+
+    mainline_ids = set(mainline_lane.node_ids)
+    mainline_nodes = [
+        node for node in nodes if str(node.get("id") or "") in mainline_ids
+    ]
+    plan = build_wrap_plan(mainline_nodes, options, planner="placement")
+    if not plan.chunks:
+        return None
+
+    # Keep the secondary rework path below every wrapped mainline row so
+    # ordinary continuation edges never have to pass through rework nodes.
+    rework_after_row = len(plan.chunks) - 1
+
+    lanes: list[ElkLayoutLane] = []
+    for row_index, chunk in enumerate(plan.chunks):
+        lanes.append(
+            ElkLayoutLane(
+                id=f"__sppm_row_wrap_{len(lanes)}",
+                label="",
+                node_ids=tuple(chunk),
+            )
+        )
+        if row_index == rework_after_row:
+            lanes.append(
+                ElkLayoutLane(
+                    id=f"__sppm_row_wrap_rework_{len(lanes)}",
+                    label="",
+                    node_ids=rework_lane.node_ids,
+                )
+            )
+
+    return tuple(lanes), plan.boundary_edges
 
 
 def layout_sppm_with_elk(

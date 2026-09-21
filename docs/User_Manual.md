@@ -300,6 +300,8 @@ Queue and task timing contract:
   valid on work nodes.
 - A promoted queue uses `measurement_refs` to identify task wait measurements
   that it repeats or aggregates, preventing double counting.
+- Adjacent queue and work waits with different `measurement_id` values remain
+  independent measurements and are both included in static totals.
 
 The following metadata keys are recognized and validated by FLO. Other keys are
 currently preserved in IR for custom tooling. The approved requirement is to
@@ -448,7 +450,9 @@ FLO supports these transition forms:
 
 - Explicit transition list: `transitions` with `source` and `target`
 - Outcome transitions from decisions: `outcomes` mapping under a `decision` step
-- Optional transition labels: `outcome` and or `label` fields
+- Optional transition labels: `outcome` and/or `label` fields. When both are
+  present, `outcome` is the machine-readable decision value and `label` is the
+  rendered display text.
 - Optional transition semantics: `handoff`, `rework`, `edge_type`, and `metadata`
 
 Canonical transition example:
@@ -1144,9 +1148,10 @@ Important:
 
 - Render-only flags are invalid with JSON, ingredients, or movement export modes.
 - If you pass render-only flags together with JSON, ingredients, or movement export, FLO returns usage error code `1`.
-- Direct-SVG row wrapping currently applies to unambiguous linear LR SPPM
-  sequences. Branching and rework maps remain unwrapped until their continuation
-  semantics can be preserved without conflating branches with page rows.
+- Profile-driven direct-SVG row wrapping applies automatically to unambiguous
+  linear LR SPPM sequences. Supplying an explicit `--layout-width` also opts a
+  branching or rework map into width-constrained wrapping; rework stays on a
+  secondary row below the wrapped mainline.
 - Wrapped LR SPPM SVG routes each row boundary through a deterministic clear
   corridor from the previous row's bottom port to the next row's top port.
 

@@ -43,7 +43,7 @@
 <text x="1035.8" y="130.2" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">Return to intake and request revised package details immediately</text>
 </g>
 <g data-edge-source="rework" data-edge-target="intake_wait_queue" data-edge-kind="rework" data-edge-rework-variant="return">
-<polyline points="936.5,290.0 936.5,266.0 1092.0,266.0 1092.0,4.0 304.5,4.0 304.5,28.0" fill="none" stroke="#b91c1c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
+<polyline points="936.5,290.0 936.5,266.0 1092.0,266.0 1092.0,202.0 304.5,202.0 304.5,178.0" fill="none" stroke="#b91c1c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
 </g>
 <g data-edge-source="start" data-edge-target="intake_wait_queue" data-edge-kind="direct">
 <polyline points="144.0,103.0 252.2,103.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />

@@ -94,20 +94,26 @@ def render_sppm_svg_artifact_from_layout(
         edge_paths=result.edge_paths,
         lanes=result.lanes,
     )
-    postprocess_diagnostics = list(
-        row_gap_diagnostics(
-            node_bounds=display_node_bounds,
-            lanes=result.lanes,
-            edge_paths=display_edge_paths,
-        )
+    wrapped_rows = any(
+        str(getattr(lane, "id", "")).startswith("__sppm_row_wrap_")
+        for lane in result.lanes
     )
-    postprocess_diagnostics.extend(
-        rework_alignment_diagnostics(
-            node_bounds=display_node_bounds,
-            lanes=result.lanes,
-            edge_paths=display_edge_paths,
+    postprocess_diagnostics = []
+    if not wrapped_rows:
+        postprocess_diagnostics.extend(
+            row_gap_diagnostics(
+                node_bounds=display_node_bounds,
+                lanes=result.lanes,
+                edge_paths=display_edge_paths,
+            )
         )
-    )
+        postprocess_diagnostics.extend(
+            rework_alignment_diagnostics(
+                node_bounds=display_node_bounds,
+                lanes=result.lanes,
+                edge_paths=display_edge_paths,
+            )
+        )
     display_canvas_bounds = _display_canvas_bounds(
         base_canvas=result.canvas_bounds,
         node_bounds=display_node_bounds,

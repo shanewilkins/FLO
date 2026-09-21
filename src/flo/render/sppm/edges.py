@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from html import escape
+from itertools import pairwise
 from typing import Any
 
 from .._diagnostics import RenderDiagnostic
@@ -711,9 +712,16 @@ def _rework_label_placement(
     if len(points) < 2:
         return _LabelPlacement(x=float(first.x_px), y=float(first.y_px))
     if rework_variant == "return" and len(points) > 2:
+        horizontal_indexes = [
+            index
+            for index, (segment_start, segment_end) in enumerate(pairwise(points))
+            if abs(segment_end.x_px - segment_start.x_px)
+            >= abs(segment_end.y_px - segment_start.y_px)
+            and abs(segment_end.x_px - segment_start.x_px) > 1e-6
+        ]
         segment_index = _longest_segment_index(
             points,
-            segment_indexes=range(len(points) - 1),
+            segment_indexes=horizontal_indexes or range(len(points) - 1),
         )
         if segment_index is not None:
             segment_start = points[segment_index]

@@ -101,7 +101,7 @@ def test_normalize_rework_edge_points_preserves_aligned_outside_corridor() -> No
     assert normalized == points
 
 
-def test_rework_return_label_uses_longest_corridor_segment() -> None:
+def test_rework_return_label_prefers_horizontal_corridor_segment() -> None:
     points = (
         LayoutPoint(50.0, 180.0),
         LayoutPoint(50.0, 150.0),
@@ -113,9 +113,9 @@ def test_rework_return_label_uses_longest_corridor_segment() -> None:
 
     placement = _rework_label_placement(points, rework_variant="return")
 
-    assert placement.x == 152.0
-    assert placement.y == 80.0
-    assert placement.anchor == "start"
+    assert placement.x == 95.0
+    assert placement.y == 142.0
+    assert placement.anchor == "middle"
 
 
 def test_attachment_warn_threshold_accounts_for_queue_geometry() -> None:

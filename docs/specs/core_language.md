@@ -191,6 +191,8 @@ FLO models several authored relations as first-class semantic surfaces.
        transitions, and rework edges all compile into canonical directed edges.
     - `outcome` belongs only to an edge leaving a `decision`.
     - `route` belongs only to an edge leaving a generic `branch`.
+    - When an edge declares both `outcome` and `label`, renderers use `label`
+       as display text while preserving `outcome` as the semantic value.
 
 2. Handoff relation
    - `handoff` is a first-class transition relation.
@@ -241,9 +243,13 @@ Normative timing-placement rules:
        declares the corresponding IDs in `measurement_refs`.
     - A directly preceding queue and work node may instead share one
        `measurement_id` when they present the same measurement.
+    - Directly adjacent queue and work waits with distinct non-empty
+       `measurement_id` values are independent measurements and both contribute
+       to static totals.
     - Linked queue projections remain renderable but contribute no additional
        waiting time to static totals.
-    - An unlinked queue `wait_time` remains an independent timing contribution.
+    - An independently identified, unlinked queue `wait_time` remains an
+       independent timing contribution.
 
 4. Active work and setup time belong on work nodes
    - `metadata.cycle_time`, `metadata.crossover_time`, and alias fields such as

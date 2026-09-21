@@ -1,6 +1,6 @@
 {
   "canvas_bounds": {
-    "height_px": 652.0,
+    "height_px": 662.0,
     "width_px": 702.5,
     "x_px": 0.0,
     "y_px": 0.0
@@ -20,15 +20,15 @@
       "points": [
         {
           "x_px": 288.0,
-          "y_px": 449.0
+          "y_px": 459.0
         },
         {
           "x_px": 288.0,
-          "y_px": 640.0
+          "y_px": 650.0
         },
         {
           "x_px": 15.0,
-          "y_px": 640.0
+          "y_px": 650.0
         },
         {
           "x_px": 15.0,
@@ -57,25 +57,25 @@
       "label": "yes",
       "label_point": {
         "x_px": 363.0,
-        "y_px": 505.0
+        "y_px": 515.0
       },
       "outgoing_token": null,
       "points": [
         {
           "x_px": 288.0,
-          "y_px": 449.0
+          "y_px": 459.0
         },
         {
           "x_px": 288.0,
-          "y_px": 459.0
+          "y_px": 469.0
         },
         {
           "x_px": 365.0,
-          "y_px": 459.0
+          "y_px": 469.0
         },
         {
           "x_px": 365.0,
-          "y_px": 561.0
+          "y_px": 571.0
         }
       ],
       "rework_variant": null,
@@ -119,15 +119,15 @@
       "points": [
         {
           "x_px": 601.5,
-          "y_px": 449.0
+          "y_px": 459.0
         },
         {
           "x_px": 601.5,
-          "y_px": 640.0
+          "y_px": 650.0
         },
         {
           "x_px": 689.5,
-          "y_px": 640.0
+          "y_px": 650.0
         },
         {
           "x_px": 689.5,
@@ -202,7 +202,7 @@
     },
     {
       "bounds": {
-        "height_px": 278.0,
+        "height_px": 288.0,
         "width_px": 491.0,
         "x_px": 188.5,
         "y_px": 347.0
@@ -218,7 +218,7 @@
   ],
   "node_bounds": {
     "approved": {
-      "height_px": 90.0,
+      "height_px": 100.0,
       "width_px": 175.0,
       "x_px": 200.5,
       "y_px": 359.0
@@ -233,13 +233,13 @@
       "height_px": 52.0,
       "width_px": 132.0,
       "x_px": 299.0,
-      "y_px": 561.0
+      "y_px": 571.0
     },
     "start": {
       "height_px": 52.0,
       "width_px": 132.0,
       "x_px": 535.5,
-      "y_px": 397.0
+      "y_px": 407.0
     },
     "verify": {
       "height_px": 70.0,

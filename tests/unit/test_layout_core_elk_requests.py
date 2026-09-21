@@ -183,6 +183,30 @@ def test_build_sppm_elk_layout_request_accepts_reference_example_without_inventi
     )
 
 
+def test_sppm_edge_label_overrides_machine_readable_outcome_for_display():
+    process = {
+        "nodes": [
+            {"id": "decision", "kind": "decision", "name": "Approved?"},
+            {"id": "finish", "kind": "end", "name": "Finish"},
+        ],
+        "edges": [
+            {
+                "source": "decision",
+                "target": "finish",
+                "outcome": "approved",
+                "label": "Yes — publish",
+            }
+        ],
+    }
+
+    request = build_sppm_elk_layout_request(
+        process,
+        options=RenderOptions(diagram="sppm", orientation="lr"),
+    )
+
+    assert request.edges[0].label == "Yes — publish"
+
+
 def test_build_sppm_elk_layout_request_builds_deterministic_wrap_rows():
     path = Path("examples/reference/washnfold.flo")
     adapter_model = parse_adapter(
@@ -362,6 +386,7 @@ def test_build_sppm_elk_layout_request_expands_decision_nodes_for_long_titles():
 
     assert decision_node.width_px > 158
     assert decision_node.height_px > 90
+    assert decision_node.height_px >= round(decision_node.width_px * 0.57)
 
 
 def test_build_sppm_elk_layout_request_wraps_queue_titles_without_forcing_ellipsis():
@@ -479,6 +504,50 @@ def test_build_sppm_request_derives_branch_route_for_explicit_rework_return():
     assert rework_return.rework_variant == "return"
     assert ordinary.is_rework is False
     assert ordinary.rework_variant is None
+
+
+def test_serialize_sppm_rework_labels_do_not_participate_in_routing():
+    request = build_sppm_elk_layout_request(
+        {
+            "nodes": [
+                {"id": "inspect", "kind": "decision", "name": "Defective?"},
+                {"id": "correct", "kind": "task", "name": "Correct"},
+                {"id": "done", "kind": "end", "name": "Done"},
+            ],
+            "edges": [
+                {
+                    "source": "inspect",
+                    "target": "correct",
+                    "outcome": "yes",
+                    "label": "Needs correction",
+                },
+                {
+                    "source": "correct",
+                    "target": "inspect",
+                    "edge_type": "rework",
+                    "rework": True,
+                    "label": "Recheck",
+                },
+                {"source": "inspect", "target": "done", "outcome": "no"},
+            ],
+        },
+        options=RenderOptions(diagram="sppm", orientation="lr"),
+    )
+
+    payload = serialize_elk_layout_request(request)
+    serialized_edges = {
+        (edge["sources"][0], edge["targets"][0]): edge for edge in payload["edges"]
+    }
+
+    assert all(
+        "labels" not in edge
+        for edge in serialized_edges.values()
+        if "correct" in edge["sources"][0] or "correct" in edge["targets"][0]
+    )
+    assert {edge.label for edge in request.edges if edge.rework_variant} == {
+        "Needs correction",
+        "Recheck",
+    }
 
 
 def test_build_sppm_elk_layout_request_preserves_explicit_continuation_tokens():
@@ -689,7 +758,7 @@ def test_serialize_sppm_return_rework_edge_targets_south_port():
     assert payload["edges"][0]["targets"] == ["decision__port_south"]
 
 
-def test_build_sppm_synthetic_rows_set_rework_chain_ports_for_right_to_left_flow():
+def test_build_sppm_synthetic_rows_follow_authored_rework_chain_direction():
     request = build_sppm_elk_layout_request(
         {
             "nodes": [
@@ -712,6 +781,45 @@ def test_build_sppm_synthetic_rows_set_rework_chain_ports_for_right_to_left_flow
                 {
                     "source": "rework_task",
                     "target": "decision",
+                    "edge_type": "rework",
+                    "rework": True,
+                },
+            ],
+        },
+        options=RenderOptions(diagram="sppm", orientation="lr"),
+    )
+
+    edge_by_pair = {(edge.source_id, edge.target_id): edge for edge in request.edges}
+
+    assert edge_by_pair[("rework_queue", "rework_task")].source_port_side == "EAST"
+    assert edge_by_pair[("rework_queue", "rework_task")].target_port_side == "WEST"
+
+
+def test_build_sppm_synthetic_rows_reverse_ports_when_rework_returns_earlier():
+    request = build_sppm_elk_layout_request(
+        {
+            "nodes": [
+                {"id": "start", "kind": "start", "name": "Start"},
+                {"id": "early_task", "kind": "task", "name": "Initial work"},
+                {"id": "decision", "kind": "decision", "name": "Ready?"},
+                {"id": "rework_queue", "kind": "queue", "name": "Rework Queue"},
+                {"id": "rework_task", "kind": "task", "name": "Fix"},
+                {"id": "finish", "kind": "end", "name": "Finish"},
+            ],
+            "edges": [
+                {"source": "start", "target": "early_task"},
+                {"source": "early_task", "target": "decision"},
+                {"source": "decision", "target": "finish", "outcome": "yes"},
+                {
+                    "source": "decision",
+                    "target": "rework_queue",
+                    "outcome": "no",
+                    "edge_type": "rework",
+                },
+                {"source": "rework_queue", "target": "rework_task"},
+                {
+                    "source": "rework_task",
+                    "target": "early_task",
                     "edge_type": "rework",
                     "rework": True,
                 },

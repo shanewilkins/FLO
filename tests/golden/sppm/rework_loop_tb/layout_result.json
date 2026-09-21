@@ -1,7 +1,7 @@
 {
   "canvas_bounds": {
     "height_px": 710.0,
-    "width_px": 638.0,
+    "width_px": 635.0,
     "x_px": 0.0,
     "y_px": 0.0
   },
@@ -47,10 +47,7 @@
       "incoming_token": null,
       "is_rework": true,
       "label": "no",
-      "label_point": {
-        "x_px": 625.0,
-        "y_px": 244.0
-      },
+      "label_point": null,
       "outgoing_token": null,
       "points": [
         {

@@ -23,7 +23,7 @@ steps:
       cycle_time:
         value: 3
         unit: min
-      wait_time:
+      wait_before:
         value: 5.1
         unit: min
         measurement_id: dropoff_wait
@@ -41,7 +41,7 @@ steps:
       cycle_time:
         value: 4.8
         unit: min
-      wait_time:
+      wait_before:
         value: 4.5
         unit: min
         measurement_id: sort_tag_wait
@@ -56,9 +56,7 @@ steps:
       wait_time:
         value: 501.7
         unit: min
-        measurement_refs:
-          - wash_wait
-          - dry_wait
+        measurement_id: order_batch_release_wait
 
   - id: wash
     name: Wash loads
@@ -70,10 +68,10 @@ steps:
       cycle_time:
         value: 30.4
         unit: min
-      wait_time:
+      wait_before:
         value: 500.9
         unit: min
-        measurement_id: wash_wait
+        measurement_id: load_wash_wait
       changeover_time:
         value: 1.5
         unit: min
@@ -88,7 +86,7 @@ steps:
       cycle_time:
         value: 45.3
         unit: min
-      wait_time:
+      wait_before:
         value: 0.8
         unit: min
         measurement_id: dry_wait
@@ -106,7 +104,7 @@ steps:
       cycle_time:
         value: 16.2
         unit: min
-      wait_time:
+      wait_before:
         value: 3.6
         unit: min
         measurement_id: fold_package_wait
@@ -125,8 +123,6 @@ steps:
       wait_time:
         value: 37.9
         unit: min
-        measurement_refs:
-          - stage_notify_wait
 
   - id: stage_notify
     name: Stage and notify
@@ -138,10 +134,6 @@ steps:
       cycle_time:
         value: 4
         unit: min
-      wait_time:
-        value: 37.9
-        unit: min
-        measurement_id: stage_notify_wait
       changeover_time:
         value: 0.0
         unit: min
@@ -153,8 +145,6 @@ steps:
       wait_time:
         value: 5.6
         unit: min
-        measurement_refs:
-          - fold_correction_wait
 
   - id: fold_correction
     name: Fold correction
@@ -166,10 +156,6 @@ steps:
       cycle_time:
         value: 6.8
         unit: min
-      wait_time:
-        value: 5.6
-        unit: min
-        measurement_id: fold_correction_wait
       changeover_time:
         value: 0.0
         unit: min
@@ -208,11 +194,10 @@ transitions:
     label: Packaging check fails (5 of 39 orders)
     edge_type: rework
     rework: true
-    metadata:
-      count: 5
-      frequency: 5 of 39 orders
   - source: correction_queue
     target: fold_correction
   - source: fold_correction
     target: notification_queue
     label: Corrected package rejoins flow
+    edge_type: rework
+    rework: true

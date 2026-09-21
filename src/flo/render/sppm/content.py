@@ -127,6 +127,7 @@ def measure_sppm_node(
         height = max(
             _DECISION_MIN_HEIGHT_PX,
             62 + (_line_count(content.title) * 26),
+            round(width * 0.57),
         )
         return scaled(
             SppmNodeMeasure(

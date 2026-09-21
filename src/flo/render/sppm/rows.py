@@ -20,6 +20,11 @@ def _enforce_sppm_row_alignment(
     edge_paths: dict[tuple[str, str], Any],
     lanes: tuple[Any, ...],
 ) -> tuple[dict[str, LayoutBounds], dict[tuple[str, str], Any]]:
+    if any(
+        str(getattr(lane, "id", "")).startswith("__sppm_row_wrap_") for lane in lanes
+    ):
+        return dict(node_bounds), _orthogonalized_edges(edge_paths=edge_paths)
+
     mainline_ids, rework_ids = _sppm_row_ids(
         lanes=lanes,
         node_bounds=node_bounds,
@@ -605,9 +610,9 @@ def _rebuild_rework_route(
 
     if edge_path.rework_variant == "return" and edge_path.is_rework:
         source = _bounds_anchor(source_bounds, "NORTH")
-        target = _bounds_anchor(target_bounds, "NORTH")
+        target = _bounds_anchor(target_bounds, "SOUTH")
         source_clearance_y = source.y_px - 24.0
-        target_clearance_y = target.y_px - 24.0
+        target_clearance_y = target.y_px + 24.0
         corridor_x = (
             max(
                 source_bounds.x_px + source_bounds.width_px,
