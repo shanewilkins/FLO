@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.2
 
 - Allow adjacent queue and work waits to remain independent when they declare
   distinct measurement identities, while retaining `E1505` for ambiguous
