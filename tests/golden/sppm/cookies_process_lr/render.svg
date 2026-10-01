@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2227" height="294" viewBox="0 0 2227 294" data-flo-artifact-kind="svg" data-flo-backend="svg" data-flo-diagram="sppm" data-flo-layout-engine="elk" role="img" aria-labelledby="flo-svg-title flo-svg-description" data-sppm-publication-page-id="main-p1">
+<defs>
+<marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L8,3 L0,6 z" fill="#475569" />
+</marker>
+<marker id="flo-sppm-rework-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L8,3 L0,6 z" fill="#b91c1c" />
+</marker>
+</defs>
+<title id="flo-svg-title">Chocolate Chip Cookie Process — SPPM</title>
+<desc id="flo-svg-description">SPPM diagram for Chocolate Chip Cookie Process. Read node and transition labels for process details.</desc>
+<metadata id="flo-theme-tokens" data-flo-theme="default">{"canvas":{"background":"#fffdf8"},"name":"default","roles":{"annotation":{"border":"#666666","detail_text":"#475569","fill":"#fffdf8","title_text":"#0f172a"},"boundary":{"border":"gray","detail_text":"gray","fill":"#FFFFFF","title_text":"gray"},"callout":{"border":"#666666","detail_text":"#475569","fill":"#ffffff","title_text":"#0f172a"},"connector":{"border":"#475569","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"decision":{"border":"#285B8F","detail_text":"#475569","fill":"#E3EEF7","title_text":"#0f172a"},"information_route":{"border":"royalblue","detail_text":"royalblue","fill":"#FFFFFF","title_text":"royalblue"},"lane":{"border":"#cbd5e1","detail_text":"#475569","fill":"#f8fafc","title_text":"#334155"},"location_processing":{"border":"firebrick","detail_text":"#475569","fill":"mistyrose","title_text":"#0f172a"},"location_staging":{"border":"seagreen","detail_text":"#475569","fill":"honeydew","title_text":"#0f172a"},"location_storage":{"border":"goldenrod","detail_text":"#475569","fill":"lemonchiffon","title_text":"#0f172a"},"location_support":{"border":"deepskyblue","detail_text":"#475569","fill":"azure","title_text":"#0f172a"},"location_transit":{"border":"slategray","detail_text":"#475569","fill":"mintcream","title_text":"#0f172a"},"location_unknown":{"border":"steelblue","detail_text":"#475569","fill":"aliceblue","title_text":"#0f172a"},"material_route":{"border":"tomato","detail_text":"tomato","fill":"#FFFFFF","title_text":"tomato"},"nva":{"border":"#C62828","detail_text":"#475569","fill":"#EF9A9A","title_text":"#0f172a"},"people_route":{"border":"royalblue","detail_text":"royalblue","fill":"#FFFFFF","title_text":"royalblue"},"publication":{"border":"#cbd5e1","detail_text":"#334155","fill":"#fffdf8","title_text":"#0f172a"},"queue":{"border":"#E65100","detail_text":"#475569","fill":"#FFB74D","title_text":"#0f172a"},"rework":{"border":"#b91c1c","detail_text":"#b91c1c","fill":"#FFFFFF","title_text":"#b91c1c"},"rnva":{"border":"#F9A825","detail_text":"#475569","fill":"#FFF176","title_text":"#0f172a"},"start_end":{"border":"#333333","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"subprocess":{"border":"#607D8B","detail_text":"#475569","fill":"#F8FAFC","title_text":"#0f172a"},"surface":{"border":"#cbd5e1","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"token":{"border":"#455A64","detail_text":"#455A64","fill":"#ffffff","title_text":"#455A64"},"unknown":{"border":"#9E9E9E","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"va":{"border":"#2E7D32","detail_text":"#475569","fill":"#81C784","title_text":"#0f172a"}},"typography":{"font_family":["Helvetica"],"scale":1.0}}</metadata>
+<rect width="100%" height="100%" fill="#fffdf8" />
+<g data-sppm-publication-band="header">
+<line x1="28.0" y1="28.0" x2="2199.0" y2="28.0" stroke="#cbd5e1" stroke-width="1" />
+<text x="28.0" y="52.0" font-family="Helvetica" font-size="22" font-weight="700" fill="#0f172a">Chocolate Chip Cookie Process</text>
+<text x="28.0" y="76.0" font-family="Helvetica" font-size="12" fill="#334155">Process: chocolate_chip_cookies</text>
+<text x="28.0" y="92.0" font-family="Helvetica" font-size="12" fill="#334155">Subprocess View: parent-only</text>
+<text x="28.0" y="108.0" font-family="Helvetica" font-size="12" fill="#334155">Nodes: 8</text>
+<text x="28.0" y="124.0" font-family="Helvetica" font-size="12" fill="#334155">Edges: 5</text>
+</g>
+<g transform="translate(28.0,148.0)">
+<g data-edge-source="add_dry_ingredients" data-edge-target="rest_dough" data-edge-kind="direct">
+<polyline points="1035.0,65.0 1091.0,65.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="bake" data-edge-target="end" data-edge-kind="direct">
+<polyline points="1983.0,65.0 2039.0,65.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="preheat" data-edge-target="bake" data-edge-kind="direct">
+<polyline points="1627.0,65.0 1683.0,65.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="prep_subprocess" data-edge-target="wet_mix_subprocess" data-edge-kind="direct">
+<polyline points="448.0,65.0 504.0,65.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="rest_dough" data-edge-target="preheat" data-edge-kind="direct">
+<polyline points="1331.0,65.0 1387.0,65.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="start" data-edge-target="prep_subprocess" data-edge-kind="direct">
+<polyline points="144.0,65.0 200.0,65.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="wet_mix_subprocess" data-edge-target="add_dry_ingredients" data-edge-kind="direct">
+<polyline points="764.0,65.0 820.0,65.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-node-id="start" data-node-kind="start">
+<rect x="12.0" y="39.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="78.0" y="70.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Start</text>
+</g>
+<g data-node-id="prep_subprocess" data-node-kind="subprocess">
+<ellipse cx="324.0" cy="65.0" rx="124.0" ry="53.0" fill="#F8FAFC" stroke="#607D8B" stroke-width="2" stroke-dasharray="4 4" />
+<text x="324.0" y="36.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Prep Subprocess</text>
+<text x="324.0" y="57.0" text-anchor="middle" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Subprocess</text>
+<text x="324.0" y="70.0" text-anchor="middle" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Detail map: prep_subprocess</text>
+</g>
+<g data-node-id="wet_mix_subprocess" data-node-kind="subprocess">
+<ellipse cx="634.0" cy="65.0" rx="130.0" ry="53.0" fill="#F8FAFC" stroke="#607D8B" stroke-width="2" stroke-dasharray="4 4" />
+<text x="634.0" y="36.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Combine Wet Ingredients</text>
+<text x="634.0" y="57.0" text-anchor="middle" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Subprocess</text>
+<text x="634.0" y="70.0" text-anchor="middle" font-family="Helvetica" font-size="11" font-weight="400" fill="#475569">Detail map: wet_mix_subprocess</text>
+</g>
+<g data-node-id="add_dry_ingredients" data-node-kind="task">
+<rect x="820.0" y="14.0" width="215.0" height="102.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 832.0 14.0 L 1023.0 14.0 Q 1035.0 14.0 1035.0 26.0 L 1035.0 48.0 L 820.0 48.0 L 820.0 26.0 Q 820.0 14.0 832.0 14.0 Z" fill="#FFFFFF" stroke="none" />
+<line x1="820.0" y1="48.0" x2="1035.0" y2="48.0" stroke="#9E9E9E" stroke-width="1" opacity="0.35" />
+<text x="927.5" y="32.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Add Dry Ingredients</text>
+<text x="838.0" y="66.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">Workers: lead_baker</text>
+<text x="838.0" y="80.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">CT: 6 min</text>
+</g>
+<g data-node-id="rest_dough" data-node-kind="wait">
+<rect x="1091.0" y="14.0" width="240.0" height="102.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 1103.0 14.0 L 1319.0 14.0 Q 1331.0 14.0 1331.0 26.0 L 1331.0 48.0 L 1091.0 48.0 L 1091.0 26.0 Q 1091.0 14.0 1103.0 14.0 Z" fill="#FFFFFF" stroke="none" />
+<line x1="1091.0" y1="48.0" x2="1331.0" y2="48.0" stroke="#9E9E9E" stroke-width="1" opacity="0.35" />
+<text x="1211.0" y="32.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Rest Dough</text>
+<text x="1109.0" y="66.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">Workers: assistant_baker</text>
+<text x="1109.0" y="80.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">WT: 12 min wait</text>
+</g>
+<g data-node-id="preheat" data-node-kind="task">
+<rect x="1387.0" y="14.0" width="240.0" height="102.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 1399.0 14.0 L 1615.0 14.0 Q 1627.0 14.0 1627.0 26.0 L 1627.0 48.0 L 1387.0 48.0 L 1387.0 26.0 Q 1387.0 14.0 1399.0 14.0 Z" fill="#FFFFFF" stroke="none" />
+<line x1="1387.0" y1="48.0" x2="1627.0" y2="48.0" stroke="#9E9E9E" stroke-width="1" opacity="0.35" />
+<text x="1507.0" y="32.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Preheat Oven</text>
+<text x="1405.0" y="66.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">Workers: assistant_baker</text>
+<text x="1405.0" y="80.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">CT: 15 min</text>
+</g>
+<g data-node-id="bake" data-node-kind="task">
+<rect x="1683.0" y="14.0" width="300.0" height="102.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 1695.0 14.0 L 1971.0 14.0 Q 1983.0 14.0 1983.0 26.0 L 1983.0 48.0 L 1683.0 48.0 L 1683.0 26.0 Q 1683.0 14.0 1695.0 14.0 Z" fill="#FFFFFF" stroke="none" />
+<line x1="1683.0" y1="48.0" x2="1983.0" y2="48.0" stroke="#9E9E9E" stroke-width="1" opacity="0.35" />
+<text x="1833.0" y="32.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Bake</text>
+<text x="1701.0" y="66.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">Workers: lead_baker, assistant_baker</text>
+<text x="1701.0" y="80.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">CT: 13 min</text>
+</g>
+<g data-node-id="end" data-node-kind="end">
+<rect x="2039.0" y="39.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="2105.0" y="70.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">End</text>
+</g>
+</g>
+</svg>

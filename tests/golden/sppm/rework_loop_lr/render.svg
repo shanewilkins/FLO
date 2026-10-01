@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1398" height="444" viewBox="0 0 1398 444" data-flo-artifact-kind="svg" data-flo-backend="svg" data-flo-diagram="sppm" data-flo-layout-engine="elk" role="img" aria-labelledby="flo-svg-title flo-svg-description" data-sppm-publication-page-id="main-p1">
+<defs>
+<marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L8,3 L0,6 z" fill="#475569" />
+</marker>
+<marker id="flo-sppm-rework-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L8,3 L0,6 z" fill="#b91c1c" />
+</marker>
+</defs>
+<title id="flo-svg-title">Invoice Review (with rework) — SPPM</title>
+<desc id="flo-svg-description">SPPM diagram for Invoice Review (with rework). Read node and transition labels for process details.</desc>
+<metadata id="flo-theme-tokens" data-flo-theme="default">{"canvas":{"background":"#fffdf8"},"name":"default","roles":{"annotation":{"border":"#666666","detail_text":"#475569","fill":"#fffdf8","title_text":"#0f172a"},"boundary":{"border":"gray","detail_text":"gray","fill":"#FFFFFF","title_text":"gray"},"callout":{"border":"#666666","detail_text":"#475569","fill":"#ffffff","title_text":"#0f172a"},"connector":{"border":"#475569","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"decision":{"border":"#285B8F","detail_text":"#475569","fill":"#E3EEF7","title_text":"#0f172a"},"information_route":{"border":"royalblue","detail_text":"royalblue","fill":"#FFFFFF","title_text":"royalblue"},"lane":{"border":"#cbd5e1","detail_text":"#475569","fill":"#f8fafc","title_text":"#334155"},"location_processing":{"border":"firebrick","detail_text":"#475569","fill":"mistyrose","title_text":"#0f172a"},"location_staging":{"border":"seagreen","detail_text":"#475569","fill":"honeydew","title_text":"#0f172a"},"location_storage":{"border":"goldenrod","detail_text":"#475569","fill":"lemonchiffon","title_text":"#0f172a"},"location_support":{"border":"deepskyblue","detail_text":"#475569","fill":"azure","title_text":"#0f172a"},"location_transit":{"border":"slategray","detail_text":"#475569","fill":"mintcream","title_text":"#0f172a"},"location_unknown":{"border":"steelblue","detail_text":"#475569","fill":"aliceblue","title_text":"#0f172a"},"material_route":{"border":"tomato","detail_text":"tomato","fill":"#FFFFFF","title_text":"tomato"},"nva":{"border":"#C62828","detail_text":"#475569","fill":"#EF9A9A","title_text":"#0f172a"},"people_route":{"border":"royalblue","detail_text":"royalblue","fill":"#FFFFFF","title_text":"royalblue"},"publication":{"border":"#cbd5e1","detail_text":"#334155","fill":"#fffdf8","title_text":"#0f172a"},"queue":{"border":"#E65100","detail_text":"#475569","fill":"#FFB74D","title_text":"#0f172a"},"rework":{"border":"#b91c1c","detail_text":"#b91c1c","fill":"#FFFFFF","title_text":"#b91c1c"},"rnva":{"border":"#F9A825","detail_text":"#475569","fill":"#FFF176","title_text":"#0f172a"},"start_end":{"border":"#333333","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"subprocess":{"border":"#607D8B","detail_text":"#475569","fill":"#F8FAFC","title_text":"#0f172a"},"surface":{"border":"#cbd5e1","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"token":{"border":"#455A64","detail_text":"#455A64","fill":"#ffffff","title_text":"#455A64"},"unknown":{"border":"#9E9E9E","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"va":{"border":"#2E7D32","detail_text":"#475569","fill":"#81C784","title_text":"#0f172a"}},"typography":{"font_family":["Helvetica"],"scale":1.0}}</metadata>
+<rect width="100%" height="100%" fill="#fffdf8" />
+<g data-sppm-publication-band="header">
+<line x1="28.0" y1="28.0" x2="1370.0" y2="28.0" stroke="#cbd5e1" stroke-width="1" />
+<text x="28.0" y="52.0" font-family="Helvetica" font-size="22" font-weight="700" fill="#0f172a">Invoice Review (with rework)</text>
+<text x="28.0" y="76.0" font-family="Helvetica" font-size="12" fill="#334155">Process: invoice_review_v1</text>
+<text x="28.0" y="92.0" font-family="Helvetica" font-size="12" fill="#334155">Subprocess View: parent-only</text>
+<text x="28.0" y="108.0" font-family="Helvetica" font-size="12" fill="#334155">Nodes: 6</text>
+<text x="28.0" y="124.0" font-family="Helvetica" font-size="12" fill="#334155">Edges: 6</text>
+</g>
+<g transform="translate(28.0,148.0)">
+<g data-edge-source="decision" data-edge-target="approve" data-edge-kind="direct">
+<polyline points="850.0,57.0 1210.0,57.0 1276.0,207.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+<rect x="893.0" y="130.0" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
+<text x="907.0" y="143.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">yes</text>
+</g>
+<g data-edge-source="decision" data-edge-target="rework" data-edge-kind="rework" data-edge-rework-variant="branch">
+<polyline points="692.0,57.0 693.9,102.0 693.9,210.7 724.2,210.7 724.2,204.4 717.0,204.4 717.0,214.6 736.8,214.6 736.8,210.5 729.5,210.5 729.5,198.7 777.6,198.7 777.6,188.7 771.0,188.7 771.0,198.0" fill="none" stroke="#b91c1c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
+<rect x="689.1" y="64.7" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
+<text x="703.1" y="77.7" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">no</text>
+</g>
+<g data-edge-source="review" data-edge-target="decision" data-edge-kind="direct">
+<polyline points="636.0,57.0 692.0,57.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="rework" data-edge-target="approve" data-edge-kind="direct">
+<polyline points="866.0,233.0 887.0,233.0 887.0,240.9 1113.6,240.9 1113.6,196.8 1210.0,196.8 1210.0,233.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="start" data-edge-target="submit" data-edge-kind="direct">
+<polyline points="144.0,57.0 200.0,57.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-edge-source="submit" data-edge-target="review" data-edge-kind="direct">
+<polyline points="390.0,57.0 446.0,57.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+</g>
+<g data-node-id="start" data-node-kind="start">
+<rect x="12.0" y="31.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="78.0" y="62.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Start</text>
+</g>
+<g data-node-id="submit" data-node-kind="task">
+<rect x="200.0" y="22.0" width="190.0" height="70.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 212.0 22.0 L 378.0 22.0 Q 390.0 22.0 390.0 34.0 L 390.0 56.0 L 200.0 56.0 L 200.0 34.0 Q 200.0 22.0 212.0 22.0 Z" fill="#FFFFFF" stroke="none" />
+<text x="295.0" y="40.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Submit Invoice</text>
+</g>
+<g data-node-id="review" data-node-kind="task">
+<rect x="446.0" y="22.0" width="190.0" height="70.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 458.0 22.0 L 624.0 22.0 Q 636.0 22.0 636.0 34.0 L 636.0 56.0 L 446.0 56.0 L 446.0 34.0 Q 446.0 22.0 458.0 22.0 Z" fill="#FFFFFF" stroke="none" />
+<text x="541.0" y="40.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Review Invoice</text>
+</g>
+<g data-node-id="decision" data-node-kind="decision">
+<polygon points="771.0,12.0 850.0,57.0 771.0,102.0 692.0,57.0" fill="#E3EEF7" stroke="#285B8F" stroke-width="2" />
+<text x="771.0" y="62.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Valid?</text>
+</g>
+<g data-node-id="rework" data-node-kind="task">
+<rect x="676.0" y="198.0" width="190.0" height="70.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 688.0 198.0 L 854.0 198.0 Q 866.0 198.0 866.0 210.0 L 866.0 232.0 L 676.0 232.0 L 676.0 210.0 Q 676.0 198.0 688.0 198.0 Z" fill="#FFFFFF" stroke="none" />
+<text x="771.0" y="216.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Request Rework</text>
+</g>
+<g data-node-id="approve" data-node-kind="end">
+<rect x="1210.0" y="207.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="1276.0" y="238.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Approved</text>
+</g>
+</g>
+</svg>

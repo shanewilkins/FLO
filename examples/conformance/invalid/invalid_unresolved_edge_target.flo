@@ -1,0 +1,21 @@
+spec_version: "0.1"
+
+process:
+  id: invalid_unresolved_edge
+  name: Invalid Unresolved Edge
+
+steps:
+  - id: start
+    kind: start
+
+  - id: prepare
+    kind: task
+
+  - id: finish
+    kind: end
+
+edges:
+  - source: start
+    target: prepare
+  - source: prepare
+    target: does_not_exist

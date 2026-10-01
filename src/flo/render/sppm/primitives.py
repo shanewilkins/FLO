@@ -1,0 +1,126 @@
+"""Shared SVG primitives used across direct SVG renderers."""
+
+from __future__ import annotations
+
+from html import escape
+from typing import Any
+
+from .._process_header import extract_process_header_context
+from ..layout_core.models import LayoutBounds
+from ..options import RenderOptions
+from .edges import _edge_svg
+from .nodes import _node_svg
+
+SVG_ACCESSIBILITY_ATTRIBUTES = (
+    'role="img" aria-labelledby="flo-svg-title flo-svg-description"'
+)
+
+
+def svg_accessibility_elements(process: Any, *, diagram_name: str) -> list[str]:
+    """Return a deterministic accessible name and description for an SVG."""
+    context = extract_process_header_context(process)
+    process_title = context.title or "FLO process"
+    title = f"{process_title} — {diagram_name}"
+    description = (
+        f"{diagram_name} diagram for {process_title}. "
+        "Read node and transition labels for process details."
+    )
+    return [
+        f'<title id="flo-svg-title">{escape(title)}</title>',
+        f'<desc id="flo-svg-description">{escape(description)}</desc>',
+    ]
+
+
+def standard_svg_defs(options: RenderOptions | None = None) -> list[str]:
+    """Return the shared arrow marker definitions for direct SVG renderers."""
+    resolved = options or RenderOptions()
+    connector_color = resolved.resolved_theme.role("connector").border
+    rework_color = resolved.resolved_theme.role("rework").border
+    return [
+        "<defs>",
+        '<marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">',
+        f'<path d="M0,0 L8,3 L0,6 z" fill="{connector_color}" />',
+        "</marker>",
+        '<marker id="flo-sppm-rework-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">',
+        f'<path d="M0,0 L8,3 L0,6 z" fill="{rework_color}" />',
+        "</marker>",
+        "</defs>",
+    ]
+
+
+def standard_lane_svg(lane: Any, options: RenderOptions | None = None) -> list[str]:
+    """Render a lane frame using the shared direct-SVG style."""
+    role = (options or RenderOptions()).resolved_theme.role("lane")
+    return [
+        f'<g data-lane-id="{escape(str(lane.id))}">',
+        f'<rect x="{lane.bounds.x_px:.1f}" y="{lane.bounds.y_px:.1f}" width="{lane.bounds.width_px:.1f}" height="{lane.bounds.height_px:.1f}" rx="18" fill="{role.fill}" stroke="{role.border}" stroke-width="1.5" />',
+        f'<text x="{lane.bounds.x_px + 8.0:.1f}" y="{lane.bounds.y_px - 6.0:.1f}" font-family="Helvetica" font-size="12" font-weight="700" fill="{role.title_text}">{escape(str(lane.label))}</text>',
+        "</g>",
+    ]
+
+
+def standard_node_svg(
+    *,
+    node: Any,
+    raw_node: dict[str, Any],
+    options: RenderOptions,
+    x: float,
+    y: float,
+    width: float,
+    height: float,
+) -> list[str]:
+    """Render one node using the shared SPPM-developed node primitive."""
+    return _node_svg(
+        node=node,
+        raw_node=raw_node,
+        options=options,
+        x=x,
+        y=y,
+        width=width,
+        height=height,
+    )
+
+
+def standard_edge_svg(
+    *,
+    edge_path: Any,
+    source_bounds: LayoutBounds | None,
+    target_bounds: LayoutBounds | None,
+    source_kind: str,
+    target_kind: str,
+    avoid_bounds: tuple[Any, ...],
+    canvas_bounds: LayoutBounds,
+    diagnostics: list[Any],
+    render_as_rework_style: bool = False,
+    options: RenderOptions | None = None,
+) -> tuple[list[str], tuple[LayoutBounds, ...]]:
+    """Render one edge using the shared SPPM-developed edge primitive."""
+    return _edge_svg(
+        edge_path,
+        source_bounds=source_bounds,
+        target_bounds=target_bounds,
+        source_kind=source_kind,
+        target_kind=target_kind,
+        avoid_bounds=avoid_bounds,
+        canvas_bounds=canvas_bounds,
+        diagnostics=diagnostics,
+        render_as_rework_style=render_as_rework_style,
+        options=options,
+    )
+
+
+def raw_node_lookup(
+    process: dict[str, Any] | Any, *, options: RenderOptions
+) -> dict[str, dict[str, Any]]:
+    """Return raw node payloads keyed by node id for direct SVG rendering."""
+    from ..layout_core.elk_support import (
+        extract_nodes_and_edges,
+        project_parent_only_subprocess_view,
+    )
+
+    nodes, edges = extract_nodes_and_edges(process)
+    if options.subprocess_view == "parent_only":
+        nodes, edges = project_parent_only_subprocess_view(nodes, edges)
+    return {
+        str(node.get("id") or ""): node for node in nodes if str(node.get("id") or "")
+    }

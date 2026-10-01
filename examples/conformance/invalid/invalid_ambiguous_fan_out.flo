@@ -1,0 +1,33 @@
+spec_version: "0.1"
+
+process:
+  id: ambiguous_fan_out
+  name: Ambiguous Fan Out
+
+steps:
+  - id: start
+    kind: start
+
+  - id: assign_work
+    kind: task
+
+  - id: work_a
+    kind: task
+
+  - id: work_b
+    kind: task
+
+  - id: finish
+    kind: end
+
+transitions:
+  - source: start
+    target: assign_work
+  - source: assign_work
+    target: work_a
+  - source: assign_work
+    target: work_b
+  - source: work_a
+    target: finish
+  - source: work_b
+    target: finish

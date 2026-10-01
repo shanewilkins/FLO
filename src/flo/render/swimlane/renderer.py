@@ -1,0 +1,112 @@
+"""Minimal direct-SVG swimlane renderer backed by ELK layout."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from .._artifact import RenderArtifact
+from .._diagnostics import (
+    log_render_diagnostics,
+    serialize_render_diagnostics,
+    serialize_render_diagnostics_report,
+)
+from .._svg_theme import apply_svg_typography
+from ..layout_core.elk import execute_elk_layout
+from ..layout_core.elk_runtime import run_elkjs_layout
+from ..options import RenderOptions
+from ..shared.svg import SVG_ACCESSIBILITY_ATTRIBUTES, svg_accessibility_elements
+from .layout import build_swimlane_elk_layout_request
+from .primitives import edge_svg, lane_svg, node_svg, raw_node_lookup, svg_defs
+
+_PADDING = 24.0
+
+
+def render_swimlane_svg_artifact(
+    process: dict[str, Any] | Any, options: RenderOptions
+) -> tuple[RenderArtifact, None]:
+    """Render a standalone SVG swimlane diagram using ELK layout."""
+    request = build_swimlane_elk_layout_request(process, options=options)
+    result = execute_elk_layout(request, engine=run_elkjs_layout)
+    diagnostics_report = result.diagnostics_report(
+        diagram="swimlane",
+        backend="svg",
+        artifact_kind="svg",
+        strict=options.layout_fit == "fit-strict",
+    )
+    log_render_diagnostics(diagnostics_report)
+    node_by_id = {node.id: node for node in request.nodes}
+    raw_node_by_id = raw_node_lookup(process, options=options)
+
+    width = max(1.0, result.canvas_bounds.width_px + (_PADDING * 2.0))
+    height = max(1.0, result.canvas_bounds.height_px + (_PADDING * 2.0))
+
+    parts = [
+        (
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:.0f}" '
+            f'height="{height:.0f}" viewBox="0 0 {width:.0f} {height:.0f}" '
+            'data-flo-artifact-kind="svg" data-flo-backend="svg" '
+            'data-flo-diagram="swimlane" data-flo-layout-engine="elk" '
+            f"{SVG_ACCESSIBILITY_ATTRIBUTES}>"
+        ),
+        *svg_accessibility_elements(process, diagram_name="swimlane"),
+        f'<rect width="100%" height="100%" fill="{options.resolved_theme.canvas_background}" />',
+        f'<g transform="translate({_PADDING:.1f},{_PADDING:.1f})">',
+    ]
+    parts[1:1] = svg_defs(options)
+
+    for lane in result.lanes:
+        parts.extend(lane_svg(lane, options))
+
+    for edge_key in sorted(result.edge_paths.keys()):
+        source_id, target_id = edge_key
+        edge_parts, _annotation_bounds = edge_svg(
+            edge_path=result.edge_paths[edge_key],
+            source_bounds=result.node_bounds.get(source_id),
+            target_bounds=result.node_bounds.get(target_id),
+            source_kind=str(
+                getattr(node_by_id.get(source_id), "kind", "task") or "task"
+            ).lower(),
+            target_kind=str(
+                getattr(node_by_id.get(target_id), "kind", "task") or "task"
+            ).lower(),
+            avoid_bounds=tuple(result.node_bounds.values()),
+            canvas_bounds=result.canvas_bounds,
+            diagnostics=[],
+            render_as_rework_style=False,
+            options=options,
+        )
+        parts.extend(edge_parts)
+
+    for node_id in [node.id for node in request.nodes]:
+        bounds = result.bounds_for(node_id)
+        node = node_by_id.get(node_id)
+        if bounds is None or node is None:
+            continue
+        parts.extend(
+            node_svg(
+                node=node,
+                raw_node=raw_node_by_id.get(node.id, {}),
+                options=options,
+                x=bounds.x_px,
+                y=bounds.y_px,
+                width=bounds.width_px,
+                height=bounds.height_px,
+            )
+        )
+
+    parts.append("</g>")
+    parts.append("</svg>")
+    return (
+        RenderArtifact(
+            kind="svg",
+            content=apply_svg_typography("\n".join(parts), options),
+            backend="svg",
+            metadata={
+                "render_diagnostics": serialize_render_diagnostics(result.diagnostics),
+                "render_diagnostics_report": serialize_render_diagnostics_report(
+                    diagnostics_report
+                ),
+            },
+        ),
+        None,
+    )

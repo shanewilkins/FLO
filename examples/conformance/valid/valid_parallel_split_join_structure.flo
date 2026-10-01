@@ -1,0 +1,38 @@
+spec_version: "0.1"
+
+process:
+  id: valid_parallel_split_join_structure
+  name: Valid Parallel Split Join Structure
+
+steps:
+  - id: start
+    kind: start
+
+  - id: split
+    kind: parallel_split
+
+  - id: lane_a
+    kind: task
+
+  - id: lane_b
+    kind: task
+
+  - id: join
+    kind: parallel_join
+
+  - id: end
+    kind: end
+
+transitions:
+  - source: start
+    target: split
+  - source: split
+    target: lane_a
+  - source: split
+    target: lane_b
+  - source: lane_a
+    target: join
+  - source: lane_b
+    target: join
+  - source: join
+    target: end

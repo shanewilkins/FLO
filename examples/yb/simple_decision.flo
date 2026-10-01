@@ -1,0 +1,40 @@
+spec_version: "0.1"
+
+process:
+  id: yb_simple_decision
+  name: Yellow Belt Decision Process
+
+steps:
+  - id: start
+    kind: start
+    name: Request Received
+
+  - id: review_request
+    kind: decision
+    name: Request Complete?
+
+  - id: perform_work
+    kind: task
+    name: Perform Work
+
+  - id: return_request
+    kind: task
+    name: Return Incomplete Request
+
+  - id: finish
+    kind: end
+    name: Request Closed
+
+transitions:
+  - source: start
+    target: review_request
+  - source: review_request
+    target: perform_work
+    outcome: yes
+  - source: review_request
+    target: return_request
+    outcome: no
+  - source: perform_work
+    target: finish
+  - source: return_request
+    target: finish

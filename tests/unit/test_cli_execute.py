@@ -1,0 +1,101 @@
+from types import SimpleNamespace
+
+import flo.app.cli as cli_mod
+from flo.errors import EXIT_INTERNAL_ERROR, CLIError
+
+
+def test_execute_shuts_down_telemetry_on_read_error(monkeypatch):
+    calls: list[str] = []
+
+    telemetry = SimpleNamespace(shutdown=lambda: calls.append("shutdown"))
+    services = SimpleNamespace(
+        telemetry=telemetry,
+        error_handler=lambda msg: calls.append(f"err:{msg}"),
+    )
+
+    monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
+    monkeypatch.setattr("flo.app.io.read_input", lambda path: (5, "", "read failed"))
+
+    rc = cli_mod._execute("/missing.flo", "render", {})
+
+    assert rc == 5
+    assert calls == ["err:read failed", "shutdown"]
+
+
+def test_execute_maps_unexpected_exception_to_internal(monkeypatch):
+    calls: list[str] = []
+
+    telemetry = SimpleNamespace(shutdown=lambda: calls.append("shutdown"))
+    services = SimpleNamespace(
+        telemetry=telemetry,
+        error_handler=lambda msg: calls.append(f"err:{msg}"),
+    )
+
+    monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
+    monkeypatch.setattr("flo.app.io.read_input", lambda path: (0, "content", ""))
+
+    def boom(content, command="render", options=None):
+        raise RuntimeError("kaboom")
+
+    monkeypatch.setattr("flo.app.run_content", boom)
+
+    rc = cli_mod._execute("input.flo", "render", {})
+
+    assert rc == EXIT_INTERNAL_ERROR
+    assert calls == ["err:Unexpected error: kaboom", "shutdown"]
+
+
+def test_execute_maps_domain_exception_code(monkeypatch):
+    calls: list[str] = []
+
+    telemetry = SimpleNamespace(shutdown=lambda: calls.append("shutdown"))
+    services = SimpleNamespace(
+        telemetry=telemetry,
+        error_handler=lambda msg: calls.append(f"err:{msg}"),
+    )
+
+    monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
+    monkeypatch.setattr("flo.app.io.read_input", lambda path: (0, "content", ""))
+
+    def fail_domain(content, command="render", options=None):
+        raise CLIError("invalid option", code=3)
+
+    monkeypatch.setattr("flo.app.run_content", fail_domain)
+
+    rc = cli_mod._execute("input.flo", "render", {})
+
+    assert rc == 3
+    assert calls == ["err:invalid option", "shutdown"]
+
+
+def test_execute_shuts_down_telemetry_on_write_error(monkeypatch):
+    calls: list[str] = []
+
+    telemetry = SimpleNamespace(shutdown=lambda: calls.append("shutdown"))
+    services = SimpleNamespace(
+        telemetry=telemetry,
+        error_handler=lambda msg: calls.append(f"err:{msg}"),
+    )
+
+    monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
+    monkeypatch.setattr("flo.app.io.read_input", lambda path: (0, "content", ""))
+    monkeypatch.setattr(
+        "flo.app.run_content",
+        lambda content, command="render", options=None: (0, "<svg />", ""),
+    )
+    monkeypatch.setattr(
+        "flo.app.io.write_output", lambda out, path: (5, "write failed")
+    )
+
+    rc = cli_mod._execute("input.flo", "render", {"output": "out.svg"})
+
+    assert rc == 5
+    assert calls == ["err:write failed", "shutdown"]
+
+
+def test_click_command_callbacks_are_exported_entrypoints():
+    # Click decorators register these callbacks dynamically; reference them
+    # explicitly so dead-code scanners treat them as intentional API surface.
+    assert callable(cli_mod.render_cmd)
+    assert callable(cli_mod.validate_cmd)
+    assert callable(cli_mod.export_cmd)

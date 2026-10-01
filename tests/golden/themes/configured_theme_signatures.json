@@ -1,0 +1,27 @@
+{
+  "spaghetti": {
+    "background": true,
+    "font": true,
+    "font_size": true,
+    "material_route": true,
+    "storage": true
+  },
+  "sppm": {
+    "font": true,
+    "font_size": true,
+    "va": true
+  },
+  "swimlane": {
+    "background": true,
+    "font": true,
+    "font_size": true,
+    "lane": true,
+    "va": true
+  },
+  "value_stream": {
+    "background": true,
+    "font": true,
+    "information_route": true,
+    "material_route": true
+  }
+}

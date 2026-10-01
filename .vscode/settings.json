@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^uv run pytest tests/unit/test_sppm_routing\\.py tests/unit/test_render_sppm\\.py tests/integration/test_cli_render_options\\.py -q$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

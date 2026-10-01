@@ -1,0 +1,84 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+          cache: 'npm'
+
+      - name: Install Node runtime deps (elkjs)
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Verify elkjs runtime import
+        run: node --input-type=module -e "await import('elkjs/lib/elk.bundled.js'); console.log('elkjs import ok')"
+
+      - name: Vendor pinned elkjs runtime
+        run: python scripts/vendor_elkjs.py
+
+      - name: Install uv
+        run: python -m pip install uv
+
+      - name: Sync project dependencies
+        run: uv sync
+
+      - name: Run quality gates
+        run: uv run pre-commit run --all-files
+
+      - name: Build package
+        run: uv build
+
+      - name: Smoke-test wheel install
+        run: |
+          python -m venv .tmp/publish-smoke
+          .tmp/publish-smoke/bin/python -m pip install --upgrade pip
+          .tmp/publish-smoke/bin/python -m pip install dist/*.whl
+          .tmp/publish-smoke/bin/python scripts/smoke_installed_imports.py
+          .tmp/publish-smoke/bin/flo --help
+          cd .tmp
+          publish-smoke/bin/flo new publish-smoke.flo --name "Publish Smoke"
+          publish-smoke/bin/flo validate publish-smoke.flo
+          publish-smoke/bin/flo render publish-smoke.flo --diagram sppm --render-to publish-smoke.svg
+          test -s publish-smoke.svg
+          publish-smoke/bin/python ../scripts/check_yb_journey.py --flo "$(pwd)/publish-smoke/bin/flo"
+
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/flo-lang
+    permissions:
+      id-token: write
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

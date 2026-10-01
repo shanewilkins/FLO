@@ -1,0 +1,410 @@
+{
+  "canvas_bounds": {
+    "height_px": 174.0,
+    "width_px": 3386.0,
+    "x_px": 0.0,
+    "y_px": 0.0
+  },
+  "edge_paths": [
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 440.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 496.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "dropoff",
+      "source_port_side": "EAST",
+      "target": "sort_tag_wait_queue",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 1883.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 1939.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "dry",
+      "source_port_side": "EAST",
+      "target": "fold_package_wait_queue",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 1637.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 1693.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "dry_wait_queue",
+      "source_port_side": "EAST",
+      "target": "dry",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 2384.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 2440.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "fold_package",
+      "source_port_side": "EAST",
+      "target": "stage_notify_wait_queue",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 2128.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 2184.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "fold_package_wait_queue",
+      "source_port_side": "EAST",
+      "target": "fold_package",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 3186.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 3242.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "payment_delivery",
+      "source_port_side": "EAST",
+      "target": "end",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 916.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 972.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "sort_tag",
+      "source_port_side": "EAST",
+      "target": "wash_wait_queue",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 670.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 726.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "sort_tag_wait_queue",
+      "source_port_side": "EAST",
+      "target": "sort_tag",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 2890.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 2946.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "stage_notify",
+      "source_port_side": "EAST",
+      "target": "payment_delivery",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 2634.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 2690.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "stage_notify_wait_queue",
+      "source_port_side": "EAST",
+      "target": "stage_notify",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 144.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 200.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "start",
+      "source_port_side": "EAST",
+      "target": "dropoff",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 1402.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 1458.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "wash",
+      "source_port_side": "EAST",
+      "target": "dry_wait_queue",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 1156.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 1212.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "wash_wait_queue",
+      "source_port_side": "EAST",
+      "target": "wash",
+      "target_port_side": "WEST"
+    }
+  ],
+  "lanes": [],
+  "node_bounds": {
+    "dropoff": {
+      "height_px": 102.0,
+      "width_px": 240.0,
+      "x_px": 200.0,
+      "y_px": 36.0
+    },
+    "dry": {
+      "height_px": 102.0,
+      "width_px": 190.0,
+      "x_px": 1693.0,
+      "y_px": 36.0
+    },
+    "dry_wait_queue": {
+      "height_px": 150.0,
+      "width_px": 179.0,
+      "x_px": 1458.0,
+      "y_px": 12.0
+    },
+    "end": {
+      "height_px": 52.0,
+      "width_px": 132.0,
+      "x_px": 3242.0,
+      "y_px": 61.0
+    },
+    "fold_package": {
+      "height_px": 102.0,
+      "width_px": 200.0,
+      "x_px": 2184.0,
+      "y_px": 36.0
+    },
+    "fold_package_wait_queue": {
+      "height_px": 150.0,
+      "width_px": 189.0,
+      "x_px": 1939.0,
+      "y_px": 12.0
+    },
+    "payment_delivery": {
+      "height_px": 102.0,
+      "width_px": 240.0,
+      "x_px": 2946.0,
+      "y_px": 36.0
+    },
+    "sort_tag": {
+      "height_px": 102.0,
+      "width_px": 190.0,
+      "x_px": 726.0,
+      "y_px": 36.0
+    },
+    "sort_tag_wait_queue": {
+      "height_px": 150.0,
+      "width_px": 174.0,
+      "x_px": 496.0,
+      "y_px": 12.0
+    },
+    "stage_notify": {
+      "height_px": 102.0,
+      "width_px": 200.0,
+      "x_px": 2690.0,
+      "y_px": 36.0
+    },
+    "stage_notify_wait_queue": {
+      "height_px": 150.0,
+      "width_px": 194.0,
+      "x_px": 2440.0,
+      "y_px": 12.0
+    },
+    "start": {
+      "height_px": 52.0,
+      "width_px": 132.0,
+      "x_px": 12.0,
+      "y_px": 61.0
+    },
+    "wash": {
+      "height_px": 102.0,
+      "width_px": 190.0,
+      "x_px": 1212.0,
+      "y_px": 36.0
+    },
+    "wash_wait_queue": {
+      "height_px": 150.0,
+      "width_px": 184.0,
+      "x_px": 972.0,
+      "y_px": 12.0
+    }
+  },
+  "orientation": "lr"
+}

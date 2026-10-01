@@ -1,0 +1,747 @@
+"""CLI entry points for the FLO tool."""
+
+from __future__ import annotations
+
+import contextlib
+import json
+import sys
+import uuid
+from dataclasses import asdict
+from typing import Any
+
+import click
+from structlog.contextvars import bind_contextvars, unbind_contextvars
+
+from flo.app.render_option_schema import iter_render_option_specs
+
+# ---------------------------------------------------------------------------
+# Shared execution helper (used by both Click handlers and console_main)
+# ---------------------------------------------------------------------------
+
+
+def _emit_error(services: Any, message: str, **event_fields: object) -> None:
+    """Emit a user-facing error message plus structured context fields.
+
+    The message contract remains unchanged (stderr), while event fields are
+    attached through structlog contextvars for observability backends.
+    """
+    bound_keys = tuple(key for key, value in event_fields.items() if value is not None)
+    try:
+        bind_contextvars(**{key: event_fields[key] for key in bound_keys})
+    except Exception:
+        bound_keys = ()
+
+    try:
+        services.error_handler(message)
+    finally:
+        if bound_keys:
+            with contextlib.suppress(Exception):
+                unbind_contextvars(*bound_keys)
+
+
+def _get_flo_version() -> str:  # pragma: no cover - importlib optional
+    """Return the installed FLO version or 'unknown' when not resolvable."""
+    try:
+        import importlib.metadata as _meta
+
+        return _meta.version("flo-lang")
+    except Exception:
+        return "unknown"
+
+
+def _safe_set_span_attr(span: Any, key: str, value: object) -> None:
+    setter = getattr(span, "set_attribute", None)
+    if callable(setter):
+        with contextlib.suppress(Exception):
+            setter(key, value)
+
+
+def _safe_add_span_event(
+    span: Any, event_name: str, attributes: dict[str, object]
+) -> None:
+    add_event = getattr(span, "add_event", None)
+    if callable(add_event):
+        with contextlib.suppress(Exception):
+            add_event(event_name, attributes)
+
+
+def _handle_run_content_exception(
+    *,
+    root_span: Any,
+    exc: Exception,
+    services: Any,
+    command: str,
+    command_id: str,
+    effective_path: str,
+    diagnostic_format: str = "text",
+) -> int:
+    from flo.app.telemetry import record_span_error
+    from flo.errors import map_exception_to_rc
+
+    mapped_rc, msg, internal, error_stage = map_exception_to_rc(exc)
+    diagnostic = getattr(exc, "diagnostic", None)
+    if diagnostic_format == "json" and diagnostic is not None:
+        msg = json.dumps(asdict(diagnostic), sort_keys=True)
+    stage = error_stage or "run_content"
+    _safe_set_span_attr(root_span, "flo.exit_code", mapped_rc)
+    _safe_set_span_attr(root_span, "flo.error.stage", stage)
+    record_span_error(root_span, msg or "")
+    display_msg = f"Unexpected error: {msg or 'internal error'}" if internal else msg
+    _emit_error(
+        services,
+        display_msg,
+        error_kind="internal" if internal else "domain",
+        error_stage=stage,
+        exit_code=mapped_rc,
+        internal=internal,
+        command=command,
+        command_id=command_id,
+        path=effective_path,
+    )
+    return mapped_rc
+
+
+def _handle_nonzero_run_content_result(
+    *,
+    root_span: Any,
+    rc: int,
+    err: str | None,
+    services: Any,
+    command: str,
+    command_id: str,
+    effective_path: str,
+) -> int:
+    from flo.app.telemetry import record_span_error
+
+    _safe_set_span_attr(root_span, "flo.exit_code", rc)
+    record_span_error(root_span, err or f"command failed with exit code {rc}")
+    if err:
+        _emit_error(
+            services,
+            err,
+            error_kind="domain",
+            error_stage="run_content",
+            exit_code=rc,
+            internal=False,
+            command=command,
+            command_id=command_id,
+            path=effective_path,
+        )
+    return rc
+
+
+def _handle_degraded_success(
+    *,
+    root_span: Any,
+    err: str | None,
+    options: dict,
+    services: Any,
+    command: str,
+    command_id: str,
+    effective_path: str,
+) -> None:
+    if not err:
+        return
+    _safe_set_span_attr(root_span, "flo.degraded", True)
+    _safe_set_span_attr(root_span, "flo.degraded_reason", err)
+    _safe_add_span_event(root_span, "flo.degraded", {"flo.degraded_reason": err})
+    user_visible_partial = err.startswith(
+        ("spaghetti-missing-spatial:", "value-stream-partial:")
+    )
+    if options.get("verbose") or user_visible_partial:
+        _emit_error(
+            services,
+            f"Warning: {err}",
+            error_kind="diagnostic",
+            error_stage=(
+                "partial_render" if user_visible_partial else "fail_open_fallback"
+            ),
+            exit_code=0,
+            internal=False,
+            command=command,
+            command_id=command_id,
+            path=effective_path,
+        )
+
+
+def _write_output_or_emit_failure(
+    *,
+    root_span: Any,
+    out: str | None,
+    options: dict,
+    services: Any,
+    command: str,
+    command_id: str,
+    effective_path: str,
+) -> int | None:
+    from flo.app.io import write_output
+    from flo.app.telemetry import record_span_error
+
+    if not out:
+        return None
+    _safe_set_span_attr(root_span, "flo.output.bytes", len(out))
+    _safe_set_span_attr(root_span, "flo.output.to_file", bool(options.get("output")))
+    write_rc, write_err = write_output(out, options.get("output"))
+    if write_rc == 0:
+        return None
+    _safe_set_span_attr(root_span, "flo.exit_code", write_rc)
+    record_span_error(root_span, write_err or "")
+    _emit_error(
+        services,
+        write_err,
+        error_kind="io",
+        error_stage="write_output",
+        exit_code=write_rc,
+        internal=False,
+        command=command,
+        command_id=command_id,
+        path=effective_path,
+    )
+    return write_rc
+
+
+def _execute_span_body(
+    root_span: Any,
+    path: str | None,
+    command: str,
+    options: dict,
+    services: Any,
+    command_id: str,
+) -> int:
+    """Run the FLO pipeline within an existing trace span.
+
+    Returns an integer exit code.
+    """
+    from flo.app import run_content
+    from flo.app.io import read_input
+    from flo.app.telemetry import record_span_error
+
+    effective_path = path or "-"
+    _safe_set_span_attr(root_span, "flo.command", command)
+    _safe_set_span_attr(root_span, "flo.command_id", command_id)
+    _safe_set_span_attr(root_span, "flo.input.path", effective_path)
+    _safe_set_span_attr(root_span, "flo.input.from_stdin", effective_path == "-")
+    rc, content, err = read_input(effective_path)
+    if rc != 0:
+        _safe_set_span_attr(root_span, "flo.exit_code", rc)
+        record_span_error(root_span, err or "")
+        _emit_error(
+            services,
+            err,
+            error_kind="io",
+            error_stage="read_input",
+            exit_code=rc,
+            internal=False,
+            command=command,
+            command_id=command_id,
+            path=effective_path,
+        )
+        return rc
+    _safe_set_span_attr(root_span, "flo.input.bytes", len(content or ""))
+
+    run_options = dict(options)
+    run_options.setdefault("source_path", effective_path)
+    _safe_set_span_attr(root_span, "flo.options.count", len(run_options))
+
+    try:
+        rc, out, err = run_content(content, command=command, options=run_options)
+    except Exception as exc:
+        return _handle_run_content_exception(
+            root_span=root_span,
+            exc=exc,
+            services=services,
+            command=command,
+            command_id=command_id,
+            effective_path=effective_path,
+            diagnostic_format=str(options.get("diagnostic_format", "text")),
+        )
+
+    if rc != 0:
+        return _handle_nonzero_run_content_result(
+            root_span=root_span,
+            rc=rc,
+            err=err,
+            services=services,
+            command=command,
+            command_id=command_id,
+            effective_path=effective_path,
+        )
+
+    _handle_degraded_success(
+        root_span=root_span,
+        err=err,
+        options=options,
+        services=services,
+        command=command,
+        command_id=command_id,
+        effective_path=effective_path,
+    )
+
+    write_failure_rc = _write_output_or_emit_failure(
+        root_span=root_span,
+        out=out,
+        options=options,
+        services=services,
+        command=command,
+        command_id=command_id,
+        effective_path=effective_path,
+    )
+    if write_failure_rc is not None:
+        return write_failure_rc
+
+    _safe_set_span_attr(root_span, "flo.exit_code", rc)
+    return rc
+
+
+def _execute(
+    path: str | None, command: str, options: dict
+) -> int:  # pragma: no cover - integration
+    """Compatibility wrapper that builds a typed execution request."""
+    from flo.app._cli_contract import CLIExecutionRequest
+
+    request = CLIExecutionRequest(
+        path=path,
+        command=command,
+        options=dict(options or {}),
+    )
+    return _execute_request(request)
+
+
+def _execute_request(request: Any) -> int:  # pragma: no cover - integration
+    """Read input, run core pipeline, and write output.
+
+    Returns an integer exit code.
+    """
+    from flo.app import get_services
+    from flo.app.telemetry import get_tracer, record_span_success
+
+    path = request.path
+    command = request.command
+    options = dict(request.options or {})
+
+    services = get_services(verbose=bool(options.get("verbose")))
+    telemetry = services.telemetry
+    tracer = get_tracer("flo.cli")
+    command_id = uuid.uuid4().hex
+    try:
+        with tracer.start_as_current_span("flo.cli.execute") as root_span:
+            root_span.set_attribute("flo.command", command)
+            root_span.set_attribute("flo.command_id", command_id)
+            root_span.set_attribute("flo.version", _get_flo_version())
+            if path:
+                root_span.set_attribute("flo.source_path", path)
+            rc = _execute_span_body(
+                root_span,
+                path,
+                command,
+                options,
+                services,
+                command_id,
+            )
+            if rc == 0:
+                record_span_success(
+                    root_span,
+                    event_name="flo.cli.completed",
+                    attributes={
+                        "flo.exit_code": 0,
+                        "flo.command": command,
+                        "flo.command_id": command_id,
+                    },
+                )
+            return rc
+    finally:
+        with contextlib.suppress(Exception):
+            telemetry.shutdown()
+
+
+def _build_render_opts(
+    verbose: bool,
+    output: str | None,
+    export_fmt: str | None,
+    diagram: str | None,
+    render_backend: str | None,
+    profile: str | None,
+    detail: str | None,
+    orientation: str | None,
+    show_notes: bool,
+    no_header: bool,
+    no_footer: bool,
+    subprocess_view: str | None,
+    sppm_projection: str | None,
+    sppm_focus_subprocess: str | None,
+    spaghetti_channel: str | None,
+    spaghetti_people_mode: str | None,
+    spaghetti_strict_spatial: bool,
+    sppm_theme: str | None,
+    theme: str | None,
+    background_color: str | None,
+    font_family: str | None,
+    typography_scale: float | None,
+    layout_wrap: str | None,
+    layout_fit: str | None,
+    layout_spacing: str | None,
+    layout_width: str | None,
+    layout_height: str | None,
+    layout_overflow: str | None,
+    publication_page_format: str | None,
+    sppm_step_numbering: str | None,
+    sppm_label_density: str | None,
+    sppm_wrap_strategy: str | None,
+    sppm_truncation_policy: str | None,
+    sppm_output_profile: str | None,
+    render_to: str | None,
+    layout_max_width_px: str | None,
+    layout_target_columns: int | None,
+    sppm_max_label_step_name: int | None,
+    sppm_max_label_workers: int | None,
+    sppm_max_label_ctwt: int | None,
+) -> dict:  # pragma: no cover - thin helper
+    """Build a normalized options dict from Click-parsed render parameters."""
+    opts: dict = {"verbose": verbose, "output": output}
+    if export_fmt:
+        opts["export"] = export_fmt
+    for key, value in (
+        ("diagram", diagram),
+        ("render_backend", render_backend),
+        ("profile", profile),
+        ("detail", detail),
+        ("orientation", orientation),
+        ("subprocess_view", subprocess_view),
+        ("sppm_projection", sppm_projection),
+        ("sppm_focus_subprocess", sppm_focus_subprocess),
+        ("spaghetti_channel", spaghetti_channel),
+        ("spaghetti_people_mode", spaghetti_people_mode),
+        ("sppm_theme", sppm_theme),
+        ("theme", theme),
+        ("background_color", background_color),
+        ("font_family", font_family),
+        ("typography_scale", typography_scale),
+        ("layout_wrap", layout_wrap),
+        ("layout_fit", layout_fit),
+        ("layout_spacing", layout_spacing),
+        ("layout_width", layout_width),
+        ("layout_height", layout_height),
+        ("layout_overflow", layout_overflow),
+        ("publication_page_format", publication_page_format),
+        ("sppm_step_numbering", sppm_step_numbering),
+        ("sppm_label_density", sppm_label_density),
+        ("sppm_wrap_strategy", sppm_wrap_strategy),
+        ("sppm_truncation_policy", sppm_truncation_policy),
+        ("sppm_output_profile", sppm_output_profile),
+        ("render_to", render_to),
+    ):
+        if value is not None:
+            opts[key] = value
+    if spaghetti_strict_spatial:
+        opts["spaghetti_strict_spatial"] = True
+    for key, value in (
+        ("layout_max_width_px", layout_max_width_px),
+        ("layout_target_columns", layout_target_columns),
+        ("sppm_max_label_step_name", sppm_max_label_step_name),
+        ("sppm_max_label_workers", sppm_max_label_workers),
+        ("sppm_max_label_ctwt", sppm_max_label_ctwt),
+    ):
+        if value is not None:
+            opts[key] = value
+    if show_notes:
+        opts["show_notes"] = True
+    if no_header:
+        opts["no_header"] = True
+    if no_footer:
+        opts["no_footer"] = True
+    return opts
+
+
+def _apply_render_click_options(*, include_render_to: bool) -> Any:
+    """Apply shared render click options from the canonical option schema."""
+
+    def _decorator(func: Any) -> Any:
+        for spec in reversed(
+            iter_render_option_specs(include_render_to=include_render_to)
+        ):
+            kwargs: dict[str, Any] = {"help": spec.help_text}
+            if spec.is_flag:
+                kwargs["is_flag"] = True
+            else:
+                if spec.choices is not None:
+                    kwargs["type"] = click.Choice(list(spec.choices))
+                elif spec.value_type is not None:
+                    kwargs["type"] = spec.value_type
+                if spec.metavar is not None:
+                    kwargs["metavar"] = spec.metavar
+            func = click.option(spec.flag, **kwargs)(func)
+        return func
+
+    return _decorator
+
+
+# ---------------------------------------------------------------------------
+# Click command group
+# ---------------------------------------------------------------------------
+
+
+@click.group()
+@click.version_option(version=_get_flo_version(), prog_name="flo")
+def cli() -> None:  # pragma: no cover - thin CLI layer
+    """Manage plain-text process models from authoring through export."""
+
+
+from flo.app.scaffold_cli import new_cmd  # noqa: E402
+
+cli.add_command(new_cmd)
+
+
+@cli.command("render")
+@click.argument("path", required=False)
+@click.option("--validate", is_flag=True, help="Only validate file")
+@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
+@click.option("-o", "--output", help="Write output to file")
+@click.option(
+    "--export",
+    "export_fmt",
+    type=click.Choice(["svg", "typst", "json", "ingredients", "movement"]),
+    help="Export format (svg for diagrams, json for machine-readable output)",
+)
+@_apply_render_click_options(include_render_to=True)
+def render_cmd(
+    path: str | None,
+    validate: bool,
+    verbose: bool,
+    output: str | None,
+    export_fmt: str | None,
+    diagram: str | None,
+    render_backend: str | None,
+    profile: str | None,
+    detail: str | None,
+    orientation: str | None,
+    show_notes: bool,
+    no_header: bool,
+    no_footer: bool,
+    subprocess_view: str | None,
+    sppm_projection: str | None,
+    sppm_focus_subprocess: str | None,
+    spaghetti_channel: str | None,
+    spaghetti_people_mode: str | None,
+    spaghetti_strict_spatial: bool,
+    sppm_theme: str | None,
+    theme: str | None,
+    background_color: str | None,
+    font_family: str | None,
+    typography_scale: float | None,
+    layout_wrap: str | None,
+    layout_fit: str | None,
+    layout_spacing: str | None,
+    layout_width: str | None,
+    layout_height: str | None,
+    layout_overflow: str | None,
+    publication_page_format: str | None,
+    sppm_step_numbering: str | None,
+    sppm_label_density: str | None,
+    sppm_wrap_strategy: str | None,
+    sppm_truncation_policy: str | None,
+    layout_max_width_px: str | None,
+    layout_target_columns: int | None,
+    sppm_max_label_step_name: int | None,
+    sppm_max_label_workers: int | None,
+    sppm_max_label_ctwt: int | None,
+    sppm_output_profile: str | None,
+    render_to: str | None,
+) -> None:  # pragma: no cover - integration
+    """Render a FLO diagram as SVG by default."""
+    from flo.app._cli_contract import CLIExecutionRequest
+
+    command = "validate" if validate else "render"
+    opts = _build_render_opts(
+        verbose=verbose,
+        output=output,
+        export_fmt=export_fmt,
+        diagram=diagram,
+        render_backend=render_backend,
+        profile=profile,
+        detail=detail,
+        orientation=orientation,
+        show_notes=show_notes,
+        no_header=no_header,
+        no_footer=no_footer,
+        subprocess_view=subprocess_view,
+        sppm_projection=sppm_projection,
+        sppm_focus_subprocess=sppm_focus_subprocess,
+        spaghetti_channel=spaghetti_channel,
+        spaghetti_people_mode=spaghetti_people_mode,
+        spaghetti_strict_spatial=spaghetti_strict_spatial,
+        sppm_theme=sppm_theme,
+        theme=theme,
+        background_color=background_color,
+        font_family=font_family,
+        typography_scale=typography_scale,
+        layout_wrap=layout_wrap,
+        layout_fit=layout_fit,
+        layout_spacing=layout_spacing,
+        layout_width=layout_width,
+        layout_height=layout_height,
+        layout_overflow=layout_overflow,
+        publication_page_format=publication_page_format,
+        sppm_step_numbering=sppm_step_numbering,
+        sppm_label_density=sppm_label_density,
+        sppm_wrap_strategy=sppm_wrap_strategy,
+        sppm_truncation_policy=sppm_truncation_policy,
+        sppm_output_profile=sppm_output_profile,
+        render_to=render_to,
+        layout_max_width_px=layout_max_width_px,
+        layout_target_columns=layout_target_columns,
+        sppm_max_label_step_name=sppm_max_label_step_name,
+        sppm_max_label_workers=sppm_max_label_workers,
+        sppm_max_label_ctwt=sppm_max_label_ctwt,
+    )
+    rc = _execute_request(CLIExecutionRequest(path=path, command=command, options=opts))
+    raise SystemExit(rc)
+
+
+from flo.app._model_commands import register_model_commands  # noqa: E402
+
+validate_cmd, inspect_cmd = register_model_commands(cli, _execute_request)
+
+
+@cli.command("export")
+@click.argument("path", required=False)
+@click.option(
+    "--export",
+    "export_fmt",
+    type=click.Choice(["svg", "typst", "json", "ingredients", "movement"]),
+    default="json",
+    show_default=True,
+    help="Export format (svg for diagrams, json for machine-readable output)",
+)
+@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
+@click.option("-o", "--output", help="Write output to file")
+@_apply_render_click_options(include_render_to=False)
+def export_cmd(
+    path: str | None,
+    export_fmt: str,
+    verbose: bool,
+    output: str | None,
+    diagram: str | None,
+    render_backend: str | None,
+    profile: str | None,
+    detail: str | None,
+    orientation: str | None,
+    show_notes: bool,
+    no_header: bool,
+    no_footer: bool,
+    subprocess_view: str | None,
+    sppm_projection: str | None,
+    sppm_focus_subprocess: str | None,
+    spaghetti_channel: str | None,
+    spaghetti_people_mode: str | None,
+    spaghetti_strict_spatial: bool,
+    sppm_theme: str | None,
+    theme: str | None,
+    background_color: str | None,
+    font_family: str | None,
+    typography_scale: float | None,
+    layout_wrap: str | None,
+    layout_fit: str | None,
+    layout_spacing: str | None,
+    layout_width: str | None,
+    layout_height: str | None,
+    layout_overflow: str | None,
+    publication_page_format: str | None,
+    sppm_step_numbering: str | None,
+    sppm_label_density: str | None,
+    sppm_wrap_strategy: str | None,
+    sppm_truncation_policy: str | None,
+    layout_max_width_px: str | None,
+    layout_target_columns: int | None,
+    sppm_max_label_step_name: int | None,
+    sppm_max_label_workers: int | None,
+    sppm_max_label_ctwt: int | None,
+    sppm_output_profile: str | None,
+) -> None:  # pragma: no cover - integration
+    """Export FLO input as SVG, JSON, or text summaries."""
+    from flo.app._cli_contract import CLIExecutionRequest
+
+    opts = _build_render_opts(
+        verbose=verbose,
+        output=output,
+        export_fmt=export_fmt,
+        diagram=diagram,
+        render_backend=render_backend,
+        profile=profile,
+        detail=detail,
+        orientation=orientation,
+        show_notes=show_notes,
+        no_header=no_header,
+        no_footer=no_footer,
+        subprocess_view=subprocess_view,
+        sppm_projection=sppm_projection,
+        sppm_focus_subprocess=sppm_focus_subprocess,
+        spaghetti_channel=spaghetti_channel,
+        spaghetti_people_mode=spaghetti_people_mode,
+        spaghetti_strict_spatial=spaghetti_strict_spatial,
+        sppm_theme=sppm_theme,
+        theme=theme,
+        background_color=background_color,
+        font_family=font_family,
+        typography_scale=typography_scale,
+        layout_wrap=layout_wrap,
+        layout_fit=layout_fit,
+        layout_spacing=layout_spacing,
+        layout_width=layout_width,
+        layout_height=layout_height,
+        layout_overflow=layout_overflow,
+        publication_page_format=publication_page_format,
+        sppm_step_numbering=sppm_step_numbering,
+        sppm_label_density=sppm_label_density,
+        sppm_wrap_strategy=sppm_wrap_strategy,
+        sppm_truncation_policy=sppm_truncation_policy,
+        sppm_output_profile=sppm_output_profile,
+        render_to=None,
+        layout_max_width_px=layout_max_width_px,
+        layout_target_columns=layout_target_columns,
+        sppm_max_label_step_name=sppm_max_label_step_name,
+        sppm_max_label_workers=sppm_max_label_workers,
+        sppm_max_label_ctwt=sppm_max_label_ctwt,
+    )
+    rc = _execute_request(
+        CLIExecutionRequest(path=path, command="export", options=opts)
+    )
+    raise SystemExit(rc)
+
+
+# ---------------------------------------------------------------------------
+# Argparse-based entry (for `flo <path>` without explicit subcommand)
+# ---------------------------------------------------------------------------
+
+
+def console_main(argv: list | None = None) -> int:
+    """Run the historical implicit-path console entry."""
+    from flo.app._console_entry import console_main as run_console
+
+    return run_console(
+        argv,
+        execute_request=_execute_request,
+        emit_error=_emit_error,
+    )
+
+
+def main(argv: list | None = None) -> int:
+    """Run the programmatic CLI entrypoint and return its exit code."""
+    args = list(sys.argv[1:] if argv is None else argv)
+    explicit_commands = {"new", "render", "validate", "inspect", "export"}
+    use_click = (
+        not args
+        or args[0] in explicit_commands
+        or args[0] in {"-h", "--help", "--version"}
+    )
+    if not use_click:
+        return console_main(args)
+
+    try:
+        result = cli.main(args=args, prog_name="flo", standalone_mode=False)
+    except click.ClickException as exc:
+        exc.show()
+        return int(exc.exit_code)
+    except SystemExit as exc:
+        code = exc.code
+        return code if isinstance(code, int) else 1
+    return int(result or 0)

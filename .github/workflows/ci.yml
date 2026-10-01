@@ -1,0 +1,165 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  package-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+          cache: 'npm'
+
+      - name: Install and vendor ELK runtime
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          python scripts/vendor_elkjs.py
+
+      - name: Build and smoke-test installed wheel imports
+        run: |
+          python -m pip install uv
+          uv build --wheel
+          python -m venv .tmp/ci-wheel-smoke
+          .tmp/ci-wheel-smoke/bin/python -m pip install dist/*.whl
+          .tmp/ci-wheel-smoke/bin/python scripts/smoke_installed_imports.py
+          .tmp/ci-wheel-smoke/bin/flo --help
+
+  macos-package-smoke:
+    runs-on: macos-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+          cache: 'npm'
+
+      - name: Install and vendor ELK runtime
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          python scripts/vendor_elkjs.py
+
+      - name: Build and exercise installed wheel
+        run: |
+          python -m pip install uv
+          uv build --wheel
+          python -m venv .tmp/macos-wheel-smoke
+          .tmp/macos-wheel-smoke/bin/python -m pip install dist/*.whl
+          .tmp/macos-wheel-smoke/bin/python scripts/smoke_installed_imports.py
+          .tmp/macos-wheel-smoke/bin/flo --help
+          cd .tmp
+          macos-wheel-smoke/bin/flo new macos-smoke.flo --name "macOS Smoke"
+          macos-wheel-smoke/bin/flo validate macos-smoke.flo
+          macos-wheel-smoke/bin/flo render macos-smoke.flo --diagram sppm --render-to macos-smoke.svg
+          test -s macos-smoke.svg
+
+  sppm-determinism:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+          cache: 'npm'
+
+      - name: Install Node runtime deps (elkjs)
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Prepare uv runner and project dev deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install uv
+          uv sync
+
+      - name: Run committed SPPM golden artifact gate
+        run: uv run python scripts/check_sppm_baseline_drift.py
+
+      - name: Run focused SPPM determinism tests
+        run: >-
+          uv run pytest -q
+          tests/unit/test_sppm_baseline_drift.py
+          tests/unit/test_layout_core_elk_requests.py
+          -k 'parent_only_subprocess_edges_are_stable or test_sppm_baseline_drift'
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+          cache: 'npm'
+
+      - name: Install Node runtime deps (elkjs)
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Verify elkjs runtime import
+        run: node --input-type=module -e "await import('elkjs/lib/elk.bundled.js'); console.log('elkjs import ok')"
+
+      - name: Prepare uv runner and project dev deps
+        run: |
+          python -m pip install --upgrade pip
+          # Install the uv runner used by local development
+          python -m pip install uv
+          # Sync project dependencies into the project virtualenv using uv
+          uv sync
+
+      - name: Run pre-commit hooks (match local pre-commit)
+        run: uv run pre-commit run --all-files
+
+      - name: Run SPPM layout invariant suite
+        run: uv run pytest -q tests/unit/test_sppm_layout_invariants.py
+
+      - name: Run test suite with coverage
+        run: uv run pytest --cov=src/flo --cov-report=term-missing --cov-fail-under=90
+
+      - name: Check SVG accessible names and descriptions
+        run: uv run python scripts/check_svg_accessibility.py
+
+      - name: Set up Chrome for SVG consumer smoke
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v2
+
+      - name: Open maintained SVG in headless Chrome
+        run: |
+          mkdir -p .tmp/browser-smoke
+          uv run flo render examples/reference/washnfold.flo --diagram sppm --sppm-output-profile book --render-to .tmp/browser-smoke/washnfold.svg
+          "${{ steps.setup-chrome.outputs.chrome-path }}" --headless --no-sandbox --disable-gpu --allow-file-access-from-files --screenshot=.tmp/browser-smoke/washnfold.png "file://${{ github.workspace }}/.tmp/browser-smoke/washnfold.svg"
+          test -s .tmp/browser-smoke/washnfold.png

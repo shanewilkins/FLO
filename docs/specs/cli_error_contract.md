@@ -1,0 +1,119 @@
+# FLO CLI Error Contract
+
+Purpose: define the normative CLI-facing error classes, exit-code meanings, and
+stream/output behavior for FLO commands.
+
+## Error class hierarchy
+
+Implemented in `src/flo/errors.py`:
+
+- `DomainError`
+  - Base class for expected domain-level errors.
+- `CLIError`
+  - CLI-facing error wrapper with exit code mapping.
+- `ParseError`
+  - Parse/loading failures.
+- `CompileError`
+  - Adapter-to-model compilation failures.
+- `ValidationError`
+  - Semantic/schema validation failures.
+- `RenderError`
+  - Output rendering failures.
+
+## Exit codes
+
+Current mappings:
+
+- `0` (`EXIT_SUCCESS`): success
+- `1` (`EXIT_USAGE`): CLI usage or argument issues
+- `2` (`EXIT_PARSE_ERROR`): parse error
+- `3` (`EXIT_COMPILE_ERROR`): compile error
+- `4` (`EXIT_VALIDATION_ERROR`): validation error
+- `5` (`EXIT_RENDER_ERROR`): render or export I/O/rendering error
+- `70` (`EXIT_INTERNAL_ERROR`): unexpected internal failure
+
+## Stream conventions
+
+- Primary command output and artifacts are written to `stdout` unless an
+  explicit output destination is used.
+- Diagnostics and errors are written through the CLI error path, which is
+  `stderr`-oriented.
+- Telemetry or logging output must not be emitted on `stdout` when commands
+  return payloads such as SVG or JSON.
+- Process-event inputs and raw attributes must not appear in stdout payloads,
+  stderr diagnostics, logs, runtime spans, or ordinary artifacts except through
+  an explicit telemetry-derived export permitted by the privacy policy.
+- Input `-` means read from `stdin`.
+- Output `-` means write to `stdout`.
+
+## Render vs export contract
+
+- Renderers and exporters are separate concerns and use separate registries.
+  - Renderers (human-readable visualization) live under `src/flo/render`.
+  - Exporters (machine-readable or report-style projections) live under
+    `src/flo/process/export`.
+- `--diagram` supports `swimlane`, `spaghetti`, and `sppm` for render output.
+- With no explicit diagram or source render default, `flo render` selects
+  `sppm`.
+- `--profile`, `--detail`, `--orientation {lr,tb}`, `--show-notes`,
+  `--subprocess-view`, shared autoformat controls (`--layout-wrap`,
+  `--layout-max-width-px`, `--layout-target-columns`, `--layout-width`,
+  `--layout-height`, `--layout-overflow`), and all SPPM render controls are
+  render-only options.
+- If `--export json`, `--export ingredients`, or `--export movement` is
+  selected, render-only options are rejected with usage exit code `1`.
+
+## Renderer policy contract (pre-1.0)
+
+- Rework edges render as dashed lines.
+- Rework classification precedence is explicit metadata first, inferred back-edge
+  fallback second.
+- Explicit rework semantics override inferred classification when they differ.
+- Exact single-page SPPM bounds reflow before scaling. The default `safe-fit`
+  policy preserves aspect ratio, scales only to the `0.75` legibility floor,
+  and otherwise returns exit code `5` with requested bounds, natural bounds,
+  required scale, and the floor. `error`, `expand`, and unrestricted `scale`
+  remain explicit alternatives; `paginate` is publication-only.
+
+## Validation diagnostics
+
+Semantic validation uses stable diagnostic-style prefixes in messages (for
+example `E1003`, `E1101`) so failures are easier to script against and triage.
+
+### Structured diagnostic contract effective in 0.4
+
+The 0.4 MVP extends parser, include, compiler, and validator diagnostics to one
+typed record containing, where applicable:
+
+- stable code and severity
+- source file, line, and column
+- FLO field path
+- source excerpt
+- suggested correction
+- include chain
+
+Human stderr and machine-readable output must be generated from the same typed
+record so automation does not need to scrape prose. Sensitive telemetry input
+and raw attributes remain excluded under the telemetry privacy policy.
+
+`flo validate --format json` emits this record as deterministic JSON through
+the diagnostic stream. The default `--format text` renders the same record in
+the compiler-style source excerpt format.
+
+## Projection capability diagnostics
+
+Unsupported diagram/backend projection requests are usage errors and must:
+
+- return exit code `1` (`EXIT_USAGE`)
+- include requested diagram and backend
+- include supported backends for the requested diagram
+- fail early before renderer dispatch
+
+## Relationship to other documents
+
+- Core language semantics live in `docs/specs/core_language.md`.
+- Diagram meaning lives in the other files under `docs/specs/`.
+- This contract is the normative CLI/interface companion to the implementation
+  in `src/flo/errors.py`.
+- Process-event semantics live in `docs/specs/telemetry_events.md`; privacy and
+  disclosure rules live in `docs/policy/telemetry_privacy.md`.

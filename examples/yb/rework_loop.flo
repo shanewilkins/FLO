@@ -1,0 +1,53 @@
+spec_version: "0.1"
+
+process:
+  id: yb_rework_loop
+  name: Yellow Belt Rework Loop
+
+lanes:
+  - id: requester
+    name: Requester
+  - id: reviewer
+    name: Reviewer
+
+steps:
+  - id: start
+    kind: start
+    name: Request Received
+
+  - id: prepare_request
+    kind: task
+    name: Prepare Request
+    lane: requester
+
+  - id: review_request
+    kind: decision
+    name: Request Correct?
+    lane: reviewer
+
+  - id: correct_request
+    kind: task
+    name: Correct Request
+    lane: requester
+
+  - id: finish
+    kind: end
+    name: Request Approved
+
+transitions:
+  - source: start
+    target: prepare_request
+  - source: prepare_request
+    target: review_request
+  - source: review_request
+    target: finish
+    outcome: yes
+  - source: review_request
+    target: correct_request
+    outcome: no
+    edge_type: rework
+    rework: true
+  - source: correct_request
+    target: prepare_request
+    edge_type: rework
+    rework: true

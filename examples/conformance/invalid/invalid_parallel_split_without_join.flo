@@ -1,0 +1,33 @@
+spec_version: "0.1"
+
+process:
+  id: invalid_parallel_split_without_join
+  name: Invalid Parallel Split Without Join
+
+steps:
+  - id: start
+    kind: start
+
+  - id: split
+    kind: parallel_split
+
+  - id: branch_a
+    kind: task
+
+  - id: branch_b
+    kind: task
+
+  - id: end
+    kind: end
+
+transitions:
+  - source: start
+    target: split
+  - source: split
+    target: branch_a
+  - source: split
+    target: branch_b
+  - source: branch_a
+    target: end
+  - source: branch_b
+    target: end

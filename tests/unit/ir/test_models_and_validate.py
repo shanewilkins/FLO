@@ -1,0 +1,29 @@
+import pytest
+
+from flo.errors import ValidationError
+from flo.process.ir import validate_ir
+from flo.process.ir.models import Edge
+
+
+def test_validate_valid_ir(ir_factory, node_factory):
+    ir = ir_factory(
+        name="test",
+        nodes=[node_factory("start", type="start"), node_factory("end", type="end")],
+    )
+    ir.edges = [Edge(source="start", target="end")]
+    # should not raise
+    validate_ir(ir)
+
+
+def test_validate_empty_nodes_raises(ir_factory):
+    ir = ir_factory(name="empty", nodes=[])
+    with pytest.raises(ValidationError):
+        validate_ir(ir)
+
+
+@pytest.mark.parametrize("ids", [["a", "a"], ["x", "x", "x"]])
+def test_validate_duplicate_ids_raises(ir_factory, node_factory, ids):
+    nodes = [node_factory(i) for i in ids]
+    ir = ir_factory(name="dup", nodes=nodes)
+    with pytest.raises(ValidationError):
+        validate_ir(ir)

@@ -1,0 +1,29 @@
+spec_version: "0.1"
+
+process:
+  id: invalid_queue_no_outgoing
+  name: Invalid Queue No Outgoing Edge
+
+steps:
+  - id: start
+    kind: start
+
+  - id: submit
+    kind: task
+
+  - id: review_queue
+    kind: queue
+    metadata:
+      queue_policy: FIFO
+      buffer_capacity: 5
+
+  - id: complete
+    kind: end
+
+edges:
+  - source: start
+    target: submit
+  - source: submit
+    target: review_queue
+  - source: submit
+    target: complete

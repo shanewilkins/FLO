@@ -1,0 +1,165 @@
+# Standard Process Procedure Map (SPPM)
+
+Purpose: define what an SPPM means in FLO and which behavior is considered
+part of the normative diagram contract.
+
+## Intent
+
+An SPPM is FLO's default rich process-map variant.
+
+It presents a process as a structured, reader-friendly diagram intended for
+operational communication, work instruction, review, and continuous-improvement
+analysis. Compared with a minimal flowchart, an SPPM favors richer process
+objects, denser but controlled annotation, and stronger legibility rules for
+complex maps.
+
+## Required inputs
+
+An SPPM depends on:
+
+1. The rich process-map semantics defined in `process_map.md`.
+2. Optional analysis or metadata-backed summary metrics.
+3. Optional presentation metadata that refines, but does not replace, the
+  underlying canonical process graph.
+
+## Normative characteristics
+
+An SPPM in FLO must satisfy the following characteristics:
+
+1. Process-map-first representation
+   - The diagram represents the canonical process graph and richer process-map
+     semantics, not an alternate model.
+
+2. Rich process-object vocabulary
+   - The diagram may use a broader shape and annotation vocabulary than a
+     minimal flowchart when needed to express approved FLO process-map
+     semantics and LSS-oriented analysis surfaces.
+
+3. Legible structured layout
+   - The layout should prioritize readable node labels, stable routing, and
+     intelligible continuation handling for dense maps.
+
+4. Explicit decision visibility
+   - Decision points and their outcomes must remain visually distinguishable so
+     branching logic is clear to a reader.
+
+5. Optional metrics as annotations
+   - Summary metrics may be shown when supplied or derivable from approved FLO
+     analysis surfaces, but the SPPM does not redefine process semantics.
+   - Work-step cards show declared active processing as `CT` and declared setup
+     or changeover as the distinct `C/O` metric. Queue shapes show declared
+     queue delay as `WT`.
+   - When timing is declared for the complete visible process, the publication
+     footer consumes the typed static timing result for cycle, waiting,
+     changeover, and lead time. It must not independently sum raw metadata.
+   - One complete path may show one lead time. Complete alternatives show a
+     lead-time range. Incomplete, cyclic, or parallel timing shows an unavailable
+     lead time and directs the reader to `flo inspect` diagnostics.
+   - A partial projection does not reuse whole-process timing totals. If no
+     timing is declared, FLO does not add an empty timing footer. Explicit
+     footer metrics may replace generated rows with the same label.
+
+6. Publication composition is adjacent, not defining
+   - Headers, footers, captions, and other page furniture may accompany an
+     SPPM in publication workflows, but those surfaces are not the core
+     defining semantic difference between SPPM and other process-map variants.
+
+7. Rectangular-grid centroid alignment
+   - Node shape centroids must align to intersections of a rectangular layout
+     grid.
+   - The layout engine should be configured to produce this alignment directly,
+     not inferred from renderer-side geometry mutation.
+
+8. Mainline and rework row semantics
+   - An unwrapped primary path from start to stop must flow left-to-right on
+     one dominant mainline row.
+   - A linear LR process may be split into ordered publication rows. Every row
+     flows left-to-right, and each row boundary uses an explicit orthogonal
+     bottom-to-top continuation corridor without changing canonical graph
+     order. Branching or rework graphs are not automatically row-wrapped from a
+     profile hint, but an explicit requested artifact width opts them into
+     width-constrained wrapping.
+   - Rework paths must be rendered on a secondary row below the mainline.
+     Ordinary edges within that row attach according to their computed layout
+     order; an explicit rework-return edge routes from the final rework step to
+     the southern port of its declared reintegration target without imposing one
+     global row direction. For a queue, that port is the triangle's bottom tip.
+
+9. Start/end horizontal boundary contract
+   - On an unwrapped dominant row, no node may be placed to the left of the
+     start node centroid or to the right of the stop/end node centroid.
+   - On a wrapped linear map, the start and stop bound their respective first
+     and last continuation rows; global horizontal bounds do not imply process
+     order across rows.
+
+10. Orthogonal edge routing
+  SPPM connectors must route as orthogonal polylines (horizontal/vertical
+  segments), with arrowheads preserving directed process flow. Rework captions
+  are placed after routing and must not act as layout obstacles that introduce
+  connector detours.
+
+11. Port-based connector attachment
+  Connectors must originate and terminate at explicit node ports. Each node
+  must expose top, right, bottom, and left ports positioned at the midpoint of
+  the corresponding boundary edge. Connector attachment should prefer
+  semantically appropriate sides (for example, left-to-right chains use
+  right-to-left attachments, while rework branch and return connectors use
+  the sides appropriate to their declared endpoints).
+
+12. Decision geometry
+  Decision nodes use a moderately upright diamond whose height is at least 57%
+  of its width. Content may expand the shape, but the default must not collapse
+  into a shallow lozenge that obscures top and bottom branch attachment.
+
+13. Minimum spacing contract
+  Layout must enforce non-trivial minimum horizontal and vertical separation
+  between node boundaries to preserve readability under dense annotations.
+
+## Non-goals
+
+An SPPM is not:
+
+- a simulation output
+- a facility layout map
+- a process mining timeline
+- a free-form reporting canvas for arbitrary KPIs
+- a minimal flowchart
+
+## Regression And Stability Gates
+
+The canonical SPPM corpus manifest is
+`examples/conformance/sppm_corpus.json`. Accepted normalized layout and SVG
+artifacts live under `tests/golden/sppm/` and must never be hand-edited.
+The `washnfold_white_belt` case is the release-blocking book-profile artifact
+for the White Belt material. `scripts/build_white_belt_book_artifact.py` is the
+only supported copy/check path for the book-consumed `washnfold.svg`.
+The `simple_decision_book` case is the compact book-profile acceptance artifact
+for a decision diamond with two labeled, spatially distinct branches.
+
+Every change that can affect SPPM geometry or diagnostics must pass:
+
+- the SPPM layout-invariant suite
+- byte-identical baseline regeneration and drift comparison
+- focused determinism tests for ordering and accepted strategy behavior
+
+The promoted production layout strategy remains frozen for ordinary
+correctness work. The historical strategy matrix is run only for a deliberate
+redesign, and reopening the strategy requires an explicit accepted decision.
+
+An intentional golden update must regenerate artifacts, review every diff,
+rerun the drift check, and explain the accepted change and review evidence.
+Generated artifacts are never edited by hand.
+
+The executable commands and corpus procedures live with
+`scripts/check_sppm_baseline_drift.py`,
+`scripts/build_sppm_baseline_artifacts.py`, and
+`tests/unit/test_sppm_layout_invariants.py`.
+
+## Relationship to other documents
+
+- Diagram meaning is defined here.
+- Shared rich process-map semantics belong in `process_map.md`.
+- Renderer decomposition and refactor boundaries belong in
+  `docs/design/renderers/sppm.md`.
+- Structural IR contract belongs in `schema/flo_ir.json`.
+- Core process semantics belong in `docs/specs/core_language.md`.

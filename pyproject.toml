@@ -1,0 +1,144 @@
+[project]
+name = "flo-lang"
+version = "0.4.2"
+description = "FLO reference implementation"
+readme = "README.md"
+requires-python = ">=3.14"
+license = "MIT"
+license-files = ["LICENSE.md"]
+# Runtime dependencies
+dependencies = [
+    "structlog>=22.0",
+    "opentelemetry-api>=1.20.0",
+    "opentelemetry-sdk>=1.20.0",
+    "click>=8.1",
+    "rich>=13.0",
+    "pydantic>=2.0",
+    "PyYAML>=6.0",
+    "jsonschema>=4.26.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/shanewilkins/FLO"
+Repository = "https://github.com/shanewilkins/FLO"
+Issues = "https://github.com/shanewilkins/FLO/issues"
+Changelog = "https://github.com/shanewilkins/FLO/blob/master/docs/CHANGELOG.md"
+
+[project.optional-dependencies]
+
+[build-system]
+requires = ["uv_build>=0.12.0,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "flo"
+module-root = "src"
+
+[project.scripts]
+flo = "flo.app.cli:main"
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.1",
+    "pydocstyle>=6.3.0",
+    "pytest>=9.0.2",
+    "ruff>=0.15.2",
+    "vulture>=2.14",
+    "radon>=5.1.0",
+    "pytest",
+    "pytest-cov>=4.0",
+    "import-linter>=2.10",
+    "ty>=0.0.78",
+]
+
+[tool.ruff]
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B", "UP", "SIM", "C4", "PIE", "RUF"]
+ignore = ["RUF001"]
+
+[tool.importlinter]
+# Import-linter rules for enforcing layer boundaries in FLO.
+root_package = "flo"
+
+[[tool.importlinter.contracts]]
+name = "Process domain is independent of outer packages"
+type = "forbidden"
+source_modules = ["flo.process"]
+forbidden_modules = ["flo.source", "flo.render", "flo.app"]
+
+[[tool.importlinter.contracts]]
+name = "Source imports only process and leaf contracts"
+type = "forbidden"
+source_modules = ["flo.source"]
+forbidden_modules = ["flo.render", "flo.app"]
+
+[[tool.importlinter.contracts]]
+name = "Render is independent of source and application"
+type = "forbidden"
+source_modules = ["flo.render"]
+forbidden_modules = ["flo.source", "flo.app"]
+
+[[tool.importlinter.contracts]]
+name = "Renderer-neutral shared code is independent of renderer packages"
+type = "forbidden"
+source_modules = ["flo.render.shared"]
+forbidden_modules = [
+    "flo.render.sppm",
+    "flo.render.swimlane",
+    "flo.render.spaghetti",
+    "flo.render.value_stream",
+]
+
+[[tool.importlinter.contracts]]
+name = "SPPM does not import other renderers"
+type = "forbidden"
+source_modules = ["flo.render.sppm"]
+forbidden_modules = [
+    "flo.render.swimlane",
+    "flo.render.spaghetti",
+    "flo.render.value_stream",
+]
+
+[[tool.importlinter.contracts]]
+name = "Swimlane does not import other renderers"
+type = "forbidden"
+source_modules = ["flo.render.swimlane"]
+forbidden_modules = [
+    "flo.render.sppm",
+    "flo.render.spaghetti",
+    "flo.render.value_stream",
+]
+
+[[tool.importlinter.contracts]]
+name = "Spaghetti does not import other renderers"
+type = "forbidden"
+source_modules = ["flo.render.spaghetti"]
+forbidden_modules = [
+    "flo.render.sppm",
+    "flo.render.swimlane",
+    "flo.render.value_stream",
+]
+
+[[tool.importlinter.contracts]]
+name = "Value stream does not import other renderers"
+type = "forbidden"
+source_modules = ["flo.render.value_stream"]
+forbidden_modules = [
+    "flo.render.sppm",
+    "flo.render.swimlane",
+    "flo.render.spaghetti",
+]
+
+[[tool.importlinter.contracts]]
+name = "FLO package siblings are acyclic"
+type = "acyclic_siblings"
+ancestors = ["flo"]
+depth = 3
+
+[tool.coverage.report]
+omit = [
+    "src/flo/main.py",
+    "src/flo/app/_sppm_refactor_baseline.py",
+]

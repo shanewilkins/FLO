@@ -1,0 +1,359 @@
+from typing import Any, cast
+
+import pytest
+
+from flo.errors import ValidationError
+from flo.process.ir.models import IR, Edge, Node
+from flo.process.ir.validate import validate_ir
+
+
+def test_validate_ir_accepts_consumes_produces_when_items_declared():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(
+                id="mix",
+                type="task",
+                attrs={
+                    "consumes": ["flour", "water"],
+                    "produces": ["dough"],
+                },
+            ),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="mix"),
+            Edge(source="mix", target="end"),
+        ],
+        process_metadata={
+            "items": [
+                {"id": "flour", "name": "Flour", "kind": "material"},
+                {"id": "water", "name": "Water", "kind": "material"},
+                {"id": "dough", "name": "Dough", "kind": "material"},
+            ]
+        },
+    )
+
+    validate_ir(ir)
+
+
+def test_validate_ir_rejects_consumes_with_undeclared_item():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="mix", type="task", attrs={"consumes": ["flour"]}),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="mix"),
+            Edge(source="mix", target="end"),
+        ],
+        process_metadata={
+            "items": [
+                {"id": "water", "name": "Water", "kind": "material"},
+            ]
+        },
+    )
+
+    with pytest.raises(ValidationError, match="E1312"):
+        validate_ir(ir)
+
+
+def test_validate_ir_accepts_legacy_item_relation_without_item_declarations():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="mix", type="task", attrs={"produces": ["dough"]}),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="mix"),
+            Edge(source="mix", target="end"),
+        ],
+    )
+
+    validate_ir(ir)
+
+
+def test_validate_ir_accepts_canonical_item_and_resource_kinds():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="end", handoff=True),
+        ],
+        process_metadata={
+            "items": [
+                {"id": "order", "name": "Order", "kind": "information"},
+                {"id": "dough", "name": "Dough", "kind": "material"},
+            ],
+            "resources": [
+                {"id": "baker", "name": "Baker", "kind": "person"},
+                {"id": "mixer", "name": "Mixer", "kind": "equipment"},
+            ],
+        },
+    )
+
+    validate_ir(ir)
+
+
+def test_validate_ir_rejects_invalid_item_kind():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="end"),
+        ],
+        process_metadata={
+            "items": [
+                {"id": "order", "name": "Order", "kind": "unknown"},
+            ],
+        },
+    )
+
+    with pytest.raises(ValidationError, match="E1217"):
+        validate_ir(ir)
+
+
+def test_validate_ir_rejects_invalid_resource_kind():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="end"),
+        ],
+        process_metadata={
+            "resources": [
+                {"id": "operator", "name": "Operator", "kind": "team"},
+            ],
+        },
+    )
+
+    with pytest.raises(ValidationError, match="E1218"):
+        validate_ir(ir)
+
+
+def test_validate_ir_rejects_non_boolean_handoff():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="end", handoff=cast(Any, "yes")),
+        ],
+    )
+
+    with pytest.raises(ValidationError, match="E1410"):
+        validate_ir(cast(Any, ir))
+
+
+def test_validate_ir_accepts_resource_relations_with_matching_kinds():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(
+                id="mix",
+                type="task",
+                attrs={
+                    "performed_by": ["baker"],
+                    "uses": ["mixer"],
+                },
+            ),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="mix"),
+            Edge(source="mix", target="end"),
+        ],
+        process_metadata={
+            "resources": [
+                {"id": "baker", "name": "Baker", "kind": "person"},
+                {"id": "mixer", "name": "Mixer", "kind": "equipment"},
+            ]
+        },
+    )
+
+    validate_ir(ir)
+
+
+def test_validate_ir_rejects_resource_relations_with_unknown_resource():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="mix", type="task", attrs={"performed_by": ["baker"]}),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="mix"),
+            Edge(source="mix", target="end"),
+        ],
+        process_metadata={
+            "resources": [
+                {"id": "mixer", "name": "Mixer", "kind": "equipment"},
+            ]
+        },
+    )
+
+    with pytest.raises(ValidationError, match="E1313"):
+        validate_ir(ir)
+
+
+def test_validate_ir_rejects_branch_with_unknown_eligible_resource():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(
+                id="assign",
+                type="branch",
+                attrs={
+                    "branch": {
+                        "mode": "dispatch",
+                        "eligible_resources": ["missing_worker"],
+                    }
+                },
+            ),
+            Node(id="left", type="task"),
+            Node(id="right", type="task"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="assign"),
+            Edge(source="assign", target="left", route="left"),
+            Edge(source="assign", target="right", route="right"),
+            Edge(source="left", target="end"),
+            Edge(source="right", target="end"),
+        ],
+        process_metadata={
+            "resources": [
+                {"id": "worker", "name": "Worker", "kind": "person"},
+            ]
+        },
+    )
+
+    with pytest.raises(ValidationError, match=r"E1315.*missing_worker"):
+        validate_ir(ir)
+
+
+def test_validate_ir_accepts_legacy_resource_relation_without_declarations():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="mix", type="task", attrs={"uses": ["mixer"]}),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="mix"),
+            Edge(source="mix", target="end"),
+        ],
+    )
+
+    validate_ir(ir)
+
+
+def test_validate_ir_rejects_resource_relations_with_wrong_kind():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="mix", type="task", attrs={"uses": ["baker"]}),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="mix"),
+            Edge(source="mix", target="end"),
+        ],
+        process_metadata={
+            "resources": [
+                {"id": "baker", "name": "Baker", "kind": "person"},
+            ]
+        },
+    )
+
+    with pytest.raises(ValidationError, match="E1314"):
+        validate_ir(ir)
+
+
+def test_validate_ir_accepts_parallel_split_join_structure():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="split", type="parallel_split"),
+            Node(id="a", type="task"),
+            Node(id="b", type="task"),
+            Node(id="join", type="parallel_join"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="split"),
+            Edge(source="split", target="a"),
+            Edge(source="split", target="b"),
+            Edge(source="a", target="join"),
+            Edge(source="b", target="join"),
+            Edge(source="join", target="end"),
+        ],
+    )
+
+    validate_ir(ir)
+
+
+def test_validate_ir_rejects_parallel_split_with_single_outgoing():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="split", type="parallel_split"),
+            Node(id="join", type="parallel_join"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="split"),
+            Edge(source="split", target="join"),
+            Edge(source="join", target="end"),
+            Edge(source="start", target="join"),
+        ],
+    )
+
+    with pytest.raises(ValidationError, match="E1011"):
+        validate_ir(ir)
+
+
+def test_validate_ir_rejects_parallel_join_without_parallel_split_upstream():
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="a", type="task"),
+            Node(id="b", type="task"),
+            Node(id="join", type="parallel_join"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="a"),
+            Edge(source="start", target="b"),
+            Edge(source="a", target="join"),
+            Edge(source="b", target="join"),
+            Edge(source="join", target="end"),
+        ],
+    )
+
+    with pytest.raises(ValidationError, match="E1014"):
+        validate_ir(ir)

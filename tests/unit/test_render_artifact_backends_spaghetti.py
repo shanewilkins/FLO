@@ -1,0 +1,669 @@
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+import pytest
+
+from flo.process.ir import ensure_schema_aligned, validate_ir
+from flo.render import render_artifact
+from flo.source import compile_adapter, parse_adapter
+
+
+def test_reference_spaghetti_svg_artifact_is_deterministic():
+    artifact = _render_reference_spaghetti()
+    rerun_artifact = _render_reference_spaghetti()
+
+    assert artifact.kind == "svg"
+    assert artifact.backend == "svg"
+    assert artifact.content == rerun_artifact.content
+    assert _spaghetti_svg_signature(artifact.content) == {
+        "artifact_kind": "svg",
+        "backend": "svg",
+        "locations": (
+            "cooling_rack",
+            "dishwasher",
+            "oven_station",
+            "pantry",
+            "prep_bench",
+            "service_corridor",
+        ),
+        "route_channels": ("material", "people"),
+    }
+
+
+def _render_reference_spaghetti():
+    path = Path("examples/reference/chocolate_chip_cookies.flo")
+    adapter_model = parse_adapter(
+        path.read_text(encoding="utf-8"), source_path=str(path)
+    )
+    ir = compile_adapter(adapter_model)
+    validate_ir(ir)
+    ensure_schema_aligned(ir)
+    return render_artifact(
+        ir,
+        options={"diagram": "spaghetti", "render_backend": "svg"},
+    )
+
+
+def _spaghetti_svg_signature(svg: str) -> dict[str, object]:
+    root = ET.fromstring(svg)
+    locations = tuple(
+        sorted(
+            element.attrib["data-location-id"]
+            for element in root.iter()
+            if "data-location-id" in element.attrib
+        )
+    )
+    route_channels = tuple(
+        sorted(
+            {
+                element.attrib["data-route-channel"]
+                for element in root.iter()
+                if "data-route-channel" in element.attrib
+            }
+        )
+    )
+    return {
+        "artifact_kind": root.attrib.get("data-flo-artifact-kind"),
+        "backend": root.attrib.get("data-flo-backend"),
+        "locations": locations,
+        "route_channels": route_channels,
+    }
+
+
+def test_render_artifact_svg_spaghetti_people_channel_suppresses_material_routes():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "location": "pantry",
+                "outputs": ["flour"],
+                "workers": ["assistant_baker"],
+            },
+            {
+                "id": "mix",
+                "kind": "task",
+                "name": "Mix",
+                "location": "prep_bench",
+                "inputs": ["flour"],
+                "workers": ["assistant_baker"],
+            },
+        ],
+        "edges": [{"source": "gather", "target": "mix"}],
+        "process": {
+            "metadata": {
+                "locations": [
+                    {
+                        "id": "pantry",
+                        "name": "Pantry",
+                        "kind": "storage",
+                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                    },
+                    {
+                        "id": "prep_bench",
+                        "name": "Prep Bench",
+                        "kind": "operation",
+                        "metadata": {"spatial": {"x": 3, "y": 4, "unit": "m"}},
+                    },
+                ]
+            }
+        },
+    }
+
+    artifact = render_artifact(
+        ir_like,
+        options={
+            "diagram": "spaghetti",
+            "render_backend": "svg",
+            "spaghetti_channel": "people",
+        },
+    )
+
+    assert artifact.kind == "svg"
+    assert 'data-route-channel="people"' in artifact.content
+    assert 'data-route-channel="material"' not in artifact.content
+    assert ">P 1x<" in artifact.content
+    assert "Pantry" in artifact.content
+    assert "Prep Bench" in artifact.content
+
+
+def test_render_artifact_svg_spaghetti_worker_mode_labels_people_routes_by_worker():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "location": "pantry",
+                "workers": ["assistant_baker"],
+            },
+            {
+                "id": "mix",
+                "kind": "task",
+                "name": "Mix",
+                "location": "prep_bench",
+                "workers": ["assistant_baker"],
+            },
+        ],
+        "edges": [{"source": "gather", "target": "mix"}],
+        "process": {
+            "metadata": {
+                "locations": [
+                    {
+                        "id": "pantry",
+                        "name": "Pantry",
+                        "kind": "storage",
+                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                    },
+                    {
+                        "id": "prep_bench",
+                        "name": "Prep Bench",
+                        "kind": "operation",
+                        "metadata": {"spatial": {"x": 3, "y": 4, "unit": "m"}},
+                    },
+                ]
+            }
+        },
+    }
+
+    artifact = render_artifact(
+        ir_like,
+        options={
+            "diagram": "spaghetti",
+            "render_backend": "svg",
+            "spaghetti_channel": "people",
+            "spaghetti_people_mode": "worker",
+        },
+    )
+
+    assert artifact.kind == "svg"
+    assert 'data-route-channel="people"' in artifact.content
+    assert ">P assistant_baker 1x<" in artifact.content
+    assert 'stroke-dasharray="10 4"' not in artifact.content
+
+
+def test_render_artifact_svg_spaghetti_renders_boundary_polygon_and_label():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "location": "pantry",
+                "outputs": ["flour"],
+            },
+            {
+                "id": "mix",
+                "kind": "task",
+                "name": "Mix",
+                "location": "bench",
+                "inputs": ["flour"],
+            },
+        ],
+        "edges": [{"source": "gather", "target": "mix"}],
+        "process": {
+            "metadata": {
+                "locations": [
+                    {
+                        "id": "pantry",
+                        "name": "Pantry",
+                        "kind": "storage",
+                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                    },
+                    {
+                        "id": "bench",
+                        "name": "Bench",
+                        "kind": "operation",
+                        "metadata": {"spatial": {"x": 3, "y": 1, "unit": "m"}},
+                    },
+                ],
+                "layout_boundary": {
+                    "x": -1.0,
+                    "y": -1.0,
+                    "width": 6.0,
+                    "height": 4.0,
+                    "label": "Kitchen Boundary",
+                },
+            }
+        },
+    }
+
+    artifact = render_artifact(
+        ir_like,
+        options={
+            "diagram": "spaghetti",
+            "render_backend": "svg",
+            "spaghetti_channel": "material",
+        },
+    )
+
+    assert artifact.kind == "svg"
+    assert 'stroke-dasharray="6 4"' in artifact.content
+    assert ">Kitchen Boundary<" in artifact.content
+    assert '<polygon points="' in artifact.content
+
+
+def test_render_artifact_svg_spaghetti_maps_location_kinds_to_svg_shapes():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "location": "pantry",
+                "outputs": ["tray"],
+            },
+            {
+                "id": "move",
+                "kind": "task",
+                "name": "Move",
+                "location": "corridor",
+                "inputs": ["tray"],
+                "outputs": ["tray"],
+            },
+            {
+                "id": "bake",
+                "kind": "task",
+                "name": "Bake",
+                "location": "oven",
+                "inputs": ["tray"],
+            },
+        ],
+        "edges": [
+            {"source": "gather", "target": "move"},
+            {"source": "move", "target": "bake"},
+        ],
+        "process": {
+            "metadata": {
+                "locations": [
+                    {
+                        "id": "pantry",
+                        "name": "Pantry",
+                        "kind": "storage",
+                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                    },
+                    {
+                        "id": "corridor",
+                        "name": "Corridor",
+                        "kind": "transit",
+                        "metadata": {"spatial": {"x": 2, "y": 1, "unit": "m"}},
+                    },
+                    {
+                        "id": "oven",
+                        "name": "Oven",
+                        "kind": "processing",
+                        "metadata": {"spatial": {"x": 4, "y": 0, "unit": "m"}},
+                    },
+                ]
+            }
+        },
+    }
+
+    artifact = render_artifact(
+        ir_like,
+        options={
+            "diagram": "spaghetti",
+            "render_backend": "svg",
+            "spaghetti_channel": "material",
+        },
+    )
+
+    assert (
+        '<g data-location-id="pantry" data-location-shape="rect">' in artifact.content
+    )
+    assert (
+        '<g data-location-id="corridor" data-location-shape="diamond">'
+        in artifact.content
+    )
+    assert (
+        '<g data-location-id="oven" data-location-shape="ellipse">' in artifact.content
+    )
+    assert "Pantry" in artifact.content
+    assert "Corridor" in artifact.content
+    assert "Oven" in artifact.content
+
+
+def test_render_artifact_svg_spaghetti_material_routes_emit_item_titles_and_labels():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "location": "pantry",
+                "outputs": ["flour"],
+            },
+            {
+                "id": "mix",
+                "kind": "task",
+                "name": "Mix",
+                "location": "bench",
+                "inputs": ["flour"],
+            },
+        ],
+        "edges": [{"source": "gather", "target": "mix"}],
+        "process": {
+            "metadata": {
+                "locations": [
+                    {
+                        "id": "pantry",
+                        "name": "Pantry",
+                        "kind": "storage",
+                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                    },
+                    {
+                        "id": "bench",
+                        "name": "Bench",
+                        "kind": "operation",
+                        "metadata": {"spatial": {"x": 3, "y": 1, "unit": "m"}},
+                    },
+                ]
+            }
+        },
+    }
+
+    artifact = render_artifact(
+        ir_like,
+        options={
+            "diagram": "spaghetti",
+            "render_backend": "svg",
+            "spaghetti_channel": "material",
+        },
+    )
+
+    assert 'data-route-channel="material"' in artifact.content
+    assert ">M 1x<" in artifact.content
+    assert "<title>items: flour</title>" in artifact.content
+    assert 'stroke="tomato"' in artifact.content
+
+
+def test_render_artifact_svg_spaghetti_people_routes_emit_titles_and_aggregate_style():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "location": "pantry",
+                "workers": ["assistant_baker"],
+            },
+            {
+                "id": "mix",
+                "kind": "task",
+                "name": "Mix",
+                "location": "bench",
+                "workers": ["assistant_baker"],
+            },
+        ],
+        "edges": [{"source": "gather", "target": "mix"}],
+        "process": {
+            "metadata": {
+                "locations": [
+                    {
+                        "id": "pantry",
+                        "name": "Pantry",
+                        "kind": "storage",
+                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                    },
+                    {
+                        "id": "bench",
+                        "name": "Bench",
+                        "kind": "operation",
+                        "metadata": {"spatial": {"x": 3, "y": 1, "unit": "m"}},
+                    },
+                ]
+            }
+        },
+    }
+
+    artifact = render_artifact(
+        ir_like,
+        options={
+            "diagram": "spaghetti",
+            "render_backend": "svg",
+            "spaghetti_channel": "people",
+            "spaghetti_people_mode": "aggregate",
+        },
+    )
+
+    assert 'data-route-channel="people"' in artifact.content
+    assert ">P 1x<" in artifact.content
+    assert "<title>workers: assistant_baker</title>" in artifact.content
+    assert 'stroke="royalblue"' in artifact.content
+    assert 'stroke-dasharray="8 6"' in artifact.content
+
+
+def test_render_artifact_svg_spaghetti_rejects_missing_spatial_metadata():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "gather",
+                "kind": "task",
+                "name": "Gather",
+                "location": "pantry",
+                "outputs": ["flour"],
+            },
+            {
+                "id": "mix",
+                "kind": "task",
+                "name": "Mix",
+                "location": "bench",
+                "inputs": ["flour"],
+            },
+        ],
+        "edges": [{"source": "gather", "target": "mix"}],
+        "process": {
+            "metadata": {
+                "locations": [
+                    {
+                        "id": "pantry",
+                        "name": "Pantry",
+                        "kind": "storage",
+                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                    },
+                    {
+                        "id": "bench",
+                        "name": "Bench",
+                        "kind": "operation",
+                    },
+                ]
+            }
+        },
+    }
+
+    with pytest.raises(
+        ValueError,
+        match=r"spaghetti-missing-spatial: omitted 1 route.*bench.*no selected route remains renderable",
+    ):
+        render_artifact(
+            ir_like,
+            options={
+                "diagram": "spaghetti",
+                "render_backend": "svg",
+                "spaghetti_channel": "material",
+            },
+        )
+
+
+def test_render_artifact_svg_spaghetti_partial_mode_omits_incomplete_routes():
+    artifact = render_artifact(
+        _partial_spaghetti_process(),
+        options={
+            "diagram": "spaghetti",
+            "render_backend": "svg",
+            "spaghetti_channel": "material",
+        },
+    )
+
+    assert 'data-flo-notice="partial-map"' in artifact.content
+    assert "Partial map — omitted 1 route(s)" in artifact.content
+    assert 'data-from="pantry" data-to="oven"' in artifact.content
+    assert 'data-to="bench"' not in artifact.content
+    assert artifact.metadata["warning"] == (
+        "spaghetti-missing-spatial: omitted 1 route(s) across "
+        "1 unpositioned location(s): bench"
+    )
+
+
+def test_render_artifact_svg_spaghetti_strict_mode_rejects_partial_map():
+    with pytest.raises(
+        ValueError,
+        match=r"spaghetti-missing-spatial: omitted 1 route.*bench",
+    ):
+        render_artifact(
+            _partial_spaghetti_process(),
+            options={
+                "diagram": "spaghetti",
+                "render_backend": "svg",
+                "spaghetti_channel": "material",
+                "spaghetti_strict_spatial": True,
+            },
+        )
+
+
+def _partial_spaghetti_process():
+    return {
+        "nodes": [
+            {
+                "id": "gather",
+                "kind": "task",
+                "location": "pantry",
+                "outputs": ["item"],
+            },
+            {
+                "id": "cook",
+                "kind": "task",
+                "location": "oven",
+                "inputs": ["item"],
+            },
+            {
+                "id": "mix",
+                "kind": "task",
+                "location": "bench",
+                "inputs": ["item"],
+            },
+        ],
+        "edges": [
+            {"source": "gather", "target": "cook"},
+            {"source": "gather", "target": "mix"},
+        ],
+        "process": {
+            "metadata": {
+                "locations": [
+                    {
+                        "id": "pantry",
+                        "name": "Pantry",
+                        "metadata": {"spatial": {"x": 0, "y": 0}},
+                    },
+                    {
+                        "id": "oven",
+                        "name": "Oven",
+                        "metadata": {"spatial": {"x": 3, "y": 1}},
+                    },
+                    {"id": "bench", "name": "Bench"},
+                ]
+            }
+        },
+    }
+
+
+def test_render_artifact_svg_spaghetti_aggregates_multi_route_hops_and_counts():
+    ir_like = {
+        "nodes": [
+            {
+                "id": "gather_a",
+                "kind": "task",
+                "name": "Gather A",
+                "location": "pantry",
+                "outputs": ["flour"],
+                "workers": ["assistant_baker"],
+            },
+            {
+                "id": "gather_b",
+                "kind": "task",
+                "name": "Gather B",
+                "location": "pantry",
+                "outputs": ["flour"],
+                "workers": ["lead_baker"],
+            },
+            {
+                "id": "mix_a",
+                "kind": "task",
+                "name": "Mix A",
+                "location": "bench",
+                "inputs": ["flour"],
+                "outputs": ["dough"],
+                "workers": ["assistant_baker"],
+            },
+            {
+                "id": "mix_b",
+                "kind": "task",
+                "name": "Mix B",
+                "location": "bench",
+                "inputs": ["flour"],
+                "outputs": ["dough"],
+                "workers": ["lead_baker"],
+            },
+            {
+                "id": "bake",
+                "kind": "task",
+                "name": "Bake",
+                "location": "oven",
+                "inputs": ["dough"],
+                "workers": ["assistant_baker", "lead_baker"],
+            },
+        ],
+        "edges": [
+            {"source": "gather_a", "target": "mix_a"},
+            {"source": "gather_b", "target": "mix_b"},
+            {"source": "mix_a", "target": "bake"},
+            {"source": "mix_b", "target": "bake"},
+        ],
+        "process": {
+            "metadata": {
+                "locations": [
+                    {
+                        "id": "pantry",
+                        "name": "Pantry",
+                        "kind": "storage",
+                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                    },
+                    {
+                        "id": "bench",
+                        "name": "Bench",
+                        "kind": "operation",
+                        "metadata": {"spatial": {"x": 3, "y": 1, "unit": "m"}},
+                    },
+                    {
+                        "id": "oven",
+                        "name": "Oven",
+                        "kind": "processing",
+                        "metadata": {"spatial": {"x": 6, "y": 0, "unit": "m"}},
+                    },
+                ]
+            }
+        },
+    }
+
+    artifact = render_artifact(
+        ir_like,
+        options={
+            "diagram": "spaghetti",
+            "render_backend": "svg",
+            "spaghetti_channel": "both",
+            "spaghetti_people_mode": "aggregate",
+        },
+    )
+
+    assert artifact.kind == "svg"
+    assert artifact.content.count('data-route-channel="material"') == 2
+    assert artifact.content.count('data-route-channel="people"') == 2
+    assert artifact.content.count(">M 2x<") == 2
+    assert artifact.content.count(">P 2x<") == 2
+    assert "<title>items: flour</title>" in artifact.content
+    assert "<title>items: dough</title>" in artifact.content
+    assert "assistant_baker" in artifact.content
+    assert "lead_baker" in artifact.content
+    assert 'data-from="pantry" data-to="bench"' in artifact.content
+    assert 'data-from="bench" data-to="oven"' in artifact.content

@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REF_DIR="$REPO_ROOT/examples/reference"
+OUT_DIR="$REPO_ROOT/renders/reference"
+
+mkdir -p "$OUT_DIR"
+
+build_svg() {
+  local input_rel="$1"
+  local output_rel="$2"
+  shift 2
+
+  local input="$REPO_ROOT/$input_rel"
+  local output="$REPO_ROOT/$output_rel"
+
+  uv run flo render "$input" --export svg --render-to "$output" "$@"
+  echo "Built: $output_rel"
+}
+
+build_text_export() {
+  local input_rel="$1"
+  local output_rel="$2"
+
+  local input="$REPO_ROOT/$input_rel"
+  local output="$REPO_ROOT/$output_rel"
+
+  uv run flo render "$input" --export ingredients -o "$output"
+  echo "Built: $output_rel"
+}
+
+# Canonical reference renders.
+build_svg "examples/reference/bakery_setup_vs_queue.flo" "renders/reference/bakery_setup_vs_queue.svg" --diagram sppm --orientation lr
+build_svg "examples/reference/chocolate_chip_cookies.flo" "renders/reference/chocolate_chip_cookies.svg" --diagram sppm --orientation lr
+build_svg "examples/reference/chocolate_chip_cookies.flo" "renders/reference/chocolate_chip_cookies_tb.svg" --diagram sppm --orientation tb
+build_svg "examples/reference/chocolate_chip_cookies.flo" "renders/reference/chocolate_chip_cookies_spaghetti.svg" --diagram spaghetti
+build_text_export "examples/reference/chocolate_chip_cookies.flo" "renders/reference/chocolate_chip_cookies_ingredients.md"
+build_svg "examples/reference/linear.flo" "renders/reference/linear.svg" --diagram sppm --orientation lr
+build_svg "examples/reference/linear.flo" "renders/reference/linear_swimlane.svg" --diagram swimlane --render-backend svg
+build_svg "examples/reference/mpi_lms_theme_specimen.flo" "renders/reference/mpi_lms_theme_specimen.svg" --diagram sppm --orientation lr --theme mpi-lms
+build_svg "examples/reference/new_semantics.flo" "renders/reference/new_semantics.svg" --diagram sppm --orientation lr
+build_text_export "examples/reference/new_semantics.flo" "renders/reference/new_semantics_ingredients.md"
+build_svg "examples/reference/rework_loop.flo" "renders/reference/rework_loop.svg" --diagram sppm --orientation lr
+build_svg "examples/reference/semantic_controls_showcase.flo" "renders/reference/semantic_controls_showcase.svg" --diagram sppm --orientation lr
+build_text_export "examples/reference/semantic_controls_showcase.flo" "renders/reference/semantic_controls_showcase_ingredients.md"
+build_svg "examples/reference/sppm_feature_showcase.flo" "renders/reference/sppm_feature_showcase.svg" --diagram sppm --orientation lr
+build_svg "examples/reference/sppm_feature_showcase_wrapped.flo" "renders/reference/sppm_feature_showcase_wrapped.svg" --diagram sppm --orientation lr --layout-wrap auto --layout-target-columns 3 --publication-page-format letter
+build_svg "examples/reference/sppm_long_label_stress.flo" "renders/reference/sppm_long_label_stress.svg" --diagram sppm --orientation lr
+build_svg "examples/reference/swimlane.flo" "renders/reference/swimlane.svg" --diagram swimlane --render-backend svg
+build_svg "examples/reference/washnfold.flo" "renders/reference/washnfold.svg" --diagram sppm --orientation lr
+build_svg "examples/reference/washnfold.flo" "renders/reference/washnfold_white_belt.svg" --diagram sppm --sppm-output-profile book --layout-target-columns 4
+
+echo "Done: reference artifacts built in $OUT_DIR"

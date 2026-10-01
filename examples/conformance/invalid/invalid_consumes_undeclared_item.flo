@@ -1,0 +1,33 @@
+spec_version: "0.1"
+
+process:
+  id: invalid_consumes_undeclared_item
+  name: Invalid Consumes Undeclared Item
+
+items:
+  - id: water
+    name: Water
+    kind: material
+
+resources:
+  - id: baker
+    name: Baker
+    kind: person
+
+steps:
+  - id: start
+    kind: start
+
+  - id: mix
+    kind: task
+    consumes: [flour]
+    performed_by: [baker]
+
+  - id: end
+    kind: end
+
+transitions:
+  - source: start
+    target: mix
+  - source: mix
+    target: end

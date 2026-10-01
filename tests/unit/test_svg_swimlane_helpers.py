@@ -1,0 +1,100 @@
+from types import SimpleNamespace
+
+from flo.render.layout_core.models import LayoutBounds
+from flo.render.options import RenderOptions
+from flo.render.sppm.edges import _label_placement
+from flo.render.swimlane.primitives import edge_svg, node_svg, svg_defs
+
+
+def _p(x: float, y: float) -> SimpleNamespace:
+    return SimpleNamespace(x_px=x, y_px=y)
+
+
+def test_node_svg_renders_decision_and_endpoint_shapes():
+    decision = node_svg(
+        node=SimpleNamespace(id="d", kind="decision", label="Decide"),
+        raw_node={},
+        options=RenderOptions(diagram="swimlane"),
+        x=0,
+        y=0,
+        width=100,
+        height=60,
+    )
+    assert any("<polygon" in line for line in decision)
+
+    endpoint = node_svg(
+        node=SimpleNamespace(id="e", kind="end", label="Done"),
+        raw_node={},
+        options=RenderOptions(diagram="swimlane"),
+        x=0,
+        y=0,
+        width=100,
+        height=60,
+    )
+    assert any("<rect" in line for line in endpoint)
+
+
+def test_edge_svg_without_label_emits_polyline_only():
+    edge = SimpleNamespace(
+        edge=("a", "b"),
+        points=(_p(0, 0), _p(10, 10)),
+        label=None,
+        label_point=None,
+        source_port_side=None,
+        target_port_side=None,
+        is_rework=False,
+        rework_variant=None,
+        callout_lines=(),
+        callout_near_source=False,
+        outgoing_token=None,
+        incoming_token=None,
+    )
+
+    lines, _bounds = edge_svg(
+        edge_path=edge,
+        source_bounds=None,
+        target_bounds=None,
+        source_kind="task",
+        target_kind="task",
+        avoid_bounds=(),
+        canvas_bounds=LayoutBounds(x_px=0.0, y_px=0.0, width_px=10.0, height_px=10.0),
+        diagnostics=[],
+        options=RenderOptions(diagram="swimlane"),
+    )
+
+    assert any("<polyline" in line for line in lines)
+    assert not any("<rect" in line for line in lines)
+
+
+def test_mpi_lms_rework_edge_and_arrowhead_share_semantic_color():
+    edge = SimpleNamespace(
+        edge=("correct", "inspect"),
+        points=(_p(0, 0), _p(100, 0)),
+        label="Recheck",
+        label_point=None,
+        source_port_side=None,
+        target_port_side=None,
+        is_rework=True,
+        rework_variant="return",
+        callout_lines=(),
+        callout_near_source=False,
+        outgoing_token=None,
+        incoming_token=None,
+    )
+    options = RenderOptions(diagram="swimlane", theme="mpi-lms")
+
+    lines, _bounds = edge_svg(edge_path=edge, options=options)
+    svg = "".join((*svg_defs(options), *lines))
+
+    assert 'stroke="#A43232"' in svg
+    assert 'fill="#A43232"' in svg
+    assert 'stroke-dasharray="7 5"' in svg
+    assert 'marker-end="url(#flo-swimlane-rework-arrow)"' in svg
+
+
+def test_label_placement_prefers_side_anchor_for_vertical_segment():
+    points = (_p(0, 0), _p(0, 20), _p(0, 40))
+
+    placement = _label_placement(points)
+
+    assert placement.anchor in {"start", "end"}

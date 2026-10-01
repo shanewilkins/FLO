@@ -1,0 +1,690 @@
+{
+  "canvas_bounds": {
+    "height_px": 421.0,
+    "width_px": 5466.0,
+    "x_px": 0.0,
+    "y_px": 0.0
+  },
+  "edge_paths": [
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 1866.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 1922.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "assess_scope",
+      "source_port_side": "EAST",
+      "target": "execute_service_wait_queue",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 1500.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 1556.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "assess_scope_wait_queue",
+      "source_port_side": "EAST",
+      "target": "assess_scope",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 3337.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 3393.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "complete",
+      "source_port_side": "EAST",
+      "target": "dispatch_queue_wait",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 3001.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 3057.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "complete_wait_queue",
+      "source_port_side": "EAST",
+      "target": "complete",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 3948.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 4004.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "dispatch_queue",
+      "source_port_side": "EAST",
+      "target": "stop",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 3587.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 3643.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "dispatch_queue_wait",
+      "source_port_side": "EAST",
+      "target": "dispatch_queue",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 2497.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 2553.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "execute_service",
+      "source_port_side": "EAST",
+      "target": "qa",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 2121.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 2177.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "execute_service_wait_queue",
+      "source_port_side": "EAST",
+      "target": "execute_service",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 740.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 796.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "intake",
+      "source_port_side": "EAST",
+      "target": "triage",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 384.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 440.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "intake_wait_queue",
+      "source_port_side": "EAST",
+      "target": "intake",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 1230.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 1286.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "process_queue",
+      "source_port_side": "EAST",
+      "target": "assess_scope_wait_queue",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": "pass",
+      "label_point": {
+        "x_px": 2659.0,
+        "y_px": 84.0
+      },
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 2756.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 2812.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "qa",
+      "source_port_side": "EAST",
+      "target": "complete_wait_queue",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [
+        "Rate: 8%",
+        "Reason: QA defects"
+      ],
+      "callout_near_source": true,
+      "incoming_token": null,
+      "is_rework": true,
+      "label": "fail",
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 2654.5,
+          "y_px": 145.0
+        },
+        {
+          "x_px": 2888.7028985507245,
+          "y_px": 249.0
+        },
+        {
+          "x_px": 3251.295429208473,
+          "y_px": 249.0
+        },
+        {
+          "x_px": 3276.066889632107,
+          "y_px": 260.0
+        },
+        {
+          "x_px": 3464.680044593088,
+          "y_px": 260.0
+        },
+        {
+          "x_px": 3489.4515050167224,
+          "y_px": 249.0
+        },
+        {
+          "x_px": 3954.480490523969,
+          "y_px": 249.0
+        },
+        {
+          "x_px": 3977.0,
+          "y_px": 259.0
+        }
+      ],
+      "rework_variant": "branch",
+      "source": "qa",
+      "source_port_side": "SOUTH",
+      "target": "rework_quality_wait_queue",
+      "target_port_side": "NORTH"
+    },
+    {
+      "callout_lines": [
+        "Frequency: 3/day",
+        "Count: 12 per week"
+      ],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": true,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 597.5,
+          "y_px": 267.0
+        },
+        {
+          "x_px": 512.5030959752322,
+          "y_px": 156.0
+        },
+        {
+          "x_px": 597.65737874097,
+          "y_px": 156.0
+        },
+        {
+          "x_px": 590.0,
+          "y_px": 146.0
+        }
+      ],
+      "rework_variant": "return",
+      "source": "rework_intake",
+      "source_port_side": "NORTH",
+      "target": "intake",
+      "target_port_side": "SOUTH"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 1470.0,
+          "y_px": 334.0
+        },
+        {
+          "x_px": 755.0,
+          "y_px": 334.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "rework_intake_wait_queue",
+      "source_port_side": "WEST",
+      "target": "rework_intake",
+      "target_port_side": "EAST"
+    },
+    {
+      "callout_lines": [
+        "Frequency: 1/day",
+        "Count: 4 per week"
+      ],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": true,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 2370.0,
+          "y_px": 267.0
+        },
+        {
+          "x_px": 2159.5833333333335,
+          "y_px": 172.0
+        },
+        {
+          "x_px": 1733.1491228070176,
+          "y_px": 172.0
+        },
+        {
+          "x_px": 1711.0,
+          "y_px": 162.0
+        }
+      ],
+      "rework_variant": "return",
+      "source": "rework_quality",
+      "source_port_side": "NORTH",
+      "target": "assess_scope",
+      "target_port_side": "SOUTH"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 3880.0,
+          "y_px": 334.0
+        },
+        {
+          "x_px": 2510.0,
+          "y_px": 334.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "rework_quality_wait_queue",
+      "source_port_side": "WEST",
+      "target": "rework_quality",
+      "target_port_side": "EAST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 144.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 200.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "start",
+      "source_port_side": "EAST",
+      "target": "intake_wait_queue",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": "True",
+      "label_point": {
+        "x_px": 890.5,
+        "y_px": 84.0
+      },
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 985.0,
+          "y_px": 87.0
+        },
+        {
+          "x_px": 1041.0,
+          "y_px": 87.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "triage",
+      "source_port_side": "EAST",
+      "target": "process_queue",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [
+        "Rate: 12%",
+        "Reason: Missing details"
+      ],
+      "callout_near_source": true,
+      "incoming_token": null,
+      "is_rework": true,
+      "label": "False",
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 890.5,
+          "y_px": 144.0
+        },
+        {
+          "x_px": 979.034090909091,
+          "y_px": 249.0
+        },
+        {
+          "x_px": 1171.646590909091,
+          "y_px": 249.0
+        },
+        {
+          "x_px": 1180.9215909090908,
+          "y_px": 260.0
+        },
+        {
+          "x_px": 1287.8261363636364,
+          "y_px": 260.0
+        },
+        {
+          "x_px": 1297.1011363636364,
+          "y_px": 249.0
+        },
+        {
+          "x_px": 1556.0681818181818,
+          "y_px": 249.0
+        },
+        {
+          "x_px": 1564.5,
+          "y_px": 259.0
+        }
+      ],
+      "rework_variant": "branch",
+      "source": "triage",
+      "source_port_side": "SOUTH",
+      "target": "rework_intake_wait_queue",
+      "target_port_side": "NORTH"
+    }
+  ],
+  "lanes": [],
+  "node_bounds": {
+    "assess_scope": {
+      "height_px": 150.0,
+      "width_px": 310.0,
+      "x_px": 1556.0,
+      "y_px": 12.0
+    },
+    "assess_scope_wait_queue": {
+      "height_px": 150.0,
+      "width_px": 214.0,
+      "x_px": 1286.0,
+      "y_px": 12.0
+    },
+    "complete": {
+      "height_px": 134.0,
+      "width_px": 280.0,
+      "x_px": 3057.0,
+      "y_px": 20.0
+    },
+    "complete_wait_queue": {
+      "height_px": 150.0,
+      "width_px": 189.0,
+      "x_px": 2812.0,
+      "y_px": 12.0
+    },
+    "dispatch_queue": {
+      "height_px": 150.0,
+      "width_px": 305.0,
+      "x_px": 3643.0,
+      "y_px": 12.0
+    },
+    "dispatch_queue_wait": {
+      "height_px": 150.0,
+      "width_px": 194.0,
+      "x_px": 3393.0,
+      "y_px": 12.0
+    },
+    "execute_service": {
+      "height_px": 134.0,
+      "width_px": 320.0,
+      "x_px": 2177.0,
+      "y_px": 20.0
+    },
+    "execute_service_wait_queue": {
+      "height_px": 150.0,
+      "width_px": 199.0,
+      "x_px": 1922.0,
+      "y_px": 12.0
+    },
+    "intake": {
+      "height_px": 118.0,
+      "width_px": 300.0,
+      "x_px": 440.0,
+      "y_px": 28.0
+    },
+    "intake_wait_queue": {
+      "height_px": 150.0,
+      "width_px": 184.0,
+      "x_px": 200.0,
+      "y_px": 12.0
+    },
+    "process_queue": {
+      "height_px": 150.0,
+      "width_px": 189.0,
+      "x_px": 1041.0,
+      "y_px": 12.0
+    },
+    "qa": {
+      "height_px": 116.0,
+      "width_px": 203.0,
+      "x_px": 2553.0,
+      "y_px": 29.0
+    },
+    "rework_intake": {
+      "height_px": 134.0,
+      "width_px": 315.0,
+      "x_px": 440.0,
+      "y_px": 267.0
+    },
+    "rework_intake_wait_queue": {
+      "height_px": 150.0,
+      "width_px": 189.0,
+      "x_px": 1470.0,
+      "y_px": 259.0
+    },
+    "rework_quality": {
+      "height_px": 134.0,
+      "width_px": 280.0,
+      "x_px": 2230.0,
+      "y_px": 267.0
+    },
+    "rework_quality_wait_queue": {
+      "height_px": 150.0,
+      "width_px": 194.0,
+      "x_px": 3880.0,
+      "y_px": 259.0
+    },
+    "start": {
+      "height_px": 52.0,
+      "width_px": 132.0,
+      "x_px": 12.0,
+      "y_px": 61.0
+    },
+    "stop": {
+      "height_px": 52.0,
+      "width_px": 132.0,
+      "x_px": 4004.0,
+      "y_px": 61.0
+    },
+    "triage": {
+      "height_px": 114.0,
+      "width_px": 189.0,
+      "x_px": 796.0,
+      "y_px": 30.0
+    }
+  },
+  "orientation": "lr"
+}

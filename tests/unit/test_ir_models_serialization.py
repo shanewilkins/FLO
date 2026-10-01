@@ -1,0 +1,182 @@
+from pathlib import Path
+
+from flo.process.ir._internal_shape import (
+    ir_from_internal_dict,
+    ir_to_internal_dict,
+    ir_to_internal_json,
+)
+from flo.process.ir.models import IR, Edge, Node
+
+
+def test_ir_to_from_dict_and_json(tmp_path: Path, ir_factory, node_factory):
+    nodes = [node_factory("n1", attrs={"foo": "bar"}), node_factory("n2", type="end")]
+    ir = ir_factory(name="test", nodes=nodes)
+
+    d = ir_to_internal_dict(ir)
+    assert d["name"] == "test"
+    assert isinstance(d["nodes"], list)
+
+    s = ir_to_internal_json(ir)
+    assert '"name": "test"' in s
+
+    # write to file and read via from_internal_dict
+    p = tmp_path / "ir.json"
+    ir_to_internal_json(ir, path=str(p))
+    loaded = ir_from_internal_dict({"name": "x", "nodes": d["nodes"]})
+    assert loaded.name == "x"
+    assert any(n.id == "n1" for n in loaded.nodes)
+
+
+def test_process_version_roundtrips_through_internal_shape(node_factory) -> None:
+    ir = IR(name="versioned", nodes=[node_factory("n1")], process_version="2026.1")
+
+    data = ir_to_internal_dict(ir)
+    loaded = ir_from_internal_dict(data)
+
+    assert data["process_version"] == "2026.1"
+    assert loaded.process_version == "2026.1"
+
+
+def test_process_context_roundtrips_through_internal_shape(node_factory) -> None:
+    ir = IR(
+        name="context",
+        nodes=[node_factory("n1")],
+        process_owner={"id": "owner", "name": "Owner"},
+        business_units=[{"id": "ops", "name": "Operations"}],
+        lanes=[{"id": "ops", "name": "Operations", "type": "team"}],
+    )
+
+    loaded = ir_from_internal_dict(ir_to_internal_dict(ir))
+
+    assert loaded.process_owner == {"id": "owner", "name": "Owner"}
+    assert loaded.business_units == [{"id": "ops", "name": "Operations"}]
+    assert loaded.lanes == [{"id": "ops", "name": "Operations", "type": "team"}]
+
+
+def test_canonical_fields_roundtrip_without_metadata_shadow_copy() -> None:
+    ir = IR(
+        name="canonical",
+        nodes=[
+            Node(id="parent", type="subprocess"),
+            Node(id="child", type="task", subprocess_parent="parent"),
+        ],
+        items=[{"id": "order", "name": "Order", "kind": "information"}],
+        resources=[{"id": "owner", "name": "Owner", "kind": "person"}],
+        locations=[{"id": "desk", "name": "Desk"}],
+        render_intent={"defaults": {"diagram": "sppm"}},
+        process_metadata={"custom": {"source_system": "erp"}},
+    )
+
+    loaded = ir_from_internal_dict(ir_to_internal_dict(ir))
+
+    assert loaded.items == ir.items
+    assert loaded.resources == ir.resources
+    assert loaded.locations == ir.locations
+    assert loaded.render_intent == ir.render_intent
+    assert loaded.nodes[1].subprocess_parent == "parent"
+    assert loaded.nodes[1].attrs == {}
+    assert loaded.process_metadata == {"custom": {"source_system": "erp"}}
+
+
+def test_legacy_metadata_fields_promote_once_at_ir_boundary() -> None:
+    ir = IR(
+        name="legacy-constructor",
+        nodes=[
+            Node(
+                id="child",
+                type="task",
+                attrs={"subprocess_parent": "parent", "name": "Child"},
+            )
+        ],
+        process_metadata={
+            "items": [{"id": "order", "name": "Order", "kind": "information"}],
+            "resources": [{"id": "owner", "name": "Owner", "kind": "person"}],
+            "locations": [{"id": "desk", "name": "Desk"}],
+            "render": {"defaults": {"diagram": "sppm"}},
+            "custom": True,
+        },
+    )
+
+    assert ir.items is not None
+    assert ir.resources is not None
+    assert ir.locations is not None
+    assert ir.render_intent == {"defaults": {"diagram": "sppm"}}
+    assert ir.process_metadata == {"custom": True}
+    assert ir.nodes[0].subprocess_parent == "parent"
+    assert ir.nodes[0].attrs == {"name": "Child"}
+
+
+def test_ir_edge_optional_fields_roundtrip(tmp_path: Path):
+    ir = IR(
+        name="edges",
+        nodes=[],
+        edges=[
+            Edge(
+                source="a",
+                target="b",
+                id="e1",
+                outcome="yes",
+                route="worker_a",
+                label="approve",
+                edge_type="rework",
+                rework=True,
+                metadata={"k": "v"},
+            ),
+            Edge(source="b", target="c"),
+        ],
+    )
+
+    data = ir_to_internal_dict(ir)
+    assert data["edges"][0]["id"] == "e1"
+    assert data["edges"][0]["outcome"] == "yes"
+    assert data["edges"][0]["route"] == "worker_a"
+    assert data["edges"][0]["label"] == "approve"
+    assert data["edges"][0]["edge_type"] == "rework"
+    assert data["edges"][0]["rework"] is True
+    assert data["edges"][0]["metadata"] == {"k": "v"}
+    assert "id" not in data["edges"][1]
+
+    p = tmp_path / "edges.json"
+    text = ir_to_internal_json(ir, path=p)
+    assert p.exists()
+    assert '"edges"' in text
+
+
+def test_ir_from_internal_dict_defaults_for_missing_fields():
+    data = {
+        "name": "demo",
+        "nodes": [{"id": "n1", "type": "task"}],
+        "edges": [{"source": "n1", "target": "n2"}],
+    }
+    ir = ir_from_internal_dict(data)
+    assert ir.name == "demo"
+    assert ir.nodes[0].attrs == {}
+    assert ir.edges[0].id is None
+    assert ir.edges[0].outcome is None
+    assert ir.edges[0].route is None
+
+
+def test_ir_from_internal_dict_preserves_edge_type_and_rework():
+    data = {
+        "name": "demo",
+        "nodes": [{"id": "n1", "type": "task"}],
+        "edges": [
+            {"source": "n1", "target": "n2", "edge_type": "rework", "rework": True}
+        ],
+    }
+    ir = ir_from_internal_dict(data)
+    assert ir.edges[0].edge_type == "rework"
+    assert ir.edges[0].rework is True
+
+
+def test_ir_normalizes_non_object_attrs_and_metadata_at_construction() -> None:
+    ir = IR(
+        name="demo",
+        nodes=[{"id": "n1", "type": "task", "attrs": "bad"}],
+        edges=[{"source": "n1", "target": "n2", "metadata": "bad"}],
+        process_metadata="bad",
+    )
+
+    assert ir.nodes[0].attrs == {}
+    assert ir.edges[0].metadata is None
+    assert ir.process_metadata is None

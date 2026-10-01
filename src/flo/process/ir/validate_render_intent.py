@@ -1,0 +1,240 @@
+"""Validation helpers for render-intent metadata in FLO IR."""
+
+from __future__ import annotations
+
+import re
+from typing import Any
+
+from flo.errors import ValidationError
+
+from .metadata import extract_process_field
+from .models import IR
+
+_DIMENSION_RE = re.compile(r"^(?:\d+(?:\.\d+)?|\.\d+)\s*(?:px|in|cm|mm)?$")
+
+
+def _raise_render_intent_error(message: str) -> None:
+    raise ValidationError(message, error_stage="validate_render_intent")
+
+
+def validate_render_intent(ir: IR) -> None:
+    """Validate render-intent structure in process metadata.
+
+    Enforces:
+    - Valid diagram types (sppm, swimlane, spaghetti, value_stream)
+    - Valid page formats (letter, a4, legal, tabloid)
+    - Valid diagram-specific configs (sppm, spaghetti)
+    - View names are identifiers
+    """
+    render = extract_process_field(ir, "render_intent")
+    if render is None:
+        return
+
+    if not isinstance(render, dict):
+        _raise_render_intent_error("process.metadata.render must be an object")
+
+    # Validate defaults if present
+    defaults = render.get("defaults")
+    if defaults:
+        _validate_render_view(defaults, "render.defaults")
+
+    # Validate views if present
+    views = render.get("views")
+    if views:
+        if not isinstance(views, dict):
+            _raise_render_intent_error(
+                "process.metadata.render.views must be an object"
+            )
+
+        for view_id, view_config in views.items():
+            if not isinstance(view_id, str) or not view_id:
+                _raise_render_intent_error(
+                    f"view id must be non-empty string, got: {view_id}"
+                )
+            if not isinstance(view_config, dict):
+                _raise_render_intent_error(f"render.views.{view_id} must be an object")
+            _validate_render_view(view_config, f"render.views.{view_id}")
+
+
+def _validate_render_view(view: dict[str, Any], path: str) -> None:
+    """Validate a single render view configuration.
+
+    Args:
+        view: render view dictionary
+        path: JSONPath for error messages (e.g. "render.defaults" or "render.views.sppm_main")
+    """
+    _validate_render_diagram(view, path)
+    _validate_render_publication(view, path)
+    _validate_render_layout(view, path)
+    _validate_render_sppm_config(view, path)
+    _validate_render_spaghetti_config(view, path)
+
+
+def _validate_render_diagram(view: dict[str, Any], path: str) -> None:
+    """Validate diagram type in render view."""
+    _VALID_DIAGRAMS = {"sppm", "swimlane", "spaghetti", "value_stream"}
+    diagram = view.get("diagram")
+    if diagram is not None:
+        if not isinstance(diagram, str):
+            _raise_render_intent_error(
+                f"{path}.diagram must be string, got {type(diagram).__name__}"
+            )
+        if diagram not in _VALID_DIAGRAMS:
+            _raise_render_intent_error(
+                f"{path}.diagram='{diagram}' not supported; must be one of {sorted(_VALID_DIAGRAMS)}"
+            )
+
+
+def _validate_render_publication(view: dict[str, Any], path: str) -> None:
+    """Validate publication config in render view."""
+    _VALID_PAGE_FORMATS = {"letter", "a4", "legal", "tabloid"}
+    pub = view.get("publication")
+    if pub is None:
+        return
+
+    if not isinstance(pub, dict):
+        _raise_render_intent_error(f"{path}.publication must be object")
+
+    # Validate page_format
+    page_format = pub.get("page_format")
+    if page_format is not None:
+        if not isinstance(page_format, str):
+            _raise_render_intent_error(f"{path}.publication.page_format must be string")
+        if page_format not in _VALID_PAGE_FORMATS:
+            _raise_render_intent_error(
+                f"{path}.publication.page_format='{page_format}' not supported; must be one of {sorted(_VALID_PAGE_FORMATS)}"
+            )
+
+    # Validate margins
+    margins = pub.get("margins")
+    if margins is not None:
+        if not isinstance(margins, dict):
+            _raise_render_intent_error(f"{path}.publication.margins must be object")
+        for key in margins:
+            if key not in {"top", "right", "bottom", "left"}:
+                _raise_render_intent_error(
+                    f"{path}.publication.margins: unknown key '{key}'"
+                )
+            val = margins[key]
+            if not isinstance(val, int) or val < 0:
+                _raise_render_intent_error(
+                    f"{path}.publication.margins.{key} must be non-negative integer"
+                )
+
+
+def _validate_render_layout(view: dict[str, Any], path: str) -> None:
+    """Validate layout config in render view."""
+    layout = view.get("layout")
+    if layout is None:
+        return
+
+    if not isinstance(layout, dict):
+        _raise_render_intent_error(f"{path}.layout must be object")
+
+    _validate_layout_wrap(layout, path)
+    _validate_layout_integers(layout, path)
+    _validate_layout_dimensions(layout, path)
+    _validate_layout_overflow(layout, path)
+
+
+def _validate_layout_wrap(layout: dict[str, Any], path: str) -> None:
+    wrap = layout.get("wrap")
+    if wrap is not None:
+        valid_wraps = {"none", "auto", "manual"}
+        if wrap not in valid_wraps:
+            _raise_render_intent_error(
+                f"{path}.layout.wrap='{wrap}' not supported; must be one of {sorted(valid_wraps)}"
+            )
+
+
+def _validate_layout_integers(layout: dict[str, Any], path: str) -> None:
+    for key in {"max_width", "target_columns"}:
+        val = layout.get(key)
+        if val is not None and (not isinstance(val, int) or val < 1):
+            _raise_render_intent_error(f"{path}.layout.{key} must be positive integer")
+
+
+def _validate_layout_dimensions(layout: dict[str, Any], path: str) -> None:
+    for key in ("width", "height"):
+        value = layout.get(key)
+        if value is None:
+            continue
+        if isinstance(value, bool) or (
+            not isinstance(value, (int, float, str))
+            or (isinstance(value, (int, float)) and value <= 0)
+            or (
+                isinstance(value, str)
+                and not _DIMENSION_RE.fullmatch(value.strip().lower())
+            )
+        ):
+            _raise_render_intent_error(
+                f"{path}.layout.{key} must be a positive dimension using px, in, cm, or mm"
+            )
+
+
+def _validate_layout_overflow(layout: dict[str, Any], path: str) -> None:
+    overflow = layout.get("overflow")
+    if overflow is not None and overflow not in {
+        "safe-fit",
+        "error",
+        "expand",
+        "scale",
+        "paginate",
+    }:
+        _raise_render_intent_error(
+            f"{path}.layout.overflow='{overflow}' not supported; must be one of ['error', 'expand', 'paginate', 'safe-fit', 'scale']"
+        )
+
+
+def _validate_render_sppm_config(view: dict[str, Any], path: str) -> None:
+    """Validate SPPM-specific config in render view."""
+    sppm = view.get("sppm")
+    if sppm is None:
+        return
+
+    if not isinstance(sppm, dict):
+        _raise_render_intent_error(f"{path}.sppm must be object")
+
+    _VALID_DENSITIES = {"full", "compact", "teaching"}
+    _VALID_NUMBERING = {"none", "visible", "hidden"}
+
+    density = sppm.get("label_density")
+    if density is not None and density not in _VALID_DENSITIES:
+        _raise_render_intent_error(
+            f"{path}.sppm.label_density='{density}' not supported"
+        )
+
+    for key in {"node_numbering", "edge_numbering"}:
+        numbering = sppm.get(key)
+        if numbering is not None and numbering not in _VALID_NUMBERING:
+            _raise_render_intent_error(f"{path}.sppm.{key}='{numbering}' not supported")
+
+
+def _validate_render_spaghetti_config(view: dict[str, Any], path: str) -> None:
+    """Validate spaghetti-specific config in render view."""
+    spaghetti = view.get("spaghetti")
+    if spaghetti is None:
+        return
+
+    if not isinstance(spaghetti, dict):
+        _raise_render_intent_error(f"{path}.spaghetti must be object")
+
+    channel = spaghetti.get("channel")
+    if channel is not None:
+        _VALID_CHANNELS = {"material", "people", "equipment"}
+        if channel not in _VALID_CHANNELS:
+            _raise_render_intent_error(
+                f"{path}.spaghetti.channel='{channel}' not supported"
+            )
+
+    mode = spaghetti.get("people_mode")
+    if mode is not None:
+        _VALID_MODES = {"aggregate", "individual"}
+        if mode not in _VALID_MODES:
+            _raise_render_intent_error(
+                f"{path}.spaghetti.people_mode='{mode}' not supported"
+            )
+
+    strict_spatial = spaghetti.get("strict_spatial")
+    if strict_spatial is not None and not isinstance(strict_spatial, bool):
+        _raise_render_intent_error(f"{path}.spaghetti.strict_spatial must be boolean")

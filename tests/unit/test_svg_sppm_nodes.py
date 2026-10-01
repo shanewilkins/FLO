@@ -1,0 +1,311 @@
+from __future__ import annotations
+
+from types import SimpleNamespace
+
+import pytest
+
+from flo.render.options import RenderOptions
+from flo.render.sppm.nodes import _node_svg
+
+
+@pytest.mark.parametrize(
+    ("kind", "expected_snippets", "forbidden_snippets"),
+    [
+        (
+            "task",
+            ('data-node-kind="task"', 'data-node-header="top-rounded"'),
+            ('data-node-queue-body="true"',),
+        ),
+        (
+            "decision",
+            ('data-node-kind="decision"', "<polygon"),
+            ('data-node-header="top-rounded"',),
+        ),
+        (
+            "queue",
+            (
+                'data-node-kind="queue"',
+                'data-node-queue-body="true"',
+                'data-node-queue-color-band="true"',
+                'data-node-queue-divider="true"',
+            ),
+            (),
+        ),
+        (
+            "subprocess",
+            ('data-node-kind="subprocess"', "<ellipse"),
+            ('data-node-header="top-rounded"',),
+        ),
+        (
+            "start",
+            ('data-node-kind="start"', '<rect x="10.0" y="20.0" width="180.0"'),
+            ('data-node-header="top-rounded"',),
+        ),
+    ],
+)
+def test_node_svg_renders_kind_specific_geometry(
+    kind: str,
+    expected_snippets: tuple[str, ...],
+    forbidden_snippets: tuple[str, ...],
+) -> None:
+    node = SimpleNamespace(id="n1", kind=kind, label="Node Label")
+    raw_node = {
+        "metadata": {"cycle_time": {"value": 5, "unit": "min"}},
+        "workers": ["Alex"],
+        "note": "Check this",
+    }
+
+    parts = _node_svg(
+        node=node,
+        raw_node=raw_node,
+        options=RenderOptions(diagram="sppm", show_notes=True),
+        x=10.0,
+        y=20.0,
+        width=180.0,
+        height=120.0,
+    )
+    svg = "".join(parts)
+
+    for snippet in expected_snippets:
+        assert snippet in svg
+    for snippet in forbidden_snippets:
+        assert snippet not in svg
+
+
+def test_node_svg_task_includes_info_lines_and_note() -> None:
+    node = SimpleNamespace(id="t1", kind="task", label="Mix Dough")
+    raw_node = {
+        "metadata": {
+            "cycle_time": {"value": 7, "unit": "min"},
+            "description": "Combine ingredients",
+        },
+        "workers": ["Baker"],
+        "note": "Use cold water",
+    }
+
+    parts = _node_svg(
+        node=node,
+        raw_node=raw_node,
+        options=RenderOptions(diagram="sppm", show_notes=True),
+        x=0.0,
+        y=0.0,
+        width=220.0,
+        height=140.0,
+    )
+    svg = "".join(parts)
+
+    assert "Combine ingredients" in svg
+    assert "CT: 7 min" in svg
+    assert "Workers: Baker" in svg
+    assert "Note: Use cold water" in svg
+
+
+def test_node_svg_task_displays_declared_changeover_as_c_o_time() -> None:
+    node = SimpleNamespace(id="t1", kind="task", label="Set Up Oven")
+    raw_node = {
+        "metadata": {
+            "cycle_time": {"value": 5, "unit": "min"},
+            "changeover_time": {"value": 30, "unit": "min"},
+        },
+        "workers": ["Baker"],
+    }
+
+    svg = "".join(
+        _node_svg(
+            node=node,
+            raw_node=raw_node,
+            options=RenderOptions(diagram="sppm"),
+            x=0.0,
+            y=0.0,
+            width=220.0,
+            height=140.0,
+        )
+    )
+
+    assert "CT: 5 min" in svg
+    assert "C/O: 30 min" in svg
+    assert "CO: 30 min crossover" not in svg
+
+
+def test_node_svg_decision_omits_info_lines_even_when_metadata_present() -> None:
+    node = SimpleNamespace(id="d1", kind="decision", label="Quality OK?")
+    raw_node = {
+        "metadata": {
+            "cycle_time": {"value": 12, "unit": "min"},
+            "description": "Review output",
+        },
+        "workers": ["Inspector"],
+        "note": "Escalate if needed",
+    }
+
+    parts = _node_svg(
+        node=node,
+        raw_node=raw_node,
+        options=RenderOptions(diagram="sppm", show_notes=True),
+        x=0.0,
+        y=0.0,
+        width=180.0,
+        height=120.0,
+    )
+    svg = "".join(parts)
+
+    assert "Quality OK?" in svg
+    assert "CT:" not in svg
+    assert "Workers:" not in svg
+    assert "Note:" not in svg
+
+
+def test_node_svg_queue_renders_wait_time_line() -> None:
+    node = SimpleNamespace(id="q1", kind="queue", label="Prep Queue")
+    raw_node = {"metadata": {"wait_time": {"value": 9, "unit": "min"}}}
+
+    parts = _node_svg(
+        node=node,
+        raw_node=raw_node,
+        options=RenderOptions(diagram="sppm"),
+        x=20.0,
+        y=30.0,
+        width=160.0,
+        height=160.0,
+    )
+    svg = "".join(parts)
+
+    assert "Prep Queue" in svg
+    assert "WT: 9 min" in svg
+    assert 'fill="#FFB74D"' in svg
+    assert 'fill="#FFFFFF"' in svg
+    assert 'font-size="14" font-weight="600"' in svg
+    assert 'points="20.0,30.0 180.0,30.0 152.0,86.0 48.0,86.0"' in svg
+    assert svg.index('data-node-queue-color-band="true"') < svg.index("Prep Queue")
+
+
+def test_node_svg_queue_distinguishes_missing_and_zero_wait_time() -> None:
+    node = SimpleNamespace(id="q1", kind="queue", label="Prep Queue")
+    options = RenderOptions(diagram="sppm")
+
+    missing_svg = "".join(
+        _node_svg(
+            node=node,
+            raw_node={"metadata": {}},
+            options=options,
+            x=20.0,
+            y=30.0,
+            width=160.0,
+            height=160.0,
+        )
+    )
+    zero_svg = "".join(
+        _node_svg(
+            node=node,
+            raw_node={"metadata": {"wait_time": {"value": 0, "unit": "min"}}},
+            options=options,
+            x=20.0,
+            y=30.0,
+            width=160.0,
+            height=160.0,
+        )
+    )
+
+    assert "WT:" not in missing_svg
+    assert "WT: 0 min" in zero_svg
+
+
+def test_node_svg_task_uses_larger_body_text() -> None:
+    node = SimpleNamespace(id="t1", kind="task", label="Mix Dough")
+    raw_node = {
+        "metadata": {"cycle_time": {"value": 7, "unit": "min"}},
+        "workers": ["Baker"],
+    }
+
+    svg = "".join(
+        _node_svg(
+            node=node,
+            raw_node=raw_node,
+            options=RenderOptions(diagram="sppm"),
+            x=0.0,
+            y=0.0,
+            width=220.0,
+            height=140.0,
+        )
+    )
+
+    assert 'font-size="12" font-weight="400"' in svg
+
+
+def test_node_svg_queue_uses_selected_theme_colors() -> None:
+    node = SimpleNamespace(id="q1", kind="queue", label="Prep Queue")
+    raw_node = {"metadata": {"wait_time": {"value": 9, "unit": "min"}}}
+
+    svg = "".join(
+        _node_svg(
+            node=node,
+            raw_node=raw_node,
+            options=RenderOptions(diagram="sppm", sppm_theme="flatly"),
+            x=20.0,
+            y=30.0,
+            width=160.0,
+            height=160.0,
+        )
+    )
+
+    assert 'fill="#F39C12"' in svg
+    assert 'stroke="#C27D0E"' in svg
+    assert 'fill="#2C3E50">Prep Queue' in svg
+
+
+def test_node_svg_decision_uses_selected_primary_theme_colors() -> None:
+    node = SimpleNamespace(id="d1", kind="decision", label="Quality OK?")
+
+    svg = "".join(
+        _node_svg(
+            node=node,
+            raw_node={"metadata": {}},
+            options=RenderOptions(diagram="sppm", sppm_theme="flatly"),
+            x=20.0,
+            y=30.0,
+            width=160.0,
+            height=120.0,
+        )
+    )
+
+    assert 'fill="#D5D8DC"' in svg
+    assert 'stroke="#2C3E50"' in svg
+    assert 'fill="#121920">Quality OK?' in svg
+
+
+@pytest.mark.parametrize(
+    ("kind", "metadata", "fill", "border", "title_fill"),
+    [
+        ("task", {"value_class": "VA"}, "#0B5D5A", "#CDD5D5", "#FFFFFF"),
+        ("task", {"value_class": "RNVA"}, "#8A5A00", "#CDD5D5", "#FFFFFF"),
+        ("task", {"value_class": "NVA"}, "#A43232", "#CDD5D5", "#FFFFFF"),
+        ("task", {}, "#FFFFFF", "#CDD5D5", "#1F2933"),
+        ("queue", {}, "#F1F4F3", "#1F2933", "#1F2933"),
+        ("decision", {}, "#1D5D88", "#1D5D88", "#FFFFFF"),
+        ("start", {}, "#FFFFFF", "#0B5D5A", "#1F2933"),
+    ],
+)
+def test_node_svg_uses_mpi_lms_semantic_roles(
+    kind: str,
+    metadata: dict[str, str],
+    fill: str,
+    border: str,
+    title_fill: str,
+) -> None:
+    node = SimpleNamespace(id="node", kind=kind, label="Node title")
+
+    svg = "".join(
+        _node_svg(
+            node=node,
+            raw_node={"metadata": metadata},
+            options=RenderOptions(diagram="sppm", theme="mpi-lms"),
+            x=20.0,
+            y=30.0,
+            width=160.0,
+            height=120.0,
+        )
+    )
+
+    assert f'fill="{fill}"' in svg
+    assert f'stroke="{border}"' in svg
+    assert f'fill="{title_fill}">Node title' in svg

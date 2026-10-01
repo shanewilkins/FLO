@@ -1,0 +1,438 @@
+# FLO Core Language
+
+Purpose: define the normative meaning of FLO source documents, the canonical
+compiled process model, and the minimum semantic rules that implementations
+must enforce.
+
+## Intent
+
+FLO is a declarative process language.
+Authors describe process facts such as ordered steps, branch points, waiting,
+ownership, and supporting metadata.
+
+Implementations compile that authored process description into a canonical,
+graph-shaped process model that is independent of any single rendering surface.
+
+This compiled model is the semantic foundation for validation,
+visualization, analysis, and downstream integrations.
+Renderers, exporters, and CLI commands operate on this shared meaning rather
+than inventing alternate process semantics.
+
+## Source document conventions
+
+The FLO source format uses a small set of top-level conventions before authored
+process content is compiled into the canonical process model.
+
+## Authoring model
+
+FLO's normative source-authoring model is process-first rather than graph-first.
+
+1. Ordered steps are the primary source form
+    - Authors normally declare a `steps` list in business sequence order.
+    - When no explicit top-level `transitions` or `edges` list is provided,
+       implementations must synthesize default control flow between adjacent
+       non-`end` steps.
+
+2. Branching is declared locally
+    - A branch point explicitly states how one incoming flow produces or selects
+       multiple outgoing paths.
+    - A `decision` evaluates a condition and declares named `outcomes`.
+    - A generic `branch` selects one route using a declared branch mode and may
+       declare local named `routes`.
+    - A `parallel_split` activates every outgoing path and does not select one.
+    - Local outcomes and routes compile into directed control-flow edges in the
+       canonical process model.
+
+3. Explicit transitions are optional
+    - Top-level `transitions` or `edges` may be used for advanced,
+       non-local, or compatibility-oriented control-flow authoring.
+    - When an explicit transitions list is present, it is the authoritative
+       control-flow declaration for that source document.
+
+4. Graph structure is compiled semantic form
+    - Nodes and edges remain the canonical internal and serialized process
+       structure.
+    - In normal authoring, that graph is derived from the process description
+       rather than authored directly.
+
+### Top-level conventions
+
+1. Version declaration
+   - A FLO source document must declare `spec_version`.
+   - The current supported language version is `"0.1"`.
+
+2. Composed source documents
+   - FLO source documents may include other source files via top-level include
+     directives.
+   - `includes` is the canonical list form.
+   - `include` is a supported single-value alias.
+
+3. Include resolution
+   - Include paths are resolved relative to the current source file.
+   - The entry file's parent directory is the source trust root. Resolved
+     absolute paths, parent traversal, and symlinks may not escape it.
+   - Include cycles are invalid.
+   - Duplicate step identifiers introduced by composition are invalid.
+   - Composition enforces the deterministic file-size, include-count,
+     include-depth, and expanded-byte limits in
+     `docs/policy/source_trust.md`.
+
+## Canonical authored primitives
+
+FLO's accepted authored semantic model is process-first.
+
+Process-level collections:
+
+- `items` is the canonical collection for flow objects.
+- `resources` is the canonical collection for performers and enabling support.
+- `locations` is the canonical collection for movement-relevant places.
+
+Canonical item kinds:
+
+- `material`
+- `information`
+
+Canonical resource kinds:
+
+- `person`
+- `equipment`
+
+Canonical step-level relations:
+
+- `consumes`
+- `produces`
+- `performed_by`
+- `uses`
+- `location`
+
+Compatibility posture:
+
+- Legacy aliases such as `materials`, `workers`, `equipment`, `inputs`, and
+   `outputs` remain accepted for compatibility in the current v0.1
+   implementation.
+- New normative examples and guidance should use canonical `items`,
+   `resources`, `consumes`, `produces`, `performed_by`, and `uses`.
+
+## Core entities
+
+The canonical compiled FLO process model includes the following entity
+families:
+
+1. Process
+   - A named, versionable process definition with stable identity and optional
+     metadata.
+
+2. Node
+   - The compiled representation of a process step or control point.
+
+3. Edge
+   - A compiled directed relationship between nodes representing control flow.
+
+4. Lane
+   - An optional grouping surface for nodes, commonly used for role,
+     department, or system responsibility.
+
+5. Item
+    - A process-level declared flow object that may be consumed, produced,
+       transferred, or reworked.
+
+6. Resource
+    - A process-level declared performer or enabling support entity used by one
+       or more steps.
+
+7. Location
+    - A process-level declared place where work occurs or through which items
+       or people move.
+
+8. Timing and descriptive metadata
+    - Optional descriptive metadata that enriches nodes, edges, and the process
+       without changing the fundamental process model.
+
+## Node types
+
+The current normative node vocabulary is:
+
+- `start`
+- `end`
+- `task`
+- `system_task`
+- `queue`
+- `wait`
+- `decision`
+- `branch`
+- `subprocess`
+- `parallel_split`
+- `parallel_join`
+
+Other node families may be added later, but this set defines the current
+normative baseline.
+
+Current node-family intent:
+
+- `queue` represents explicit waiting or buffering before work begins.
+- `wait` represents an explicit hold state without implying active work.
+- `subprocess` represents a collapsible child-process boundary in the source
+   model and may be projected differently by renderers.
+- `decision` evaluates a condition and selects one named outcome.
+- `branch` selects one route using a declared non-decision mechanism.
+- A `branch` must declare `branch.mode` as `dispatch`, `probabilistic`,
+   `external`, or `unspecified`.
+- Workload leveling is modeled as `branch.mode: dispatch` with a policy such as
+   `least_loaded`; it is not a decision outcome.
+- `parallel_split` starts one-to-many concurrent control flow.
+- `parallel_join` synchronizes many-to-one concurrent control flow.
+
+## Canonical relation semantics
+
+FLO models several authored relations as first-class semantic surfaces.
+
+1. Control-flow relations
+    - Default sequence, decision outcomes, generic branch routes, explicit
+       transitions, and rework edges all compile into canonical directed edges.
+    - `outcome` belongs only to an edge leaving a `decision`.
+    - `route` belongs only to an edge leaving a generic `branch`.
+    - When an edge declares both `outcome` and `label`, renderers use `label`
+       as display text while preserving `outcome` as the semantic value.
+
+2. Handoff relation
+   - `handoff` is a first-class transition relation.
+   - In the current canonical structural contract it is represented as a
+     boolean edge field.
+   - Optional typed classification such as `handoff_type` may be attached in
+     edge metadata.
+
+3. Item relations
+   - `consumes` and `produces` identify declared process items used or emitted
+     by a step.
+
+4. Resource relations
+   - `performed_by` identifies declared `person` resources.
+   - `uses` identifies declared `equipment` resources.
+
+5. Location relation
+   - `location` identifies the declared process location associated with a
+     step.
+
+6. Rework relation
+   - `rework` is a relation on an edge, not a node kind.
+   - An edge may be both `rework` and `handoff`.
+
+## Timing semantics
+
+FLO distinguishes waiting and active setup or work time because they represent
+different process facts and should not be collapsed into one metric.
+
+Normative timing-placement rules:
+
+1. Queue-state duration belongs on queue nodes
+    - `metadata.wait_time` is canonical on `queue` nodes.
+    - It describes an explicitly modeled waiting or buffering state.
+
+2. Worksheet waiting evidence belongs on work nodes
+    - `metadata.wait_before` is canonical on `task`, `system_task`, and
+       `subprocess` nodes.
+    - It records elapsed waiting from arrival for that work step until active
+       work or setup begins.
+    - Authored task-level `metadata.wait_time` is accepted as a source
+       compatibility alias and compiles to `metadata.wait_before`.
+    - Canonical IR must not retain task-level `metadata.wait_time`.
+
+3. Promoted queue projections must identify their evidence
+    - A work-node `wait_before` may declare `measurement_id`.
+    - A queue `wait_time` that repeats or aggregates work-node waiting evidence
+       declares the corresponding IDs in `measurement_refs`.
+    - A directly preceding queue and work node may instead share one
+       `measurement_id` when they present the same measurement.
+    - Directly adjacent queue and work waits with distinct non-empty
+       `measurement_id` values are independent measurements and both contribute
+       to static totals.
+    - Linked queue projections remain renderable but contribute no additional
+       waiting time to static totals.
+    - An independently identified, unlinked queue `wait_time` remains an
+       independent timing contribution.
+
+4. Active work and setup time belong on work nodes
+   - `metadata.cycle_time`, `metadata.crossover_time`, and alias fields such as
+     `transfer_time` or `changeover_time` belong on work nodes such as `task`,
+     `system_task`, and `subprocess`.
+
+5. Queue nodes are delay-only nodes
+    - Queue nodes must not carry active work or setup-time fields such as
+       `cycle_time`, `crossover_time`, `transfer_time`, or `changeover_time`.
+
+6. Authors should model promoted waiting structurally
+   - If a process includes substantial waiting before work begins, authors
+       may promote it to an explicit `queue` node without removing the
+       worksheet-derived `wait_before` evidence from the downstream work step.
+
+These rules preserve the semantic distinction between queueing delay and
+changeover or processing time.
+
+## Normative semantic rules
+
+An implementation of FLO must enforce these minimum semantic rules:
+
+1. Stable node identity
+   - Every authored step or compiled node must have a unique identifier within
+     the process.
+
+2. Single entry point
+   - Exactly one `start` node is required.
+
+3. At least one termination point
+   - At least one `end` node is required.
+
+4. Explicit transition precedence
+   - If a top-level `transitions` or `edges` list is present, implementations
+     must treat that list as the authoritative source of control flow for the
+     document rather than also synthesizing default sequential edges.
+
+5. Implicit sequential synthesis
+   - If no top-level `transitions` or `edges` list is present,
+     implementations must synthesize a sequential edge from each non-`end`
+     step to the next step in source order.
+   - A step with non-empty `outcomes` must not also receive an additional
+     implicit sequential edge solely from adjacency.
+
+6. Outcome-based branching synthesis
+   - `outcomes` declarations must compile into outgoing edges from the
+     declaring step to the named target steps.
+
+7. Route-based branching synthesis
+    - `routes` declarations must compile into outgoing edges from a generic
+       `branch` to the named target steps.
+    - Named routes identify alternatives without claiming that they are evaluated
+       decision outcomes.
+
+8. Edge endpoint validity
+   - Every compiled edge source and target must resolve to a declared node.
+
+9. Explicit branch-point semantics
+   - Every `decision` node must have at least two outgoing compiled edges.
+    - Every generic `branch` node must have at least two outgoing compiled edges
+       and a supported `branch.mode`.
+    - Every node with multiple outgoing edges must be a `decision`, `branch`, or
+       `parallel_split`.
+    - Ordinary tasks, queues, starts, and other non-branch nodes may not fan out
+       because the path-selection semantics would be ambiguous.
+
+10. Predecessor rule
+   - Every non-`start` node must have at least one predecessor.
+
+11. Successor rule
+    - Every non-`end` node must have at least one successor.
+
+12. Reachability from start
+    - Every node must be reachable from the `start` node.
+
+13. Reachability to termination
+    - Every node must be able to reach at least one `end` node.
+
+14. Cycles are allowed
+    - Cycles are permitted in the process graph; they are not invalid solely
+      because they are cyclic.
+
+15. Queue metadata validation
+    - If `metadata.buffer_capacity` is present on a queue node, it must be an
+      integer greater than or equal to `1`.
+    - `metadata.queue_policy` is optional under the current v0.1 implementation
+      and may be used by downstream analysis or future queueing models.
+
+16. Item relation integrity
+      - If process-level `items` are declared, every `consumes` and `produces`
+         reference must resolve to a declared process item id.
+
+17. Resource relation integrity
+      - If process-level `resources` are declared, every `performed_by` and
+         `uses` reference must resolve to a declared process resource id.
+
+18. Resource kind compatibility
+      - `performed_by` references must resolve to resources of kind `person`.
+      - `uses` references must resolve to resources of kind `equipment`.
+
+19. Explicit handoff typing and shape
+      - If `handoff` is present on an edge or transition, it must be boolean in
+         the canonical structural contract.
+      - Optional typed handoff metadata must not contradict the structural
+         meaning of the edge.
+
+20. Parallel structure validity
+      - `parallel_split` nodes must have at least two outgoing edges.
+      - `parallel_split` nodes must reach at least one `parallel_join` node.
+      - `parallel_join` nodes must have at least two incoming edges.
+      - `parallel_join` nodes must be reachable from at least one
+         `parallel_split` node.
+
+   ## Rendering boundary
+
+   The canonical language distinguishes decisions, generic branches, and parallel
+   splits even when a renderer does not yet provide distinct geometry for every
+   branch-point kind.
+   The current SPPM MVP is required to render decisions and parallel structure.
+   Dedicated generic-branch and dispatch visualization is deferred and must not be
+   simulated by relabeling a generic branch as a decision.
+
+## Serialization relationship
+
+The canonical compiled process model is conceptually prior to any single
+serialization.
+
+- `schema/flo_ir.json` defines the authoritative serialized structural contract.
+- Implementations may use typed objects internally.
+- JSON output is a serialization of the canonical compiled model, not a
+   separate source of semantic truth.
+
+Current process-context fields have the following lossless canonical mapping:
+
+| Authored field | Canonical IR field | Serialized JSON field |
+| --- | --- | --- |
+| `process.owner` | `IR.process_owner` | `process.owner` |
+| `process.business_units` | `IR.business_units` | `process.business_units` |
+| ordered `lanes` entries, including `id`, `name`, `type`, and additional metadata | `IR.lanes` in authored order | top-level `lanes` in the same order |
+| a node nested under a subprocess | `Node.subprocess_parent` | `nodes[*].subprocess_parent` |
+
+Compilation must preserve these values exactly. A source form that cannot be
+represented by this mapping is rejected rather than silently dropped.
+
+Canonical data follows the three-tier boundary recorded in
+`docs/design/adr/canonical_ir_metadata_and_subprocess_hierarchy.md`:
+
+- identity, referenced entities, lanes, graph structure, and subprocess
+  membership are canonical semantics;
+- render and publication intent are typed extensions that do not redefine
+  process control flow; and
+- unknown metadata is an opaque annotation that is preserved without FLO
+  assigning it implicit meaning.
+
+Subprocess containment is represented by a flat node collection and an
+optional `subprocess_parent` reference. Containment does not imply a
+control-flow edge. Rich parent, child-map, bounded-inline, continuation, and
+pagination projections are separate `0.4` presentation commitments.
+
+## Scope boundaries
+
+FLO core language semantics cover:
+
+- process structure
+- step identity and compiled node identity
+- authored control-flow declarations and compiled control-flow rules
+- optional lanes and descriptive metadata
+
+FLO core language semantics do not by themselves define:
+
+- renderer-specific visual conventions
+- movement-analysis semantics beyond their dependence on the process graph
+- simulation behavior
+- scheduling or workflow execution
+
+## Relationship to other documents
+
+- Structural serialization authority belongs in `schema/flo_ir.json`.
+- Diagram-specific normative meaning belongs in the other files under
+  `docs/specs/`.
+- The CLI/interface contract lives in `docs/specs/cli_error_contract.md`.
+- Timing rationale and modeling background are further explained in
+   `docs/design/wait-time-vs-changeover-time-semantics.md`, but this file owns
+   the normative rule.
+- The historical design note in `docs/design/history/IR.md` is explanatory background
+   only; this file is the normative semantic source.

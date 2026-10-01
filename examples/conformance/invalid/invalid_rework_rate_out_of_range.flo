@@ -1,0 +1,44 @@
+spec_version: "0.1"
+
+process:
+  id: invalid_rework_rate_out_of_range
+  name: Invalid Rework Rate Out Of Range
+
+steps:
+  - id: start
+    kind: start
+
+  - id: process
+    kind: task
+
+  - id: decision
+    kind: decision
+    outcomes:
+      done: end
+      retry: rework
+
+  - id: rework
+    kind: task
+
+  - id: end
+    kind: end
+
+transitions:
+  - source: start
+    target: process
+  - source: process
+    target: decision
+  - source: decision
+    target: end
+    outcome: done
+  - source: decision
+    target: rework
+    outcome: retry
+    edge_type: rework
+    rework: true
+    metadata:
+      rate: 1.2
+  - source: rework
+    target: process
+    edge_type: rework
+    rework: true

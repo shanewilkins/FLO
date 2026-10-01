@@ -1,0 +1,699 @@
+"""Row alignment and canvas geometry helpers for direct SPPM SVG rendering."""
+
+from __future__ import annotations
+
+import itertools
+from dataclasses import replace
+from typing import Any
+
+from .._diagnostics import RenderDiagnostic
+from ..layout_core.models import LayoutBounds, LayoutPoint
+from ..layout_core.rework_geometry import infer_rework_row_ids, translate_edge_points
+
+_MIN_MAINLINE_REWORK_GAP_PX = 56.0
+_MAX_REWORK_ALIGNMENT_DELTA_PX = 48.0
+
+
+def _enforce_sppm_row_alignment(
+    *,
+    node_bounds: dict[str, LayoutBounds],
+    edge_paths: dict[tuple[str, str], Any],
+    lanes: tuple[Any, ...],
+) -> tuple[dict[str, LayoutBounds], dict[tuple[str, str], Any]]:
+    if any(
+        str(getattr(lane, "id", "")).startswith("__sppm_row_wrap_") for lane in lanes
+    ):
+        return dict(node_bounds), _orthogonalized_edges(edge_paths=edge_paths)
+
+    mainline_ids, rework_ids = _sppm_row_ids(
+        lanes=lanes,
+        node_bounds=node_bounds,
+        edge_paths=edge_paths,
+    )
+    if not mainline_ids or not rework_ids:
+        return dict(node_bounds), _orthogonalized_edges(edge_paths=edge_paths)
+
+    shifts = _initial_row_shifts(
+        node_bounds=node_bounds,
+        mainline_ids=mainline_ids,
+        rework_ids=rework_ids,
+    )
+    _align_rework_clusters(
+        node_bounds=node_bounds,
+        edge_paths=edge_paths,
+        mainline_ids=mainline_ids,
+        rework_ids=rework_ids,
+        shifts=shifts,
+    )
+    _enforce_mainline_min_horizontal_gap(
+        node_bounds=node_bounds,
+        mainline_ids=mainline_ids,
+        shifts=shifts,
+    )
+    _clamp_shifted_nodes_between_terminals(node_bounds=node_bounds, shifts=shifts)
+
+    transformed_nodes = _apply_node_shifts(node_bounds=node_bounds, shifts=shifts)
+    transformed_edges = _apply_edge_shifts(
+        edge_paths=edge_paths,
+        shifts=shifts,
+        node_bounds=transformed_nodes,
+    )
+    return transformed_nodes, transformed_edges
+
+
+def _display_canvas_bounds(
+    *,
+    base_canvas: LayoutBounds,
+    node_bounds: dict[str, LayoutBounds],
+    edge_paths: dict[tuple[str, str], Any],
+) -> LayoutBounds:
+    max_x = float("-inf")
+    max_y = float("-inf")
+    for bounds in node_bounds.values():
+        max_x = max(max_x, bounds.x_px + bounds.width_px)
+        max_y = max(max_y, bounds.y_px + bounds.height_px)
+    for edge_path in edge_paths.values():
+        for point in edge_path.points:
+            max_x = max(max_x, point.x_px)
+            max_y = max(max_y, point.y_px)
+    if max_x == float("-inf") or max_y == float("-inf"):
+        return base_canvas
+    max_x = max(max_x, base_canvas.x_px)
+    max_y = max(max_y, base_canvas.y_px)
+    return LayoutBounds(
+        x_px=base_canvas.x_px,
+        y_px=base_canvas.y_px,
+        width_px=max_x - base_canvas.x_px,
+        height_px=max_y - base_canvas.y_px,
+    )
+
+
+def _sppm_row_ids(
+    *,
+    lanes: tuple[Any, ...],
+    node_bounds: dict[str, LayoutBounds],
+    edge_paths: dict[tuple[str, str], Any],
+) -> tuple[set[str], set[str]]:
+    mainline_ids: set[str] = set()
+    rework_ids: set[str] = set()
+    for lane in lanes:
+        lane_id = str(getattr(lane, "id", ""))
+        lane_node_ids = {
+            str(node_id)
+            for node_id in getattr(lane, "node_ids", ())
+            if str(node_id) in node_bounds
+        }
+        if lane_id == "__sppm_row_mainline":
+            mainline_ids.update(lane_node_ids)
+        elif lane_id == "__sppm_row_rework":
+            rework_ids.update(lane_node_ids)
+    if mainline_ids and rework_ids:
+        return mainline_ids, rework_ids
+
+    return _infer_row_ids_from_rework_edges(
+        node_bounds=node_bounds,
+        edge_paths=edge_paths,
+    )
+
+
+def _infer_row_ids_from_rework_edges(
+    *,
+    node_bounds: dict[str, LayoutBounds],
+    edge_paths: dict[tuple[str, str], Any],
+) -> tuple[set[str], set[str]]:
+    return infer_rework_row_ids(
+        node_ids=set(node_bounds),
+        edges=(
+            (
+                source_id,
+                target_id,
+                bool(getattr(edge_path, "is_rework", False)),
+                str(getattr(edge_path, "rework_variant", "") or "") or None,
+            )
+            for (source_id, target_id), edge_path in edge_paths.items()
+        ),
+    )
+
+
+def row_gap_diagnostics(
+    *,
+    node_bounds: dict[str, LayoutBounds],
+    lanes: tuple[Any, ...],
+    edge_paths: dict[tuple[str, str], Any],
+) -> tuple[RenderDiagnostic, ...]:
+    """Report a warning when mainline and rework rows are packed too tightly."""
+    mainline_ids, rework_ids = _sppm_row_ids(
+        lanes=lanes,
+        node_bounds=node_bounds,
+        edge_paths=edge_paths,
+    )
+    if not mainline_ids or not rework_ids:
+        return ()
+
+    mainline_bottom = max(
+        node_bounds[node_id].y_px + node_bounds[node_id].height_px
+        for node_id in mainline_ids
+    )
+    rework_top = min(node_bounds[node_id].y_px for node_id in rework_ids)
+    measured_gap_px = rework_top - mainline_bottom
+    if measured_gap_px >= _MIN_MAINLINE_REWORK_GAP_PX:
+        return ()
+
+    return (
+        RenderDiagnostic(
+            code="sppm-row-gap-tight",
+            severity="warning",
+            message=(
+                "Mainline-to-rework row separation is below the minimum spacing target."
+            ),
+            metadata={
+                "measured_gap_px": round(measured_gap_px, 2),
+                "min_gap_px": _MIN_MAINLINE_REWORK_GAP_PX,
+            },
+        ),
+    )
+
+
+def rework_alignment_diagnostics(
+    *,
+    node_bounds: dict[str, LayoutBounds],
+    lanes: tuple[Any, ...],
+    edge_paths: dict[tuple[str, str], Any],
+) -> tuple[RenderDiagnostic, ...]:
+    """Report warnings when rework branch/return alignment drifts from intent."""
+    mainline_ids, rework_ids = _sppm_row_ids(
+        lanes=lanes,
+        node_bounds=node_bounds,
+        edge_paths=edge_paths,
+    )
+    if not mainline_ids or not rework_ids:
+        return ()
+
+    diagnostics: list[RenderDiagnostic] = []
+    for (source_id, target_id), edge_path in edge_paths.items():
+        variant = str(getattr(edge_path, "rework_variant", "") or "")
+        if (
+            variant == "branch"
+            and source_id in mainline_ids
+            and target_id in rework_ids
+        ):
+            _append_alignment_diagnostic(
+                diagnostics=diagnostics,
+                node_bounds=node_bounds,
+                reference_id=source_id,
+                candidate_id=target_id,
+                code="sppm-branch-alignment-delta",
+                message=(
+                    "SPPM rework branch target drifted away from its branch-source alignment intent."
+                ),
+            )
+        if (
+            variant == "return"
+            and source_id in rework_ids
+            and target_id in mainline_ids
+        ):
+            _append_alignment_diagnostic(
+                diagnostics=diagnostics,
+                node_bounds=node_bounds,
+                reference_id=target_id,
+                candidate_id=source_id,
+                code="sppm-return-alignment-delta",
+                message=(
+                    "SPPM rework return source drifted away from its reintegration-target alignment intent."
+                ),
+            )
+
+    return tuple(diagnostics)
+
+
+def _append_alignment_diagnostic(
+    *,
+    diagnostics: list[RenderDiagnostic],
+    node_bounds: dict[str, LayoutBounds],
+    reference_id: str,
+    candidate_id: str,
+    code: str,
+    message: str,
+) -> None:
+    reference_bounds = node_bounds.get(reference_id)
+    candidate_bounds = node_bounds.get(candidate_id)
+    if reference_bounds is None or candidate_bounds is None:
+        return
+    reference_center_x = reference_bounds.x_px + (reference_bounds.width_px / 2.0)
+    candidate_center_x = candidate_bounds.x_px + (candidate_bounds.width_px / 2.0)
+    delta_px = abs(candidate_center_x - reference_center_x)
+    if delta_px <= _MAX_REWORK_ALIGNMENT_DELTA_PX:
+        return
+    diagnostics.append(
+        RenderDiagnostic(
+            code=code,
+            severity="warning",
+            message=message,
+            metadata={
+                "reference_node": reference_id,
+                "candidate_node": candidate_id,
+                "alignment_delta_px": round(delta_px, 2),
+                "max_expected_delta_px": _MAX_REWORK_ALIGNMENT_DELTA_PX,
+            },
+        )
+    )
+
+
+def _orthogonalized_edges(
+    *, edge_paths: dict[tuple[str, str], Any]
+) -> dict[tuple[str, str], Any]:
+    return {
+        edge_key: replace(edge_path, points=_orthogonalize_points(edge_path.points))
+        for edge_key, edge_path in edge_paths.items()
+    }
+
+
+def _initial_row_shifts(
+    *,
+    node_bounds: dict[str, LayoutBounds],
+    mainline_ids: set[str],
+    rework_ids: set[str],
+) -> dict[str, tuple[float, float]]:
+    shifts: dict[str, tuple[float, float]] = dict.fromkeys(node_bounds, (0.0, 0.0))
+    mainline_center_y = sum(
+        node_bounds[node_id].y_px + (node_bounds[node_id].height_px / 2.0)
+        for node_id in mainline_ids
+    ) / float(len(mainline_ids))
+    max_mainline_height = max(
+        node_bounds[node_id].height_px for node_id in mainline_ids
+    )
+    max_rework_height = max(node_bounds[node_id].height_px for node_id in rework_ids)
+    rework_center_y = (
+        mainline_center_y
+        + (max_mainline_height / 2.0)
+        + (max_rework_height / 2.0)
+        + 96.0
+    )
+    for node_id in mainline_ids:
+        bounds = node_bounds[node_id]
+        center_y = bounds.y_px + (bounds.height_px / 2.0)
+        shifts[node_id] = (0.0, mainline_center_y - center_y)
+    for node_id in rework_ids:
+        bounds = node_bounds[node_id]
+        center_y = bounds.y_px + (bounds.height_px / 2.0)
+        shifts[node_id] = (0.0, rework_center_y - center_y)
+    return shifts
+
+
+def _align_rework_clusters(
+    *,
+    node_bounds: dict[str, LayoutBounds],
+    edge_paths: dict[tuple[str, str], Any],
+    mainline_ids: set[str],
+    rework_ids: set[str],
+    shifts: dict[str, tuple[float, float]],
+) -> None:
+    rework_adjacency, branch_pairs = _rework_graph(
+        edge_paths=edge_paths,
+        mainline_ids=mainline_ids,
+        rework_ids=rework_ids,
+    )
+    visited_rework_ids: set[str] = set()
+    sorted_pairs = _sorted_branch_pairs(
+        branch_pairs=branch_pairs, node_bounds=node_bounds
+    )
+    return_target_by_source = _return_target_by_source(
+        edge_paths=edge_paths,
+        mainline_ids=mainline_ids,
+    )
+    for source_id, target_id in sorted_pairs:
+        if target_id in visited_rework_ids:
+            continue
+        cluster = _connected_cluster(seed=target_id, adjacency=rework_adjacency)
+        if not cluster:
+            continue
+        ordered_cluster = _ordered_cluster(
+            target_id=target_id,
+            cluster=cluster,
+            adjacency=rework_adjacency,
+            node_bounds=node_bounds,
+        )
+        source_center_x = node_bounds[source_id].x_px + (
+            node_bounds[source_id].width_px / 2.0
+        )
+        tail_node_id = next(
+            (
+                node_id
+                for node_id in reversed(ordered_cluster)
+                if node_id in return_target_by_source
+            ),
+            None,
+        )
+        tail_target_center_x = _tail_target_center_x(
+            tail_node_id=tail_node_id,
+            return_target_by_source=return_target_by_source,
+            node_bounds=node_bounds,
+        )
+        for index, node_id in enumerate(ordered_cluster):
+            bounds = node_bounds[node_id]
+            current_center_x = bounds.x_px + (bounds.width_px / 2.0)
+            target_center_x = _cluster_target_center_x(
+                index=index,
+                node_id=node_id,
+                ordered_cluster=ordered_cluster,
+                source_center_x=source_center_x,
+                tail_target_center_x=tail_target_center_x,
+                tail_node_id=tail_node_id,
+                current_center_x=current_center_x,
+            )
+            _, dy = shifts.get(node_id, (0.0, 0.0))
+            shifts[node_id] = (target_center_x - current_center_x, dy)
+        visited_rework_ids.update(cluster)
+
+
+def _sorted_branch_pairs(
+    *,
+    branch_pairs: list[tuple[str, str]],
+    node_bounds: dict[str, LayoutBounds],
+) -> list[tuple[str, str]]:
+    return sorted(
+        branch_pairs,
+        key=lambda pair: (
+            node_bounds[pair[0]].x_px + (node_bounds[pair[0]].width_px / 2.0),
+            pair[0],
+            pair[1],
+        ),
+    )
+
+
+def _return_target_by_source(
+    *,
+    edge_paths: dict[tuple[str, str], Any],
+    mainline_ids: set[str],
+) -> dict[str, str]:
+    return {
+        source_id: target_id
+        for (source_id, target_id), edge_path in edge_paths.items()
+        if str(edge_path.rework_variant or "") == "return" and target_id in mainline_ids
+    }
+
+
+def _tail_target_center_x(
+    *,
+    tail_node_id: str | None,
+    return_target_by_source: dict[str, str],
+    node_bounds: dict[str, LayoutBounds],
+) -> float | None:
+    if tail_node_id is None:
+        return None
+    target_id = return_target_by_source.get(tail_node_id)
+    if target_id is None:
+        return None
+    target_bounds = node_bounds[target_id]
+    return target_bounds.x_px + (target_bounds.width_px / 2.0)
+
+
+def _cluster_target_center_x(
+    *,
+    index: int,
+    node_id: str,
+    ordered_cluster: list[str],
+    source_center_x: float,
+    tail_target_center_x: float | None,
+    tail_node_id: str | None,
+    current_center_x: float,
+) -> float:
+    if tail_target_center_x is not None and len(ordered_cluster) > 1:
+        ratio = index / float(len(ordered_cluster) - 1)
+        return source_center_x * (1.0 - ratio) + tail_target_center_x * ratio
+    if index == 0:
+        # Keep branch targets directly under the branch source.
+        return source_center_x
+    if tail_target_center_x is not None and node_id == tail_node_id:
+        # Keep return sources directly under reintegration targets.
+        return tail_target_center_x
+    # Avoid aggressive horizontal spreading in postprocess when anchor intent is
+    # incomplete; preserve ELK-native horizontal placement.
+    return current_center_x
+
+
+def _rework_graph(
+    *,
+    edge_paths: dict[tuple[str, str], Any],
+    mainline_ids: set[str],
+    rework_ids: set[str],
+) -> tuple[dict[str, set[str]], list[tuple[str, str]]]:
+    rework_adjacency: dict[str, set[str]] = {node_id: set() for node_id in rework_ids}
+    branch_pairs: list[tuple[str, str]] = []
+    for (source_id, target_id), edge_path in edge_paths.items():
+        if (
+            source_id in rework_ids
+            and target_id in rework_ids
+            and not bool(edge_path.is_rework)
+        ):
+            rework_adjacency[source_id].add(target_id)
+            rework_adjacency[target_id].add(source_id)
+        if (
+            str(edge_path.rework_variant or "") == "branch"
+            and source_id in mainline_ids
+            and target_id in rework_ids
+        ):
+            branch_pairs.append((source_id, target_id))
+    return rework_adjacency, branch_pairs
+
+
+def _connected_cluster(*, seed: str, adjacency: dict[str, set[str]]) -> set[str]:
+    cluster: set[str] = set()
+    stack = [seed]
+    while stack:
+        current = stack.pop()
+        if current in cluster:
+            continue
+        cluster.add(current)
+        for neighbor in adjacency.get(current, set()):
+            if neighbor not in cluster:
+                stack.append(neighbor)
+    return cluster
+
+
+def _ordered_cluster(
+    *,
+    target_id: str,
+    cluster: set[str],
+    adjacency: dict[str, set[str]],
+    node_bounds: dict[str, LayoutBounds],
+) -> list[str]:
+    ordered_cluster: list[str] = [target_id]
+    while True:
+        current = ordered_cluster[-1]
+        next_ids = sorted(
+            (
+                node_id
+                for node_id in adjacency.get(current, set())
+                if node_id in cluster and node_id not in ordered_cluster
+            ),
+            key=lambda node_id: (node_bounds[node_id].x_px, node_id),
+        )
+        if not next_ids:
+            break
+        ordered_cluster.append(next_ids[0])
+    for node_id in sorted(cluster):
+        if node_id not in ordered_cluster:
+            ordered_cluster.append(node_id)
+    return ordered_cluster
+
+
+def _clamp_shifted_nodes_between_terminals(
+    *,
+    node_bounds: dict[str, LayoutBounds],
+    shifts: dict[str, tuple[float, float]],
+) -> None:
+    start_id = "start" if "start" in node_bounds else None
+    stop_id = (
+        "stop"
+        if "stop" in node_bounds
+        else (
+            "end"
+            if "end" in node_bounds
+            else ("finish" if "finish" in node_bounds else None)
+        )
+    )
+    if start_id is None or stop_id is None:
+        return
+    start_bounds = node_bounds[start_id]
+    stop_bounds = node_bounds[stop_id]
+    min_center_x = start_bounds.x_px + (start_bounds.width_px / 2.0)
+    max_center_x = stop_bounds.x_px + (stop_bounds.width_px / 2.0)
+    if min_center_x > max_center_x:
+        return
+    for node_id, bounds in node_bounds.items():
+        if node_id in {start_id, stop_id}:
+            continue
+        dx, dy = shifts.get(node_id, (0.0, 0.0))
+        center_x = bounds.x_px + (bounds.width_px / 2.0) + dx
+        if center_x < min_center_x:
+            dx += min_center_x - center_x
+        elif center_x > max_center_x:
+            dx += max_center_x - center_x
+        shifts[node_id] = (dx, dy)
+
+
+def _apply_node_shifts(
+    *,
+    node_bounds: dict[str, LayoutBounds],
+    shifts: dict[str, tuple[float, float]],
+) -> dict[str, LayoutBounds]:
+    transformed_nodes: dict[str, LayoutBounds] = {}
+    for node_id, bounds in node_bounds.items():
+        dx, dy = shifts.get(node_id, (0.0, 0.0))
+        transformed_nodes[node_id] = LayoutBounds(
+            x_px=bounds.x_px + dx,
+            y_px=bounds.y_px + dy,
+            width_px=bounds.width_px,
+            height_px=bounds.height_px,
+        )
+    return transformed_nodes
+
+
+def _apply_edge_shifts(
+    *,
+    edge_paths: dict[tuple[str, str], Any],
+    shifts: dict[str, tuple[float, float]],
+    node_bounds: dict[str, LayoutBounds],
+) -> dict[tuple[str, str], Any]:
+    transformed_edges: dict[tuple[str, str], Any] = {}
+    for edge_key, edge_path in edge_paths.items():
+        source_id, target_id = edge_key
+        source_shift = shifts.get(source_id, (0.0, 0.0))
+        target_shift = shifts.get(target_id, (0.0, 0.0))
+        rebuilt_points = _rebuild_rework_route(
+            edge_path=edge_path,
+            source_bounds=node_bounds.get(source_id),
+            target_bounds=node_bounds.get(target_id),
+        )
+        translated_points = rebuilt_points or translate_edge_points(
+            edge_path.points,
+            source_shift=source_shift,
+            target_shift=target_shift,
+        )
+        shifted_label_point = edge_path.label_point
+        if rebuilt_points:
+            shifted_label_point = None
+        elif shifted_label_point is not None:
+            lx = shifted_label_point.x_px + ((source_shift[0] + target_shift[0]) / 2.0)
+            ly = shifted_label_point.y_px + ((source_shift[1] + target_shift[1]) / 2.0)
+            shifted_label_point = LayoutPoint(x_px=lx, y_px=ly)
+        transformed_edges[edge_key] = replace(
+            edge_path,
+            points=_orthogonalize_points(translated_points),
+            label_point=shifted_label_point,
+        )
+    return transformed_edges
+
+
+def _rebuild_rework_route(
+    *,
+    edge_path: Any,
+    source_bounds: LayoutBounds | None,
+    target_bounds: LayoutBounds | None,
+) -> tuple[LayoutPoint, ...] | None:
+    if source_bounds is None or target_bounds is None:
+        return None
+
+    if edge_path.rework_variant == "branch" and not edge_path.is_rework:
+        source = _bounds_anchor(source_bounds, "SOUTH")
+        target = _bounds_anchor(target_bounds, "WEST")
+        turn_y = source.y_px + max(24.0, (target.y_px - source.y_px) / 2.0)
+        approach_x = target.x_px - 24.0
+        return (
+            source,
+            LayoutPoint(x_px=source.x_px, y_px=turn_y),
+            LayoutPoint(x_px=approach_x, y_px=turn_y),
+            LayoutPoint(x_px=approach_x, y_px=target.y_px),
+            target,
+        )
+
+    if edge_path.rework_variant == "return" and edge_path.is_rework:
+        source = _bounds_anchor(source_bounds, "NORTH")
+        target = _bounds_anchor(target_bounds, "SOUTH")
+        source_clearance_y = source.y_px - 24.0
+        target_clearance_y = target.y_px + 24.0
+        corridor_x = (
+            max(
+                source_bounds.x_px + source_bounds.width_px,
+                target_bounds.x_px + target_bounds.width_px,
+            )
+            + 28.0
+        )
+        return (
+            source,
+            LayoutPoint(x_px=source.x_px, y_px=source_clearance_y),
+            LayoutPoint(x_px=corridor_x, y_px=source_clearance_y),
+            LayoutPoint(x_px=corridor_x, y_px=target_clearance_y),
+            LayoutPoint(x_px=target.x_px, y_px=target_clearance_y),
+            target,
+        )
+
+    return None
+
+
+def _bounds_anchor(bounds: LayoutBounds, side: str) -> LayoutPoint:
+    center_x = bounds.x_px + (bounds.width_px / 2.0)
+    center_y = bounds.y_px + (bounds.height_px / 2.0)
+    if side == "NORTH":
+        return LayoutPoint(x_px=center_x, y_px=bounds.y_px)
+    if side == "SOUTH":
+        return LayoutPoint(x_px=center_x, y_px=bounds.y_px + bounds.height_px)
+    if side == "WEST":
+        return LayoutPoint(x_px=bounds.x_px, y_px=center_y)
+    return LayoutPoint(x_px=bounds.x_px + bounds.width_px, y_px=center_y)
+
+
+def _enforce_mainline_min_horizontal_gap(
+    *,
+    node_bounds: dict[str, LayoutBounds],
+    mainline_ids: set[str],
+    shifts: dict[str, tuple[float, float]],
+) -> None:
+    ordered_mainline = sorted(
+        mainline_ids,
+        key=lambda node_id: (
+            node_bounds[node_id].x_px,
+            node_bounds[node_id].y_px,
+            node_id,
+        ),
+    )
+    if len(ordered_mainline) < 2:
+        return
+
+    min_gap_px = 56.0
+    propagated_dx = 0.0
+    for prev_id, current_id in itertools.pairwise(ordered_mainline):
+        prev_dx, _ = shifts.get(prev_id, (0.0, 0.0))
+        current_dx, current_dy = shifts.get(current_id, (0.0, 0.0))
+        prev_right = node_bounds[prev_id].x_px + prev_dx + node_bounds[prev_id].width_px
+        current_left = node_bounds[current_id].x_px + current_dx + propagated_dx
+        deficit = (prev_right + min_gap_px) - current_left
+        if deficit > 0.0:
+            propagated_dx += deficit
+        shifts[current_id] = (current_dx + propagated_dx, current_dy)
+
+
+def _orthogonalize_points(points: tuple[LayoutPoint, ...]) -> tuple[LayoutPoint, ...]:
+    if len(points) < 2:
+        return points
+    orthogonal: list[LayoutPoint] = [points[0]]
+    for point in points[1:]:
+        prev = orthogonal[-1]
+        dx = point.x_px - prev.x_px
+        dy = point.y_px - prev.y_px
+        if abs(dx) > 1e-6 and abs(dy) > 1e-6:
+            bend = LayoutPoint(x_px=point.x_px, y_px=prev.y_px)
+            if abs(bend.x_px - prev.x_px) > 1e-6 or abs(bend.y_px - prev.y_px) > 1e-6:
+                orthogonal.append(bend)
+        orthogonal.append(point)
+    deduped: list[LayoutPoint] = []
+    for point in orthogonal:
+        if (
+            deduped
+            and abs(deduped[-1].x_px - point.x_px) < 1e-6
+            and abs(deduped[-1].y_px - point.y_px) < 1e-6
+        ):
+            continue
+        deduped.append(point)
+    return tuple(deduped)

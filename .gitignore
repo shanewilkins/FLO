@@ -1,0 +1,37 @@
+__pycache__/
+.pytest_cache/
+*.pyc
+.DS_Store
+venv/
+flo.egg-info/
+*.egg-info/
+node_modules/
+src/flo/render/layout_core/vendor/elk.bundled.js
+src/flo/render/layout_core/vendor/ELKJS_LICENSE.md
+
+# Roadmap local data (generated exports, backups, logs, temp files)
+.roadmap/artifacts/
+.roadmap/backups/
+.roadmap/logs/
+.roadmap/*.tmp
+.roadmap/*.lock
+
+.roadmap/config.yaml  # Local user configuration (not to be shared)
+
+# Coverage output
+.coverage
+.coverage.*
+coverage.xml
+coverage.json
+
+# Local render outputs (DOT/SVG/PNG, etc.)
+renders/*
+!renders/.gitkeep
+!renders/reference/
+renders/reference/*
+!renders/reference/washnfold_white_belt.svg
+.tmp/
+
+# Working notes kept local to this repo clone
+ROADMAP_CLI_BUGS.md
+notes/

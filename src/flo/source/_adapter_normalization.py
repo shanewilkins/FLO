@@ -1,0 +1,623 @@
+"""Adapter-facing normalization helpers for compilation.
+
+This module owns adapter payload normalization concerns: process metadata,
+source node extraction/flattening, and attribute normalization.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from flo.process.schema.render_metadata import (
+    PROCESS_METADATA_PROCESS_ID_KEY,
+    PROCESS_METADATA_PROCESS_NAME_KEY,
+)
+
+_SOURCE_NODE_KINDS = {
+    "start",
+    "task",
+    "system_task",
+    "queue",
+    "wait",
+    "decision",
+    "branch",
+    "end",
+    "subprocess",
+    "parallel_split",
+    "parallel_join",
+}
+
+
+def coerce_adapter_model(adapter_model: dict[str, Any] | None) -> dict[str, Any]:
+    """Return a dictionary payload for compiler normalization."""
+    return adapter_model or {}
+
+
+def validate_adapter_contract(adapter: dict[str, Any]) -> None:
+    """Validate the strict v0.1 adapter contract for compilation.
+
+    Required payload keys are `spec_version`, `process`, and `steps`.
+    Compatibility aliases such as `nodes`, `edges`, and `from`/`to`
+    transition keys are intentionally rejected.
+    """
+    _validate_spec_version(adapter)
+    _validate_process(adapter)
+    _validate_steps(adapter)
+    _validate_transitions(adapter)
+    _validate_lanes(adapter)
+
+
+def _validate_spec_version(adapter: dict[str, Any]) -> None:
+    spec_version = adapter.get("spec_version")
+    if spec_version != "0.1":
+        raise ValueError("spec_version must be present and set to '0.1'")
+
+
+def _validate_process(adapter: dict[str, Any]) -> None:
+    process_raw = adapter.get("process")
+    if not isinstance(process_raw, dict):
+        raise ValueError("process must be an object")
+
+    process_id = process_raw.get("id")
+    process_name = process_raw.get("name")
+    if not isinstance(process_id, str) or not process_id.strip():
+        raise ValueError("process.id must be a non-empty string")
+    if not isinstance(process_name, str) or not process_name.strip():
+        raise ValueError("process.name must be a non-empty string")
+
+    process_version = process_raw.get("version")
+    if process_version is not None and (
+        not isinstance(process_version, (int, str)) or isinstance(process_version, bool)
+    ):
+        raise ValueError("process.version must be an integer or string when provided")
+
+    owner = process_raw.get("owner")
+    if owner is not None:
+        _validate_named_identity(owner, path="process.owner")
+
+    business_units = process_raw.get("business_units")
+    if business_units is not None:
+        _validate_named_identity_list(
+            business_units,
+            path="process.business_units",
+        )
+
+
+def _validate_steps(adapter: dict[str, Any]) -> None:
+    if "nodes" in adapter:
+        raise ValueError("steps is required; nodes alias is not supported")
+    steps = adapter.get("steps")
+    if not isinstance(steps, list):
+        raise ValueError("steps must be a list")
+    if not steps:
+        raise ValueError("steps must contain at least one step")
+
+    seen_ids: set[str] = set()
+    _validate_step_entries(steps=steps, path="steps", seen_ids=seen_ids)
+
+
+def _validate_step_entries(*, steps: list[Any], path: str, seen_ids: set[str]) -> None:
+    """Validate required authored step shape, including nested subprocesses."""
+    for idx, step in enumerate(steps):
+        step_path = f"{path}[{idx}]"
+        _validate_step_entry(step=step, path=step_path, seen_ids=seen_ids)
+
+
+def _validate_step_entry(*, step: Any, path: str, seen_ids: set[str]) -> None:
+    if not isinstance(step, dict):
+        raise ValueError(f"{path} must be an object")
+
+    _register_step_id(step=step, path=path, seen_ids=seen_ids)
+    kind = _validate_step_kind(step=step, path=path)
+    _validate_step_outcomes(step=step, path=path, kind=kind)
+    _validate_step_routes(step=step, path=path, kind=kind)
+    _validate_branch_config(step=step, path=path, kind=kind)
+    _validate_step_wait_alias(step=step, path=path, kind=kind)
+    nested = _nested_step_entries(step=step, kind=kind)
+    if nested is None:
+        return
+    if kind != "subprocess":
+        raise ValueError(f"{path} may declare nested steps only for kind 'subprocess'")
+    if not isinstance(nested, list):
+        raise ValueError(f"{path}.subnodes must be a list")
+    _validate_step_entries(
+        steps=nested,
+        path=f"{path}.subnodes",
+        seen_ids=seen_ids,
+    )
+
+
+def _register_step_id(*, step: dict[str, Any], path: str, seen_ids: set[str]) -> None:
+    step_id = step.get("id")
+    if not isinstance(step_id, str) or not step_id.strip():
+        raise ValueError(f"{path}.id must be a non-empty string")
+    if step_id in seen_ids:
+        raise ValueError(f"duplicate step id '{step_id}' detected at {path}")
+    seen_ids.add(step_id)
+
+
+def _validate_step_kind(*, step: dict[str, Any], path: str) -> str:
+    if "type" in step and "kind" not in step:
+        raise ValueError(f"{path} must use 'kind'; 'type' is not supported")
+    kind = step.get("kind")
+    if not isinstance(kind, str) or not kind.strip():
+        raise ValueError(f"{path}.kind must be a non-empty string")
+    if kind not in _SOURCE_NODE_KINDS:
+        allowed = ", ".join(sorted(_SOURCE_NODE_KINDS))
+        raise ValueError(f"{path}.kind must be one of: {allowed}")
+    return kind
+
+
+def _nested_step_entries(*, step: dict[str, Any], kind: str) -> Any:
+    nested = step.get("subnodes")
+    if nested is None and kind == "subprocess":
+        return step.get("steps")
+    return nested
+
+
+def _validate_step_outcomes(*, step: dict[str, Any], path: str, kind: str) -> None:
+    if "outcomes" not in step:
+        return
+    outcomes = step.get("outcomes")
+    if kind != "decision":
+        raise ValueError(f"E0201: {path}.outcomes is only valid for kind 'decision'")
+    if not isinstance(outcomes, dict) or len(outcomes) < 2:
+        raise ValueError(
+            f"E0202: {path}.outcomes must be an object with at least two branches"
+        )
+
+    normalized_names: set[str] = set()
+    for raw_name, target_spec in outcomes.items():
+        name = _normalized_outcome_name(raw_name)
+        if name is None:
+            raise ValueError(
+                f"E0203: {path}.outcomes branch names must be non-empty strings"
+            )
+        normalized_name = name.casefold()
+        if normalized_name in normalized_names:
+            raise ValueError(
+                f"E0204: {path}.outcomes contains duplicate branch '{name}'"
+            )
+        normalized_names.add(normalized_name)
+        _validate_outcome_target(
+            target_spec=target_spec,
+            path=f"{path}.outcomes.{name}",
+        )
+
+
+def _normalized_outcome_name(value: Any) -> str | None:
+    if value is True:
+        return "yes"
+    if value is False:
+        return "no"
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return None
+
+
+def _validate_outcome_target(*, target_spec: Any, path: str) -> None:
+    if isinstance(target_spec, str) and target_spec.strip():
+        return
+    if not isinstance(target_spec, dict):
+        raise ValueError(
+            f"E0205: {path} must name a target step or define a branch object"
+        )
+    target = target_spec.get("target", target_spec.get("to"))
+    if not isinstance(target, str) or not target.strip():
+        raise ValueError(f"E0206: {path}.target must be a non-empty string")
+    _validate_transition_fields(transition=target_spec, path=path)
+
+
+def _validate_step_routes(*, step: dict[str, Any], path: str, kind: str) -> None:
+    if "routes" not in step:
+        return
+    routes = step.get("routes")
+    if kind != "branch":
+        raise ValueError(f"E0211: {path}.routes is only valid for kind 'branch'")
+    if not isinstance(routes, dict) or len(routes) < 2:
+        raise ValueError(
+            f"E0212: {path}.routes must be an object with at least two routes"
+        )
+    normalized_names: set[str] = set()
+    for raw_name, target_spec in routes.items():
+        name = _normalized_outcome_name(raw_name)
+        if name is None:
+            raise ValueError(
+                f"E0213: {path}.routes route names must be non-empty strings"
+            )
+        normalized_name = name.casefold()
+        if normalized_name in normalized_names:
+            raise ValueError(f"E0213: {path}.routes contains duplicate route '{name}'")
+        normalized_names.add(normalized_name)
+        _validate_outcome_target(
+            target_spec=target_spec,
+            path=f"{path}.routes.{name}",
+        )
+
+
+def _validate_branch_config(*, step: dict[str, Any], path: str, kind: str) -> None:
+    config = step.get("branch")
+    if kind != "branch":
+        if config is not None:
+            raise ValueError(f"E0214: {path}.branch is only valid for kind 'branch'")
+        return
+    if not isinstance(config, dict):
+        raise ValueError(f"E0215: {path}.branch must be an object")
+    mode = config.get("mode")
+    allowed_modes = {"dispatch", "probabilistic", "external", "unspecified"}
+    if mode not in allowed_modes:
+        allowed = ", ".join(sorted(allowed_modes))
+        raise ValueError(f"E0216: {path}.branch.mode must be one of: {allowed}")
+    policy = config.get("policy")
+    if policy is not None and (not isinstance(policy, str) or not policy.strip()):
+        raise ValueError(
+            f"E0217: {path}.branch.policy must be a non-empty string when provided"
+        )
+    eligible_resources = config.get("eligible_resources")
+    if eligible_resources is not None and (
+        not isinstance(eligible_resources, list)
+        or not eligible_resources
+        or any(
+            not isinstance(resource_id, str) or not resource_id.strip()
+            for resource_id in eligible_resources
+        )
+        or len(set(eligible_resources)) != len(eligible_resources)
+    ):
+        raise ValueError(
+            f"E0218: {path}.branch.eligible_resources must be a non-empty list "
+            "of unique resource IDs"
+        )
+
+
+def _validate_step_wait_alias(*, step: dict[str, Any], path: str, kind: str) -> None:
+    if kind not in {"task", "system_task", "subprocess"}:
+        return
+    metadata = step.get("metadata")
+    if not isinstance(metadata, dict):
+        return
+    if "wait_time" in metadata and "wait_before" in metadata:
+        raise ValueError(
+            f"E0219: {path}.metadata declares both wait_time and wait_before. "
+            "Use wait_before; task wait_time is only a source compatibility alias."
+        )
+
+
+def _validate_transitions(adapter: dict[str, Any]) -> None:
+    if "edges" in adapter:
+        raise ValueError("transitions must be used; edges alias is not supported")
+
+    transitions = adapter.get("transitions")
+    if transitions is None:
+        return
+    if not isinstance(transitions, list):
+        raise ValueError("transitions must be a list when provided")
+
+    for idx, transition in enumerate(transitions):
+        _validate_transition_entry(idx=idx, transition=transition)
+
+
+def _validate_lanes(adapter: dict[str, Any]) -> None:
+    lanes = adapter.get("lanes")
+    if lanes is None:
+        return
+    _validate_named_identity_list(
+        lanes, path="lanes", allowed_types={"role", "team", "system"}
+    )
+
+
+def _validate_named_identity_list(
+    value: Any,
+    *,
+    path: str,
+    allowed_types: set[str] | None = None,
+) -> None:
+    if not isinstance(value, list):
+        raise ValueError(f"{path} must be a list")
+    seen_ids: set[str] = set()
+    for idx, entry in enumerate(value):
+        entry_path = f"{path}[{idx}]"
+        _validate_named_identity(entry, path=entry_path)
+        entry_id = entry["id"]
+        if entry_id in seen_ids:
+            raise ValueError(f"duplicate {path} id '{entry_id}' detected")
+        seen_ids.add(entry_id)
+        entry_type = entry.get("type")
+        if entry_type is not None and (
+            allowed_types is None or entry_type not in allowed_types
+        ):
+            allowed = ", ".join(sorted(allowed_types or set()))
+            raise ValueError(f"{entry_path}.type must be one of: {allowed}")
+        metadata = entry.get("metadata")
+        if metadata is not None and not isinstance(metadata, dict):
+            raise ValueError(f"{entry_path}.metadata must be an object")
+
+
+def _validate_named_identity(value: Any, *, path: str) -> None:
+    if not isinstance(value, dict):
+        raise ValueError(f"{path} must be an object")
+    for key in ("id", "name"):
+        field = value.get(key)
+        if not isinstance(field, str) or not field.strip():
+            raise ValueError(f"{path}.{key} must be a non-empty string")
+
+
+def _validate_transition_entry(*, idx: int, transition: Any) -> None:
+    if not isinstance(transition, dict):
+        raise ValueError(f"transitions[{idx}] must be an object")
+    if "from" in transition or "to" in transition:
+        raise ValueError(f"transitions[{idx}] must use 'source' and 'target' keys")
+
+    source = transition.get("source")
+    target = transition.get("target")
+    if not isinstance(source, str) or not source.strip():
+        raise ValueError(f"transitions[{idx}].source must be a non-empty string")
+    if not isinstance(target, str) or not target.strip():
+        raise ValueError(f"transitions[{idx}].target must be a non-empty string")
+    _validate_transition_fields(transition=transition, path=f"transitions[{idx}]")
+
+
+def _validate_transition_fields(*, transition: dict[str, Any], path: str) -> None:
+    optional_text_fields = ("id", "label", "edge_type", "route")
+    for field in optional_text_fields:
+        value = transition.get(field)
+        if value is not None and (not isinstance(value, str) or not value.strip()):
+            raise ValueError(
+                f"E0207: {path}.{field} must be a non-empty string when provided"
+            )
+
+    outcome = transition.get("outcome")
+    if outcome is not None and _normalized_outcome_name(outcome) is None:
+        raise ValueError(
+            f"E0208: {path}.outcome must be a non-empty string when provided"
+        )
+
+    for field in ("handoff", "rework"):
+        value = transition.get(field)
+        if value is not None and not isinstance(value, bool):
+            raise ValueError(
+                f"E0209: {path}.{field} must be true or false when provided"
+            )
+
+    metadata = transition.get("metadata")
+    if metadata is not None and not isinstance(metadata, dict):
+        raise ValueError(f"E0210: {path}.metadata must be an object when provided")
+
+
+def resolve_process_name(adapter: dict[str, Any]) -> str:
+    """Resolve display/process name from adapter payload."""
+    process_raw = adapter.get("process")
+    process: dict[str, Any] = process_raw if isinstance(process_raw, dict) else {}
+    return str(
+        process.get("id") or process.get("name") or adapter.get("name") or "unnamed"
+    )
+
+
+def resolve_process_version(adapter: dict[str, Any]) -> int | str | None:
+    """Resolve the authored process version without coercing its scalar type."""
+    process_raw = adapter.get("process")
+    process: dict[str, Any] = process_raw if isinstance(process_raw, dict) else {}
+    version = process.get("version")
+    if isinstance(version, (int, str)) and not isinstance(version, bool):
+        return version
+    return None
+
+
+def resolve_process_owner(adapter: dict[str, Any]) -> dict[str, Any] | None:
+    """Return the authored process owner as first-class process context."""
+    process = adapter.get("process")
+    owner = process.get("owner") if isinstance(process, dict) else None
+    return dict(owner) if isinstance(owner, dict) else None
+
+
+def resolve_business_units(adapter: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return authored business units in declared order."""
+    process = adapter.get("process")
+    units = process.get("business_units") if isinstance(process, dict) else None
+    return [dict(unit) for unit in units] if isinstance(units, list) else []
+
+
+def resolve_lanes(adapter: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return authored lane declarations in declared order."""
+    lanes = adapter.get("lanes")
+    return [dict(lane) for lane in lanes] if isinstance(lanes, list) else []
+
+
+def resolve_items(adapter: dict[str, Any]) -> Any:
+    """Return the canonical item collection outside opaque metadata."""
+    return _resolve_canonical_process_value(adapter, "items")
+
+
+def resolve_resources(adapter: dict[str, Any]) -> Any:
+    """Return the canonical resource collection outside opaque metadata."""
+    return _resolve_canonical_process_value(adapter, "resources")
+
+
+def resolve_locations(adapter: dict[str, Any]) -> Any:
+    """Return the canonical location collection outside opaque metadata."""
+    return _resolve_canonical_process_value(adapter, "locations")
+
+
+def resolve_render_intent(adapter: dict[str, Any]) -> Any:
+    """Return FLO-typed render intent outside opaque process metadata."""
+    process = adapter.get("process")
+    metadata = process.get("metadata") if isinstance(process, dict) else None
+    return metadata.get("render") if isinstance(metadata, dict) else None
+
+
+def resolve_process_metadata(adapter: dict[str, Any]) -> dict[str, Any] | None:
+    """Resolve normalized process metadata payload from adapter model."""
+    process_raw = adapter.get("process")
+    process: dict[str, Any] = process_raw if isinstance(process_raw, dict) else {}
+
+    metadata_raw = process.get("metadata")
+    metadata: dict[str, Any] = (
+        dict(metadata_raw) if isinstance(metadata_raw, dict) else {}
+    )
+    for typed_key in ("items", "resources", "locations", "render"):
+        metadata.pop(typed_key, None)
+
+    process_id = process.get("id")
+    if isinstance(process_id, str) and process_id.strip():
+        metadata.setdefault(PROCESS_METADATA_PROCESS_ID_KEY, process_id)
+
+    process_name = process.get("name")
+    if isinstance(process_name, str) and process_name.strip():
+        metadata.setdefault(PROCESS_METADATA_PROCESS_NAME_KEY, process_name)
+
+    for key in (
+        "materials",
+        "equipment",
+        "workers",
+    ):
+        value = adapter.get(key)
+        if not _is_resource_collection(value):
+            value = process.get(key)
+        if _is_resource_collection(value):
+            metadata[key] = value
+
+    return metadata or None
+
+
+def _resolve_canonical_process_value(adapter: dict[str, Any], key: str) -> Any:
+    process = adapter.get("process")
+    process_mapping = process if isinstance(process, dict) else {}
+    metadata = process_mapping.get("metadata")
+    candidates = (
+        adapter.get(key),
+        process_mapping.get(key),
+        metadata.get(key) if isinstance(metadata, dict) else None,
+    )
+    return next((value for value in candidates if value is not None), None)
+
+
+def resolve_source_nodes(adapter: dict[str, Any]) -> Any:
+    """Resolve adapter source-node container from the authoritative steps list."""
+    return adapter.get("steps")
+
+
+def flatten_source_nodes(
+    source_nodes: list[Any],
+    parent_subprocess: str | None = None,
+) -> list[dict[str, Any]]:
+    """Flatten nested subprocess nodes into linear node entries."""
+    flattened: list[dict[str, Any]] = []
+    for a_node in source_nodes:
+        if not isinstance(a_node, dict):
+            continue
+
+        node_entry: dict[str, Any] = dict(a_node)
+        if parent_subprocess and not node_entry.get("subprocess_parent"):
+            node_entry["subprocess_parent"] = parent_subprocess
+
+        node_id = node_entry.get("id")
+        nested_nodes = _resolve_subnodes(node_entry)
+        flattened.append(node_entry)
+
+        if isinstance(nested_nodes, list):
+            next_parent = str(node_id) if node_id is not None else None
+            flattened.extend(
+                flatten_source_nodes(nested_nodes, parent_subprocess=next_parent)
+            )
+
+    return flattened
+
+
+def normalize_node_attrs(a_node: dict[str, Any]) -> dict[str, Any]:
+    """Normalize node attrs from adapter payload fields and aliases."""
+    attrs = a_node.get("attrs")
+    normalized: dict[str, Any] = dict(attrs) if isinstance(attrs, dict) else {}
+
+    for key in (
+        "name",
+        "lane",
+        "location",
+        "consumes",
+        "produces",
+        "performed_by",
+        "uses",
+        "workers",
+        "equipment",
+        "note",
+        "metadata",
+        "inputs",
+        "outputs",
+        "subprocess_parent",
+        "branch",
+    ):
+        if key in a_node:
+            normalized.setdefault(key, a_node[key])
+    outcomes = a_node.get("outcomes")
+    if isinstance(outcomes, dict) and "outcomes" not in normalized:
+        normalized["outcomes"] = outcomes
+    routes = a_node.get("routes")
+    if isinstance(routes, dict) and "routes" not in normalized:
+        normalized["routes"] = routes
+
+    metadata = normalized.get("metadata")
+    node_kind = str(a_node.get("kind") or "").strip().lower()
+    if isinstance(metadata, dict):
+        normalized_metadata = dict(metadata)
+        if (
+            node_kind in {"task", "system_task", "subprocess"}
+            and "wait_time" in normalized_metadata
+            and "wait_before" not in normalized_metadata
+        ):
+            normalized_metadata["wait_before"] = normalized_metadata.pop("wait_time")
+        normalized["metadata"] = normalized_metadata
+
+    # Canonical aliases are populated from legacy keys when explicit canonical
+    # values are absent so downstream logic can consume one preferred surface.
+    if "consumes" not in normalized and isinstance(normalized.get("inputs"), list):
+        normalized["consumes"] = list(normalized["inputs"])
+    if "produces" not in normalized and isinstance(normalized.get("outputs"), list):
+        normalized["produces"] = list(normalized["outputs"])
+    if "performed_by" not in normalized and isinstance(normalized.get("workers"), list):
+        normalized["performed_by"] = list(normalized["workers"])
+    if "uses" not in normalized and isinstance(normalized.get("equipment"), list):
+        normalized["uses"] = list(normalized["equipment"])
+
+    return normalized
+
+
+def resolve_explicit_transitions(adapter: dict[str, Any]) -> Any:
+    """Resolve explicit transitions list from adapter payload."""
+    return adapter.get("transitions")
+
+
+def _is_resource_collection(value: Any) -> bool:
+    if isinstance(value, list):
+        return True
+    if not isinstance(value, dict):
+        return False
+
+    has_nested_collection = False
+    for group_name, group_value in value.items():
+        if not isinstance(group_name, str) or not group_name.strip():
+            return False
+
+        if group_name == "name":
+            if not isinstance(group_value, str) or not group_value.strip():
+                return False
+            continue
+
+        if not isinstance(group_value, (list, dict)):
+            return False
+        has_nested_collection = True
+
+    return has_nested_collection
+
+
+def _resolve_subnodes(node_entry: dict[str, Any]) -> Any:
+    subnodes = node_entry.pop("subnodes", None)
+    if isinstance(subnodes, list):
+        return subnodes
+
+    kind = str(node_entry.get("kind") or node_entry.get("type") or "").strip().lower()
+    if kind != "subprocess":
+        return None
+
+    nested_steps = node_entry.pop("steps", None)
+    if isinstance(nested_steps, list):
+        return nested_steps
+
+    return None
