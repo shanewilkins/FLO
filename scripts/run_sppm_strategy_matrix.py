@@ -8,7 +8,7 @@ import itertools
 import json
 import math
 import os
-from collections.abc import Iterator
+from collections.abc import Generator, Iterator
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -653,7 +653,7 @@ def _segments_cross_strict(
 
 
 @contextmanager
-def _strategy_environment(strategy: Strategy) -> Iterator[None]:
+def _strategy_environment(strategy: Strategy) -> Generator[None]:
     updates = {
         ENV_PARTITION_MODE: strategy.partition_mode,
         ENV_PORT_CONSTRAINTS: strategy.port_constraints,

@@ -20,11 +20,11 @@ try:
 
     OTEL_AVAILABLE = True
 except Exception:  # pragma: no cover - optional dependency
-    trace = None  # type: ignore
-    Resource = None  # type: ignore
-    SDKTracerProvider = None  # type: ignore
+    trace = None
+    Resource = None
+    SDKTracerProvider = None
     SimpleSpanProcessor = None
-    ConsoleSpanExporter = None  # ty: ignore[invalid-assignment]
+    ConsoleSpanExporter = None
     OTEL_AVAILABLE = False
 
 

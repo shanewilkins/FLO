@@ -7,7 +7,7 @@ import json
 import os
 import shutil
 import sys
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -139,7 +139,7 @@ def _parse_profile_id(profile_id: str) -> dict[str, str]:
 
 
 @contextmanager
-def _temporary_profile_env(profile: dict[str, str]) -> Iterator[None]:
+def _temporary_profile_env(profile: dict[str, str]) -> Generator[None]:
     previous = {name: os.getenv(name) for name in profile}
     try:
         for name, value in profile.items():
