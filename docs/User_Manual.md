@@ -815,15 +815,28 @@ Typical fields include description, cycle time, performers, wait time on queue n
 SPPM-relevant fields per step:
 
 - `metadata.value_class`: controls node color
-- `metadata.cycle_time`: shown in info box as `CT:`
-- `metadata.wait_time`: shown in info box as `WT:` (queue nodes)
-- `metadata.crossover_time`: shown in info box as `CO:` (task/system_task/subprocess)
+- `metadata.cycle_time`: shown in info box as `P/T:`
+- `metadata.wait_time`: shown in info box as `W/T:` (queue nodes)
+- `metadata.crossover_time`: shown in info box as `S/T:` (task/system_task/subprocess)
 - `metadata.description`: shown as the first line of the info box
 - `performed_by`: shown as the performer line in the info box
 - `uses`: available for equipment-aware examples and downstream summaries
 
+Timing fields require an explicit finite, nonnegative numeric `value` and a
+supported `unit` (`s`, `m`, `min`, `hr`, or `d`). Omit unmeasured fields; null,
+NaN, infinity, numeric strings, and booleans fail validation. Explicit integer
+or floating-point zero is a measurement and stays visible in full and compact
+metric views. Missing applicable timings display `?` rather than a blank or
+zero: work steps show `P/T: ?`, `W/T: ?`, and `S/T: ?`; queues show `W/T: ?`.
+Compact cards group missing metrics on their own line. Teaching views retain
+their single primary metric. Missing categories in an
+existing timing footer also show `?`. Wait labels convert to minutes. An unavailable modeled lead time
+appears as `Unavailable` with a reason in `flo inspect`; it is never shown as
+zero. Even with complete timing coverage, cycles and parallel flows can leave
+modeled lead time unavailable.
+
 The current renderer shows one scalar value for each available timing field.
-Under the accepted measurement-profile contract, compact output will show the explicitly selected primary statistic and identify its method, such as `Avg CT`, `Median WT`, or `P90 C/O`.
+Under the accepted measurement-profile contract, compact output will show the explicitly selected primary statistic and identify its method, such as `Avg P/T`, `Median W/T`, or `P90 S/T`.
 Detailed output will preserve all supported statistics, sample context, basis, and evidence identity.
 Machine-readable output will preserve the complete profile even when the selected renderer cannot display every result.
 
@@ -1199,17 +1212,17 @@ SPPM label policy matrix:
 - `--sppm-truncation-policy` selects overflow behavior.
 - Task node names, decision labels, subprocess titles, queue badges, decision and branch labels, and publication header and footer text all use `--sppm-max-label-step-name`.
 - Performer-line text uses `--sppm-max-label-workers`.
-- CT and WT metric lines and footer metric values use `--sppm-max-label-ctwt`.
+- P/T and W/T metric lines and footer metric values use `--sppm-max-label-ctwt`.
 
 SPPM time semantics:
 
 - `wait_time` models queue delay.
 - `crossover_time` models setup or changeover time.
 - These metrics are intentionally distinct because they imply different operational problems and different improvement methods.
-- Work-step shapes display declared setup or changeover as `C/O`; queue shapes
-  display queue delay as `WT`.
+- Work-step shapes display declared setup or changeover as `S/T`; queue shapes
+  display queue delay as `W/T`.
 - When timing is declared for the complete visible process, the footer shows
-  cycle, waiting, C/O, and modeled lead time from the same static-analysis
+  processing, waiting, setup, and modeled lead time from the same static-analysis
   result used by `flo inspect`. Alternative paths show a range; unresolved
   timing shows `Unavailable` and points to inspect diagnostics.
 - Under the accepted future profile contract, static timing will consume only

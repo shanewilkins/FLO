@@ -5,23 +5,21 @@ from __future__ import annotations
 from flo.errors import RenderError
 
 from .elk_contracts import ElkLayoutRequest
-from .elk_sppm_helpers import _sppm_branch_anchor_helpers
-from .sppm_strategy import should_emit_sppm_branch_anchors
-
-_RESERVED_RENDER_IDS = {
-    "unassigned",
-    "unassigned_start",
-    "unassigned_end",
-    "__sppm_row_mainline",
-    "__sppm_row_rework",
-}
 
 
-def validate_elk_request_namespaces(request: ElkLayoutRequest) -> None:
+def validate_elk_request_namespaces(
+    request: ElkLayoutRequest,
+    *,
+    reserved_ids: frozenset[str] = frozenset(),
+    reserved_prefixes: tuple[str, ...] = (),
+    synthetic_lane_ids: set[str] | None = None,
+) -> None:
     """Raise when a render-visible ELK namespace is ambiguous."""
     node_ids = [node.id for node in request.nodes]
     lane_ids = [lane.id for lane in request.lanes]
-    helper_node_ids = _helper_node_ids(request)
+    helper_node_ids = [
+        str(node["id"]) for node in request.serialization.auxiliary_nodes
+    ]
 
     _raise_on_duplicates(kind="node", ids=node_ids)
     _raise_on_duplicates(kind="lane", ids=lane_ids)
@@ -43,39 +41,19 @@ def validate_elk_request_namespaces(request: ElkLayoutRequest) -> None:
         right_kind="helper node",
         right_ids=helper_node_ids,
     )
-    _raise_on_reserved_ids(kind="node", ids=node_ids)
+    _raise_on_reserved_ids(
+        kind="node",
+        ids=node_ids,
+        reserved_ids=reserved_ids,
+        reserved_prefixes=reserved_prefixes,
+    )
     _raise_on_reserved_ids(
         kind="lane",
         ids=lane_ids,
-        ignore_ids=_synthetic_lane_ids(request),
+        ignore_ids=synthetic_lane_ids,
+        reserved_ids=reserved_ids,
+        reserved_prefixes=reserved_prefixes,
     )
-
-
-def _synthetic_lane_ids(request: ElkLayoutRequest) -> set[str]:
-    node_lane_by_id = {node.id: node.lane_id for node in request.nodes}
-    synthetic: set[str] = set()
-    for lane in request.lanes:
-        if lane.id.startswith("__sppm_row_wrap_"):
-            synthetic.add(lane.id)
-            continue
-        if lane.id not in {"unassigned", "unassigned_start", "unassigned_end"}:
-            continue
-        if lane.node_ids and all(
-            node_lane_by_id.get(node_id) is None for node_id in lane.node_ids
-        ):
-            synthetic.add(lane.id)
-    return synthetic
-
-
-def _helper_node_ids(request: ElkLayoutRequest) -> list[str]:
-    if request.diagram != "sppm":
-        return []
-    if not should_emit_sppm_branch_anchors(has_lanes=bool(request.lanes)):
-        return []
-    helper_nodes, _helper_edges = _sppm_branch_anchor_helpers(request=request)
-    return [
-        str(node.get("id") or "") for node in helper_nodes if str(node.get("id") or "")
-    ]
 
 
 def _raise_on_duplicates(*, kind: str, ids: list[str]) -> None:
@@ -112,13 +90,15 @@ def _raise_on_reserved_ids(
     kind: str,
     ids: list[str],
     ignore_ids: set[str] | None = None,
+    reserved_ids: frozenset[str],
+    reserved_prefixes: tuple[str, ...],
 ) -> None:
     ignored = ignore_ids or set()
     reserved = sorted(
         current_id
         for current_id in set(ids)
         if current_id not in ignored
-        and (current_id in _RESERVED_RENDER_IDS or current_id.startswith("__sppm_"))
+        and (current_id in reserved_ids or current_id.startswith(reserved_prefixes))
     )
     if reserved:
         reserved_text = ", ".join(reserved)

@@ -17,7 +17,9 @@ from flo.process.analysis import (
 )
 
 from .._artifact import RenderArtifact
+from .._execution import GeometryObserver, SceneObserver
 from .._svg_theme import apply_svg_typography
+from ..layout_core.trace import LayoutObserver
 from ..options import RenderOptions
 from ..shared.svg import (
     SVG_ACCESSIBILITY_ATTRIBUTES,
@@ -31,7 +33,12 @@ _NODE_HEIGHT = 48.0
 
 
 def render_spaghetti_svg_artifact(
-    process: dict[str, Any] | Any, options: RenderOptions
+    process: dict[str, Any] | Any,
+    options: RenderOptions,
+    *,
+    layout_observer: LayoutObserver | None = None,
+    geometry_observer: GeometryObserver | None = None,
+    scene_observer: SceneObserver | None = None,
 ) -> tuple[RenderArtifact, None]:
     """Render a minimal standalone SVG for spaghetti maps with spatial metadata."""
     material_movements = infer_material_movements(process)

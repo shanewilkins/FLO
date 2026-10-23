@@ -48,32 +48,32 @@ def test_apply_density_filter_for_teaching_compact_and_full():
     teaching = apply_density_filter(
         density="teaching",
         description="desc",
-        ct_line="CT: 10 min",
-        wt_line="WT: 2 min",
+        ct_line="P/T: 10 min",
+        wt_line="W/T: 2 min",
         workers_line="Ops",
         notes_line="note",
     )
-    assert teaching == ["CT: 10 min", "note"]
+    assert teaching == ["P/T: 10 min", "note"]
 
     compact = apply_density_filter(
         density="compact",
         description="desc",
-        ct_line="CT: 10 min",
-        wt_line="WT: 2 min",
+        ct_line="P/T: 10 min",
+        wt_line="W/T: 2 min",
         workers_line="Ops",
         notes_line="note",
     )
-    assert compact == ["CT: 10 min | WT: 2 min", "Ops", "note"]
+    assert compact == ["P/T: 10 min | W/T: 2 min", "Ops", "note"]
 
     full = apply_density_filter(
         density="full",
         description="desc",
-        ct_line="CT: 10 min",
-        wt_line="WT: 2 min",
+        ct_line="P/T: 10 min",
+        wt_line="W/T: 2 min",
         workers_line="Ops",
         notes_line="note",
     )
-    assert full == ["desc", "Ops", "CT: 10 min", "WT: 2 min", "note"]
+    assert full == ["desc", "Ops", "P/T: 10 min", "W/T: 2 min", "note"]
 
 
 def test_wrap_text_strategies_cover_hard_balanced_and_word_wrap():

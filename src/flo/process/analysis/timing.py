@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from dataclasses import asdict, dataclass
-from math import fsum
-from typing import Any, Literal, cast
+from dataclasses import asdict, dataclass, field
+from math import fsum, isfinite
+from typing import Any, Literal
 
+from flo.process.durations import duration_seconds
 from flo.process.ir.metadata import extract_node_metadata
 from flo.process.ir.models import IR, Node
 
@@ -15,13 +16,7 @@ from .process_metadata import extract_process_metadata
 
 TimingSeverity = Literal["info", "warning"]
 
-_SECONDS_PER_UNIT = {
-    "s": 1.0,
-    "m": 60.0,
-    "min": 60.0,
-    "hr": 3600.0,
-    "d": 86400.0,
-}
+_MISSING = object()
 _WORK_NODE_TYPES = frozenset({"task", "system_task", "subprocess"})
 _PARALLEL_NODE_TYPES = frozenset({"parallel_split", "parallel_join"})
 _CHANGEOVER_FIELDS = ("crossover_time", "transfer_time", "changeover_time")
@@ -46,6 +41,7 @@ class TimingTotals:
     cycle_time_seconds: float | None = None
     wait_time_seconds: float | None = None
     changeover_time_seconds: float | None = None
+    _overflowed: bool = field(default=False, repr=False)
 
     @property
     def elapsed_time_seconds(self) -> float | None:
@@ -59,7 +55,7 @@ class TimingTotals:
             )
             if value is not None
         )
-        return fsum(values) if values else None
+        return None if self._overflowed else _finite_sum(values)
 
     def as_dict(self) -> dict[str, float | None]:
         """Return a stable JSON-compatible representation."""
@@ -194,12 +190,18 @@ def analyze_process_timing(process: IR) -> ProcessTimingAnalysis:
         for node in sorted(process.nodes, key=lambda item: item.id)
     )
     timing_by_node = {timing.node_id: timing for timing in node_timings}
+    invalid_node_ids = {
+        item.node_id for item in diagnostics if item.code == "timing-invalid-duration"
+    }
     missing_node_ids = tuple(
         sorted(
             node.id
             for node in process.nodes
-            if _expected_timing_field(node) is not None
-            and not _has_expected_timing(node)
+            if node.id in invalid_node_ids
+            or (
+                _expected_timing_field(node) is not None
+                and not _has_expected_timing(node)
+            )
         )
     )
     if missing_node_ids:
@@ -209,12 +211,14 @@ def analyze_process_timing(process: IR) -> ProcessTimingAnalysis:
                 severity="warning",
                 message=(
                     "Modeled lead time is incomplete because expected timing is "
-                    f"missing on: {', '.join(missing_node_ids)}."
+                    f"missing or invalid on: {', '.join(missing_node_ids)}."
                 ),
             )
         )
 
-    declared_totals = _sum_totals(timing.totals for timing in node_timings)
+    declared_totals = _sum_totals(
+        (timing.totals for timing in node_timings), diagnostics=diagnostics
+    )
     paths = _analyze_paths(
         process,
         timing_by_node=timing_by_node,
@@ -256,14 +260,14 @@ def _analyze_node_timing(
     metadata = extract_node_metadata(node)
     node_type = node.type.strip().lower()
     cycle_seconds = _duration_seconds(
-        metadata.get("cycle_time"),
+        metadata.get("cycle_time", _MISSING),
         node_id=node.id,
         field="cycle_time",
         diagnostics=diagnostics,
     )
     wait_field = "wait_before" if node_type in _WORK_NODE_TYPES else "wait_time"
     wait_seconds = _duration_seconds(
-        None if suppress_wait else metadata.get(wait_field),
+        metadata.get(wait_field, _MISSING),
         node_id=node.id,
         field=wait_field,
         diagnostics=diagnostics,
@@ -274,7 +278,7 @@ def _analyze_node_timing(
         diagnostics=diagnostics,
     )
     changeover_seconds = _duration_seconds(
-        metadata.get(changeover_field) if changeover_field else None,
+        metadata.get(changeover_field) if changeover_field else _MISSING,
         node_id=node.id,
         field=changeover_field or "changeover_time",
         diagnostics=diagnostics,
@@ -284,7 +288,7 @@ def _analyze_node_timing(
         node_type=node_type,
         totals=TimingTotals(
             cycle_time_seconds=cycle_seconds,
-            wait_time_seconds=wait_seconds,
+            wait_time_seconds=None if suppress_wait else wait_seconds,
             changeover_time_seconds=changeover_seconds,
         ),
         changeover_source_field=changeover_field,
@@ -356,24 +360,12 @@ def _duration_seconds(
     field: str,
     diagnostics: list[TimingDiagnostic],
 ) -> float | None:
-    if raw is None:
+    if raw is _MISSING:
         return None
-    if not isinstance(raw, dict):
+    seconds = duration_seconds(raw)
+    if seconds is None:
         _append_invalid_duration_diagnostic(diagnostics, node_id=node_id, field=field)
-        return None
-    duration = cast(dict[str, object], raw)
-    value = duration.get("value")
-    unit = duration.get("unit")
-    if (
-        not isinstance(value, (int, float))
-        or isinstance(value, bool)
-        or float(value) < 0
-        or not isinstance(unit, str)
-        or unit.strip().lower() not in _SECONDS_PER_UNIT
-    ):
-        _append_invalid_duration_diagnostic(diagnostics, node_id=node_id, field=field)
-        return None
-    return float(value) * _SECONDS_PER_UNIT[unit.strip().lower()]
+    return seconds
 
 
 def _append_invalid_duration_diagnostic(
@@ -433,18 +425,7 @@ def _has_expected_timing(node: Node) -> bool:
 
 
 def _is_duration_spec(raw: object) -> bool:
-    if not isinstance(raw, dict):
-        return False
-    duration = cast(dict[str, object], raw)
-    value = duration.get("value")
-    unit = duration.get("unit")
-    return (
-        isinstance(value, (int, float))
-        and not isinstance(value, bool)
-        and float(value) >= 0
-        and isinstance(unit, str)
-        and unit.strip().lower() in _SECONDS_PER_UNIT
-    )
+    return duration_seconds(raw) is not None
 
 
 def _analyze_paths(
@@ -525,6 +506,7 @@ def _analyze_paths(
             node_ids=path,
             timing_by_node=timing_by_node,
             missing_node_ids=missing_node_ids,
+            diagnostics=diagnostics,
         )
         for path in raw_paths
     )
@@ -547,37 +529,72 @@ def _build_timing_path(
     node_ids: tuple[str, ...],
     timing_by_node: dict[str, NodeTiming],
     missing_node_ids: frozenset[str],
+    diagnostics: list[TimingDiagnostic],
 ) -> TimingPath:
     missing_on_path = tuple(
         node_id for node_id in node_ids if node_id in missing_node_ids
     )
     totals = _sum_totals(
-        timing_by_node[node_id].totals
-        for node_id in node_ids
-        if node_id in timing_by_node
+        (
+            timing_by_node[node_id].totals
+            for node_id in node_ids
+            if node_id in timing_by_node
+        ),
+        diagnostics=diagnostics,
     )
     return TimingPath(
         node_ids=node_ids,
         totals=totals,
-        complete=not missing_on_path,
+        complete=not missing_on_path and not totals._overflowed,
         missing_node_ids=missing_on_path,
     )
 
 
-def _sum_totals(values: Iterable[TimingTotals]) -> TimingTotals:
+def _sum_totals(
+    values: Iterable[TimingTotals],
+    *,
+    diagnostics: list[TimingDiagnostic],
+) -> TimingTotals:
     totals = tuple(values)
-    return TimingTotals(
-        cycle_time_seconds=_sum_category(item.cycle_time_seconds for item in totals),
-        wait_time_seconds=_sum_category(item.wait_time_seconds for item in totals),
-        changeover_time_seconds=_sum_category(
-            item.changeover_time_seconds for item in totals
-        ),
+    categories = tuple(
+        tuple(value for item in totals if (value := getattr(item, name)) is not None)
+        for name in (
+            "cycle_time_seconds",
+            "wait_time_seconds",
+            "changeover_time_seconds",
+        )
     )
+    sums = tuple(_finite_sum(category) for category in categories)
+    overflowed = any(
+        category and total is None
+        for category, total in zip(categories, sums, strict=True)
+    )
+    overflowed = overflowed or (
+        any(value is not None for value in sums)
+        and _finite_sum(value for value in sums if value is not None) is None
+    )
+    if overflowed and not any(
+        item.code == "timing-total-overflow" for item in diagnostics
+    ):
+        diagnostics.append(
+            TimingDiagnostic(
+                code="timing-total-overflow",
+                severity="warning",
+                message="Timing totals exceed the finite numeric range; affected elapsed totals are unavailable.",
+            )
+        )
+    return TimingTotals(*sums, _overflowed=overflowed)
 
 
-def _sum_category(values: Iterable[float | None]) -> float | None:
-    declared_values = tuple(value for value in values if value is not None)
-    return fsum(declared_values) if declared_values else None
+def _finite_sum(values: Iterable[float]) -> float | None:
+    declared = tuple(values)
+    if not declared:
+        return None
+    try:
+        total = fsum(declared)
+    except OverflowError:
+        return None
+    return total if isfinite(total) else None
 
 
 __all__ = [

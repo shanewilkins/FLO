@@ -24,6 +24,32 @@ Use these subdirectories for fast navigation.
 The top level of `docs/design/` is reserved for active cross-cutting design
 notes, migration plans, and taxonomy notes that span multiple components.
 
+## Architecture acceptance before release
+
+- [Architecture validation results](architecture_validation.md): completed
+  assessment, three blocking findings, and bounded remediation R1–R4 under TR-118.
+- [Architecture validation slice](architecture_validation_plan.md): completed
+  assessment scope and disposition.
+- [Layout finalization ADR](adr/render_layout_finalization.md): accepted ownership
+  clarification; implementation remains pending.
+- [Release architecture integrity policy](../policy/release_architecture_integrity.md):
+  authoritative acceptance gate and known-good baseline requirements for every release.
+
+## White Belt acceptance evidence
+
+- [Release closure plan](white_belt_release_plan.md): ordered release gates,
+  executable evidence, and outstanding promotion checks.
+
+
+- [Semantic pipeline audit](white_belt_semantic_audit.md): completed language,
+  schema, public API, and canonical exchange audit for the semantic slice of TR-114.
+
+## Next-sprint implementation planning
+
+- [Consistent diagnostic delivery](diagnostic_delivery_plan.md): queued 0.4
+  stabilization work for UR-086 and TR-117, including warning aggregation,
+  severity-aware success, and the missing-timing use case.
+
 ## Authority Boundary
 
 Design documents are explanatory. ADRs record durable rationale but do not

@@ -1,0 +1,14 @@
+spec_version: '0.1'
+process:
+  id: invalid
+  name: Invalid
+steps:
+- id: start
+  kind: start
+- id: work
+  kind: task
+  consumes:
+  - missing
+- id: end
+  kind: end
+items: []

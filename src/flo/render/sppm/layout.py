@@ -18,24 +18,25 @@ from ..layout_core.elk_contracts import (
     ElkLayoutRequest,
 )
 from ..layout_core.elk_runtime import run_elkjs_layout
-from ..layout_core.elk_sppm_helpers import (
-    _node_kind_map,
-    _sppm_apply_secondary_row_edge_ports,
-    _sppm_partition_indexes_for_synthetic_rows,
-    _sppm_synthetic_row_lanes,
-)
 from ..layout_core.elk_support import (
     extract_nodes_and_edges,
     ordered_edges,
     ordered_nodes,
     project_parent_only_subprocess_view,
 )
-from ..layout_core.elk_validation import validate_elk_request_namespaces
 from ..layout_core.lane_support import lane_specs
 from ..layout_core.models import LayoutResult
 from ..options import RenderOptions
 from .content import measure_sppm_node
 from .continuation_tokens import resolve_explicit_sppm_continuation_tokens
+from .elk_helpers import (
+    _node_kind_map,
+    _sppm_apply_secondary_row_edge_ports,
+    _sppm_partition_indexes_for_synthetic_rows,
+    _sppm_synthetic_row_lanes,
+)
+from .elk_serialization import prepare_sppm_request
+from .namespace import validate_sppm_namespaces
 from .rework_content import build_sppm_rework_metadata_lines
 from .wrap import build_wrap_plan
 
@@ -56,10 +57,9 @@ def build_sppm_elk_layout_request(
     edge_specs = ordered_edges(
         edges,
         node_kinds=_node_kind_map(nodes),
-        diagram="sppm",
-        direction=direction,
         decorator=_decorate_sppm_edge,
     )
+    edge_specs = tuple(_initial_edge_ports(edge, direction) for edge in edge_specs)
     edge_specs = _derive_rework_branch_routes(
         edges=edge_specs,
         node_kinds=_node_kind_map(nodes),
@@ -92,7 +92,8 @@ def build_sppm_elk_layout_request(
         edges=edge_specs,
         strict_diagnostics=render_options.layout_fit == "fit-strict",
     )
-    validate_elk_request_namespaces(request)
+    request = prepare_sppm_request(request)
+    validate_sppm_namespaces(request)
     return request
 
 
@@ -213,8 +214,8 @@ def _explicit_branched_wrap_lanes(
     if not plan.chunks:
         return None
 
-    # Keep the secondary rework path below every wrapped mainline row so
-    # ordinary continuation edges never have to pass through rework nodes.
+    # Start with an outside fallback row. Final wrapped geometry evaluates
+    # local above/below candidates for isolated same-row corrections.
     rework_after_row = len(plan.chunks) - 1
 
     lanes: list[ElkLayoutLane] = []
@@ -244,7 +245,11 @@ def layout_sppm_with_elk(
     engine: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
     options: RenderOptions | None = None,
 ) -> LayoutResult:
-    """Build, execute, and normalize an SPPM ELK layout pass."""
+    """Return intermediate SPPM engine geometry, not a complete artifact.
+
+    This layout-only diagnostic API neither prepares standalone viewport budgets
+    nor emits SVG. Artifact consumers use ``flo.render.render_execution``.
+    """
     render_options = options or RenderOptions(diagram="sppm")
     if render_options.diagram != "sppm":
         raise ValueError("SPPM ELK adapter requires diagram='sppm'.")
@@ -379,3 +384,15 @@ def _elk_direction(options: RenderOptions) -> ElkDirection:
 
 
 __all__ = ["build_sppm_elk_layout_request", "layout_sppm_with_elk"]
+
+
+def _initial_edge_ports(edge: ElkLayoutEdge, direction: ElkDirection) -> ElkLayoutEdge:
+    if edge.rework_variant == "branch":
+        source, target = "SOUTH", "NORTH"
+    elif edge.rework_variant == "return":
+        source, target = "NORTH", "SOUTH"
+    elif direction == "DOWN":
+        source, target = "SOUTH", "NORTH"
+    else:
+        source, target = "EAST", "WEST"
+    return replace(edge, source_port_side=source, target_port_side=target)

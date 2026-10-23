@@ -22,10 +22,17 @@ except Exception:  # pragma: no cover - optional dev dependency
 DEFAULT_SPPM_REFACTOR_BASELINE_FILES: tuple[str, ...] = (
     "src/flo/render/sppm/publication.py",
     "src/flo/render/sppm/renderer.py",
+    "src/flo/render/sppm/svg.py",
+    "src/flo/render/sppm/geometry.py",
     "src/flo/render/sppm/edges.py",
+    "src/flo/render/sppm/edge_geometry.py",
+    "src/flo/render/sppm/edge_layout.py",
+    "src/flo/render/sppm/edge_svg.py",
+    "src/flo/render/sppm/attachments.py",
+    "src/flo/render/sppm/scene.py",
     "src/flo/render/sppm/nodes.py",
     "src/flo/render/sppm/rows.py",
-    "src/flo/render/layout_core/elk_sppm_helpers.py",
+    "src/flo/render/sppm/elk_helpers.py",
 )
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]

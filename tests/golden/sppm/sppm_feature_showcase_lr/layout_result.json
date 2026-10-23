@@ -1,6 +1,6 @@
 {
   "canvas_bounds": {
-    "height_px": 421.0,
+    "height_px": 445.0,
     "width_px": 5466.0,
     "x_px": 0.0,
     "y_px": 0.0
@@ -17,11 +17,11 @@
       "points": [
         {
           "x_px": 1866.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 1922.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -41,11 +41,11 @@
       "points": [
         {
           "x_px": 1500.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 1556.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -65,11 +65,11 @@
       "points": [
         {
           "x_px": 3337.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 3393.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -89,11 +89,11 @@
       "points": [
         {
           "x_px": 3001.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 3057.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -113,11 +113,11 @@
       "points": [
         {
           "x_px": 3948.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 4004.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -137,11 +137,11 @@
       "points": [
         {
           "x_px": 3587.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 3643.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -161,11 +161,11 @@
       "points": [
         {
           "x_px": 2497.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 2553.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -185,11 +185,11 @@
       "points": [
         {
           "x_px": 2121.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 2177.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -209,11 +209,11 @@
       "points": [
         {
           "x_px": 740.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 796.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -233,11 +233,11 @@
       "points": [
         {
           "x_px": 384.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 440.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -257,11 +257,11 @@
       "points": [
         {
           "x_px": 1230.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 1286.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -278,17 +278,17 @@
       "label": "pass",
       "label_point": {
         "x_px": 2659.0,
-        "y_px": 84.0
+        "y_px": 100.0
       },
       "outgoing_token": null,
       "points": [
         {
           "x_px": 2756.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 2812.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -311,35 +311,35 @@
       "points": [
         {
           "x_px": 2654.5,
-          "y_px": 145.0
+          "y_px": 161.0
         },
         {
           "x_px": 2888.7028985507245,
-          "y_px": 249.0
+          "y_px": 265.0
         },
         {
           "x_px": 3251.295429208473,
-          "y_px": 249.0
+          "y_px": 265.0
         },
         {
           "x_px": 3276.066889632107,
-          "y_px": 260.0
+          "y_px": 276.0
         },
         {
           "x_px": 3464.680044593088,
-          "y_px": 260.0
+          "y_px": 276.0
         },
         {
           "x_px": 3489.4515050167224,
-          "y_px": 249.0
+          "y_px": 265.0
         },
         {
           "x_px": 3954.480490523969,
-          "y_px": 249.0
+          "y_px": 265.0
         },
         {
           "x_px": 3977.0,
-          "y_px": 259.0
+          "y_px": 275.0
         }
       ],
       "rework_variant": "branch",
@@ -365,16 +365,16 @@
           "y_px": 267.0
         },
         {
-          "x_px": 512.5030959752322,
-          "y_px": 156.0
+          "x_px": 538.2401574803149,
+          "y_px": 196.0
         },
         {
-          "x_px": 597.65737874097,
-          "y_px": 156.0
+          "x_px": 598.3464566929133,
+          "y_px": 196.0
         },
         {
           "x_px": 590.0,
-          "y_px": 146.0
+          "y_px": 186.0
         }
       ],
       "rework_variant": "return",
@@ -394,11 +394,11 @@
       "points": [
         {
           "x_px": 1470.0,
-          "y_px": 334.0
+          "y_px": 350.0
         },
         {
           "x_px": 755.0,
-          "y_px": 334.0
+          "y_px": 350.0
         }
       ],
       "rework_variant": null,
@@ -424,16 +424,16 @@
           "y_px": 267.0
         },
         {
-          "x_px": 2159.5833333333335,
-          "y_px": 172.0
+          "x_px": 2219.9292452830186,
+          "y_px": 204.0
         },
         {
-          "x_px": 1733.1491228070176,
-          "y_px": 172.0
+          "x_px": 1734.8207547169811,
+          "y_px": 204.0
         },
         {
           "x_px": 1711.0,
-          "y_px": 162.0
+          "y_px": 194.0
         }
       ],
       "rework_variant": "return",
@@ -453,11 +453,11 @@
       "points": [
         {
           "x_px": 3880.0,
-          "y_px": 334.0
+          "y_px": 350.0
         },
         {
           "x_px": 2510.0,
-          "y_px": 334.0
+          "y_px": 350.0
         }
       ],
       "rework_variant": null,
@@ -477,11 +477,11 @@
       "points": [
         {
           "x_px": 144.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 200.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -495,20 +495,20 @@
       "callout_near_source": false,
       "incoming_token": null,
       "is_rework": false,
-      "label": "True",
+      "label": "yes",
       "label_point": {
         "x_px": 890.5,
-        "y_px": 84.0
+        "y_px": 100.0
       },
       "outgoing_token": null,
       "points": [
         {
           "x_px": 985.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 1041.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -525,41 +525,41 @@
       "callout_near_source": true,
       "incoming_token": null,
       "is_rework": true,
-      "label": "False",
+      "label": "no",
       "label_point": null,
       "outgoing_token": null,
       "points": [
         {
           "x_px": 890.5,
-          "y_px": 144.0
+          "y_px": 160.0
         },
         {
           "x_px": 979.034090909091,
-          "y_px": 249.0
+          "y_px": 265.0
         },
         {
           "x_px": 1171.646590909091,
-          "y_px": 249.0
+          "y_px": 265.0
         },
         {
           "x_px": 1180.9215909090908,
-          "y_px": 260.0
+          "y_px": 276.0
         },
         {
           "x_px": 1287.8261363636364,
-          "y_px": 260.0
+          "y_px": 276.0
         },
         {
           "x_px": 1297.1011363636364,
-          "y_px": 249.0
+          "y_px": 265.0
         },
         {
           "x_px": 1556.0681818181818,
-          "y_px": 249.0
+          "y_px": 265.0
         },
         {
           "x_px": 1564.5,
-          "y_px": 259.0
+          "y_px": 275.0
         }
       ],
       "rework_variant": "branch",
@@ -572,7 +572,7 @@
   "lanes": [],
   "node_bounds": {
     "assess_scope": {
-      "height_px": 150.0,
+      "height_px": 182.0,
       "width_px": 310.0,
       "x_px": 1556.0,
       "y_px": 12.0
@@ -581,22 +581,22 @@
       "height_px": 150.0,
       "width_px": 214.0,
       "x_px": 1286.0,
-      "y_px": 12.0
+      "y_px": 28.0
     },
     "complete": {
-      "height_px": 134.0,
+      "height_px": 182.0,
       "width_px": 280.0,
       "x_px": 3057.0,
-      "y_px": 20.0
+      "y_px": 12.0
     },
     "complete_wait_queue": {
       "height_px": 150.0,
       "width_px": 189.0,
       "x_px": 2812.0,
-      "y_px": 12.0
+      "y_px": 28.0
     },
     "dispatch_queue": {
-      "height_px": 150.0,
+      "height_px": 182.0,
       "width_px": 305.0,
       "x_px": 3643.0,
       "y_px": 12.0
@@ -605,46 +605,46 @@
       "height_px": 150.0,
       "width_px": 194.0,
       "x_px": 3393.0,
-      "y_px": 12.0
+      "y_px": 28.0
     },
     "execute_service": {
-      "height_px": 134.0,
+      "height_px": 182.0,
       "width_px": 320.0,
       "x_px": 2177.0,
-      "y_px": 20.0
+      "y_px": 12.0
     },
     "execute_service_wait_queue": {
       "height_px": 150.0,
       "width_px": 199.0,
       "x_px": 1922.0,
-      "y_px": 12.0
+      "y_px": 28.0
     },
     "intake": {
-      "height_px": 118.0,
+      "height_px": 166.0,
       "width_px": 300.0,
       "x_px": 440.0,
-      "y_px": 28.0
+      "y_px": 20.0
     },
     "intake_wait_queue": {
       "height_px": 150.0,
       "width_px": 184.0,
       "x_px": 200.0,
-      "y_px": 12.0
+      "y_px": 28.0
     },
     "process_queue": {
       "height_px": 150.0,
       "width_px": 189.0,
       "x_px": 1041.0,
-      "y_px": 12.0
+      "y_px": 28.0
     },
     "qa": {
       "height_px": 116.0,
       "width_px": 203.0,
       "x_px": 2553.0,
-      "y_px": 29.0
+      "y_px": 45.0
     },
     "rework_intake": {
-      "height_px": 134.0,
+      "height_px": 166.0,
       "width_px": 315.0,
       "x_px": 440.0,
       "y_px": 267.0
@@ -653,10 +653,10 @@
       "height_px": 150.0,
       "width_px": 189.0,
       "x_px": 1470.0,
-      "y_px": 259.0
+      "y_px": 275.0
     },
     "rework_quality": {
-      "height_px": 134.0,
+      "height_px": 166.0,
       "width_px": 280.0,
       "x_px": 2230.0,
       "y_px": 267.0
@@ -665,25 +665,25 @@
       "height_px": 150.0,
       "width_px": 194.0,
       "x_px": 3880.0,
-      "y_px": 259.0
+      "y_px": 275.0
     },
     "start": {
       "height_px": 52.0,
       "width_px": 132.0,
       "x_px": 12.0,
-      "y_px": 61.0
+      "y_px": 77.0
     },
     "stop": {
       "height_px": 52.0,
       "width_px": 132.0,
       "x_px": 4004.0,
-      "y_px": 61.0
+      "y_px": 77.0
     },
     "triage": {
       "height_px": 114.0,
       "width_px": 189.0,
       "x_px": 796.0,
-      "y_px": 30.0
+      "y_px": 46.0
     }
   },
   "orientation": "lr"

@@ -8,7 +8,7 @@ from typing import Any
 from flo.render._diagnostics import log_render_diagnostics
 
 from ..layout_core.elk import execute_elk_layout
-from ..layout_core.elk_contracts import ElkDirection, ElkLayoutRequest
+from ..layout_core.elk_contracts import ElkDirection, ElkLayoutRequest, ElkSerialization
 from ..layout_core.elk_runtime import run_elkjs_layout
 from ..layout_core.elk_support import (
     extract_nodes_and_edges,
@@ -17,7 +17,11 @@ from ..layout_core.elk_support import (
     project_parent_only_subprocess_view,
 )
 from ..layout_core.elk_validation import validate_elk_request_namespaces
-from ..layout_core.lane_support import lane_specs
+from ..layout_core.lane_support import (
+    GENERATED_LANE_IDS,
+    generated_lane_ids,
+    lane_specs,
+)
 from ..layout_core.models import LayoutResult
 from ..options import RenderOptions
 
@@ -43,12 +47,23 @@ def build_swimlane_elk_layout_request(
         edges=ordered_edges(
             edges,
             node_kinds=_node_kind_map(nodes),
-            diagram="swimlane",
-            direction=direction,
         ),
         strict_diagnostics=render_options.layout_fit == "fit-strict",
+        serialization=ElkSerialization(
+            root_options={
+                "elk.algorithm": "layered",
+                "elk.direction": direction,
+                "elk.edgeRouting": "ORTHOGONAL",
+                "elk.partitioning.activate": "true",
+                "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            }
+        ),
     )
-    validate_elk_request_namespaces(request)
+    validate_elk_request_namespaces(
+        request,
+        reserved_ids=GENERATED_LANE_IDS,
+        synthetic_lane_ids=generated_lane_ids(request),
+    )
     return request
 
 
@@ -58,7 +73,11 @@ def layout_swimlane_with_elk(
     engine: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
     options: RenderOptions | None = None,
 ) -> LayoutResult:
-    """Build, execute, and normalize a swimlane ELK layout pass."""
+    """Return intermediate SWIMLANE engine geometry, not a complete artifact.
+
+    This layout-only diagnostic API neither prepares standalone viewport budgets
+    nor emits SVG. Artifact consumers use ``flo.render.render_execution``.
+    """
     render_options = options or RenderOptions(diagram="swimlane")
     if render_options.diagram != "swimlane":
         raise ValueError("Swimlane ELK adapter requires diagram='swimlane'.")

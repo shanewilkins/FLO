@@ -39,7 +39,7 @@ repos:
         types: [python]
         pass_filenames: true
         files: "\\.py$"
-        exclude: "^(scripts/|src/flo/render/layout_core/elk\\.py|src/flo/render/_svg_sppm_edges\\.py|tests/integration/test_cli_render_options\\.py|tests/unit/test_layout_core_elk_requests\\.py|tests/unit/test_layout_core_elk_runtime\\.py|tests/unit/test_render_artifact_backends_sppm\\.py)$"
+        exclude: "^(scripts/|src/flo/render/_svg_sppm_edges\\.py|tests/integration/test_cli_render_options\\.py|tests/unit/test_layout_core_elk_requests\\.py|tests/unit/test_layout_core_elk_runtime\\.py|tests/unit/test_render_artifact_backends_sppm\\.py)$"
       - id: radon-complexity
         name: radon complexity
         entry: uv run python scripts/check_complexity.py
@@ -61,6 +61,11 @@ repos:
         entry: uv run lint-imports
         language: system
         pass_filenames: false
+      - id: architecture-responsibility-check
+        name: architecture responsibilities (fast source check)
+        entry: uv run python scripts/architecture_boundaries.py
+        language: system
+        pass_filenames: false
       - id: docs-governance-check
         name: docs governance (via uv)
         entry: uv run python scripts/check_docs_governance.py --strict
@@ -73,6 +78,12 @@ repos:
         language: system
         pass_filenames: false
         files: "^(src/flo/render/|tests/golden/sppm/|scripts/check_svg_accessibility\\.py)"
+      - id: sppm-final-geometry-check
+        name: SPPM final SVG geometry
+        entry: uv run python scripts/check_sppm_geometry.py
+        language: system
+        pass_filenames: false
+        files: "^(src/flo/render/|tests/golden/sppm/|scripts/check_sppm_geometry\\.py)"
       - id: sppm-golden-drift-check
         name: SPPM golden artifact drift (via uv)
         entry: uv run python scripts/check_sppm_baseline_drift.py

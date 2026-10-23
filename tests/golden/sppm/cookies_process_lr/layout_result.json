@@ -1,6 +1,6 @@
 {
   "canvas_bounds": {
-    "height_px": 130.0,
+    "height_px": 158.0,
     "width_px": 2183.0,
     "x_px": 0.0,
     "y_px": 0.0
@@ -17,11 +17,11 @@
       "points": [
         {
           "x_px": 1035.0,
-          "y_px": 65.0
+          "y_px": 79.0
         },
         {
           "x_px": 1091.0,
-          "y_px": 65.0
+          "y_px": 79.0
         }
       ],
       "rework_variant": null,
@@ -41,11 +41,11 @@
       "points": [
         {
           "x_px": 1983.0,
-          "y_px": 65.0
+          "y_px": 79.0
         },
         {
           "x_px": 2039.0,
-          "y_px": 65.0
+          "y_px": 79.0
         }
       ],
       "rework_variant": null,
@@ -65,11 +65,11 @@
       "points": [
         {
           "x_px": 1627.0,
-          "y_px": 65.0
+          "y_px": 79.0
         },
         {
           "x_px": 1683.0,
-          "y_px": 65.0
+          "y_px": 79.0
         }
       ],
       "rework_variant": null,
@@ -89,11 +89,11 @@
       "points": [
         {
           "x_px": 448.0,
-          "y_px": 65.0
+          "y_px": 79.0
         },
         {
           "x_px": 504.0,
-          "y_px": 65.0
+          "y_px": 79.0
         }
       ],
       "rework_variant": null,
@@ -113,11 +113,11 @@
       "points": [
         {
           "x_px": 1331.0,
-          "y_px": 65.0
+          "y_px": 79.0
         },
         {
           "x_px": 1387.0,
-          "y_px": 65.0
+          "y_px": 79.0
         }
       ],
       "rework_variant": null,
@@ -137,11 +137,11 @@
       "points": [
         {
           "x_px": 144.0,
-          "y_px": 65.0
+          "y_px": 79.0
         },
         {
           "x_px": 200.0,
-          "y_px": 65.0
+          "y_px": 79.0
         }
       ],
       "rework_variant": null,
@@ -161,11 +161,11 @@
       "points": [
         {
           "x_px": 764.0,
-          "y_px": 65.0
+          "y_px": 79.0
         },
         {
           "x_px": 820.0,
-          "y_px": 65.0
+          "y_px": 79.0
         }
       ],
       "rework_variant": null,
@@ -178,52 +178,52 @@
   "lanes": [],
   "node_bounds": {
     "add_dry_ingredients": {
-      "height_px": 102.0,
+      "height_px": 134.0,
       "width_px": 215.0,
       "x_px": 820.0,
-      "y_px": 14.0
+      "y_px": 12.0
     },
     "bake": {
-      "height_px": 102.0,
+      "height_px": 134.0,
       "width_px": 300.0,
       "x_px": 1683.0,
-      "y_px": 14.0
+      "y_px": 12.0
     },
     "end": {
       "height_px": 52.0,
       "width_px": 132.0,
       "x_px": 2039.0,
-      "y_px": 39.0
+      "y_px": 53.0
     },
     "preheat": {
-      "height_px": 102.0,
+      "height_px": 134.0,
       "width_px": 240.0,
       "x_px": 1387.0,
-      "y_px": 14.0
+      "y_px": 12.0
     },
     "prep_subprocess": {
       "height_px": 106.0,
       "width_px": 248.0,
       "x_px": 200.0,
-      "y_px": 12.0
+      "y_px": 26.0
     },
     "rest_dough": {
-      "height_px": 102.0,
+      "height_px": 134.0,
       "width_px": 240.0,
       "x_px": 1091.0,
-      "y_px": 14.0
+      "y_px": 12.0
     },
     "start": {
       "height_px": 52.0,
       "width_px": 132.0,
       "x_px": 12.0,
-      "y_px": 39.0
+      "y_px": 53.0
     },
     "wet_mix_subprocess": {
       "height_px": 106.0,
       "width_px": 260.0,
       "x_px": 504.0,
-      "y_px": 12.0
+      "y_px": 26.0
     }
   },
   "orientation": "lr"

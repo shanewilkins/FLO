@@ -2,6 +2,45 @@
 
 ## 0.4.2
 
+- Keep shared completion nodes on the mainline, rebuild shifted correction routes
+  without interpolated zigzags, and keep return corridors clear of work cards.
+  Resolve labels and continuation tokens against occupied geometry, respecting
+  usable space beside polygon tips. Gate final SVG endpoints, orthogonality,
+  canvas containment, node collisions, and annotation collisions independently
+  of the layout model; the release corpus now has no render warning allowances.
+- Show declared work-card value classes as text in all densities and remove
+  tinted SPPM colors from the monochrome theme. Add CLI acceptance for equivalent
+  px/in/cm/mm geometry, deterministic output, unreadable-fit failure, and expansion.
+
+- Align public API validation and inspection with CLI schema checks. Reject
+  malformed metadata, null transitions, discarded hierarchy declarations,
+  unresolved declared context references, boolean queue capacities, misplaced
+  work timing, and non-finite typed numeric evidence before validated consumers
+  produce output. Extend conformance coverage through API and canonical export.
+
+- Show `?` for missing applicable SPPM timing values and missing timing-footer
+  categories so unmeasured durations remain visibly distinct from measured zero.
+  Reserve local correction clearance for straight branch and return connectors
+  as metric labels grow, without repacking mainline rows.
+
+- Preserve scalar timing states throughout validation, exchange, analysis, and
+  SPPM: reject non-finite/invalid durations with source repair guidance, retain
+  measured zero waits and setups, convert wait units correctly, and refuse
+  complete lead-time claims for invalid optional timing or numeric overflow.
+  Show valid partial timing evidence alongside unavailable lead time.
+
+- Align local correction endpoints with their mainline anchors when spacing
+  permits, preserve orthogonal bends, and style internal correction connectors
+  with the same dotted rework color and arrowhead as the branch and return.
+
+- Place simple wrapped SPPM corrections above or below their departure/rejoin
+  row using a bounded deterministic route comparison, retain complex branches
+  on the outside fallback row, and route skipped rows through outside gutters.
+
+- Label SPPM processing, waiting, and setup durations as `P/T`, `W/T`, and
+  `S/T`, and use Processing Time and Setup Time in publication footers.
+  Existing source fields and timing calculations remain compatible.
+
 - Allow adjacent queue and work waits to remain independent when they declare
   distinct measurement identities, while retaining `E1505` for ambiguous
   unlinked measurements.

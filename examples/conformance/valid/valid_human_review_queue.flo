@@ -7,10 +7,10 @@ process:
 lanes:
   - id: employee
     name: Employee
-    kind: default
+    type: role
   - id: finance
     name: Finance
-    kind: default
+    type: role
 
 steps:
   - id: start

@@ -12,6 +12,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from flo.process.durations import duration_number, duration_seconds
+
 __all__ = [
     "SppmMetadataValue",
     "get_metadata_changeover_time",
@@ -32,12 +34,11 @@ class SppmMetadataValue:
     unit: str | None = None
 
     @property
-    def numeric_value(self) -> float:
-        """Return numeric value, defaulting to 0 if invalid."""
-        try:
-            return float(self.value) if self.value is not None else 0.0
-        except ValueError, TypeError:
-            return 0.0
+    def numeric_value(self) -> float | None:
+        """Return a finite duration value, preserving invalid or missing as None."""
+        if duration_seconds({"value": self.value, "unit": self.unit}) is None:
+            return None
+        return duration_number(self.value)
 
 
 def get_metadata_field(
@@ -75,11 +76,9 @@ def get_metadata_value_class(metadata: dict[str, Any] | None) -> str | None:
 
 def _parse_time_spec(time_spec: Any) -> SppmMetadataValue | None:
     """Parse a time spec dict into SppmMetadataValue, or None if invalid."""
-    if not isinstance(time_spec, dict):
+    if duration_seconds(time_spec) is None:
         return None
-    value = time_spec.get("value")
-    unit = time_spec.get("unit", "min")
-    return SppmMetadataValue(value=value, unit=unit)
+    return SppmMetadataValue(value=time_spec["value"], unit=time_spec["unit"])
 
 
 def get_metadata_wait_time_minutes(
@@ -90,20 +89,18 @@ def get_metadata_wait_time_minutes(
     ``wait_before`` is the worksheet observation attached to a work node.
     ``wait_time`` is the duration attached to an explicit queue node.
 
-    Returns the raw numeric value (int or float) to preserve formatting,
+    Returns the declared duration normalized to minutes,
     or None if absent or invalid.
     """
-    time_spec = get_metadata_field(metadata, "wait_before", expected_type=dict)
-    if not isinstance(time_spec, dict):
-        time_spec = get_metadata_field(metadata, "wait_time", expected_type=dict)
-    if not isinstance(time_spec, dict):
+    if not isinstance(metadata, dict):
         return None
-    value = time_spec.get("value")
-    if value is None:
-        return None
-    if isinstance(value, (int, float)):
-        return value
-    return None
+    time_spec = (
+        metadata.get("wait_before")
+        if "wait_before" in metadata
+        else metadata.get("wait_time")
+    )
+    seconds = duration_seconds(time_spec)
+    return None if seconds is None else seconds / 60.0
 
 
 def get_metadata_cycle_time(
@@ -134,10 +131,8 @@ def get_metadata_crossover_time(
     standardization/SMED.
     """
     for field_name in ("crossover_time", "transfer_time", "changeover_time"):
-        time_spec = get_metadata_field(metadata, field_name, expected_type=dict)
-        parsed = _parse_time_spec(time_spec)
-        if parsed is not None:
-            return parsed
+        if isinstance(metadata, dict) and field_name in metadata:
+            return _parse_time_spec(metadata[field_name])
     return None
 
 

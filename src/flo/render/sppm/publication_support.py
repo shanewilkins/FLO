@@ -179,12 +179,14 @@ def _footer_content_from_timing_analysis(
 
 
 def _has_declared_timing(analysis: ProcessTimingAnalysis) -> bool:
-    missing_ids = set(analysis.missing_timing_node_ids)
-    timed_node_types = {"task", "system_task", "subprocess", "queue"}
     return any(
-        (timing.node_type in timed_node_types and timing.node_id not in missing_ids)
-        or timing.changeover_source_field is not None
+        value is not None
         for timing in analysis.node_timings
+        for value in (
+            timing.totals.cycle_time_seconds,
+            timing.totals.wait_time_seconds,
+            timing.totals.changeover_time_seconds,
+        )
     )
 
 
@@ -193,14 +195,13 @@ def _declared_timing_rows(
 ) -> list[tuple[str, str]]:
     totals = analysis.declared_totals
     values = (
-        ("Cycle Time", totals.cycle_time_seconds),
+        ("Processing Time", totals.cycle_time_seconds),
         ("Waiting Time", totals.wait_time_seconds),
-        ("C/O Time", totals.changeover_time_seconds),
+        ("Setup Time", totals.changeover_time_seconds),
     )
     return [
-        (label, _format_timing_seconds(seconds))
+        (label, "?" if seconds is None else _format_timing_seconds(seconds))
         for label, seconds in values
-        if seconds is not None
     ]
 
 

@@ -37,6 +37,17 @@ jobs:
           .tmp/ci-wheel-smoke/bin/python -m pip install dist/*.whl
           .tmp/ci-wheel-smoke/bin/python scripts/smoke_installed_imports.py
           .tmp/ci-wheel-smoke/bin/flo --help
+          .tmp/ci-wheel-smoke/bin/python scripts/check_yb_journey.py --flo "$PWD/.tmp/ci-wheel-smoke/bin/flo"
+          .tmp/ci-wheel-smoke/bin/python scripts/architecture_trace.py --installed-python "$PWD/.tmp/ci-wheel-smoke/bin/python" --output .tmp/ci-wheel-smoke-architecture.json --check
+
+      - name: Retain Linux candidate evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-candidate-evidence
+          path: |
+            dist/*.whl
+            .tmp/ci-wheel-smoke-architecture.json
 
   macos-package-smoke:
     runs-on: macos-latest
@@ -68,11 +79,28 @@ jobs:
           .tmp/macos-wheel-smoke/bin/python -m pip install dist/*.whl
           .tmp/macos-wheel-smoke/bin/python scripts/smoke_installed_imports.py
           .tmp/macos-wheel-smoke/bin/flo --help
-          cd .tmp
-          macos-wheel-smoke/bin/flo new macos-smoke.flo --name "macOS Smoke"
-          macos-wheel-smoke/bin/flo validate macos-smoke.flo
-          macos-wheel-smoke/bin/flo render macos-smoke.flo --diagram sppm --render-to macos-smoke.svg
-          test -s macos-smoke.svg
+          .tmp/macos-wheel-smoke/bin/python scripts/check_yb_journey.py --flo "$PWD/.tmp/macos-wheel-smoke/bin/flo"
+          .tmp/macos-wheel-smoke/bin/python scripts/architecture_trace.py --installed-python "$PWD/.tmp/macos-wheel-smoke/bin/python" --output .tmp/macos-wheel-smoke-architecture.json --check
+
+      - name: Set up Chrome for font measurements
+        id: macos-chrome
+        uses: browser-actions/setup-chrome@v2
+
+      - name: Measure SVG glyph bounds and publication scaling
+        run: >-
+          .tmp/macos-wheel-smoke/bin/python scripts/check_svg_browser.py
+          --browser "${{ steps.macos-chrome.outputs.chrome-path }}"
+          --output .tmp/macos-font-metrics.json
+
+      - name: Retain macOS candidate evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-candidate-evidence
+          path: |
+            dist/*.whl
+            .tmp/macos-wheel-smoke-architecture.json
+            .tmp/macos-font-metrics.json
 
   sppm-determinism:
     runs-on: ubuntu-latest
@@ -150,6 +178,9 @@ jobs:
       - name: Run test suite with coverage
         run: uv run pytest --cov=src/flo --cov-report=term-missing --cov-fail-under=90
 
+      - name: Check final SPPM SVG geometry
+        run: uv run python scripts/check_sppm_geometry.py
+
       - name: Check SVG accessible names and descriptions
         run: uv run python scripts/check_svg_accessibility.py
 
@@ -163,3 +194,16 @@ jobs:
           uv run flo render examples/reference/washnfold.flo --diagram sppm --sppm-output-profile book --render-to .tmp/browser-smoke/washnfold.svg
           "${{ steps.setup-chrome.outputs.chrome-path }}" --headless --no-sandbox --disable-gpu --allow-file-access-from-files --screenshot=.tmp/browser-smoke/washnfold.png "file://${{ github.workspace }}/.tmp/browser-smoke/washnfold.svg"
           test -s .tmp/browser-smoke/washnfold.png
+
+      - name: Measure SVG glyph bounds and publication scaling
+        run: >-
+          uv run python scripts/check_svg_browser.py
+          --browser "${{ steps.setup-chrome.outputs.chrome-path }}" --no-sandbox
+          --output .tmp/browser-smoke/font-metrics.json
+
+      - name: Retain Linux browser evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-browser-evidence
+          path: .tmp/browser-smoke/

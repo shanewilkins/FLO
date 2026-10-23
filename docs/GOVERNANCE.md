@@ -92,6 +92,15 @@ product commitment in the appropriate register and the rationale in an ADR.
 Update the current spec and schema when the implementation changes, or mark the
 future contract's effective release unambiguously.
 
+## Release Architecture Acceptance
+
+Every release, including patches, must satisfy the
+[release architecture integrity policy](policy/release_architecture_integrity.md)
+and TR-118. Its accepted baseline must reconcile the effective architecture,
+implementation, documented ownership, and verification evidence. Architecture
+violations block release even when functional and golden checks pass. Future
+target structures must be clearly distinguished from current obligations.
+
 ## Change Classes
 
 Every change belongs to one primary class.

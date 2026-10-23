@@ -125,15 +125,9 @@ def _filter_cases(
 def _build_case(
     *, case: dict[str, Any], outdir: Path, debug_dir: Path | None = None
 ) -> tuple[dict[str, Any], ...]:
-    from flo.process.analysis import analyze_process_timing
-    from flo.render.layout_core import (
-        normalize_elk_layout_result,
-        run_elkjs_layout,
-        serialize_elk_layout_request,
-    )
+    from flo.process.ir import ensure_schema_aligned, validate_ir
+    from flo.render import render_execution
     from flo.render.options import RenderOptions
-    from flo.render.sppm.layout import build_sppm_elk_layout_request
-    from flo.render.sppm.renderer import render_sppm_svg_artifact_from_layout
     from flo.source import compile_adapter, parse_adapter
 
     case_id = str(case["id"])
@@ -149,23 +143,15 @@ def _build_case(
     model = parse_adapter(
         source_path.read_text(encoding="utf-8"), source_path=str(source_path)
     )
-    timing_analysis = (
-        analyze_process_timing(compile_adapter(model))
-        if model.get("spec_version") == "0.1"
-        else None
-    )
-    request = build_sppm_elk_layout_request(model, options=options)
-    request_payload = serialize_elk_layout_request(request)
-    response_payload = run_elkjs_layout(request_payload)
-    normalized_layout = normalize_elk_layout_result(response_payload, request=request)
-
-    svg_artifact, _ = render_sppm_svg_artifact_from_layout(
-        process=model,
-        options=options,
-        request=request,
-        result=normalized_layout,
-        timing_analysis=timing_analysis,
-    )
+    process = compile_adapter(model)
+    validate_ir(process)
+    ensure_schema_aligned(process)
+    execution = render_execution(process, options, capture_layout=True)
+    if len(execution.layout_stages) != 1:
+        raise ValueError(f"Case '{case_id}' must produce exactly one ELK layout stage")
+    stage = execution.layout_stages[0]
+    normalized_layout = stage.result
+    svg_artifact = execution.artifact
     case_dir = outdir / case_id
     case_dir.mkdir(parents=True, exist_ok=True)
     _prune_case_dir(case_dir)
@@ -177,8 +163,8 @@ def _build_case(
     if debug_dir:
         debug_case_dir = debug_dir / case_id
         debug_case_dir.mkdir(parents=True, exist_ok=True)
-        _write_json(debug_case_dir / "elk_request.json", request_payload)
-        _write_json(debug_case_dir / "elk_response.json", response_payload)
+        _write_json(debug_case_dir / "elk_request.json", stage.request_payload)
+        _write_json(debug_case_dir / "elk_response.json", stage.response_payload)
 
     print(f"Built: {_display_path(case_dir)}")
     diagnostics = svg_artifact.metadata.get("render_diagnostics", [])

@@ -114,7 +114,7 @@ class RoutedEdgePath:
 
 @dataclass(frozen=True)
 class LayoutResult:
-    """Backend-neutral final geometry emitted by a layout engine."""
+    """Normalized engine geometry, before diagram finalization and SVG emission."""
 
     orientation: OrientationMode
     canvas_bounds: LayoutBounds

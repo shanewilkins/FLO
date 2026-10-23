@@ -7,6 +7,13 @@ Status: accepted
 Define the current decomposition of FLO's ELK-backed, FLO-owned direct-SVG
 SPPM renderer. Normative SPPM meaning lives in `docs/specs/sppm.md`.
 
+## Architecture validation and effective clarification
+
+The [validation report](../architecture_validation.md) closes AF-001–003 through
+R1–R3b. One production sequence produces engine, routed, and final-scene values;
+SVG consumes the final scene. Clean candidate acceptance remains R4 work. The
+[finalization ADR](../adr/render_layout_finalization.md) records the accepted split.
+
 ## Renderer boundary model
 
 SPPM is split into four concerns.
@@ -30,7 +37,7 @@ reintroduced as layout or publication fallbacks.
 ## Current module layout
 
 - `src/flo/render/sppm/renderer.py`
-  Direct-SVG entrypoint and final artifact assembly.
+  Production orchestration, explicit precomputed-engine adapter, and stage observation.
 - `src/flo/render/sppm/layout.py`
   SPPM-owned ELK request construction, node measurement, continuation-token
   decoration, rework callouts, wrapping, and layout adapter.
@@ -39,8 +46,15 @@ reintroduced as layout or publication fallbacks.
   routing, and geometry strategies.
 - `src/flo/render/sppm/nodes.py`
   SPPM node presentation.
+- `src/flo/render/sppm/scene.py`, `geometry.py`, `edge_geometry.py`,
+  `edge_layout.py`, and `attachments.py`
+  Finalize node/routes, shape attachments, labels/callouts/tokens, occupied bounds,
+  publication bands, and diagnostic outcomes before emission.
+- `src/flo/render/sppm/svg.py` and `edge_svg.py`
+  Serialize final scene and connector/annotation geometry with supplied paint.
 - `src/flo/render/sppm/edges.py`
-  Edge, label, and callout presentation.
+  Explicit intermediate route/token compatibility adapters for stage-level tests;
+  the production emitter cannot depend on them.
 - `src/flo/render/sppm/rows.py`
   Mainline and rework-row display alignment and diagnostics.
 - `src/flo/render/sppm/projection.py`
@@ -54,13 +68,15 @@ reintroduced as layout or publication fallbacks.
 
 ## Ownership rules
 
-- ELK owns requested graph placement and routed geometry.
-- SPPM layout normalization owns the normative row and boundary constraints
-  described by `docs/specs/sppm.md`.
-- SVG modules render supplied geometry and may apply only deterministic
-  presentation transforms that do not create competing route policy.
-- Publication planning owns page context; a future Typst compositor owns
-  multi-page document composition.
+- ELK supplies algorithmic graph placement and routed geometry.
+- SPPM-owned layout policy and finalization own the normative row, boundary,
+  attachment, and annotation constraints described by `docs/specs/sppm.md`.
+- SVG emission consumes finalized geometry and applies paint, typography, and
+  coordinate serialization. Formatting and supplied viewport transforms are
+  permitted; moving nodes, rebuilding routes, and choosing annotation positions
+  are competing layout policy and belong before emission.
+- Publication planning owns page context; the Typst compositor owns multi-page
+  document composition. Full publication acceptance remains a later belt gate.
 
 ## Footer metric policy
 

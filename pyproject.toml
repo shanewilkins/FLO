@@ -132,6 +132,34 @@ forbidden_modules = [
 ]
 
 [[tool.importlinter.contracts]]
+name = "Neutral render infrastructure cannot depend on dispatch or diagram implementations"
+type = "forbidden"
+source_modules = [
+    "flo.render.layout_core", "flo.render.shared",
+    "flo.render._artifact", "flo.render._diagnostics", "flo.render._geometry",
+    "flo.render._execution",
+    "flo.render._process_header", "flo.render._publication", "flo.render._svg_theme",
+    "flo.render._text", "flo.render.options", "flo.render.themes",
+    "flo.render.legacy_sppm_themes", "flo.render.typst_publication",
+]
+forbidden_modules = [
+    "flo.render.sppm", "flo.render.swimlane", "flo.render.spaghetti",
+    "flo.render.value_stream", "flo.render.registry", "flo.render.capability_matrix",
+]
+
+[[tool.importlinter.contracts]]
+name = "SPPM SVG emission cannot run node or route layout policy"
+type = "forbidden"
+source_modules = ["flo.render.sppm.svg", "flo.render.sppm.edge_svg"]
+forbidden_modules = [
+    "flo.render.sppm.scene", "flo.render.sppm.edge_geometry", "flo.render.sppm.edge_layout",
+    "flo.render.sppm.attachments", "flo.render.sppm.avoidance", "flo.render.sppm.edges",
+    "flo.render.sppm.geometry", "flo.render.sppm.rows", "flo.render.sppm.row_routes",
+    "flo.render.sppm.layout", "flo.render.sppm.layout_wrap", "flo.render.sppm.layout_spacing",
+    "flo.render.sppm.wrapped_rework", "flo.render.layout_core.elk",
+]
+
+[[tool.importlinter.contracts]]
 name = "FLO package siblings are acyclic"
 type = "acyclic_siblings"
 ancestors = ["flo"]

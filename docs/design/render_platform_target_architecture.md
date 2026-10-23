@@ -2,6 +2,16 @@
 
 Status: accepted
 
+## Effective ownership clarification
+
+The [layout finalization ADR](adr/render_layout_finalization.md) clarifies the
+existing split for next-release acceptance: ELK supplies algorithmic placement;
+FLO-owned diagram layout policy performs bounded finalization; SVG emission
+consumes finalized geometry. Implementation drift is tracked in the
+[architecture validation report](architecture_validation.md), not accepted by
+this document. The later sections titled "Proposed" remain target sketches,
+not a requirement to create every suggested type or package before release.
+
 ## Purpose
 
 Define the target split between diagram semantics, layout, rendering, and true
@@ -44,12 +54,13 @@ Questions that belong to FLO:
 
 ### Layout engine
 
-ELK owns:
-
-- node placement for graph-like diagrams
-- port-aware routing
-- orthogonal or layered path planning
-- hierarchy-aware layout constraints
+The layout stage owns final geometry. ELK supplies algorithmic node placement,
+port-aware routing, orthogonal/layered planning, and hierarchy constraints.
+FLO-owned diagram policy defines and applies bounded adjustments for wrapping,
+correction rows, shape attachments, and annotation placement before emission.
+Neutral engine code executes/normalizes; renderer-owned policy selects these
+conventions. All of these decisions must be reflected in the inspectable final
+geometry consumed by the SVG emitter.
 
 Questions that belong to ELK:
 
@@ -66,7 +77,10 @@ The SVG renderer owns:
 - typography and paint policy already decided by FLO semantics
 - asset export suitable for reports, notebooks, slides, and documentation
 
-The SVG renderer does not decide layout policy or page breaks.
+The SVG emitter does not decide layout policy or page breaks. Geometry preparation
+and finalization belong to the production render orchestrator and diagram-owned
+layout stage; emission does not move nodes, rebuild routes, clip attachments, or
+choose annotation positions.
 
 ### Typst compositor
 

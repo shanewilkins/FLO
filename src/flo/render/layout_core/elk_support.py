@@ -8,9 +8,8 @@ from typing import Any
 
 from flo.render.options import RenderOptions
 
-from .elk_contracts import ElkLayoutEdge, ElkLayoutNode
+from .elk_contracts import ElkLayoutEdge, ElkLayoutNode, ElkSerialization
 from .rework_semantics import resolve_rework_route_variant
-from .sppm_strategy import sppm_port_constraints_value
 
 _DEFAULT_NODE_WIDTH_PX = 140
 _DEFAULT_NODE_HEIGHT_PX = 52
@@ -42,8 +41,6 @@ def ordered_edges(
     edges: list[dict[str, Any]],
     *,
     node_kinds: dict[str, str] | None = None,
-    diagram: str | None = None,
-    direction: str | None = None,
     decorator: EdgeDecorator | None = None,
 ) -> tuple[ElkLayoutEdge, ...]:
     """Convert process edges into ordered ELK edges."""
@@ -52,8 +49,6 @@ def ordered_edges(
             edge=edge,
             index=index,
             node_kinds=node_kinds or {},
-            diagram=diagram,
-            direction=direction,
             decorator=decorator,
         )
         for index, edge in enumerate(edges)
@@ -64,8 +59,8 @@ def ordered_edges(
 def serialize_node(
     node: ElkLayoutNode,
     *,
-    diagram: str | None = None,
     constrain_terminal_layers: bool = True,
+    settings: ElkSerialization | None = None,
 ) -> dict[str, Any]:
     """Serialize one ELK node contract into the payload shape ELK expects."""
     out: dict[str, Any] = {
@@ -81,39 +76,35 @@ def serialize_node(
         layout_options["elk.layered.layering.layerConstraint"] = "FIRST"
     elif node.kind == "end" and constrain_terminal_layers:
         layout_options["elk.layered.layering.layerConstraint"] = "LAST"
-    if diagram == "sppm":
-        layout_options["elk.portConstraints"] = sppm_port_constraints_value()
     if node.partition_index is not None:
         layout_options["elk.partitioning.partition"] = str(node.partition_index)
     if layout_options:
         out["layoutOptions"] = layout_options
-    if diagram == "sppm":
-        out["ports"] = _sppm_cardinal_ports(node.id)
+    if settings is not None:
+        extras = settings.node_overrides.get(node.id, {})
+        layout_options.update(extras.get("layoutOptions", {}))
+        if "ports" in extras:
+            out["ports"] = extras["ports"]
+        if layout_options:
+            out["layoutOptions"] = layout_options
     return out
 
 
 def serialize_edge(
-    edge: ElkLayoutEdge, *, diagram: str | None = None
+    edge: ElkLayoutEdge, *, settings: ElkSerialization | None = None
 ) -> dict[str, Any]:
     """Serialize one ELK edge contract into the payload shape ELK expects."""
     source_endpoint = edge.source_id
     target_endpoint = edge.target_id
-    if diagram == "sppm":
-        source_endpoint = _port_id(edge.source_id, edge.source_port_side or "EAST")
-        target_endpoint = _port_id(edge.target_id, edge.target_port_side or "WEST")
     out: dict[str, Any] = {
         "id": edge.id,
         "sources": [source_endpoint],
         "targets": [target_endpoint],
     }
-    # SPPM places rework annotations after routing. Supplying those labels to ELK
-    # makes the router bend the connector around an invisible label box even
-    # though the SVG renderer chooses its own caption position.
-    label_affects_layout = not (
-        diagram == "sppm" and edge.rework_variant in {"branch", "return"}
-    )
-    if edge.label and label_affects_layout:
+    if edge.label and (settings is None or edge.id not in settings.unlabeled_edge_ids):
         out["labels"] = [{"text": edge.label}]
+    if settings is not None:
+        out.update(settings.edge_overrides.get(edge.id, {}))
     return out
 
 
@@ -223,8 +214,6 @@ def _elk_edge(
     edge: dict[str, Any],
     index: int,
     node_kinds: dict[str, str],
-    diagram: str | None = None,
-    direction: str | None = None,
     decorator: EdgeDecorator | None = None,
 ) -> ElkLayoutEdge:
     source_id = str(edge.get("source") or "")
@@ -234,19 +223,6 @@ def _elk_edge(
     rework_variant = resolve_rework_route_variant(edge, source_kind=source_kind)
     source_port_side: str | None = None
     target_port_side: str | None = None
-    if diagram == "sppm":
-        if rework_variant == "branch":
-            source_port_side = "SOUTH"
-            target_port_side = "NORTH"
-        elif rework_variant == "return":
-            source_port_side = "NORTH"
-            target_port_side = "SOUTH"
-        elif direction == "DOWN":
-            source_port_side = "SOUTH"
-            target_port_side = "NORTH"
-        else:
-            source_port_side = "EAST"
-            target_port_side = "WEST"
     layout_edge = ElkLayoutEdge(
         id=f"e{index}:{source_id}->{target_id}",
         source_id=source_id,
@@ -258,26 +234,6 @@ def _elk_edge(
         target_port_side=target_port_side,
     )
     return decorator(layout_edge, edge) if decorator is not None else layout_edge
-
-
-def _port_id(node_id: str, side: str) -> str:
-    return f"{node_id}__port_{side.lower()}"
-
-
-def _sppm_cardinal_ports(node_id: str) -> list[dict[str, Any]]:
-    sides = ("NORTH", "EAST", "SOUTH", "WEST")
-    return [
-        {
-            "id": _port_id(node_id, side),
-            "width": 0,
-            "height": 0,
-            "layoutOptions": {
-                "elk.port.side": side,
-                "elk.port.index": str(index),
-            },
-        }
-        for index, side in enumerate(sides)
-    ]
 
 
 def _lane_id(node: dict[str, Any]) -> str | None:

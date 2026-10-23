@@ -29,7 +29,7 @@ FLO's normative source-authoring model is process-first rather than graph-first.
 
 1. Ordered steps are the primary source form
     - Authors normally declare a `steps` list in business sequence order.
-    - When no explicit top-level `transitions` or `edges` list is provided,
+    - When no explicit top-level `transitions` list is provided,
        implementations must synthesize default control flow between adjacent
        non-`end` steps.
 
@@ -44,7 +44,7 @@ FLO's normative source-authoring model is process-first rather than graph-first.
        canonical process model.
 
 3. Explicit transitions are optional
-    - Top-level `transitions` or `edges` may be used for advanced,
+    - Top-level `transitions` may be used for advanced,
        non-local, or compatibility-oriented control-flow authoring.
     - When an explicit transitions list is present, it is the authoritative
        control-flow declaration for that source document.
@@ -268,6 +268,29 @@ Normative timing-placement rules:
 These rules preserve the semantic distinction between queueing delay and
 changeover or processing time.
 
+Authored `process.metadata`, step `metadata`, and legacy step `attrs` must be
+objects when present. Invalid container shapes must fail compilation rather than
+being discarded. An explicit `transitions` value must be a list; null does not
+request implicit sequencing. Nested subprocess declarations use either `steps`
+or `subnodes`, and an explicit `subprocess_parent` must be a non-empty string.
+The same branch and timing-alias rules apply inside legacy `attrs`.
+
+## Scalar timing values
+
+A declared duration is an object with an explicit numeric `value` and `unit`.
+Supported units are `s`, `m`, `min`, `hr`, and `d`. Values must be finite and
+nonnegative, and conversion to seconds must also remain finite. Booleans,
+numeric strings, NaN, infinity, negative values, missing units, and explicit
+nulls are invalid durations; validation reports `E1301`, `E1302`, or `E1303`
+with source context and repair guidance. Omit an unmeasured field rather than
+supplying null, a placeholder, or a guessed zero.
+
+Integer and floating-point zero are valid measurements. Canonical exchange
+preserves omitted fields as absent and declared zeros as numeric values.
+Invalid timing cannot pass validation into canonical export, inspection, or
+CLI rendering. Renderer accessors do not default invalid or missing durations
+to zero or assume a missing unit.
+
 ## Normative semantic rules
 
 An implementation of FLO must enforce these minimum semantic rules:
@@ -283,12 +306,12 @@ An implementation of FLO must enforce these minimum semantic rules:
    - At least one `end` node is required.
 
 4. Explicit transition precedence
-   - If a top-level `transitions` or `edges` list is present, implementations
+   - If a top-level `transitions` list is present, implementations
      must treat that list as the authoritative source of control flow for the
      document rather than also synthesizing default sequential edges.
 
 5. Implicit sequential synthesis
-   - If no top-level `transitions` or `edges` list is present,
+   - If no top-level `transitions` list is present,
      implementations must synthesize a sequential edge from each non-`end`
      step to the next step in source order.
    - A step with non-empty `outcomes` must not also receive an additional
@@ -334,17 +357,19 @@ An implementation of FLO must enforce these minimum semantic rules:
 
 15. Queue metadata validation
     - If `metadata.buffer_capacity` is present on a queue node, it must be an
-      integer greater than or equal to `1`.
+      integer greater than or equal to `1`; booleans and null are invalid.
     - `metadata.queue_policy` is optional under the current v0.1 implementation
       and may be used by downstream analysis or future queueing models.
 
 16. Item relation integrity
       - If process-level `items` are declared, every `consumes` and `produces`
-         reference must resolve to a declared process item id.
+         reference must resolve to a declared process item id. An explicitly
+         empty collection declares no valid item references.
 
 17. Resource relation integrity
       - If process-level `resources` are declared, every `performed_by` and
-         `uses` reference must resolve to a declared process resource id.
+         `uses` reference must resolve to a declared process resource id. An
+         explicitly empty collection declares no valid resource references.
 
 18. Resource kind compatibility
       - `performed_by` references must resolve to resources of kind `person`.
@@ -362,6 +387,16 @@ An implementation of FLO must enforce these minimum semantic rules:
       - `parallel_join` nodes must have at least two incoming edges.
       - `parallel_join` nodes must be reachable from at least one
          `parallel_split` node.
+
+21. Location and lane integrity
+    - When locations are declared, every step `location` reference must resolve
+      to a declared location ID, including when the collection is empty.
+    - When lane declarations are listed, every step `lane` reference must resolve
+      to one of their IDs. Documents without lane or location declarations retain
+      the existing descriptive-string behavior.
+    - Spatial coordinates, measured quantities, canonical quantities, and numeric
+      rework metadata must be finite; non-finite or overflowing values must fail
+      validation rather than contaminating downstream calculations.
 
    ## Rendering boundary
 

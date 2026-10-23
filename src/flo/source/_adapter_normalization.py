@@ -65,6 +65,8 @@ def _validate_process(adapter: dict[str, Any]) -> None:
     if not isinstance(process_name, str) or not process_name.strip():
         raise ValueError("process.name must be a non-empty string")
 
+    _validate_optional_object(process_raw, "metadata", path="process")
+
     process_version = process_raw.get("version")
     if process_version is not None and (
         not isinstance(process_version, (int, str)) or isinstance(process_version, bool)
@@ -107,12 +109,14 @@ def _validate_step_entry(*, step: Any, path: str, seen_ids: set[str]) -> None:
     if not isinstance(step, dict):
         raise ValueError(f"{path} must be an object")
 
+    _validate_step_payload(step, path=path)
     _register_step_id(step=step, path=path, seen_ids=seen_ids)
     kind = _validate_step_kind(step=step, path=path)
-    _validate_step_outcomes(step=step, path=path, kind=kind)
-    _validate_step_routes(step=step, path=path, kind=kind)
-    _validate_branch_config(step=step, path=path, kind=kind)
-    _validate_step_wait_alias(step=step, path=path, kind=kind)
+    effective_step = {**step, **(step.get("attrs") or {})}
+    _validate_step_outcomes(step=effective_step, path=path, kind=kind)
+    _validate_step_routes(step=effective_step, path=path, kind=kind)
+    _validate_branch_config(step=effective_step, path=path, kind=kind)
+    _validate_step_wait_alias(step=effective_step, path=path, kind=kind)
     nested = _nested_step_entries(step=step, kind=kind)
     if nested is None:
         return
@@ -125,6 +129,31 @@ def _validate_step_entry(*, step: Any, path: str, seen_ids: set[str]) -> None:
         path=f"{path}.subnodes",
         seen_ids=seen_ids,
     )
+
+
+def _validate_optional_object(value: dict[str, Any], key: str, *, path: str) -> None:
+    if key in value and not isinstance(value[key], dict):
+        raise ValueError(f"{path}.{key} must be an object")
+
+
+def _validate_step_payload(step: dict[str, Any], *, path: str) -> None:
+    _validate_optional_object(step, "attrs", path=path)
+    for payload, payload_path in (
+        (step, path),
+        (step.get("attrs", {}), f"{path}.attrs"),
+    ):
+        _validate_optional_object(payload, "metadata", path=payload_path)
+        if "subprocess_parent" in payload:
+            parent = payload["subprocess_parent"]
+            if not isinstance(parent, str) or not parent.strip():
+                raise ValueError(
+                    f"{payload_path}.subprocess_parent must be a non-empty string"
+                )
+    if "subnodes" in step and "steps" in step:
+        raise ValueError(f"{path} must use either subnodes or steps, not both")
+    for key in ("subnodes", "steps"):
+        if key in step and not isinstance(step[key], list):
+            raise ValueError(f"{path}.{key} must be a list")
 
 
 def _register_step_id(*, step: dict[str, Any], path: str, seen_ids: set[str]) -> None:
@@ -286,9 +315,9 @@ def _validate_transitions(adapter: dict[str, Any]) -> None:
     if "edges" in adapter:
         raise ValueError("transitions must be used; edges alias is not supported")
 
-    transitions = adapter.get("transitions")
-    if transitions is None:
+    if "transitions" not in adapter:
         return
+    transitions = adapter["transitions"]
     if not isinstance(transitions, list):
         raise ValueError("transitions must be a list when provided")
 

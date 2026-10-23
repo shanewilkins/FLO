@@ -1,0 +1,2015 @@
+{
+  "architecture_acceptance": "pending remediation and clean-candidate review",
+  "architecture_document_digests": {
+    "docs/design/adr/render_layout_finalization.md": "4749f7a2bb6b7bddb788cfb5a9aaef7be941038fd03b95bc5ce731aedfd63e7e",
+    "docs/design/adr/render_stack_elk_svg_typst.md": "85642694a6d3b15f40268b16737a46eb1f8ce08927a4e5219de46512649433e7",
+    "docs/design/adr/simplified_package_architecture.md": "441a2367015cefd2e93d8ca48ce35333affa1c1e667c4428abf92073e7f75dcf",
+    "docs/design/render_platform_target_architecture.md": "1c693a0e0d13e462df7c2a8c9baa19ff915e5f76095c1eb8b0fea96c7177f529",
+    "docs/design/renderers/boundaries.md": "469407fdd8a11c80ece9df242d6631de9c28bfe67439ee42f45587a101495981",
+    "docs/design/renderers/sppm.md": "cdd6af977328e21bdee7a238633d97553e5dfa7278e9b37c9ef47c1f7838a788"
+  },
+  "assessment": "architecture validation; not release acceptance",
+  "assessment_tool_digests": {
+    "architecture_boundaries.py": "8e3bddcf3e1cf9c6c677417b4c4b2590b78a4e3f8033b8114b8587ab68ee592e",
+    "architecture_trace.py": "dae48134cafc1f3f567c27d2b72b500c65443a1217356deb314e20caad15e79f"
+  },
+  "behavioral_checks_pass": true,
+  "blocking_findings": [],
+  "cases": [
+    {
+      "artifact_digests": {
+        "cli": "f0cf05f2040c5c1faecc928a55da2727952ba4f3aa05dee95c677b463eb26257",
+        "golden": "f0cf05f2040c5c1faecc928a55da2727952ba4f3aa05dee95c677b463eb26257",
+        "python": "f0cf05f2040c5c1faecc928a55da2727952ba4f3aa05dee95c677b463eb26257"
+      },
+      "canonical_ir_object_unchanged": true,
+      "canonical_ir_unchanged": true,
+      "case": "basic_linear",
+      "geometry": null,
+      "golden_diagnostic_count": 0,
+      "installed": null,
+      "observations": {
+        "annotations_finalized_before_svg": 0,
+        "clipped_routes": 0,
+        "display_changes": [
+          {
+            "nodes_moved": [],
+            "routes_changed": []
+          }
+        ],
+        "display_geometry_stage": "before_svg",
+        "final_scene": {
+          "content_origin": {
+            "x_px": 28.0,
+            "y_px": 148.0
+          },
+          "diagnostics": [],
+          "edges": [
+            {
+              "annotations": [],
+              "edge": [
+                "pack",
+                "ship"
+              ],
+              "points": [
+                {
+                  "x_px": 576.0,
+                  "y_px": 71.0
+                },
+                {
+                  "x_px": 632.0,
+                  "y_px": 71.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            },
+            {
+              "annotations": [],
+              "edge": [
+                "pick",
+                "pack"
+              ],
+              "points": [
+                {
+                  "x_px": 360.0,
+                  "y_px": 71.0
+                },
+                {
+                  "x_px": 416.0,
+                  "y_px": 71.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            },
+            {
+              "annotations": [],
+              "edge": [
+                "start",
+                "pick"
+              ],
+              "points": [
+                {
+                  "x_px": 144.0,
+                  "y_px": 71.0
+                },
+                {
+                  "x_px": 200.0,
+                  "y_px": 71.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            }
+          ],
+          "footer": null,
+          "header": {
+            "name": "header",
+            "texts": [
+              {
+                "anchor": "start",
+                "role_field": "title_text",
+                "size_px": 22,
+                "text": "Order Fulfillment",
+                "weight": "700",
+                "x": 28.0,
+                "y": 52.0
+              },
+              {
+                "anchor": "start",
+                "role_field": "detail_text",
+                "size_px": 12,
+                "text": "Process: order_fulfillment_v1",
+                "weight": null,
+                "x": 28.0,
+                "y": 76.0
+              },
+              {
+                "anchor": "start",
+                "role_field": "detail_text",
+                "size_px": 12,
+                "text": "Subprocess View: parent-only",
+                "weight": null,
+                "x": 28.0,
+                "y": 92.0
+              },
+              {
+                "anchor": "start",
+                "role_field": "detail_text",
+                "size_px": 12,
+                "text": "Nodes: 4",
+                "weight": null,
+                "x": 28.0,
+                "y": 108.0
+              },
+              {
+                "anchor": "start",
+                "role_field": "detail_text",
+                "size_px": 12,
+                "text": "Edges: 3",
+                "weight": null,
+                "x": 28.0,
+                "y": 124.0
+              }
+            ],
+            "width": 764.0,
+            "x": 28.0,
+            "y": 28.0
+          },
+          "height": 306.0,
+          "occupied_bounds": [],
+          "width": 820.0
+        },
+        "final_scene_count": 1,
+        "labels_placed_during_svg": 0,
+        "placement_calls_during_svg": 0,
+        "policy_calls_during_svg": {
+          "attachments": 0,
+          "avoidance": 0,
+          "labels": 0
+        },
+        "routed_geometry": {
+          "canvas_bounds": {
+            "height_px": 130.0,
+            "width_px": 764.0,
+            "x_px": 0.0,
+            "y_px": 0.0
+          },
+          "edge_groups": {
+            "correction": []
+          },
+          "edge_paths": [
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "pack",
+                "ship"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 576.0,
+                  "y_px": 71.0
+                },
+                {
+                  "x_px": 632.0,
+                  "y_px": 71.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "EAST",
+              "target_port_side": "WEST"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "pick",
+                "pack"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 360.0,
+                  "y_px": 71.0
+                },
+                {
+                  "x_px": 416.0,
+                  "y_px": 71.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "EAST",
+              "target_port_side": "WEST"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "start",
+                "pick"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 144.0,
+                  "y_px": 71.0
+                },
+                {
+                  "x_px": 200.0,
+                  "y_px": 71.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "EAST",
+              "target_port_side": "WEST"
+            }
+          ],
+          "node_bounds": {
+            "pack": {
+              "height_px": 118.0,
+              "width_px": 160.0,
+              "x_px": 416.0,
+              "y_px": 12.0
+            },
+            "pick": {
+              "height_px": 118.0,
+              "width_px": 160.0,
+              "x_px": 200.0,
+              "y_px": 12.0
+            },
+            "ship": {
+              "height_px": 52.0,
+              "width_px": 132.0,
+              "x_px": 632.0,
+              "y_px": 45.0
+            },
+            "start": {
+              "height_px": 52.0,
+              "width_px": 132.0,
+              "x_px": 12.0,
+              "y_px": 45.0
+            }
+          },
+          "node_groups": {
+            "correction": [],
+            "mainline": [
+              "pack",
+              "pick",
+              "ship",
+              "start"
+            ]
+          },
+          "visible_lanes": []
+        },
+        "routed_stage_count": 1,
+        "viewport": null
+      },
+      "options": {
+        "diagram": "sppm",
+        "orientation": "lr"
+      },
+      "paths_agree": true,
+      "python_repeatable": true,
+      "render_diagnostic_count": 0,
+      "source": "examples/conformance/valid/valid_basic_linear.flo",
+      "source_digest": "3be3922b0b1be0e99628bfb5e2656914b387c012db115a960d7bb5273b788c4d"
+    },
+    {
+      "artifact_digests": {
+        "cli": "b4e6c43720e477c571d3ff21afb1913a660f9ae80eabf83a3c6cc0e1d159763c",
+        "golden": "b4e6c43720e477c571d3ff21afb1913a660f9ae80eabf83a3c6cc0e1d159763c",
+        "python": "b4e6c43720e477c571d3ff21afb1913a660f9ae80eabf83a3c6cc0e1d159763c"
+      },
+      "canonical_ir_object_unchanged": true,
+      "canonical_ir_unchanged": true,
+      "case": "book_washnfold_local_rework",
+      "geometry": {
+        "expanded": false,
+        "final_height_px": 1306,
+        "final_width_px": 1200,
+        "natural_height_px": 1106,
+        "natural_width_px": 1016,
+        "overflow_policy": "safe-fit",
+        "overflows_requested_bounds": false,
+        "requested_height_px": null,
+        "requested_width_px": 1200,
+        "scale": 1.1808318264014466
+      },
+      "golden_diagnostic_count": 0,
+      "installed": null,
+      "observations": {
+        "annotations_finalized_before_svg": 3,
+        "clipped_routes": 9,
+        "display_changes": [
+          {
+            "nodes_moved": [],
+            "routes_changed": [
+              "correction_queue->fold_correction",
+              "dropoff->sort_tag",
+              "dry->fold_package",
+              "fold_correction->notification_queue",
+              "notification_queue->stage_notify",
+              "packaging_check->correction_queue",
+              "packaging_check->notification_queue",
+              "stage_notify->end",
+              "start->dropoff",
+              "wash_release_queue->wash"
+            ]
+          }
+        ],
+        "display_geometry_stage": "before_svg",
+        "final_scene": {
+          "content_origin": {
+            "x_px": 28.0,
+            "y_px": 28.0
+          },
+          "diagnostics": [],
+          "edges": [
+            {
+              "annotations": [],
+              "edge": [
+                "correction_queue",
+                "fold_correction"
+              ],
+              "points": [
+                {
+                  "x_px": 156.25,
+                  "y_px": 975.0
+                },
+                {
+                  "x_px": 196.375,
+                  "y_px": 975.0
+                },
+                {
+                  "x_px": 236.5,
+                  "y_px": 975.0
+                }
+              ],
+              "rework": true,
+              "variant": ""
+            },
+            {
+              "annotations": [],
+              "edge": [
+                "dropoff",
+                "sort_tag"
+              ],
+              "points": [
+                {
+                  "x_px": 520.0,
+                  "y_px": 71.0
+                },
+                {
+                  "x_px": 576.0,
+                  "y_px": 71.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            },
+            {
+              "annotations": [],
+              "edge": [
+                "dry",
+                "fold_package"
+              ],
+              "points": [
+                {
+                  "x_px": 332.0,
+                  "y_px": 515.0
+                },
+                {
+                  "x_px": 388.0,
+                  "y_px": 515.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            },
+            {
+              "annotations": [
+                {
+                  "bounds": {
+                    "height_px": 18,
+                    "width_px": 210.0,
+                    "x_px": 259.0,
+                    "y_px": 850.0
+                  },
+                  "kind": "label",
+                  "texts": [
+                    {
+                      "anchor": "middle",
+                      "role_field": "title_text",
+                      "size_px": 12,
+                      "text": "Corrected package rejoins flow",
+                      "weight": null,
+                      "x": 364.0,
+                      "y": 863.0
+                    }
+                  ],
+                  "token": null,
+                  "token_position": null
+                }
+              ],
+              "edge": [
+                "fold_correction",
+                "notification_queue"
+              ],
+              "points": [
+                {
+                  "x_px": 364.0,
+                  "y_px": 908.0
+                },
+                {
+                  "x_px": 364.0,
+                  "y_px": 816.0
+                }
+              ],
+              "rework": true,
+              "variant": "return"
+            },
+            {
+              "annotations": [],
+              "edge": [
+                "fold_package",
+                "packaging_check"
+              ],
+              "points": [
+                {
+                  "x_px": 548.0,
+                  "y_px": 582.0
+                },
+                {
+                  "x_px": 548.0,
+                  "y_px": 624.0
+                },
+                {
+                  "x_px": 106.5,
+                  "y_px": 624.0
+                },
+                {
+                  "x_px": 106.5,
+                  "y_px": 684.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            },
+            {
+              "annotations": [],
+              "edge": [
+                "notification_queue",
+                "stage_notify"
+              ],
+              "points": [
+                {
+                  "x_px": 417.5,
+                  "y_px": 741.0
+                },
+                {
+                  "x_px": 527.0,
+                  "y_px": 741.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            },
+            {
+              "annotations": [
+                {
+                  "bounds": {
+                    "height_px": 18,
+                    "width_px": 266.0,
+                    "x_px": 0.0,
+                    "y_px": 800.28
+                  },
+                  "kind": "label",
+                  "texts": [
+                    {
+                      "anchor": "middle",
+                      "role_field": "title_text",
+                      "size_px": 12,
+                      "text": "Packaging check fails (5 of 39 orders)",
+                      "weight": null,
+                      "x": 133.0,
+                      "y": 813.28
+                    }
+                  ],
+                  "token": null,
+                  "token_position": null
+                }
+              ],
+              "edge": [
+                "packaging_check",
+                "correction_queue"
+              ],
+              "points": [
+                {
+                  "x_px": 106.5,
+                  "y_px": 798.0
+                },
+                {
+                  "x_px": 106.5,
+                  "y_px": 900.0
+                }
+              ],
+              "rework": true,
+              "variant": "branch"
+            },
+            {
+              "annotations": [
+                {
+                  "bounds": {
+                    "height_px": 18,
+                    "width_px": 70.0,
+                    "x_px": 220.75,
+                    "y_px": 725.0
+                  },
+                  "kind": "label",
+                  "texts": [
+                    {
+                      "anchor": "middle",
+                      "role_field": "title_text",
+                      "size_px": 12,
+                      "text": "acceptable",
+                      "weight": null,
+                      "x": 255.75,
+                      "y": 738.0
+                    }
+                  ],
+                  "token": null,
+                  "token_position": null
+                }
+              ],
+              "edge": [
+                "packaging_check",
+                "notification_queue"
+              ],
+              "points": [
+                {
+                  "x_px": 201.0,
+                  "y_px": 741.0
+                },
+                {
+                  "x_px": 310.5,
+                  "y_px": 741.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            },
+            {
+              "annotations": [],
+              "edge": [
+                "sort_tag",
+                "wash_release_queue"
+              ],
+              "points": [
+                {
+                  "x_px": 736.0,
+                  "y_px": 130.0
+                },
+                {
+                  "x_px": 736.0,
+                  "y_px": 172.0
+                },
+                {
+                  "x_px": 109.0,
+                  "y_px": 172.0
+                },
+                {
+                  "x_px": 109.0,
+                  "y_px": 214.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            },
+            {
+              "annotations": [],
+              "edge": [
+                "stage_notify",
+                "end"
+              ],
+              "points": [
+                {
+                  "x_px": 772.0,
+                  "y_px": 741.0
+                },
+                {
+                  "x_px": 828.0,
+                  "y_px": 741.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            },
+            {
+              "annotations": [],
+              "edge": [
+                "start",
+                "dropoff"
+              ],
+              "points": [
+                {
+                  "x_px": 144.0,
+                  "y_px": 71.0
+                },
+                {
+                  "x_px": 200.0,
+                  "y_px": 71.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            },
+            {
+              "annotations": [],
+              "edge": [
+                "wash",
+                "dry"
+              ],
+              "points": [
+                {
+                  "x_px": 422.0,
+                  "y_px": 348.0
+                },
+                {
+                  "x_px": 422.0,
+                  "y_px": 406.0
+                },
+                {
+                  "x_px": 172.0,
+                  "y_px": 406.0
+                },
+                {
+                  "x_px": 172.0,
+                  "y_px": 456.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            },
+            {
+              "annotations": [],
+              "edge": [
+                "wash_release_queue",
+                "wash"
+              ],
+              "points": [
+                {
+                  "x_px": 157.5,
+                  "y_px": 289.0
+                },
+                {
+                  "x_px": 262.0,
+                  "y_px": 289.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            }
+          ],
+          "footer": null,
+          "header": null,
+          "height": 1106.0,
+          "occupied_bounds": [
+            {
+              "height_px": 18,
+              "width_px": 210.0,
+              "x_px": 259.0,
+              "y_px": 850.0
+            },
+            {
+              "height_px": 18,
+              "width_px": 266.0,
+              "x_px": 0.0,
+              "y_px": 800.28
+            },
+            {
+              "height_px": 18,
+              "width_px": 70.0,
+              "x_px": 220.75,
+              "y_px": 725.0
+            }
+          ],
+          "width": 1016.0
+        },
+        "final_scene_count": 1,
+        "labels_placed_during_svg": 0,
+        "placement_calls_during_svg": 0,
+        "policy_calls_during_svg": {
+          "attachments": 0,
+          "avoidance": 0,
+          "labels": 0
+        },
+        "routed_geometry": {
+          "canvas_bounds": {
+            "height_px": 1050.0,
+            "width_px": 960.0,
+            "x_px": 0.0,
+            "y_px": 0.0
+          },
+          "edge_groups": {
+            "correction": [
+              [
+                "correction_queue",
+                "fold_correction"
+              ]
+            ]
+          },
+          "edge_paths": [
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "correction_queue",
+                "fold_correction"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 156.25,
+                  "y_px": 975.0
+                },
+                {
+                  "x_px": 196.375,
+                  "y_px": 975.0
+                },
+                {
+                  "x_px": 236.5,
+                  "y_px": 975.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "EAST",
+              "target_port_side": "WEST"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "dropoff",
+                "sort_tag"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 520.0,
+                  "y_px": 71.0
+                },
+                {
+                  "x_px": 548.0,
+                  "y_px": 71.0
+                },
+                {
+                  "x_px": 576.0,
+                  "y_px": 71.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "EAST",
+              "target_port_side": "WEST"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "dry",
+                "fold_package"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 332.0,
+                  "y_px": 515.0
+                },
+                {
+                  "x_px": 360.0,
+                  "y_px": 515.0
+                },
+                {
+                  "x_px": 388.0,
+                  "y_px": 515.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "EAST",
+              "target_port_side": "WEST"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "fold_correction",
+                "notification_queue"
+              ],
+              "incoming_token": null,
+              "is_rework": true,
+              "label": "Corrected package rejoins flow",
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 364.0,
+                  "y_px": 908.0
+                },
+                {
+                  "x_px": 364.0,
+                  "y_px": 858.0
+                },
+                {
+                  "x_px": 364.0,
+                  "y_px": 816.0
+                }
+              ],
+              "rework_variant": "return",
+              "source_port_side": "NORTH",
+              "target_port_side": "SOUTH"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "fold_package",
+                "packaging_check"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 548.0,
+                  "y_px": 582.0
+                },
+                {
+                  "x_px": 548.0,
+                  "y_px": 624.0
+                },
+                {
+                  "x_px": 106.5,
+                  "y_px": 624.0
+                },
+                {
+                  "x_px": 106.5,
+                  "y_px": 684.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "SOUTH",
+              "target_port_side": "NORTH"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "notification_queue",
+                "stage_notify"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 417.5,
+                  "y_px": 741.0
+                },
+                {
+                  "x_px": 472.25,
+                  "y_px": 741.0
+                },
+                {
+                  "x_px": 527.0,
+                  "y_px": 741.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "EAST",
+              "target_port_side": "WEST"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "packaging_check",
+                "correction_queue"
+              ],
+              "incoming_token": null,
+              "is_rework": true,
+              "label": "Packaging check fails (5 of 39 orders)",
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 106.5,
+                  "y_px": 798.0
+                },
+                {
+                  "x_px": 106.5,
+                  "y_px": 858.0
+                },
+                {
+                  "x_px": 106.5,
+                  "y_px": 900.0
+                }
+              ],
+              "rework_variant": "branch",
+              "source_port_side": "SOUTH",
+              "target_port_side": "NORTH"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "packaging_check",
+                "notification_queue"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": "acceptable",
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 201.0,
+                  "y_px": 741.0
+                },
+                {
+                  "x_px": 255.75,
+                  "y_px": 741.0
+                },
+                {
+                  "x_px": 310.5,
+                  "y_px": 741.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "EAST",
+              "target_port_side": "WEST"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "sort_tag",
+                "wash_release_queue"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 736.0,
+                  "y_px": 130.0
+                },
+                {
+                  "x_px": 736.0,
+                  "y_px": 172.0
+                },
+                {
+                  "x_px": 109.0,
+                  "y_px": 172.0
+                },
+                {
+                  "x_px": 109.0,
+                  "y_px": 214.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "SOUTH",
+              "target_port_side": "NORTH"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "stage_notify",
+                "end"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 772.0,
+                  "y_px": 741.0
+                },
+                {
+                  "x_px": 800.0,
+                  "y_px": 741.0
+                },
+                {
+                  "x_px": 828.0,
+                  "y_px": 741.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "EAST",
+              "target_port_side": "WEST"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "start",
+                "dropoff"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 144.0,
+                  "y_px": 71.0
+                },
+                {
+                  "x_px": 172.0,
+                  "y_px": 71.0
+                },
+                {
+                  "x_px": 200.0,
+                  "y_px": 71.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "EAST",
+              "target_port_side": "WEST"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "wash",
+                "dry"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 422.0,
+                  "y_px": 348.0
+                },
+                {
+                  "x_px": 422.0,
+                  "y_px": 406.0
+                },
+                {
+                  "x_px": 172.0,
+                  "y_px": 406.0
+                },
+                {
+                  "x_px": 172.0,
+                  "y_px": 456.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "SOUTH",
+              "target_port_side": "NORTH"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "wash_release_queue",
+                "wash"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 157.5,
+                  "y_px": 289.0
+                },
+                {
+                  "x_px": 209.75,
+                  "y_px": 289.0
+                },
+                {
+                  "x_px": 262.0,
+                  "y_px": 289.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "EAST",
+              "target_port_side": "WEST"
+            }
+          ],
+          "node_bounds": {
+            "correction_queue": {
+              "height_px": 150.0,
+              "width_px": 199.0,
+              "x_px": 7.0,
+              "y_px": 900.0
+            },
+            "dropoff": {
+              "height_px": 118.0,
+              "width_px": 320.0,
+              "x_px": 200.0,
+              "y_px": 12.0
+            },
+            "dry": {
+              "height_px": 118.0,
+              "width_px": 320.0,
+              "x_px": 12.0,
+              "y_px": 456.0
+            },
+            "end": {
+              "height_px": 52.0,
+              "width_px": 132.0,
+              "x_px": 828.0,
+              "y_px": 715.0
+            },
+            "fold_correction": {
+              "height_px": 134.0,
+              "width_px": 255.0,
+              "x_px": 236.5,
+              "y_px": 908.0
+            },
+            "fold_package": {
+              "height_px": 134.0,
+              "width_px": 320.0,
+              "x_px": 388.0,
+              "y_px": 448.0
+            },
+            "notification_queue": {
+              "height_px": 150.0,
+              "width_px": 214.0,
+              "x_px": 257.0,
+              "y_px": 666.0
+            },
+            "packaging_check": {
+              "height_px": 114.0,
+              "width_px": 189.0,
+              "x_px": 12.0,
+              "y_px": 684.0
+            },
+            "sort_tag": {
+              "height_px": 118.0,
+              "width_px": 320.0,
+              "x_px": 576.0,
+              "y_px": 12.0
+            },
+            "stage_notify": {
+              "height_px": 134.0,
+              "width_px": 245.0,
+              "x_px": 527.0,
+              "y_px": 674.0
+            },
+            "start": {
+              "height_px": 52.0,
+              "width_px": 132.0,
+              "x_px": 12.0,
+              "y_px": 45.0
+            },
+            "wash": {
+              "height_px": 118.0,
+              "width_px": 320.0,
+              "x_px": 262.0,
+              "y_px": 230.0
+            },
+            "wash_release_queue": {
+              "height_px": 150.0,
+              "width_px": 194.0,
+              "x_px": 12.0,
+              "y_px": 214.0
+            }
+          },
+          "node_groups": {
+            "correction": [
+              "correction_queue",
+              "fold_correction"
+            ],
+            "mainline": [
+              "dropoff",
+              "dry",
+              "end",
+              "fold_package",
+              "notification_queue",
+              "packaging_check",
+              "sort_tag",
+              "stage_notify",
+              "start",
+              "wash",
+              "wash_release_queue"
+            ]
+          },
+          "visible_lanes": []
+        },
+        "routed_stage_count": 1,
+        "viewport": {
+          "expanded": false,
+          "final_height_px": 1306,
+          "final_width_px": 1200,
+          "natural_height_px": 1106,
+          "natural_width_px": 1016,
+          "overflow_policy": "safe-fit",
+          "overflows_requested_bounds": false,
+          "requested_height_px": null,
+          "requested_width_px": 1200,
+          "scale": 1.1808318264014466
+        }
+      },
+      "options": {
+        "background_color": "transparent",
+        "diagram": "sppm",
+        "layout_max_width_px": 1200,
+        "layout_width": "1200px",
+        "layout_wrap": "auto",
+        "no_footer": true,
+        "no_header": true,
+        "sppm_output_profile": "book",
+        "sppm_theme": "mpi-lms"
+      },
+      "paths_agree": true,
+      "python_repeatable": true,
+      "render_diagnostic_count": 0,
+      "source": "examples/reference/book_washnfold.flo",
+      "source_digest": "7b099545ee4de749b128fbe5860e7876b9350f46591c34ecd83485455ae529ec"
+    },
+    {
+      "artifact_digests": {
+        "cli": "6a17ab7d6ccc16a1555d8b97e63fe0aa7a246833af4b5970081fa3a884564dba",
+        "golden": "6a17ab7d6ccc16a1555d8b97e63fe0aa7a246833af4b5970081fa3a884564dba",
+        "python": "6a17ab7d6ccc16a1555d8b97e63fe0aa7a246833af4b5970081fa3a884564dba"
+      },
+      "canonical_ir_object_unchanged": true,
+      "canonical_ir_unchanged": true,
+      "case": "sppm_long_label_stress_lr",
+      "geometry": null,
+      "golden_diagnostic_count": 0,
+      "installed": null,
+      "observations": {
+        "annotations_finalized_before_svg": 2,
+        "clipped_routes": 4,
+        "display_changes": [
+          {
+            "nodes_moved": [
+              "rework"
+            ],
+            "routes_changed": [
+              "quality_gate->rework",
+              "rework->intake_wait_queue"
+            ]
+          }
+        ],
+        "display_geometry_stage": "before_svg",
+        "final_scene": {
+          "content_origin": {
+            "x_px": 28.0,
+            "y_px": 148.0
+          },
+          "diagnostics": [],
+          "edges": [
+            {
+              "annotations": [],
+              "edge": [
+                "intake",
+                "quality_gate"
+              ],
+              "points": [
+                {
+                  "x_px": 765.0,
+                  "y_px": 122.0
+                },
+                {
+                  "x_px": 821.0,
+                  "y_px": 122.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            },
+            {
+              "annotations": [],
+              "edge": [
+                "intake_wait_queue",
+                "intake"
+              ],
+              "points": [
+                {
+                  "x_px": 356.75,
+                  "y_px": 122.0
+                },
+                {
+                  "x_px": 465.0,
+                  "y_px": 122.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            },
+            {
+              "annotations": [],
+              "edge": [
+                "process",
+                "end"
+              ],
+              "points": [
+                {
+                  "x_px": 1648.0,
+                  "y_px": 122.0
+                },
+                {
+                  "x_px": 1704.0,
+                  "y_px": 122.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            },
+            {
+              "annotations": [],
+              "edge": [
+                "process_queue",
+                "process"
+              ],
+              "points": [
+                {
+                  "x_px": 1268.5,
+                  "y_px": 122.0
+                },
+                {
+                  "x_px": 1378.0,
+                  "y_px": 122.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            },
+            {
+              "annotations": [
+                {
+                  "bounds": {
+                    "height_px": 18,
+                    "width_px": 392.0,
+                    "x_px": 910.75,
+                    "y_px": 22.0
+                  },
+                  "kind": "label",
+                  "texts": [
+                    {
+                      "anchor": "middle",
+                      "role_field": "title_text",
+                      "size_px": 12,
+                      "text": "Continue through quality gate with manual oversight path",
+                      "weight": null,
+                      "x": 1106.75,
+                      "y": 35.0
+                    }
+                  ],
+                  "token": null,
+                  "token_position": null
+                }
+              ],
+              "edge": [
+                "quality_gate",
+                "process_queue"
+              ],
+              "points": [
+                {
+                  "x_px": 1052.0,
+                  "y_px": 122.0
+                },
+                {
+                  "x_px": 1161.5,
+                  "y_px": 122.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            },
+            {
+              "annotations": [
+                {
+                  "bounds": {
+                    "height_px": 18,
+                    "width_px": 448.0,
+                    "x_px": 712.5,
+                    "y_px": 237.36
+                  },
+                  "kind": "label",
+                  "texts": [
+                    {
+                      "anchor": "middle",
+                      "role_field": "title_text",
+                      "size_px": 12,
+                      "text": "Return to intake and request revised package details immediately",
+                      "weight": null,
+                      "x": 936.5,
+                      "y": 250.36
+                    }
+                  ],
+                  "token": null,
+                  "token_position": null
+                }
+              ],
+              "edge": [
+                "quality_gate",
+                "rework"
+              ],
+              "points": [
+                {
+                  "x_px": 936.5,
+                  "y_px": 204.0
+                },
+                {
+                  "x_px": 936.5,
+                  "y_px": 328.0
+                }
+              ],
+              "rework": true,
+              "variant": "branch"
+            },
+            {
+              "annotations": [],
+              "edge": [
+                "rework",
+                "intake_wait_queue"
+              ],
+              "points": [
+                {
+                  "x_px": 809.0,
+                  "y_px": 419.0
+                },
+                {
+                  "x_px": 785.0,
+                  "y_px": 419.0
+                },
+                {
+                  "x_px": 785.0,
+                  "y_px": 280.0
+                },
+                {
+                  "x_px": 304.5,
+                  "y_px": 280.0
+                },
+                {
+                  "x_px": 304.5,
+                  "y_px": 197.0
+                }
+              ],
+              "rework": true,
+              "variant": "return"
+            },
+            {
+              "annotations": [],
+              "edge": [
+                "start",
+                "intake_wait_queue"
+              ],
+              "points": [
+                {
+                  "x_px": 144.0,
+                  "y_px": 122.0
+                },
+                {
+                  "x_px": 252.25,
+                  "y_px": 122.0
+                }
+              ],
+              "rework": false,
+              "variant": ""
+            }
+          ],
+          "footer": {
+            "name": "footer",
+            "texts": [
+              {
+                "anchor": "start",
+                "role_field": "detail_text",
+                "size_px": 12,
+                "text": "Processing Time: 32 min",
+                "weight": null,
+                "x": 28.0,
+                "y": 682.0
+              },
+              {
+                "anchor": "start",
+                "role_field": "detail_text",
+                "size_px": 12,
+                "text": "Waiting Time: 27 min",
+                "weight": null,
+                "x": 28.0,
+                "y": 698.0
+              },
+              {
+                "anchor": "start",
+                "role_field": "detail_text",
+                "size_px": 12,
+                "text": "Setup Time: ?",
+                "weight": null,
+                "x": 28.0,
+                "y": 714.0
+              },
+              {
+                "anchor": "start",
+                "role_field": "detail_text",
+                "size_px": 12,
+                "text": "Lead Time: Unavailable",
+                "weight": null,
+                "x": 28.0,
+                "y": 730.0
+              },
+              {
+                "anchor": "start",
+                "role_field": "detail_text",
+                "size_px": 12,
+                "text": "Very Long Operational Throughput Metric Name: Exceptionally verbose value text for clipping checks",
+                "weight": null,
+                "x": 28.0,
+                "y": 746.0
+              },
+              {
+                "anchor": "start",
+                "role_field": "detail_text",
+                "size_px": 12,
+                "text": "Timing diagnostics available; run flo inspect for details.",
+                "weight": null,
+                "x": 28.0,
+                "y": 762.0
+              },
+              {
+                "anchor": "start",
+                "role_field": "detail_text",
+                "size_px": 12,
+                "text": "This footer note is intentionally long so truncation policy behavior is easy to inspect.",
+                "weight": null,
+                "x": 28.0,
+                "y": 778.0
+              }
+            ],
+            "width": 1836.0,
+            "x": 28.0,
+            "y": 658.0
+          },
+          "header": {
+            "name": "header",
+            "texts": [
+              {
+                "anchor": "start",
+                "role_field": "title_text",
+                "size_px": 22,
+                "text": "SPPM Long Label Stress Demonstration for Predictable Truncation Behavior",
+                "weight": "700",
+                "x": 28.0,
+                "y": 52.0
+              },
+              {
+                "anchor": "start",
+                "role_field": "detail_text",
+                "size_px": 12,
+                "text": "Process: sppm_long_label_stress",
+                "weight": null,
+                "x": 28.0,
+                "y": 76.0
+              },
+              {
+                "anchor": "start",
+                "role_field": "detail_text",
+                "size_px": 12,
+                "text": "Subprocess View: parent-only",
+                "weight": null,
+                "x": 28.0,
+                "y": 92.0
+              },
+              {
+                "anchor": "start",
+                "role_field": "detail_text",
+                "size_px": 12,
+                "text": "Nodes: 8",
+                "weight": null,
+                "x": 28.0,
+                "y": 108.0
+              },
+              {
+                "anchor": "start",
+                "role_field": "detail_text",
+                "size_px": 12,
+                "text": "Edges: 8",
+                "weight": null,
+                "x": 28.0,
+                "y": 124.0
+              }
+            ],
+            "width": 1836.0,
+            "x": 28.0,
+            "y": 28.0
+          },
+          "height": 830.0,
+          "occupied_bounds": [
+            {
+              "height_px": 18,
+              "width_px": 392.0,
+              "x_px": 910.75,
+              "y_px": 22.0
+            },
+            {
+              "height_px": 18,
+              "width_px": 448.0,
+              "x_px": 712.5,
+              "y_px": 237.36
+            }
+          ],
+          "width": 1892.0
+        },
+        "final_scene_count": 1,
+        "labels_placed_during_svg": 0,
+        "placement_calls_during_svg": 0,
+        "policy_calls_during_svg": {
+          "attachments": 0,
+          "avoidance": 0,
+          "labels": 0
+        },
+        "routed_geometry": {
+          "canvas_bounds": {
+            "height_px": 510.0,
+            "width_px": 1836.0,
+            "x_px": 0.0,
+            "y_px": 0.0
+          },
+          "edge_groups": {
+            "correction": []
+          },
+          "edge_paths": [
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "intake",
+                "quality_gate"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 765.0,
+                  "y_px": 122.0
+                },
+                {
+                  "x_px": 821.0,
+                  "y_px": 122.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "EAST",
+              "target_port_side": "WEST"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "intake_wait_queue",
+                "intake"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 409.0,
+                  "y_px": 122.0
+                },
+                {
+                  "x_px": 465.0,
+                  "y_px": 122.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "EAST",
+              "target_port_side": "WEST"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "process",
+                "end"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 1648.0,
+                  "y_px": 122.0
+                },
+                {
+                  "x_px": 1704.0,
+                  "y_px": 122.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "EAST",
+              "target_port_side": "WEST"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "process_queue",
+                "process"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 1322.0,
+                  "y_px": 122.0
+                },
+                {
+                  "x_px": 1378.0,
+                  "y_px": 122.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "EAST",
+              "target_port_side": "WEST"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "quality_gate",
+                "process_queue"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": "Continue through quality gate with manual oversight path",
+              "label_point": {
+                "x_px": 1080.0,
+                "y_px": 119.0
+              },
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 1052.0,
+                  "y_px": 122.0
+                },
+                {
+                  "x_px": 1108.0,
+                  "y_px": 122.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "EAST",
+              "target_port_side": "WEST"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "quality_gate",
+                "rework"
+              ],
+              "incoming_token": null,
+              "is_rework": true,
+              "label": "Return to intake and request revised package details immediately",
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 936.5,
+                  "y_px": 204.0
+                },
+                {
+                  "x_px": 936.5,
+                  "y_px": 328.0
+                }
+              ],
+              "rework_variant": "branch",
+              "source_port_side": "SOUTH",
+              "target_port_side": "NORTH"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "rework",
+                "intake_wait_queue"
+              ],
+              "incoming_token": null,
+              "is_rework": true,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 809.0,
+                  "y_px": 419.0
+                },
+                {
+                  "x_px": 785.0,
+                  "y_px": 419.0
+                },
+                {
+                  "x_px": 785.0,
+                  "y_px": 280.0
+                },
+                {
+                  "x_px": 304.5,
+                  "y_px": 280.0
+                },
+                {
+                  "x_px": 304.5,
+                  "y_px": 197.0
+                }
+              ],
+              "rework_variant": "return",
+              "source_port_side": "NORTH",
+              "target_port_side": "SOUTH"
+            },
+            {
+              "callout_lines": [],
+              "callout_near_source": false,
+              "edge": [
+                "start",
+                "intake_wait_queue"
+              ],
+              "incoming_token": null,
+              "is_rework": false,
+              "label": null,
+              "label_point": null,
+              "outgoing_token": null,
+              "points": [
+                {
+                  "x_px": 144.0,
+                  "y_px": 122.0
+                },
+                {
+                  "x_px": 200.0,
+                  "y_px": 122.0
+                }
+              ],
+              "rework_variant": null,
+              "source_port_side": "EAST",
+              "target_port_side": "WEST"
+            }
+          ],
+          "node_bounds": {
+            "end": {
+              "height_px": 52.0,
+              "width_px": 132.0,
+              "x_px": 1704.0,
+              "y_px": 96.0
+            },
+            "intake": {
+              "height_px": 220.0,
+              "width_px": 300.0,
+              "x_px": 465.0,
+              "y_px": 12.0
+            },
+            "intake_wait_queue": {
+              "height_px": 150.0,
+              "width_px": 209.0,
+              "x_px": 200.0,
+              "y_px": 47.0
+            },
+            "process": {
+              "height_px": 198.0,
+              "width_px": 270.0,
+              "x_px": 1378.0,
+              "y_px": 23.0
+            },
+            "process_queue": {
+              "height_px": 150.0,
+              "width_px": 214.0,
+              "x_px": 1108.0,
+              "y_px": 47.0
+            },
+            "quality_gate": {
+              "height_px": 164.0,
+              "width_px": 231.0,
+              "x_px": 821.0,
+              "y_px": 40.0
+            },
+            "rework": {
+              "height_px": 182.0,
+              "width_px": 255.0,
+              "x_px": 809.0,
+              "y_px": 328.0
+            },
+            "start": {
+              "height_px": 52.0,
+              "width_px": 132.0,
+              "x_px": 12.0,
+              "y_px": 96.0
+            }
+          },
+          "node_groups": {
+            "correction": [
+              "rework"
+            ],
+            "mainline": [
+              "end",
+              "intake",
+              "intake_wait_queue",
+              "process",
+              "process_queue",
+              "quality_gate",
+              "start"
+            ]
+          },
+          "visible_lanes": []
+        },
+        "routed_stage_count": 1,
+        "viewport": null
+      },
+      "options": {
+        "diagram": "sppm",
+        "orientation": "lr"
+      },
+      "paths_agree": true,
+      "python_repeatable": true,
+      "render_diagnostic_count": 0,
+      "source": "examples/reference/sppm_long_label_stress.flo",
+      "source_digest": "234f8c83c9e0b7acdf3602c7a43deb3c3395730529340d46d53a0d70125c9631"
+    }
+  ],
+  "configuration_digests": {
+    ".github/workflows/ci.yml": "433ce37a6b875d3082ff5377af10d6ed7374778e73d0f0d36a839475297f08af",
+    ".github/workflows/publish.yml": "425d7bb1d375ef753e322b25760912804e429cd9f3b08d8519df5faeb55f021b",
+    ".pre-commit-config.yaml": "611f77db29f210d6229f0178250f36fa3391c0be010b0fb8225936773db7e222",
+    "package-lock.json": "58ba37e3fd3db8474ab06e4155efe23e5b0b4255faa715456a1c58ef0a1597e9",
+    "pyproject.toml": "dd0d6a99b908e6ae6cc3d24c2d61cca40e83d45b4c5b80b9408e25ffce43ea1b",
+    "uv.lock": "99f1ddf28a5c2711df494b725d3860e6cd0a613a87b86b09b683613941c53b24"
+  },
+  "findings_source": "docs/design/architecture_validation.md",
+  "head_revision": "60c2c98be0c36bd3b71908ceb44b85c68e716804",
+  "installed_package_matches_source": false,
+  "responsibility_check_pass": true,
+  "runtime_package_digest": "9c1c761edb54c21f1a1abd34a7284b703faa857d8e257554cdf644024de8181a",
+  "schema_version": 1
+}

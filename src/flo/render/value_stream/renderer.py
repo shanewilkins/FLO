@@ -9,6 +9,8 @@ from flo.process.analysis import ValueStreamFlow, project_value_stream
 from flo.process.ir.models import IR
 
 from .._artifact import RenderArtifact
+from .._execution import GeometryObserver, SceneObserver
+from ..layout_core.trace import LayoutObserver
 from ..options import RenderOptions
 from ..shared.svg import (
     SVG_ACCESSIBILITY_ATTRIBUTES,
@@ -22,7 +24,12 @@ _CARD_TOP = 180.0
 
 
 def render_value_stream_svg_artifact(
-    process: Any, options: RenderOptions
+    process: Any,
+    options: RenderOptions,
+    *,
+    layout_observer: LayoutObserver | None = None,
+    geometry_observer: GeometryObserver | None = None,
+    scene_observer: SceneObserver | None = None,
 ) -> tuple[RenderArtifact, None]:
     """Render canonical item and timing facts as a value-stream SVG."""
     if not isinstance(process, IR):

@@ -7,7 +7,7 @@ from typing import Any
 
 from flo.process.analysis import ModelInspectionReport, inspect_process_model
 from flo.process.export import export_ir
-from flo.process.ir import IR, validate_ir
+from flo.process.ir import IR, ensure_schema_aligned, validate_ir
 from flo.source import compile_adapter, parse_adapter, pop_source_composition
 from flo.source.diagnostics import SourceDiagnostic, source_diagnostic
 
@@ -56,6 +56,7 @@ def validate(content: str, *, source_path: str | None = None) -> OperationResult
         return OperationResult(value=None, diagnostics=compiled.diagnostics)
     try:
         validate_ir(compiled.value)
+        ensure_schema_aligned(compiled.value)
     except Exception as exc:
         return _failure(content=content, source_path=source_path, error=exc)
     return compiled
@@ -75,6 +76,7 @@ def inspect(
     try:
         process = compile_adapter(value)
         validate_ir(process)
+        ensure_schema_aligned(process)
         return OperationResult(
             value=inspect_process_model(
                 process,

@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from flo.process.durations import duration_number
 from flo.process.schema.subprocess_refs import resolve_subprocess_detail_map_reference
 
 from ..options import RenderOptions
@@ -193,7 +194,9 @@ def _queue_content(
             html_break="\n",
         )
     wait_minutes = get_metadata_wait_time_minutes(metadata)
-    info_lines = (f"WT: {wait_minutes:g} min",) if wait_minutes is not None else ()
+    info_lines = (
+        f"W/T: {wait_minutes:g} min" if wait_minutes is not None else "W/T: ?",
+    )
     return SppmNodeContent(title=title or "Q", info_lines=info_lines)
 
 
@@ -221,20 +224,18 @@ def _task_info_lines(
     description = _soft_wrap(
         normalize_space(get_metadata_description(metadata)), width=_TASK_DESC_WRAP
     )
-    ct_line = _format_time_line(get_metadata_cycle_time(metadata), "CT", "", options)
+    ct_line = _format_time_line(get_metadata_cycle_time(metadata), "P/T", "", options)
     wt_line = _format_time_line(
         get_metadata_wait_time_minutes(metadata),
-        "WT",
+        "W/T",
         " wait",
         options,
-        require_positive=True,
     )
     co_line = _format_time_line(
         get_metadata_crossover_time(metadata),
-        "C/O",
+        "S/T",
         "",
         options,
-        require_positive=True,
     )
     workers_line = _format_workers_line(workers, options)
     notes_line = (
@@ -242,7 +243,11 @@ def _task_info_lines(
         if note and getattr(options, "show_notes", False)
         else ""
     )
-    return tuple(
+    value_class = metadata.get("value_class")
+    class_lines = (
+        (f"Class: {value_class}",) if value_class in {"VA", "RNVA", "NVA"} else ()
+    )
+    return class_lines + tuple(
         apply_density_filter(
             density=options.sppm_label_density,
             description=description,
@@ -303,13 +308,17 @@ def _format_time_line(
     prefix: str,
     suffix: str,
     options: RenderOptions,
-    *,
-    require_positive: bool = False,
 ) -> str:
     if value is None:
-        return ""
+        return format_text_field(
+            f"{prefix}: ?",
+            max_len=options.sppm_max_label_ctwt,
+            wrap_strategy=options.sppm_wrap_strategy,
+            truncation_policy=options.sppm_truncation_policy,
+            html_break="\n",
+        )
     if isinstance(value, (int, float)):
-        if require_positive and value <= 0:
+        if duration_number(value) is None:
             return ""
         value_str = (
             str(int(value))
@@ -323,7 +332,7 @@ def _format_time_line(
             truncation_policy=options.sppm_truncation_policy,
             html_break="\n",
         )
-    if require_positive and value.numeric_value <= 0:
+    if value.numeric_value is None:
         return ""
     return format_text_field(
         f"{prefix}: {value.value} {value.unit or 'min'}{suffix}",

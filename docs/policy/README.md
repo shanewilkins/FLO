@@ -1,9 +1,12 @@
 # FLO Policy
 
-This directory is reserved for durable safety, privacy, and product-scope
+This directory is reserved for durable safety, privacy, product-scope, and release-governance
 boundaries.
 
 Current policies:
+
+- [Release architecture integrity](release_architecture_integrity.md): known-good
+  baselines and architecture acceptance before every release, including patches
 
 - `artifact_scope.md`: what belongs in FLO versus downstream analysis tools
 - `telemetry_privacy.md`: privacy and disclosure boundaries for process-event

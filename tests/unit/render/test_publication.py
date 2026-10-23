@@ -521,15 +521,15 @@ def test_build_sppm_publication_plan_uses_typed_timing_analysis_for_footer():
     footer = plan.primary_series().pages[0].band("footer")
     assert footer is not None
     assert footer.content.rows == (
-        ("Cycle Time", "30 s"),
+        ("Processing Time", "30 s"),
         ("Waiting Time", "15 min"),
-        ("C/O Time", "30 s"),
+        ("Setup Time", "30 s"),
         ("Lead Time", "16 min"),
     )
     assert footer.content.notes == ()
 
 
-def test_build_sppm_publication_footer_omits_absent_categories_and_keeps_zero():
+def test_build_sppm_publication_footer_marks_missing_categories_and_keeps_zero():
     process = IR(
         name="Measured Zero Queue",
         nodes=[
@@ -564,8 +564,9 @@ def test_build_sppm_publication_footer_omits_absent_categories_and_keeps_zero():
     footer = plan.primary_series().pages[0].band("footer")
     assert footer is not None
     assert footer.content.rows == (
-        ("Cycle Time", "2 min"),
+        ("Processing Time", "2 min"),
         ("Waiting Time", "0 min"),
+        ("Setup Time", "?"),
         ("Lead Time", "2 min"),
     )
 

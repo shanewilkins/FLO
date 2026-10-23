@@ -437,7 +437,7 @@ def test_run_sppm_svg_export_emits_svg(tmp_path):
     assert "<svg" in result.output
     assert "SPPM SVG Demo" in result.output
     assert "Coordinator" in result.output
-    assert "CT: 4 min" in result.output
+    assert "P/T: 4 min" in result.output
     assert 'data-node-port-rail="in"' not in result.output
 
 

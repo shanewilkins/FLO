@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from functools import cache
 from pathlib import Path
 from statistics import fmean
@@ -21,7 +22,8 @@ from flo.render.layout_core import (
 )
 from flo.render.options import RenderOptions
 from flo.render.sppm.layout import build_sppm_elk_layout_request
-from flo.source import parse_adapter
+from flo.render.sppm.layout_options import prepare_sppm_layout
+from flo.source import compile_adapter, parse_adapter
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _CORPUS_PATH = _REPO_ROOT / "examples" / "conformance" / "sppm_corpus.json"
@@ -51,13 +53,13 @@ def _request_and_result(case_id: str) -> tuple[ElkLayoutRequest, LayoutResult]:
     raw_options = case.get("options", {})
     option_overrides = raw_options if isinstance(raw_options, dict) else {}
     options_map = {"diagram": "sppm", **option_overrides}
-    options = RenderOptions.from_mapping(options_map)
+    options = prepare_sppm_layout(RenderOptions.from_mapping(options_map))
 
     model = parse_adapter(
         source_path.read_text(encoding="utf-8"),
         source_path=str(source_path),
     )
-    request = build_sppm_elk_layout_request(model, options=options)
+    request = build_sppm_elk_layout_request(compile_adapter(model), options=options)
     result = execute_elk_layout(request, engine=run_elkjs_layout)
     return request, result
 
@@ -232,9 +234,24 @@ def _assert_rework_separation(
     if not mainline_cross or not rework_cross:
         return
 
-    separation = abs(fmean(rework_cross) - fmean(mainline_cross))
+    if any(lane.id.startswith("__sppm_row_wrap_") for lane in result.lanes):
+        # A local correction may sit between mainline rows. Comparing whole-
+        # process centroids can report a false collision in a clear diagram.
+        separation = _wrapped_rework_gap(result, mainline, rework)
+    else:
+        separation = abs(fmean(rework_cross) - fmean(mainline_cross))
     assert separation >= min_cross_separation_px, (
         f"rework_row_separation violated: cross_center_delta={separation:.2f}px"
+    )
+
+
+def _wrapped_rework_gap(result, mainline, rework):
+    return min(
+        max(b.y_px - a.y_px - a.height_px, a.y_px - b.y_px - b.height_px)
+        for first in mainline
+        for second in rework
+        if (a := result.bounds_for(first)) is not None
+        if (b := result.bounds_for(second)) is not None
     )
 
 
@@ -351,7 +368,7 @@ def test_simple_decision_book_has_distinct_labeled_branches():
     decision_edges = [
         edge for edge in request.edges if edge.source_id == "review_request"
     ]
-    assert {edge.label for edge in decision_edges} == {"True", "False"}
+    assert {edge.label for edge in decision_edges} == {"yes", "no"}
 
     target_centers = []
     for edge in decision_edges:
@@ -429,7 +446,8 @@ def test_mainline_monotonic_reports_negative_case():
         _assert_mainline_monotonic(request, result, min_major_step_px=20.0)
 
 
-def test_rework_row_separation_reports_negative_case():
+@pytest.mark.parametrize("wrapped", [False, True])
+def test_rework_row_separation_reports_negative_case(wrapped):
     request = ElkLayoutRequest(
         diagram="sppm",
         direction="RIGHT",
@@ -483,6 +501,25 @@ def test_rework_row_separation_reports_negative_case():
             ),
         },
     )
+
+    if wrapped:
+        result = replace(
+            result,
+            lanes=(
+                LayoutLaneFrame(
+                    id="__sppm_row_wrap_0",
+                    label="",
+                    bounds=result.canvas_bounds,
+                    node_ids=("decision", "mainline"),
+                ),
+                LayoutLaneFrame(
+                    id="__sppm_row_wrap_rework_1",
+                    label="",
+                    bounds=result.canvas_bounds,
+                    node_ids=("rework",),
+                ),
+            ),
+        )
 
     with pytest.raises(AssertionError, match="rework_row_separation violated"):
         _assert_rework_separation(request, result, min_cross_separation_px=40.0)

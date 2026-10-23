@@ -12,6 +12,12 @@ records are added below.
 
 `uv run python scripts/check_svg_accessibility.py` verifies that every committed SPPM golden SVG has a deterministic accessible name and description, `role="img"`, valid labelled-by references, and unique IDs. Theme tests independently enforce the current normal-text contrast floor. CI also opens and rasterizes the white-belt SVG in headless Chrome.
 
+The release also gates final-SVG geometry (including visible lane containment),
+visible work-card VA/RNVA/NVA class text in every density mode, shape and dotted
+connector cues across all built-in themes, and neutral monochrome SPPM colors.
+Browser font-metric and publication-scale legibility acceptance remains pending
+in the [release closure plan](../design/white_belt_release_plan.md).
+
 These checks establish machine-readable structure and browser consumption. They do not establish a useful screen-reader reading order or user comprehension.
 
 ## Accessibility-specialist session

@@ -2,8 +2,14 @@
 
 from __future__ import annotations
 
+import json
+import subprocess
+import sys
 import tomllib
 from pathlib import Path
+
+import pytest
+import yaml
 
 
 def _find_repo_root() -> Path:
@@ -67,3 +73,86 @@ def test_importlinter_contracts_are_configured_and_nonempty() -> None:
             assert isinstance(contract.get("depth"), int), (
                 f"contract #{idx + 1} requires an explicit cycle-check depth"
             )
+
+
+def test_neutral_contract_has_no_dependency_bypasses() -> None:
+    """Neutral boundaries cover indirect paths and carry no migration waivers."""
+    config = tomllib.loads((_find_repo_root() / "pyproject.toml").read_text())
+    contract = next(
+        item
+        for item in config["tool"]["importlinter"]["contracts"]
+        if item["name"].startswith("Neutral render infrastructure")
+    )
+    assert not contract.get("allow_indirect_imports", False)
+    assert not contract.get("ignore_imports", [])
+
+
+def test_fast_architecture_checks_are_required_local_hooks() -> None:
+    """Responsibility checks run before engine and installed-wheel acceptance."""
+    config = yaml.safe_load((_find_repo_root() / ".pre-commit-config.yaml").read_text())
+    hooks = {hook["id"]: hook for repo in config["repos"] for hook in repo["hooks"]}
+    for hook_id, command in (
+        ("importlinter-check", "uv run lint-imports"),
+        (
+            "architecture-responsibility-check",
+            "uv run python scripts/architecture_boundaries.py",
+        ),
+    ):
+        hook = hooks[hook_id]
+        assert hook["entry"] == command
+        assert not hook["pass_filenames"]
+        assert "files" not in hook and "exclude" not in hook
+
+
+@pytest.mark.parametrize(
+    ("source", "passes"),
+    [
+        ("from .. import sppm as diagram", False),
+        ("def run():\n    import flo.render.swimlane as diagram", False),
+        ("from flo.render import registry", False),
+        ("from .. import _text as text", True),
+    ],
+)
+def test_neutral_import_contract_rejects_new_module_regressions(
+    tmp_path, source, passes
+):
+    """Exercise the real configured contract on fresh modules, not just its schema."""
+    config = tomllib.loads((_find_repo_root() / "pyproject.toml").read_text())
+    contract = next(
+        item
+        for item in config["tool"]["importlinter"]["contracts"]
+        if item["name"].startswith("Neutral render infrastructure")
+    )
+    packages = {
+        "layout_core",
+        "shared",
+        "sppm",
+        "swimlane",
+        "spaghetti",
+        "value_stream",
+    }
+    for module in contract["source_modules"] + contract["forbidden_modules"]:
+        path = tmp_path / module.replace(".", "/")
+        if path.name in packages:
+            path = path / "__init__.py"
+        else:
+            path = path.with_suffix(".py")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("")
+    (tmp_path / "flo/__init__.py").write_text("")
+    (tmp_path / "flo/render/__init__.py").write_text("")
+    (tmp_path / "flo/render/layout_core/new_module.py").write_text(source)
+    text = (
+        '[tool.importlinter]\nroot_package = "flo"\n[[tool.importlinter.contracts]]\n'
+    )
+    text += "\n".join(f"{key} = {json.dumps(value)}" for key, value in contract.items())
+    (tmp_path / "pyproject.toml").write_text(text)
+    result = subprocess.run(
+        [str(Path(sys.executable).parent / "lint-imports")],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert (result.returncode == 0) is passes, result.stdout + result.stderr
+    assert ("KEPT" if passes else "BROKEN") in result.stdout

@@ -322,16 +322,16 @@
   "lanes": [],
   "node_bounds": {
     "dropoff": {
-      "height_px": 102.0,
+      "height_px": 150.0,
       "width_px": 240.0,
       "x_px": 200.0,
-      "y_px": 36.0
+      "y_px": 12.0
     },
     "dry": {
-      "height_px": 102.0,
+      "height_px": 150.0,
       "width_px": 190.0,
       "x_px": 1693.0,
-      "y_px": 36.0
+      "y_px": 12.0
     },
     "dry_wait_queue": {
       "height_px": 150.0,
@@ -346,10 +346,10 @@
       "y_px": 61.0
     },
     "fold_package": {
-      "height_px": 102.0,
+      "height_px": 150.0,
       "width_px": 200.0,
       "x_px": 2184.0,
-      "y_px": 36.0
+      "y_px": 12.0
     },
     "fold_package_wait_queue": {
       "height_px": 150.0,
@@ -358,16 +358,16 @@
       "y_px": 12.0
     },
     "payment_delivery": {
-      "height_px": 102.0,
+      "height_px": 150.0,
       "width_px": 240.0,
       "x_px": 2946.0,
-      "y_px": 36.0
+      "y_px": 12.0
     },
     "sort_tag": {
-      "height_px": 102.0,
+      "height_px": 150.0,
       "width_px": 190.0,
       "x_px": 726.0,
-      "y_px": 36.0
+      "y_px": 12.0
     },
     "sort_tag_wait_queue": {
       "height_px": 150.0,
@@ -376,10 +376,10 @@
       "y_px": 12.0
     },
     "stage_notify": {
-      "height_px": 102.0,
+      "height_px": 150.0,
       "width_px": 200.0,
       "x_px": 2690.0,
-      "y_px": 36.0
+      "y_px": 12.0
     },
     "stage_notify_wait_queue": {
       "height_px": 150.0,
@@ -394,10 +394,10 @@
       "y_px": 61.0
     },
     "wash": {
-      "height_px": 102.0,
+      "height_px": 150.0,
       "width_px": 190.0,
       "x_px": 1212.0,
-      "y_px": 36.0
+      "y_px": 12.0
     },
     "wash_wait_queue": {
       "height_px": 150.0,

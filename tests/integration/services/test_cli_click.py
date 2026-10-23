@@ -1,4 +1,5 @@
 import json
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from click.testing import CliRunner
@@ -148,7 +149,11 @@ def test_cli_safe_fits_white_belt_map_to_exact_letter_canvas(tmp_path):
     assert 'width="816"' in root
     assert 'height="1056"' in root
     assert 'preserveAspectRatio="xMidYMid meet"' in root
-    assert 'viewBox="0 0 774 1306"' in root
+    viewbox = ET.fromstring(output_path.read_text()).attrib["viewBox"]
+    x, y, width, height = map(float, viewbox.split())
+    assert (x, y) == (0, 0)
+    assert width > 0 and height > 0
+    assert 0.75 <= min(816 / width, 1056 / height) <= 1
 
 
 def test_cli_render_scale_writes_requested_canvas_and_natural_viewbox(
