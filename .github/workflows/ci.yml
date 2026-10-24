@@ -87,10 +87,16 @@ jobs:
         uses: browser-actions/setup-chrome@v2
 
       - name: Measure SVG glyph bounds and publication scaling
-        run: >-
-          .tmp/macos-wheel-smoke/bin/python scripts/check_svg_browser.py
-          --browser "${{ steps.macos-chrome.outputs.chrome-path }}"
-          --output .tmp/macos-font-metrics.json
+        env:
+          CHROME_PATH: ${{ steps.macos-chrome.outputs.chrome-path }}
+        run: |
+          # setup-chrome flattens the macOS bundle into its tool-cache directory.
+          # Keep the .app layout so sandboxed helpers can find the parent service.
+          chrome_bundle="$RUNNER_TEMP/Google Chrome for Testing.app"
+          ditto "$(dirname "$(dirname "$CHROME_PATH")")" "$chrome_bundle/Contents"
+          .tmp/macos-wheel-smoke/bin/python scripts/check_svg_browser.py \
+            --browser "$chrome_bundle/Contents/MacOS/Google Chrome for Testing" \
+            --output .tmp/macos-font-metrics.json
 
       - name: Retain macOS candidate evidence
         if: always()
