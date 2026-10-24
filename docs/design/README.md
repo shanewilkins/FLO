@@ -27,18 +27,20 @@ notes, migration plans, and taxonomy notes that span multiple components.
 ## Architecture acceptance before release
 
 - [Architecture validation results](architecture_validation.md): completed
-  assessment, three blocking findings, and bounded remediation R1–R4 under TR-118.
+  assessment, closure of three findings, and candidate acceptance under TR-118.
 - [Architecture validation slice](architecture_validation_plan.md): completed
   assessment scope and disposition.
 - [Layout finalization ADR](adr/render_layout_finalization.md): accepted ownership
-  clarification; implementation remains pending.
+  clarification, implemented by R1–R3b.
 - [Release architecture integrity policy](../policy/release_architecture_integrity.md):
   authoritative acceptance gate and known-good baseline requirements for every release.
 
 ## White Belt acceptance evidence
 
 - [Release closure plan](white_belt_release_plan.md): ordered release gates,
-  executable evidence, and outstanding promotion checks.
+  completed candidate gates and remaining release-cut actions.
+- [Candidate acceptance](white_belt_candidate_acceptance.md): immutable revision,
+  clean platform results, finding dispositions, and artifact identities.
 
 
 - [Semantic pipeline audit](white_belt_semantic_audit.md): completed language,

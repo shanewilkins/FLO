@@ -15,12 +15,11 @@ Unresolved architectural violations block release. The accepted baseline and
 its immutable revision, checks, decisions, and artifact identities become the
 starting point for the next release cycle.
 
-The current candidate has not passed this gate. The completed
-[architecture validation assessment](design/architecture_validation.md) identifies
-three blocking responsibility violations. Its remediation slices take priority
-over further browser acceptance or release promotion work. Existing
-functional and packaging evidence is retained; it does not establish architecture
-integrity by itself.
+The current White Belt candidate has completed R1–R4 and closed AF-001–003.
+The [acceptance record](design/white_belt_candidate_acceptance.md) retains the
+repository-wide review, immutable revisions, clean Linux/macOS installed-wheel
+and browser results, and artifact hashes. The eventual tagged release must pass
+the same policy and record its final distribution identities.
 
 ## MVP Boundary
 
@@ -258,28 +257,18 @@ Before 1.0, FLO will document:
   density modes, and use neutral monochrome SPPM colors. Theme contrast and
   shape/label/dotted-path checks protect non-color meaning.
 - [Implemented] Publish the single-page SPPM capability boundary and compatibility
-  expectations; stable promotion remains conditional on the remaining gates.
+  expectations; single-page stable promotion is recorded with clean candidate evidence.
 
 ### 0.4: Remaining White Belt Delivery
 
-- Complete architecture remediation R3b–R4 from the
-  [validation report](design/architecture_validation.md), close AF-001–003, and
-  verify final candidate integrity under TR-118 before cutting another release.
-  Assessment, R1 shared execution, and R2 policy ownership are complete; AF-002
-  and AF-003 are closed. R3a now finalizes routed geometry before SVG emission;
-  AF-001 still requires R3b and final release acceptance.
-
-
-- Move the single-page SPPM surface needed by White Belt to the stable renderer
-  tier without making multi-page or child-map publication part of the 0.4 gate.
-- Complete browser/font measurements for node-label legibility, clipping, and
-  effective text size at intended publication scales. Visible-lane containment
-  now passes the final-SVG corpus gate.
-- Run the expanded installed-package journey and SVG-consumer checks from clean
-  CI checkouts on Linux and macOS, and verify the regenerated book artifact.
-- Complete candidate review, reconcile release evidence, and tag/publish the
-  accepted artifact. Local progress and outstanding checks are recorded in the
-  [release closure plan](design/white_belt_release_plan.md).
+- [Implemented] R1–R4 architecture remediation and candidate acceptance; all three
+  findings closed and executable responsibility/import/stage gates retained.
+- [Implemented] Stable single-page SPPM promotion, browser glyph/scale/clipping
+  measurements, clean Linux/macOS installed-wheel journeys, and book/SVG consumer
+  acceptance. See the [acceptance record](design/white_belt_candidate_acceptance.md).
+- Select the next release version, verify its final concrete distribution under
+  the same architecture/platform gates, record its immutable tag and hashes,
+  and publish after review. No new release has been tagged or published.
 
 The 0.4 gate explicitly excludes multi-page publication, automatic child maps,
 Yellow Belt swimlane and spaghetti acceptance, and Green Belt value-stream-map

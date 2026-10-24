@@ -19,7 +19,7 @@ Current support matrix:
 | --- | --- | --- | --- |
 | swimlane | svg | maintained | Yellow Belt 0.5 |
 | spaghetti | svg | maintained | Yellow Belt 0.5 |
-| sppm | svg | maintained; single-page stable candidate | White Belt 0.4 |
+| sppm | svg | stable for single-page White Belt; maintained beyond that scope | White Belt 0.4 |
 | value_stream | svg | maintained | Green Belt 0.6 |
 
 Swimlane, spaghetti, SPPM, and value stream are the maintained renderer
@@ -79,6 +79,7 @@ publication, and child-map publication acceptance remain outside this promotion.
   physical sizing, installed-package, and SVG-consumer checks are acceptance
   gates. Passing goldens alone does not promote a renderer.
 
-Current promotion evidence and remaining acceptance are recorded in
-[the release plan](../design/white_belt_release_plan.md). SPPM stays maintained
-until the remaining visual/browser and clean-checkout release checks pass.
+Single-page promotion is supported by the
+[candidate acceptance record](../design/white_belt_candidate_acceptance.md),
+including clean Linux/macOS installed-wheel and browser glyph measurements.
+Broader publication surfaces retain their existing maintained status.

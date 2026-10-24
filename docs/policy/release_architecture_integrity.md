@@ -61,8 +61,9 @@ verify that unaffected baseline boundaries remain intact.
 
 ## Current candidate
 
-Architecture acceptance for the current White Belt candidate is pending. Existing
-functional, geometry, and packaging evidence remains useful, but it is not an
-architecture acceptance record. The
-[architecture validation slice](../design/architecture_validation_plan.md) is the
-first item in the [release closure plan](../design/white_belt_release_plan.md).
+The current White Belt candidate has completed architecture remediation and clean
+candidate acceptance. Its [acceptance record](../design/white_belt_candidate_acceptance.md)
+identifies reviewed decisions, closed findings, immutable source/tested revisions,
+platform checks, and distribution identities. This is candidate acceptance, not a
+published release baseline. The eventual versioned release must satisfy this gate
+and record its immutable tag and final artifacts before publication.

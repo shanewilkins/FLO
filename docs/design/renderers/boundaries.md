@@ -126,8 +126,8 @@ artifact APIs delegate to it and keep their return types. Optional
 resolved artifact and prepared options. Golden tooling consumes this result and
 may not import request builders, engine normalization, emission, or viewport
 implementation helpers. Tests instrument the common entrypoint and constrain
-the golden tool's imports. Capture does not supply finalized geometry: R3 remains
-responsible for that contract.
+the golden tool's imports. Capture includes engine, routed geometry, and final
+scene stages under the R3 contracts below.
 
 Layout-only diagnostic helpers and precomputed-layout SVG emission explicitly
 name their intermediate stage. Page-local publication figures use the diagram
@@ -147,8 +147,8 @@ its own settings. Shared coordinate and intersection mechanisms remain neutral.
 Tests exercise neutral requests under different diagram tags/environment values,
 explicit transformation execution, payload isolation, and independent swimlane
 configuration. The fast source gate scans all neutral modules for diagram-tag
-dispatch and SPPM symbols/literals, complementing full-tree import contracts. The
-AF-001 was subsequently closed by R3b; R4 records candidate acceptance.
+dispatch and SPPM symbols/literals, complementing full-tree import contracts.
+R3b closes AF-001; R4 records candidate acceptance.
 
 
 ## Routed geometry consumption contract (R3a)
@@ -162,9 +162,9 @@ SVG emission from depending on the node/route layout policy or ELK execution,
 including indirect paths. Tests parse SVG emitted from deliberately changed
 supplied geometry and retain independent final-SVG checks.
 
-R3a is a partial geometry contract: edge shape attachment, annotation placement,
-occupied bounds, and remaining viewport/band decisions await R3b. The emitter
-still performs those operations, so AF-001 remains a release blocker.
+Routed geometry is an intermediate contract. R3b supplies edge shape attachment,
+annotation placement, occupied bounds, and publication band decisions in the
+final scene before emission.
 
 
 ## Final scene contract (R3b)

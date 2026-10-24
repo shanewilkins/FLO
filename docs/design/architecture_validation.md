@@ -1,7 +1,7 @@
 # Architecture validation: White Belt candidate
 
-Status: R1–R3b complete; all identified architecture findings closed. R4 clean-candidate acceptance is in progress.
-Review date: 2026-10-23. Governing release requirement: TR-118.
+Status: R1–R4 complete; all identified architecture findings closed. Candidate accepted; release cut pending.
+Review date: 2026-10-24. Governing release requirement: TR-118.
 
 ## Current disposition
 
@@ -15,7 +15,7 @@ The [historical assessment](architecture_validation_history.md) preserves initia
 findings and milestone evidence. It does not describe unresolved current drift.
 The [machine evidence](architecture_validation_evidence.json) describes its recorded
 candidate, with runtime/configuration/decision hashes and actual stage observations.
-Clean installed-platform results must match the immutable candidate before R4 closes.
+The [candidate acceptance record](white_belt_candidate_acceptance.md) records matching clean Linux/macOS installed-platform results and artifact identities.
 
 ## Effective architecture review
 
@@ -88,15 +88,14 @@ excluded from the production emitter's enforced dependency tree.
 
 ## Candidate acceptance (R4)
 
-Local full run: 1,230 tests passed, 93.72% coverage; seven existing Click test-helper
-deprecations. Local pre-commit quality gates, final geometry/accessibility, and
-corpus parity pass. Browser-parser and CI retention tests were subsequently added.
+The [candidate acceptance record](white_belt_candidate_acceptance.md) closes R4.
+Clean CI passed 1,234 tests with 93.72% coverage, all quality/boundary gates,
+13-case golden/geometry/accessibility checks, installed-wheel identity and journeys
+on Linux/macOS, and actual Chrome glyph/fit measurements on both platforms.
+All 643 text elements per platform pass; no clipping or unsafe-fit issue remains.
 
-Local Edge aborted inside the sandbox and timed out in an isolated unrestricted
-run; no local browser success is claimed. Clean Chrome consumer and installed-wheel
-results on Linux/macOS remain required. The immutable candidate source revision,
-CI run links, artifact identities, final finding dispositions, and remaining release
-limitations will be recorded in the acceptance record after those checks finish.
-
-No release version bump, tag, or package publication is implied by candidate
-architecture acceptance. Tag/publication review remains the final release action.
+The record distinguishes the immutable source revision from GitHub's tested merge
+revision and retains wheel, runtime, decision/configuration, and SVG identities.
+R4 accepts the reviewed candidate architecture; it does not create a release tag
+or publish a distribution. The eventual versioned release must satisfy the policy
+and record its tag before it becomes the next cycle's published baseline.

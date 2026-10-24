@@ -1,0 +1,290 @@
+{
+  "architecture_document_digests": {
+    "docs/design/adr/render_layout_finalization.md": "4749f7a2bb6b7bddb788cfb5a9aaef7be941038fd03b95bc5ce731aedfd63e7e",
+    "docs/design/adr/render_stack_elk_svg_typst.md": "85642694a6d3b15f40268b16737a46eb1f8ce08927a4e5219de46512649433e7",
+    "docs/design/adr/simplified_package_architecture.md": "441a2367015cefd2e93d8ca48ce35333affa1c1e667c4428abf92073e7f75dcf",
+    "docs/design/render_platform_target_architecture.md": "1c693a0e0d13e462df7c2a8c9baa19ff915e5f76095c1eb8b0fea96c7177f529",
+    "docs/design/renderers/boundaries.md": "469407fdd8a11c80ece9df242d6631de9c28bfe67439ee42f45587a101495981",
+    "docs/design/renderers/sppm.md": "cdd6af977328e21bdee7a238633d97553e5dfa7278e9b37c9ef47c1f7838a788"
+  },
+  "blocking_findings": [],
+  "ci_jobs": {
+    "macos-package-smoke": "success",
+    "package-smoke": "success",
+    "sppm-determinism": "success",
+    "test": "success"
+  },
+  "ci_run": "https://github.com/shanewilkins/FLO/actions/runs/40101761290",
+  "configuration_digests": {
+    ".github/workflows/ci.yml": "06f69bbd417db5d2cd79bfa7df225f584be97266b3d1e6445db42501b00005f5",
+    ".github/workflows/publish.yml": "425d7bb1d375ef753e322b25760912804e429cd9f3b08d8519df5faeb55f021b",
+    ".pre-commit-config.yaml": "611f77db29f210d6229f0178250f36fa3391c0be010b0fb8225936773db7e222",
+    "package-lock.json": "58ba37e3fd3db8474ab06e4155efe23e5b0b4255faa715456a1c58ef0a1597e9",
+    "pyproject.toml": "dd0d6a99b908e6ae6cc3d24c2d61cca40e83d45b4c5b80b9408e25ffce43ea1b",
+    "uv.lock": "99f1ddf28a5c2711df494b725d3860e6cd0a613a87b86b09b683613941c53b24"
+  },
+  "findings": {
+    "AF-001": "closed: R3a/R3b final scene and pure emission",
+    "AF-002": "closed: R2 diagram policy ownership",
+    "AF-003": "closed: R1 common production execution"
+  },
+  "functional_checks": {
+    "coverage_percent": 93.72,
+    "existing_click_deprecations": 7,
+    "geometry_violations": 0,
+    "golden_cases": 13,
+    "golden_files": 26,
+    "tests_passed": 1234
+  },
+  "limitations": [
+    "Single-page SPPM promotion only; multi-page, child-map publication and other belt renderer acceptance remain deferred.",
+    "Unified diagnostic delivery is queued under TR-117; missing optional timing remains nonfatal and visibly unknown.",
+    "Candidate acceptance does not create a release tag or publish a distribution."
+  ],
+  "platforms": {
+    "linux": {
+      "architecture_evidence_sha256": "7a079a19530f6276a68ab589a95479ea457dc96f765f103d51ec6dcb4ab5e762",
+      "candidate_artifact": "linux-candidate-evidence",
+      "glyph_evidence_sha256": "c1bf9150d0b634ff289d24ddbee89f33098911e9fdd732adf24dd56bc5706b3a",
+      "glyph_measurements": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+        "cases": [
+          {
+            "id": "bakery_setup_vs_queue_lr",
+            "issues": [],
+            "min_effective_font_px": 11,
+            "text_count": 71
+          },
+          {
+            "id": "book_washnfold_local_rework",
+            "issues": [],
+            "min_effective_font_px": 12.989150090415912,
+            "text_count": 47
+          },
+          {
+            "id": "cookies_process_lr",
+            "issues": [],
+            "min_effective_font_px": 11,
+            "text_count": 33
+          },
+          {
+            "id": "linear_lr",
+            "issues": [],
+            "min_effective_font_px": 12,
+            "text_count": 18
+          },
+          {
+            "id": "linear_tb",
+            "issues": [],
+            "min_effective_font_px": 12,
+            "text_count": 21
+          },
+          {
+            "id": "rework_loop_lr",
+            "issues": [],
+            "min_effective_font_px": 12,
+            "text_count": 22
+          },
+          {
+            "id": "rework_loop_tb",
+            "issues": [],
+            "min_effective_font_px": 12,
+            "text_count": 25
+          },
+          {
+            "id": "simple_decision_book",
+            "issues": [],
+            "min_effective_font_px": 12,
+            "text_count": 16
+          },
+          {
+            "id": "sppm_feature_showcase_lr",
+            "issues": [],
+            "min_effective_font_px": 10,
+            "text_count": 105
+          },
+          {
+            "id": "sppm_feature_showcase_wrapped_lr",
+            "issues": [],
+            "min_effective_font_px": 9,
+            "text_count": 107
+          },
+          {
+            "id": "sppm_long_label_stress_lr",
+            "issues": [],
+            "min_effective_font_px": 11,
+            "text_count": 58
+          },
+          {
+            "id": "washnfold_lr",
+            "issues": [],
+            "min_effective_font_px": 11,
+            "text_count": 63
+          },
+          {
+            "id": "washnfold_white_belt",
+            "issues": [],
+            "min_effective_font_px": 11,
+            "text_count": 57
+          }
+        ],
+        "inputs": {
+          "tests/golden/sppm/bakery_setup_vs_queue_lr/render.svg": "59a091df7ca461e9bd580687a34fe9eaa13baf0aaf930bf40f9d036c45554c38",
+          "tests/golden/sppm/book_washnfold_local_rework/render.svg": "b4e6c43720e477c571d3ff21afb1913a660f9ae80eabf83a3c6cc0e1d159763c",
+          "tests/golden/sppm/cookies_process_lr/render.svg": "2e8aaab5c42dbcdffa069bdf5df6fdf5890b09d00a8c5da98313099ee2fe95c7",
+          "tests/golden/sppm/linear_lr/render.svg": "ce9e422422083049dd6cb3d9497defe00039d6702f7bd468d07218795acc0b23",
+          "tests/golden/sppm/linear_tb/render.svg": "6c0c3535ef24fabb3195f31bfe9f512936ec52d498a28950dafdf7bb36716418",
+          "tests/golden/sppm/rework_loop_lr/render.svg": "6ef151f759d6da41347777c4fb59e88906264b28fbc8b5fc63fa143514836631",
+          "tests/golden/sppm/rework_loop_tb/render.svg": "64605d5625ed74d399463b1b4eec4e6c36e5c9f86b2c5723ffd84dfdae35c0a7",
+          "tests/golden/sppm/simple_decision_book/render.svg": "f9e437131fc1477b3ba7ab2e31b98b5e189cf763ab7ae065bbb6eca405c1e1c9",
+          "tests/golden/sppm/sppm_feature_showcase_lr/render.svg": "5893cf6bbc6a5fa178a6feff377aee5e1164b256aee30979324c9e5a9add8852",
+          "tests/golden/sppm/sppm_feature_showcase_wrapped_lr/render.svg": "3669b00d617ea199f174d800aebc73f29f51066c2a399531027af3e037e81baa",
+          "tests/golden/sppm/sppm_long_label_stress_lr/render.svg": "6a17ab7d6ccc16a1555d8b97e63fe0aa7a246833af4b5970081fa3a884564dba",
+          "tests/golden/sppm/washnfold_lr/render.svg": "6862326d368bccafe3aea62bcb54812beec092580e9005941604aa6c1da412bc",
+          "tests/golden/sppm/washnfold_white_belt/render.svg": "ef0636a03cc5bdcf9ff9f5ed1da5150af555806343a3d7b2242e4cd318ae92f7"
+        },
+        "scale_floor": 0.75,
+        "schema_version": 1
+      },
+      "installed_package_matches_source": true,
+      "wheel": "flo_lang-0.4.2-py3-none-any.whl",
+      "wheel_sha256": "04321a78079ede3020030f9c8bfa62420836bd3fbbc0b655c9ebc5c1e873627b"
+    },
+    "macos": {
+      "architecture_evidence_sha256": "061dec840728a038d849eaafcce93d28adc4f299095b7b41cdf4b43c7f446662",
+      "candidate_artifact": "macos-candidate-evidence",
+      "glyph_evidence_sha256": "e81b5988da5b19ca67eb711133538f9576c63b4ff28bf0a44d55052cfad910d8",
+      "glyph_measurements": {
+        "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+        "cases": [
+          {
+            "id": "bakery_setup_vs_queue_lr",
+            "issues": [],
+            "min_effective_font_px": 11,
+            "text_count": 71
+          },
+          {
+            "id": "book_washnfold_local_rework",
+            "issues": [],
+            "min_effective_font_px": 12.989150090415912,
+            "text_count": 47
+          },
+          {
+            "id": "cookies_process_lr",
+            "issues": [],
+            "min_effective_font_px": 11,
+            "text_count": 33
+          },
+          {
+            "id": "linear_lr",
+            "issues": [],
+            "min_effective_font_px": 12,
+            "text_count": 18
+          },
+          {
+            "id": "linear_tb",
+            "issues": [],
+            "min_effective_font_px": 12,
+            "text_count": 21
+          },
+          {
+            "id": "rework_loop_lr",
+            "issues": [],
+            "min_effective_font_px": 12,
+            "text_count": 22
+          },
+          {
+            "id": "rework_loop_tb",
+            "issues": [],
+            "min_effective_font_px": 12,
+            "text_count": 25
+          },
+          {
+            "id": "simple_decision_book",
+            "issues": [],
+            "min_effective_font_px": 12,
+            "text_count": 16
+          },
+          {
+            "id": "sppm_feature_showcase_lr",
+            "issues": [],
+            "min_effective_font_px": 10,
+            "text_count": 105
+          },
+          {
+            "id": "sppm_feature_showcase_wrapped_lr",
+            "issues": [],
+            "min_effective_font_px": 9,
+            "text_count": 107
+          },
+          {
+            "id": "sppm_long_label_stress_lr",
+            "issues": [],
+            "min_effective_font_px": 11,
+            "text_count": 58
+          },
+          {
+            "id": "washnfold_lr",
+            "issues": [],
+            "min_effective_font_px": 11,
+            "text_count": 63
+          },
+          {
+            "id": "washnfold_white_belt",
+            "issues": [],
+            "min_effective_font_px": 11,
+            "text_count": 57
+          }
+        ],
+        "inputs": {
+          "tests/golden/sppm/bakery_setup_vs_queue_lr/render.svg": "59a091df7ca461e9bd580687a34fe9eaa13baf0aaf930bf40f9d036c45554c38",
+          "tests/golden/sppm/book_washnfold_local_rework/render.svg": "b4e6c43720e477c571d3ff21afb1913a660f9ae80eabf83a3c6cc0e1d159763c",
+          "tests/golden/sppm/cookies_process_lr/render.svg": "2e8aaab5c42dbcdffa069bdf5df6fdf5890b09d00a8c5da98313099ee2fe95c7",
+          "tests/golden/sppm/linear_lr/render.svg": "ce9e422422083049dd6cb3d9497defe00039d6702f7bd468d07218795acc0b23",
+          "tests/golden/sppm/linear_tb/render.svg": "6c0c3535ef24fabb3195f31bfe9f512936ec52d498a28950dafdf7bb36716418",
+          "tests/golden/sppm/rework_loop_lr/render.svg": "6ef151f759d6da41347777c4fb59e88906264b28fbc8b5fc63fa143514836631",
+          "tests/golden/sppm/rework_loop_tb/render.svg": "64605d5625ed74d399463b1b4eec4e6c36e5c9f86b2c5723ffd84dfdae35c0a7",
+          "tests/golden/sppm/simple_decision_book/render.svg": "f9e437131fc1477b3ba7ab2e31b98b5e189cf763ab7ae065bbb6eca405c1e1c9",
+          "tests/golden/sppm/sppm_feature_showcase_lr/render.svg": "5893cf6bbc6a5fa178a6feff377aee5e1164b256aee30979324c9e5a9add8852",
+          "tests/golden/sppm/sppm_feature_showcase_wrapped_lr/render.svg": "3669b00d617ea199f174d800aebc73f29f51066c2a399531027af3e037e81baa",
+          "tests/golden/sppm/sppm_long_label_stress_lr/render.svg": "6a17ab7d6ccc16a1555d8b97e63fe0aa7a246833af4b5970081fa3a884564dba",
+          "tests/golden/sppm/washnfold_lr/render.svg": "6862326d368bccafe3aea62bcb54812beec092580e9005941604aa6c1da412bc",
+          "tests/golden/sppm/washnfold_white_belt/render.svg": "ef0636a03cc5bdcf9ff9f5ed1da5150af555806343a3d7b2242e4cd318ae92f7"
+        },
+        "scale_floor": 0.75,
+        "schema_version": 1
+      },
+      "installed_package_matches_source": true,
+      "wheel": "flo_lang-0.4.2-py3-none-any.whl",
+      "wheel_sha256": "04321a78079ede3020030f9c8bfa62420836bd3fbbc0b655c9ebc5c1e873627b"
+    }
+  },
+  "release_tag": null,
+  "representative_svg_sha256": {
+    "basic_linear": {
+      "cli": "f0cf05f2040c5c1faecc928a55da2727952ba4f3aa05dee95c677b463eb26257",
+      "golden": "f0cf05f2040c5c1faecc928a55da2727952ba4f3aa05dee95c677b463eb26257",
+      "installed_cli": "f0cf05f2040c5c1faecc928a55da2727952ba4f3aa05dee95c677b463eb26257",
+      "python": "f0cf05f2040c5c1faecc928a55da2727952ba4f3aa05dee95c677b463eb26257"
+    },
+    "book_washnfold_local_rework": {
+      "cli": "b4e6c43720e477c571d3ff21afb1913a660f9ae80eabf83a3c6cc0e1d159763c",
+      "golden": "b4e6c43720e477c571d3ff21afb1913a660f9ae80eabf83a3c6cc0e1d159763c",
+      "installed_cli": "b4e6c43720e477c571d3ff21afb1913a660f9ae80eabf83a3c6cc0e1d159763c",
+      "python": "b4e6c43720e477c571d3ff21afb1913a660f9ae80eabf83a3c6cc0e1d159763c"
+    },
+    "sppm_long_label_stress_lr": {
+      "cli": "6a17ab7d6ccc16a1555d8b97e63fe0aa7a246833af4b5970081fa3a884564dba",
+      "golden": "6a17ab7d6ccc16a1555d8b97e63fe0aa7a246833af4b5970081fa3a884564dba",
+      "installed_cli": "6a17ab7d6ccc16a1555d8b97e63fe0aa7a246833af4b5970081fa3a884564dba",
+      "python": "6a17ab7d6ccc16a1555d8b97e63fe0aa7a246833af4b5970081fa3a884564dba"
+    }
+  },
+  "review_date": "2026-10-24",
+  "revision_note": "PR CI tests a synthetic merge of source_revision. Subsequent evidence-only commits record this candidate; they do not change the recorded runtime.",
+  "runtime_package_digest": "9c1c761edb54c21f1a1abd34a7284b703faa857d8e257554cdf644024de8181a",
+  "schema_version": 1,
+  "source_revision": "ede833e122bbfdb363610556d934ccf310cc50c5",
+  "status": "candidate accepted; release tag and publication pending",
+  "tested_merge_revision": "b54aea44bcc7dfcfa4ac397351563199533b4359"
+}

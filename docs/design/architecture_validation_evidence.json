@@ -20,6 +20,7 @@
       "artifact_digests": {
         "cli": "f0cf05f2040c5c1faecc928a55da2727952ba4f3aa05dee95c677b463eb26257",
         "golden": "f0cf05f2040c5c1faecc928a55da2727952ba4f3aa05dee95c677b463eb26257",
+        "installed_cli": "f0cf05f2040c5c1faecc928a55da2727952ba4f3aa05dee95c677b463eb26257",
         "python": "f0cf05f2040c5c1faecc928a55da2727952ba4f3aa05dee95c677b463eb26257"
       },
       "canonical_ir_object_unchanged": true,
@@ -27,7 +28,11 @@
       "case": "basic_linear",
       "geometry": null,
       "golden_diagnostic_count": 0,
-      "installed": null,
+      "installed": {
+        "location": "/home/runner/work/FLO/FLO/.tmp/ci-wheel-smoke/lib/python3.14/site-packages/flo",
+        "package_digest": "9c1c761edb54c21f1a1abd34a7284b703faa857d8e257554cdf644024de8181a",
+        "svg_digest": "f0cf05f2040c5c1faecc928a55da2727952ba4f3aa05dee95c677b463eb26257"
+      },
       "observations": {
         "annotations_finalized_before_svg": 0,
         "clipped_routes": 0,
@@ -313,6 +318,7 @@
       "artifact_digests": {
         "cli": "b4e6c43720e477c571d3ff21afb1913a660f9ae80eabf83a3c6cc0e1d159763c",
         "golden": "b4e6c43720e477c571d3ff21afb1913a660f9ae80eabf83a3c6cc0e1d159763c",
+        "installed_cli": "b4e6c43720e477c571d3ff21afb1913a660f9ae80eabf83a3c6cc0e1d159763c",
         "python": "b4e6c43720e477c571d3ff21afb1913a660f9ae80eabf83a3c6cc0e1d159763c"
       },
       "canonical_ir_object_unchanged": true,
@@ -331,7 +337,11 @@
         "scale": 1.1808318264014466
       },
       "golden_diagnostic_count": 0,
-      "installed": null,
+      "installed": {
+        "location": "/home/runner/work/FLO/FLO/.tmp/ci-wheel-smoke/lib/python3.14/site-packages/flo",
+        "package_digest": "9c1c761edb54c21f1a1abd34a7284b703faa857d8e257554cdf644024de8181a",
+        "svg_digest": "b4e6c43720e477c571d3ff21afb1913a660f9ae80eabf83a3c6cc0e1d159763c"
+      },
       "observations": {
         "annotations_finalized_before_svg": 3,
         "clipped_routes": 9,
@@ -1293,6 +1303,7 @@
       "artifact_digests": {
         "cli": "6a17ab7d6ccc16a1555d8b97e63fe0aa7a246833af4b5970081fa3a884564dba",
         "golden": "6a17ab7d6ccc16a1555d8b97e63fe0aa7a246833af4b5970081fa3a884564dba",
+        "installed_cli": "6a17ab7d6ccc16a1555d8b97e63fe0aa7a246833af4b5970081fa3a884564dba",
         "python": "6a17ab7d6ccc16a1555d8b97e63fe0aa7a246833af4b5970081fa3a884564dba"
       },
       "canonical_ir_object_unchanged": true,
@@ -1300,7 +1311,11 @@
       "case": "sppm_long_label_stress_lr",
       "geometry": null,
       "golden_diagnostic_count": 0,
-      "installed": null,
+      "installed": {
+        "location": "/home/runner/work/FLO/FLO/.tmp/ci-wheel-smoke/lib/python3.14/site-packages/flo",
+        "package_digest": "9c1c761edb54c21f1a1abd34a7284b703faa857d8e257554cdf644024de8181a",
+        "svg_digest": "6a17ab7d6ccc16a1555d8b97e63fe0aa7a246833af4b5970081fa3a884564dba"
+      },
       "observations": {
         "annotations_finalized_before_svg": 2,
         "clipped_routes": 4,
@@ -1999,7 +2014,7 @@
     }
   ],
   "configuration_digests": {
-    ".github/workflows/ci.yml": "433ce37a6b875d3082ff5377af10d6ed7374778e73d0f0d36a839475297f08af",
+    ".github/workflows/ci.yml": "06f69bbd417db5d2cd79bfa7df225f584be97266b3d1e6445db42501b00005f5",
     ".github/workflows/publish.yml": "425d7bb1d375ef753e322b25760912804e429cd9f3b08d8519df5faeb55f021b",
     ".pre-commit-config.yaml": "611f77db29f210d6229f0178250f36fa3391c0be010b0fb8225936773db7e222",
     "package-lock.json": "58ba37e3fd3db8474ab06e4155efe23e5b0b4255faa715456a1c58ef0a1597e9",
@@ -2007,8 +2022,8 @@
     "uv.lock": "99f1ddf28a5c2711df494b725d3860e6cd0a613a87b86b09b683613941c53b24"
   },
   "findings_source": "docs/design/architecture_validation.md",
-  "head_revision": "60c2c98be0c36bd3b71908ceb44b85c68e716804",
-  "installed_package_matches_source": false,
+  "head_revision": "b54aea44bcc7dfcfa4ac397351563199533b4359",
+  "installed_package_matches_source": true,
   "responsibility_check_pass": true,
   "runtime_package_digest": "9c1c761edb54c21f1a1abd34a7284b703faa857d8e257554cdf644024de8181a",
   "schema_version": 1

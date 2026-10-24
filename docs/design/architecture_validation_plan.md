@@ -1,6 +1,6 @@
 # Architecture validation before the next release
 
-Status: assessment and R1–R3b complete; clean-candidate acceptance R4 in progress.
+Status: assessment and R1–R4 complete; candidate accepted. See the [acceptance record](white_belt_candidate_acceptance.md).
 
 Results: [validation report](architecture_validation.md),
 [machine evidence](architecture_validation_evidence.json), and
@@ -8,7 +8,7 @@ Results: [validation report](architecture_validation.md),
 
 This plan implements the acceptance work required by TR-118 and the
 [release architecture integrity policy](../policy/release_architecture_integrity.md).
-It does not declare existing drift accepted or architecture integrity verified.
+The assessment identified drift; remediation and clean-candidate verification are recorded separately in the acceptance record.
 
 ## Objective and stopping point
 
@@ -90,5 +90,5 @@ functional output agrees across all four traced paths. R1 closes AF-003 through 
 R2 closes AF-002 through diagram-owned policy and explicit neutral engine inputs.
 R3a finalizes nodes/routes and exposes routed geometry before SVG emission.
 R3b closes AF-001 with a complete final scene and pure SVG consumption.
-Immutable clean-candidate acceptance (R4) is the remaining architecture gate.
+Immutable clean-candidate acceptance (R4) is complete; the acceptance record retains platform and artifact evidence.
 No production renderer changes were made to make this assessment appear green.

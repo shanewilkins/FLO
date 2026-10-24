@@ -331,7 +331,11 @@ def build_report(installed_python: Path | None = None) -> dict:
             for case in traces
         ),
         "responsibility_check_pass": not violations,
-        "architecture_acceptance": "pending remediation and clean-candidate review",
+        "architecture_acceptance": (
+            "blocked by responsibility findings"
+            if violations
+            else "requires recorded clean-candidate review"
+        ),
         "blocking_findings": violations,
         "architecture_document_digests": {
             name: digest((REPO_ROOT / name).read_bytes()) for name in architecture_docs
