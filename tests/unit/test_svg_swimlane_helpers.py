@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 from flo.render.layout_core.models import LayoutBounds
 from flo.render.options import RenderOptions
-from flo.render.sppm.edges import _label_placement
+from flo.render.sppm.edge_layout import _label_placement
 from flo.render.swimlane.primitives import edge_svg, node_svg, svg_defs
 
 

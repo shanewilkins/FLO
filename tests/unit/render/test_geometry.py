@@ -2,8 +2,9 @@ import pytest
 
 from flo.errors import RenderError
 from flo.render._artifact import RenderArtifact
-from flo.render._geometry import prepare_svg_layout, resolve_svg_geometry
+from flo.render._geometry import resolve_svg_geometry
 from flo.render.options import RenderOptions
+from flo.render.sppm.layout_options import prepare_sppm_layout
 
 
 def _artifact() -> RenderArtifact:
@@ -23,7 +24,7 @@ def test_explicit_sppm_width_constrains_profile_wrap_budget():
         }
     )
 
-    prepared = prepare_svg_layout(options)
+    prepared = prepare_sppm_layout(options)
 
     assert options.layout_max_width_px == 1200
     assert prepared.layout_width_px == 800

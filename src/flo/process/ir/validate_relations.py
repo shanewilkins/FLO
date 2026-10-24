@@ -14,7 +14,7 @@ def validate_item_relations(obj: IR) -> None:
     """Validate consumes/produces item references against declared process items."""
     items_collection = extract_process_field(obj, "items")
     declared_items = _collect_declared_kinds(items_collection)
-    if not declared_items:
+    if items_collection is None:
         return
 
     for node in obj.nodes:
@@ -35,7 +35,7 @@ def validate_resource_relations(obj: IR) -> None:
     """Validate performed_by/uses references against declared typed resources."""
     resources_collection = extract_process_field(obj, "resources")
     declared_resources = _collect_declared_kinds(resources_collection)
-    if not declared_resources:
+    if resources_collection is None:
         return
 
     _validate_branch_eligible_resources(obj, declared_resources)
@@ -65,6 +65,38 @@ def validate_resource_relations(obj: IR) -> None:
                     raise ValidationError(
                         f"E1314: node '{node.id}' {relation} resource '{resource_ref}' must reference kind '{expected_kind}'"
                     )
+
+
+def validate_context_relations(obj: IR) -> None:
+    """Resolve lane and location references when their collections are declared."""
+    locations = extract_process_field(obj, "locations")
+    declarations = {
+        "lane": {entry["id"] for entry in obj.lanes} if obj.lanes else None,
+        "location": _collect_declared_ids(locations) if locations is not None else None,
+    }
+    for node in obj.nodes:
+        for field, declared in declarations.items():
+            reference = node.attrs.get(field)
+            if reference is None or declared is None:
+                continue
+            if not isinstance(reference, str) or reference not in declared:
+                raise ValidationError(
+                    f"E1316: node '{node.id}' {field} '{reference}' must reference a declared process {field} id"
+                )
+
+
+def _collect_declared_ids(collection: Any) -> set[str]:
+    if isinstance(collection, list):
+        return {entry["id"] for entry in collection}
+    if isinstance(collection, dict):
+        return set().union(
+            *(
+                _collect_declared_ids(nested)
+                for key, nested in collection.items()
+                if key != "name"
+            )
+        )
+    return set()
 
 
 def _validate_branch_eligible_resources(

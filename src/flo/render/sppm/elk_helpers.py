@@ -5,8 +5,8 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Any
 
-from .elk_contracts import ElkLayoutEdge, ElkLayoutLane, ElkLayoutRequest
-from .sppm_strategy import current_sppm_layout_strategy, sppm_spacing_values
+from ..layout_core.elk_contracts import ElkLayoutEdge, ElkLayoutLane, ElkLayoutRequest
+from .strategy import current_sppm_layout_strategy, sppm_spacing_values
 
 
 def _sppm_spacing_layout_options() -> dict[str, str]:
@@ -38,9 +38,6 @@ def _root_layout_options(request: ElkLayoutRequest) -> dict[str, str]:
         options["elk.partitioning.activate"] = "true"
     if request.lanes and not _synthetic_sppm_rows(request=request):
         options["elk.hierarchyHandling"] = "INCLUDE_CHILDREN"
-    if request.diagram == "swimlane":
-        options["elk.edgeRouting"] = "ORTHOGONAL"
-        options["elk.partitioning.activate"] = "true"
     return options
 
 
@@ -477,11 +474,6 @@ def _walk_rework_chain(
         current = next_candidates[0]
 
     return tuple(chain)
-
-
-def _sppm_lane_direction(*, lane_id: str, root_direction: str) -> str:
-    """Keep row direction aligned with authored flow, including rework rows."""
-    return root_direction
 
 
 def _sppm_apply_secondary_row_edge_ports(

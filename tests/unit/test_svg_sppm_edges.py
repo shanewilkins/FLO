@@ -7,19 +7,20 @@ import pytest
 from flo.render._diagnostics import RenderDiagnostic
 from flo.render.layout_core.models import LayoutBounds, LayoutPoint
 from flo.render.options import RenderOptions
-from flo.render.sppm.edges import (
+from flo.render.sppm.attachments import (
     _attachment_miss_warn_px,
     _clip_edge_points_to_node_bounds,
-    _edge_stroke,
-    _edge_svg,
-    _edge_token_svg,
-    _is_synthetic_sppm_lane,
+    _normalize_rework_edge_points,
+)
+from flo.render.sppm.edge_layout import (
     _label_placement,
     _lane_header_avoid_bounds,
-    _normalize_rework_edge_points,
     _placement_overlaps_bounds,
     _rework_label_placement,
 )
+from flo.render.sppm.edge_svg import _edge_stroke
+from flo.render.sppm.edges import _edge_svg, _edge_token_svg
+from flo.render.sppm.namespace import is_synthetic_sppm_lane
 
 
 @pytest.mark.parametrize(
@@ -44,12 +45,12 @@ def test_edge_stroke_styles(
     assert actual == expected
 
 
-def test_normalize_rework_edge_points_dedupes_and_collapses_short_span() -> None:
+def test_normalize_rework_edge_points_dedupes_and_collapses_straight_span() -> None:
     points = (
         LayoutPoint(0.0, 0.0),
         LayoutPoint(0.0, 0.0),
-        LayoutPoint(40.0, 80.0),
-        LayoutPoint(20.0, 80.0),
+        LayoutPoint(0.0, 40.0),
+        LayoutPoint(0.0, 80.0),
     )
 
     normalized = _normalize_rework_edge_points(
@@ -58,7 +59,7 @@ def test_normalize_rework_edge_points_dedupes_and_collapses_short_span() -> None
         rework_variant="branch",
     )
 
-    assert normalized == (LayoutPoint(0.0, 0.0), LayoutPoint(20.0, 80.0))
+    assert normalized == (LayoutPoint(0.0, 0.0), LayoutPoint(0.0, 80.0))
 
 
 def test_normalize_rework_edge_points_keeps_non_axis_aligned_path() -> None:
@@ -281,7 +282,7 @@ def test_edge_token_svg_marks_source_and_target_positions() -> None:
     ],
 )
 def test_is_synthetic_sppm_lane(lane_id: str, expected: bool) -> None:
-    assert _is_synthetic_sppm_lane(lane_id) is expected
+    assert is_synthetic_sppm_lane(lane_id) is expected
 
 
 def test_edge_svg_returns_empty_for_single_point_path() -> None:
@@ -402,3 +403,16 @@ def test_label_placement_records_overlap_fallback_diagnostic_when_unavoidable() 
     assert diagnostics
     assert diagnostics[0].code == "sppm-annotation-overlap-fallback"
     assert diagnostics[0].metadata["edge"] == "a->b"
+
+
+def test_normalize_rework_preserves_small_orthogonal_bends():
+    points = (
+        LayoutPoint(0, 0),
+        LayoutPoint(0, 40),
+        LayoutPoint(10, 40),
+        LayoutPoint(10, 80),
+    )
+    assert (
+        _normalize_rework_edge_points(points, is_rework=True, rework_variant="branch")
+        == points
+    )

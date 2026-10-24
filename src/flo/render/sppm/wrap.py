@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from statistics import fmean
 from typing import Any, Literal
 
+from flo.process.durations import duration_number
+
 from ..layout_core.models import NodeMeasure, PlacementConstraints, PlacementPlan
 from ..layout_core.placement import build_placement_plan
 from ..options import RenderOptions
@@ -462,26 +464,29 @@ def _estimate_sppm_node_width_px(
     )
     ct_spec = get_metadata_cycle_time(metadata)
     ct_line = _format_time_width_field_from_spec(
-        prefix="CT",
+        prefix="P/T",
         spec=ct_spec,
         suffix="",
         options=options,
     )
     wt_minutes = get_metadata_wait_time_minutes(metadata)
     wt_line = _format_time_width_field_from_minutes(
-        prefix="WT",
+        prefix="W/T",
         minutes=wt_minutes,
         suffix=" wait",
         options=options,
     )
     co_spec = get_metadata_crossover_time(metadata)
     co_line = _format_time_width_field_from_spec(
-        prefix="C/O",
+        prefix="S/T",
         spec=co_spec,
         suffix="",
         options=options,
-        require_positive=True,
     )
+    if kind in {"queue", "decision", "subprocess"}:
+        ct_line = co_line = ""
+        if kind != "queue":
+            wt_line = ""
     workers_line = _format_workers_width_field(workers=workers, options=options)
     notes_line = normalize_space(f"Note: {note}") if note and options.show_notes else ""
 
@@ -520,12 +525,13 @@ def _format_time_width_field_from_spec(
     spec: Any,
     suffix: str,
     options: RenderOptions,
-    require_positive: bool = False,
 ) -> str:
     """Format time field from SppmMetadataValue (cycle_time, changeover_time)."""
     if spec is None:
-        return ""
-    if require_positive and spec.numeric_value <= 0:
+        return _format_sppm_width_field(
+            f"{prefix}: ?", max_len=options.sppm_max_label_ctwt, options=options
+        )
+    if spec.numeric_value is None:
         return ""
     unit = spec.unit or "min"
     return _format_sppm_width_field(
@@ -541,10 +547,13 @@ def _format_time_width_field_from_minutes(
     minutes: Any,
     suffix: str,
     options: RenderOptions,
-    require_positive: bool = False,
 ) -> str:
     """Format time field from numeric minutes (wait_time)."""
-    if not isinstance(minutes, (int, float)) or (require_positive and minutes < 0):
+    if minutes is None:
+        return _format_sppm_width_field(
+            f"{prefix}: ?", max_len=options.sppm_max_label_ctwt, options=options
+        )
+    if duration_number(minutes) is None:
         return ""
     # Format as int if it's a whole number, otherwise as float
     value_str = (

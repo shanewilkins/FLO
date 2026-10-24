@@ -58,16 +58,27 @@ def apply_density_filter(
         return [line for line in [key_metric, notes_line] if line]
 
     if density == "compact":
-        condensed_metric = " | ".join(
-            line for line in [ct_line, wt_line, co_line] if line
-        )
-        return [line for line in [condensed_metric, workers_line, notes_line] if line]
+        return [
+            line
+            for line in (
+                *_compact_metric_lines(ct_line, wt_line, co_line),
+                workers_line,
+                notes_line,
+            )
+            if line
+        ]
 
     return [
         line
         for line in [description, workers_line, ct_line, wt_line, co_line, notes_line]
         if line
     ]
+
+
+def _compact_metric_lines(*metrics: str) -> tuple[str, str]:
+    declared = " | ".join(line for line in metrics if line and not line.endswith(": ?"))
+    missing = " | ".join(line for line in metrics if line.endswith(": ?"))
+    return declared, missing
 
 
 def _initials(name: str) -> str:

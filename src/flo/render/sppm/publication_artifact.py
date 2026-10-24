@@ -79,6 +79,9 @@ def _render_sppm_page_svg_assets(
     nodes: list[dict[str, Any]],
     edges: list[dict[str, Any]],
 ) -> tuple[dict[str, str], ...]:
+    # Page planning supplies figure options; the diagram entrypoint owns engine
+    # execution/emission. These are page-local figures, not standalone viewport
+    # artifacts. Do not reconstruct the request/engine/emitter sequence here.
     nodes_by_id = {str(node.get("id") or ""): node for node in nodes}
     page_options = replace(
         options,

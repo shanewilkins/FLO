@@ -295,12 +295,17 @@ def _field_name_from_message(message: str) -> str | None:
     if "E1025" in message:
         return "kind"
     candidates = (
+        "wait_before",
+        "crossover_time",
+        "transfer_time",
         "wait_time",
         "cycle_time",
         "changeover_time",
         "crossover",
         "transfer",
         "buffer_capacity",
+        "location",
+        "lane",
         "performed_by",
         "consumes",
         "produces",
@@ -458,7 +463,12 @@ def _suggestion_for_code(message: str) -> str | None:
         "E1312": "Declare the referenced item under process.metadata.items or correct the item ID.",
         "E1313": "Declare the referenced resource under process.metadata.resources or correct the resource ID.",
         "E1314": "Use a resource whose declared kind matches this relation.",
+        "E1316": "Declare the referenced lane or location, or correct the step reference.",
+        "E1102": "Use an integer capacity of at least 1; booleans and null are not capacities.",
         "E1315": "Declare the eligible resource under process.metadata.resources or correct the resource ID.",
+        "E1301": "Declare timing as an object with an explicit numeric value and supported unit; omit the field if unmeasured.",
+        "E1302": "Use a finite, nonnegative number whose duration fits in seconds; omit the field if unmeasured.",
+        "E1303": "Specify s, m, min, hr, or d explicitly; no timing unit is inferred.",
         "E1304": "Use a non-empty measurement_id string or remove it.",
         "E1305": "List one or more unique, non-empty measurement IDs.",
         "E1404": "Use edge_type: rework with rework: true, or omit both fields.",
@@ -469,5 +479,6 @@ def _suggestion_for_code(message: str) -> str | None:
             "measurement_id values, or keep only one measurement."
         ),
         "E1506": "Give each work-node waiting measurement a unique measurement_id.",
+        "E1508": "Move active timing and wait_before to a work node; use a queue for wait_time.",
         "E1507": "Reference measurement_id values declared by work-node wait_before metadata.",
     }.get(code_match.group(1))

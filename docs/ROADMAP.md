@@ -6,6 +6,21 @@ The roadmap is a public planning document and does not override FLO's policy, sp
 Normative scope, lifecycle, acceptance criteria, and unresolved product
 decisions are tracked in `docs/requirements/`.
 
+## Architecture Integrity Gate For Every Release
+
+Under TR-118 and the [release architecture integrity policy](policy/release_architecture_integrity.md),
+every release, including patches, must leave a verified baseline whose effective
+accepted architecture, implementation, documentation, and boundaries agree.
+Unresolved architectural violations block release. The accepted baseline and
+its immutable revision, checks, decisions, and artifact identities become the
+starting point for the next release cycle.
+
+The current White Belt candidate has completed R1–R4 and closed AF-001–003.
+The [acceptance record](design/white_belt_candidate_acceptance.md) retains the
+repository-wide review, immutable revisions, clean Linux/macOS installed-wheel
+and browser results, and artifact hashes. The eventual tagged release must pass
+the same policy and record its final distribution identities.
+
 ## MVP Boundary
 
 FLO 0.4 is the minimum viable product milestone. FLO 1.0 is the later stability
@@ -189,7 +204,7 @@ Before 1.0, FLO will document:
 ### 0.4: Completed Increments
 
 - [Implemented] Preserve omitted queue-wait timing as absent and render an
-  explicitly measured zero queue wait as `WT: 0 min` in maintained SPPM output.
+  explicitly measured zero queue wait as `W/T: 0 min` in maintained SPPM output.
 - [Implemented] Preserve omitted timing categories as absent through static
   timing analysis, inspection JSON, and SPPM publication totals rather than
   supplying an implicit zero.
@@ -217,32 +232,56 @@ Before 1.0, FLO will document:
   references, and explicit warning-or-error behavior when non-linear
   continuation would be ambiguous.
 
+- [Implemented] Complete scalar timing-state preservation across validation,
+  static analysis, canonical exchange, and SPPM: reject invalid/non-finite
+  durations, preserve omissions and integer/floating-point zeros, normalize
+  wait units, and report unavailable lead time with diagnostics. End-to-end
+  fixtures cover these states without introducing later measurement profiles.
+
+- [Implemented] Audit the White Belt semantic pipeline across source shape,
+  graph and relation validation, timing placement, schema validation, public
+  API operations, and canonical exchange. Close silent-discard and unresolved
+  reference gaps; require schema checks for API validation and inspection.
+  See [audit evidence](design/white_belt_semantic_audit.md). Renderer promotion
+  and installed-consumer acceptance remain separate release work.
+
+- [Implemented] Add final-SVG geometry acceptance independent of the layout
+  model, repair correction routing and annotation collisions, and eliminate
+  render-warning allowances from the 13-case release corpus. Build goldens from
+  validated canonical IR through public geometry preparation and resolution;
+  assert book SVG parity with the CLI.
+- [Implemented] Verify equivalent px/in/cm/mm sizing, repeatable output, unreadable
+  fit failure, and explicit expansion through the CLI. Extend the installed-wheel
+  journey to inspection, public API isolation, and equivalent physical dimensions.
+- [Implemented] Preserve declared work-card value classes as visible text in all
+  density modes, and use neutral monochrome SPPM colors. Theme contrast and
+  shape/label/dotted-path checks protect non-color meaning.
+- [Implemented] Publish the single-page SPPM capability boundary and compatibility
+  expectations; single-page stable promotion is recorded with clean candidate evidence.
+
 ### 0.4: Remaining White Belt Delivery
 
-- Complete invalid and unavailable timing-state preservation across validation,
-  static analysis, canonical exchange, and SPPM, including focused end-to-end
-  coverage alongside the implemented omitted-versus-measured-zero behavior.
-- Audit the White Belt authoring and compiler path so accepted source always
-  produces schema-valid canonical IR and invalid identities, references,
-  timing values, or graph structure fail with actionable diagnostics rather
-  than being repaired or guessed by a renderer.
-- Complete deterministic single-page SPPM width and height control with
-  unit-bearing dimensions, inspectable natural and final bounds, explicit safe
-  fit or overflow behavior, and no clipping or unreadable forced scaling.
-- Move the single-page SPPM surface needed by White Belt to the stable renderer
-  tier without making multi-page or child-map publication part of the 0.4 gate.
-- Add visual-invariant coverage for node-label legibility, overlap, clipping, and
-  lane-frame containment on top of the established deterministic and golden-artifact gates.
-- Publish the renderer capability matrix and renderer compatibility guarantees.
-- Add color-safe and monochrome accessibility gates, non-color semantic cues,
-  and legibility criteria to SPPM stable renderer promotion.
-- Rehearse the complete White Belt install, author, validate, render, size, and
-  canonical-export journey and regenerate the book-consumed reference artifact
-  from a clean checkout.
+- [Implemented] R1–R4 architecture remediation and candidate acceptance; all three
+  findings closed and executable responsibility/import/stage gates retained.
+- [Implemented] Stable single-page SPPM promotion, browser glyph/scale/clipping
+  measurements, clean Linux/macOS installed-wheel journeys, and book/SVG consumer
+  acceptance. See the [acceptance record](design/white_belt_candidate_acceptance.md).
+- Select the next release version, verify its final concrete distribution under
+  the same architecture/platform gates, record its immutable tag and hashes,
+  and publish after review. No new release has been tagged or published.
 
 The 0.4 gate explicitly excludes multi-page publication, automatic child maps,
 Yellow Belt swimlane and spaghetti acceptance, and Green Belt value-stream-map
 acceptance.
+
+#### Next sprint: consistent diagnostic delivery
+
+The next 0.4 stabilization sprint prioritizes consistent command and Python API
+warning/error delivery under `UR-086` and `TR-117`. The
+[diagnostic delivery plan](design/diagnostic_delivery_plan.md) records the gap,
+implementation sequence, and review scenarios, starting with nonfatal aggregated
+missing-timing warnings. Scope is committed; implementation is pending. Sprint
+dates and a patch-release number have not been assigned.
 
 ### 0.5: Yellow Belt Delivery
 

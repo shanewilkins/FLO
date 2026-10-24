@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Literal
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from typing import Any, Literal
 
+from .models import LayoutResult
 from .rework_semantics import ReworkRouteVariant
 
 ElkDirection = Literal["RIGHT", "DOWN"]
@@ -51,6 +53,20 @@ class ElkLayoutEdge:
 
 
 @dataclass(frozen=True)
+class ElkSerialization:
+    """Explicit engine settings supplied by a diagram request builder."""
+
+    root_options: dict[str, str] = field(default_factory=dict)
+    lane_options: dict[str, str] = field(default_factory=dict)
+    node_overrides: dict[str, dict[str, Any]] = field(default_factory=dict)
+    edge_overrides: dict[str, dict[str, Any]] = field(default_factory=dict)
+    unlabeled_edge_ids: frozenset[str] = frozenset()
+    auxiliary_nodes: tuple[dict[str, Any], ...] = ()
+    auxiliary_edges: tuple[dict[str, Any], ...] = ()
+    constrain_terminal_layers: bool = True
+
+
+@dataclass(frozen=True)
 class ElkLayoutRequest:
     """Stable FLO-owned request contract for an ELK layout pass."""
 
@@ -60,3 +76,8 @@ class ElkLayoutRequest:
     nodes: tuple[ElkLayoutNode, ...]
     edges: tuple[ElkLayoutEdge, ...]
     strict_diagnostics: bool = False
+
+    serialization: ElkSerialization = field(default_factory=ElkSerialization)
+    result_transform: (
+        Callable[[ElkLayoutRequest, LayoutResult], LayoutResult] | None
+    ) = field(default=None, repr=False, compare=False)

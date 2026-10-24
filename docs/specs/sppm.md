@@ -13,6 +13,11 @@ analysis. Compared with a minimal flowchart, an SPPM favors richer process
 objects, denser but controlled annotation, and stronger legibility rules for
 complex maps.
 
+Declared work-card value classes also appear as `Class: VA`, `Class: RNVA`, or
+`Class: NVA` text in every density mode, so their meaning survives color removal.
+Unknown or omitted classes are not guessed. The monochrome theme uses neutral
+grays for SPPM shapes, text, connectors, and annotations.
+
 ## Required inputs
 
 An SPPM depends on:
@@ -46,9 +51,19 @@ An SPPM in FLO must satisfy the following characteristics:
 5. Optional metrics as annotations
    - Summary metrics may be shown when supplied or derivable from approved FLO
      analysis surfaces, but the SPPM does not redefine process semantics.
-   - Work-step cards show declared active processing as `CT` and declared setup
-     or changeover as the distinct `C/O` metric. Queue shapes show declared
-     queue delay as `WT`.
+   - Work-step cards show declared active processing as `P/T` and declared setup
+     or changeover as the distinct `S/T` metric. Queue shapes show declared
+     queue delay as `W/T`. Declared zero processing, waiting, and setup durations
+     remain visible in full and compact metric projections. Wait labels normalize
+     supported duration units to minutes; missing units are never inferred.
+     Missing applicable metrics display `P/T: ?`, `W/T: ?`, or `S/T: ?`
+     without an invented unit or value. Queues display only their applicable
+     waiting metric. Full and compact views show all three work-step metrics;
+     teaching view retains its single primary metric. Compact cards group missing
+     metrics on a separate line to preserve readability and width. Missing categories in an
+     existing timing footer display `?`, while unavailable derived lead time is
+     labeled `Unavailable` with analysis diagnostics. Valid partial timing evidence may
+     still appear in the footer without implying complete lead time.
    - When timing is declared for the complete visible process, the publication
      footer consumes the typed static timing result for cycle, waiting,
      changeover, and lead time. It must not independently sum raw metadata.
@@ -79,11 +94,12 @@ An SPPM in FLO must satisfy the following characteristics:
      order. Branching or rework graphs are not automatically row-wrapped from a
      profile hint, but an explicit requested artifact width opts them into
      width-constrained wrapping.
-   - Rework paths must be rendered on a secondary row below the mainline.
-     Ordinary edges within that row attach according to their computed layout
-     order; an explicit rework-return edge routes from the final rework step to
-     the southern port of its declared reintegration target without imposing one
-     global row direction. For a queue, that port is the triangle's bottom tip.
+   - Unwrapped rework paths use a secondary row below the mainline. Explicitly
+     width-wrapped maps use the deterministic local placement policy below.
+     Internal correction edges follow computed row order and share the dotted
+     rework style while retaining their ordinary graph semantics. A return
+     from below attaches to the target's southern port (the bottom tip for a
+     queue); a return from above attaches to its northern port.
 
 9. Start/end horizontal boundary contract
    - On an unwrapped dominant row, no node may be placed to the left of the
@@ -163,3 +179,36 @@ The executable commands and corpus procedures live with
   `docs/design/renderers/sppm.md`.
 - Structural IR contract belongs in `schema/flo_ir.json`.
 - Core process semantics belong in `docs/specs/core_language.md`.
+
+## Deterministic local rework placement
+
+For explicitly sized, wrapped left-to-right maps, mainline row membership is
+fixed before rework placement. An isolated linear correction with exactly one
+departure and one rejoin on the same mainline row has two candidates: directly
+above or directly below that row. The first and last correction nodes align with the departure and rejoin
+columns when node widths and a minimum 24px local correction gap permit
+straight vertical connectors. When necessary, the rejoin column and later
+nodes on that row move right once to reserve this clearance, preserving row
+membership. Natural row bounds may extend rightward to retain alignment;
+final artifact geometry still honors the requested size. Otherwise the correction row is packed between those columns and
+connectors retain orthogonal bends; simplification must not turn those bends
+into diagonal shortcuts. Internal connectors between correction nodes share
+the dotted rework color and arrowhead without acquiring branch/return semantics.
+
+Candidates are ranked lexicographically by connector/node and reserved-caption
+collisions, connector crossings, bends, and Manhattan route length. An exact
+tie selects below. Each correction connector reserves the same 240px by 24px
+caption envelope regardless of caption wording or presence. Labels do not
+classify branches or select their side. Branches are processed in mainline
+order, with source and target IDs breaking ties. Each branch is scored exactly
+twice; placement never repacks the mainline or repeats until convergence.
+
+If neither candidate is collision-free, retain the outside fallback row.
+Shared correction paths, nested cycles, and rejoins on a different mainline
+row also retain that fallback. Independent eligible chains may receive
+separate local rows. Ports follow the selected relative positions: upward
+connectors leave north and enter south; downward connectors leave south and
+enter north. Connections skipping a row use an outside gutter, with the
+shorter route selected and a left-gutter tie-break, rather than traversing
+intervening nodes. Existing placement remains in use for other orientations
+and diagrams without explicit width-driven rework wrapping.

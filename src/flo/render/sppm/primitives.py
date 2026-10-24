@@ -6,9 +6,7 @@ from html import escape
 from typing import Any
 
 from .._process_header import extract_process_header_context
-from ..layout_core.models import LayoutBounds
 from ..options import RenderOptions
-from .edges import _edge_svg
 from .nodes import _node_svg
 
 SVG_ACCESSIBILITY_ATTRIBUTES = (
@@ -78,34 +76,6 @@ def standard_node_svg(
         y=y,
         width=width,
         height=height,
-    )
-
-
-def standard_edge_svg(
-    *,
-    edge_path: Any,
-    source_bounds: LayoutBounds | None,
-    target_bounds: LayoutBounds | None,
-    source_kind: str,
-    target_kind: str,
-    avoid_bounds: tuple[Any, ...],
-    canvas_bounds: LayoutBounds,
-    diagnostics: list[Any],
-    render_as_rework_style: bool = False,
-    options: RenderOptions | None = None,
-) -> tuple[list[str], tuple[LayoutBounds, ...]]:
-    """Render one edge using the shared SPPM-developed edge primitive."""
-    return _edge_svg(
-        edge_path,
-        source_bounds=source_bounds,
-        target_bounds=target_bounds,
-        source_kind=source_kind,
-        target_kind=target_kind,
-        avoid_bounds=avoid_bounds,
-        canvas_bounds=canvas_bounds,
-        diagnostics=diagnostics,
-        render_as_rework_style=render_as_rework_style,
-        options=options,
     )
 
 

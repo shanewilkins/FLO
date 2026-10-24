@@ -14,6 +14,7 @@ def test_ci_has_macos_wheel_smoke_and_headless_chrome_svg_consumer() -> None:
     assert "runs-on: macos-latest" in workflow
     assert "browser-actions/setup-chrome@" in workflow
     assert "scripts/check_svg_accessibility.py" in workflow
+    assert "scripts/check_sppm_geometry.py" in workflow
     assert "--headless" in workflow
 
 
@@ -29,3 +30,6 @@ def test_wheel_smoke_jobs_vendor_elk_before_building() -> None:
         vendor_index = section.index("python scripts/vendor_elkjs.py")
         build_index = section.index("uv build --wheel")
         assert npm_index < vendor_index < build_index
+        assert "scripts/check_yb_journey.py --flo" in section
+        assert "scripts/architecture_trace.py --installed-python" in section
+        assert "--check" in section

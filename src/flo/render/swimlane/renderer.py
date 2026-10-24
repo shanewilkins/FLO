@@ -10,9 +10,11 @@ from .._diagnostics import (
     serialize_render_diagnostics,
     serialize_render_diagnostics_report,
 )
+from .._execution import GeometryObserver, SceneObserver
 from .._svg_theme import apply_svg_typography
 from ..layout_core.elk import execute_elk_layout
 from ..layout_core.elk_runtime import run_elkjs_layout
+from ..layout_core.trace import LayoutObserver
 from ..options import RenderOptions
 from ..shared.svg import SVG_ACCESSIBILITY_ATTRIBUTES, svg_accessibility_elements
 from .layout import build_swimlane_elk_layout_request
@@ -22,11 +24,21 @@ _PADDING = 24.0
 
 
 def render_swimlane_svg_artifact(
-    process: dict[str, Any] | Any, options: RenderOptions
+    process: dict[str, Any] | Any,
+    options: RenderOptions,
+    *,
+    layout_observer: LayoutObserver | None = None,
+    geometry_observer: GeometryObserver | None = None,
+    scene_observer: SceneObserver | None = None,
 ) -> tuple[RenderArtifact, None]:
     """Render a standalone SVG swimlane diagram using ELK layout."""
     request = build_swimlane_elk_layout_request(process, options=options)
-    result = execute_elk_layout(request, engine=run_elkjs_layout)
+    if layout_observer is None:
+        result = execute_elk_layout(request, engine=run_elkjs_layout)
+    else:
+        result = execute_elk_layout(
+            request, engine=run_elkjs_layout, observer=layout_observer
+        )
     diagnostics_report = result.diagnostics_report(
         diagram="swimlane",
         backend="svg",

@@ -1,7 +1,7 @@
 {
   "canvas_bounds": {
-    "height_px": 174.0,
-    "width_px": 4240.0,
+    "height_px": 206.0,
+    "width_px": 4250.0,
     "x_px": 0.0,
     "y_px": 0.0
   },
@@ -16,12 +16,12 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 3414.0,
-          "y_px": 87.0
+          "x_px": 3424.0,
+          "y_px": 103.0
         },
         {
-          "x_px": 3470.0,
-          "y_px": 87.0
+          "x_px": 3480.0,
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -40,12 +40,12 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 3058.0,
-          "y_px": 87.0
+          "x_px": 3068.0,
+          "y_px": 103.0
         },
         {
-          "x_px": 3114.0,
-          "y_px": 87.0
+          "x_px": 3124.0,
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -64,12 +64,12 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 4040.0,
-          "y_px": 87.0
+          "x_px": 4050.0,
+          "y_px": 103.0
         },
         {
-          "x_px": 4096.0,
-          "y_px": 87.0
+          "x_px": 4106.0,
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -88,12 +88,12 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 3684.0,
-          "y_px": 87.0
+          "x_px": 3694.0,
+          "y_px": 103.0
         },
         {
-          "x_px": 3740.0,
-          "y_px": 87.0
+          "x_px": 3750.0,
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -113,11 +113,11 @@
       "points": [
         {
           "x_px": 1611.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 1667.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -137,11 +137,11 @@
       "points": [
         {
           "x_px": 980.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 1036.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -161,11 +161,11 @@
       "points": [
         {
           "x_px": 1250.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 1306.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -184,12 +184,12 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 2803.0,
-          "y_px": 87.0
+          "x_px": 2813.0,
+          "y_px": 103.0
         },
         {
-          "x_px": 2859.0,
-          "y_px": 87.0
+          "x_px": 2869.0,
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -208,12 +208,12 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 2568.0,
-          "y_px": 87.0
+          "x_px": 2573.0,
+          "y_px": 103.0
         },
         {
-          "x_px": 2624.0,
-          "y_px": 87.0
+          "x_px": 2629.0,
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -233,11 +233,11 @@
       "points": [
         {
           "x_px": 730.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 786.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -257,11 +257,11 @@
       "points": [
         {
           "x_px": 404.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 460.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -280,12 +280,12 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 2217.0,
-          "y_px": 87.0
+          "x_px": 2222.0,
+          "y_px": 103.0
         },
         {
-          "x_px": 2273.0,
-          "y_px": 87.0
+          "x_px": 2278.0,
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -304,12 +304,12 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 1841.0,
-          "y_px": 87.0
+          "x_px": 1846.0,
+          "y_px": 103.0
         },
         {
-          "x_px": 1897.0,
-          "y_px": 87.0
+          "x_px": 1902.0,
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -329,11 +329,11 @@
       "points": [
         {
           "x_px": 144.0,
-          "y_px": 87.0
+          "y_px": 103.0
         },
         {
           "x_px": 200.0,
-          "y_px": 87.0
+          "y_px": 103.0
         }
       ],
       "rework_variant": null,
@@ -346,94 +346,94 @@
   "lanes": [],
   "node_bounds": {
     "bake": {
-      "height_px": 118.0,
+      "height_px": 166.0,
       "width_px": 300.0,
-      "x_px": 3114.0,
-      "y_px": 28.0
+      "x_px": 3124.0,
+      "y_px": 20.0
     },
     "bake_wait_queue": {
       "height_px": 150.0,
       "width_px": 199.0,
-      "x_px": 2859.0,
-      "y_px": 12.0
+      "x_px": 2869.0,
+      "y_px": 28.0
     },
     "cool": {
-      "height_px": 118.0,
+      "height_px": 166.0,
       "width_px": 300.0,
-      "x_px": 3740.0,
-      "y_px": 28.0
+      "x_px": 3750.0,
+      "y_px": 20.0
     },
     "cool_wait_queue": {
       "height_px": 150.0,
       "width_px": 214.0,
-      "x_px": 3470.0,
-      "y_px": 12.0
+      "x_px": 3480.0,
+      "y_px": 28.0
     },
     "end": {
       "height_px": 52.0,
       "width_px": 132.0,
-      "x_px": 4096.0,
-      "y_px": 61.0
+      "x_px": 4106.0,
+      "y_px": 77.0
     },
     "laminate": {
-      "height_px": 118.0,
+      "height_px": 166.0,
       "width_px": 305.0,
       "x_px": 1306.0,
-      "y_px": 28.0
+      "y_px": 20.0
     },
     "laminate_queue": {
       "height_px": 150.0,
       "width_px": 194.0,
       "x_px": 786.0,
-      "y_px": 12.0
+      "y_px": 28.0
     },
     "laminate_wait_queue": {
       "height_px": 150.0,
       "width_px": 214.0,
       "x_px": 1036.0,
-      "y_px": 12.0
+      "y_px": 28.0
     },
     "oven_queue": {
       "height_px": 150.0,
-      "width_px": 179.0,
-      "x_px": 2624.0,
-      "y_px": 12.0
+      "width_px": 184.0,
+      "x_px": 2629.0,
+      "y_px": 28.0
     },
     "oven_setup": {
-      "height_px": 150.0,
+      "height_px": 182.0,
       "width_px": 295.0,
-      "x_px": 2273.0,
+      "x_px": 2278.0,
       "y_px": 12.0
     },
     "prepare_dough": {
-      "height_px": 118.0,
+      "height_px": 166.0,
       "width_px": 270.0,
       "x_px": 460.0,
-      "y_px": 28.0
+      "y_px": 20.0
     },
     "prepare_dough_wait_queue": {
       "height_px": 150.0,
       "width_px": 204.0,
       "x_px": 200.0,
-      "y_px": 12.0
+      "y_px": 28.0
     },
     "proof": {
-      "height_px": 118.0,
+      "height_px": 166.0,
       "width_px": 320.0,
-      "x_px": 1897.0,
-      "y_px": 28.0
+      "x_px": 1902.0,
+      "y_px": 20.0
     },
     "rest_queue": {
       "height_px": 150.0,
-      "width_px": 174.0,
+      "width_px": 179.0,
       "x_px": 1667.0,
-      "y_px": 12.0
+      "y_px": 28.0
     },
     "start": {
       "height_px": 52.0,
       "width_px": 132.0,
       "x_px": 12.0,
-      "y_px": 61.0
+      "y_px": 77.0
     }
   },
   "orientation": "lr"

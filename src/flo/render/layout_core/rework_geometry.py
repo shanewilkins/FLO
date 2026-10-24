@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from .models import LayoutPoint
+from .models import LayoutBounds, LayoutPoint
 
 
 def infer_rework_row_ids(
@@ -38,6 +38,18 @@ def infer_rework_row_ids(
 
     if not rework_node_ids:
         return set(), set()
+    # A correction can rejoin ordinary flow without an explicit return edge.
+    # Shared downstream nodes belong to the mainline, including shared ends.
+    incoming = {target for _, target, _, _ in edge_rows}
+    mainline_adjacency = _non_rework_adjacency(
+        edges=(edge for edge in edge_rows if edge[3] != "branch"), node_ids=node_ids
+    )
+    mainline = _reachable_until_return_sources(
+        start_ids=node_ids - incoming,
+        return_sources=set(),
+        adjacency=mainline_adjacency,
+    )
+    rework_node_ids -= mainline
     return node_ids - rework_node_ids, rework_node_ids
 
 
@@ -132,3 +144,30 @@ def _reachable_until_return_sources(
             if next_id not in reachable:
                 frontier.append(next_id)
     return reachable
+
+
+def segment_hits(a: LayoutPoint, b: LayoutPoint, box: LayoutBounds) -> bool:
+    """Return whether an orthogonal segment crosses the interior of a box."""
+    if a.x_px == b.x_px:
+        return (
+            box.x_px < a.x_px < box.x_px + box.width_px
+            and max(a.y_px, b.y_px) > box.y_px
+            and min(a.y_px, b.y_px) < box.y_px + box.height_px
+        )
+    if a.y_px == b.y_px:
+        return (
+            box.y_px < a.y_px < box.y_px + box.height_px
+            and max(a.x_px, b.x_px) > box.x_px
+            and min(a.x_px, b.x_px) < box.x_px + box.width_px
+        )
+    return False
+
+
+def boxes_overlap(a: LayoutBounds, b: LayoutBounds) -> bool:
+    """Return whether two boxes have overlapping interiors."""
+    return (
+        a.x_px < b.x_px + b.width_px
+        and b.x_px < a.x_px + a.width_px
+        and a.y_px < b.y_px + b.height_px
+        and b.y_px < a.y_px + a.height_px
+    )

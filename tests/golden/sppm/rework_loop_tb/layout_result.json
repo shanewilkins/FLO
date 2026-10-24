@@ -1,6 +1,6 @@
 {
   "canvas_bounds": {
-    "height_px": 710.0,
+    "height_px": 806.0,
     "width_px": 635.0,
     "x_px": 0.0,
     "y_px": 0.0
@@ -14,25 +14,25 @@
       "label": "yes",
       "label_point": {
         "x_px": 491.0,
-        "y_px": 515.0
+        "y_px": 611.0
       },
       "outgoing_token": null,
       "points": [
         {
           "x_px": 416.0,
-          "y_px": 459.0
+          "y_px": 555.0
         },
         {
           "x_px": 416.0,
-          "y_px": 469.0
+          "y_px": 565.0
         },
         {
           "x_px": 493.0,
-          "y_px": 469.0
+          "y_px": 565.0
         },
         {
           "x_px": 493.0,
-          "y_px": 571.0
+          "y_px": 667.0
         }
       ],
       "rework_variant": null,
@@ -52,15 +52,15 @@
       "points": [
         {
           "x_px": 416.0,
-          "y_px": 459.0
+          "y_px": 555.0
         },
         {
           "x_px": 416.0,
-          "y_px": 650.0
+          "y_px": 746.0
         },
         {
           "x_px": 622.0,
-          "y_px": 650.0
+          "y_px": 746.0
         },
         {
           "x_px": 622.0,
@@ -92,19 +92,19 @@
       "points": [
         {
           "x_px": 155.0,
-          "y_px": 279.0
+          "y_px": 375.0
         },
         {
           "x_px": 155.0,
-          "y_px": 306.0
+          "y_px": 402.0
         },
         {
           "x_px": 416.0,
-          "y_px": 306.0
+          "y_px": 402.0
         },
         {
           "x_px": 416.0,
-          "y_px": 369.0
+          "y_px": 465.0
         }
       ],
       "rework_variant": null,
@@ -124,19 +124,19 @@
       "points": [
         {
           "x_px": 505.0,
-          "y_px": 119.0
+          "y_px": 167.0
         },
         {
           "x_px": 505.0,
-          "y_px": 525.0
+          "y_px": 621.0
         },
         {
           "x_px": 493.0,
-          "y_px": 525.0
+          "y_px": 621.0
         },
         {
           "x_px": 493.0,
-          "y_px": 571.0
+          "y_px": 667.0
         }
       ],
       "rework_variant": null,
@@ -156,15 +156,15 @@
       "points": [
         {
           "x_px": 111.0,
-          "y_px": 459.0
+          "y_px": 555.0
         },
         {
           "x_px": 111.0,
-          "y_px": 650.0
+          "y_px": 746.0
         },
         {
           "x_px": 23.0,
-          "y_px": 650.0
+          "y_px": 746.0
         },
         {
           "x_px": 23.0,
@@ -196,11 +196,11 @@
       "points": [
         {
           "x_px": 155.0,
-          "y_px": 119.0
+          "y_px": 167.0
         },
         {
           "x_px": 155.0,
-          "y_px": 209.0
+          "y_px": 257.0
         }
       ],
       "rework_variant": null,
@@ -213,7 +213,7 @@
   "lanes": [
     {
       "bounds": {
-        "height_px": 94.0,
+        "height_px": 142.0,
         "width_px": 564.0,
         "x_px": 48.0,
         "y_px": 37.0
@@ -227,10 +227,10 @@
     },
     {
       "bounds": {
-        "height_px": 94.0,
+        "height_px": 142.0,
         "width_px": 214.0,
         "x_px": 48.0,
-        "y_px": 197.0
+        "y_px": 245.0
       },
       "id": "finance",
       "label": "Finance",
@@ -243,7 +243,7 @@
         "height_px": 278.0,
         "width_px": 538.0,
         "x_px": 33.0,
-        "y_px": 357.0
+        "y_px": 453.0
       },
       "id": "unassigned",
       "label": "unassigned",
@@ -259,22 +259,22 @@
       "height_px": 52.0,
       "width_px": 132.0,
       "x_px": 427.0,
-      "y_px": 571.0
+      "y_px": 667.0
     },
     "decision": {
       "height_px": 90.0,
       "width_px": 158.0,
       "x_px": 337.0,
-      "y_px": 369.0
+      "y_px": 465.0
     },
     "review": {
-      "height_px": 70.0,
+      "height_px": 118.0,
       "width_px": 190.0,
       "x_px": 60.0,
-      "y_px": 209.0
+      "y_px": 257.0
     },
     "rework": {
-      "height_px": 70.0,
+      "height_px": 118.0,
       "width_px": 190.0,
       "x_px": 410.0,
       "y_px": 49.0
@@ -283,10 +283,10 @@
       "height_px": 52.0,
       "width_px": 132.0,
       "x_px": 45.0,
-      "y_px": 407.0
+      "y_px": 503.0
     },
     "submit": {
-      "height_px": 70.0,
+      "height_px": 118.0,
       "width_px": 190.0,
       "x_px": 60.0,
       "y_px": 49.0

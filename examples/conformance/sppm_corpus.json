@@ -1,6 +1,20 @@
 {
   "cases": [
     {
+      "id": "book_washnfold_local_rework",
+      "input": "examples/reference/book_washnfold.flo",
+      "options": {
+        "layout_width": "1200px",
+        "layout_wrap": "auto",
+        "layout_max_width_px": 1200,
+        "sppm_theme": "mpi-lms",
+        "sppm_output_profile": "book",
+        "background_color": "transparent",
+        "no_header": true,
+        "no_footer": true
+      }
+    },
+    {
       "id": "linear_lr",
       "input": "examples/reference/linear.flo",
       "options": {
@@ -19,15 +33,6 @@
       "input": "examples/reference/rework_loop.flo",
       "options": {
         "orientation": "lr"
-      },
-      "diagnostic_budget": {
-        "rationale": "Known LR rework endpoint corrections are visually reviewed for 0.4.1; increases fail the gate.",
-        "allowed": {
-          "sppm-attachment-miss-distance": {
-            "max_count": 2,
-            "max_values": {"miss_distance_px": 91}
-          }
-        }
       }
     },
     {
@@ -35,19 +40,6 @@
       "input": "examples/reference/rework_loop.flo",
       "options": {
         "orientation": "tb"
-      },
-      "diagnostic_budget": {
-        "rationale": "Known TB rework alignment and endpoint corrections are visually reviewed; increases fail the gate.",
-        "allowed": {
-          "sppm-attachment-miss-distance": {
-            "max_count": 5,
-            "max_values": {"miss_distance_px": 102}
-          },
-          "sppm-branch-alignment-delta": {
-            "max_count": 1,
-            "max_values": {"alignment_delta_px": 420}
-          }
-        }
       }
     },
     {
@@ -55,15 +47,6 @@
       "input": "examples/reference/sppm_feature_showcase.flo",
       "options": {
         "orientation": "lr"
-      },
-      "diagnostic_budget": {
-        "rationale": "The 0.4.1 showcase retains two visually reviewed rework callout overlap fallbacks; increases fail the gate.",
-        "allowed": {
-          "sppm-annotation-overlap-fallback": {
-            "max_count": 2,
-            "max_values": {}
-          }
-        }
       }
     },
     {
@@ -74,15 +57,6 @@
         "layout_wrap": "auto",
         "layout_target_columns": 3,
         "publication_page_format": "letter"
-      },
-      "diagnostic_budget": {
-        "rationale": "The wrapped 0.4.1 showcase retains two visually reviewed rework callout overlap fallbacks; increases fail the gate.",
-        "allowed": {
-          "sppm-annotation-overlap-fallback": {
-            "max_count": 2,
-            "max_values": {}
-          }
-        }
       }
     },
     {
@@ -90,19 +64,6 @@
       "input": "examples/reference/sppm_long_label_stress.flo",
       "options": {
         "orientation": "lr"
-      },
-      "diagnostic_budget": {
-        "rationale": "The long-label stress case intentionally retains one return-alignment and one endpoint warning; increases fail the gate.",
-        "allowed": {
-          "sppm-attachment-miss-distance": {
-            "max_count": 1,
-            "max_values": {"miss_distance_px": 145}
-          },
-          "sppm-return-alignment-delta": {
-            "max_count": 1,
-            "max_values": {"alignment_delta_px": 633}
-          }
-        }
       }
     },
     {

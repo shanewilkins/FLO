@@ -62,6 +62,10 @@ def rehearse(flo_command: str) -> dict[str, object]:
                 cwd=workspace,
             ),
             _run(
+                [flo_command, "inspect", "purchase-request.flo", "--format", "json"],
+                cwd=workspace,
+            ),
+            _run(
                 [
                     flo_command,
                     "render",
@@ -90,7 +94,8 @@ def rehearse(flo_command: str) -> dict[str, object]:
                     python_command,
                     "-c",
                     (
-                        "from pathlib import Path; import flo; "
+                        "from pathlib import Path; import flo, sys; "
+                        "assert Path(flo.__file__).resolve().is_relative_to(Path(sys.prefix).resolve()); "
                         "source = Path('purchase-request.flo').read_text(); "
                         "validated = flo.validate(source, source_path='purchase-request.flo'); "
                         "assert validated.ok; "
@@ -102,6 +107,33 @@ def rehearse(flo_command: str) -> dict[str, object]:
                 label="public-api",
             ),
         ]
+        expected_svg = (workspace / "purchase-request.svg").read_bytes()
+        for width, height in (
+            ("816px", "1056px"),
+            ("21.59cm", "27.94cm"),
+            ("215.9mm", "279.4mm"),
+        ):
+            steps.append(
+                _run(
+                    [
+                        flo_command,
+                        "render",
+                        "purchase-request.flo",
+                        "--layout-width",
+                        width,
+                        "--layout-height",
+                        height,
+                        "--render-to",
+                        "purchase-request.svg",
+                    ],
+                    cwd=workspace,
+                    label=f"equivalent-size-{width}",
+                )
+            )
+            if (workspace / "purchase-request.svg").read_bytes() != expected_svg:
+                raise RuntimeError(
+                    "Equivalent physical dimensions changed the installed SVG"
+                )
         elapsed = time.perf_counter() - started
         source = workspace / "purchase-request.flo"
         svg = workspace / "purchase-request.svg"

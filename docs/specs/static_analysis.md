@@ -50,6 +50,18 @@ Graph-wide declared totals are an inventory of authored timing. They are not
 automatically process lead time because mutually exclusive branches would be
 double-counted.
 
+## Timing states
+
+Omitted duration fields remain absent in canonical exchange and produce null
+category totals when no values were declared. A missing expected work or queue
+duration produces `timing-incomplete`. Explicit null and malformed durations
+are invalid, not omissions: the validated CLI rejects them, while analysis of
+unvalidated IR emits `timing-invalid-duration`. Declared numeric zero remains
+zero. An unavailable derived lead time is null with a reason, such as missing
+or invalid inputs, cycles, parallel flow, or numeric overflow. Timing coverage
+can be complete while a cycle or unsupported elapsed-time policy makes lead
+time unavailable. None of these states supplies an implicit zero.
+
 ## Path and lead-time rules
 
 For a complete acyclic process without parallel split/join semantics, FLO
@@ -78,7 +90,11 @@ The initial analyzer refuses to guess when elapsed-time meaning is unresolved:
 - parallel flow requires a critical-path and synchronization policy
 - more than 256 acyclic paths requires a later bounded aggregation strategy
 - multiple compatible setup/changeover fields produce an ambiguity diagnostic
-- malformed timing is ignored with a diagnostic rather than coerced
+- malformed timing in directly supplied IR is ignored with a diagnostic rather
+  than coerced; any invalid declared duration, including an optional setup or
+  pre-task wait, prevents a complete lead-time claim on the affected path
+- numeric overflow produces `timing-total-overflow` and an unavailable elapsed
+  total, never infinity, a crash, or a partial sum presented as complete
 
 For FLO 0.1 compatibility, setup/changeover lookup precedence is
 `crossover_time`, then `transfer_time`, then `changeover_time`. The selected

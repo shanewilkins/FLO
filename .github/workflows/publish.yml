@@ -59,6 +59,12 @@ jobs:
           test -s publish-smoke.svg
           publish-smoke/bin/python ../scripts/check_yb_journey.py --flo "$(pwd)/publish-smoke/bin/flo"
 
+      - name: Check candidate architecture before publication
+        run: >-
+          .tmp/publish-smoke/bin/python scripts/architecture_trace.py
+          --installed-python "$PWD/.tmp/publish-smoke/bin/python"
+          --output .tmp/architecture-validation.json --check
+
       - name: Upload dist artifacts
         uses: actions/upload-artifact@v7
         with:

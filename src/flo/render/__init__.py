@@ -6,10 +6,12 @@ from dataclasses import replace
 from typing import Any
 
 from ._artifact import RenderArtifact
-from ._geometry import prepare_svg_layout, resolve_svg_geometry
+from ._execution import FinalScene, RenderExecution, RoutedGeometry
+from ._geometry import resolve_svg_geometry
 from ._publication import resolve_publication_page_format
+from .layout_core.trace import ElkLayoutTrace
 from .options import RenderOptions
-from .registry import render_registered
+from .registry import prepare_render_options, render_registered
 from .themes import BUILTIN_THEMES, RenderTheme, ThemeRole
 
 
@@ -29,9 +31,41 @@ def render_artifact_and_contract(
     ir: Any, options: RenderOptions | dict | None = None
 ) -> tuple[RenderArtifact, None]:
     """Render an artifact and return no backend postprocess contract."""
-    render_options = prepare_svg_layout(_coerce_render_options(options))
-    artifact, contract = render_registered(ir, render_options)
-    return resolve_svg_geometry(artifact, render_options), contract
+    return render_execution(ir, options).artifact, None
+
+
+def render_execution(
+    ir: Any,
+    options: RenderOptions | dict | None = None,
+    *,
+    capture_layout: bool = False,
+) -> RenderExecution:
+    """Run the production sequence, optionally retaining detached engine stages.
+
+    Stage capture observes the same execution used by ordinary artifact rendering.
+    Engine results are intermediate geometry, not the finalized scene contract.
+    """
+    render_options = prepare_render_options(_coerce_render_options(options))
+    stages: list[ElkLayoutTrace] = []
+    geometry: list[RoutedGeometry] = []
+    scenes: list[FinalScene] = []
+    if capture_layout:
+        artifact, _ = render_registered(
+            ir,
+            render_options,
+            layout_observer=stages.append,
+            geometry_observer=geometry.append,
+            scene_observer=scenes.append,
+        )
+    else:
+        artifact, _ = render_registered(ir, render_options)
+    return RenderExecution(
+        artifact=resolve_svg_geometry(artifact, render_options),
+        options=render_options,
+        layout_stages=tuple(stages),
+        geometry_stages=tuple(geometry),
+        scene_stages=tuple(scenes),
+    )
 
 
 def _coerce_render_options(
@@ -50,10 +84,12 @@ def _coerce_render_options(
 __all__ = [
     "BUILTIN_THEMES",
     "RenderArtifact",
+    "RenderExecution",
     "RenderOptions",
     "RenderTheme",
     "ThemeRole",
     "render_artifact",
     "render_artifact_and_contract",
+    "render_execution",
     "resolve_publication_page_format",
 ]

@@ -95,12 +95,12 @@ def test_node_svg_task_includes_info_lines_and_note() -> None:
     svg = "".join(parts)
 
     assert "Combine ingredients" in svg
-    assert "CT: 7 min" in svg
+    assert "P/T: 7 min" in svg
     assert "Workers: Baker" in svg
     assert "Note: Use cold water" in svg
 
 
-def test_node_svg_task_displays_declared_changeover_as_c_o_time() -> None:
+def test_node_svg_task_displays_declared_changeover_as_setup_time() -> None:
     node = SimpleNamespace(id="t1", kind="task", label="Set Up Oven")
     raw_node = {
         "metadata": {
@@ -122,8 +122,8 @@ def test_node_svg_task_displays_declared_changeover_as_c_o_time() -> None:
         )
     )
 
-    assert "CT: 5 min" in svg
-    assert "C/O: 30 min" in svg
+    assert "P/T: 5 min" in svg
+    assert "S/T: 30 min" in svg
     assert "CO: 30 min crossover" not in svg
 
 
@@ -150,7 +150,7 @@ def test_node_svg_decision_omits_info_lines_even_when_metadata_present() -> None
     svg = "".join(parts)
 
     assert "Quality OK?" in svg
-    assert "CT:" not in svg
+    assert "P/T:" not in svg
     assert "Workers:" not in svg
     assert "Note:" not in svg
 
@@ -171,7 +171,7 @@ def test_node_svg_queue_renders_wait_time_line() -> None:
     svg = "".join(parts)
 
     assert "Prep Queue" in svg
-    assert "WT: 9 min" in svg
+    assert "W/T: 9 min" in svg
     assert 'fill="#FFB74D"' in svg
     assert 'fill="#FFFFFF"' in svg
     assert 'font-size="14" font-weight="600"' in svg
@@ -206,8 +206,9 @@ def test_node_svg_queue_distinguishes_missing_and_zero_wait_time() -> None:
         )
     )
 
-    assert "WT:" not in missing_svg
-    assert "WT: 0 min" in zero_svg
+    assert "W/T: ?" in missing_svg
+    assert "W/T: 0" not in missing_svg
+    assert "W/T: 0 min" in zero_svg
 
 
 def test_node_svg_task_uses_larger_body_text() -> None:

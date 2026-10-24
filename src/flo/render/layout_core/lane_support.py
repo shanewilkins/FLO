@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .elk_contracts import ElkLayoutLane
+from .elk_contracts import ElkLayoutLane, ElkLayoutRequest
 
 
 def lane_specs(
@@ -152,3 +152,18 @@ def _declared_lane_labels(process: dict[str, Any] | Any) -> dict[str, str]:
         if lane_id:
             labels[lane_id] = str(raw_lane.get("name") or lane_id).strip() or lane_id
     return labels
+
+
+GENERATED_LANE_IDS = frozenset({"unassigned", "unassigned_start", "unassigned_end"})
+
+
+def generated_lane_ids(request: ElkLayoutRequest) -> set[str]:
+    """Identify lane containers generated for nodes without authored membership."""
+    node_lane_by_id = {node.id: node.lane_id for node in request.nodes}
+    return {
+        lane.id
+        for lane in request.lanes
+        if lane.id in GENERATED_LANE_IDS
+        and lane.node_ids
+        and all(node_lane_by_id.get(node_id) is None for node_id in lane.node_ids)
+    }

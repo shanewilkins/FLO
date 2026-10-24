@@ -1,0 +1,582 @@
+{
+  "canvas_bounds": {
+    "height_px": 1062.0,
+    "width_px": 972.0,
+    "x_px": 0.0,
+    "y_px": 0.0
+  },
+  "edge_paths": [
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 156.25,
+          "y_px": 975.0
+        },
+        {
+          "x_px": 196.375,
+          "y_px": 975.0
+        },
+        {
+          "x_px": 196.375,
+          "y_px": 975.0
+        },
+        {
+          "x_px": 236.5,
+          "y_px": 975.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "correction_queue",
+      "source_port_side": "EAST",
+      "target": "fold_correction",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 520.0,
+          "y_px": 71.0
+        },
+        {
+          "x_px": 548.0,
+          "y_px": 71.0
+        },
+        {
+          "x_px": 548.0,
+          "y_px": 71.0
+        },
+        {
+          "x_px": 576.0,
+          "y_px": 71.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "dropoff",
+      "source_port_side": "EAST",
+      "target": "sort_tag",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 332.0,
+          "y_px": 515.0
+        },
+        {
+          "x_px": 360.0,
+          "y_px": 515.0
+        },
+        {
+          "x_px": 360.0,
+          "y_px": 515.0
+        },
+        {
+          "x_px": 388.0,
+          "y_px": 515.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "dry",
+      "source_port_side": "EAST",
+      "target": "fold_package",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": true,
+      "label": "Corrected package rejoins flow",
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 364.0,
+          "y_px": 908.0
+        },
+        {
+          "x_px": 364.0,
+          "y_px": 858.0
+        },
+        {
+          "x_px": 364.0,
+          "y_px": 858.0
+        },
+        {
+          "x_px": 364.0,
+          "y_px": 816.0
+        }
+      ],
+      "rework_variant": "return",
+      "source": "fold_correction",
+      "source_port_side": "NORTH",
+      "target": "notification_queue",
+      "target_port_side": "SOUTH"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 548.0,
+          "y_px": 582.0
+        },
+        {
+          "x_px": 548.0,
+          "y_px": 624.0
+        },
+        {
+          "x_px": 106.5,
+          "y_px": 624.0
+        },
+        {
+          "x_px": 106.5,
+          "y_px": 684.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "fold_package",
+      "source_port_side": "SOUTH",
+      "target": "packaging_check",
+      "target_port_side": "NORTH"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 417.5,
+          "y_px": 741.0
+        },
+        {
+          "x_px": 472.25,
+          "y_px": 741.0
+        },
+        {
+          "x_px": 472.25,
+          "y_px": 741.0
+        },
+        {
+          "x_px": 527.0,
+          "y_px": 741.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "notification_queue",
+      "source_port_side": "EAST",
+      "target": "stage_notify",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": true,
+      "label": "Packaging check fails (5 of 39 orders)",
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 106.5,
+          "y_px": 798.0
+        },
+        {
+          "x_px": 106.5,
+          "y_px": 858.0
+        },
+        {
+          "x_px": 106.5,
+          "y_px": 858.0
+        },
+        {
+          "x_px": 106.5,
+          "y_px": 900.0
+        }
+      ],
+      "rework_variant": "branch",
+      "source": "packaging_check",
+      "source_port_side": "SOUTH",
+      "target": "correction_queue",
+      "target_port_side": "NORTH"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": "acceptable",
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 201.0,
+          "y_px": 741.0
+        },
+        {
+          "x_px": 255.75,
+          "y_px": 741.0
+        },
+        {
+          "x_px": 255.75,
+          "y_px": 741.0
+        },
+        {
+          "x_px": 310.5,
+          "y_px": 741.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "packaging_check",
+      "source_port_side": "EAST",
+      "target": "notification_queue",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 736.0,
+          "y_px": 130.0
+        },
+        {
+          "x_px": 736.0,
+          "y_px": 172.0
+        },
+        {
+          "x_px": 109.0,
+          "y_px": 172.0
+        },
+        {
+          "x_px": 109.0,
+          "y_px": 214.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "sort_tag",
+      "source_port_side": "SOUTH",
+      "target": "wash_release_queue",
+      "target_port_side": "NORTH"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 772.0,
+          "y_px": 741.0
+        },
+        {
+          "x_px": 800.0,
+          "y_px": 741.0
+        },
+        {
+          "x_px": 800.0,
+          "y_px": 741.0
+        },
+        {
+          "x_px": 828.0,
+          "y_px": 741.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "stage_notify",
+      "source_port_side": "EAST",
+      "target": "end",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 144.0,
+          "y_px": 71.0
+        },
+        {
+          "x_px": 172.0,
+          "y_px": 71.0
+        },
+        {
+          "x_px": 172.0,
+          "y_px": 71.0
+        },
+        {
+          "x_px": 200.0,
+          "y_px": 71.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "start",
+      "source_port_side": "EAST",
+      "target": "dropoff",
+      "target_port_side": "WEST"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 422.0,
+          "y_px": 348.0
+        },
+        {
+          "x_px": 422.0,
+          "y_px": 406.0
+        },
+        {
+          "x_px": 172.0,
+          "y_px": 406.0
+        },
+        {
+          "x_px": 172.0,
+          "y_px": 456.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "wash",
+      "source_port_side": "SOUTH",
+      "target": "dry",
+      "target_port_side": "NORTH"
+    },
+    {
+      "callout_lines": [],
+      "callout_near_source": false,
+      "incoming_token": null,
+      "is_rework": false,
+      "label": null,
+      "label_point": null,
+      "outgoing_token": null,
+      "points": [
+        {
+          "x_px": 157.5,
+          "y_px": 289.0
+        },
+        {
+          "x_px": 209.75,
+          "y_px": 289.0
+        },
+        {
+          "x_px": 209.75,
+          "y_px": 289.0
+        },
+        {
+          "x_px": 262.0,
+          "y_px": 289.0
+        }
+      ],
+      "rework_variant": null,
+      "source": "wash_release_queue",
+      "source_port_side": "EAST",
+      "target": "wash",
+      "target_port_side": "WEST"
+    }
+  ],
+  "lanes": [
+    {
+      "bounds": {
+        "height_px": 142.0,
+        "width_px": 908.0,
+        "x_px": 0.0,
+        "y_px": 0.0
+      },
+      "id": "__sppm_row_wrap_0",
+      "label": "",
+      "node_ids": [
+        "start",
+        "dropoff",
+        "sort_tag"
+      ]
+    },
+    {
+      "bounds": {
+        "height_px": 174.0,
+        "width_px": 594.0,
+        "x_px": 0.0,
+        "y_px": 202.0
+      },
+      "id": "__sppm_row_wrap_1",
+      "label": "",
+      "node_ids": [
+        "wash_release_queue",
+        "wash"
+      ]
+    },
+    {
+      "bounds": {
+        "height_px": 158.0,
+        "width_px": 720.0,
+        "x_px": 0.0,
+        "y_px": 436.0
+      },
+      "id": "__sppm_row_wrap_2",
+      "label": "",
+      "node_ids": [
+        "dry",
+        "fold_package"
+      ]
+    },
+    {
+      "bounds": {
+        "height_px": 174.0,
+        "width_px": 972.0,
+        "x_px": 0.0,
+        "y_px": 654.0
+      },
+      "id": "__sppm_row_wrap_3",
+      "label": "",
+      "node_ids": [
+        "packaging_check",
+        "notification_queue",
+        "stage_notify",
+        "end"
+      ]
+    },
+    {
+      "bounds": {
+        "height_px": 174.0,
+        "width_px": 503.5,
+        "x_px": 0.0,
+        "y_px": 888.0
+      },
+      "id": "__sppm_row_wrap_rework_local_15_packaging_check_correction_queue",
+      "label": "",
+      "node_ids": [
+        "correction_queue",
+        "fold_correction"
+      ]
+    }
+  ],
+  "node_bounds": {
+    "correction_queue": {
+      "height_px": 150.0,
+      "width_px": 199.0,
+      "x_px": 7.0,
+      "y_px": 900.0
+    },
+    "dropoff": {
+      "height_px": 118.0,
+      "width_px": 320.0,
+      "x_px": 200.0,
+      "y_px": 12.0
+    },
+    "dry": {
+      "height_px": 118.0,
+      "width_px": 320.0,
+      "x_px": 12.0,
+      "y_px": 456.0
+    },
+    "end": {
+      "height_px": 52.0,
+      "width_px": 132.0,
+      "x_px": 828.0,
+      "y_px": 715.0
+    },
+    "fold_correction": {
+      "height_px": 134.0,
+      "width_px": 255.0,
+      "x_px": 236.5,
+      "y_px": 908.0
+    },
+    "fold_package": {
+      "height_px": 134.0,
+      "width_px": 320.0,
+      "x_px": 388.0,
+      "y_px": 448.0
+    },
+    "notification_queue": {
+      "height_px": 150.0,
+      "width_px": 214.0,
+      "x_px": 257.0,
+      "y_px": 666.0
+    },
+    "packaging_check": {
+      "height_px": 114.0,
+      "width_px": 189.0,
+      "x_px": 12.0,
+      "y_px": 684.0
+    },
+    "sort_tag": {
+      "height_px": 118.0,
+      "width_px": 320.0,
+      "x_px": 576.0,
+      "y_px": 12.0
+    },
+    "stage_notify": {
+      "height_px": 134.0,
+      "width_px": 245.0,
+      "x_px": 527.0,
+      "y_px": 674.0
+    },
+    "start": {
+      "height_px": 52.0,
+      "width_px": 132.0,
+      "x_px": 12.0,
+      "y_px": 45.0
+    },
+    "wash": {
+      "height_px": 118.0,
+      "width_px": 320.0,
+      "x_px": 262.0,
+      "y_px": 230.0
+    },
+    "wash_release_queue": {
+      "height_px": 150.0,
+      "width_px": 194.0,
+      "x_px": 12.0,
+      "y_px": 214.0
+    }
+  },
+  "orientation": "lr"
+}

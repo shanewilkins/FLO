@@ -9,6 +9,7 @@ from typing import Any
 from .._diagnostics import RenderDiagnostic
 from ..layout_core.models import LayoutBounds, LayoutPoint
 from ..layout_core.rework_geometry import infer_rework_row_ids, translate_edge_points
+from .row_routes import _rebuild_forward_route, _rebuild_rework_route
 
 _MIN_MAINLINE_REWORK_GAP_PX = 56.0
 _MAX_REWORK_ALIGNMENT_DELTA_PX = 48.0
@@ -211,6 +212,9 @@ def rework_alignment_diagnostics(
             variant == "return"
             and source_id in rework_ids
             and target_id in mainline_ids
+            and not _branch_anchor_takes_precedence(
+                source_id, node_bounds=node_bounds, edge_paths=edge_paths
+            )
         ):
             _append_alignment_diagnostic(
                 diagnostics=diagnostics,
@@ -224,6 +228,18 @@ def rework_alignment_diagnostics(
             )
 
     return tuple(diagnostics)
+
+
+def _branch_anchor_takes_precedence(source_id, *, node_bounds, edge_paths):
+    """Align a singleton correction to departure and use a dogleg to rejoin."""
+    for (departure, correction), path in edge_paths.items():
+        if correction != source_id or path.rework_variant != "branch":
+            continue
+        first, second = node_bounds[departure], node_bounds[correction]
+        delta = abs(first.x_px + first.width_px / 2 - second.x_px - second.width_px / 2)
+        if delta <= _MAX_REWORK_ALIGNMENT_DELTA_PX:
+            return True
+    return False
 
 
 def _append_alignment_diagnostic(
@@ -556,6 +572,13 @@ def _apply_edge_shifts(
     shifts: dict[str, tuple[float, float]],
     node_bounds: dict[str, LayoutBounds],
 ) -> dict[tuple[str, str], Any]:
+    mainline, _ = _infer_row_ids_from_rework_edges(
+        node_bounds=node_bounds, edge_paths=edge_paths
+    )
+    mainline_bottom = max(
+        (node_bounds[node].y_px + node_bounds[node].height_px for node in mainline),
+        default=None,
+    )
     transformed_edges: dict[tuple[str, str], Any] = {}
     for edge_key, edge_path in edge_paths.items():
         source_id, target_id = edge_key
@@ -565,7 +588,12 @@ def _apply_edge_shifts(
             edge_path=edge_path,
             source_bounds=node_bounds.get(source_id),
             target_bounds=node_bounds.get(target_id),
+            mainline_bottom=mainline_bottom,
         )
+        if rebuilt_points is None and source_shift != target_shift:
+            rebuilt_points = _rebuild_forward_route(
+                edge_path, node_bounds.get(source_id), node_bounds.get(target_id)
+            )
         translated_points = rebuilt_points or translate_edge_points(
             edge_path.points,
             source_shift=source_shift,
@@ -584,64 +612,6 @@ def _apply_edge_shifts(
             label_point=shifted_label_point,
         )
     return transformed_edges
-
-
-def _rebuild_rework_route(
-    *,
-    edge_path: Any,
-    source_bounds: LayoutBounds | None,
-    target_bounds: LayoutBounds | None,
-) -> tuple[LayoutPoint, ...] | None:
-    if source_bounds is None or target_bounds is None:
-        return None
-
-    if edge_path.rework_variant == "branch" and not edge_path.is_rework:
-        source = _bounds_anchor(source_bounds, "SOUTH")
-        target = _bounds_anchor(target_bounds, "WEST")
-        turn_y = source.y_px + max(24.0, (target.y_px - source.y_px) / 2.0)
-        approach_x = target.x_px - 24.0
-        return (
-            source,
-            LayoutPoint(x_px=source.x_px, y_px=turn_y),
-            LayoutPoint(x_px=approach_x, y_px=turn_y),
-            LayoutPoint(x_px=approach_x, y_px=target.y_px),
-            target,
-        )
-
-    if edge_path.rework_variant == "return" and edge_path.is_rework:
-        source = _bounds_anchor(source_bounds, "NORTH")
-        target = _bounds_anchor(target_bounds, "SOUTH")
-        source_clearance_y = source.y_px - 24.0
-        target_clearance_y = target.y_px + 24.0
-        corridor_x = (
-            max(
-                source_bounds.x_px + source_bounds.width_px,
-                target_bounds.x_px + target_bounds.width_px,
-            )
-            + 28.0
-        )
-        return (
-            source,
-            LayoutPoint(x_px=source.x_px, y_px=source_clearance_y),
-            LayoutPoint(x_px=corridor_x, y_px=source_clearance_y),
-            LayoutPoint(x_px=corridor_x, y_px=target_clearance_y),
-            LayoutPoint(x_px=target.x_px, y_px=target_clearance_y),
-            target,
-        )
-
-    return None
-
-
-def _bounds_anchor(bounds: LayoutBounds, side: str) -> LayoutPoint:
-    center_x = bounds.x_px + (bounds.width_px / 2.0)
-    center_y = bounds.y_px + (bounds.height_px / 2.0)
-    if side == "NORTH":
-        return LayoutPoint(x_px=center_x, y_px=bounds.y_px)
-    if side == "SOUTH":
-        return LayoutPoint(x_px=center_x, y_px=bounds.y_px + bounds.height_px)
-    if side == "WEST":
-        return LayoutPoint(x_px=bounds.x_px, y_px=center_y)
-    return LayoutPoint(x_px=bounds.x_px + bounds.width_px, y_px=center_y)
 
 
 def _enforce_mainline_min_horizontal_gap(

@@ -3,23 +3,29 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeGuard
 
 from flo.errors import ValidationError
+from flo.process.durations import SECONDS_PER_UNIT, duration_number, duration_seconds
 
 from ._graph_utils import build_adjacency_maps, traverse
 from .enums import ProcessValueClass
 from .metadata import extract_node_metadata
 from .models import IR
 from .schema_projection import ir_to_schema_dict
-from .validate_relations import validate_item_relations, validate_resource_relations
+from .validate_relations import (
+    validate_context_relations,
+    validate_item_relations,
+    validate_resource_relations,
+)
 from .validate_render_intent import validate_render_intent
 from .validate_structure import validate_parallel_structure
 from .validate_subprocess import validate_subprocess_metadata
 
 _MEASURE_UNITS = {"mg", "g", "kg", "ml", "l", "mm", "cm", "m"}
-_TIME_UNITS = {"s", "m", "min", "hr", "d"}
+_TIME_UNITS = set(SECONDS_PER_UNIT)
 _SPATIAL_UNITS = {"mm", "cm", "m", "in", "ft"}
 
 try:
@@ -59,6 +65,7 @@ def validate_ir(obj: Any) -> None:
     validate_subprocess_metadata(obj)
     _validate_edge_metadata(obj)
     _validate_process_resources(obj)
+    validate_context_relations(obj)
     validate_item_relations(obj)
     validate_resource_relations(obj)
     validate_parallel_structure(obj, incoming_counts, outgoing_counts)
@@ -270,6 +277,23 @@ def _validate_queue_wait_time_semantics(obj: IR) -> None:
                     "field, or compile authored FLO source so the compatibility "
                     "alias is normalized."
                 )
+        else:
+            misplaced = set(metadata) & {
+                "cycle_time",
+                "crossover_time",
+                "transfer_time",
+                "changeover_time",
+                "wait_before",
+                "wait_time",
+            }
+            if node_type == "wait":
+                misplaced.discard("wait_time")
+            if misplaced:
+                field = sorted(misplaced)[0]
+                raise ValidationError(
+                    f"E1508: {node_type} node '{node.id}' metadata.{field} belongs "
+                    "on a work node, or on a queue for wait_time."
+                )
 
 
 def _validate_wait_measurement_links(obj: IR) -> None:
@@ -448,7 +472,9 @@ def _validate_queue_metadata(node_id: str, metadata: dict[str, Any]) -> None:
     # All other fields are validated per type if present.
 
     capacity = metadata.get("buffer_capacity")
-    if capacity is not None and (not isinstance(capacity, int) or capacity < 1):
+    if "buffer_capacity" in metadata and (
+        not isinstance(capacity, int) or isinstance(capacity, bool) or capacity < 1
+    ):
         raise ValidationError(
             f"E1102: queue node '{node_id}' has invalid metadata.buffer_capacity; expected integer >= 1"
         )
@@ -514,17 +540,18 @@ def _validate_node_time_metadata_value(node_id: str, key: str, value: Any) -> No
         )
 
     duration_value = value.get("value")
-    if (
-        not isinstance(duration_value, (int, float))
-        or isinstance(duration_value, bool)
-        or float(duration_value) < 0
-    ):
-        raise ValidationError(f"E1302: {path}.value must be a number >= 0")
+    if duration_number(duration_value) is None:
+        raise ValidationError(f"E1302: {path}.value must be a finite number >= 0")
 
     unit = value.get("unit")
     if not isinstance(unit, str) or unit.strip().lower() not in _TIME_UNITS:
         raise ValidationError(
             f"E1303: {path}.unit must be one of {sorted(_TIME_UNITS)}"
+        )
+
+    if duration_seconds(value) is None:
+        raise ValidationError(
+            f"E1302: {path}.value must remain finite when converted to seconds"
         )
 
     measurement_id = value.get("measurement_id")
@@ -678,7 +705,7 @@ def _validate_location_spatial(path: str, resource: dict[str, Any]) -> None:
     y = spatial.get("y")
     if not _is_number(x) or not _is_number(y):
         raise ValidationError(
-            f"E1215: {path}.metadata.spatial must include numeric x and y"
+            f"E1215: {path}.metadata.spatial must include finite numeric x and y"
         )
 
     unit = spatial.get("unit")
@@ -705,8 +732,13 @@ def _extract_location_spatial(resource: dict[str, Any]) -> dict[str, Any] | None
     return None
 
 
-def _is_number(value: Any) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool)
+def _is_number(value: Any) -> TypeGuard[int | float]:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        return False
 
 
 def _validate_resource_quantity(path: str, quantity: dict[str, Any]) -> None:
@@ -745,13 +777,9 @@ def _validate_count_quantity(path: str, quantity: dict[str, Any]) -> None:
 
 def _validate_measure_quantity(path: str, quantity: dict[str, Any]) -> None:
     value = quantity.get("value")
-    if (
-        not isinstance(value, (int, float))
-        or isinstance(value, bool)
-        or float(value) <= 0
-    ):
+    if not _is_number(value) or value <= 0:
         raise ValidationError(
-            f"E1209: {path}.quantity.value must be a number > 0 for kind=measure"
+            f"E1209: {path}.quantity.value must be a finite number > 0 for kind=measure"
         )
 
     unit = quantity.get("unit")
@@ -777,13 +805,9 @@ def _validate_measure_quantity(path: str, quantity: dict[str, Any]) -> None:
 def _validate_canonical_quantity(
     path: str, canonical_value: Any, canonical_unit: Any
 ) -> None:
-    if (
-        not isinstance(canonical_value, (int, float))
-        or isinstance(canonical_value, bool)
-        or float(canonical_value) <= 0
-    ):
+    if not _is_number(canonical_value) or canonical_value <= 0:
         raise ValidationError(
-            f"E1212: {path}.quantity.canonical_value must be a number > 0"
+            f"E1212: {path}.quantity.canonical_value must be a finite number > 0"
         )
     if (
         not isinstance(canonical_unit, str)
@@ -842,11 +866,7 @@ def _validate_rework_edge_metadata(*, edge: Any, metadata: dict[str, Any]) -> No
     edge_path = f"edge '{edge.source}' -> '{edge.target}'"
 
     rate = metadata.get("rate")
-    if rate is not None and (
-        not isinstance(rate, (int, float))
-        or isinstance(rate, bool)
-        or not (0 <= float(rate) <= 1)
-    ):
+    if rate is not None and (not _is_number(rate) or not (0 <= rate <= 1)):
         raise ValidationError(
             f"E1401: {edge_path} metadata.rate must be a number between 0 and 1"
         )
@@ -862,11 +882,7 @@ def _validate_rework_edge_metadata(*, edge: Any, metadata: dict[str, Any]) -> No
 
     count = metadata.get("count")
     if count is not None:
-        is_valid_number = (
-            isinstance(count, (int, float))
-            and not isinstance(count, bool)
-            and float(count) > 0
-        )
+        is_valid_number = _is_number(count) and count > 0
         is_valid_text = isinstance(count, str) and bool(count.strip())
         if not (is_valid_number or is_valid_text):
             raise ValidationError(
