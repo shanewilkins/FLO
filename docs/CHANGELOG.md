@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.3
 
 - Finalize routed geometry and complete SPPM scenes before SVG emission. Enforce
   package direction, diagram policy ownership, and emitter boundaries with import
