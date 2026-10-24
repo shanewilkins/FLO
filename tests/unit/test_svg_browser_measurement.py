@@ -28,3 +28,14 @@ def test_browser_result_decodes_html_entities():
         '<pre id="result">{&quot;cases&quot;:[{&quot;text_count&quot;:3}]}</pre>'
     )
     assert result["cases"][0]["text_count"] == 3
+
+
+def test_timed_out_browser_is_recorded_as_failure_with_diagnostics():
+    import subprocess
+
+    failure = CHECK.browser_failure(
+        subprocess.TimeoutExpired("browser", 45, stderr=b"startup failed")
+    )
+    assert failure["status"] == "browser_error"
+    assert failure["cases"] == []
+    assert failure["stderr_tail"] == "startup failed"

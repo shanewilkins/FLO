@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.4.2
+## Unreleased
+
+- Finalize routed geometry and complete SPPM scenes before SVG emission. Enforce
+  package direction, diagram policy ownership, and emitter boundaries with import
+  contracts, responsibility checks, and stage-consumption tests.
 
 - Keep shared completion nodes on the mainline, rebuild shifted correction routes
   without interpolated zigzags, and keep return corridors clear of work cards.
@@ -40,6 +44,8 @@
 - Label SPPM processing, waiting, and setup durations as `P/T`, `W/T`, and
   `S/T`, and use Processing Time and Setup Time in publication footers.
   Existing source fields and timing calculations remain compatible.
+
+## 0.4.2
 
 - Allow adjacent queue and work waits to remain independent when they declare
   distinct measurement identities, while retaining `E1505` for ambiguous

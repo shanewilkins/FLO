@@ -8,6 +8,7 @@ import html
 import json
 import re
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -65,6 +66,22 @@ def parse_result(output: str) -> dict:
     return result
 
 
+def browser_failure(
+    error: subprocess.TimeoutExpired | subprocess.CalledProcessError,
+) -> dict:
+    """Retain startup diagnostics while keeping unmeasured consumers failed."""
+    stderr = error.stderr or ""
+    if isinstance(stderr, bytes):
+        stderr = stderr.decode(errors="replace")
+    return {
+        "schema_version": 1,
+        "status": "browser_error",
+        "cases": [],
+        "error": type(error).__name__,
+        "stderr_tail": stderr[-6000:],
+    }
+
+
 def main() -> int:
     """Run an isolated headless browser as an SVG consumer, never a render runtime."""
     parser = argparse.ArgumentParser()
@@ -90,25 +107,47 @@ def main() -> int:
             )
         pieces.append('<pre id="result"></pre><script>' + MEASURE + "</script>")
         document.write_text("\n".join(pieces))
-        completed = subprocess.run(
-            [
-                str(args.browser),
-                "--headless=new",
-                *(["--no-sandbox"] if args.no_sandbox else []),
-                "--disable-gpu",
-                "--no-first-run",
-                "--no-default-browser-check",
-                "--disable-background-networking",
-                f"--user-data-dir={workspace / 'profile'}",
-                "--virtual-time-budget=5000",
-                "--dump-dom",
-                document.as_uri(),
-            ],
-            capture_output=True,
-            text=True,
-            timeout=45,
-            check=True,
-        )
+        try:
+            completed = subprocess.run(
+                [
+                    str(args.browser),
+                    "--headless=new",
+                    *(["--no-sandbox"] if args.no_sandbox else []),
+                    "--disable-gpu",
+                    "--no-first-run",
+                    "--no-default-browser-check",
+                    "--disable-background-networking",
+                    "--enable-automation",
+                    "--password-store=basic",
+                    # Chromium's documented macOS flags avoid OS permission dialogs
+                    # in a fresh test profile; no real user keychain is accessed.
+                    # https://chromium.googlesource.com/chromium/src/+/HEAD/docs/mac_build_instructions.md
+                    *(
+                        [
+                            "--use-mock-keychain",
+                            "--disable-features=DialMediaRouteProvider",
+                        ]
+                        if sys.platform == "darwin"
+                        else []
+                    ),
+                    f"--user-data-dir={workspace / 'profile'}",
+                    "--virtual-time-budget=5000",
+                    "--dump-dom",
+                    document.as_uri(),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=45,
+                check=True,
+            )
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as error:
+            failure = browser_failure(error)
+            output = json.dumps(failure, indent=2, sort_keys=True) + "\n"
+            if args.output:
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                args.output.write_text(output)
+            print(output, end="")
+            return 1
         result = parse_result(completed.stdout)
     result["inputs"] = {
         str(path.relative_to(ROOT))
