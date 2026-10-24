@@ -4,7 +4,7 @@
     "docs/design/adr/render_stack_elk_svg_typst.md": "85642694a6d3b15f40268b16737a46eb1f8ce08927a4e5219de46512649433e7",
     "docs/design/adr/simplified_package_architecture.md": "441a2367015cefd2e93d8ca48ce35333affa1c1e667c4428abf92073e7f75dcf",
     "docs/design/render_platform_target_architecture.md": "1c693a0e0d13e462df7c2a8c9baa19ff915e5f76095c1eb8b0fea96c7177f529",
-    "docs/design/renderers/boundaries.md": "469407fdd8a11c80ece9df242d6631de9c28bfe67439ee42f45587a101495981",
+    "docs/design/renderers/boundaries.md": "bbe89effcfe5be65dd5dcf2ab7553867c3ec303a0f63d596a25f16b50e0fc15f",
     "docs/design/renderers/sppm.md": "cdd6af977328e21bdee7a238633d97553e5dfa7278e9b37c9ef47c1f7838a788"
   },
   "blocking_findings": [],
@@ -14,7 +14,7 @@
     "sppm-determinism": "success",
     "test": "success"
   },
-  "ci_run": "https://github.com/shanewilkins/FLO/actions/runs/40101761290",
+  "ci_run": "https://github.com/shanewilkins/FLO/actions/runs/40102340173",
   "configuration_digests": {
     ".github/workflows/ci.yml": "06f69bbd417db5d2cd79bfa7df225f584be97266b3d1e6445db42501b00005f5",
     ".github/workflows/publish.yml": "425d7bb1d375ef753e322b25760912804e429cd9f3b08d8519df5faeb55f021b",
@@ -43,7 +43,8 @@
   ],
   "platforms": {
     "linux": {
-      "architecture_evidence_sha256": "7a079a19530f6276a68ab589a95479ea457dc96f765f103d51ec6dcb4ab5e762",
+      "architecture_evidence_sha256": "64be6f1a558ea52e97458dbeff08889f042deab070c431c7755aaaa9569a3ae9",
+      "browser_version": "156.0.8078.47",
       "candidate_artifact": "linux-candidate-evidence",
       "glyph_evidence_sha256": "c1bf9150d0b634ff289d24ddbee89f33098911e9fdd732adf24dd56bc5706b3a",
       "glyph_measurements": {
@@ -151,7 +152,8 @@
       "wheel_sha256": "04321a78079ede3020030f9c8bfa62420836bd3fbbc0b655c9ebc5c1e873627b"
     },
     "macos": {
-      "architecture_evidence_sha256": "061dec840728a038d849eaafcce93d28adc4f299095b7b41cdf4b43c7f446662",
+      "architecture_evidence_sha256": "bd785cc67f7f9403551d311291453bc86b87258b67b0174308f1821074931001",
+      "browser_version": "156.0.8078.47",
       "candidate_artifact": "macos-candidate-evidence",
       "glyph_evidence_sha256": "e81b5988da5b19ca67eb711133538f9576c63b4ff28bf0a44d55052cfad910d8",
       "glyph_measurements": {
@@ -284,7 +286,7 @@
   "revision_note": "PR CI tests a synthetic merge of source_revision. Subsequent evidence-only commits record this candidate; they do not change the recorded runtime.",
   "runtime_package_digest": "9c1c761edb54c21f1a1abd34a7284b703faa857d8e257554cdf644024de8181a",
   "schema_version": 1,
-  "source_revision": "ede833e122bbfdb363610556d934ccf310cc50c5",
+  "source_revision": "e82859da49aff86068992ec7bcbc7bbb2a4e9565",
   "status": "candidate accepted; release tag and publication pending",
-  "tested_merge_revision": "b54aea44bcc7dfcfa4ac397351563199533b4359"
+  "tested_merge_revision": "91b6855f6dc91d457c57b9ad2cfec3ac4b75486f"
 }

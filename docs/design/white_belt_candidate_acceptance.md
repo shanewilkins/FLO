@@ -12,10 +12,10 @@ The [architecture trace](architecture_validation_evidence.json) retains actual
 stage observations and public/CLI/golden/installed-path parity. These records
 identify the tested candidate rather than assuming that any later HEAD was tested.
 
-[Clean CI run 40101761290](https://github.com/shanewilkins/FLO/actions/runs/40101761290)
+[Clean CI run 40102340173](https://github.com/shanewilkins/FLO/actions/runs/40102340173)
 passed all four jobs. Source revision:
-`ede833e122bbfdb363610556d934ccf310cc50c5`; tested merge revision:
-`b54aea44bcc7dfcfa4ac397351563199533b4359`.
+`e82859da49aff86068992ec7bcbc7bbb2a4e9565`; tested merge revision:
+`91b6855f6dc91d457c57b9ad2cfec3ac4b75486f`.
 
 Both platform builds produced the same `flo_lang-0.4.2-py3-none-any.whl`:
 SHA-256 `04321a78079ede3020030f9c8bfa62420836bd3fbbc0b655c9ebc5c1e873627b`.

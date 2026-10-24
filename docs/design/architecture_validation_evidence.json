@@ -1,17 +1,17 @@
 {
-  "architecture_acceptance": "pending remediation and clean-candidate review",
+  "architecture_acceptance": "requires recorded clean-candidate review",
   "architecture_document_digests": {
     "docs/design/adr/render_layout_finalization.md": "4749f7a2bb6b7bddb788cfb5a9aaef7be941038fd03b95bc5ce731aedfd63e7e",
     "docs/design/adr/render_stack_elk_svg_typst.md": "85642694a6d3b15f40268b16737a46eb1f8ce08927a4e5219de46512649433e7",
     "docs/design/adr/simplified_package_architecture.md": "441a2367015cefd2e93d8ca48ce35333affa1c1e667c4428abf92073e7f75dcf",
     "docs/design/render_platform_target_architecture.md": "1c693a0e0d13e462df7c2a8c9baa19ff915e5f76095c1eb8b0fea96c7177f529",
-    "docs/design/renderers/boundaries.md": "469407fdd8a11c80ece9df242d6631de9c28bfe67439ee42f45587a101495981",
+    "docs/design/renderers/boundaries.md": "bbe89effcfe5be65dd5dcf2ab7553867c3ec303a0f63d596a25f16b50e0fc15f",
     "docs/design/renderers/sppm.md": "cdd6af977328e21bdee7a238633d97553e5dfa7278e9b37c9ef47c1f7838a788"
   },
   "assessment": "architecture validation; not release acceptance",
   "assessment_tool_digests": {
     "architecture_boundaries.py": "8e3bddcf3e1cf9c6c677417b4c4b2590b78a4e3f8033b8114b8587ab68ee592e",
-    "architecture_trace.py": "dae48134cafc1f3f567c27d2b72b500c65443a1217356deb314e20caad15e79f"
+    "architecture_trace.py": "4bcb3d6a6c0879ebd5591f2a3531020cb24de1cda10e6d688dc65f9cf44bdb5d"
   },
   "behavioral_checks_pass": true,
   "blocking_findings": [],
@@ -2022,7 +2022,7 @@
     "uv.lock": "99f1ddf28a5c2711df494b725d3860e6cd0a613a87b86b09b683613941c53b24"
   },
   "findings_source": "docs/design/architecture_validation.md",
-  "head_revision": "b54aea44bcc7dfcfa4ac397351563199533b4359",
+  "head_revision": "91b6855f6dc91d457c57b9ad2cfec3ac4b75486f",
   "installed_package_matches_source": true,
   "responsibility_check_pass": true,
   "runtime_package_digest": "9c1c761edb54c21f1a1abd34a7284b703faa857d8e257554cdf644024de8181a",
