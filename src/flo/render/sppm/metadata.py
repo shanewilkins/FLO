@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from flo.process.durations import duration_number, duration_seconds
+from flo.process.units import convert_duration
 
 __all__ = [
     "SppmMetadataValue",
@@ -100,7 +101,7 @@ def get_metadata_wait_time_minutes(
         else metadata.get("wait_time")
     )
     seconds = duration_seconds(time_spec)
-    return None if seconds is None else seconds / 60.0
+    return None if seconds is None else convert_duration(seconds, "s", "min")
 
 
 def get_metadata_cycle_time(

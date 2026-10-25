@@ -12,6 +12,7 @@ from flo.process.schema.render_metadata import (
     first_present_metadata_value,
 )
 from flo.process.schema.subprocess_refs import resolve_subprocess_detail_map_reference
+from flo.process.units import convert_duration
 
 from .._process_header import build_process_header_rows
 from .._publication import (
@@ -260,8 +261,8 @@ def _analysis_matches_visible_process(
 def _format_timing_seconds(seconds: float) -> str:
     if seconds == 0:
         return "0 min"
-    if seconds % 60 == 0:
-        return f"{_format_timing_number(seconds / 60)} min"
+    if seconds % convert_duration(1, "min", "s") == 0:
+        return f"{_format_timing_number(convert_duration(seconds, 's', 'min'))} min"
     return f"{_format_timing_number(seconds)} s"
 
 

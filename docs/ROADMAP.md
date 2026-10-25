@@ -308,9 +308,11 @@ a patch-release number have not been assigned.
   [source and render input decision](design/adr/pydantic_source_and_render_inputs.md).
 
 Configuration consolidation, the spatial Pint trial, source shape models, and
-shared render-input validation are implemented. Duration/resource unit migration
-remains follow-up work after compatibility review; graph and domain validators
-remain explicit.
+shared render-input validation are implemented. Duration conversion now uses
+the shared Pint registry with explicit minute aliases and unchanged exchange,
+diagnostics, and presentation policies. Resource unit migration remains follow-up
+work after its compatibility/equivalence policy is defined; graph and domain
+validators remain explicit.
 
 #### Consistent diagnostic delivery: implemented
 
@@ -321,8 +323,9 @@ without contaminating payload stdout. Missing applicable timing produces one
 nonfatal aggregated warning; measured zero remains valid and warning-only
 results remain successful. Existing fatal exit codes and geometry strictness
 are preserved. The [diagnostic delivery plan](design/diagnostic_delivery_plan.md)
-records compatibility decisions and local verification. Broader duration/resource
-Pint migration remains follow-up work; no release has been assigned or published.
+records compatibility decisions and local verification. Duration conversion is
+integrated through the shared Pint boundary; resource migration remains follow-up
+work. No release has been assigned or published.
 
 ### 0.5: Yellow Belt Delivery
 

@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Any, TypeGuard
 
 from flo.errors import ValidationError
-from flo.process.durations import SECONDS_PER_UNIT, duration_number, duration_seconds
-from flo.process.units import SPATIAL_UNITS
+from flo.process.durations import duration_number, duration_seconds
+from flo.process.units import DURATION_UNITS, SPATIAL_UNITS
 
 from ._graph_utils import build_adjacency_maps, traverse
 from .enums import ProcessValueClass
@@ -26,7 +26,6 @@ from .validate_structure import validate_parallel_structure
 from .validate_subprocess import validate_subprocess_metadata
 
 _MEASURE_UNITS = {"mg", "g", "kg", "ml", "l", "mm", "cm", "m"}
-_TIME_UNITS = set(SECONDS_PER_UNIT)
 
 try:
     import jsonschema
@@ -544,9 +543,9 @@ def _validate_node_time_metadata_value(node_id: str, key: str, value: Any) -> No
         raise ValidationError(f"E1302: {path}.value must be a finite number >= 0")
 
     unit = value.get("unit")
-    if not isinstance(unit, str) or unit.strip().lower() not in _TIME_UNITS:
+    if not isinstance(unit, str) or unit.strip().lower() not in DURATION_UNITS:
         raise ValidationError(
-            f"E1303: {path}.unit must be one of {sorted(_TIME_UNITS)}"
+            f"E1303: {path}.unit must be one of {sorted(DURATION_UNITS)}"
         )
 
     if duration_seconds(value) is None:

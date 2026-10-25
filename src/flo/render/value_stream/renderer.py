@@ -8,6 +8,7 @@ from typing import Any
 
 from flo.process.analysis import ValueStreamFlow, project_value_stream
 from flo.process.ir.models import IR
+from flo.process.units import convert_duration
 
 from .._artifact import RenderArtifact
 from .._execution import GeometryObserver, SceneObserver
@@ -229,10 +230,10 @@ def _metric(label: str, seconds: float | None) -> str:
 
 
 def _format_seconds(seconds: float) -> str:
-    if seconds and seconds % 3600 == 0:
-        return f"{seconds / 3600:g} hr"
-    if seconds and seconds % 60 == 0:
-        return f"{seconds / 60:g} min"
+    if seconds and seconds % convert_duration(1, "hr", "s") == 0:
+        return f"{convert_duration(seconds, 's', 'hr'):g} hr"
+    if seconds and seconds % convert_duration(1, "min", "s") == 0:
+        return f"{convert_duration(seconds, 's', 'min'):g} min"
     return f"{seconds:g} s"
 
 

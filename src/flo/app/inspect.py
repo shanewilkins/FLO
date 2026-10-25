@@ -11,6 +11,7 @@ from flo.process.analysis import (
     ProcessTimingAnalysis,
     StructuralDiagnostic,
 )
+from flo.process.units import convert_duration
 
 
 def format_timing_analysis(
@@ -204,8 +205,8 @@ def _format_duration(seconds: float | None) -> str:
         return "unavailable"
     if seconds == 0:
         return "0 min"
-    if seconds % 60 == 0:
-        return f"{_format_number(seconds / 60)} min"
+    if seconds % convert_duration(1, "min", "s") == 0:
+        return f"{_format_number(convert_duration(seconds, 's', 'min'))} min"
     return f"{_format_number(seconds)} s"
 
 

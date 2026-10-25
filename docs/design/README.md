@@ -52,8 +52,8 @@ notes, migration plans, and taxonomy notes that span multiple components.
   completed structural source migration and shared render-input normalization,
   with duplicate checks/parsers removed and diagnostic/schema boundaries retained.
 - [Quantity validation and units](adr/quantity_validation_and_units.md): completed
-  configuration consolidation and spatial Pint trial, with the source quantity
-  model assessment and remaining migration boundaries.
+  configuration consolidation, spatial Pint trial, and shared duration conversion,
+  with the source quantity model assessment and remaining resource boundaries.
 - [Consistent diagnostic delivery](diagnostic_delivery_plan.md): implemented 0.4
   stabilization work for UR-086 and TR-117, including warning aggregation,
   severity-aware success, and the missing-timing use case.

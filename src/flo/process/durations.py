@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from math import isfinite
 
-SECONDS_PER_UNIT = {"s": 1.0, "m": 60.0, "min": 60.0, "hr": 3600.0, "d": 86400.0}
+from .units import DURATION_UNITS, convert_duration
 
 
 def duration_number(value: object) -> float | None:
@@ -26,8 +26,7 @@ def duration_seconds(raw: object) -> float | None:
     unit = raw.get("unit")
     if value is None or not isinstance(unit, str):
         return None
-    factor = SECONDS_PER_UNIT.get(unit.strip().lower())
-    if factor is None:
+    if unit.strip().lower() not in DURATION_UNITS:
         return None
-    seconds = value * factor
+    seconds = convert_duration(value, unit, "s")
     return seconds if isfinite(seconds) else None

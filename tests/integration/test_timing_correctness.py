@@ -5,6 +5,7 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
+from flo import api
 from flo.app.cli import cli
 from flo.errors import EXIT_VALIDATION_ERROR
 
@@ -47,6 +48,7 @@ def _source(metadata, *, queue=None):
         ({"value": 10**400, "unit": "s"}, "E1302"),
         ({"value": 1}, "E1303"),
         ({"value": 1, "unit": "fortnight"}, "E1303"),
+        ({"value": 1, "unit": "minute"}, "E1303"),
     ],
 )
 @pytest.mark.parametrize(
@@ -158,6 +160,47 @@ def test_queue_wait_units_agree_between_source_analysis_and_display(
     svg = runner.invoke(cli, ["render", str(source)])
     assert svg.exit_code == 0, svg.output
     assert f"W/T: {minutes:g} min" in svg.output
+
+
+@pytest.mark.parametrize(
+    ("unit", "seconds"),
+    [("s", 0.5), ("m", 30), ("min", 30), ("hr", 1800), ("d", 43200)],
+)
+def test_duration_migration_preserves_authored_exchange_and_operation_reports(
+    unit, seconds
+):
+    quantity = {"value": 0.5, "unit": unit}
+    metadata = {
+        field: dict(quantity)
+        for field in ("cycle_time", "wait_before", "crossover_time")
+    }
+    metadata["wait_before"]["measurement_id"] = "work-wait"
+    queue_quantity = {**quantity, "measurement_id": "queue-wait"}
+    source = _source(metadata, queue={"wait_time": queue_quantity})
+    validated = api.validate(source)
+    assert validated.ok and not validated.report.diagnostics
+    exported = api.export(source)
+    assert exported.ok and not exported.report.diagnostics
+    nodes = {node["id"]: node for node in json.loads(exported.value)["nodes"]}
+    assert nodes["work"]["metadata"] == metadata
+    assert nodes["queue"]["metadata"]["wait_time"] == queue_quantity
+
+    runner = CliRunner()
+    inspected = runner.invoke(
+        cli,
+        ["inspect", "-", "--format", "json", "--diagnostics-format", "json"],
+        input=source,
+    )
+    assert inspected.exit_code == 0
+    analysis = json.loads(inspected.stdout)
+    assert analysis["modeled_lead_time_seconds"] == seconds * 4
+    assert analysis["declared_totals"]["wait_time_seconds"] == seconds * 2
+    assert json.loads(inspected.stderr) == validated.report.as_dict()
+    rendered = runner.invoke(
+        cli, ["render", "-", "--diagnostics-format", "json"], input=source
+    )
+    assert rendered.exit_code == 0 and "<svg" in rendered.stdout
+    assert json.loads(rendered.stderr) == validated.report.as_dict()
 
 
 def test_partial_wait_evidence_is_shown_with_unavailable_lead_time(tmp_path):

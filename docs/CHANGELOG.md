@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Route scalar duration normalization and inspect/SPPM/value-stream presentation
+  conversions through the existing lazy Pint registry. Replace the handwritten
+  duration factor table with explicit supported aliases, keeping duration `m`
+  as minutes and spatial `m` as metres. Preserve authored quantities, measured
+  zero, missing/invalid timing states, diagnostics, and display policies;
+  resource quantities and supported language syntax are unchanged.
+
 - Deliver existing source, analysis, and render findings through one deterministic
   operation report preserving codes, severity, field paths, source context, and
   producer evidence. Show actionable warnings on stderr by default; add

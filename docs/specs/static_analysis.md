@@ -42,7 +42,9 @@ The initial timing result is versioned as `0.1` and preserves three categories:
 - setup or changeover time: the selected compatible setup field on work nodes
 
 Supported source units `s`, `m`, `min`, `hr`, and `d` normalize to seconds in
-the analysis result. A result retains per-node contributions, graph-wide
+the analysis result. Duration `m` means minutes, not spatial metres. Conversion
+does not rewrite authored values/units or expand the supported unit vocabulary.
+A result retains per-node contributions, graph-wide
 declared totals, path summaries, timing coverage, diagnostics, process identity,
 and the changeover-exposure policy.
 
