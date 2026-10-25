@@ -320,13 +320,19 @@ def prepare_source(
     try:
         adapter_model = parse_adapter(content, source_path=source_path)
     except Exception as exc:
+        from flo.source.models import SourceShapeError
+
         diagnostic = source_diagnostic(
             str(exc),
             content=content,
             source_path=source_path,
             cause=exc,
         )
-        error = ParseError(diagnostic.render(), error_stage="parse")
+        error_type = CompileError if isinstance(exc, SourceShapeError) else ParseError
+        error = error_type(
+            diagnostic.render(),
+            error_stage="compile" if isinstance(exc, SourceShapeError) else "parse",
+        )
         error.diagnostic = diagnostic
         raise error from exc
 
@@ -341,7 +347,12 @@ def prepare_source(
         ir = compile_adapter(adapter_model)
     except Exception as exc:
         diagnostic = source_diagnostic(
-            str(exc), content=content, source_path=source_path, cause=exc
+            str(exc),
+            content=content,
+            source_path=source_path,
+            cause=exc,
+            composition=composition,
+            document=adapter_model,
         )
         error = CompileError(diagnostic.render(), error_stage="compile")
         error.diagnostic = diagnostic
@@ -356,13 +367,20 @@ def prepare_source(
             content=content,
             source_path=source_path,
             cause=exc,
+            composition=composition,
+            document=adapter_model,
         )
         error = ValidationError(diagnostic.render(), error_stage=error_stage)
         error.diagnostic = diagnostic
         raise error from exc
     except Exception as exc:
         diagnostic = source_diagnostic(
-            str(exc), content=content, source_path=source_path, cause=exc
+            str(exc),
+            content=content,
+            source_path=source_path,
+            cause=exc,
+            composition=composition,
+            document=adapter_model,
         )
         error = ValidationError(diagnostic.render(), error_stage="validate")
         error.diagnostic = diagnostic
@@ -374,14 +392,24 @@ def prepare_source(
         except ValidationError as exc:
             error_stage = getattr(exc, "error_stage", None) or "schema_validate"
             diagnostic = source_diagnostic(
-                str(exc), content=content, source_path=source_path, cause=exc
+                str(exc),
+                content=content,
+                source_path=source_path,
+                cause=exc,
+                composition=composition,
+                document=adapter_model,
             )
             error = ValidationError(diagnostic.render(), error_stage=error_stage)
             error.diagnostic = diagnostic
             raise error from exc
         except Exception as exc:
             diagnostic = source_diagnostic(
-                str(exc), content=content, source_path=source_path, cause=exc
+                str(exc),
+                content=content,
+                source_path=source_path,
+                cause=exc,
+                composition=composition,
+                document=adapter_model,
             )
             error = ValidationError(diagnostic.render(), error_stage="schema_validate")
             error.diagnostic = diagnostic

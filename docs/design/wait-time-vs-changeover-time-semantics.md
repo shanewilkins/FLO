@@ -67,7 +67,23 @@ The same evidence may be promoted to a queue for visualization:
 ```
 
 Static timing counts the task evidence once and does not add the promoted queue
-projection again.
+projection again on a path containing the full replacement evidence.
+
+Measurement identity is an assertion, not merely a suppression switch. Repeated
+IDs must describe equivalent normalized durations. A queue's `measurement_refs`
+asserts the sum of distinct work waits; contradictory amounts or aggregate
+definitions are validation errors. Numeric equivalence uses relative tolerance
+`1e-9`, absolute tolerance `0`, preserving measured zero.
+
+Deduplication cannot be decided globally before considering alternative paths.
+If a queue-traversing path omits any referenced work wait, analysis warns and
+withholds a complete elapsed total for that path instead of silently dropping
+the queue or guessing a residual. Authored durations remain visible in diagrams,
+separate from counted contributions.
+
+An explicit `wait` hold is also time-bearing: absent `wait_time` makes affected
+timing incomplete with a warning, not a model-validation failure. These policies
+do not infer parallel synchronization or critical-path elapsed time.
 
 ## Lean/Six Sigma Alignment
 

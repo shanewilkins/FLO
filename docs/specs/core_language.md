@@ -73,6 +73,19 @@ FLO's normative source-authoring model is process-first rather than graph-first.
      absolute paths, parent traversal, and symlinks may not escape it.
    - Include cycles are invalid.
    - Duplicate step identifiers introduced by composition are invalid.
+   - Every explicitly declared `spec_version` must be supported and agree
+     across the composition. Included fragments may omit it.
+   - Validate the shapes of supplied fragment fields before merging, then
+     validate the complete composed process. A fragment need not be a complete
+     standalone flow; explicit nulls do not mean that a field was omitted.
+   - Canonical `items`, `resources`, and `locations`, and supported legacy
+     collections merge additively across files, including supported process
+     and process-metadata placements and recursively grouped collections.
+     Distinct entries are retained; duplicate entity IDs are errors, not local
+     overrides. Malformed collection shapes must not be discarded or hidden
+     by a fallback placement.
+   - Diagnostics retain the originating fragment's path, excerpt, and include
+     chain even after list concatenation changes composed indices.
    - Composition enforces the deterministic file-size, include-count,
      include-depth, and expanded-byte limits in
      `docs/policy/source_trust.md`.
@@ -241,13 +254,25 @@ Normative timing-placement rules:
     - A work-node `wait_before` may declare `measurement_id`.
     - A queue `wait_time` that repeats or aggregates work-node waiting evidence
        declares the corresponding IDs in `measurement_refs`.
-    - A directly preceding queue and work node may instead share one
+    - A queue and work node may instead share one
        `measurement_id` when they present the same measurement.
+    - Repeated waiting measurements with the same ID must have equivalent
+       durations after conversion to seconds (`E1509`). Equivalence uses
+       relative tolerance `1e-9`, absolute tolerance `0`; zero only matches zero.
+    - A queue's `measurement_refs` asserts an additive projection. Its duration
+       must equal the finite sum of distinct referenced work waits (`E1510`).
+       References are unique after whitespace normalization. Repeated copies
+       of an identified aggregate must agree on their reference set.
+       A queue sharing a work measurement's ID cannot also claim a different
+       aggregate; give the aggregate its own ID.
     - Directly adjacent queue and work waits with distinct non-empty
        `measurement_id` values are independent measurements and both contribute
        to static totals.
-    - Linked queue projections remain renderable but contribute no additional
-       waiting time to static totals.
+    - Linked queue projections remain renderable with their authored duration.
+       They contribute no additional waiting to the graph-wide inventory.
+       Path deduplication requires all referenced work waits on that path;
+       otherwise that path is timing-incomplete with a warning and no complete
+       elapsed total. Other fully evidenced paths remain complete.
     - An independently identified, unlinked queue `wait_time` remains an
        independent timing contribution.
 
@@ -272,7 +297,9 @@ Authored `process.metadata`, step `metadata`, and legacy step `attrs` must be
 objects when present. Invalid container shapes must fail compilation rather than
 being discarded. An explicit `transitions` value must be a list; null does not
 request implicit sequencing. Nested subprocess declarations use either `steps`
-or `subnodes`, and an explicit `subprocess_parent` must be a non-empty string.
+or `subnodes`, only on `kind: subprocess`; both spellings are rejected on
+ordinary steps rather than discarded. An explicit `subprocess_parent` must be
+a non-empty string.
 The same branch and timing-alias rules apply inside legacy `attrs`.
 
 ## Scalar timing values
@@ -290,6 +317,11 @@ preserves omitted fields as absent and declared zeros as numeric values.
 Invalid timing cannot pass validation into canonical export, inspection, or
 CLI rendering. Renderer accessors do not default invalid or missing durations
 to zero or assume a missing unit.
+
+An explicit `wait` hold uses `metadata.wait_time`. Omitting that duration is
+valid authoring but produces a warning and incomplete timing on affected paths.
+A measured zero hold remains complete. A hold does not imply active work or
+setup.
 
 ## Normative semantic rules
 

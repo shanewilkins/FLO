@@ -65,13 +65,24 @@ class SourceLane(NamedIdentity):
     metadata: dict[Any, Any] | None = None
 
 
-class SourceProcess(NamedIdentity):
-    """Process identity and context; quantity semantics remain IR-owned."""
+class ProcessFields(SourceModel):
+    """Process context shared by complete documents and include fragments."""
 
     version: int | str | None = None
     metadata: Authored[dict[Any, Any]] = None
     owner: NamedIdentity | None = None
     business_units: list[BusinessUnit] | None = None
+
+
+class SourceProcess(NamedIdentity, ProcessFields):
+    """Complete process identity and context; quantity semantics remain IR-owned."""
+
+
+class FragmentProcess(ProcessFields):
+    """An include may supply only part of the process identity."""
+
+    id: Authored[NonBlank] = None
+    name: Authored[NonBlank] = None
 
 
 class StepAttributes(SourceModel):
@@ -120,7 +131,9 @@ class SourceStep(StepAttributes):
     @model_validator(mode="after")
     def check_child_owner(self) -> SourceStep:
         """Subnodes belong to a subprocess rather than an ordinary step."""
-        if self.subnodes is not None and self.kind != "subprocess":
+        if (
+            self.subnodes is not None or self.steps is not None
+        ) and self.kind != "subprocess":
             raise PydanticCustomError(
                 "source_nested", "may declare nested steps only for kind 'subprocess'"
             )
@@ -185,12 +198,9 @@ class BranchConfig(SourceModel):
         return value
 
 
-class SourceDocument(SourceModel):
-    """The strict compiler-facing source contract after include composition."""
+class DocumentFields(SourceModel):
+    """Shared source fields and aliases before and after composition."""
 
-    spec_version: Literal["0.1"]
-    process: SourceProcess
-    steps: Annotated[list[SourceStep], Field(min_length=1)]
     transitions: Authored[list[SourceTransition]] = None
     lanes: list[SourceLane] | None = None
 
@@ -211,9 +221,82 @@ class SourceDocument(SourceModel):
         return value
 
 
+class SourceDocument(DocumentFields):
+    """The strict compiler-facing source contract after include composition."""
+
+    spec_version: Literal["0.1"]
+    process: SourceProcess
+    steps: Annotated[list[SourceStep], Field(min_length=1)]
+
+
+class SourceFragment(DocumentFields):
+    """Validate supplied fields without requiring a standalone process."""
+
+    spec_version: Authored[Literal["0.1"]] = None
+    process: Authored[FragmentProcess] = None
+    steps: Authored[list[SourceStep]] = None
+
+
 NamedPaths = TypeAdapter(
     Annotated[dict[NonBlank | bool, OutcomeBranch], Field(min_length=2)]
 )
+
+
+def validate_source_fragment(document: dict[str, Any]) -> None:
+    """Validate supplied shapes before composition can conceal declarations."""
+    validate_source_shape(SourceFragment, document)
+    validate_source_collections(document)
+
+
+def validate_source_collections(document: dict[str, Any]) -> None:
+    """Reject malformed collection shapes even when another placement shadows them."""
+    containers = [((), document)]
+    process = document.get("process", {})
+    if isinstance(process, dict):
+        containers.append((("process",), process))
+        metadata = process.get("metadata", {})
+        if isinstance(metadata, dict):
+            containers.append((("process", "metadata"), metadata))
+    for prefix, container in containers:
+        for key in (
+            "items",
+            "resources",
+            "locations",
+            "materials",
+            "equipment",
+            "workers",
+        ):
+            if key in container:
+                _validate_collection_shape(container[key], (*prefix, key))
+
+
+def _validate_collection_shape(value: Any, path: tuple) -> None:
+    if isinstance(value, list):
+        for index, entry in enumerate(value):
+            if not isinstance(entry, dict):
+                raise SourceShapeError(
+                    f"E1202: {source_path((*path, index))} must be an object",
+                    (*path, index),
+                )
+        return
+    if not isinstance(value, dict) or not any(key != "name" for key in value):
+        raise SourceShapeError(
+            f"E1201: {source_path(path)} must be a list or non-empty grouped object",
+            path,
+        )
+    for key, child in value.items():
+        if not isinstance(key, str) or not key.strip():
+            raise SourceShapeError(
+                f"E1201: {source_path(path)} group keys must be non-empty strings", path
+            )
+        if key == "name":
+            if not isinstance(child, str) or not child.strip():
+                raise SourceShapeError(
+                    f"E1201: {source_path((*path, key))} must be a non-empty string",
+                    (*path, key),
+                )
+        else:
+            _validate_collection_shape(child, (*path, key))
 
 
 class SourceShapeError(ValueError):

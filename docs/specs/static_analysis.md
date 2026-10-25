@@ -38,7 +38,7 @@ The initial timing result is versioned as `0.1` and preserves three categories:
 
 - cycle time: active processing time from `metadata.cycle_time`
 - waiting time: work-node evidence from `metadata.wait_before` plus independent
-  queue duration from `metadata.wait_time`
+  queue and explicit hold duration from `metadata.wait_time`
 - setup or changeover time: the selected compatible setup field on work nodes
 
 Supported source units `s`, `m`, `min`, `hr`, and `d` normalize to seconds in
@@ -47,6 +47,9 @@ does not rewrite authored values/units or expand the supported unit vocabulary.
 A result retains per-node contributions, graph-wide
 declared totals, path summaries, timing coverage, diagnostics, process identity,
 and the changeover-exposure policy.
+Each node also retains `declared_wait_time_seconds`, the normalized authored
+waiting value before deduplication. Diagrams consume this field for local
+waiting annotations; a suppressed contribution is not missing measurement data.
 
 Graph-wide declared totals are an inventory of authored timing. They are not
 automatically process lead time because mutually exclusive branches would be
@@ -55,7 +58,7 @@ double-counted.
 ## Timing states
 
 Omitted duration fields remain absent in canonical exchange and produce null
-category totals when no values were declared. A missing expected work or queue
+category totals when no values were declared. A missing expected work, queue, or hold
 duration produces `timing-incomplete`. Explicit null and malformed durations
 are invalid, not omissions: the validated CLI rejects them, while analysis of
 unvalidated IR emits `timing-invalid-duration`. Declared numeric zero remains
@@ -73,9 +76,21 @@ enumerates start-to-end paths in deterministic node-ID order.
 - Multiple complete alternative paths produce minimum and maximum path lead
   times, not one falsely precise lead time.
 - A work node is timing-complete when it declares valid `cycle_time`.
-- A queue node is timing-complete when it declares valid `wait_time`.
+- A queue or explicit `wait` hold is timing-complete when it declares valid
+  `wait_time`; measured zero is valid.
 - A queue linked to work-node waiting measurements by `measurement_refs` or a
-  shared `measurement_id` is a projection and is not counted again.
+  shared `measurement_id` is a projection. Validation enforces equivalent
+  copies and additive reference sums using relative tolerance `1e-9`, absolute
+  tolerance `0`.
+- Deduplication is path-local: a projected queue contributes no additional
+  waiting only when all replacement work waits occur on that path.
+  Uncovered projections produce one `timing-projection-incomplete` warning
+  per queue and mark affected paths incomplete. Their elapsed totals are null;
+  known category subtotals and authored node values remain visible.
+  Fully evidenced paths remain complete, but the process cannot claim a
+  complete minimum/maximum range when another path is incomplete.
+- Repeated independent queue measurements with the same ID count once per
+  path, including when different copies occur on alternative paths.
 - Missing expected timing keeps declared subtotals visible but prevents a
   complete modeled lead-time claim for the affected path.
 

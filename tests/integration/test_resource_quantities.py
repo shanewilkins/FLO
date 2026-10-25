@@ -157,7 +157,7 @@ def test_valid_quantities_preserve_exchange_and_authored_export_text(quantity):
     assert quantity == before
 
 
-def test_legacy_diagnostic_uses_the_selected_collection_not_an_ignored_scalar():
+def test_malformed_legacy_collection_is_rejected_instead_of_falling_back():
     model = yaml.safe_load(
         _source(
             {
@@ -175,8 +175,6 @@ def test_legacy_diagnostic_uses_the_selected_collection_not_an_ignored_scalar():
     result = api.validate(yaml.safe_dump(model))
 
     assert not result.ok
-    assert (
-        result.diagnostics[0].field_path
-        == "process.materials[0].quantity.canonical_value"
-    )
-    assert result.diagnostics[0].excerpt.strip() == "canonical_value: 99"
+    assert result.diagnostics[0].code == "E1201"
+    assert result.diagnostics[0].field_path == "materials"
+    assert result.diagnostics[0].excerpt.strip() == "materials: ignored legacy scalar"

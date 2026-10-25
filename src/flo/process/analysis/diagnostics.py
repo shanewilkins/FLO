@@ -21,7 +21,7 @@ def timing_diagnostic_report(
     missing = []
     for timing in analysis.node_timings:
         metadata = extract_node_metadata(nodes[timing.node_id])
-        applicable = ("wait_time",) if timing.node_type == "queue" else ()
+        applicable = ("wait_time",) if timing.node_type in {"queue", "wait"} else ()
         if timing.node_type in {"task", "system_task", "subprocess"}:
             applicable = ("cycle_time", "wait_before")
             if timing.changeover_source_field is None:

@@ -19,6 +19,7 @@ from .models import (
     SourceDocument,
     SourceShapeError,
     source_path,
+    validate_source_collections,
     validate_source_shape,
 )
 
@@ -26,6 +27,7 @@ from .models import (
 def validate_adapter_contract(adapter: dict[str, Any]) -> SourceDocument:
     """Validate source shapes once, then check source-specific relationships."""
     document = validate_source_shape(SourceDocument, adapter)
+    validate_source_collections(adapter)
     seen_ids: set[str] = set()
     _validate_step_entries(adapter["steps"], (), seen_ids)
     for path, entries in (
@@ -174,11 +176,10 @@ def resolve_process_metadata(adapter: dict[str, Any]) -> dict[str, Any] | None:
         "equipment",
         "workers",
     ):
-        value = adapter.get(key)
-        if not _is_resource_collection(value):
-            value = process.get(key)
-        if _is_resource_collection(value):
-            metadata[key] = value
+        if key in adapter:
+            metadata[key] = adapter[key]
+        elif key in process:
+            metadata[key] = process[key]
 
     return metadata or None
 
@@ -275,29 +276,6 @@ def normalize_node_attrs(a_node: dict[str, Any]) -> dict[str, Any]:
 def resolve_explicit_transitions(adapter: dict[str, Any]) -> Any:
     """Resolve explicit transitions list from adapter payload."""
     return adapter.get("transitions")
-
-
-def _is_resource_collection(value: Any) -> bool:
-    if isinstance(value, list):
-        return True
-    if not isinstance(value, dict):
-        return False
-
-    has_nested_collection = False
-    for group_name, group_value in value.items():
-        if not isinstance(group_name, str) or not group_name.strip():
-            return False
-
-        if group_name == "name":
-            if not isinstance(group_value, str) or not group_value.strip():
-                return False
-            continue
-
-        if not isinstance(group_value, (list, dict)):
-            return False
-        has_nested_collection = True
-
-    return has_nested_collection
 
 
 def _resolve_subnodes(node_entry: dict[str, Any]) -> Any:

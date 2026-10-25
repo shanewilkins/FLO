@@ -41,6 +41,7 @@ def parse_adapter(content: str, source_path: str | None = None) -> dict[str, Any
                 source_path=source_path,
                 root_source_bytes=source_bytes,
                 capture_composition=True,
+                root_content=content,
             )
             return _normalize_compiler_contract_payload(resolved)
         return {"name": "parsed", "content": content}

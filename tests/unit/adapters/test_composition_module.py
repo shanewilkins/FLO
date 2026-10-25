@@ -63,13 +63,10 @@ def test_load_include_mapping_rejects_cycle_missing_and_non_mapping(tmp_path: Pa
 
 
 def test_merge_list_values_covers_none_and_validation_errors():
-    assert composition._merge_list_values(
-        "steps", base_value=[{"id": "a"}], incoming_value=None
-    ) == [{"id": "a"}]
-    assert (
-        composition._merge_list_values("steps", base_value="bad", incoming_value=None)
-        == []
-    )
+    with pytest.raises(ValueError, match="steps must be a list"):
+        composition._merge_list_values(
+            "steps", base_value=[{"id": "a"}], incoming_value=None
+        )
 
     with pytest.raises(ValueError, match="steps must be a list"):
         composition._merge_list_values("steps", base_value=[], incoming_value="bad")
@@ -130,11 +127,21 @@ def test_merge_process_covers_none_metadata_merge_and_type_error():
         composition._merge_process([], {})
 
 
-def test_merge_documents_preserves_existing_spec_version_and_merges_known_keys():
+def test_metadata_annotations_keep_overlay_semantics_without_document_merging():
+    merged = composition._merge_process(
+        {"metadata": {"steps": ["old"], "process": "old", "items": [{"id": "a"}]}},
+        {"metadata": {"steps": ["new"], "process": "new", "items": [{"id": "b"}]}},
+    )
+    assert merged["metadata"]["steps"] == ["new"]
+    assert merged["metadata"]["process"] == "new"
+    assert merged["metadata"]["items"] == [{"id": "a"}, {"id": "b"}]
+
+
+def test_merge_documents_requires_agreeing_spec_versions_and_merges_known_keys():
     merged = composition._merge_documents(
         base={"spec_version": "0.1", "other": "old", "steps": [{"id": "a"}]},
         incoming={
-            "spec_version": "0.2",
+            "spec_version": "0.1",
             "steps": [{"id": "b"}],
             "materials": [{"id": "flour"}],
             "process": {"id": "cookie"},
@@ -147,6 +154,9 @@ def test_merge_documents_preserves_existing_spec_version_and_merges_known_keys()
     assert merged["materials"] == [{"id": "flour"}]
     assert merged["process"] == {"id": "cookie"}
     assert merged["other"] == "new"
+
+    with pytest.raises(ValueError, match="spec_version must agree"):
+        composition._merge_documents({"spec_version": "0.1"}, {"spec_version": "0.2"})
 
 
 def test_ensure_unique_id_list_skips_non_dict_or_missing_id_and_raises_for_duplicate():
@@ -167,9 +177,9 @@ def test_resolve_includes_without_source_path_uses_current_working_directory(
     monkeypatch: pytest.MonkeyPatch,
 ):
     include_file = tmp_path / "fragment.yaml"
-    include_file.write_text("steps:\n  - id: s1\n", encoding="utf-8")
+    include_file.write_text("steps:\n  - id: s1\n    kind: start\n", encoding="utf-8")
 
     monkeypatch.chdir(tmp_path)
     composed = composition.resolve_includes({"include": "fragment.yaml"})
 
-    assert composed["steps"] == [{"id": "s1"}]
+    assert composed["steps"] == [{"id": "s1", "kind": "start"}]

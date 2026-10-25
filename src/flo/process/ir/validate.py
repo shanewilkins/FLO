@@ -29,16 +29,24 @@ from .validate_relations import (
 from .validate_render_intent import validate_render_intent
 from .validate_structure import validate_parallel_structure
 from .validate_subprocess import validate_subprocess_metadata
+from .validate_waits import validate_wait_measurements
 
 _QUANTITY_REL_TOL = 1e-9
 
 
-class _QuantityValidationError(ValidationError):
+class _LocatedValidationError(ValidationError):
+    """Retain a typed field path for source-boundary enrichment."""
+
+    def __init__(self, message: str, location: tuple[str | int, ...]) -> None:
+        super().__init__(message)
+        self.location = location
+
+
+class _QuantityValidationError(_LocatedValidationError):
     """Carry a quantity field location for source-boundary enrichment."""
 
     def __init__(self, message: str, field: str) -> None:
-        super().__init__(message)
-        self.location: tuple[str | int, ...] = (field,)
+        super().__init__(message, (field,))
 
 
 try:
@@ -71,9 +79,9 @@ def validate_ir(obj: Any) -> None:
     _validate_branch_points(obj, outgoing_counts)
     _validate_queue_nodes(obj, incoming_counts, outgoing_counts)
     _validate_queue_wait_time_semantics(obj)
-    _validate_wait_measurement_links(obj)
     _validate_node_io_lists(obj)
     _validate_node_time_metadata(obj)
+    validate_wait_measurements(obj)
     _validate_node_value_class(obj)
     validate_subprocess_metadata(obj)
     _validate_edge_metadata(obj)
@@ -309,92 +317,6 @@ def _validate_queue_wait_time_semantics(obj: IR) -> None:
                 )
 
 
-def _validate_wait_measurement_links(obj: IR) -> None:
-    nodes_by_id = {node.id: node for node in obj.nodes}
-    task_waits_by_id: dict[str, str] = {}
-    for node in obj.nodes:
-        if (node.type or "").lower() not in {"task", "system_task", "subprocess"}:
-            continue
-        task_wait = extract_node_metadata(node).get("wait_before")
-        if not isinstance(task_wait, dict):
-            continue
-        measurement_id = _measurement_id(task_wait)
-        if measurement_id is None:
-            continue
-        previous_node_id = task_waits_by_id.get(measurement_id)
-        if previous_node_id is not None:
-            raise ValidationError(
-                f"E1506: work nodes '{previous_node_id}' and '{node.id}' both "
-                f"declare wait measurement_id '{measurement_id}'. Give each "
-                "distinct wait measurement a unique ID."
-            )
-        task_waits_by_id[measurement_id] = node.id
-
-    for node in obj.nodes:
-        if (node.type or "").lower() != "queue":
-            continue
-        queue_wait = extract_node_metadata(node).get("wait_time")
-        if not isinstance(queue_wait, dict):
-            continue
-        for measurement_ref in _measurement_refs(queue_wait):
-            if measurement_ref not in task_waits_by_id:
-                raise ValidationError(
-                    f"E1507: queue '{node.id}' wait_time references unknown task "
-                    f"wait measurement_id '{measurement_ref}'. Correct the reference "
-                    "or add that measurement_id to a work-node wait_before."
-                )
-
-    for edge in obj.edges:
-        source = nodes_by_id.get(edge.source)
-        target = nodes_by_id.get(edge.target)
-        if source is None or target is None:
-            continue
-        if (source.type or "").lower() != "queue" or (
-            target.type or ""
-        ).lower() not in {"task", "system_task", "subprocess"}:
-            continue
-        queue_wait = extract_node_metadata(source).get("wait_time")
-        task_wait = extract_node_metadata(target).get("wait_before")
-        if not isinstance(queue_wait, dict) or not isinstance(task_wait, dict):
-            continue
-        queue_measurement_id = _measurement_id(queue_wait)
-        task_measurement_id = _measurement_id(task_wait)
-        queue_measurement_refs = _measurement_refs(queue_wait)
-        linked = task_measurement_id is not None and (
-            queue_measurement_id == task_measurement_id
-            or task_measurement_id in queue_measurement_refs
-        )
-        independently_identified = task_measurement_id is not None and (
-            queue_measurement_id is not None or bool(queue_measurement_refs)
-        )
-        if not linked and not independently_identified:
-            raise ValidationError(
-                f"E1505: queue '{source.id}' wait_time and work node '{target.id}' "
-                "wait_before describe the same queue-to-work boundary without a "
-                "clear measurement relationship. Link a repeated measurement, give "
-                "independent measurements distinct non-empty measurement_id values, or "
-                "keep the measurement on only one node."
-            )
-
-
-def _measurement_id(duration: dict[str, Any]) -> str | None:
-    value = duration.get("measurement_id")
-    if not isinstance(value, str) or not value.strip():
-        return None
-    return value.strip()
-
-
-def _measurement_refs(duration: dict[str, Any]) -> tuple[str, ...]:
-    value = duration.get("measurement_refs")
-    if not isinstance(value, list):
-        return ()
-    return tuple(
-        reference.strip()
-        for reference in value
-        if isinstance(reference, str) and reference.strip()
-    )
-
-
 def _validate_node_connectivity(
     obj: IR,
     incoming_counts: dict[str, int],
@@ -583,7 +505,8 @@ def _validate_node_time_metadata_value(node_id: str, key: str, value: Any) -> No
             not isinstance(reference, str) or not reference.strip()
             for reference in measurement_refs
         )
-        or len(set(measurement_refs)) != len(measurement_refs)
+        or len({reference.strip() for reference in measurement_refs})
+        != len(measurement_refs)
     ):
         raise ValidationError(
             f"E1305: {path}.measurement_refs must be a non-empty list of unique strings"
@@ -621,15 +544,37 @@ def _validate_resource_collection(
     seen_ids: set[str],
     location: tuple[str | int, ...],
 ) -> None:
+    try:
+        _validate_resource_collection_contents(
+            resource_key, collection, path, seen_ids, location
+        )
+    except _LocatedValidationError:
+        raise
+    except ValidationError as exc:
+        raise _LocatedValidationError(str(exc), location) from exc
+
+
+def _validate_resource_collection_contents(
+    resource_key: str,
+    collection: Any,
+    path: str,
+    seen_ids: set[str],
+    location: tuple[str | int, ...],
+) -> None:
     if isinstance(collection, list):
         for index, resource in enumerate(collection):
-            _validate_resource_item(
-                resource_key=resource_key,
-                path=f"{path}[{index}]",
-                resource=resource,
-                seen_ids=seen_ids,
-                location=(*location, index),
-            )
+            try:
+                _validate_resource_item(
+                    resource_key=resource_key,
+                    path=f"{path}[{index}]",
+                    resource=resource,
+                    seen_ids=seen_ids,
+                    location=(*location, index),
+                )
+            except _LocatedValidationError:
+                raise
+            except ValidationError as exc:
+                raise _LocatedValidationError(str(exc), (*location, index)) from exc
         return
 
     if isinstance(collection, dict):

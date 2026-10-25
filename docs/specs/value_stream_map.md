@@ -95,11 +95,17 @@ surface. For each declared consumer, the projection chooses the nearest
 producer that can reach it through canonical process edges. A consumer with no
 reachable producer is connected to the external input boundary; a producer
 with no reachable consumer is connected to the external output boundary.
+Flat and recursively grouped canonical item collections have identical flow
+meaning; group names and labels are not fabricated item IDs.
 
 The projection does not infer item flow from control flow alone and does not
 coerce unknown item kinds into either surface. Canonical work, queue,
-subprocess, system-task, and decision nodes anchor the map. Timing annotations
-consume the typed static timing result; absent timing remains visibly absent.
+subprocess, system-task, explicit hold, and decision nodes anchor the map.
+Timing annotations consume the typed static timing result; absent timing
+remains visibly absent. Work waiting uses canonical `wait_before`; queues and
+holds use `wait_time`. Cards retain declared waiting even when analysis
+deduplicates its contribution. A known zero is shown as zero, not as absent.
+Incomplete path evidence never becomes a complete timeline lead-time claim.
 
 An absent information or material surface produces a stable
 `value-stream-*-absent` diagnostic, a `value-stream-partial` CLI warning, and a

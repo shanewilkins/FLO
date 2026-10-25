@@ -9,7 +9,9 @@ import yaml
 
 from flo.diagnostics import render_diagnostic
 
+from .composition import SourceComposition
 from .models import source_path as format_source_path
+from .provenance import SourceOrigin
 
 _NODE_RE = re.compile(r"\bnode '([^']+)'")
 _EDGE_RE = re.compile(r"\bedge '([^']+)'\s*->\s*'([^']+)'")
@@ -44,10 +46,19 @@ def source_diagnostic(
     source_path: str | None,
     cause: BaseException | None = None,
     include_chain: tuple[str, ...] = (),
+    composition: SourceComposition | None = None,
+    document: dict | None = None,
 ) -> SourceDiagnostic:
     """Build a structured, best-available source diagnostic."""
     if not include_chain:
         include_chain = _include_chain_from(cause)
+    typed_path = _typed_error_path(cause)
+    origin, typed_path = _error_origin(
+        message, cause, typed_path, composition, document
+    )
+    if origin is not None and origin.content:
+        content, source_path = origin.content, origin.source
+        include_chain = include_chain or origin.include_chain
     lines = content.splitlines()
     if not lines:
         return _unlocated_diagnostic(
@@ -69,7 +80,7 @@ def source_diagnostic(
             include_chain=include_chain,
         )
 
-    typed_path = _authored_quantity_path(content, _typed_error_path(cause))
+    typed_path = _authored_quantity_path(content, typed_path)
     typed_mark = _yaml_path_mark(content, typed_path) if typed_path else None
     if typed_mark is not None:
         return _diagnostic_at(
@@ -187,23 +198,77 @@ def _typed_error_path(cause: BaseException | None) -> tuple:
     return ()
 
 
+def _error_origin(
+    message: str,
+    cause: BaseException | None,
+    path: tuple,
+    composition: SourceComposition | None,
+    document: dict | None,
+) -> tuple[SourceOrigin | None, tuple]:
+    current = cause
+    while current is not None:
+        content = getattr(current, "source_content", None)
+        if isinstance(content, str):
+            return SourceOrigin(
+                getattr(current, "source_path", None), content, ()
+            ), path
+        current = current.__cause__
+    if composition is None or document is None:
+        return None, path
+    if path:
+        path = _authored_collection_path(document, path)
+        for length in range(len(path), -1, -1):
+            origin = composition.origins.get(path[:length])
+            if origin is not None:
+                return origin, (*origin.location, *path[length:])
+    match = _NODE_RE.search(message)
+    node_path = (
+        _source_node_path(document.get("steps", []), match.group(1)) if match else None
+    )
+    if node_path is not None:
+        return composition.origins.get(node_path), path
+    return None, path
+
+
+def _source_node_path(
+    steps: list, node_id: str, prefix: tuple = ("steps",)
+) -> tuple | None:
+    if not isinstance(steps, list):
+        return None
+    for index, step in enumerate(steps):
+        if not isinstance(step, dict):
+            continue
+        path = (*prefix, index)
+        if step.get("id") == node_id:
+            return path
+        for key in ("steps", "subnodes"):
+            if isinstance(step.get(key), list):
+                found = _source_node_path(step[key], node_id, (*path, key))
+                if found is not None:
+                    return found
+    return None
+
+
 def _authored_quantity_path(content: str, path: tuple) -> tuple:
     """Resolve typed entity paths back to the selected authored collection."""
-    if (
-        not path
-        or path[0]
-        not in {"items", "resources", "locations", "materials", "equipment", "workers"}
-        or "quantity" not in path
-    ):
+    return _authored_collection_path(yaml.safe_load(content), path)
+
+
+def _authored_collection_path(document: object, path: tuple) -> tuple:
+    if not path or path[0] not in {
+        "items",
+        "resources",
+        "locations",
+        "materials",
+        "equipment",
+        "workers",
+    }:
         return path
-    document = yaml.safe_load(content)
     for prefix in ((), ("process",), ("process", "metadata")):
         container = document
         for key in prefix:
             container = container.get(key) if isinstance(container, dict) else None
-        if isinstance(container, dict) and isinstance(
-            container.get(path[0]), (dict, list)
-        ):
+        if isinstance(container, dict) and path[0] in container:
             return (*prefix, *path)
     return path
 
@@ -551,5 +616,7 @@ def _suggestion_for_code(message: str) -> str | None:
         ),
         "E1506": "Give each work-node waiting measurement a unique measurement_id.",
         "E1508": "Move active timing and wait_before to a work node; use a queue for wait_time.",
+        "E1509": "Use equivalent durations for one measurement_id, or give independent measurements distinct IDs.",
+        "E1510": "Set queue wait_time to the sum of distinct referenced work waits, using a separate ID for an aggregate.",
         "E1507": "Reference measurement_id values declared by work-node wait_before metadata.",
     }.get(code_match.group(1))

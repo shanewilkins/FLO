@@ -1,5 +1,8 @@
+import pytest
+
 from flo.process.analysis import inspect_process_model, project_value_stream
 from flo.process.ir.models import IR, Edge, Node
+from flo.process.ir.validate import validate_ir
 
 
 def test_value_stream_projection_separates_item_kinds_and_reuses_timing() -> None:
@@ -64,6 +67,28 @@ def test_value_stream_inspection_readiness_tracks_projection_surfaces() -> None:
     assert ready.readiness[0].status == "ready"
     assert partial.readiness[0].status == "partial"
     assert partial.readiness[0].findings[0].code == ("value-stream-information-absent")
+
+
+@pytest.mark.parametrize("groups", [("batch",), ("outer", "inner")])
+def test_grouped_items_project_identically_to_flat_items(groups) -> None:
+    process = _dual_flow_process()
+    expected = project_value_stream(process)
+    entries = process.items
+    for group in groups:
+        entries = {"name": "Group label", group: entries}
+    process.items = entries
+    validate_ir(process)
+    assert project_value_stream(process) == expected
+
+
+@pytest.mark.parametrize("seconds", [0, 300])
+def test_work_card_preserves_canonical_wait_before(seconds) -> None:
+    process = _dual_flow_process()
+    process.nodes[1].attrs["metadata"]["wait_before"] = {"value": seconds, "unit": "s"}
+    validate_ir(process)
+    result = project_value_stream(process)
+    assert result.nodes[0].wait_time_seconds == seconds
+    assert result.modeled_lead_time_seconds == 1260 + seconds
 
 
 def _dual_flow_process() -> IR:

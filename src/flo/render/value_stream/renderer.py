@@ -197,7 +197,7 @@ def _flow_x(
 def _node_card(node: Any, *, x: float, options: RenderOptions) -> list[str]:
     role_name = (
         "queue"
-        if node.node_type == "queue"
+        if node.node_type in {"queue", "wait"}
         else "decision"
         if node.node_type == "decision"
         else "surface"

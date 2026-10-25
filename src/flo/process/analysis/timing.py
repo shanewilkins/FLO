@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from math import fsum, isfinite
 from typing import Any, Literal
 
-from flo.process.durations import duration_seconds
+from flo.process.durations import duration_measurement_id, duration_seconds
 from flo.process.ir.metadata import extract_node_metadata
 from flo.process.ir.models import IR, Node
+from flo.process.ir.wait_measurements import (
+    WORK_NODE_TYPES as _WORK_NODE_TYPES,
+)
+from flo.process.ir.wait_measurements import queue_wait_projections
 
 from .graph import build_adjacency, enumerate_paths, has_cycle
 from .process_metadata import extract_process_metadata
@@ -17,7 +21,6 @@ from .process_metadata import extract_process_metadata
 TimingSeverity = Literal["info", "warning"]
 
 _MISSING = object()
-_WORK_NODE_TYPES = frozenset({"task", "system_task", "subprocess"})
 _PARALLEL_NODE_TYPES = frozenset({"parallel_split", "parallel_join"})
 _CHANGEOVER_FIELDS = ("crossover_time", "transfer_time", "changeover_time")
 _MAX_PATHS = 256
@@ -42,6 +45,7 @@ class TimingTotals:
     wait_time_seconds: float | None = None
     changeover_time_seconds: float | None = None
     _overflowed: bool = field(default=False, repr=False)
+    _incomplete: bool = field(default=False, repr=False)
 
     @property
     def elapsed_time_seconds(self) -> float | None:
@@ -55,7 +59,7 @@ class TimingTotals:
             )
             if value is not None
         )
-        return None if self._overflowed else _finite_sum(values)
+        return None if self._overflowed or self._incomplete else _finite_sum(values)
 
     def as_dict(self) -> dict[str, float | None]:
         """Return a stable JSON-compatible representation."""
@@ -75,6 +79,7 @@ class NodeTiming:
     node_type: str
     totals: TimingTotals
     changeover_source_field: str | None = None
+    declared_wait_time_seconds: float | None = None
 
     def as_dict(self) -> dict[str, Any]:
         """Return a stable JSON-compatible representation."""
@@ -82,6 +87,7 @@ class NodeTiming:
             "node_id": self.node_id,
             "node_type": self.node_type,
             "changeover_source_field": self.changeover_source_field,
+            "declared_wait_time_seconds": self.declared_wait_time_seconds,
             "totals": self.totals.as_dict(),
         }
 
@@ -123,7 +129,9 @@ class ProcessTimingAnalysis:
     @property
     def timing_complete(self) -> bool:
         """Return whether every time-bearing node declares its expected timing."""
-        return not self.missing_timing_node_ids
+        return not self.missing_timing_node_ids and all(
+            path.complete for path in self.paths
+        )
 
     @property
     def modeled_lead_time_seconds(self) -> float | None:
@@ -180,15 +188,20 @@ def analyze_process_timing(process: IR) -> ProcessTimingAnalysis:
         raise TypeError("analyze_process_timing requires canonical IR")
 
     diagnostics: list[TimingDiagnostic] = []
-    projected_queue_waits = _projected_queue_wait_measurements(process)
-    node_timings = tuple(
+    projections = queue_wait_projections(process)
+    queue_measurements = {
+        node.id: duration_measurement_id(extract_node_metadata(node).get("wait_time"))
+        for node in process.nodes
+        if node.type.lower() == "queue"
+    }
+    raw_timings = tuple(
         _analyze_node_timing(
             node,
             diagnostics=diagnostics,
-            suppress_wait=node.id in projected_queue_waits,
         )
         for node in sorted(process.nodes, key=lambda item: item.id)
     )
+    node_timings = _inventory_timings(raw_timings, projections, queue_measurements)
     timing_by_node = {timing.node_id: timing for timing in node_timings}
     invalid_node_ids = {
         item.node_id for item in diagnostics if item.code == "timing-invalid-duration"
@@ -224,6 +237,14 @@ def analyze_process_timing(process: IR) -> ProcessTimingAnalysis:
         timing_by_node=timing_by_node,
         missing_node_ids=frozenset(missing_node_ids),
         diagnostics=diagnostics,
+        projections=projections,
+        queue_measurements=queue_measurements,
+    )
+    missing_node_ids = tuple(
+        sorted(
+            set(missing_node_ids)
+            | {node_id for path in paths for node_id in path.missing_node_ids}
+        )
     )
     process_metadata = extract_process_metadata(process)
     process_id = _process_identity_text(
@@ -255,7 +276,6 @@ def _analyze_node_timing(
     node: Node,
     *,
     diagnostics: list[TimingDiagnostic],
-    suppress_wait: bool = False,
 ) -> NodeTiming:
     metadata = extract_node_metadata(node)
     node_type = node.type.strip().lower()
@@ -288,69 +308,33 @@ def _analyze_node_timing(
         node_type=node_type,
         totals=TimingTotals(
             cycle_time_seconds=cycle_seconds,
-            wait_time_seconds=None if suppress_wait else wait_seconds,
+            wait_time_seconds=wait_seconds,
             changeover_time_seconds=changeover_seconds,
         ),
         changeover_source_field=changeover_field,
+        declared_wait_time_seconds=wait_seconds,
     )
 
 
-def _projected_queue_wait_measurements(process: IR) -> frozenset[str]:
-    nodes_by_id = {node.id: node for node in process.nodes}
-    task_wait_ids = {
-        measurement_id
-        for node in process.nodes
-        if (node.type or "").lower() in _WORK_NODE_TYPES
-        if isinstance(task_wait := extract_node_metadata(node).get("wait_before"), dict)
-        if (measurement_id := _duration_measurement_id(task_wait)) is not None
-    }
-    projected_queue_ids: set[str] = set()
-    for node in process.nodes:
-        if (node.type or "").lower() != "queue":
-            continue
-        queue_wait = extract_node_metadata(node).get("wait_time")
-        if not isinstance(queue_wait, dict):
-            continue
-        refs = _duration_measurement_refs(queue_wait)
-        if refs and all(reference in task_wait_ids for reference in refs):
-            projected_queue_ids.add(node.id)
-
-    for edge in process.edges:
-        source = nodes_by_id.get(edge.source)
-        target = nodes_by_id.get(edge.target)
-        if source is None or target is None:
-            continue
-        if (source.type or "").lower() != "queue" or (
-            target.type or ""
-        ).lower() not in _WORK_NODE_TYPES:
-            continue
-        queue_wait = extract_node_metadata(source).get("wait_time")
-        task_wait = extract_node_metadata(target).get("wait_before")
-        if not isinstance(queue_wait, dict) or not isinstance(task_wait, dict):
-            continue
-        queue_id = _duration_measurement_id(queue_wait)
-        task_id = _duration_measurement_id(task_wait)
-        if queue_id is not None and queue_id == task_id:
-            projected_queue_ids.add(source.id)
-    return frozenset(projected_queue_ids)
-
-
-def _duration_measurement_id(duration: dict[str, Any]) -> str | None:
-    value = duration.get("measurement_id")
-    if not isinstance(value, str) or not value.strip():
-        return None
-    return value.strip()
-
-
-def _duration_measurement_refs(duration: dict[str, Any]) -> tuple[str, ...]:
-    value = duration.get("measurement_refs")
-    if not isinstance(value, list):
-        return ()
-    return tuple(
-        reference.strip()
-        for reference in value
-        if isinstance(reference, str) and reference.strip()
-    )
+def _inventory_timings(
+    timings: tuple[NodeTiming, ...],
+    projections: dict[str, frozenset[str]],
+    queue_measurements: dict[str, str | None],
+) -> tuple[NodeTiming, ...]:
+    seen_ids: set[str] = set()
+    inventory: list[NodeTiming] = []
+    for timing in timings:
+        measurement_id = queue_measurements.get(timing.node_id)
+        if timing.node_id in projections or (
+            measurement_id is not None and measurement_id in seen_ids
+        ):
+            timing = replace(
+                timing, totals=replace(timing.totals, wait_time_seconds=None)
+            )
+        elif measurement_id is not None:
+            seen_ids.add(measurement_id)
+        inventory.append(timing)
+    return tuple(inventory)
 
 
 def _duration_seconds(
@@ -410,7 +394,7 @@ def _select_changeover_field(
 
 def _expected_timing_field(node: Node) -> str | None:
     node_type = node.type.strip().lower()
-    if node_type == "queue":
+    if node_type in {"queue", "wait"}:
         return "wait_time"
     if node_type in _WORK_NODE_TYPES:
         return "cycle_time"
@@ -434,6 +418,8 @@ def _analyze_paths(
     timing_by_node: dict[str, NodeTiming],
     missing_node_ids: frozenset[str],
     diagnostics: list[TimingDiagnostic],
+    projections: dict[str, frozenset[str]],
+    queue_measurements: dict[str, str | None],
 ) -> tuple[TimingPath, ...]:
     if any(node.type.strip().lower() in _PARALLEL_NODE_TYPES for node in process.nodes):
         diagnostics.append(
@@ -507,6 +493,8 @@ def _analyze_paths(
             timing_by_node=timing_by_node,
             missing_node_ids=missing_node_ids,
             diagnostics=diagnostics,
+            projections=projections,
+            queue_measurements=queue_measurements,
         )
         for path in raw_paths
     )
@@ -530,13 +518,43 @@ def _build_timing_path(
     timing_by_node: dict[str, NodeTiming],
     missing_node_ids: frozenset[str],
     diagnostics: list[TimingDiagnostic],
+    projections: dict[str, frozenset[str]],
+    queue_measurements: dict[str, str | None],
 ) -> TimingPath:
+    uncovered = {
+        node_id
+        for node_id in node_ids
+        if node_id in projections and not projections[node_id].issubset(node_ids)
+    }
+    for node_id in sorted(uncovered):
+        if not any(
+            item.code == "timing-projection-incomplete" and item.node_id == node_id
+            for item in diagnostics
+        ):
+            diagnostics.append(
+                TimingDiagnostic(
+                    code="timing-projection-incomplete",
+                    severity="warning",
+                    message=f"Some paths through queue '{node_id}' lack its full referenced waiting evidence; affected path elapsed totals are unavailable.",
+                    node_id=node_id,
+                    field="wait_time",
+                )
+            )
     missing_on_path = tuple(
-        node_id for node_id in node_ids if node_id in missing_node_ids
+        node_id
+        for node_id in node_ids
+        if node_id in missing_node_ids or node_id in uncovered
     )
+    seen_ids: set[str] = set()
     totals = _sum_totals(
         (
-            timing_by_node[node_id].totals
+            _path_node_totals(
+                timing_by_node[node_id],
+                projections=projections,
+                queue_measurements=queue_measurements,
+                seen_ids=seen_ids,
+                uncovered=uncovered,
+            )
             for node_id in node_ids
             if node_id in timing_by_node
         ),
@@ -547,6 +565,32 @@ def _build_timing_path(
         totals=totals,
         complete=not missing_on_path and not totals._overflowed,
         missing_node_ids=missing_on_path,
+    )
+
+
+def _path_node_totals(
+    timing: NodeTiming,
+    *,
+    projections: dict[str, frozenset[str]],
+    queue_measurements: dict[str, str | None],
+    seen_ids: set[str],
+    uncovered: set[str],
+) -> TimingTotals:
+    if timing.node_id in projections:
+        return replace(
+            timing.totals,
+            wait_time_seconds=None,
+            _incomplete=timing.node_id in uncovered,
+        )
+    if timing.node_type != "queue":
+        return timing.totals
+    measurement_id = queue_measurements.get(timing.node_id)
+    repeated = measurement_id is not None and measurement_id in seen_ids
+    if measurement_id is not None:
+        seen_ids.add(measurement_id)
+    return replace(
+        timing.totals,
+        wait_time_seconds=None if repeated else timing.declared_wait_time_seconds,
     )
 
 
@@ -565,7 +609,7 @@ def _sum_totals(
         )
     )
     sums = tuple(_finite_sum(category) for category in categories)
-    overflowed = any(
+    overflowed = any(item._overflowed for item in totals) or any(
         category and total is None
         for category, total in zip(categories, sums, strict=True)
     )
@@ -583,7 +627,11 @@ def _sum_totals(
                 message="Timing totals exceed the finite numeric range; affected elapsed totals are unavailable.",
             )
         )
-    return TimingTotals(*sums, _overflowed=overflowed)
+    return TimingTotals(
+        *sums,
+        _overflowed=overflowed,
+        _incomplete=any(item._incomplete for item in totals),
+    )
 
 
 def _finite_sum(values: Iterable[float]) -> float | None:

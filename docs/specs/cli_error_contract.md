@@ -96,7 +96,7 @@ retaining producer-specific data. Equivalent records differing only in delivery
 stage are emitted once. Existing diagnostic codes and fatal exit mappings remain
 unchanged; warning-only success remains exit 0.
 
-`timing-incomplete` aggregates omitted applicable processing, queue waiting,
+`timing-incomplete` aggregates omitted applicable processing, queue/hold waiting,
 pre-task waiting, and setup fields into one warning per operation. Details list
 affected node IDs and fields. Explicit integer/floating-point zero is measured;
 invalid declared values retain fatal source validation instead of becoming
@@ -135,6 +135,10 @@ Missing fields use the closest available enclosing mark. Existing compiler
 codes and compile-error exit status remain in effect; model-library error dumps
 are not the user-facing diagnostic format. Other producers retain their existing
 location enrichment when adapted into the common operation report.
+Included fragments undergo present-field shape validation before composition;
+these structural failures retain compile exit `3`, originating-file paths,
+authored indices, excerpts, and include chains. The complete composed model
+still undergoes ordinary compiler and semantic/schema validation.
 
 `flo validate --format json` emits this record as deterministic JSON through
 the diagnostic stream. The default `--format text` renders the same record in
@@ -151,6 +155,21 @@ These are validation failures (exit `4`), not warnings. The common report
 retains authored collection/group paths, source excerpts, and repair guidance.
 Existing malformed-value/unit codes remain unchanged. Export, inspect, and
 render stop before producing a payload for invalid canonical quantities.
+
+## Waiting evidence diagnostics
+
+`E1509` rejects contradictory copies of one waiting `measurement_id`.
+`E1510` rejects a queue duration unequal to its finite referenced sum or
+contradictory aggregate identity. Both are semantic validation failures (exit
+`4`) with source context and repair guidance. Duration equivalence uses
+normalized seconds, relative tolerance `1e-9`, and absolute tolerance `0`.
+Duplicate references, including whitespace-equivalent IDs, retain `E1305`.
+
+`timing-projection-incomplete` warns when a queue-traversing path lacks the full
+referenced work waiting evidence. Affected path elapsed totals and a complete
+process lead-time range are unavailable. An unmeasured explicit hold joins the
+aggregated `timing-incomplete` warning. These warnings do not turn otherwise
+successful validate, inspect, export, or render operations into failures.
 
 ## Projection capability diagnostics
 

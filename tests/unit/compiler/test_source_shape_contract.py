@@ -53,12 +53,13 @@ def test_compile_rejects_duplicate_ids_across_subprocess_hierarchy() -> None:
         compile_adapter(cast(Any, _model(steps)))
 
 
-def test_compile_rejects_nested_steps_on_non_subprocess() -> None:
+@pytest.mark.parametrize("children", ["steps", "subnodes"])
+def test_compile_rejects_nested_steps_on_non_subprocess(children: str) -> None:
     steps = [
         {
             "id": "work",
             "kind": "task",
-            "subnodes": [{"id": "nested", "kind": "task"}],
+            children: [{"id": "nested", "kind": "task"}],
         }
     ]
 

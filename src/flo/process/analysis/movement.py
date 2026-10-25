@@ -5,6 +5,7 @@ from __future__ import annotations
 from math import hypot, isfinite
 from typing import Any, TypeGuard
 
+from flo.process.collections import iter_collection_entries
 from flo.process.ir.metadata import extract_process_field
 from flo.process.units import SPATIAL_UNITS, length_in_metres
 
@@ -277,7 +278,7 @@ def extract_location_spatial_index(process: Any) -> dict[str, dict[str, Any]]:
     collection = extract_process_field(process, "locations")
 
     index: dict[str, dict[str, Any]] = {}
-    for item in _iter_resource_items(collection):
+    for item in iter_collection_entries(collection):
         if not isinstance(item, dict):
             continue
         location_id = _as_text(item.get("id"))
@@ -372,26 +373,6 @@ def _extract_edges(process: Any) -> list[dict[str, Any]]:
         if isinstance(edges_raw, list):
             return [edge for edge in edges_raw if isinstance(edge, dict)]
     return []
-
-
-def _iter_resource_items(collection: Any):
-    if isinstance(collection, list):
-        for item in collection:
-            yield item
-        return
-
-    if not isinstance(collection, dict):
-        return
-
-    for key, value in collection.items():
-        if key == "name":
-            continue
-        if key in {"items", "entries"} and isinstance(value, list):
-            for item in value:
-                yield item
-            continue
-        if isinstance(value, (dict, list)):
-            yield from _iter_resource_items(value)
 
 
 def _extract_spatial(resource: dict[str, Any]) -> dict[str, Any] | None:

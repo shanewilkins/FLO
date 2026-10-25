@@ -329,6 +329,21 @@ records compatibility decisions and local verification. Duration conversion is
 integrated through the shared Pint boundary, as is measured resource canonical
 equivalence. No release has been assigned or published.
 
+#### Semantic integrity follow-up: implemented
+
+Close the reproduced post-migration source and analysis gaps before installed
+distribution acceptance: partial-fragment validation before composition,
+additive canonical/legacy collection merging with originating-file diagnostics,
+strict child ownership, and rejection of malformed legacy collections.
+Waiting evidence now enforces shared-ID equivalence and additive reference sums;
+deduplication is path-local, uncovered projections warn rather than claim
+complete elapsed time, and explicit holds participate in timing coverage.
+Value-stream maps preserve grouped items and authored canonical waiting.
+These are semantic corrections, not new FLO syntax; measured zero and
+warning-only success remain unchanged. Parallel elapsed-time semantics remain
+deferred. See [core language](specs/core_language.md) and
+[static analysis](specs/static_analysis.md) for the accepted contracts.
+
 ### 0.5: Yellow Belt Delivery
 
 - Complete the accepted multi-page SPPM publication boundary, including Typst

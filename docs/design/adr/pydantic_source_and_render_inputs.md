@@ -18,6 +18,21 @@ shorthand, and effective branch configuration. The compiler validates these
 shapes before normalization. Normalization and IR assembly trust that boundary;
 their superseded structural guards are removed.
 
+Include composition uses a partial source model: validate shapes for fields
+present in each fragment before merging, without requiring standalone process
+identity or a complete flow. The composed document then passes the full source
+model and domain validators. Both child spellings require a subprocess owner.
+Known collection shapes are checked at all supported placements rather than
+silently selecting around malformed legacy input.
+
+Canonical and legacy collections compose additively across supported placements;
+duplicate IDs remain errors, not an inheritance/override feature. Explicit
+language versions must be supported and agree; fragments may omit them.
+Unknown metadata retains its existing overlay behavior. Composition privately
+tracks authored container origins so post-merge diagnostics can recover the
+original file, indices, excerpts, and include chain without adding provenance
+to canonical IR or exchange.
+
 The validated models do not replace the authored mapping passed to assembly.
 This preserves omitted keys, integer/string version identity, unknown metadata,
 child spelling, boolean outcome names, and existing attrs-overlay precedence.

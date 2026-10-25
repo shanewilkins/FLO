@@ -5,15 +5,15 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
-from flo.process.ir.metadata import extract_node_metadata
+from flo.process.collections import iter_collection_entries
 from flo.process.ir.models import IR, Node
 
 from .process_metadata import extract_process_metadata
-from .timing import analyze_process_timing
+from .timing import NodeTiming, analyze_process_timing
 
 FlowKind = Literal["information", "material"]
 _VISIBLE_NODE_TYPES = frozenset(
-    {"task", "system_task", "subprocess", "queue", "decision"}
+    {"task", "system_task", "subprocess", "queue", "wait", "decision"}
 )
 
 
@@ -108,19 +108,16 @@ def project_value_stream(process: IR) -> ValueStreamProjection:
     )
 
 
-def _project_node(node: Node, *, timing_by_node: dict[str, Any]) -> ValueStreamNode:
-    metadata = extract_node_metadata(node)
+def _project_node(
+    node: Node, *, timing_by_node: dict[str, NodeTiming]
+) -> ValueStreamNode:
     timing = timing_by_node[node.id]
     return ValueStreamNode(
         node_id=node.id,
         name=str((node.attrs or {}).get("name") or node.id),
         node_type=node.type,
-        cycle_time_seconds=(
-            timing.totals.cycle_time_seconds if "cycle_time" in metadata else None
-        ),
-        wait_time_seconds=(
-            timing.totals.wait_time_seconds if "wait_time" in metadata else None
-        ),
+        cycle_time_seconds=timing.totals.cycle_time_seconds,
+        wait_time_seconds=timing.declared_wait_time_seconds,
         changeover_time_seconds=(
             timing.totals.changeover_time_seconds
             if timing.changeover_source_field is not None
@@ -139,7 +136,7 @@ def _project_item_flows(
         "information": [],
         "material": [],
     }
-    for item in _item_entries(process.items):
+    for item in iter_collection_entries(process.items):
         kind = _flow_kind(item)
         if kind is None:
             continue
@@ -287,18 +284,6 @@ def _flow_diagnostics(
             )
         )
     return tuple(diagnostics)
-
-
-def _item_entries(value: Any) -> tuple[dict[str, Any], ...]:
-    if isinstance(value, list):
-        return tuple(item for item in value if isinstance(item, dict))
-    if isinstance(value, dict):
-        return tuple(
-            {"id": item_id, **item}
-            for item_id, item in value.items()
-            if isinstance(item, dict)
-        )
-    return ()
 
 
 def _text_values(value: Any) -> frozenset[str]:

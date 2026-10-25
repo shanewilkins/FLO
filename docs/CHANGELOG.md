@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- Close semantic data-loss gaps: reject either nested-child spelling on
+  non-subprocess steps, validate present include-fragment shapes before merging,
+  enforce supported agreeing language versions, and compose canonical and
+  legacy collections additively across supported placements. Reject malformed
+  legacy collections instead of discarding them. Retain originating-file
+  diagnostic context after composition; unknown metadata keeps overlay semantics.
+- Enforce waiting-measurement identity and additive queue projections (`E1509`,
+  `E1510`) with relative tolerance `1e-9`, absolute tolerance `0`. Deduplicate
+  per path; uncovered projections warn and withhold complete elapsed totals.
+  Include explicit holds in timing coverage without making missing measurements
+  fatal. Preserve measured zero and warning-only success.
+- Preserve recursively grouped items and canonical work waiting in value-stream
+  maps. Retain authored queue waiting separately from counted contributions,
+  and show explicit holds without inventing missing durations.
+
 - Validate measured resource canonical pairs through the shared Pint registry.
   Keep FLO source/JSON syntax, supported units, authored quantities, and count
   rules unchanged, but intentionally reject incompatible dimensions (`E1222`),
