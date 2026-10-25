@@ -3,40 +3,26 @@
 from __future__ import annotations
 
 import contextlib
-import json
 import sys
 import uuid
-from dataclasses import asdict
 from typing import Any
 
 import click
-from structlog.contextvars import bind_contextvars, unbind_contextvars
 
 from flo.app.render_option_schema import iter_render_option_specs
+
+from .diagnostic_delivery import (
+    _deliver_diagnostics,
+    _emit_error,
+    _handle_nonzero_run_content_result,
+    _handle_run_content_exception,
+    _safe_set_span_attr,
+    _write_output_or_emit_failure,
+)
 
 # ---------------------------------------------------------------------------
 # Shared execution helper (used by both Click handlers and console_main)
 # ---------------------------------------------------------------------------
-
-
-def _emit_error(services: Any, message: str, **event_fields: object) -> None:
-    """Emit a user-facing error message plus structured context fields.
-
-    The message contract remains unchanged (stderr), while event fields are
-    attached through structlog contextvars for observability backends.
-    """
-    bound_keys = tuple(key for key, value in event_fields.items() if value is not None)
-    try:
-        bind_contextvars(**{key: event_fields[key] for key in bound_keys})
-    except Exception:
-        bound_keys = ()
-
-    try:
-        services.error_handler(message)
-    finally:
-        if bound_keys:
-            with contextlib.suppress(Exception):
-                unbind_contextvars(*bound_keys)
 
 
 def _get_flo_version() -> str:  # pragma: no cover - importlib optional
@@ -47,157 +33,6 @@ def _get_flo_version() -> str:  # pragma: no cover - importlib optional
         return _meta.version("flo-lang")
     except Exception:
         return "unknown"
-
-
-def _safe_set_span_attr(span: Any, key: str, value: object) -> None:
-    setter = getattr(span, "set_attribute", None)
-    if callable(setter):
-        with contextlib.suppress(Exception):
-            setter(key, value)
-
-
-def _safe_add_span_event(
-    span: Any, event_name: str, attributes: dict[str, object]
-) -> None:
-    add_event = getattr(span, "add_event", None)
-    if callable(add_event):
-        with contextlib.suppress(Exception):
-            add_event(event_name, attributes)
-
-
-def _handle_run_content_exception(
-    *,
-    root_span: Any,
-    exc: Exception,
-    services: Any,
-    command: str,
-    command_id: str,
-    effective_path: str,
-    diagnostic_format: str = "text",
-) -> int:
-    from flo.app.telemetry import record_span_error
-    from flo.errors import map_exception_to_rc
-
-    mapped_rc, msg, internal, error_stage = map_exception_to_rc(exc)
-    diagnostic = getattr(exc, "diagnostic", None)
-    if diagnostic_format == "json" and diagnostic is not None:
-        msg = json.dumps(asdict(diagnostic), sort_keys=True)
-    stage = error_stage or "run_content"
-    _safe_set_span_attr(root_span, "flo.exit_code", mapped_rc)
-    _safe_set_span_attr(root_span, "flo.error.stage", stage)
-    record_span_error(root_span, msg or "")
-    display_msg = f"Unexpected error: {msg or 'internal error'}" if internal else msg
-    _emit_error(
-        services,
-        display_msg,
-        error_kind="internal" if internal else "domain",
-        error_stage=stage,
-        exit_code=mapped_rc,
-        internal=internal,
-        command=command,
-        command_id=command_id,
-        path=effective_path,
-    )
-    return mapped_rc
-
-
-def _handle_nonzero_run_content_result(
-    *,
-    root_span: Any,
-    rc: int,
-    err: str | None,
-    services: Any,
-    command: str,
-    command_id: str,
-    effective_path: str,
-) -> int:
-    from flo.app.telemetry import record_span_error
-
-    _safe_set_span_attr(root_span, "flo.exit_code", rc)
-    record_span_error(root_span, err or f"command failed with exit code {rc}")
-    if err:
-        _emit_error(
-            services,
-            err,
-            error_kind="domain",
-            error_stage="run_content",
-            exit_code=rc,
-            internal=False,
-            command=command,
-            command_id=command_id,
-            path=effective_path,
-        )
-    return rc
-
-
-def _handle_degraded_success(
-    *,
-    root_span: Any,
-    err: str | None,
-    options: dict,
-    services: Any,
-    command: str,
-    command_id: str,
-    effective_path: str,
-) -> None:
-    if not err:
-        return
-    _safe_set_span_attr(root_span, "flo.degraded", True)
-    _safe_set_span_attr(root_span, "flo.degraded_reason", err)
-    _safe_add_span_event(root_span, "flo.degraded", {"flo.degraded_reason": err})
-    user_visible_partial = err.startswith(
-        ("spaghetti-missing-spatial:", "value-stream-partial:")
-    )
-    if options.get("verbose") or user_visible_partial:
-        _emit_error(
-            services,
-            f"Warning: {err}",
-            error_kind="diagnostic",
-            error_stage=(
-                "partial_render" if user_visible_partial else "fail_open_fallback"
-            ),
-            exit_code=0,
-            internal=False,
-            command=command,
-            command_id=command_id,
-            path=effective_path,
-        )
-
-
-def _write_output_or_emit_failure(
-    *,
-    root_span: Any,
-    out: str | None,
-    options: dict,
-    services: Any,
-    command: str,
-    command_id: str,
-    effective_path: str,
-) -> int | None:
-    from flo.app.io import write_output
-    from flo.app.telemetry import record_span_error
-
-    if not out:
-        return None
-    _safe_set_span_attr(root_span, "flo.output.bytes", len(out))
-    _safe_set_span_attr(root_span, "flo.output.to_file", bool(options.get("output")))
-    write_rc, write_err = write_output(out, options.get("output"))
-    if write_rc == 0:
-        return None
-    _safe_set_span_attr(root_span, "flo.exit_code", write_rc)
-    record_span_error(root_span, write_err or "")
-    _emit_error(
-        services,
-        write_err,
-        error_kind="io",
-        error_stage="write_output",
-        exit_code=write_rc,
-        internal=False,
-        command=command,
-        command_id=command_id,
-        path=effective_path,
-    )
-    return write_rc
 
 
 def _execute_span_body(
@@ -212,7 +47,7 @@ def _execute_span_body(
 
     Returns an integer exit code.
     """
-    from flo.app import run_content
+    from flo.app import run_operation
     from flo.app.io import read_input
     from flo.app.telemetry import record_span_error
 
@@ -228,6 +63,7 @@ def _execute_span_body(
         _emit_error(
             services,
             err,
+            diagnostics_format=options.get("diagnostics_format", "text"),
             error_kind="io",
             error_stage="read_input",
             exit_code=rc,
@@ -244,7 +80,8 @@ def _execute_span_body(
     _safe_set_span_attr(root_span, "flo.options.count", len(run_options))
 
     try:
-        rc, out, err = run_content(content, command=command, options=run_options)
+        result = run_operation(content, command=command, options=run_options)
+        rc, out, err = result.as_tuple()
     except Exception as exc:
         return _handle_run_content_exception(
             root_span=root_span,
@@ -254,6 +91,7 @@ def _execute_span_body(
             command_id=command_id,
             effective_path=effective_path,
             diagnostic_format=str(options.get("diagnostic_format", "text")),
+            diagnostics_format=str(options.get("diagnostics_format", "text")),
         )
 
     if rc != 0:
@@ -267,16 +105,6 @@ def _execute_span_body(
             effective_path=effective_path,
         )
 
-    _handle_degraded_success(
-        root_span=root_span,
-        err=err,
-        options=options,
-        services=services,
-        command=command,
-        command_id=command_id,
-        effective_path=effective_path,
-    )
-
     write_failure_rc = _write_output_or_emit_failure(
         root_span=root_span,
         out=out,
@@ -285,9 +113,20 @@ def _execute_span_body(
         command=command,
         command_id=command_id,
         effective_path=effective_path,
+        prior_report=result.report,
     )
     if write_failure_rc is not None:
         return write_failure_rc
+
+    _deliver_diagnostics(
+        root_span=root_span,
+        report=result.report,
+        options=options,
+        services=services,
+        command=command,
+        command_id=command_id,
+        effective_path=effective_path,
+    )
 
     _safe_set_span_attr(root_span, "flo.exit_code", rc)
     return rc
@@ -395,9 +234,12 @@ def _build_render_opts(
     sppm_max_label_step_name: int | None,
     sppm_max_label_workers: int | None,
     sppm_max_label_ctwt: int | None,
+    diagnostics_format: str = "text",
 ) -> dict:  # pragma: no cover - thin helper
     """Build a normalized options dict from Click-parsed render parameters."""
     opts: dict = {"verbose": verbose, "output": output}
+    if diagnostics_format != "text":
+        opts["diagnostics_format"] = diagnostics_format
     if export_fmt:
         opts["export"] = export_fmt
     for key, value in (
@@ -497,6 +339,12 @@ cli.add_command(new_cmd)
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.option("-o", "--output", help="Write output to file")
 @click.option(
+    "--diagnostics-format",
+    type=click.Choice(["text", "json"]),
+    default="text",
+    help="Operation diagnostic report on stderr.",
+)
+@click.option(
     "--export",
     "export_fmt",
     type=click.Choice(["svg", "typst", "json", "ingredients", "movement"]),
@@ -509,6 +357,7 @@ def render_cmd(
     verbose: bool,
     output: str | None,
     export_fmt: str | None,
+    diagnostics_format: str,
     diagram: str | None,
     render_backend: str | None,
     profile: str | None,
@@ -555,6 +404,7 @@ def render_cmd(
         verbose=verbose,
         output=output,
         export_fmt=export_fmt,
+        diagnostics_format=diagnostics_format,
         diagram=diagram,
         render_backend=render_backend,
         profile=profile,
@@ -614,10 +464,17 @@ validate_cmd, inspect_cmd = register_model_commands(cli, _execute_request)
 )
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.option("-o", "--output", help="Write output to file")
+@click.option(
+    "--diagnostics-format",
+    type=click.Choice(["text", "json"]),
+    default="text",
+    help="Operation diagnostic report on stderr.",
+)
 @_apply_render_click_options(include_render_to=False)
 def export_cmd(
     path: str | None,
     export_fmt: str,
+    diagnostics_format: str,
     verbose: bool,
     output: str | None,
     diagram: str | None,
@@ -664,6 +521,7 @@ def export_cmd(
         verbose=verbose,
         output=output,
         export_fmt=export_fmt,
+        diagnostics_format=diagnostics_format,
         diagram=diagram,
         render_backend=render_backend,
         profile=profile,

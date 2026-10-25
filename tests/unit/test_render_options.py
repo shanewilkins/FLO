@@ -240,3 +240,63 @@ def test_sppm_no_footer_flag_disables_footer_band():
     )
     assert options.sppm_show_header is True
     assert options.sppm_show_footer is False
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ({"orientation": "top_to_bottom"}, {"orientation": "tb"}),
+        ({"layout_wrap": True}, {"layout_wrap": "auto"}),
+        ({"layout_fit": "strict"}, {"layout_fit": "fit-strict"}),
+        ({"layout_spacing": "tight"}, {"layout_spacing": "compact"}),
+        ({"spaghetti_channel": "materials"}, {"spaghetti_channel": "material"}),
+        ({"spaghetti_people_mode": "per_worker"}, {"spaghetti_people_mode": "worker"}),
+        ({"profile": "analysis"}, {"spaghetti_people_mode": "worker"}),
+        (
+            {"subprocess_view": "child-map"},
+            {"subprocess_view": "child_map", "sppm_projection": "child_map"},
+        ),
+        ({"sppm_wrap_strategy": "character"}, {"sppm_wrap_strategy": "hard"}),
+        ({"sppm_truncation_policy": "disabled"}, {"sppm_truncation_policy": "none"}),
+        ({"layout_target_columns": "6"}, {"layout_target_columns": 6}),
+        ({"layout_target_columns": 6.0}, {"layout_target_columns": 6}),
+    ],
+)
+def test_shared_model_preserves_aliases_through_cli_and_render_boundaries(
+    raw, expected
+):
+    from flo.app._option_validation import validate_render_options
+
+    original = dict(raw)
+    direct = RenderOptions.from_mapping(raw)
+    via_application = RenderOptions.from_mapping(validate_render_options(raw))
+
+    for key, value in expected.items():
+        assert getattr(direct, key) == value
+        assert getattr(via_application, key) == value
+    assert raw == original
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        {"layout_target_columns": True},
+        {"layout_target_columns": 1.5},
+        {"layout_width": "0cm"},
+        {"publication_page_format": "unknown"},
+        {"typography_scale": True},
+        {"themes": {"bad": False}},
+        {"orientation": []},
+        {"sppm_output_profile": {}},
+        {"subprocess_view": []},
+    ],
+)
+def test_shared_model_rejects_malformed_values_at_both_boundaries(raw):
+    from flo.app._option_validation import validate_render_options
+    from flo.errors import CLIError
+
+    key = next(iter(raw))
+    with pytest.raises(ValueError, match=key):
+        RenderOptions.from_mapping(raw)
+    with pytest.raises(CLIError, match=key):
+        validate_render_options(raw)

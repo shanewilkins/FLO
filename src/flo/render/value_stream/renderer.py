@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict
 from html import escape
 from typing import Any
 
@@ -96,6 +97,9 @@ def render_value_stream_svg_artifact(
             metadata={
                 "diagram": "value_stream",
                 "partial": projection.partial,
+                "projection_diagnostics": tuple(
+                    asdict(item) for item in projection.diagnostics
+                ),
                 **({"warning": warning} if warning else {}),
             },
         ),

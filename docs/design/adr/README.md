@@ -25,6 +25,8 @@ Normative behavior still belongs in `docs/specs/` and governance rules belong in
 
 Current ADRs:
 
+- `pydantic_source_and_render_inputs.md`
+- `quantity_validation_and_units.md`
 - `language_primitive_taxonomy.md`
 - `canonical_ir_metadata_and_subprocess_hierarchy.md`
 - `measurement_profiles_and_evidence.md`

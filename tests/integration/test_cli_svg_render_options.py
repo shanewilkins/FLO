@@ -458,7 +458,7 @@ def test_run_value_stream_svg_export_emits_dual_flow_surface():
     assert 'data-flo-diagram="value_stream"' in result.output
     assert 'data-flow-kind="information"' in result.output
     assert 'data-flow-kind="material"' in result.output
-    assert result.stderr == ""
+    assert "timing-incomplete" in result.stderr
 
 
 def test_run_value_stream_partial_export_warns_without_inventing_material(tmp_path):

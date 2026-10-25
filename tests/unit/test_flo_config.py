@@ -3,8 +3,6 @@ from pathlib import Path
 import pytest
 
 from flo.app._flo_config import (
-    _extract_sppm_preset_options,
-    _flatten_sppm_config_options,
     _resolve_diagrams_toml_path,
     merge_diagrams_toml_sppm_defaults,
 )
@@ -196,102 +194,192 @@ def test_resolve_diagrams_toml_path_handles_dash_source_and_resolve_error(
     assert resolved is None
 
 
-def _sample_sppm_config() -> dict:
-    return {
-        "max_width_px": 1200,
-        "target_columns": 7,
-        "wrap_layout": "auto",
-        "spacing": "standard",
-        "layout_spacing": "compact",
-        "step_numbering": "node",
-        "label_density": "compact",
-        "output_profile": "book",
-        "text": {
-            "wrap_strategy": "balanced",
-            "truncation_policy": "clip",
-            "max_label": {"step_name": 48, "workers": 24, "ctwt": 18},
-        },
-        "presets": {
-            "book": {
-                "orientation": "tb",
-                "max_width_px": 900,
-                "target_columns": 5,
-                "wrap_layout": "off",
-                "spacing": "compact",
-                "layout_spacing": "standard",
-                "label_density": "teaching",
-                "text": {
-                    "wrap_strategy": "word",
-                    "truncation_policy": "ellipsis",
-                    "max_label": {"step_name": 30, "workers": 15, "ctwt": 12},
-                },
-            }
-        },
-        "themes": {
-            "sunrise": {
-                "va": {"fill": "#FFF3B0", "border": "#E09F3E"},
-                "rnva": {"fill": "#FFD6A5", "border": "#F77F00"},
-                "nva": {"fill": "#FFADAD", "border": "#D00000"},
-                "decision": {"fill": "#FFF8E1", "border": "#B28704"},
-                "unknown": {"fill": "#FFFFFF", "border": "#6C757D"},
-                "start_end": {"fill": "#FFFFFF", "border": "#343A40"},
-            }
-        },
-    }
+@pytest.mark.parametrize(
+    ("content", "field"),
+    [
+        ("sppm = []", "sppm"),
+        ("[sppm]\ntext = 'bad'", "sppm.text"),
+        ("[sppm.text]\nmax_label = []", "sppm.text.max_label"),
+        (
+            "[sppm]\noutput_profile = 'book'\n[sppm.presets]\nbook = false",
+            "sppm.presets.book",
+        ),
+        ("[sppm]\ntarget_columns = true", "sppm.target_columns"),
+        ("[sppm]\ntarget_columns = 1.5", "sppm.target_columns"),
+        ("[sppm]\ntarget_columns = 0", "sppm.target_columns"),
+        ("[sppm]\nmax_width_px = false", "sppm.max_width_px"),
+        ("[sppm]\nmax_width_px = inf", "sppm.max_width_px"),
+        ("[sppm.text.max_label]\nworkers = -1", "sppm.text.max_label.workers"),
+        ("[render]\nstyle = []", "render.style"),
+        ("[render.style]\ncanvas = 'white'", "render.style.canvas"),
+        ("[render.typography]\nscale = true", "render.typography.scale"),
+        ("[render]\nfont_family = ['Arial', 5]", "render.font_family"),
+        ("[themes]\nbroken = false", "themes.broken"),
+    ],
+)
+def test_invalid_config_reports_authored_field_path(
+    tmp_path, monkeypatch, content, field
+):
+    (tmp_path / "diagrams.toml").write_text(content, encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(CLIError) as exc:
+        merge_diagrams_toml_sppm_defaults({})
+
+    assert exc.value.code == EXIT_USAGE
+    assert exc.value.error_stage == "option_validation"
+    assert "Invalid diagrams.toml" in str(exc.value)
+    assert field in str(exc.value)
+    assert "retry" in str(exc.value)
 
 
-def test_flatten_helper_maps_nested_text_options():
-    sppm = _sample_sppm_config()
+def test_config_models_preserve_aliases_and_authored_fields_only(tmp_path, monkeypatch):
+    from flo.render.options import RenderOptions
 
-    flattened = dict(_flatten_sppm_config_options(sppm))
-    _assert_flattened_layout_options(flattened)
-    _assert_flattened_text_options(flattened)
-    _assert_flattened_theme_options(flattened)
+    (tmp_path / "diagrams.toml").write_text(
+        """[sppm]
+max_width_px = '12in'
+target_columns = '6'
+wrap_layout = true
+spacing = 'tight'
+label_density = 'teach'
+[sppm.text]
+wrap_strategy = 'character'
+truncation_policy = 'cut'
+[sppm.text.max_label]
+step_name = '48'
+[render]
+theme = 'mono'
+[extension]
+arbitrary = true
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
 
-
-def _assert_flattened_layout_options(flattened):
-    assert flattened["layout_max_width_px"] == 1200
-    assert flattened["layout_target_columns"] == 7
-    assert flattened["layout_wrap"] == "auto"
-    assert flattened["layout_spacing"] == "compact"
-    assert flattened["sppm_step_numbering"] == "node"
-
-
-def _assert_flattened_text_options(flattened):
-    assert flattened["sppm_label_density"] == "compact"
-    assert flattened["sppm_output_profile"] == "book"
-    assert flattened["sppm_wrap_strategy"] == "balanced"
-    assert flattened["sppm_truncation_policy"] == "clip"
-    assert flattened["sppm_max_label_step_name"] == 48
-    assert flattened["sppm_max_label_workers"] == 24
-    assert flattened["sppm_max_label_ctwt"] == 18
-
-
-def _assert_flattened_theme_options(flattened):
-    themes = flattened["sppm_themes"]
-    assert isinstance(themes, dict)
-    assert themes["sunrise"]["va"]["fill"] == "#FFF3B0"
-    assert themes["sunrise"]["decision"]["border"] == "#B28704"
-
-
-def test_preset_helper_maps_profile_specific_options():
-    sppm = _sample_sppm_config()
-
-    preset = _extract_sppm_preset_options(sppm, "book")
-    assert preset["orientation"] == "tb"
-    assert preset["layout_max_width_px"] == 900
-    assert preset["layout_target_columns"] == 5
-    assert preset["layout_wrap"] == "off"
-    assert preset["layout_spacing"] == "standard"
-    assert preset["sppm_label_density"] == "teaching"
-    assert preset["sppm_wrap_strategy"] == "word"
-    assert preset["sppm_truncation_policy"] == "ellipsis"
-    assert preset["sppm_max_label_step_name"] == 30
-    assert preset["sppm_max_label_workers"] == 15
-    assert preset["sppm_max_label_ctwt"] == 12
+    merged = merge_diagrams_toml_sppm_defaults({})
+    assert "orientation" not in merged
+    assert "sppm_output_profile" not in merged
+    assert "themes" not in merged
+    assert "extension" not in merged
+    resolved = RenderOptions.from_mapping(merged)
+    assert resolved.layout_max_width_px == 1152
+    assert resolved.layout_target_columns == 6
+    assert resolved.layout_wrap == "auto"
+    assert resolved.layout_spacing == "compact"
+    assert resolved.sppm_label_density == "teaching"
+    assert resolved.sppm_wrap_strategy == "hard"
+    assert resolved.sppm_truncation_policy == "clip"
+    assert resolved.sppm_max_label_step_name == 48
+    assert resolved.resolved_theme.name == "monochrome"
 
 
-def test_extract_preset_returns_empty_for_missing_or_invalid_shapes():
-    assert _extract_sppm_preset_options({}, "book") == {}
-    assert _extract_sppm_preset_options({"presets": []}, "book") == {}
-    assert _extract_sppm_preset_options({"presets": {"book": "bad"}}, "book") == {}
+def test_config_validation_collects_errors_without_echoing_input(tmp_path, monkeypatch):
+    (tmp_path / "diagrams.toml").write_text(
+        "[sppm]\ntarget_columns = 'private-value'\nmax_width_px = false",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(CLIError) as exc:
+        merge_diagrams_toml_sppm_defaults({})
+
+    message = str(exc.value)
+    assert "sppm.target_columns" in message
+    assert "sppm.max_width_px" in message
+    assert "private-value" not in message
+
+
+def test_config_validation_ignores_unselected_presets(tmp_path, monkeypatch):
+    (tmp_path / "diagrams.toml").write_text(
+        "[sppm.presets.print]\ntarget_columns = false", encoding="utf-8"
+    )
+    monkeypatch.chdir(tmp_path)
+
+    merged = merge_diagrams_toml_sppm_defaults({"sppm_output_profile": "book"})
+    assert "layout_target_columns" not in merged
+
+
+def test_config_models_preserve_existing_preset_and_style_merge_order(
+    tmp_path, monkeypatch
+):
+    (tmp_path / "diagrams.toml").write_text(
+        """[sppm]
+output_profile = 'book'
+target_columns = 7
+[sppm.presets.book]
+target_columns = 5
+orientation = 'tb'
+[render]
+background_color = '#111111'
+[render.canvas]
+background = '#222222'
+[render.style]
+background_color = '#333333'
+[render.style.canvas]
+background = '#444444'
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    options = {"orientation": "lr"}
+
+    merged = merge_diagrams_toml_sppm_defaults(options)
+
+    # Retain current merging, including preset priority over global SPPM fields.
+    assert merged["layout_target_columns"] == 5
+    assert merged["orientation"] == "lr"
+    assert merged["background_color"] == "#444444"
+    assert options == {"orientation": "lr"}
+    assert (
+        merge_diagrams_toml_sppm_defaults({"layout_target_columns": 9})[
+            "layout_target_columns"
+        ]
+        == 9
+    )
+
+
+@pytest.mark.parametrize("value", ["6", "6.0", "'6'"])
+def test_config_positive_integers_accept_lossless_conversion(
+    tmp_path, monkeypatch, value
+):
+    (tmp_path / "diagrams.toml").write_text(f"[sppm]\ntarget_columns = {value}")
+    monkeypatch.chdir(tmp_path)
+    assert merge_diagrams_toml_sppm_defaults({})["layout_target_columns"] == 6
+
+
+def test_cli_override_bypasses_invalid_file_default(tmp_path, monkeypatch):
+    (tmp_path / "diagrams.toml").write_text("[sppm]\ntarget_columns = false")
+    monkeypatch.chdir(tmp_path)
+    assert (
+        merge_diagrams_toml_sppm_defaults({"layout_target_columns": 8})[
+            "layout_target_columns"
+        ]
+        == 8
+    )
+
+
+def test_selected_preset_bypasses_invalid_global_value(tmp_path, monkeypatch):
+    (tmp_path / "diagrams.toml").write_text(
+        "[sppm]\ntarget_columns = false\n[sppm.presets.book]\ntarget_columns = 6"
+    )
+    monkeypatch.chdir(tmp_path)
+    assert (
+        merge_diagrams_toml_sppm_defaults({"sppm_output_profile": "book"})[
+            "layout_target_columns"
+        ]
+        == 6
+    )
+
+
+@pytest.mark.parametrize(
+    ("profile", "preset"), [("", "default"), ("book.with.dot", "book.with.dot")]
+)
+def test_preset_names_are_literal_and_empty_profile_uses_default(
+    tmp_path, monkeypatch, profile, preset
+):
+    (tmp_path / "diagrams.toml").write_text(
+        f"[sppm]\noutput_profile = '{profile}'\n[sppm.presets.'{preset}']\ntarget_columns = 6"
+    )
+    monkeypatch.chdir(tmp_path)
+    assert merge_diagrams_toml_sppm_defaults({})["layout_target_columns"] == 6

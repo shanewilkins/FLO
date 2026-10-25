@@ -7,7 +7,6 @@ from typing import Any
 from flo.process.analysis import ProcessTimingAnalysis
 
 from .._artifact import RenderArtifact
-from .._diagnostics import build_render_diagnostics_report, log_render_diagnostics
 from .._execution import GeometryObserver, SceneObserver
 from ..layout_core.elk import execute_elk_layout
 from ..layout_core.elk_contracts import ElkLayoutRequest
@@ -70,15 +69,6 @@ def render_sppm_svg_artifact_from_layout(
         request=request,
         geometry=geometry,
         timing_analysis=timing_analysis,
-    )
-    log_render_diagnostics(
-        build_render_diagnostics_report(
-            scene.diagnostics,
-            diagram="sppm",
-            backend="svg",
-            artifact_kind="svg",
-            strict=options.layout_fit == "fit-strict",
-        )
     )
     if scene_observer is not None:
         scene_observer(

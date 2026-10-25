@@ -111,12 +111,12 @@ def test_omitted_and_measured_zero_survive_export_inspection_and_svg(
     export = runner.invoke(cli, ["export", str(source)])
     assert export.exit_code == 0, export.output
     node = next(
-        node for node in json.loads(export.output)["nodes"] if node["id"] == "work"
+        node for node in json.loads(export.stdout)["nodes"] if node["id"] == "work"
     )
     assert node.get("metadata", {}) == metadata
     inspect = runner.invoke(cli, ["inspect", str(source), "--format", "json"])
     assert inspect.exit_code == 0, inspect.output
-    result = json.loads(inspect.output)
+    result = json.loads(inspect.stdout)
     assert result["timing_complete"] is zero
     assert result["modeled_lead_time_seconds"] == (0 if zero else None)
     assert result["declared_totals"]["cycle_time_seconds"] == (0 if zero else None)
@@ -152,7 +152,7 @@ def test_queue_wait_units_agree_between_source_analysis_and_display(
     runner = CliRunner()
     inspect = runner.invoke(cli, ["inspect", str(source), "--format", "json"])
     assert inspect.exit_code == 0, inspect.output
-    result = json.loads(inspect.output)
+    result = json.loads(inspect.stdout)
     assert result["declared_totals"]["wait_time_seconds"] == minutes * 60
     assert result["modeled_lead_time_seconds"] == minutes * 60 + 60
     svg = runner.invoke(cli, ["render", str(source)])
@@ -166,7 +166,7 @@ def test_partial_wait_evidence_is_shown_with_unavailable_lead_time(tmp_path):
     runner = CliRunner()
     inspect = runner.invoke(cli, ["inspect", str(source), "--format", "json"])
     assert inspect.exit_code == 0, inspect.output
-    payload = json.loads(inspect.output)
+    payload = json.loads(inspect.stdout)
     assert payload["declared_totals"]["wait_time_seconds"] == 120
     assert payload["modeled_lead_time_seconds"] is None
     svg = runner.invoke(cli, ["render", str(source)])
@@ -190,7 +190,7 @@ def test_valid_cyclic_zero_timing_is_unavailable_rather_than_missing(tmp_path):
     runner = CliRunner()
     result = runner.invoke(cli, ["inspect", str(source), "--format", "json"])
     assert result.exit_code == 0, result.output
-    payload = json.loads(result.output)
+    payload = json.loads(result.stdout)
     assert payload["timing_complete"]
     assert payload["declared_totals"]["cycle_time_seconds"] == 0
     assert payload["missing_timing_node_ids"] == []

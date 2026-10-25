@@ -53,6 +53,9 @@ def parse_args(
         choices=["svg", "typst", "json", "ingredients", "movement"],
         help=argparse.SUPPRESS,
     )
+    parser.add_argument(
+        "--diagnostics-format", choices=["text", "json"], default="text"
+    )
     add_argparse_render_options(parser, include_render_to=True)
     parsed = parser.parse_args(argv)
 
@@ -96,6 +99,9 @@ def _build_options_from_parsed(parsed: object) -> dict:
     }
     options.update(build_render_options_from_namespace(parsed, include_render_to=True))
 
+    diagnostics_format = getattr(parsed, "diagnostics_format", "text")
+    if diagnostics_format != "text":
+        options["diagnostics_format"] = diagnostics_format
     if export_value:
         options["export"] = export_value
 

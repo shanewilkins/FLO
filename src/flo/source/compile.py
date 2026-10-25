@@ -5,7 +5,6 @@ from typing import Any
 from flo.process.ir.models import IR
 
 from ._adapter_normalization import (
-    coerce_adapter_model,
     flatten_source_nodes,
     resolve_business_units,
     resolve_items,
@@ -25,7 +24,7 @@ from ._ir_assembly import build_edges, build_nodes_from_flat_source
 
 def compile_adapter(adapter_model: dict[str, Any]) -> IR:
     """Compile a strict v0.1 adapter payload into canonical `IR`."""
-    adapter = coerce_adapter_model(adapter_model)
+    adapter = adapter_model or {}
     validate_adapter_contract(adapter)
 
     name = resolve_process_name(adapter)
@@ -39,9 +38,6 @@ def compile_adapter(adapter_model: dict[str, Any]) -> IR:
     locations = resolve_locations(adapter)
     render_intent = resolve_render_intent(adapter)
     source_nodes = resolve_source_nodes(adapter)
-
-    if not isinstance(source_nodes, list):
-        raise ValueError("steps must be a list")
 
     flat_source_nodes = flatten_source_nodes(source_nodes)
     nodes = build_nodes_from_flat_source(flat_source_nodes)

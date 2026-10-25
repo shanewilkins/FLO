@@ -7,66 +7,55 @@ any invalid combination so the caller gets a clean, actionable message.
 
 from __future__ import annotations
 
+from pathlib import Path
+
+from pydantic import ValidationError
+
 from flo.app.render_option_schema import render_option_keys
 from flo.errors import EXIT_USAGE, CLIError
-from flo.render import resolve_publication_page_format
-from flo.render.options import parse_dimension
+from flo.render.options import POSITIVE_INTEGER_OPTIONS, RenderInput
 
 
-def validate_sppm_numeric_render_options(options: dict | None) -> None:
-    """Raise ``CLIError`` if any SPPM numeric option is invalid."""
-    opts = options or {}
-    _validate_dimensions(opts)
-    _validate_page_format(opts)
-    _validate_positive_integer_options(opts)
-
-
-def _validate_dimensions(options: dict) -> None:
-    for option_name in ("layout_max_width_px", "layout_width", "layout_height"):
-        if option_name in options and parse_dimension(options.get(option_name)) is None:
-            cli_flag = f"--{option_name.replace('_', '-')}"
-            raise CLIError(
-                f"Invalid value for {cli_flag}: expected a positive dimension using px, in, cm, or mm.",
-                code=EXIT_USAGE,
-            )
-
-
-def _validate_page_format(options: dict) -> None:
-    if "publication_page_format" not in options:
-        return
+def validate_render_options(
+    options: dict | None,
+    *,
+    config_file: Path | None = None,
+    origins: dict[str, str] | None = None,
+) -> dict:
+    """Validate effective CLI/config values once and retain input provenance."""
+    opts = dict(options or {})
     try:
-        resolve_publication_page_format(
-            str(options.get("publication_page_format") or "")
-        )
-    except ValueError as exc:
-        raise CLIError(str(exc), code=EXIT_USAGE) from exc
-
-
-def _validate_positive_integer_options(options: dict) -> None:
-    numeric_flags = (
-        "layout_target_columns",
-        "sppm_max_label_step_name",
-        "sppm_max_label_workers",
-        "sppm_max_label_ctwt",
-    )
-
-    for flag in numeric_flags:
-        if flag not in options:
-            continue
-        raw_value = options.get(flag)
-        if raw_value is None:
-            parsed = 0
-        else:
-            try:
-                parsed = int(raw_value)
-            except TypeError, ValueError:
-                parsed = 0
-        if parsed <= 0:
-            cli_flag = f"--{flag.replace('_', '-')}"
-            raise CLIError(
-                f"Invalid value for {cli_flag}: expected a positive integer.",
-                code=EXIT_USAGE,
+        parsed = RenderInput.model_validate(opts)
+    except ValidationError as exc:
+        errors = exc.errors(include_url=False, include_input=False)
+        details = []
+        for error in errors:
+            key, *suffix = error["loc"]
+            path = (origins or {}).get(str(key), str(key))
+            path = ".".join((path, *(str(part) for part in suffix)))
+            details.append(
+                f"  {path}: Invalid value for --{str(key).replace('_', '-')}: {error['msg']}"
             )
+        heading = (
+            f"Invalid diagrams.toml ({config_file})"
+            if config_file
+            and any(error["loc"][0] in (origins or {}) for error in errors)
+            else "Invalid render options"
+        )
+        raise CLIError(
+            heading
+            + ":\n"
+            + "\n".join(details)
+            + "\nCorrect these configuration fields and retry.",
+            code=EXIT_USAGE,
+            error_stage="option_validation",
+        ) from exc
+    return {
+        **opts,
+        **{
+            key: getattr(parsed, key) for key in opts if key in POSITIVE_INTEGER_OPTIONS
+        },
+    }
 
 
 def ensure_render_options_compatible_with_output(

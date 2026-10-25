@@ -24,7 +24,7 @@ def test_default_path_export_json_emits_canonical_ir_contract() -> None:
     )
 
     assert result.exit_code == 0
-    payload = json.loads(result.output)
+    payload = json.loads(result.stdout)
     assert set(payload.keys()) == {"process", "nodes", "edges"}
     assert payload["process"]["id"] == "canonical_semantics_reference"
     assert isinstance(payload["nodes"], list)
@@ -65,7 +65,7 @@ def test_default_path_export_json_preserves_process_version(tmp_path) -> None:
     result = CliRunner().invoke(cli, ["render", str(model), "--export", "json"])
 
     assert result.exit_code == 0
-    assert json.loads(result.output)["process"]["version"] == "2026.1"
+    assert json.loads(result.stdout)["process"]["version"] == "2026.1"
 
 
 def test_default_path_exports_json_to_file(tmp_path):

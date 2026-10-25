@@ -4,10 +4,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass, field
-from typing import Any, Literal, cast
-
-import structlog
-from structlog.stdlib import BoundLogger
+from typing import Any, Literal
 
 RenderDiagnosticSeverity = Literal["warning", "error"]
 
@@ -141,43 +138,3 @@ def serialize_render_diagnostics_report(
         "summary": report.summary,
         "diagnostics": serialize_render_diagnostics(report.diagnostics),
     }
-
-
-def log_render_diagnostics(
-    report: RenderDiagnosticsReport,
-    logger: BoundLogger | None = None,
-) -> None:
-    """Emit structured render diagnostics through the shared logger."""
-    if not report.diagnostics:
-        return
-    active_logger = logger or cast(BoundLogger, structlog.get_logger())
-    bound_logger = active_logger.bind(
-        component="render",
-        diagram=report.diagram,
-        backend=report.backend,
-        artifact_kind=report.artifact_kind,
-        strict=report.strict,
-        warning_count=report.warning_count,
-        error_count=report.error_count,
-        partial_output=report.partial_output,
-    )
-    bound_logger.info(
-        "render_diagnostics_summary",
-        message=report.summary,
-        diagnostic_count=len(report.diagnostics),
-        code_counts=dict(sorted(report.code_counts.items())),
-        category_counts=dict(sorted(report.category_counts.items())),
-    )
-    for diagnostic in report.diagnostics:
-        log_method = (
-            bound_logger.error
-            if diagnostic.severity == "error"
-            else bound_logger.warning
-        )
-        log_method(
-            "render_diagnostic",
-            message=diagnostic.message,
-            code=diagnostic.code,
-            severity=diagnostic.severity,
-            **diagnostic.metadata,
-        )

@@ -40,7 +40,9 @@ def test_validate_against_schema_validate_raises(monkeypatch, node_factory):
 
     ir = IR(name="x", nodes=[node_factory("n")])
     # ensure open returns a valid JSON schema stub
-    monkeypatch.setattr(Path, "open", lambda self, *a, **k: io.StringIO(json.dumps({})))
+    monkeypatch.setattr(
+        Path, "open", lambda self, *_args, **_kwargs: io.StringIO(json.dumps({}))
+    )
     with pytest.raises(ValidationError):
         validate_mod.validate_against_schema(ir)
 
@@ -60,5 +62,7 @@ def test_validate_against_schema_success(monkeypatch, tmp_path, node_factory):
     ir = IR(name="x", nodes=[node_factory("n")])
     # should not raise
     # ensure open returns a valid JSON schema stub
-    monkeypatch.setattr(Path, "open", lambda self, *a, **k: io.StringIO(json.dumps({})))
+    monkeypatch.setattr(
+        Path, "open", lambda self, *_args, **_kwargs: io.StringIO(json.dumps({}))
+    )
     validate_mod.validate_against_schema(ir)

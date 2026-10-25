@@ -23,8 +23,8 @@ def build_nodes_from_flat_source(flat_source_nodes: list[dict[str, Any]]) -> lis
         subprocess_parent = attrs.pop("subprocess_parent", None)
         nodes.append(
             Node(
-                id=str(nid),
-                type=str(ntype),
+                id=nid,
+                type=ntype,
                 attrs=attrs,
                 subprocess_parent=subprocess_parent,
             )
@@ -38,8 +38,8 @@ def build_edges(adapter: dict[str, Any], nodes: list[Node]) -> list[Edge]:
     if isinstance(explicit_transitions, list):
         return _build_explicit_edges(explicit_transitions)
 
-    outcome_edges = _build_outcome_edges(nodes)
-    route_edges = _build_route_edges(nodes)
+    outcome_edges = _build_named_edges(nodes, "outcomes")
+    route_edges = _build_named_edges(nodes, "routes")
     sequential_edges = _build_sequential_edges(nodes)
     return _merge_edges([*outcome_edges, *route_edges], sequential_edges)
 
@@ -47,119 +47,55 @@ def build_edges(adapter: dict[str, Any], nodes: list[Node]) -> list[Edge]:
 def _build_explicit_edges(explicit_edges: list[Any]) -> list[Edge]:
     edges: list[Edge] = []
     for edge in explicit_edges:
-        if not isinstance(edge, dict):
-            raise ValueError("transitions entries must be objects")
-        src = edge.get("source")
-        tgt = edge.get("target")
-        if not isinstance(src, str) or not src.strip():
-            raise ValueError("transitions entries must include non-empty source")
-        if not isinstance(tgt, str) or not tgt.strip():
-            raise ValueError("transitions entries must include non-empty target")
+        src = edge["source"]
+        tgt = edge["target"]
         edges.append(
             Edge(
-                source=str(src),
-                target=str(tgt),
-                id=str(edge.get("id")) if edge.get("id") is not None else None,
+                source=src,
+                target=tgt,
+                id=edge.get("id"),
                 outcome=_normalize_outcome_value(edge.get("outcome")),
-                route=str(edge.get("route")) if edge.get("route") is not None else None,
-                label=str(edge.get("label")) if edge.get("label") is not None else None,
-                edge_type=str(edge.get("edge_type"))
-                if edge.get("edge_type") is not None
-                else None,
-                handoff=edge.get("handoff") if "handoff" in edge else None,
-                rework=edge.get("rework")
-                if isinstance(edge.get("rework"), bool)
-                else None,
-                metadata=edge.get("metadata")
-                if isinstance(edge.get("metadata"), dict)
-                else None,
+                route=edge.get("route"),
+                label=edge.get("label"),
+                edge_type=edge.get("edge_type"),
+                handoff=edge.get("handoff"),
+                rework=edge.get("rework"),
+                metadata=edge.get("metadata"),
             )
         )
     return edges
 
 
-def _build_outcome_edges(nodes: list[Node]) -> list[Edge]:
-    edges: list[Edge] = []
+def _build_named_edges(nodes: list[Node], field: str) -> list[Edge]:
+    """Assemble model-validated target shorthand and annotated named branches."""
+    edges = []
     for node in nodes:
-        attrs = node.attrs or {}
-        outcomes = attrs.get("outcomes") if isinstance(attrs, dict) else None
-        if not isinstance(outcomes, dict):
-            continue
-        for outcome, target in outcomes.items():
-            outcome_edge = _build_outcome_edge(
-                source=node.id, outcome=outcome, target_spec=target
+        for name, target in node.attrs.get(field, {}).items():
+            spec = {"target": target} if isinstance(target, str) else target
+            edges.append(
+                Edge(
+                    source=node.id,
+                    target=spec.get("target", spec.get("to")),
+                    outcome=_normalize_outcome_value(name)
+                    if field == "outcomes"
+                    else None,
+                    route=_normalize_outcome_value(name)
+                    if field == "routes"
+                    else spec.get("route"),
+                    **{
+                        key: spec.get(key)
+                        for key in (
+                            "id",
+                            "label",
+                            "edge_type",
+                            "handoff",
+                            "rework",
+                            "metadata",
+                        )
+                    },
+                )
             )
-            if outcome_edge is not None:
-                edges.append(outcome_edge)
     return edges
-
-
-def _build_outcome_edge(*, source: str, outcome: Any, target_spec: Any) -> Edge | None:
-    if isinstance(target_spec, dict):
-        target = target_spec.get("target")
-        if target is None:
-            target = target_spec.get("to")
-        if target is None:
-            return None
-        return Edge(
-            source=source,
-            target=str(target),
-            outcome=_normalize_outcome_value(outcome),
-            id=str(target_spec.get("id"))
-            if target_spec.get("id") is not None
-            else None,
-            label=str(target_spec.get("label"))
-            if target_spec.get("label") is not None
-            else None,
-            edge_type=str(target_spec.get("edge_type"))
-            if target_spec.get("edge_type") is not None
-            else None,
-            handoff=target_spec.get("handoff") if "handoff" in target_spec else None,
-            rework=target_spec.get("rework")
-            if isinstance(target_spec.get("rework"), bool)
-            else None,
-            metadata=target_spec.get("metadata")
-            if isinstance(target_spec.get("metadata"), dict)
-            else None,
-        )
-
-    if target_spec is None:
-        return None
-    return Edge(
-        source=source,
-        target=str(target_spec),
-        outcome=_normalize_outcome_value(outcome),
-    )
-
-
-def _build_route_edges(nodes: list[Node]) -> list[Edge]:
-    edges: list[Edge] = []
-    for node in nodes:
-        attrs = node.attrs or {}
-        routes = attrs.get("routes") if isinstance(attrs, dict) else None
-        if not isinstance(routes, dict):
-            continue
-        for route, target_spec in routes.items():
-            edge = _build_route_edge(
-                source=node.id,
-                route=route,
-                target_spec=target_spec,
-            )
-            if edge is not None:
-                edges.append(edge)
-    return edges
-
-
-def _build_route_edge(*, source: str, route: Any, target_spec: Any) -> Edge | None:
-    outcome_edge = _build_outcome_edge(
-        source=source,
-        outcome=None,
-        target_spec=target_spec,
-    )
-    if outcome_edge is None:
-        return None
-    outcome_edge.route = _normalize_outcome_value(route)
-    return outcome_edge
 
 
 def _normalize_outcome_value(value: Any) -> str | None:
@@ -178,16 +114,10 @@ def _build_sequential_edges(nodes: list[Node]) -> list[Edge]:
         return edges
 
     for current, nxt in itertools.pairwise(nodes):
-        current_type = (current.type or "").lower()
-        if current_type == "end":
+        if current.type == "end":
             continue
 
-        attrs = current.attrs or {}
-        outcomes = attrs.get("outcomes") if isinstance(attrs, dict) else None
-        routes = attrs.get("routes") if isinstance(attrs, dict) else None
-        if (isinstance(outcomes, dict) and outcomes) or (
-            isinstance(routes, dict) and routes
-        ):
+        if current.attrs.get("outcomes") or current.attrs.get("routes"):
             # Local branching declarations should not also get
             # an implicit sequential edge.
             continue

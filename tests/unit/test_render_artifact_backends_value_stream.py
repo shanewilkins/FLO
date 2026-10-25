@@ -18,10 +18,19 @@ def test_value_stream_svg_is_deterministic_and_distinguishes_both_flows() -> Non
     assert "C/O 2 min" in artifact.content
     assert "Modeled lead time: 21 min" in artifact.content
     assert 'data-flo-notice="partial-map"' not in artifact.content
-    assert artifact.metadata == {
-        "diagram": "value_stream",
-        "partial": False,
-    }
+    assert artifact.metadata["diagram"] == "value_stream"
+    assert artifact.metadata["partial"] is False
+    assert artifact.metadata["projection_diagnostics"] == ()
+
+
+def test_value_stream_svg_exposes_nonfatal_timing_diagnostics() -> None:
+    artifact = render_artifact(
+        _dual_flow_process(), options={"diagram": "value_stream"}
+    )
+
+    assert artifact.diagnostic_report.error_count == 0
+    assert artifact.diagnostic_report.warning_count == 1
+    assert artifact.diagnostic_report.diagnostics[0].code == "timing-incomplete"
 
 
 def test_value_stream_svg_marks_information_only_output_as_partial() -> None:

@@ -14,8 +14,8 @@ from flo.app._capability_validation import ensure_render_projection_supported
 from flo.app._flo_config import merge_diagrams_toml_render_defaults
 from flo.app._option_validation import (
     ensure_render_options_compatible_with_output,
-    validate_sppm_numeric_render_options,
 )
+from flo.app.diagnostics import CommandResult
 from flo.app.inspect import (
     format_model_inspection,
     format_structural_analysis,
@@ -25,6 +25,7 @@ from flo.app.io import write_output
 from flo.app.render_intent import RenderIntentResolver
 from flo.app.runtime_services import Services as Services
 from flo.app.runtime_services import get_services as get_services
+from flo.diagnostics import DiagnosticReport, adapt_diagnostic, diagnostic_report
 from flo.errors import (
     EXIT_SUCCESS,
     EXIT_USAGE,
@@ -39,10 +40,18 @@ from flo.process.analysis import (
     analyze_process_timing,
     inspect_process_model,
 )
+from flo.process.analysis.diagnostics import (
+    analysis_diagnostic_report,
+    timing_diagnostic_report,
+)
 from flo.process.export import export_ir
 from flo.process.ir import IR, ensure_schema_aligned, validate_ir
 from flo.render import RenderArtifact, RenderOptions, render_artifact_and_contract
 from flo.render.capability_matrix import RENDER_CAPABILITY_MATRIX
+from flo.render.diagnostics import (
+    artifact_diagnostic_report,
+    attach_operation_diagnostics,
+)
 from flo.render.sppm.publication_artifact import (
     render_sppm_typst_publication_artifact,
 )
@@ -58,26 +67,36 @@ from flo.source import (
 def run_content(
     content: str, command: str = "render", options: dict | None = None
 ) -> tuple[int, str, str]:
-    """Run the content through parse -> compile -> validate -> render.
+    """Run one operation through the compatibility payload/warning tuple."""
+    return run_operation(content, command, options).as_tuple()
 
-    Returns a tuple of (exit_code, output, error_message).
-    """
+
+def run_operation(
+    content: str, command: str = "render", options: dict | None = None
+) -> CommandResult:
+    """Run the validated pipeline and aggregate findings once for delivery."""
     source_path = _resolve_source_path(options)
-    ir, composition = _parse_compile_validate(content, source_path=source_path)
-
+    ir, composition = prepare_source(content, source_path=source_path)
+    common = timing_diagnostic_report(ir) if isinstance(ir, IR) else DiagnosticReport()
     if command == "validate":
-        return EXIT_SUCCESS, "", ""
-
-    if command == "inspect":
-        return _run_inspect_output(ir=ir, options=options, composition=composition)
-
-    output_format = _resolve_output_format(command=command, options=options)
-    if output_format in {"json", "ingredients", "movement"}:
-        return _run_export_output(ir=ir, options=options, output_format=output_format)
-    if output_format == "typst":
-        return _run_typst_publication_output(ir=ir, options=options)
-
-    return _run_render_output(ir=ir, options=options, output_format=output_format)
+        result = CommandResult(EXIT_SUCCESS, "")
+    elif command == "inspect":
+        result = _run_inspect_output(ir=ir, options=options, composition=composition)
+    else:
+        output_format = _resolve_output_format(command=command, options=options)
+        if output_format in {"json", "ingredients", "movement"}:
+            result = CommandResult.from_legacy(
+                *_run_export_output(ir=ir, options=options, output_format=output_format)
+            )
+        elif output_format == "typst":
+            result = _run_typst_publication_output(ir=ir, options=options)
+        else:
+            result = _run_render_output(
+                ir=ir, options=options, output_format=output_format
+            )
+    report = diagnostic_report((*common.diagnostics, *result.report.diagnostics))
+    label = "<stdin>" if source_path == "-" else source_path
+    return replace(result, report=report.with_source(label))
 
 
 def _run_inspect_output(
@@ -85,7 +104,7 @@ def _run_inspect_output(
     ir: IR,
     options: dict | None,
     composition: SourceComposition,
-) -> tuple[int, str, str]:
+) -> CommandResult:
     analysis, output_format, for_analysis, for_diagram = _resolve_inspect_request(
         options
     )
@@ -98,25 +117,42 @@ def _run_inspect_output(
             requested_diagram=for_diagram,
             supported_diagrams=_supported_svg_diagrams(),
         )
-        return (
+        findings = [
+            *analysis_diagnostic_report(
+                report.structure, stage="analysis.structure"
+            ).diagnostics
+        ]
+        findings.extend(
+            adapt_diagnostic(
+                item.as_dict(), stage="analysis.readiness", severity="warning"
+            )
+            for readiness in report.readiness
+            for item in readiness.findings
+        )
+        return CommandResult(
             EXIT_SUCCESS,
-            format_model_inspection(report, output_format=output_format),
-            "",
+            format_model_inspection(
+                report, output_format=output_format, include_diagnostics=False
+            ),
+            diagnostic_report(findings),
         )
 
     if analysis == "structure":
-        structural_result = analyze_process_structure(ir)
-        return (
+        result = analyze_process_structure(ir)
+        return CommandResult(
             EXIT_SUCCESS,
-            format_structural_analysis(structural_result, output_format=output_format),
-            "",
+            format_structural_analysis(
+                result, output_format=output_format, include_diagnostics=False
+            ),
+            analysis_diagnostic_report(result, stage="analysis.structure"),
         )
-
     result = analyze_process_timing(ir)
-    return (
+    return CommandResult(
         EXIT_SUCCESS,
-        format_timing_analysis(result, output_format=output_format),
-        "",
+        format_timing_analysis(
+            result, output_format=output_format, include_diagnostics=False
+        ),
+        timing_diagnostic_report(ir, result),
     )
 
 
@@ -208,9 +244,8 @@ def _run_render_output(
     ir: IR,
     options: dict | None,
     output_format: str,
-) -> tuple[int, str, str]:
+) -> CommandResult:
     resolved_options = merge_diagrams_toml_render_defaults(options=options)
-    validate_sppm_numeric_render_options(options=resolved_options)
     render_to: str | None = (resolved_options or {}).get("render_to")
 
     resolved_options = _merge_render_intent_options(ir=ir, options=resolved_options)
@@ -220,7 +255,7 @@ def _run_render_output(
     )
     ensure_render_projection_supported(render_options)
 
-    artifact, contract, warning = _render_artifact_with_diagnostics(
+    artifact, contract, report = _render_artifact_with_diagnostics(
         ir,
         render_options=render_options,
     )
@@ -230,24 +265,21 @@ def _run_render_output(
             render_to=render_to,
             contract=contract,
         )
-        return EXIT_SUCCESS, "", warning or ""
+        return CommandResult(EXIT_SUCCESS, "", report)
 
-    return (
+    return CommandResult(
         EXIT_SUCCESS,
         _render_artifact_for_stdout(
             artifact=artifact,
             output_format=output_format,
             contract=contract,
         ),
-        warning or "",
+        report,
     )
 
 
-def _run_typst_publication_output(
-    *, ir: IR, options: dict | None
-) -> tuple[int, str, str]:
+def _run_typst_publication_output(*, ir: IR, options: dict | None) -> CommandResult:
     resolved_options = merge_diagrams_toml_render_defaults(options=options)
-    validate_sppm_numeric_render_options(options=resolved_options)
     resolved_options = _merge_render_intent_options(ir=ir, options=resolved_options)
     render_options = RenderOptions.from_mapping(resolved_options)
     if render_options.diagram != "sppm":
@@ -257,13 +289,18 @@ def _run_typst_publication_output(
             error_stage="option_validation",
         )
     artifact = render_sppm_typst_publication_artifact(ir, render_options)
-    warning = artifact.metadata.get("warning")
-    warning_text = warning.strip() if isinstance(warning, str) else ""
+    artifact = attach_operation_diagnostics(
+        artifact,
+        ir,
+        diagram=render_options.diagram,
+        strict=render_options.layout_fit == "fit-strict",
+    )
+    report = artifact_diagnostic_report(artifact)
     render_to = (resolved_options or {}).get("render_to")
     if isinstance(render_to, str) and render_to:
         _write_render_artifact(artifact=artifact, render_to=render_to, contract=None)
-        return EXIT_SUCCESS, "", warning_text
-    return EXIT_SUCCESS, artifact.content, warning_text
+        return CommandResult(EXIT_SUCCESS, "", report)
+    return CommandResult(EXIT_SUCCESS, artifact.content, report)
 
 
 def _merge_render_intent_options(*, ir: IR, options: dict | None) -> dict | None:
@@ -274,9 +311,10 @@ def _merge_render_intent_options(*, ir: IR, options: dict | None) -> dict | None
     )
 
 
-def _parse_compile_validate(
+def prepare_source(
     content: str, source_path: str | None = None
 ) -> tuple[IR, SourceComposition]:
+    """Parse, compile, and validate source with consistent diagnostic stages."""
     from flo.source.diagnostics import source_diagnostic
 
     try:
@@ -529,20 +567,14 @@ def _collect_changed_inverted_boolean_overrides(
 
 def _render_artifact_with_diagnostics(
     ir: IR, render_options: RenderOptions
-) -> tuple[RenderArtifact, None, str | None]:
+) -> tuple[RenderArtifact, None, DiagnosticReport]:
     """Render untouched canonical IR and return any artifact-owned warning."""
     try:
         artifact, contract = render_artifact_and_contract(ir, options=render_options)
     except Exception as exc:
         raise RenderError(str(exc)) from exc
 
-    warning: str | None = None
-    artifact_warning = artifact.metadata.get("warning")
-    if isinstance(artifact_warning, str) and artifact_warning.strip():
-        warning = "\n".join(
-            item for item in (warning, artifact_warning.strip()) if item
-        )
-    return artifact, contract, warning
+    return artifact, contract, artifact_diagnostic_report(artifact)
 
 
 def _write_render_artifact(

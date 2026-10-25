@@ -50,6 +50,25 @@ A spaghetti map in FLO must satisfy the following characteristics:
    - Absent performer-specific metadata degrades predictably according to the
      selected aggregation mode.
 
+## Coordinate units
+
+Positioned locations use the supported spatial units `mm`, `cm`, `m`, `in`, and
+`ft`; an omitted unit defaults to `m`. Coordinates share an origin and axis
+orientation. Unit conversion does not align independently defined coordinate
+frames.
+
+Movement analysis and rendering consume the same derived location index. When
+positioned locations mix supported units, this index converts both axes to
+metres before distance calculation or SVG projection. Homogeneous maps retain
+their authored unit and scale. Optional boundary coordinates are expressed in
+the resulting map coordinate unit. Canonical source/IR/JSON quantities retain
+their authored values and units.
+
+Inferred distances are straight-line Euclidean distances in the derived index
+unit. Missing, invalid, or non-finite coordinates provide no inferred distance;
+a non-finite calculated distance is unavailable. Unsupported units on directly
+supplied unvalidated input do not acquire support through the unit library.
+
 ## Missing-spatial behavior
 
 ### Default partial mode

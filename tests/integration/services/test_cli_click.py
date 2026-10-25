@@ -224,7 +224,7 @@ def test_cli_inspect_json_from_stdin_is_pure_json():
     )
 
     assert result.exit_code == 0
-    payload = json.loads(result.output)
+    payload = json.loads(result.stdout)
     assert payload["process"]["id"] == "wash_n_fold"
     assert payload["modeled_lead_time_seconds"] == 12000.0
 
@@ -240,7 +240,7 @@ def test_cli_inspect_structure_json_from_stdin_is_pure_json():
     )
 
     assert result.exit_code == 0
-    payload = json.loads(result.output)
+    payload = json.loads(result.stdout)
     assert payload["process"]["id"] == "wash_n_fold"
     assert payload["path_summary"]["path_count"] == 1
 
@@ -280,7 +280,7 @@ includes:
         )
 
     assert result.exit_code == 0
-    payload = json.loads(result.output)
+    payload = json.loads(result.stdout)
     assert payload["composition"] == {
         "composed": True,
         "entry_source": "process.flo",
@@ -301,7 +301,7 @@ def test_cli_inspect_model_from_stdin_reports_portable_entry() -> None:
     )
 
     assert result.exit_code == 0
-    payload = json.loads(result.output)
+    payload = json.loads(result.stdout)
     assert payload["composition"]["entry_source"] == "<stdin>"
     assert payload["composition"]["included_sources"] == []
 
@@ -320,7 +320,8 @@ def test_cli_inspect_can_write_json_to_file():
         )
 
         assert result.exit_code == 0
-        assert result.output == ""
+        assert result.stdout == ""
+        assert "timing-incomplete" in result.stderr
         payload = json.loads(Path("timing.json").read_text(encoding="utf-8"))
         assert payload["declared_totals"]["cycle_time_seconds"] == 6300.0
 

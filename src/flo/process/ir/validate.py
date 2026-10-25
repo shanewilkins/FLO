@@ -9,6 +9,7 @@ from typing import Any, TypeGuard
 
 from flo.errors import ValidationError
 from flo.process.durations import SECONDS_PER_UNIT, duration_number, duration_seconds
+from flo.process.units import SPATIAL_UNITS
 
 from ._graph_utils import build_adjacency_maps, traverse
 from .enums import ProcessValueClass
@@ -26,7 +27,6 @@ from .validate_subprocess import validate_subprocess_metadata
 
 _MEASURE_UNITS = {"mg", "g", "kg", "ml", "l", "mm", "cm", "m"}
 _TIME_UNITS = set(SECONDS_PER_UNIT)
-_SPATIAL_UNITS = {"mm", "cm", "m", "in", "ft"}
 
 try:
     import jsonschema
@@ -710,10 +710,10 @@ def _validate_location_spatial(path: str, resource: dict[str, Any]) -> None:
 
     unit = spatial.get("unit")
     if unit is not None and (
-        not isinstance(unit, str) or unit.strip().lower() not in _SPATIAL_UNITS
+        not isinstance(unit, str) or unit.strip().lower() not in SPATIAL_UNITS
     ):
         raise ValidationError(
-            f"E1216: {path}.metadata.spatial.unit must be one of {sorted(_SPATIAL_UNITS)}"
+            f"E1216: {path}.metadata.spatial.unit must be one of {sorted(SPATIAL_UNITS)}"
         )
 
 

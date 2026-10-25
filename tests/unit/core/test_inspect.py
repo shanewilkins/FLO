@@ -19,7 +19,7 @@ def test_inspect_timing_text_reports_washnfold_totals() -> None:
     )
 
     assert rc == 0
-    assert err == ""
+    assert "timing-incomplete" in err
     assert out == (
         "Process: Wash n' Fold (wash_n_fold)\n"
         "Version: 1\n"
@@ -54,7 +54,7 @@ def test_inspect_timing_json_is_stable_and_machine_readable() -> None:
     assert first == second
     rc, out, err = first
     assert rc == 0
-    assert err == ""
+    assert "timing-incomplete" in err
     assert out.endswith("\n")
     payload = json.loads(out)
     assert payload["analysis_version"] == "0.1"
@@ -89,7 +89,7 @@ def test_inspect_structure_json_is_stable_and_machine_readable() -> None:
     assert first == second
     rc, out, err = first
     assert rc == 0
-    assert err == ""
+    assert "timing-incomplete" in err
     assert out.endswith("\n")
     payload = json.loads(out)
     assert payload["analysis_version"] == "0.1"
@@ -115,7 +115,7 @@ def test_inspect_structure_text_reports_summary() -> None:
     )
 
     assert rc == 0
-    assert err == ""
+    assert "timing-incomplete" in err
     assert "Structural summary:\n" in out
     assert "  Non-rework paths: 1\n" in out
     assert "  Path length (edges): 13\n" in out
@@ -143,7 +143,7 @@ def test_inspect_model_json_reports_summary_and_requested_readiness() -> None:
     assert first == second
     rc, out, err = first
     assert rc == 0
-    assert err == ""
+    assert "timing-incomplete" in err
     payload = json.loads(out)
     assert payload["report_version"] == "0.1"
     assert payload["composition"]["entry_source"] == "<memory>"
@@ -168,7 +168,7 @@ def test_inspect_model_text_is_concise() -> None:
     )
 
     assert rc == 0
-    assert err == ""
+    assert "timing-incomplete" in err
     assert "Validation: valid\n" in out
     assert "Composition:\n  Entry source: <memory>\n" in out
     assert "Model summary:\n  Nodes: 14\n" in out

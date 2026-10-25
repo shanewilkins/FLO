@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from math import sqrt
+from math import hypot, isfinite
 from typing import Any, TypeGuard
 
 from flo.process.ir.metadata import extract_process_field
+from flo.process.units import SPATIAL_UNITS, length_in_metres
 
 
 def infer_material_movements(process: Any) -> list[dict[str, Any]]:
@@ -268,7 +269,11 @@ def _sorted_text_values(values: Any) -> tuple[str, ...]:
 
 
 def extract_location_spatial_index(process: Any) -> dict[str, dict[str, Any]]:
-    """Return location_id -> {name, kind, x, y, unit} from process metadata locations."""
+    """Index positions in one frame; mixed supported units normalize to metres.
+
+    Homogeneous maps retain their authored scale. Canonical input is untouched.
+    Missing units retain the existing metre default.
+    """
     collection = extract_process_field(process, "locations")
 
     index: dict[str, dict[str, Any]] = {}
@@ -287,13 +292,23 @@ def extract_location_spatial_index(process: Any) -> dict[str, dict[str, Any]]:
         if isinstance(spatial, dict):
             x = spatial.get("x")
             y = spatial.get("y")
-            unit = _as_text(spatial.get("unit")) or "m"
-            if _is_number(x) and _is_number(y):
+            unit = (_as_text(spatial.get("unit")) or "m").lower()
+            if _is_number(x) and _is_number(y) and unit in SPATIAL_UNITS:
                 entry["x"] = float(x)
                 entry["y"] = float(y)
                 entry["unit"] = unit
         index[location_id] = entry
 
+    return _normalize_mixed_spatial_units(index)
+
+
+def _normalize_mixed_spatial_units(index: dict[str, dict[str, Any]]) -> dict:
+    if len({entry["unit"] for entry in index.values() if "unit" in entry}) > 1:
+        for entry in index.values():
+            if "unit" in entry:
+                x = length_in_metres(entry["x"], entry["unit"])
+                y = length_in_metres(entry["y"], entry["unit"])
+                entry.update(x=x, y=y, unit="m")
     return index
 
 
@@ -432,7 +447,8 @@ def _distance_between_locations(
     if not su or not tu or su != tu:
         return None, None
 
-    return sqrt((float(tx) - float(sx)) ** 2 + (float(ty) - float(sy)) ** 2), su
+    distance = hypot(float(tx) - float(sx), float(ty) - float(sy))
+    return (distance, su) if isfinite(distance) else (None, None)
 
 
 def _as_text(value: Any) -> str | None:
@@ -464,4 +480,9 @@ def _resolve_first_text_list(
 
 
 def _is_number(value: Any) -> TypeGuard[int | float]:
-    return isinstance(value, (int, float)) and not isinstance(value, bool)
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return False
+    try:
+        return isfinite(value)
+    except OverflowError:
+        return False

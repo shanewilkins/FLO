@@ -2,6 +2,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 import flo.app.telemetry as telemetry_mod
+from flo.app.diagnostics import CommandResult
 
 
 def _make_fake_trace(tracer_obj=None):
@@ -154,7 +155,7 @@ def test_console_main_handles_clierror_and_telemetry_shutdown_is_suppressed(
     def raise_cli(argv, command=None, options=None):
         raise CLIError("oh no", code=3)
 
-    monkeypatch.setattr(core_mod, "run_content", raise_cli)
+    monkeypatch.setattr(core_mod, "run_operation", raise_cli)
 
     # write_output shouldn't be called in this error path; stub it anyway
     monkeypatch.setattr(io_mod, "write_output", lambda out, path: (0, ""))
@@ -166,8 +167,10 @@ def test_console_main_handles_clierror_and_telemetry_shutdown_is_suppressed(
     # Now test normal flow where telemetry.shutdown raises but is swallowed
     monkeypatch.setattr(
         core_mod,
-        "run_content",
-        lambda content, command=None, options=None: (0, "out", ""),
+        "run_operation",
+        lambda content, command=None, options=None: CommandResult.from_legacy(
+            0, "out", ""
+        ),
     )
     monkeypatch.setattr(io_mod, "write_output", lambda out, path: (0, ""))
 

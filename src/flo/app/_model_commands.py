@@ -24,8 +24,14 @@ def register_model_commands(
         help="Diagnostic output format.",
     )
     @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
+    @click.option(
+        "--diagnostics-format",
+        type=click.Choice(["text", "json"]),
+        default="text",
+        help="Operation diagnostic report on stderr.",
+    )
     def validate_cmd(
-        path: str | None, diagnostic_format: str, verbose: bool
+        path: str | None, diagnostic_format: str, verbose: bool, diagnostics_format: str
     ) -> None:  # pragma: no cover - integration
         """Validate FLO input and return non-zero on parse/validation errors."""
         from flo.app._cli_contract import CLIExecutionRequest
@@ -34,7 +40,11 @@ def register_model_commands(
             CLIExecutionRequest(
                 path=path,
                 command="validate",
-                options={"diagnostic_format": diagnostic_format, "verbose": verbose},
+                options={
+                    "diagnostic_format": diagnostic_format,
+                    "verbose": verbose,
+                    "diagnostics_format": diagnostics_format,
+                },
             )
         )
         raise SystemExit(rc)
@@ -67,6 +77,12 @@ def register_model_commands(
         help="Report format.",
     )
     @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
+    @click.option(
+        "--diagnostics-format",
+        type=click.Choice(["text", "json"]),
+        default="text",
+        help="Operation diagnostic report on stderr.",
+    )
     @click.option("-o", "--output", help="Write output to file")
     def inspect_cmd(
         path: str | None,
@@ -76,6 +92,7 @@ def register_model_commands(
         output_format: str,
         verbose: bool,
         output: str | None,
+        diagnostics_format: str,
     ) -> None:  # pragma: no cover - integration
         """Inspect validated FLO input with deterministic static analysis."""
         from flo.app._cli_contract import CLIExecutionRequest
@@ -91,6 +108,7 @@ def register_model_commands(
                     "format": output_format,
                     "verbose": verbose,
                     "output": output,
+                    "diagnostics_format": diagnostics_format,
                 },
             )
         )

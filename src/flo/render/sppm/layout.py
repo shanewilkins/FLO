@@ -7,8 +7,6 @@ from collections.abc import Callable
 from dataclasses import replace
 from typing import Any
 
-from flo.render._diagnostics import log_render_diagnostics
-
 from ..layout_core.elk import execute_elk_layout
 from ..layout_core.elk_contracts import (
     ElkDirection,
@@ -256,13 +254,6 @@ def layout_sppm_with_elk(
 
     request = build_sppm_elk_layout_request(process, options=render_options)
     result = execute_elk_layout(request, engine=engine or run_elkjs_layout)
-    diagnostics_report = result.diagnostics_report(
-        diagram="sppm",
-        backend="elk",
-        artifact_kind="layout_result",
-        strict=render_options.layout_fit == "fit-strict",
-    )
-    log_render_diagnostics(diagnostics_report)
     return result
 
 

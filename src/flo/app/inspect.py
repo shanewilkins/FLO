@@ -17,42 +17,49 @@ def format_timing_analysis(
     result: ProcessTimingAnalysis,
     *,
     output_format: str = "text",
+    include_diagnostics: bool = True,
 ) -> str:
     """Format one timing-analysis result for humans or deterministic tooling."""
     if output_format == "json":
         return json.dumps(result.as_dict(), indent=2, sort_keys=True) + "\n"
     if output_format != "text":
         raise ValueError(f"unsupported inspect format: {output_format}")
-    return _format_timing_text(result)
+    return _format_timing_text(result, include_diagnostics=include_diagnostics)
 
 
 def format_structural_analysis(
     result: ProcessStructuralAnalysis,
     *,
     output_format: str = "text",
+    include_diagnostics: bool = True,
 ) -> str:
     """Format one structural-analysis result for humans or tooling."""
     if output_format == "json":
         return json.dumps(result.as_dict(), indent=2, sort_keys=True) + "\n"
     if output_format != "text":
         raise ValueError(f"unsupported inspect format: {output_format}")
-    return _format_structural_text(result)
+    return _format_structural_text(result, include_diagnostics=include_diagnostics)
 
 
 def format_model_inspection(
     report: ModelInspectionReport,
     *,
     output_format: str = "text",
+    include_diagnostics: bool = True,
 ) -> str:
     """Format one model-inspection report for humans or tooling."""
     if output_format == "json":
         return json.dumps(report.as_dict(), indent=2, sort_keys=True) + "\n"
     if output_format != "text":
         raise ValueError(f"unsupported inspect format: {output_format}")
-    return _format_model_inspection_text(report)
+    return _format_model_inspection_text(
+        report, include_diagnostics=include_diagnostics
+    )
 
 
-def _format_timing_text(result: ProcessTimingAnalysis) -> str:
+def _format_timing_text(
+    result: ProcessTimingAnalysis, *, include_diagnostics: bool
+) -> str:
     process_label = result.process_name
     if result.process_id != result.process_name:
         process_label = f"{process_label} ({result.process_id})"
@@ -74,7 +81,7 @@ def _format_timing_text(result: ProcessTimingAnalysis) -> str:
         f"Changeover policy: {_humanize_policy(result.changeover_exposure_policy)}",
     ]
 
-    if result.diagnostics:
+    if include_diagnostics and result.diagnostics:
         lines.extend(("", "Diagnostics:"))
         for diagnostic in result.diagnostics:
             location = f" ({diagnostic.node_id})" if diagnostic.node_id else ""
@@ -86,7 +93,9 @@ def _format_timing_text(result: ProcessTimingAnalysis) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _format_structural_text(result: ProcessStructuralAnalysis) -> str:
+def _format_structural_text(
+    result: ProcessStructuralAnalysis, *, include_diagnostics: bool
+) -> str:
     process_label = result.process_name
     if result.process_id != result.process_name:
         process_label = f"{process_label} ({result.process_id})"
@@ -116,7 +125,7 @@ def _format_structural_text(result: ProcessStructuralAnalysis) -> str:
         f"  Unclassified steps: {_format_ids(result.unclassified_node_ids)}",
     ]
 
-    if result.diagnostics:
+    if include_diagnostics and result.diagnostics:
         lines.extend(("", "Diagnostics:"))
         for diagnostic in result.diagnostics:
             lines.append(
@@ -127,7 +136,9 @@ def _format_structural_text(result: ProcessStructuralAnalysis) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _format_model_inspection_text(report: ModelInspectionReport) -> str:
+def _format_model_inspection_text(
+    report: ModelInspectionReport, *, include_diagnostics: bool
+) -> str:
     process_label = report.process_name
     if report.process_id != report.process_name:
         process_label = f"{process_label} ({report.process_id})"
@@ -165,7 +176,7 @@ def _format_model_inspection_text(report: ModelInspectionReport) -> str:
                 lines.append(
                     f"    [{finding.kind}] {finding.code}{ids}: {finding.message}"
                 )
-    if report.structure.diagnostics:
+    if include_diagnostics and report.structure.diagnostics:
         lines.extend(("", "Model diagnostics:"))
         for diagnostic in report.structure.diagnostics:
             lines.append(

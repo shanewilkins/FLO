@@ -8,6 +8,36 @@ from flo.render import render_artifact
 from flo.source import compile_adapter, parse_adapter
 
 
+def test_mixed_unit_spaghetti_matches_equivalent_metre_geometry():
+    process = {
+        "nodes": [
+            {"id": "a", "attrs": {"location": "a"}},
+            {"id": "b", "attrs": {"location": "b"}},
+        ],
+        "edges": [{"source": "a", "target": "b"}],
+        "process": {
+            "locations": [
+                {"id": "a", "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}}},
+                {
+                    "id": "b",
+                    "metadata": {"spatial": {"x": 300, "y": 400, "unit": "cm"}},
+                },
+            ]
+        },
+    }
+    options = {"diagram": "spaghetti", "spaghetti_channel": "material"}
+    mixed_svg = render_artifact(process, options=options).content
+    process["process"]["locations"][1]["metadata"]["spatial"] = {
+        "x": 3,
+        "y": 4,
+        "unit": "m",
+    }
+    metre_svg = render_artifact(process, options=options).content
+
+    assert mixed_svg == metre_svg
+    assert 'data-from="a"' in mixed_svg
+
+
 def test_reference_spaghetti_svg_artifact_is_deterministic():
     artifact = _render_reference_spaghetti()
     rerun_artifact = _render_reference_spaghetti()

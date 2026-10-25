@@ -274,14 +274,55 @@ The 0.4 gate explicitly excludes multi-page publication, automatic child maps,
 Yellow Belt swimlane and spaghetti acceptance, and Green Belt value-stream-map
 acceptance.
 
-#### Next sprint: consistent diagnostic delivery
+#### Next sprint: Pydantic input validation
 
-The next 0.4 stabilization sprint prioritizes consistent command and Python API
-warning/error delivery under `UR-086` and `TR-117`. The
-[diagnostic delivery plan](design/diagnostic_delivery_plan.md) records the gap,
-implementation sequence, and review scenarios, starting with nonfatal aggregated
-missing-timing warnings. Scope is committed; implementation is pending. Sprint
-dates and a patch-release number have not been assigned.
+Take selective Pydantic adoption first, starting with configuration validation,
+then trial Pint in movement analysis before designing source quantity models.
+Consistent diagnostic delivery is also implemented below. This is implementation work
+within the existing contracts; it does not add a release gate. Sprint dates and
+a patch-release number have not been assigned.
+
+- [Implemented] Consolidate CLI and effective configuration validation in one
+  Pydantic model; remove the separate configuration-model layer, duplicate
+  numeric validators, and procedural flattening functions while
+  preserving configuration precedence, supported aliases, intentional
+  normalization, and actionable CLI diagnostics.
+- [Implemented] Verify valid configuration and malformed nested values through focused
+  regression checks, including strict numeric/boolean handling and compatibility
+  with existing render-option resolution. Configuration errors use the current
+  CLI usage-error boundary and operation diagnostic delivery.
+- [Implemented] Trial Pint conversion in the shared movement location index,
+  including mixed-unit distance and SVG equivalence checks while retaining
+  homogeneous-map scale and authored canonical values.
+- [Implemented] Assess process source models as the next adoption slice, documenting how
+  to replace handwritten shape checks while preserving source-aware errors and
+  the published JSON Schema contract. Keep internal geometry, layout, and
+  analysis dataclasses and explicit graph/domain validators. See the
+  [quantity validation and units decision](design/adr/quantity_validation_and_units.md).
+- [Implemented] Replace source structural checks with Pydantic models through
+  nested subprocess compilation, preserving authored data, diagnostic codes,
+  and canonical schema output. Remove superseded resolver/assembly guards.
+- [Implemented] Complete shared render-input validation and normalization for
+  application and renderer mappings. Derive model fields and defaults from
+  `RenderOptions` and remove the repetitive per-option parsers. See the
+  [source and render input decision](design/adr/pydantic_source_and_render_inputs.md).
+
+Configuration consolidation, the spatial Pint trial, source shape models, and
+shared render-input validation are implemented. Duration/resource unit migration
+remains follow-up work after compatibility review; graph and domain validators
+remain explicit.
+
+#### Consistent diagnostic delivery: implemented
+
+Consistent command, Python API, and render-artifact warning/error delivery under
+`UR-086` and `TR-117` is implemented. One operation report preserves producer
+context, orders and deduplicates findings, and exposes JSON diagnostics on stderr
+without contaminating payload stdout. Missing applicable timing produces one
+nonfatal aggregated warning; measured zero remains valid and warning-only
+results remain successful. Existing fatal exit codes and geometry strictness
+are preserved. The [diagnostic delivery plan](design/diagnostic_delivery_plan.md)
+records compatibility decisions and local verification. Broader duration/resource
+Pint migration remains follow-up work; no release has been assigned or published.
 
 ### 0.5: Yellow Belt Delivery
 

@@ -9,6 +9,7 @@ from ._artifact import RenderArtifact
 from ._execution import FinalScene, RenderExecution, RoutedGeometry
 from ._geometry import resolve_svg_geometry
 from ._publication import resolve_publication_page_format
+from .diagnostics import attach_operation_diagnostics
 from .layout_core.trace import ElkLayoutTrace
 from .options import RenderOptions
 from .registry import prepare_render_options, render_registered
@@ -60,7 +61,12 @@ def render_execution(
     else:
         artifact, _ = render_registered(ir, render_options)
     return RenderExecution(
-        artifact=resolve_svg_geometry(artifact, render_options),
+        artifact=attach_operation_diagnostics(
+            resolve_svg_geometry(artifact, render_options),
+            ir,
+            diagram=render_options.diagram,
+            strict=render_options.layout_fit == "fit-strict",
+        ),
         options=render_options,
         layout_stages=tuple(stages),
         geometry_stages=tuple(geometry),

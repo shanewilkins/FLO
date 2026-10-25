@@ -3,7 +3,7 @@ import pytest
 from flo.app._capability_validation import ensure_render_projection_supported
 from flo.app._option_validation import (
     ensure_render_options_compatible_with_output,
-    validate_sppm_numeric_render_options,
+    validate_render_options,
 )
 from flo.errors import CLIError
 
@@ -58,13 +58,13 @@ def test_ensure_render_options_compatible_with_output_rejects_json_with_render_f
         ({"sppm_max_label_ctwt": None}, "sppm-max-label-ctwt"),
     ],
 )
-def test_validate_sppm_numeric_render_options_rejects_invalid_values(options, expected):
+def test_validate_render_options_rejects_invalid_values(options, expected):
     with pytest.raises(CLIError, match=expected):
-        validate_sppm_numeric_render_options(options)
+        validate_render_options(options)
 
 
-def test_validate_sppm_numeric_render_options_accepts_valid_values():
-    validate_sppm_numeric_render_options(
+def test_validate_render_options_accepts_valid_values():
+    validate_render_options(
         {
             "layout_max_width_px": "8.5in",
             "publication_page_format": "letter",

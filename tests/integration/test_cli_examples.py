@@ -40,7 +40,7 @@ def test_cli_export_json_canonical_reference_examples_emit_expected_json():
         )
 
         assert result.exit_code == 0
-        payload = json.loads(result.output)
+        payload = json.loads(result.stdout)
         assert payload["process"]["id"] == expected_process_id
         node_kinds = {node["kind"] for node in payload["nodes"]}
         assert expected_kinds.issubset(node_kinds)

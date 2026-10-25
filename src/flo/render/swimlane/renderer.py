@@ -6,7 +6,6 @@ from typing import Any
 
 from .._artifact import RenderArtifact
 from .._diagnostics import (
-    log_render_diagnostics,
     serialize_render_diagnostics,
     serialize_render_diagnostics_report,
 )
@@ -45,7 +44,6 @@ def render_swimlane_svg_artifact(
         artifact_kind="svg",
         strict=options.layout_fit == "fit-strict",
     )
-    log_render_diagnostics(diagnostics_report)
     node_by_id = {node.id: node for node in request.nodes}
     raw_node_by_id = raw_node_lookup(process, options=options)
 

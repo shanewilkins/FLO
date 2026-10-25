@@ -579,6 +579,12 @@ For spatial analysis and spaghetti-map rendering, locations can include optional
 - `metadata.spatial.unit`: optional unit (`mm|cm|m|in|ft`)
 - `kind`: optional semantic location kind used for spaghetti-map shape styling
 
+Coordinates share one origin and axis orientation. A missing spatial unit retains
+the metre default. If positioned locations mix supported units, movement
+distances and spaghetti positions normalize to metres; maps using a single unit
+retain that unit and scale. Source and canonical JSON keep their authored values
+and units. Optional boundary coordinates use the resulting map coordinate unit.
+
 Spaghetti rendering uses deterministic partial mode by default: routes whose
 two endpoints are positioned are rendered, incomplete routes are omitted, and
 both stderr and the SVG identify the result as partial. Use
@@ -1204,7 +1210,26 @@ SPPM preset and config defaults:
 
 - Built-in `--sppm-output-profile` presets set baseline SPPM defaults for orientation, wrapping, density, and named page formats.
 - If a `diagrams.toml` file exists beside the source `.flo` file or in the current working directory, FLO loads `[sppm]` defaults automatically.
-- Precedence is CLI flags, then explicit `diagrams.toml` keys, then preset overrides, then built-in defaults.
+- Precedence is CLI flags, then the selected `diagrams.toml` preset, then global
+  `diagrams.toml` defaults, then built-in defaults.
+- FLO checks table structure when reading defaults, then validates effective
+  fields after selecting a preset and applying CLI overrides. Unselected presets
+  and overridden field values do not block rendering. Malformed configuration
+  reports the file and field path as a usage error (exit 1).
+  Positive integer settings accept integers, integer strings, and whole-number
+  floats such as `6.0`; booleans and fractional numbers are rejected.
+  Dimensions accept positive finite values
+  with the existing px, in, cm, and mm syntax. Existing option aliases remain
+  supported, and unknown configuration keys retain their existing handling.
+  Theme contents and typography ranges continue to use the render theme validator.
+
+The same render-input validation and alias normalization apply to CLI/configuration
+and Python `RenderOptions.from_mapping` inputs. `RenderOptions` remains an immutable
+dataclass inside renderers. Source compilation also validates process context,
+recursive step structure, and transition/branch fields through typed models;
+nested failures retain their authored field paths and source excerpts. This does
+not convert authored numeric strings into process numbers or replace graph and
+domain validation.
 
 SPPM label policy matrix:
 

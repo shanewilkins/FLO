@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 
 import flo.app.cli as cli_mod
+from flo.app.diagnostics import CommandResult
 from flo.errors import EXIT_INTERNAL_ERROR, CLIError
 
 
@@ -37,7 +38,7 @@ def test_execute_maps_unexpected_exception_to_internal(monkeypatch):
     def boom(content, command="render", options=None):
         raise RuntimeError("kaboom")
 
-    monkeypatch.setattr("flo.app.run_content", boom)
+    monkeypatch.setattr("flo.app.run_operation", boom)
 
     rc = cli_mod._execute("input.flo", "render", {})
 
@@ -60,7 +61,7 @@ def test_execute_maps_domain_exception_code(monkeypatch):
     def fail_domain(content, command="render", options=None):
         raise CLIError("invalid option", code=3)
 
-    monkeypatch.setattr("flo.app.run_content", fail_domain)
+    monkeypatch.setattr("flo.app.run_operation", fail_domain)
 
     rc = cli_mod._execute("input.flo", "render", {})
 
@@ -80,8 +81,10 @@ def test_execute_shuts_down_telemetry_on_write_error(monkeypatch):
     monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
     monkeypatch.setattr("flo.app.io.read_input", lambda path: (0, "content", ""))
     monkeypatch.setattr(
-        "flo.app.run_content",
-        lambda content, command="render", options=None: (0, "<svg />", ""),
+        "flo.app.run_operation",
+        lambda content, command="render", options=None: CommandResult.from_legacy(
+            0, "<svg />", ""
+        ),
     )
     monkeypatch.setattr(
         "flo.app.io.write_output", lambda out, path: (5, "write failed")

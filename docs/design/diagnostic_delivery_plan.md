@@ -1,18 +1,19 @@
-# Consistent diagnostic delivery: next sprint
+# Consistent diagnostic delivery
 
-Status: queued for the next sprint; implementation pending.
+Status: implemented and locally verified; release acceptance remains separate.
 Recorded: 2026-10-23.
+Verification updated: 2026-10-25.
 Release track: 0.4 White Belt stabilization; no sprint dates or patch version assigned.
 
 The committed outcomes and acceptance criteria live in
 [UR-086](../requirements/user_requirements.csv) and
 [TR-117](../requirements/technical_requirements.csv). This document explains
-implementation sequencing and review scenarios. It does not change the current
-[CLI error contract](../specs/cli_error_contract.md).
+implementation sequencing and review scenarios. The implemented interface is
+specified in the [CLI error contract](../specs/cli_error_contract.md).
 
 ## Need
 
-FLO already has structured source errors, analysis findings, render reports,
+Before this work, FLO had structured source errors, analysis findings, render reports,
 logging, and runtime tracing. Their delivery differs by producer. A timing
 warning visible in `flo inspect` can be absent from an ordinary render command;
 render warnings have a separate logging path; some degraded-success messages
@@ -37,31 +38,31 @@ values are also absent from the existing `timing-incomplete` coverage warning.
 | Python callers | `src/flo/api.py` and render artifacts | Expose warnings without turning successful results into failures. |
 | Observability | `src/flo/app/logging.py` and `telemetry.py` | Retain trace context without duplicating user-facing diagnostics or contaminating stdout. |
 
-## Next-sprint work
+## Completed work
 
-- [ ] Inventory existing diagnostic codes, severities, delivery paths, and
+- [x] Inventory existing diagnostic codes, severities, delivery paths, and
   strict-mode behavior. Link overlapping obligations such as TR-029, TR-032,
   TR-053, TR-077, and TR-079 rather than creating replacement code families.
-- [ ] Define a common operation-level diagnostic envelope and adapters for the
+- [x] Define a common operation-level diagnostic envelope and adapters for the
   existing typed source, analysis, and rendering records. Keep domain producers
   independent of the CLI and logging implementation.
-- [ ] Define deterministic ordering, duplicate identity, aggregation, and
+- [x] Define deterministic ordering, duplicate identity, aggregation, and
   visibility. One underlying finding should not be printed again merely because
   layout, rendering, and output handling each encountered it.
-- [ ] Route actionable warnings to concise stderr output by default. Provide
+- [x] Route actionable warnings to concise stderr output by default. Provide
   complete structured details to programmatic consumers and a documented
   machine-readable command path. Keep SVG/JSON payload stdout clean.
-- [ ] Add the first integrated use case: aggregate missing applicable processing,
+- [x] Add the first integrated use case: aggregate missing applicable processing,
   queue, pre-task waiting, and setup fields into one timing warning per operation.
   Include omitted optional fields represented by `?`; do not warn for an
   explicitly measured zero merely because its numeric value is falsey.
-- [ ] Make operation success depend on error severity rather than the presence
-  of any diagnostic. The current `OperationResult.ok` treats any diagnostic as
-  failure, so warning delivery needs an explicit compatibility review.
-- [ ] Preserve existing fatal errors, exit codes, strict geometry failures, and
+- [x] Make operation success depend on error severity rather than the presence
+  of any diagnostic. `OperationResult.ok` retains successful values for
+  warning/info-only results; a missing value or error remains unsuccessful.
+- [x] Preserve existing fatal errors, exit codes, strict geometry failures, and
   privacy boundaries. Geometry strictness alone should not turn missing timing
   into an error.
-- [ ] Add regression fixtures, CLI/API checks, documentation, and a release note
+- [x] Add regression fixtures, CLI/API checks, documentation, and a release note
   together with implementation. Review warning volume on untimed starter models
   and on the book's Wash n' Fold diagram.
 
@@ -94,7 +95,28 @@ cover no timing at all, partially measured models, multiple missing fields,
 measured zeros, invalid input, unavailable analysis, and disabled publication
 footers. Hiding a diagram footer should not hide the command's warning.
 
-Before implementation, the shared envelope shape, structured-output command
-syntax, and compatibility handling for existing metadata/result fields need to
-be specified in the current CLI/API contracts. Those interface details are
-implementation decisions for this sprint, not claims about today's behavior.
+### Delivery and compatibility decisions
+
+- The architecture-neutral `DiagnosticReport` adapts existing source, analysis,
+  and render records without replacing producer-owned types or codes.
+- Reports sort by severity (error, warning, info), stage, code, source, field
+  path, and serialized record content. Duplicate identity includes all record
+  content except delivery stage; differing evidence remains distinct.
+- `--diagnostics-format json` emits one versioned operation report to stderr,
+  including an empty report on clean success. Default text shows warnings;
+  verbose text also shows informational findings. Payload stdout stays separate.
+- Existing `validate --format json` source records, render metadata, and
+  `run_content` tuples remain supported. Python results expose `.report`;
+  render artifacts expose `.diagnostic_report` without printing.
+- Artifact metadata adaptation lives beside the artifact contract. Timing
+  attachment depends on that contract, not vice versa, keeping render siblings
+  acyclic.
+
+### Local verification
+
+On 2026-10-25, the full suite passed with 1,333 tests and 94.01% source
+coverage (90% required). Focused report/delivery coverage passed 24 tests.
+All 11 import contracts, architecture responsibilities, source typing, Ruff
+lint/format checks, docstrings, unused-code checks, and strict documentation
+governance passed. The SPPM drift gate matched all 13 cases / 26 committed files.
+These checks do not replace final installed-package/platform release acceptance.

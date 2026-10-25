@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from structlog.contextvars import get_contextvars
 
 import flo.app.cli as cli_mod
+from flo.app.diagnostics import CommandResult
 from flo.errors import (
     EXIT_INTERNAL_ERROR,
     EXIT_VALIDATION_ERROR,
@@ -26,7 +27,7 @@ def test_execute_emits_domain_error_event_fields(monkeypatch):
     monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
     monkeypatch.setattr("flo.app.io.read_input", lambda path: (0, "content", ""))
     monkeypatch.setattr(
-        "flo.app.run_content",
+        "flo.app.run_operation",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(CLIError("bad flags", code=3)),
     )
 
@@ -58,7 +59,7 @@ def test_execute_emits_internal_error_event_fields(monkeypatch):
     monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
     monkeypatch.setattr("flo.app.io.read_input", lambda path: (0, "content", ""))
     monkeypatch.setattr(
-        "flo.app.run_content",
+        "flo.app.run_operation",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("boom")),
     )
 
@@ -90,8 +91,8 @@ def test_execute_emits_verbose_diagnostic_on_fail_open_fallback(monkeypatch):
     monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
     monkeypatch.setattr("flo.app.io.read_input", lambda path: (0, "content", ""))
     monkeypatch.setattr(
-        "flo.app.run_content",
-        lambda *_args, **_kwargs: (
+        "flo.app.run_operation",
+        lambda *_args, **_kwargs: CommandResult.from_legacy(
             0,
             "<svg />",
             "renderer degraded: boom",
@@ -125,8 +126,10 @@ def test_execute_emits_write_output_error_fields_on_export_json(monkeypatch):
     monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
     monkeypatch.setattr("flo.app.io.read_input", lambda path: (0, "content", ""))
     monkeypatch.setattr(
-        "flo.app.run_content",
-        lambda *_args, **_kwargs: (0, '{"process":{},"nodes":[],"edges":[]}', ""),
+        "flo.app.run_operation",
+        lambda *_args, **_kwargs: CommandResult.from_legacy(
+            0, '{"process":{},"nodes":[],"edges":[]}', ""
+        ),
     )
     monkeypatch.setattr(
         "flo.app.io.write_output",
@@ -161,7 +164,7 @@ def test_execute_maps_compile_error_stage_granularity(monkeypatch):
     monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
     monkeypatch.setattr("flo.app.io.read_input", lambda path: (0, "content", ""))
     monkeypatch.setattr(
-        "flo.app.run_content",
+        "flo.app.run_operation",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(
             CompileError("compile failed", error_stage="compile")
         ),
@@ -191,7 +194,7 @@ def test_execute_maps_parse_error_stage_granularity(monkeypatch):
     monkeypatch.setattr("flo.app.get_services", lambda verbose=False: services)
     monkeypatch.setattr("flo.app.io.read_input", lambda path: (0, "content", ""))
     monkeypatch.setattr(
-        "flo.app.run_content",
+        "flo.app.run_operation",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(
             ParseError("parse failed", error_stage="parse")
         ),

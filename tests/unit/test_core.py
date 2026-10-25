@@ -103,7 +103,7 @@ def test_renderer_receives_unmodified_canonical_ir(
     rc, out, err = run_content("ok content")
     assert rc == 0
     assert out == "<svg>ok</svg>"
-    assert err == ""
+    assert "timing-incomplete" in err
     assert received == [compiled]
 
 
@@ -139,7 +139,7 @@ def test_run_content_returns_svg_artifact_content(
     )
     assert rc == 0
     assert out == "<svg>ok</svg>"
-    assert err == ""
+    assert "timing-incomplete" in err
 
 
 def test_run_content_render_to_writes_svg_directly(
@@ -175,7 +175,7 @@ def test_run_content_render_to_writes_svg_directly(
 
     assert rc == 0
     assert out == ""
-    assert err == ""
+    assert "timing-incomplete" in err
     assert out_path.read_text(encoding="utf-8") == "<svg>ok</svg>"
 
 
@@ -267,7 +267,7 @@ def test_run_content_applies_render_metadata_defaults_to_render_options(
     rc, out, err = run_content("some content")
     assert rc == 0
     assert out == "<svg>ok</svg>"
-    assert err == ""
+    assert "timing-incomplete" in err
 
     render_options = captured["options"]
     assert render_options.diagram == "spaghetti"
@@ -315,7 +315,7 @@ def test_run_content_cli_options_override_render_metadata_defaults(
     )
     assert rc == 0
     assert out == "<svg>ok</svg>"
-    assert err == ""
+    assert "timing-incomplete" in err
 
     render_options = captured["options"]
     assert render_options.diagram == "swimlane"
@@ -343,7 +343,7 @@ def test_run_content_without_render_metadata_keeps_default_diagram(
     rc, out, err = run_content("some content")
     assert rc == 0
     assert out == "<svg>ok</svg>"
-    assert err == ""
+    assert "timing-incomplete" in err
 
     render_options = captured["options"]
     assert render_options.diagram == "sppm"

@@ -1,5 +1,38 @@
 # Changelog
 
+## Unreleased
+
+- Deliver existing source, analysis, and render findings through one deterministic
+  operation report preserving codes, severity, field paths, source context, and
+  producer evidence. Show actionable warnings on stderr by default; add
+  `--diagnostics-format json` without mixing diagnostics into artifact stdout.
+  Retain legacy source JSON diagnostics, render metadata, and `run_content`
+  tuples while exposing reports to Python and artifact consumers.
+- Aggregate missing applicable processing, queue waiting, pre-task waiting, and
+  setup timing into one `timing-incomplete` warning per operation, independent of
+  footer visibility. Keep measured zero valid, warning-only operations successful,
+  and existing fatal errors and strict geometry exit codes unchanged.
+
+- Replace handwritten source shape checks with strict Pydantic models for
+  process context, recursive steps, explicit transitions, branch configuration,
+  and named targets. Preserve authored values, annotations, omissions, compiler
+  codes, and canonical schema output; retain explicit identity and graph rules.
+  Locate nested structural failures using typed paths and YAML source marks.
+- Share one Pydantic render input model between CLI/configuration validation and
+  `RenderOptions.from_mapping`, deriving field types/defaults from the immutable
+  dataclass. Replace repetitive alias parsers with declarative normalization and
+  remove duplicate assembly guards after source validation.
+
+- Consolidate CLI/configuration validation in one Pydantic model, replacing
+  duplicate numeric validators and TOML flattening functions. Validate effective
+  values after selecting a preset and applying overrides, retain field-path
+  usage errors, and accept lossless integer conversions while rejecting booleans
+  and fractional values.
+- Use Pint to normalize mixed supported spatial units to metres in the location
+  index shared by movement analysis and spaghetti rendering. Preserve authored
+  canonical quantities and homogeneous-map scale; keep unsupported or non-finite
+  coordinates unavailable instead of inferring misleading distances.
+
 ## 0.4.3
 
 - Finalize routed geometry and complete SPPM scenes before SVG emission. Enforce

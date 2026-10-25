@@ -18,7 +18,7 @@ def test_run_content_with_example_file(example_file: Path):
 
     assert rc == EXIT_SUCCESS
     assert "<svg" in out
-    assert err == ""
+    assert all(line.startswith("timing-") for line in err.splitlines())
 
 
 def test_run_content_empty_is_rejected():

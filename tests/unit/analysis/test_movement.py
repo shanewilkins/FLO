@@ -1,3 +1,8 @@
+from copy import deepcopy
+from math import hypot
+
+import pytest
+
 from flo.process.analysis import (
     aggregate_people_movements,
     aggregate_people_movements_by_worker,
@@ -6,6 +11,93 @@ from flo.process.analysis import (
     infer_people_movements,
 )
 from flo.process.ir.models import IR, Edge
+
+
+def _positioned_process(source_unit="m", target_unit="m", target=(3, 4)):
+    return {
+        "nodes": [
+            {"id": "a", "attrs": {"location": "a", "workers": ["worker"]}},
+            {"id": "b", "attrs": {"location": "b", "workers": ["worker"]}},
+        ],
+        "edges": [{"source": "a", "target": "b"}],
+        "process": {
+            "locations": [
+                {
+                    "id": "a",
+                    "metadata": {"spatial": {"x": 0, "y": 0, "unit": source_unit}},
+                },
+                {
+                    "id": "b",
+                    "metadata": {
+                        "spatial": {"x": target[0], "y": target[1], "unit": target_unit}
+                    },
+                },
+            ]
+        },
+    }
+
+
+@pytest.mark.parametrize(
+    ("unit", "target"),
+    [("mm", (3000, 4000)), ("cm", (300, 400)), ("in", (30, 40)), ("ft", (3, 4))],
+)
+def test_mixed_unit_movements_use_one_metre_frame_without_mutating_input(unit, target):
+    process = _positioned_process(target_unit=unit, target=target)
+    before = deepcopy(process)
+    factor = {"mm": 0.001, "cm": 0.01, "in": 0.0254, "ft": 0.3048}[unit]
+
+    for infer in (infer_material_movements, infer_people_movements):
+        distance = infer(process)[0]["distance"]
+        assert distance["unit"] == "m"
+        assert distance["value"] == pytest.approx(hypot(*target) * factor)
+    assert process == before
+
+
+def test_mixed_units_convert_both_nonzero_endpoints_before_subtraction():
+    process = _positioned_process(target_unit="ft", target=(10, 20))
+    process["process"]["locations"][0]["metadata"]["spatial"].update(x=1, y=2)
+
+    forward = infer_material_movements(process)[0]["distance"]
+    process["edges"] = [{"source": "b", "target": "a"}]
+    reverse = infer_material_movements(process)[0]["distance"]
+
+    assert forward["unit"] == "m"
+    assert forward["value"] == pytest.approx(hypot(3.048 - 1, 6.096 - 2))
+    assert reverse == forward
+
+
+def test_homogeneous_maps_retain_their_unit_and_scale():
+    process = _positioned_process(source_unit="ft", target_unit="ft")
+    assert infer_material_movements(process)[0]["distance"] == {
+        "value": 5,
+        "unit": "ft",
+    }
+    assert extract_location_spatial_index(process)["b"]["x"] == 3
+
+
+@pytest.mark.parametrize("invalid", [True, float("nan"), float("inf"), 10**400])
+def test_invalid_unvalidated_coordinates_have_no_inferred_distance(invalid):
+    process = _positioned_process(target=(invalid, 4))
+    assert "distance" not in infer_material_movements(process)[0]
+
+
+@pytest.mark.parametrize("unit", ["kg", "s", "km", "nonsense"])
+def test_pint_does_not_expand_the_supported_spatial_unit_contract(unit):
+    process = _positioned_process(target_unit=unit)
+    assert "distance" not in infer_material_movements(process)[0]
+
+
+def test_large_finite_distances_do_not_overflow_during_squaring():
+    process = _positioned_process(target=(3e200, 4e200))
+    assert infer_material_movements(process)[0]["distance"]["value"] == pytest.approx(
+        5e200
+    )
+
+
+def test_overflowed_distance_is_unavailable():
+    process = _positioned_process(target=(1e308, 0))
+    process["process"]["locations"][0]["metadata"]["spatial"]["x"] = -1e308
+    assert "distance" not in infer_material_movements(process)[0]
 
 
 def test_infer_people_movements_requires_shared_workers_and_location_change(

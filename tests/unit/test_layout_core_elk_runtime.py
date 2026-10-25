@@ -999,7 +999,9 @@ def test_layout_sppm_with_elk_rejects_non_sppm_options():
         raise AssertionError("Expected SPPM adapter to reject non-SPPM options")
 
 
-def test_layout_swimlane_with_elk_logs_render_diagnostics(monkeypatch, capsys):
+def test_layout_swimlane_with_elk_retains_diagnostics_without_logging(
+    monkeypatch, capsys
+):
     def fake_execute_elk_layout(_request, *, engine):
         return LayoutResult(
             orientation="tb",
@@ -1055,21 +1057,17 @@ def test_layout_swimlane_with_elk_logs_render_diagnostics(monkeypatch, capsys):
 
         assert result.diagnostics[0].code == "elk-edge-missing"
         captured = capsys.readouterr()
-        assert "render_diagnostics_summary" in captured.err
-        assert "render_diagnostic" in captured.err
-        assert (
-            "backend='elk'" in captured.err
-            or 'backend="elk"' in captured.err
-            or "backend=elk" in captured.err
-        )
-        assert "layout_result" in captured.err
-        assert "start->review" in captured.err
+        assert captured.err == captured.out == ""
+        assert result.diagnostics[0].metadata == {
+            "source_id": "start",
+            "target_id": "review",
+        }
     finally:
         root.handlers = old_handlers
         root.setLevel(old_level)
 
 
-def test_layout_sppm_with_elk_logs_render_diagnostics(monkeypatch, capsys):
+def test_layout_sppm_with_elk_retains_diagnostics_without_logging(monkeypatch, capsys):
     def fake_execute_elk_layout(_request, *, engine):
         return LayoutResult(
             orientation="lr",
@@ -1126,14 +1124,8 @@ def test_layout_sppm_with_elk_logs_render_diagnostics(monkeypatch, capsys):
 
         assert result.diagnostics[0].code == "elk-lane-frame-missing"
         captured = capsys.readouterr()
-        assert "render_diagnostics_summary" in captured.err
-        assert "render_diagnostic" in captured.err
-        assert (
-            "backend='elk'" in captured.err
-            or 'backend="elk"' in captured.err
-            or "backend=elk" in captured.err
-        )
-        assert "expected lane 'front'" in captured.err
+        assert captured.err == captured.out == ""
+        assert result.diagnostics[0].metadata == {"lane_id": "front"}
     finally:
         root.handlers = old_handlers
         root.setLevel(old_level)

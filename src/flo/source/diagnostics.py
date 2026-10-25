@@ -5,6 +5,12 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+import yaml
+
+from flo.diagnostics import render_diagnostic
+
+from .models import source_path as format_source_path
+
 _NODE_RE = re.compile(r"\bnode '([^']+)'")
 _EDGE_RE = re.compile(r"\bedge '([^']+)'\s*->\s*'([^']+)'")
 _CODE_RE = re.compile(r"\b(E\d{4})\b")
@@ -28,24 +34,7 @@ class SourceDiagnostic:
 
     def render(self) -> str:
         """Render the diagnostic in a compiler-style human format."""
-        if (
-            self.source is None
-            or self.line is None
-            or self.column is None
-            or self.excerpt is None
-        ):
-            return self.message
-        location = f"{self.source}:{self.line}:{self.column}"
-        field = f" [{self.field_path}]" if self.field_path else ""
-        gutter = str(self.line)
-        caret_padding = " " * max(0, self.column - 1)
-        return "\n".join(
-            (
-                f"{location}: {self.message}{field}",
-                f"  {gutter} | {self.excerpt}",
-                f"  {' ' * len(gutter)} | {caret_padding}^",
-            )
-        )
+        return render_diagnostic(self)
 
 
 def source_diagnostic(
@@ -77,6 +66,20 @@ def source_diagnostic(
             line_index=line_index,
             column_index=column_index,
             field_path=None,
+            include_chain=include_chain,
+        )
+
+    typed_path = _typed_error_path(cause)
+    typed_mark = _yaml_path_mark(content, typed_path) if typed_path else None
+    if typed_mark is not None:
+        return _diagnostic_at(
+            message=message,
+            source=_source_label(source_path),
+            lines=lines,
+            line_index=typed_mark.line,
+            column_index=typed_mark.column,
+            field_path=format_source_path(typed_path),
+            suggestion=_suggestion_for_code(message),
             include_chain=include_chain,
         )
 
@@ -173,6 +176,50 @@ def source_aware_message(
         cause=cause,
     )
     return diagnostic.render()
+
+
+def _typed_error_path(cause: BaseException | None) -> tuple:
+    while cause is not None:
+        location = getattr(cause, "location", None)
+        if isinstance(location, tuple):
+            return location
+        cause = cause.__cause__
+    return ()
+
+
+def _yaml_path_mark(content: str, path: tuple):
+    """Locate a typed path using YAML structure, including nested child indices."""
+    try:
+        node = yaml.compose(content, Loader=yaml.SafeLoader)
+    except yaml.YAMLError:
+        return None
+    mark = node.start_mark if node is not None else None
+    for part in path:
+        if isinstance(node, yaml.SequenceNode) and isinstance(part, int):
+            if part < 0 or part >= len(node.value):
+                break
+            node = node.value[part]
+            mark = node.start_mark
+        elif isinstance(node, yaml.MappingNode):
+            pair = next(
+                (pair for pair in node.value if _yaml_key(pair[0]) == part), None
+            )
+            if pair is None:
+                break
+            key, node = pair
+            mark = key.start_mark
+        else:
+            break
+    return mark
+
+
+def _yaml_key(node: yaml.Node):
+    scalar_tags = {"bool", "int", "float", "null"}
+    return (
+        yaml.safe_load(node.value)
+        if node.tag.rsplit(":", 1)[-1] in scalar_tags
+        else node.value
+    )
 
 
 def _marked_error_location(cause: BaseException | None) -> tuple[int, int] | None:

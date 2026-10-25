@@ -77,6 +77,38 @@ Current mappings:
 
 ## Validation diagnostics
 
+### Operation diagnostic report
+
+`--diagnostics-format text|json` applies to render, export, validate, and inspect
+commands and the implicit render entry point. Text is the default: actionable
+warnings are visible on stderr without verbose mode; informational findings are
+visible with verbose mode. JSON emits one report to stderr, including an empty
+report for a successful operation with no findings. Artifact/report stdout
+remains independently parseable. The existing `validate --format json` source
+diagnostic record remains supported; the explicit operation-report flag takes
+precedence when both JSON switches are selected.
+
+The report has `report_version: "0.1"`, warning/error/info counts, and a
+deterministically ordered `diagnostics` array. Each record contains code (which
+can be null for an uncoded existing failure), severity, stage, message, optional
+source/line/column/excerpt/field-path/suggestion, include chain, and `details`
+retaining producer-specific data. Equivalent records differing only in delivery
+stage are emitted once. Existing diagnostic codes and fatal exit mappings remain
+unchanged; warning-only success remains exit 0.
+
+`timing-incomplete` aggregates omitted applicable processing, queue waiting,
+pre-task waiting, and setup fields into one warning per operation. Details list
+affected node IDs and fields. Explicit integer/floating-point zero is measured;
+invalid declared values retain fatal source validation instead of becoming
+missing-value warnings. Footer visibility and strict geometry do not suppress
+or promote this warning.
+
+Python operation results expose the same report and treat only error severity
+as diagnostic failure. Render artifacts retain producer metadata and add an
+`operation_diagnostics` report; programmatic rendering does not print it.
+The legacy application `run_content` tuple remains available, with warning text
+in its third element; structured command consumers use `run_operation`.
+
 Semantic validation uses stable diagnostic-style prefixes in messages (for
 example `E1003`, `E1101`) so failures are easier to script against and triage.
 
@@ -95,6 +127,14 @@ typed record containing, where applicable:
 Human stderr and machine-readable output must be generated from the same typed
 record so automation does not need to scrape prose. Sensitive telemetry input
 and raw attributes remain excluded under the telemetry privacy policy.
+
+Source structural failures carry authored field paths, including indices in
+nested `steps` or `subnodes` and fields inside `attrs`. When that path is present
+in the entry document, its YAML source mark supplies the location and excerpt.
+Missing fields use the closest available enclosing mark. Existing compiler
+codes and compile-error exit status remain in effect; model-library error dumps
+are not the user-facing diagnostic format. Other producers retain their existing
+location enrichment when adapted into the common operation report.
 
 `flo validate --format json` emits this record as deterministic JSON through
 the diagnostic stream. The default `--format text` renders the same record in

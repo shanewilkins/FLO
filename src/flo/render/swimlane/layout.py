@@ -5,8 +5,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from flo.render._diagnostics import log_render_diagnostics
-
 from ..layout_core.elk import execute_elk_layout
 from ..layout_core.elk_contracts import ElkDirection, ElkLayoutRequest, ElkSerialization
 from ..layout_core.elk_runtime import run_elkjs_layout
@@ -84,13 +82,6 @@ def layout_swimlane_with_elk(
 
     request = build_swimlane_elk_layout_request(process, options=render_options)
     result = execute_elk_layout(request, engine=engine or run_elkjs_layout)
-    diagnostics_report = result.diagnostics_report(
-        diagram="swimlane",
-        backend="elk",
-        artifact_kind="layout_result",
-        strict=render_options.layout_fit == "fit-strict",
-    )
-    log_render_diagnostics(diagnostics_report)
     return result
 
 
