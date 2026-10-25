@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Validate measured resource canonical pairs through the shared Pint registry.
+  Keep FLO source/JSON syntax, supported units, authored quantities, and count
+  rules unchanged, but intentionally reject incompatible dimensions (`E1222`),
+  unequal canonical amounts (`E1223`, relative tolerance `1e-9`, absolute
+  tolerance `0`), and non-representable canonical conversions (`E1224`).
+  New failures preserve authored collection/group field paths and repair guidance
+  through CLI/API reports. Correct inconsistent canonical pairs or omit both
+  optional canonical fields; no density or mass-to-volume conversion is inferred.
+
 - Route scalar duration normalization and inspect/SPPM/value-stream presentation
   conversions through the existing lazy Pint registry. Replace the handwritten
   duration factor table with explicit supported aliases, keeping duration `m`

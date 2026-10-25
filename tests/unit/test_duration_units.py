@@ -130,6 +130,7 @@ def test_ordinary_import_leaves_pint_lazy_and_conversions_share_one_registry():
             "assert units.convert_duration(1, 'm', 's') == 60; "
             "registry = units._registry(); "
             "assert units.length_in_metres(100, 'cm') == 1; "
+            "assert units.convert_measure(250, 'g', 'kg') == 0.25; "
             "assert units._registry() is registry; "
             "assert units._registry.cache_info().currsize == 1",
         ],

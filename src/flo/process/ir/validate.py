@@ -9,7 +9,12 @@ from typing import Any, TypeGuard
 
 from flo.errors import ValidationError
 from flo.process.durations import duration_number, duration_seconds
-from flo.process.units import DURATION_UNITS, SPATIAL_UNITS
+from flo.process.units import (
+    DURATION_UNITS,
+    MEASURE_UNITS,
+    SPATIAL_UNITS,
+    convert_measure,
+)
 
 from ._graph_utils import build_adjacency_maps, traverse
 from .enums import ProcessValueClass
@@ -25,7 +30,16 @@ from .validate_render_intent import validate_render_intent
 from .validate_structure import validate_parallel_structure
 from .validate_subprocess import validate_subprocess_metadata
 
-_MEASURE_UNITS = {"mg", "g", "kg", "ml", "l", "mm", "cm", "m"}
+_QUANTITY_REL_TOL = 1e-9
+
+
+class _QuantityValidationError(ValidationError):
+    """Carry a quantity field location for source-boundary enrichment."""
+
+    def __init__(self, message: str, field: str) -> None:
+        super().__init__(message)
+        self.location: tuple[str | int, ...] = (field,)
+
 
 try:
     import jsonschema
@@ -596,6 +610,7 @@ def _validate_process_resources(obj: IR) -> None:
             collection=resources,
             path=resource_key,
             seen_ids=set(),
+            location=(resource_key,),
         )
 
 
@@ -604,6 +619,7 @@ def _validate_resource_collection(
     collection: Any,
     path: str,
     seen_ids: set[str],
+    location: tuple[str | int, ...],
 ) -> None:
     if isinstance(collection, list):
         for index, resource in enumerate(collection):
@@ -612,6 +628,7 @@ def _validate_resource_collection(
                 path=f"{path}[{index}]",
                 resource=resource,
                 seen_ids=seen_ids,
+                location=(*location, index),
             )
         return
 
@@ -644,6 +661,7 @@ def _validate_resource_collection(
                 collection=nested_collection,
                 path=f"{path}.{group_name}",
                 seen_ids=seen_ids,
+                location=(*location, group_name),
             )
         return
 
@@ -657,6 +675,7 @@ def _validate_resource_item(
     path: str,
     resource: Any,
     seen_ids: set[str],
+    location: tuple[str | int, ...],
 ) -> None:
     if not isinstance(resource, dict):
         raise ValidationError(f"E1202: {path} must be an object")
@@ -689,7 +708,11 @@ def _validate_resource_item(
     if not isinstance(quantity, dict):
         raise ValidationError(f"E1204: {path}.quantity must be an object")
 
-    _validate_resource_quantity(path=path, quantity=quantity)
+    try:
+        _validate_resource_quantity(path=path, quantity=quantity)
+    except _QuantityValidationError as exc:
+        exc.location = (*location, "quantity", *exc.location)
+        raise
 
 
 def _validate_location_spatial(path: str, resource: dict[str, Any]) -> None:
@@ -782,9 +805,9 @@ def _validate_measure_quantity(path: str, quantity: dict[str, Any]) -> None:
         )
 
     unit = quantity.get("unit")
-    if not isinstance(unit, str) or unit.strip().lower() not in _MEASURE_UNITS:
+    if not isinstance(unit, str) or unit.strip().lower() not in MEASURE_UNITS:
         raise ValidationError(
-            f"E1210: {path}.quantity.unit must be one of {sorted(_MEASURE_UNITS)} for kind=measure"
+            f"E1210: {path}.quantity.unit must be one of {sorted(MEASURE_UNITS)} for kind=measure"
         )
 
     canonical_value = quantity.get("canonical_value")
@@ -797,12 +820,21 @@ def _validate_measure_quantity(path: str, quantity: dict[str, Any]) -> None:
         return
 
     _validate_canonical_quantity(
-        path=path, canonical_value=canonical_value, canonical_unit=canonical_unit
+        path=path,
+        canonical_value=canonical_value,
+        canonical_unit=canonical_unit,
+        value=value,
+        unit=unit,
     )
 
 
 def _validate_canonical_quantity(
-    path: str, canonical_value: Any, canonical_unit: Any
+    path: str,
+    canonical_value: Any,
+    canonical_unit: Any,
+    *,
+    value: float,
+    unit: str,
 ) -> None:
     if not _is_number(canonical_value) or canonical_value <= 0:
         raise ValidationError(
@@ -810,10 +842,30 @@ def _validate_canonical_quantity(
         )
     if (
         not isinstance(canonical_unit, str)
-        or canonical_unit.strip().lower() not in _MEASURE_UNITS
+        or canonical_unit.strip().lower() not in MEASURE_UNITS
     ):
         raise ValidationError(
-            f"E1213: {path}.quantity.canonical_unit must be one of {sorted(_MEASURE_UNITS)}"
+            f"E1213: {path}.quantity.canonical_unit must be one of {sorted(MEASURE_UNITS)}"
+        )
+    try:
+        equivalent = convert_measure(float(value), unit, canonical_unit)
+    except ValueError as exc:
+        raise _QuantityValidationError(
+            f"E1222: {path}.quantity.canonical_unit must have the same dimension as unit '{unit}'",
+            "canonical_unit",
+        ) from exc
+    if not math.isfinite(equivalent) or equivalent <= 0:
+        raise _QuantityValidationError(
+            f"E1224: {path}.quantity.canonical_value conversion must remain finite and > 0 in '{canonical_unit}'",
+            "canonical_value",
+        )
+    if not math.isclose(
+        equivalent, canonical_value, rel_tol=_QUANTITY_REL_TOL, abs_tol=0
+    ):
+        raise _QuantityValidationError(
+            f"E1223: {path}.quantity.canonical_value must represent the same amount as {value} {unit} "
+            f"({equivalent:g} {canonical_unit}; relative tolerance {_QUANTITY_REL_TOL:g}, absolute tolerance 0)",
+            "canonical_value",
         )
 
 

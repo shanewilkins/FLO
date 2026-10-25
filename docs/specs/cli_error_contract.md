@@ -140,6 +140,18 @@ location enrichment when adapted into the common operation report.
 the diagnostic stream. The default `--format text` renders the same record in
 the compiler-style source excerpt format.
 
+## Resource quantity diagnostics
+
+Measured quantity canonical pairs retain the existing source/JSON syntax but
+must now represent an equivalent amount. `E1222` reports incompatible
+dimensions at `quantity.canonical_unit`; `E1223` reports unequal amounts at
+`quantity.canonical_value` (relative tolerance `1e-9`, absolute tolerance `0`);
+`E1224` reports a converted amount that overflows or underflows to zero.
+These are validation failures (exit `4`), not warnings. The common report
+retains authored collection/group paths, source excerpts, and repair guidance.
+Existing malformed-value/unit codes remain unchanged. Export, inspect, and
+render stop before producing a payload for invalid canonical quantities.
+
 ## Projection capability diagnostics
 
 Unsupported diagram/backend projection requests are usage errors and must:

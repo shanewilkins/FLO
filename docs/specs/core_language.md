@@ -398,6 +398,28 @@ An implementation of FLO must enforce these minimum semantic rules:
       rework metadata must be finite; non-finite or overflowing values must fail
       validation rather than contaminating downstream calculations.
 
+22. Resource quantity integrity
+   - Measured quantities retain finite `value > 0` and supported units
+     `mg`, `g`, `kg`, `ml`, `l`, `mm`, `cm`, and `m`.
+   - Optional `canonical_value` and `canonical_unit` are provided together,
+     using finite positive values and supported units. They describe the same
+     amount as the authored pair, not just a compatible dimension.
+   - Units must have the same physical dimension (`E1222`). No mass-to-volume
+     conversion or material density is inferred.
+   - Canonical amount equivalence uses relative tolerance `1e-9` and absolute
+     tolerance `0`: `abs(converted - canonical) <= 1e-9 *
+     max(abs(converted), abs(canonical))`. A mismatch fails with `E1223`.
+     The converted value must remain finite and positive; overflow or
+     underflow to zero fails with `E1224`.
+   - Count quantities remain discrete integer counts of at least 1, optionally
+     labeled `each`; they are not converted as dimensionless physical measures.
+   - These checks cover item, resource, location, and supported legacy
+     collections, including nested groups. Validation preserves authored
+     values, units, canonical pairs, omissions, and qualifiers.
+   - The source and JSON shapes are unchanged. This deliberately tightens
+     validation for inconsistent canonical declarations; correct the pair or
+     omit both optional canonical fields.
+
    ## Rendering boundary
 
    The canonical language distinguishes decisions, generic branches, and parallel

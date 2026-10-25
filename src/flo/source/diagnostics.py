@@ -69,7 +69,7 @@ def source_diagnostic(
             include_chain=include_chain,
         )
 
-    typed_path = _typed_error_path(cause)
+    typed_path = _authored_quantity_path(content, _typed_error_path(cause))
     typed_mark = _yaml_path_mark(content, typed_path) if typed_path else None
     if typed_mark is not None:
         return _diagnostic_at(
@@ -185,6 +185,27 @@ def _typed_error_path(cause: BaseException | None) -> tuple:
             return location
         cause = cause.__cause__
     return ()
+
+
+def _authored_quantity_path(content: str, path: tuple) -> tuple:
+    """Resolve typed entity paths back to the selected authored collection."""
+    if (
+        not path
+        or path[0]
+        not in {"items", "resources", "locations", "materials", "equipment", "workers"}
+        or "quantity" not in path
+    ):
+        return path
+    document = yaml.safe_load(content)
+    for prefix in ((), ("process",), ("process", "metadata")):
+        container = document
+        for key in prefix:
+            container = container.get(key) if isinstance(container, dict) else None
+        if isinstance(container, dict) and isinstance(
+            container.get(path[0]), (dict, list)
+        ):
+            return (*prefix, *path)
+    return path
 
 
 def _yaml_path_mark(content: str, path: tuple):
@@ -507,6 +528,9 @@ def _suggestion_for_code(message: str) -> str | None:
         "E1030": "Use dispatch, probabilistic, external, or unspecified as the branch mode.",
         "E1031": "Remove outcome from the generic branch edge and use route when a name is needed.",
         "E1032": "Give each named route leaving the branch a unique name.",
+        "E1222": "Use a canonical unit of the same dimension; mass-to-volume conversion is not inferred.",
+        "E1223": "Supply the equivalent canonical amount within relative tolerance 1e-9, or omit both optional canonical fields.",
+        "E1224": "Choose an equivalent canonical unit whose converted amount remains finite and positive.",
         "E1312": "Declare the referenced item under process.metadata.items or correct the item ID.",
         "E1313": "Declare the referenced resource under process.metadata.resources or correct the resource ID.",
         "E1314": "Use a resource whose declared kind matches this relation.",

@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from pint import UnitRegistry
 
 SPATIAL_UNITS = frozenset({"mm", "cm", "m", "in", "ft"})
+MEASURE_UNITS = frozenset({"mg", "g", "kg", "ml", "l", "mm", "cm", "m"})
 _DURATION_UNIT_NAMES = {
     "s": "second",
     "m": "minute",
@@ -46,3 +47,16 @@ def convert_duration(value: float, source_unit: str, target_unit: str) -> float:
         .to(_DURATION_UNIT_NAMES[target])
         .magnitude
     )
+
+
+def convert_measure(value: float, source_unit: str, target_unit: str) -> float:
+    """Convert supported measured units without inferring material properties."""
+    source = source_unit.strip().lower()
+    target = target_unit.strip().lower()
+    for unit in (source, target):
+        if unit not in MEASURE_UNITS:
+            raise ValueError(f"Unsupported measure unit: {unit}")
+    quantity = _registry().Quantity(value, source)
+    if not quantity.is_compatible_with(target):
+        raise ValueError(f"Incompatible measure units: {source} and {target}")
+    return float(quantity.to(target).magnitude)

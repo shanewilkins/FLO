@@ -566,8 +566,22 @@ Process-level KPI and resource data should be stored in metadata.
 
 For material quantities, use one of two quantity shapes:
 
-- Discrete count: `kind: count`, integer `value`, `unit: each` (optional `qualifier`, for example `large`)
-- Continuous SI-style measure: `kind: measure`, numeric `value`, and metric `unit` from `mg|g|kg|ml|l|mm|cm|m`
+- Discrete count: `kind: count`, integer `value >= 1`, optional `unit: each`
+  (optional `qualifier`, for example `large`).
+- Continuous SI-style measure: `kind: measure`, finite numeric `value > 0`,
+  and metric `unit` from `mg|g|kg|ml|l|mm|cm|m`.
+
+Measured quantities may also declare `canonical_value` and `canonical_unit`
+together. These must represent the same amount in dimensionally compatible
+units, within relative tolerance `1e-9` and zero absolute tolerance. For example,
+`250 g` may declare canonical `0.25 kg`, but not `99 kg` or `0.25 l`.
+Mass-to-volume conversion is not inferred. A canonical conversion must remain
+finite and positive. Measured `m` means metres; duration `m` means minutes.
+
+Validation preserves both authored pairs and never inserts omitted canonical
+fields. This adds no new syntax, but inconsistent canonical declarations that
+previously passed now fail validation. Correct the canonical pair or omit both
+optional fields; plain measured quantities and discrete counts remain supported.
 
 The same quantity contract can be used for canonical `items` and `resources` when counts or measured quantities are useful.
 `locations` usually use ids, names, optional kinds, and location metadata rather than quantity.

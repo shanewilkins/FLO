@@ -310,9 +310,11 @@ a patch-release number have not been assigned.
 Configuration consolidation, the spatial Pint trial, source shape models, and
 shared render-input validation are implemented. Duration conversion now uses
 the shared Pint registry with explicit minute aliases and unchanged exchange,
-diagnostics, and presentation policies. Resource unit migration remains follow-up
-work after its compatibility/equivalence policy is defined; graph and domain
-validators remain explicit.
+diagnostics, and presentation policies. Measured resource canonical pairs now use
+the shared registry to enforce same-dimension equivalent amounts with relative
+tolerance `1e-9` and zero absolute tolerance. Source syntax, authored values, and
+count semantics remain unchanged; inconsistent canonical pairs are intentionally
+rejected. Graph and domain validators remain explicit.
 
 #### Consistent diagnostic delivery: implemented
 
@@ -324,8 +326,8 @@ nonfatal aggregated warning; measured zero remains valid and warning-only
 results remain successful. Existing fatal exit codes and geometry strictness
 are preserved. The [diagnostic delivery plan](design/diagnostic_delivery_plan.md)
 records compatibility decisions and local verification. Duration conversion is
-integrated through the shared Pint boundary; resource migration remains follow-up
-work. No release has been assigned or published.
+integrated through the shared Pint boundary, as is measured resource canonical
+equivalence. No release has been assigned or published.
 
 ### 0.5: Yellow Belt Delivery
 
