@@ -69,6 +69,13 @@ The existing entrypoint parity, semantic, geometry, and installed-wheel checks
 are evidence to retain. Their green status must not be represented as completion
 of this architecture review.
 
+The complexity-checker reference above records the assessment-time Radon gate.
+Current enforcement is Ruff `C901` at maximum McCabe complexity 15 in
+`pyproject.toml`, via the standard Ruff hook without complexity-specific file
+exclusions. The custom checker and Radon baseline scores are retired; the two
+metrics are not numerically interchangeable. File-size exclusions remain a
+separate policy. See [contributor validation guidance](../../CONTRIBUTING.md).
+
 ## Deliverables
 
 1. An effective-architecture inventory and one stage/responsibility map.

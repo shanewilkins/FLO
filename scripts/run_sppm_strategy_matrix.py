@@ -47,6 +47,8 @@ SPACING_PROFILES = ("compact", "balanced", "roomy")
 
 @dataclass(frozen=True)
 class Strategy:
+    """Identify one combination of layout strategy settings."""
+
     partition_mode: str
     port_constraints: str
     helper_anchors: str
@@ -54,6 +56,7 @@ class Strategy:
 
     @property
     def id(self) -> str:
+        """Return the canonical strategy identifier."""
         return (
             f"part={self.partition_mode}|port={self.port_constraints}|"
             f"anchors={self.helper_anchors}|space={self.spacing_profile}"
@@ -62,6 +65,8 @@ class Strategy:
 
 @dataclass(frozen=True)
 class CaseEvaluation:
+    """Record invariant results and measurements for one corpus case."""
+
     case_id: str
     passed: bool
     failures: tuple[str, ...]
@@ -80,6 +85,8 @@ class CaseEvaluation:
 
 @dataclass(frozen=True)
 class StrategyEvaluation:
+    """Aggregate corpus outcomes for one layout strategy."""
+
     strategy: Strategy
     total_cases: int
     passed_cases: int
@@ -99,6 +106,7 @@ class StrategyEvaluation:
 
 
 def main() -> int:
+    """Evaluate the strategy matrix and write its measurements."""
     parser = argparse.ArgumentParser(prog="run_sppm_strategy_matrix.py")
     parser.add_argument(
         "--manifest",
@@ -845,9 +853,11 @@ def _invariant_rework_separation(
     delta = abs(fmean(rework_cross) - fmean(mainline_cross))
     if delta < min_cross_separation_px:
         return [
-            "rework_separation "
-            f"cross_delta={delta:.2f} "
-            f"min_required={min_cross_separation_px:.2f}"
+            (
+                "rework_separation "
+                f"cross_delta={delta:.2f} "
+                f"min_required={min_cross_separation_px:.2f}"
+            )
         ]
     return []
 

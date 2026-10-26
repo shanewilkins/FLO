@@ -22,7 +22,9 @@ def _run(
     command: list[str], *, cwd: Path, label: str | None = None
 ) -> dict[str, object]:
     started = time.perf_counter()
-    result = subprocess.run(command, cwd=cwd, text=True, capture_output=True)
+    result = subprocess.run(  # noqa: S603 - Trusted CLI/interpreter selected for acceptance.
+        command, cwd=cwd, text=True, capture_output=True, check=False
+    )
     elapsed = time.perf_counter() - started
     if result.returncode != 0:
         raise RuntimeError(

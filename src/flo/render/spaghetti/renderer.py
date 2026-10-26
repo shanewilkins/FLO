@@ -229,8 +229,10 @@ def _partial_map_notice(
     )
     return [
         '<g data-flo-notice="partial-map" role="note">',
-        '<rect x="12" y="12" width="430" height="28" rx="5" '
-        'fill="#fff3cd" stroke="#8a6d3b" />',
+        (
+            '<rect x="12" y="12" width="430" height="28" rx="5" '
+            'fill="#fff3cd" stroke="#8a6d3b" />'
+        ),
         f'<text x="24" y="31" font-size="13" fill="#5f4b20">{escape(text)}</text>',
         "</g>",
     ]
@@ -484,7 +486,7 @@ def _spaghetti_worker_style(worker: str) -> tuple[str, str]:
 
 
 def _stable_palette_index(text: str, size: int) -> int:
-    digest = hashlib.sha1(text.encode("utf-8")).digest()
+    digest = hashlib.sha1(text.encode("utf-8"), usedforsecurity=False).digest()
     seed = int.from_bytes(digest[:4], "big", signed=False)
     return seed % max(1, size)
 
@@ -653,12 +655,8 @@ def _rectangle_bounds(
     min_y = _as_number(boundary.get("min_y"))
     max_x = _as_number(boundary.get("max_x"))
     max_y = _as_number(boundary.get("max_y"))
-    if None in {min_x, min_y, max_x, max_y}:
+    if min_x is None or min_y is None or max_x is None or max_y is None:
         return None
-    assert min_x is not None
-    assert min_y is not None
-    assert max_x is not None
-    assert max_y is not None
     if min_x == max_x or min_y == max_y:
         return None
     return min(min_x, max_x), min(min_y, max_y), max(min_x, max_x), max(min_y, max_y)

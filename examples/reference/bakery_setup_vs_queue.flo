@@ -12,7 +12,7 @@ process:
       Pedagogical example: Demonstrates the distinction between wait time (queue)
       and changeover time (setup). Both are non-value-adding but require different
       improvement approaches.
-    
+
     caption: |
       Oven changeover (setup, 30 min) is different from waiting for oven availability
       (queue, 120 min). Reducing oven setup via SMED does NOT fix waiting-for-oven.

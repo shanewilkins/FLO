@@ -280,6 +280,21 @@ def resolve_render_theme(
             raise
         theme = DEFAULT_THEME
 
+    return _apply_direct_overrides(
+        theme,
+        background_color=background_color,
+        font_family=font_family,
+        typography_scale=typography_scale,
+    )
+
+
+def _apply_direct_overrides(
+    theme: RenderTheme,
+    *,
+    background_color: Any,
+    font_family: Any,
+    typography_scale: Any,
+) -> RenderTheme:
     if background_color is not None:
         theme = replace(
             theme,

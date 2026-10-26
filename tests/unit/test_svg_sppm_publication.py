@@ -128,6 +128,6 @@ def test_book_rework_connectors_are_vertical_and_entire_correction_path_is_red()
 def _svg_edge_elements(content):
     return {
         (group.get("data-edge-source"), group.get("data-edge-target")): group
-        for group in ET.fromstring(content).iter()
+        for group in ET.fromstring(content).iter()  # noqa: S314 - Renderer-produced SVG.
         if group.get("data-edge-source")
     }

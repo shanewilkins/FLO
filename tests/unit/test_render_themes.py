@@ -67,8 +67,8 @@ def test_theme_inheritance_is_partial_and_immutable() -> None:
     assert theme.font_family == ("Avenir Next", "Arial", "sans-serif")
     assert theme.role("va").fill == "#B8E6C1"
     assert theme.role("rnva").fill == "#FFF176"
+    roles = cast(Any, theme.roles)
     with pytest.raises(TypeError):
-        roles = cast(Any, theme.roles)
         roles["va"] = theme.role("rnva")
 
 
@@ -109,6 +109,69 @@ def test_legacy_sppm_theme_is_adapted_into_shared_contract() -> None:
 
     assert theme.role("va").fill == "#D1F2EB"
     assert theme.canvas_background == "#fffdf8"
+
+
+def test_direct_overrides_follow_inheritance_without_mutating_the_registry() -> None:
+    definitions = _theme_definitions()
+    inherited = resolve_render_theme(
+        selected_name="book_house", definitions=definitions
+    )
+    overridden = resolve_render_theme(
+        selected_name="book_house",
+        definitions=definitions,
+        background_color="#123456",
+        font_family=["serif"],
+        typography_scale=1.25,
+    )
+    assert overridden.name == inherited.name
+    assert overridden.canvas_background == "#123456"
+    assert overridden.font_family == ("serif",)
+    assert overridden.typography_scale == 1.25
+    assert overridden.roles == inherited.roles
+    assert (
+        resolve_render_theme(selected_name="book_house", definitions=definitions)
+        == inherited
+    )
+
+
+def test_direct_overrides_follow_a_non_strict_unknown_name_fallback() -> None:
+    overridden = resolve_render_theme(
+        selected_name="missing",
+        strict_name=False,
+        background_color="#123456",
+        font_family=["serif"],
+        typography_scale=1.25,
+    )
+    assert overridden.name == "default"
+    assert overridden.canvas_background == "#123456"
+    assert overridden.font_family == ("serif",)
+    assert overridden.typography_scale == 1.25
+    assert overridden.roles == BUILTIN_THEMES["default"].roles
+    assert resolve_render_theme(selected_name="default") == BUILTIN_THEMES["default"]
+
+
+@pytest.mark.parametrize(
+    "overrides,field",
+    [
+        ({"background_color": "not-a-color"}, "background_color"),
+        ({"font_family": 42}, "font_family"),
+        ({"typography_scale": 2}, "typography_scale"),
+    ],
+)
+def test_invalid_direct_overrides_are_not_hidden_by_non_strict_fallback(
+    overrides, field
+) -> None:
+    with pytest.raises(ThemeValidationError, match=field):
+        resolve_render_theme(selected_name="missing", strict_name=False, **overrides)
+
+
+def test_non_strict_selection_still_validates_unselected_definitions() -> None:
+    with pytest.raises(ThemeValidationError, match="unknown theme"):
+        resolve_render_theme(
+            selected_name="default",
+            strict_name=False,
+            definitions={"unused": {"extends": "missing"}},
+        )
 
 
 def test_builtin_semantic_roles_meet_normal_text_contrast_floor() -> None:

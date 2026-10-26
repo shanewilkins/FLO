@@ -6,65 +6,81 @@ on:
   pull_request:
     branches: [ master ]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_LOCKED: 'true'
+
 jobs:
   package-smoke:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Check out
-        uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          python-version: '3.14'
+          persist-credentials: false
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: '26'
-          cache: 'npm'
+      - name: Set up toolchain
+        uses: ./.github/actions/setup
 
       - name: Install and vendor ELK runtime
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
           python scripts/vendor_elkjs.py
 
-      - name: Build and smoke-test installed wheel imports
+      - name: Sync locked development dependencies
+        run: uv sync --locked
+
+      - name: Build and validate distributions
         run: |
-          python -m pip install uv
-          uv build --wheel
+          uv build --out-dir dist --sdist
+          uv build --out-dir dist --wheel
+          uv run twine check --strict dist/*
+          uv run python scripts/check_release_artifacts.py dist/*.whl dist/*.tar.gz
+          uv build dist/*.tar.gz --wheel --out-dir .tmp/sdist-wheel
+          uv run twine check --strict .tmp/sdist-wheel/*.whl
+          uv run python scripts/check_release_artifacts.py .tmp/sdist-wheel/*.whl
+
+      - name: Smoke-test installed wheels
+        run: |
           python -m venv .tmp/ci-wheel-smoke
           .tmp/ci-wheel-smoke/bin/python -m pip install dist/*.whl
           .tmp/ci-wheel-smoke/bin/python scripts/smoke_installed_imports.py
           .tmp/ci-wheel-smoke/bin/flo --help
           .tmp/ci-wheel-smoke/bin/python scripts/check_yb_journey.py --flo "$PWD/.tmp/ci-wheel-smoke/bin/flo"
           .tmp/ci-wheel-smoke/bin/python scripts/architecture_trace.py --installed-python "$PWD/.tmp/ci-wheel-smoke/bin/python" --output .tmp/ci-wheel-smoke-architecture.json --check
+          python -m venv .tmp/ci-sdist-smoke
+          .tmp/ci-sdist-smoke/bin/python -m pip install .tmp/sdist-wheel/*.whl
+          .tmp/ci-sdist-smoke/bin/python scripts/smoke_installed_imports.py
+          .tmp/ci-sdist-smoke/bin/python scripts/check_yb_journey.py --flo "$PWD/.tmp/ci-sdist-smoke/bin/flo"
 
       - name: Retain Linux candidate evidence
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: linux-candidate-evidence
           path: |
-            dist/*.whl
+            dist/
+            .tmp/sdist-wheel/
             .tmp/ci-wheel-smoke-architecture.json
 
   macos-package-smoke:
     runs-on: macos-latest
+    timeout-minutes: 20
     steps:
       - name: Check out
-        uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          python-version: '3.14'
+          persist-credentials: false
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: '26'
-          cache: 'npm'
+      - name: Set up toolchain
+        uses: ./.github/actions/setup
 
       - name: Install and vendor ELK runtime
         run: |
@@ -73,7 +89,6 @@ jobs:
 
       - name: Build and exercise installed wheel
         run: |
-          python -m pip install uv
           uv build --wheel
           python -m venv .tmp/macos-wheel-smoke
           .tmp/macos-wheel-smoke/bin/python -m pip install dist/*.whl
@@ -84,7 +99,7 @@ jobs:
 
       - name: Set up Chrome for font measurements
         id: macos-chrome
-        uses: browser-actions/setup-chrome@v2
+        uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2
 
       - name: Measure SVG glyph bounds and publication scaling
         env:
@@ -100,7 +115,7 @@ jobs:
 
       - name: Retain macOS candidate evidence
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: macos-candidate-evidence
           path: |
@@ -108,58 +123,17 @@ jobs:
             .tmp/macos-wheel-smoke-architecture.json
             .tmp/macos-font-metrics.json
 
-  sppm-determinism:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out
-        uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.14'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: '26'
-          cache: 'npm'
-
-      - name: Install Node runtime deps (elkjs)
-        run: npm ci --ignore-scripts --no-audit --no-fund
-
-      - name: Prepare uv runner and project dev deps
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install uv
-          uv sync
-
-      - name: Run committed SPPM golden artifact gate
-        run: uv run python scripts/check_sppm_baseline_drift.py
-
-      - name: Run focused SPPM determinism tests
-        run: >-
-          uv run pytest -q
-          tests/unit/test_sppm_baseline_drift.py
-          tests/unit/test_layout_core_elk_requests.py
-          -k 'parent_only_subprocess_edges_are_stable or test_sppm_baseline_drift'
-
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Check out
-        uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          python-version: '3.14'
+          persist-credentials: false
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: '26'
-          cache: 'npm'
+      - name: Set up toolchain
+        uses: ./.github/actions/setup
 
       - name: Install Node runtime deps (elkjs)
         run: npm ci --ignore-scripts --no-audit --no-fund
@@ -167,32 +141,20 @@ jobs:
       - name: Verify elkjs runtime import
         run: node --input-type=module -e "await import('elkjs/lib/elk.bundled.js'); console.log('elkjs import ok')"
 
-      - name: Prepare uv runner and project dev deps
-        run: |
-          python -m pip install --upgrade pip
-          # Install the uv runner used by local development
-          python -m pip install uv
-          # Sync project dependencies into the project virtualenv using uv
-          uv sync
+      - name: Sync locked development dependencies
+        run: uv sync --locked
 
       - name: Run pre-commit hooks (match local pre-commit)
+        env:
+          SKIP: pytest-check
         run: uv run pre-commit run --all-files
 
-      - name: Run SPPM layout invariant suite
-        run: uv run pytest -q tests/unit/test_sppm_layout_invariants.py
-
       - name: Run test suite with coverage
-        run: uv run pytest --cov=src/flo --cov-report=term-missing --cov-fail-under=90
-
-      - name: Check final SPPM SVG geometry
-        run: uv run python scripts/check_sppm_geometry.py
-
-      - name: Check SVG accessible names and descriptions
-        run: uv run python scripts/check_svg_accessibility.py
+        run: uv run --locked pytest --cov=src/flo --cov-report=term-missing --cov-fail-under=90
 
       - name: Set up Chrome for SVG consumer smoke
         id: setup-chrome
-        uses: browser-actions/setup-chrome@v2
+        uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2
 
       - name: Open maintained SVG in headless Chrome
         run: |
@@ -209,7 +171,7 @@ jobs:
 
       - name: Retain Linux browser evidence
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: linux-browser-evidence
           path: .tmp/browser-smoke/

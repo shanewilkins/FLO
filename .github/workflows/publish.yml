@@ -4,25 +4,35 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-pypi
+  cancel-in-progress: false
+
+env:
+  UV_LOCKED: 'true'
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     permissions:
       contents: read
     steps:
       - name: Check out
-        uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
         with:
-          python-version: '3.14'
+          persist-credentials: false
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: '26'
-          cache: 'npm'
+      - name: Set up toolchain
+        uses: ./.github/actions/setup
+
+      - name: Verify release tag
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: python scripts/check_release_artifacts.py --tag "$RELEASE_TAG"
 
       - name: Install Node runtime deps (elkjs)
         run: npm ci --ignore-scripts --no-audit --no-fund
@@ -33,17 +43,33 @@ jobs:
       - name: Vendor pinned elkjs runtime
         run: python scripts/vendor_elkjs.py
 
-      - name: Install uv
-        run: python -m pip install uv
-
       - name: Sync project dependencies
-        run: uv sync
+        run: uv sync --locked
 
       - name: Run quality gates
+        env:
+          SKIP: pytest-check
         run: uv run pre-commit run --all-files
 
+      - name: Run test suite with coverage
+        run: uv run --locked pytest --cov=src/flo --cov-report=term-missing --cov-fail-under=90
+
       - name: Build package
-        run: uv build
+        run: |
+          uv build --out-dir dist --sdist
+          uv build --out-dir dist --wheel
+          uv run twine check --strict dist/*
+          uv run python scripts/check_release_artifacts.py dist/*.whl dist/*.tar.gz
+          uv build dist/*.tar.gz --wheel --out-dir .tmp/sdist-wheel
+          uv run twine check --strict .tmp/sdist-wheel/*.whl
+          uv run python scripts/check_release_artifacts.py .tmp/sdist-wheel/*.whl
+
+      - name: Smoke-test sdist-built wheel
+        run: |
+          python -m venv .tmp/publish-sdist-smoke
+          .tmp/publish-sdist-smoke/bin/python -m pip install .tmp/sdist-wheel/*.whl
+          .tmp/publish-sdist-smoke/bin/python scripts/smoke_installed_imports.py
+          .tmp/publish-sdist-smoke/bin/python scripts/check_yb_journey.py --flo "$PWD/.tmp/publish-sdist-smoke/bin/flo"
 
       - name: Smoke-test wheel install
         run: |
@@ -66,7 +92,7 @@ jobs:
           --output .tmp/architecture-validation.json --check
 
       - name: Upload dist artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: dist
           path: dist/
@@ -74,6 +100,7 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment:
       name: pypi
       url: https://pypi.org/p/flo-lang
@@ -81,10 +108,10 @@ jobs:
       id-token: write
     steps:
       - name: Download dist artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: dist
           path: dist/
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1

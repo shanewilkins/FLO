@@ -88,3 +88,32 @@ def test_final_geometry_gate_detects_node_outside_its_lane():
     assert "node a outside lane owner" in CHECK.geometry_violations(
         svg, {"owner": ["a"]}
     )
+
+
+def test_final_geometry_gate_preserves_missing_route_behavior():
+    svg = _BASE.format(annotation='<rect x="390" y="30" width="30" height="18"/>')
+    svg = svg.replace('<polyline points="50,45 200,45"/>', "")
+
+    assert CHECK.geometry_violations(svg) == ("edge a->b has no route",)
+
+
+def test_final_geometry_gate_reports_outside_segments_once():
+    svg = _BASE.format(annotation="").replace(
+        "50,45 200,45", "50,45 50,250 200,250 200,45"
+    )
+
+    assert CHECK.geometry_violations(svg) == ("edge a->b outside canvas",)
+
+
+def test_final_geometry_gate_preserves_cross_edge_annotation_checks():
+    annotation = '<rect x="100" y="30" width="20" height="18"/>'
+    svg = _BASE.format(annotation=annotation).replace(
+        "</g></svg>",
+        (
+            '<g data-edge-source="a" data-edge-target="b">'
+            '<polyline points="50,45 200,45"/>'
+            f"{annotation}</g></g></svg>"
+        ),
+    )
+
+    assert CHECK.geometry_violations(svg) == ("annotations a->b/a->b overlap",)

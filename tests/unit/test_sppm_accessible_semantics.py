@@ -31,7 +31,7 @@ def test_value_classes_and_control_flow_have_visible_noncolor_cues(theme, densit
         _model(),
         options={"diagram": "sppm", "sppm_theme": theme, "sppm_label_density": density},
     )
-    root = ET.fromstring(artifact.content)
+    root = ET.fromstring(artifact.content)  # noqa: S314 - Renderer-produced SVG.
     text = {element.text for element in root.findall(".//s:text", NS)}
     assert {"Class: VA", "Class: RNVA", "Class: NVA"} <= text
     assert root.find(".//s:g[@data-node-kind='queue']/s:polygon", NS) is not None

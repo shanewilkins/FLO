@@ -573,8 +573,8 @@ def test_build_sppm_elk_layout_request_preserves_explicit_continuation_tokens():
 
     edge = request.edges[0]
 
-    assert edge.outgoing_token == "P2-OPS"
-    assert edge.incoming_token == "P1-H"
+    assert edge.outgoing_token == "P2-OPS"  # noqa: S105 - SVG label, not a credential.
+    assert edge.incoming_token == "P1-H"  # noqa: S105 - SVG label, not a credential.
 
 
 def test_serialize_sppm_elk_layout_request_activates_partitioning_and_preserves_step_order():

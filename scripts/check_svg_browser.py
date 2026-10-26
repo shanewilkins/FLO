@@ -108,7 +108,7 @@ def main() -> int:
         pieces.append('<pre id="result"></pre><script>' + MEASURE + "</script>")
         document.write_text("\n".join(pieces))
         try:
-            completed = subprocess.run(
+            completed = subprocess.run(  # noqa: S603 - Explicit trusted browser executable.
                 [
                     str(args.browser),
                     "--headless=new",

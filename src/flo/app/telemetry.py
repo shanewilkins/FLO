@@ -6,10 +6,13 @@ returned so callers can always call `shutdown()` safely.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
-from contextlib import contextmanager, suppress
+from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any
+
+_LOGGER = logging.getLogger(__name__)
 
 try:
     # Optional OpenTelemetry SDK imports
@@ -20,6 +23,7 @@ try:
 
     OTEL_AVAILABLE = True
 except Exception:  # pragma: no cover - optional dependency
+    _LOGGER.debug("OpenTelemetry SDK initialization failed", exc_info=True)
     trace = None
     Resource = None
     SDKTracerProvider = None
@@ -95,8 +99,8 @@ def init_telemetry(
         return Telemetry(tracer=None, shutdown=lambda: None)
 
     if _provider is None:
-        # Narrow runtime types for static type checkers
-        assert Resource is not None and SDKTracerProvider is not None
+        if Resource is None or SDKTracerProvider is None:
+            raise RuntimeError("OpenTelemetry SDK is marked available but incomplete.")
         resource = Resource.create({"service.name": service_name})
         provider = SDKTracerProvider(resource=resource)
 
@@ -109,7 +113,9 @@ def init_telemetry(
                 exporter = ConsoleSpanExporter()
                 provider.add_span_processor(SimpleSpanProcessor(exporter))
             except Exception:
-                pass
+                _LOGGER.debug(
+                    "Failed to configure the console span exporter", exc_info=True
+                )
 
         # register provider (guarded for static checkers)
         if trace is not None:
@@ -130,7 +136,9 @@ def init_telemetry(
                     shutdown_fn()
                     return
             except Exception:
-                pass
+                _LOGGER.debug(
+                    "Failed to shut down the telemetry provider", exc_info=True
+                )
 
             # Best-effort: attempt to shut down attached span processors
             span_processors = getattr(_provider, "span_processors", None) or getattr(
@@ -143,7 +151,9 @@ def init_telemetry(
                         if callable(sp_shutdown):
                             sp_shutdown()
                     except Exception:
-                        pass
+                        _LOGGER.debug(
+                            "Failed to shut down a span processor", exc_info=True
+                        )
         finally:
             _provider = None
 
@@ -168,6 +178,7 @@ def shutdown() -> None:
             shutdown_fn()
             return
     except Exception:
+        _LOGGER.debug("Failed to shut down the telemetry provider", exc_info=True)
         span_processors = getattr(_provider, "span_processors", None) or getattr(
             _provider, "_active_span_processors", None
         )
@@ -178,7 +189,7 @@ def shutdown() -> None:
                     if callable(sp_shutdown):
                         sp_shutdown()
                 except Exception:
-                    pass
+                    _LOGGER.debug("Failed to shut down a span processor", exc_info=True)
     finally:
         _provider = None
 
@@ -196,17 +207,21 @@ def record_span_error(span: Any, message: str = "") -> None:
         if callable(set_status):
             set_status(StatusCode.ERROR, message)
     except Exception:
-        pass
+        _LOGGER.debug("Failed to mark the span as failed", exc_info=True)
     # Capture an exception-like signal so tracing backends can attach error
     # stack context even when callers only provide message text.
     record_exception = getattr(span, "record_exception", None)
     if callable(record_exception):
-        with suppress(Exception):
+        try:
             record_exception(RuntimeError(message or "span error"))
+        except Exception:
+            _LOGGER.debug("Failed to record the span exception", exc_info=True)
     add_event = getattr(span, "add_event", None)
     if callable(add_event):
-        with suppress(Exception):
+        try:
             add_event("error", {"error.message": message})
+        except Exception:
+            _LOGGER.debug("Failed to add the span error event", exc_info=True)
 
 
 def record_span_success(
@@ -228,7 +243,7 @@ def record_span_success(
         if callable(set_status):
             set_status(StatusCode.OK, "")
     except Exception:
-        pass
+        _LOGGER.debug("Failed to mark the span as successful", exc_info=True)
 
     payload = dict(attributes or {})
     if payload:
@@ -238,9 +253,11 @@ def record_span_success(
                 try:
                     set_attribute(str(key), value)
                 except Exception:
-                    continue
+                    _LOGGER.debug("Failed to set a span attribute", exc_info=True)
 
     add_event = getattr(span, "add_event", None)
     if callable(add_event):
-        with suppress(Exception):
+        try:
             add_event(event_name, payload or None)
+        except Exception:
+            _LOGGER.debug("Failed to add the span success event", exc_info=True)

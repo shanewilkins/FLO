@@ -41,23 +41,33 @@ flo = "flo.app.cli:main"
 [dependency-groups]
 dev = [
     "pre-commit>=4.5.1",
-    "pydocstyle>=6.3.0",
     "pytest>=9.0.2",
     "ruff>=0.15.2",
-    "vulture>=2.14",
-    "radon>=5.1.0",
-    "pytest",
     "pytest-cov>=4.0",
     "import-linter>=2.10",
     "ty>=0.0.78",
+    "twine>=7.0.0",
 ]
 
 [tool.ruff]
 target-version = "py314"
 
 [tool.ruff.lint]
-select = ["E4", "E7", "E9", "F", "I", "B", "UP", "SIM", "C4", "PIE", "RUF"]
+select = [
+    "E4", "E7", "E9", "F", "I", "B", "UP", "SIM", "C4", "C901", "PIE", "RUF",
+    "PLE", "DTZ", "LOG", "G", "PGH", "ISC", "PLW1510", "PT011", "PT012", "PT017", "D", "S",
+]
 ignore = ["RUF001"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.ruff.lint.per-file-ignores]
+"**/test_*.py" = ["D"]
+"tests/**" = ["S101"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
 
 [tool.importlinter]
 # Import-linter rules for enforcing layer boundaries in FLO.

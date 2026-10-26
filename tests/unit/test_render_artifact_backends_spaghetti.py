@@ -5,7 +5,16 @@ import pytest
 
 from flo.process.ir import ensure_schema_aligned, validate_ir
 from flo.render import render_artifact
+from flo.render.spaghetti.renderer import _stable_palette_index
 from flo.source import compile_adapter, parse_adapter
+
+
+@pytest.mark.parametrize(
+    ("worker", "size", "expected"),
+    [("alice", 8, 2), ("bob", 8, 5), ("", 8, 6), ("alice", 0, 0)],
+)
+def test_non_security_hash_preserves_worker_palette_choices(worker, size, expected):
+    assert _stable_palette_index(worker, size) == expected
 
 
 def test_mixed_unit_spaghetti_matches_equivalent_metre_geometry():
@@ -75,7 +84,7 @@ def _render_reference_spaghetti():
 
 
 def _spaghetti_svg_signature(svg: str) -> dict[str, object]:
-    root = ET.fromstring(svg)
+    root = ET.fromstring(svg)  # noqa: S314 - Renderer-produced SVG.
     locations = tuple(
         sorted(
             element.attrib["data-location-id"]

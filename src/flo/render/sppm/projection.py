@@ -64,7 +64,7 @@ def _project_child_map(
     focus_id: str | None,
     requested_mode: str,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], SppmProjectionContext]:
-    if not _is_subprocess_node(focus_id, nodes_by_id):
+    if focus_id is None or not _is_subprocess_node(focus_id, nodes_by_id):
         projected_nodes, projected_edges = project_parent_only_subprocess_view(
             nodes, edges
         )
@@ -77,8 +77,6 @@ def _project_child_map(
                 fallback_reason="missing-focus-subprocess",
             ),
         )
-    assert focus_id is not None
-
     descendant_ids = _descendant_ids(focus_id, nodes_by_id=nodes_by_id)
     subtree_ids = {focus_id, *descendant_ids}
     entry_ids = _incoming_neighbor_ids(subtree_ids, edges)
@@ -111,7 +109,7 @@ def _project_inline(
     focus_id: str | None,
     options: RenderOptions,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], SppmProjectionContext]:
-    if not _is_subprocess_node(focus_id, nodes_by_id):
+    if focus_id is None or not _is_subprocess_node(focus_id, nodes_by_id):
         projected_nodes, projected_edges = project_parent_only_subprocess_view(
             nodes, edges
         )
@@ -124,8 +122,6 @@ def _project_inline(
                 fallback_reason="missing-focus-subprocess",
             ),
         )
-    assert focus_id is not None
-
     descendant_ids = _descendant_ids(focus_id, nodes_by_id=nodes_by_id)
     if len(descendant_ids) > _inline_budget(options):
         projected_nodes, projected_edges, context = _project_child_map(

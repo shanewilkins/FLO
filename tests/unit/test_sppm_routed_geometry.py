@@ -105,7 +105,7 @@ def test_svg_consumes_supplied_positions_routes_canvas_and_correction_membership
     artifact, _ = emit_sppm_svg_artifact(
         process=process, options=options, request=request, scene=scene
     )
-    root = ET.fromstring(artifact.content)
+    root = ET.fromstring(artifact.content)  # noqa: S314 - Renderer-produced SVG.
     assert root.attrib["viewBox"] == "0 0 756 356"
     ns = {"s": "http://www.w3.org/2000/svg"}
     for name, x in (("a", 100), ("b", 350)):

@@ -7,6 +7,7 @@ import contextlib
 import hashlib
 import io
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -177,7 +178,7 @@ files=sorted(p for p in root.rglob('*') if p.suffix in {'.py','.json','.js','.mj
 payload='\\n'.join(f'{p.relative_to(root).as_posix()}:{hashlib.sha256(p.read_bytes()).hexdigest()}' for p in files)
 print(json.dumps({'package_digest':hashlib.sha256(payload.encode()).hexdigest(),'location':str(root)}))
 """
-    probe = subprocess.run(
+    probe = subprocess.run(  # noqa: S603 - Explicit trusted candidate interpreter.
         [str(python), "-c", code],
         cwd=workspace,
         check=True,
@@ -187,12 +188,13 @@ print(json.dumps({'package_digest':hashlib.sha256(payload.encode()).hexdigest(),
     )
     identity = json.loads(probe.stdout)
     output = workspace / "installed.svg"
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603 - CLI beside the trusted candidate interpreter.
         [str(python.with_name("flo")), *cli_arguments(source, options, output)],
         cwd=workspace,
         capture_output=True,
         text=True,
         timeout=30,
+        check=False,
     )
     if result.returncode:
         raise RuntimeError(f"Installed trace failed: {result.stderr}\n{result.stdout}")
@@ -290,6 +292,9 @@ def build_report(installed_python: Path | None = None) -> dict:
         case["installed"]["package_digest"] == source_hash for case in traces
     )
     violations = findings(REPO_ROOT)
+    git = shutil.which("git")
+    if git is None:
+        raise RuntimeError("Git is required to record the candidate revision.")
     architecture_docs = [
         "docs/design/adr/simplified_package_architecture.md",
         "docs/design/adr/render_stack_elk_svg_typst.md",
@@ -301,8 +306,8 @@ def build_report(installed_python: Path | None = None) -> dict:
     return {
         "schema_version": 1,
         "assessment": "architecture validation; not release acceptance",
-        "head_revision": subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True
+        "head_revision": subprocess.check_output(  # noqa: S603 - Resolved Git executable and fixed arguments.
+            [git, "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True
         ).strip(),
         "runtime_package_digest": source_hash,
         "configuration_digests": {

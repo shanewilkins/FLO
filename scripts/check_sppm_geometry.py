@@ -117,11 +117,51 @@ def _distance(point: Point, a: Point, b: Point) -> float:
     return math.dist(point, (a[0] + ratio * dx, a[1] + ratio * dy))
 
 
+def _edge_violations(
+    edge: ET.Element,
+    *,
+    nodes: dict[str | None, ET.Element],
+    boxes: dict[str | None, Box],
+    canvas: Box,
+) -> tuple[list[str], list[tuple[str, Box]]]:
+    source, target = edge.get("data-edge-source"), edge.get("data-edge-target")
+    edge_id = f"{source}->{target}"
+    line = edge.find("s:polyline", NS)
+    points = _points(line.get("points", "")) if line is not None else ()
+    if len(points) < 2:
+        return [f"edge {edge_id} has no route"], []
+    issues: list[str] = []
+    annotations: list[tuple[str, Box]] = []
+    for endpoint, node in ((points[0], source), (points[-1], target)):
+        if node not in nodes or not _on_shape(endpoint, nodes[node]):
+            issues.append(f"edge {edge_id} detached at {node}")
+    for a, b in pairwise(points):
+        if abs(a[0] - b[0]) > TOLERANCE and abs(a[1] - b[1]) > TOLERANCE:
+            issues.append(f"edge {edge_id} is diagonal")
+        for name, box in boxes.items():
+            if name not in (source, target) and _segment_crosses(a, b, box):
+                issues.append(f"edge {edge_id} crosses node {name}")
+        if not _inside(
+            (min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1])),
+            canvas,
+        ):
+            issues.append(f"edge {edge_id} outside canvas")
+    for rect in edge.findall(".//s:rect", NS):
+        box = shape_bounds(rect)
+        annotations.append((edge_id, box))
+        if not _inside(box, canvas):
+            issues.append(f"annotation {edge_id} outside canvas")
+        for name in boxes:
+            if _shape_overlaps_box(nodes[name], box):
+                issues.append(f"annotation {edge_id} overlaps node {name}")
+    return issues, annotations
+
+
 def geometry_violations(
     content: str, lane_members: dict[str, list[str]] | None = None
 ) -> tuple[str, ...]:
     """Find collisions, clipped shapes, diagonal segments, and detached endpoints."""
-    root = ET.fromstring(content)
+    root = ET.fromstring(content)  # noqa: S314 - Trusted renderer artifacts.
     nodes = {
         node.get("data-node-id"): node[0]
         for node in root.findall(".//s:g[@data-node-id]", NS)
@@ -161,35 +201,11 @@ def geometry_violations(
             issues.append(f"nodes {first}/{second} overlap")
     annotations = []
     for edge in root.findall(".//s:g[@data-edge-source]", NS):
-        source, target = edge.get("data-edge-source"), edge.get("data-edge-target")
-        edge_id = f"{source}->{target}"
-        line = edge.find("s:polyline", NS)
-        points = _points(line.get("points", "")) if line is not None else ()
-        if len(points) < 2:
-            issues.append(f"edge {edge_id} has no route")
-            continue
-        for endpoint, node in ((points[0], source), (points[-1], target)):
-            if node not in nodes or not _on_shape(endpoint, nodes[node]):
-                issues.append(f"edge {edge_id} detached at {node}")
-        for a, b in pairwise(points):
-            if abs(a[0] - b[0]) > TOLERANCE and abs(a[1] - b[1]) > TOLERANCE:
-                issues.append(f"edge {edge_id} is diagonal")
-            for name, box in boxes.items():
-                if name not in (source, target) and _segment_crosses(a, b, box):
-                    issues.append(f"edge {edge_id} crosses node {name}")
-            if not _inside(
-                (min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1])),
-                canvas,
-            ):
-                issues.append(f"edge {edge_id} outside canvas")
-        for rect in edge.findall(".//s:rect", NS):
-            box = shape_bounds(rect)
-            annotations.append((edge_id, box))
-            if not _inside(box, canvas):
-                issues.append(f"annotation {edge_id} outside canvas")
-            for name in boxes:
-                if _shape_overlaps_box(nodes[name], box):
-                    issues.append(f"annotation {edge_id} overlaps node {name}")
+        edge_issues, edge_annotations = _edge_violations(
+            edge, nodes=nodes, boxes=boxes, canvas=canvas
+        )
+        issues.extend(edge_issues)
+        annotations.extend(edge_annotations)
     for (first, a), (second, b) in combinations(annotations, 2):
         if _overlap(a, b):
             issues.append(f"annotations {first}/{second} overlap")

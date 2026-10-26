@@ -152,11 +152,13 @@ class LayoutResult:
 def serialize_layout_result(result: LayoutResult) -> str:
     """Return a stable snapshot of final layout geometry."""
     lines = [
-        "canvas"
-        f" x={_format_coord(result.canvas_bounds.x_px)}"
-        f" y={_format_coord(result.canvas_bounds.y_px)}"
-        f" w={_format_coord(result.canvas_bounds.width_px)}"
-        f" h={_format_coord(result.canvas_bounds.height_px)}",
+        (
+            "canvas"
+            f" x={_format_coord(result.canvas_bounds.x_px)}"
+            f" y={_format_coord(result.canvas_bounds.y_px)}"
+            f" w={_format_coord(result.canvas_bounds.width_px)}"
+            f" h={_format_coord(result.canvas_bounds.height_px)}"
+        ),
         f"orientation {result.orientation}",
     ]
     for lane in result.lanes:

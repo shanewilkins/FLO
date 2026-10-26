@@ -27,12 +27,15 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 @dataclass(frozen=True)
 class DriftSummary:
+    """Record missing, unexpected, and changed canonical artifacts."""
+
     missing_files: tuple[str, ...]
     extra_files: tuple[str, ...]
     changed_files: tuple[str, ...]
 
     @property
     def has_drift(self) -> bool:
+        """Return whether any tracked artifact differs."""
         return bool(self.missing_files or self.extra_files or self.changed_files)
 
 
@@ -91,6 +94,7 @@ def diagnostic_budget_violations(
 
 
 def main() -> int:
+    """Check canonical artifacts and their reviewed diagnostic budgets."""
     parser = argparse.ArgumentParser(prog="check_sppm_baseline_drift.py")
     parser.add_argument(
         "--manifest",
@@ -156,6 +160,7 @@ def compare_baseline_dirs(
     actual_dir: Path,
     case_ids: Sequence[str] | None = None,
 ) -> DriftSummary:
+    """Compare tracked artifacts and return deterministic differences."""
     expected_files = _tracked_files_for_cases(expected_dir, case_ids=case_ids)
     actual_files = _tracked_files_for_cases(actual_dir, case_ids=case_ids)
 

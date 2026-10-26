@@ -206,7 +206,7 @@ def test_run_content_render_to_rejects_non_svg_target_for_svg_artifact(
                 "diagram": "spaghetti",
                 "export": "svg",
                 "render_backend": "svg",
-                "render_to": "/tmp/out.png",
+                "render_to": "/example/out.png",
             },
         )
 

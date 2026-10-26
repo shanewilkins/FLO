@@ -921,16 +921,14 @@ def test_layout_swimlane_with_elk_runs_full_adapter_slice():
 
 
 def test_layout_swimlane_with_elk_rejects_non_swimlane_options():
-    try:
+    with pytest.raises(
+        ValueError, match=r"^Swimlane ELK adapter requires diagram='swimlane'\.$"
+    ):
         layout_swimlane_with_elk(
             {"nodes": [], "edges": []},
             engine=lambda payload: payload,
             options=RenderOptions(diagram="spaghetti"),
         )
-    except ValueError as exc:
-        assert str(exc) == "Swimlane ELK adapter requires diagram='swimlane'."
-    else:
-        raise AssertionError("Expected swimlane adapter to reject non-swimlane options")
 
 
 def test_layout_sppm_with_elk_runs_full_adapter_slice_without_lane_groups():
@@ -987,16 +985,14 @@ def test_layout_sppm_with_elk_runs_full_adapter_slice_without_lane_groups():
 
 
 def test_layout_sppm_with_elk_rejects_non_sppm_options():
-    try:
+    with pytest.raises(
+        ValueError, match=r"^SPPM ELK adapter requires diagram='sppm'\.$"
+    ):
         layout_sppm_with_elk(
             {"nodes": [], "edges": []},
             engine=lambda payload: payload,
             options=RenderOptions(diagram="spaghetti"),
         )
-    except ValueError as exc:
-        assert str(exc) == "SPPM ELK adapter requires diagram='sppm'."
-    else:
-        raise AssertionError("Expected SPPM adapter to reject non-SPPM options")
 
 
 def test_layout_swimlane_with_elk_retains_diagnostics_without_logging(

@@ -15,7 +15,7 @@ SVG_NAMESPACE = "http://www.w3.org/2000/svg"
 def accessibility_violations(path: Path) -> tuple[str, ...]:
     """Return accessible-name violations for one standalone SVG."""
     try:
-        root = ET.parse(path).getroot()
+        root = ET.parse(path).getroot()  # noqa: S314 - Trusted renderer artifacts.
     except (OSError, ET.ParseError) as exc:
         return (f"cannot parse SVG: {exc}",)
 

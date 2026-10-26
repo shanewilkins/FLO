@@ -2,9 +2,9 @@
 name: render-intent-schema-and-multi-view-support
 headline: Refactor render and publication intent from CLI+TOML into source metadata with strict validation, multi-view support, and bundle orchestration.
 description: |-
-  Implement source-driven render intent with typed metadata, strict validation, 
-  multi-view rendering capability (one .flo → multiple diagram types), and a bundle 
-  orchestration layer. Addresses critical architectural issues blocking human-readable 
+  Implement source-driven render intent with typed metadata, strict validation,
+  multi-view rendering capability (one .flo → multiple diagram types), and a bundle
+  orchestration layer. Addresses critical architectural issues blocking human-readable
   render schema and multi-artifact generation.
 due_date: '2026-05-23T00:00:00'
 status: open
@@ -30,7 +30,7 @@ Refactor render and publication intent from CLI+TOML configuration into source m
 
 Current architecture splits render intent across three incoherent sources:
 - CLI flags (Click and argparse in [src/flo/core/cli.py](../../../src/flo/core/cli.py) / [src/flo/core/cli_args.py](../../../src/flo/core/cli_args.py))
-- TOML [diagrams.toml](../../../diagrams.toml) global and preset defaults 
+- TOML [diagrams.toml](../../../diagrams.toml) global and preset defaults
 - Hardcoded RenderOptions defaults in [src/flo/render/options.py](../../../src/flo/render/options.py)
 
 This makes it impossible to:

@@ -220,7 +220,8 @@ def _requested_canvas_bounds(
     requested_height: int | None,
 ) -> tuple[int, int]:
     if requested_width is None:
-        assert requested_height is not None
+        if requested_height is None:
+            raise RenderError("At least one requested canvas dimension is required.")
         return round(
             requested_height * natural_width / natural_height
         ), requested_height

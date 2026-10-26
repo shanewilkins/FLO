@@ -31,7 +31,7 @@ def _add_otel_trace_info(logger, _method_name: str, event_dict: dict) -> dict:
                 event_dict.setdefault("trace_id", hex(sc.trace_id))
             if getattr(sc, "span_id", 0):
                 event_dict.setdefault("span_id", hex(sc.span_id))
-    except Exception:
+    except Exception:  # noqa: S110 - Logging here could recursively invoke this processor.
         # OTEL not available or some error retrieving span -> no-op
         pass
     return event_dict

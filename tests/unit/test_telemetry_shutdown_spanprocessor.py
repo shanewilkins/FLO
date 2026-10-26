@@ -41,7 +41,7 @@ def test_init_telemetry_prefers_provider_shutdown(monkeypatch):
     assert telemetry_mod._provider is None
 
 
-def test_shutdown_fallback_to_span_processors(monkeypatch):
+def test_shutdown_fallback_to_span_processors(monkeypatch, caplog):
     # Provider whose shutdown raises, but has span_processors
     class BadProvider:
         def __init__(self):
@@ -68,10 +68,17 @@ def test_shutdown_fallback_to_span_processors(monkeypatch):
 
     monkeypatch.setattr(telemetry_mod, "_provider", p)
 
-    telemetry_mod.shutdown()
+    with caplog.at_level("DEBUG", logger=telemetry_mod.__name__):
+        telemetry_mod.shutdown()
 
     assert getattr(pg, "called", False) is True
     assert telemetry_mod._provider is None
+    assert caplog.messages == [
+        "Failed to shut down the telemetry provider",
+        "Failed to shut down a span processor",
+    ]
+    assert all(record.levelname == "DEBUG" for record in caplog.records)
+    assert all(record.exc_info is not None for record in caplog.records)
 
 
 def test_init_telemetry_adds_console_span_processor(monkeypatch):

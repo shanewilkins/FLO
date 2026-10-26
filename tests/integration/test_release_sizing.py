@@ -38,7 +38,7 @@ def test_physical_units_produce_identical_exact_canvas_and_repeatable_svg(tmp_pa
         first = runner.invoke(cli, command)
         assert first.exit_code == 0, first.output
         content = output.read_bytes()
-        root = ET.fromstring(content)
+        root = ET.fromstring(content)  # noqa: S314 - Renderer-produced SVG.
         assert (root.get("width"), root.get("height")) == ("816", "1056")
         second = runner.invoke(cli, command)
         assert second.exit_code == 0, second.output
@@ -65,7 +65,7 @@ def test_unreadable_exact_canvas_fails_and_expand_preserves_full_diagram(tmp_pat
     assert not output.exists()
     expanded = runner.invoke(cli, [*command, "--layout-overflow", "expand"])
     assert expanded.exit_code == 0, expanded.output
-    root = ET.fromstring(output.read_bytes())
+    root = ET.fromstring(output.read_bytes())  # noqa: S314 - Renderer-produced SVG.
     assert float(root.get("width")) >= 384
     assert float(root.get("height")) > 4
     viewbox = list(map(float, root.get("viewBox").split()))

@@ -149,7 +149,7 @@ def test_cli_safe_fits_white_belt_map_to_exact_letter_canvas(tmp_path):
     assert 'width="816"' in root
     assert 'height="1056"' in root
     assert 'preserveAspectRatio="xMidYMid meet"' in root
-    viewbox = ET.fromstring(output_path.read_text()).attrib["viewBox"]
+    viewbox = ET.fromstring(output_path.read_text()).attrib["viewBox"]  # noqa: S314 - Renderer-produced SVG.
     x, y, width, height = map(float, viewbox.split())
     assert (x, y) == (0, 0)
     assert width > 0 and height > 0

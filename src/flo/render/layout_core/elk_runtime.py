@@ -24,7 +24,7 @@ def run_elkjs_layout(
     node_command: str = "node",
     timeout_seconds: float = _DEFAULT_TIMEOUT_SECONDS,
 ) -> dict[str, Any]:
-    """Execute ELK via the local Node runtime and return the JSON response."""
+    """Execute ELK with a trusted Node executable and the bundled runtime script."""
     if not shutil.which(node_command):
         raise ElkRuntimeUnavailableError(
             f"Node.js executable '{node_command}' not found on PATH."
@@ -37,12 +37,13 @@ def run_elkjs_layout(
         )
 
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603 - Trusted Node command; fixed script, no shell.
             [node_command, str(script_path)],
             input=json.dumps(payload),
             text=True,
             capture_output=True,
             timeout=timeout_seconds,
+            check=False,
         )
     except subprocess.TimeoutExpired as exc:
         raise ElkEngineTimeoutError(

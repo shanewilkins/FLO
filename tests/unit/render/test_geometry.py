@@ -2,7 +2,7 @@ import pytest
 
 from flo.errors import RenderError
 from flo.render._artifact import RenderArtifact
-from flo.render._geometry import resolve_svg_geometry
+from flo.render._geometry import _requested_canvas_bounds, resolve_svg_geometry
 from flo.render.options import RenderOptions
 from flo.render.sppm.layout_options import prepare_sppm_layout
 
@@ -13,6 +13,16 @@ def _artifact() -> RenderArtifact:
         backend="svg",
         content='<svg width="720" height="480" viewBox="0 0 720 480"></svg>',
     )
+
+
+def test_requested_canvas_bounds_rejects_missing_dimensions_explicitly():
+    with pytest.raises(RenderError, match="At least one requested canvas dimension"):
+        _requested_canvas_bounds(
+            natural_width=720,
+            natural_height=480,
+            requested_width=None,
+            requested_height=None,
+        )
 
 
 def test_explicit_sppm_width_constrains_profile_wrap_budget():

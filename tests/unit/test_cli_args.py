@@ -21,7 +21,7 @@ def test_parse_args_none_returns_defaults(services):
     "args, expected_command, expected_output",
     [
         (
-            ["/tmp/input.flo", "-v", "-o", "out.txt", "--validate"],
+            ["/example/input.flo", "-v", "-o", "out.txt", "--validate"],
             "validate",
             "out.txt",
         ),

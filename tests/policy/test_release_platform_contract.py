@@ -13,8 +13,10 @@ def test_ci_has_macos_wheel_smoke_and_headless_chrome_svg_consumer() -> None:
     assert "macos-package-smoke:" in workflow
     assert "runs-on: macos-latest" in workflow
     assert "browser-actions/setup-chrome@" in workflow
-    assert "scripts/check_svg_accessibility.py" in workflow
-    assert "scripts/check_sppm_geometry.py" in workflow
+    hooks = Path(".pre-commit-config.yaml").read_text(encoding="utf-8")
+    assert "scripts/check_svg_accessibility.py" in hooks
+    assert "scripts/check_sppm_geometry.py" in hooks
+    assert "pre-commit run --all-files" in workflow
     assert "--headless" in workflow
 
 
@@ -22,13 +24,13 @@ def test_wheel_smoke_jobs_vendor_elk_before_building() -> None:
     workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
     sections = (
         _job_section(workflow, "package-smoke", "macos-package-smoke"),
-        _job_section(workflow, "macos-package-smoke", "sppm-determinism"),
+        _job_section(workflow, "macos-package-smoke", "test"),
     )
 
     for section in sections:
         npm_index = section.index("npm ci --ignore-scripts --no-audit --no-fund")
         vendor_index = section.index("python scripts/vendor_elkjs.py")
-        build_index = section.index("uv build --wheel")
+        build_index = section.index("uv build")
         assert npm_index < vendor_index < build_index
         assert "scripts/check_yb_journey.py --flo" in section
         assert "scripts/architecture_trace.py --installed-python" in section

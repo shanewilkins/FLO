@@ -28,6 +28,7 @@ ENV_SPACING_PROFILE = "FLO_SPPM_SPACING_PROFILE"
 
 
 def main() -> int:
+    """Build comparable artifacts for the selected strategy profiles."""
     parser = argparse.ArgumentParser(prog="compare_sppm_profiles.py")
     parser.add_argument(
         "--manifest",

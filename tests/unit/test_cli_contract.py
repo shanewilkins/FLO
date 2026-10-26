@@ -16,7 +16,7 @@ def test_parsed_args_is_frozen():
     """Verify ParsedArgs cannot be mutated after creation."""
     args = ParsedArgs(path="test.flo", command="render", options={})
     with pytest.raises(AttributeError):
-        args.path = "other.flo"  # type: ignore
+        args.path = "other.flo"  # type: ignore[misc]
 
 
 def test_parsed_args_asdict_for_backward_compat():

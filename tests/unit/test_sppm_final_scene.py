@@ -39,8 +39,8 @@ def _prepared():
                 (LayoutPoint(90, 160), LayoutPoint(610, 160)),
                 label="yes",
                 callout_lines=("CT=3m",),
-                outgoing_token="WIP",
-                incoming_token="DONE",
+                outgoing_token="WIP",  # noqa: S106 - SVG label, not a credential.
+                incoming_token="DONE",  # noqa: S106 - SVG label, not a credential.
             )
         },
     )
@@ -91,7 +91,7 @@ def test_emitter_consumes_supplied_scene_even_when_policy_is_disabled(monkeypatc
     artifact, _ = emit_sppm_svg_artifact(
         process=process, options=options, request=request, scene=supplied
     )
-    root = ET.fromstring(artifact.content)
+    root = ET.fromstring(artifact.content)  # noqa: S314 - Renderer-produced SVG.
     ns = {"s": "http://www.w3.org/2000/svg"}
     line = root.find('.//s:g[@data-edge-source="a"]/s:polyline', ns)
     assert line.attrib["points"] == "111.0,165.0 589.0,165.0"

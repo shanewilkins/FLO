@@ -263,9 +263,9 @@ def test_edge_token_svg_marks_source_and_target_positions() -> None:
         LayoutPoint(100.0, 0.0),
     )
 
-    source_svg = "".join(_edge_token_svg(points=points, token="WIP", near_source=True))
+    source_svg = "".join(_edge_token_svg(points=points, token="WIP", near_source=True))  # noqa: S106 - SVG label, not a credential.
     target_svg = "".join(
-        _edge_token_svg(points=points, token="DONE", near_source=False)
+        _edge_token_svg(points=points, token="DONE", near_source=False)  # noqa: S106 - SVG label, not a credential.
     )
 
     assert 'data-edge-token="WIP"' in source_svg
@@ -340,8 +340,8 @@ def test_edge_svg_renders_callout_and_edge_tokens() -> None:
         rework_variant=None,
         callout_lines=("handoff", "owner: QA"),
         callout_near_source=True,
-        outgoing_token="WIP",
-        incoming_token="DONE",
+        outgoing_token="WIP",  # noqa: S106 - SVG label, not a credential.
+        incoming_token="DONE",  # noqa: S106 - SVG label, not a credential.
     )
 
     parts, annotation_bounds = _edge_svg(edge_path)

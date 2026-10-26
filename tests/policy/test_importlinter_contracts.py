@@ -92,10 +92,10 @@ def test_fast_architecture_checks_are_required_local_hooks() -> None:
     config = yaml.safe_load((_find_repo_root() / ".pre-commit-config.yaml").read_text())
     hooks = {hook["id"]: hook for repo in config["repos"] for hook in repo["hooks"]}
     for hook_id, command in (
-        ("importlinter-check", "uv run lint-imports"),
+        ("importlinter-check", "uv run --locked lint-imports"),
         (
             "architecture-responsibility-check",
-            "uv run python scripts/architecture_boundaries.py",
+            "uv run --locked python scripts/architecture_boundaries.py",
         ),
     ):
         hook = hooks[hook_id]
@@ -147,7 +147,7 @@ def test_neutral_import_contract_rejects_new_module_regressions(
     )
     text += "\n".join(f"{key} = {json.dumps(value)}" for key, value in contract.items())
     (tmp_path / "pyproject.toml").write_text(text)
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603 - Installed tool with a generated test fixture.
         [str(Path(sys.executable).parent / "lint-imports")],
         cwd=tmp_path,
         capture_output=True,

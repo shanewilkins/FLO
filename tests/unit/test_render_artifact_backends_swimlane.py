@@ -69,7 +69,7 @@ def _render_reference_swimlane():
 
 
 def _swimlane_svg_signature(svg: str) -> dict[str, object]:
-    root = ET.fromstring(svg)
+    root = ET.fromstring(svg)  # noqa: S314 - Renderer-produced SVG.
     lanes = tuple(
         element.attrib["data-lane-id"]
         for element in root.iter()

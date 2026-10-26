@@ -178,7 +178,7 @@ def parse_polygon_bounds(points_str: str) -> tuple[float, float, float, float]:
 def extract_svg_dimensions(svg_path: Path) -> list[SVGElement]:
     """Parse SVG file and extract element dimensions."""
     try:
-        tree = ET.parse(svg_path)
+        tree = ET.parse(svg_path)  # noqa: S314 - Trusted renderer artifacts.
         root = tree.getroot()
     except ET.ParseError as e:
         print(f"Error parsing SVG: {e}")

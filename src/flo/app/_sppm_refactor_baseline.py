@@ -13,12 +13,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
 
-try:
-    from radon.complexity import cc_visit
-except Exception:  # pragma: no cover - optional dev dependency
-    cc_visit = None
-
-
 DEFAULT_SPPM_REFACTOR_BASELINE_FILES: tuple[str, ...] = (
     "src/flo/render/sppm/publication.py",
     "src/flo/render/sppm/renderer.py",
@@ -81,7 +75,6 @@ class FunctionBaseline:
     lineno: int
     end_lineno: int
     span_lines: int
-    complexity: int | None = None
 
 
 @dataclass(frozen=True)
@@ -94,7 +87,6 @@ class FileBaseline:
     long_lines_gt_100: int
     function_count: int
     longest_function: FunctionBaseline | None
-    complexity_findings: tuple[FunctionBaseline, ...]
 
 
 @dataclass(frozen=True)
@@ -152,7 +144,6 @@ def collect_file_baseline(path: Path) -> FileBaseline:
     longest_function = max(
         function_stats, key=lambda item: item.span_lines, default=None
     )
-    complexity_findings = _collect_complexity_findings(path)
     return FileBaseline(
         path=path,
         line_count=line_count,
@@ -160,37 +151,7 @@ def collect_file_baseline(path: Path) -> FileBaseline:
         long_lines_gt_100=long_lines_gt_100,
         function_count=len(functions),
         longest_function=longest_function,
-        complexity_findings=complexity_findings,
     )
-
-
-def _collect_complexity_findings(path: Path) -> tuple[FunctionBaseline, ...]:
-    if cc_visit is None:
-        return ()
-
-    try:
-        blocks = cc_visit(path.read_text(encoding="utf-8"))
-    except Exception:
-        return ()
-
-    findings: list[FunctionBaseline] = []
-    for block in blocks:
-        complexity = int(getattr(block, "complexity", 0) or 0)
-        if complexity <= 0:
-            continue
-        lineno = int(getattr(block, "lineno", 0) or 0)
-        span_lines = 1
-        findings.append(
-            FunctionBaseline(
-                name=str(getattr(block, "name", "")),
-                lineno=lineno,
-                end_lineno=lineno,
-                span_lines=span_lines,
-                complexity=complexity,
-            )
-        )
-    findings.sort(key=lambda item: (-int(item.complexity or 0), item.name, item.lineno))
-    return tuple(findings)
 
 
 def format_sppm_refactor_baseline_report(report: BaselineReport) -> str:
@@ -198,15 +159,20 @@ def format_sppm_refactor_baseline_report(report: BaselineReport) -> str:
     lines: list[str] = []
     stats = report.files
     lines.append(
-        "| File | Lines | Max line | >100 chars | Functions | Longest function | Complexity |"
+        "| File | Lines | Max line | >100 chars | Functions | Longest function |"
     )
-    lines.append("| --- | ---: | ---: | ---: | ---: | --- | --- |")
+    lines.append("| --- | ---: | ---: | ---: | ---: | --- |")
     for item in stats:
         longest = _format_longest_function(item.longest_function)
-        complexity = _format_complexity(item.complexity_findings)
         lines.append(
-            f"| {_workspace_relative_path(item.path)} | {item.line_count} | {item.max_line_length} | {item.long_lines_gt_100} | {item.function_count} | {longest} | {complexity} |"
+            f"| {_workspace_relative_path(item.path)} | {item.line_count} | {item.max_line_length} | {item.long_lines_gt_100} | {item.function_count} | {longest} |"
         )
+    lines.append("")
+    lines.append(
+        "Historical Radon complexity scores are retired. Complexity is enforced "
+        "separately by Ruff C901 (`uv run --locked ruff check src tests scripts`); its McCabe "
+        "scores are not interchangeable with the historical Radon measurements."
+    )
     lines.append("")
     lines.append("## Layer Violations")
     lines.extend(_format_layer_violations(report.layer_violations))
@@ -469,12 +435,6 @@ def _format_longest_function(item: FunctionBaseline | None) -> str:
     if item is None:
         return "-"
     return f"{item.name}:{item.span_lines}"
-
-
-def _format_complexity(items: Sequence[FunctionBaseline]) -> str:
-    if not items:
-        return "-"
-    return ", ".join(f"{item.name}({item.complexity})" for item in items[:3])
 
 
 def main(argv: Sequence[str] | None = None) -> int:

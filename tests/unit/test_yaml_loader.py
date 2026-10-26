@@ -15,5 +15,8 @@ content: ok
 
 def test_load_adapter_invalid_raises():
     y = "- just\n- a\n- list"
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match=r"^YAML content must be a mapping with keys 'name' and 'content'$",
+    ):
         load_adapter_from_yaml(y)

@@ -1,98 +1,87 @@
 repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+        exclude: '^(tests/golden/|renders/)|\.svg$'
+  - repo: https://github.com/rhysd/actionlint
+    rev: 914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12
+    hooks:
+      - id: actionlint
+        files: '^\.github/(workflows/|actions/)|^\.pre-commit-config\.yaml$'
+        pass_filenames: false
   - repo: local
     hooks:
       - id: ruff-format
-        name: ruff format (via uv)
-        entry: uv run ruff format src tests
+        name: ruff format
+        entry: uv run --locked ruff format src tests scripts
         language: system
-        types: [python]
+        types: [file]
+        files: '(\.py$|^(pyproject\.toml|uv\.lock|\.pre-commit-config\.yaml)$)'
         pass_filenames: false
       - id: ruff-check
-        name: ruff (via uv)
-        entry: uv run ruff check src tests
+        name: ruff
+        entry: uv run --locked ruff check src tests scripts
         language: system
-        types: [python]
-        pass_filenames: false
-      - id: ruff-ann401-advisory
-        name: ruff ANN401 advisory (via uv)
-        # Advisory-only gate for explicit Any usage. Keep non-blocking for now.
-        entry: uv run ruff check src tests --select ANN401 --exit-zero
-        language: system
-        types: [python]
-        pass_filenames: false
-      - id: pydocstyle-check
-        name: pydocstyle (via uv)
-        entry: uv run pydocstyle src tests
-        language: system
-        types: [python]
+        types: [file]
+        files: '(\.py$|^(pyproject\.toml|uv\.lock|\.pre-commit-config\.yaml)$)'
         pass_filenames: false
       - id: ty-check
-        name: ty (via uv)
-        entry: uv run ty check src
+        name: ty
+        entry: uv run --locked ty check src
         language: system
-        types: [python]
+        types: [file]
+        files: '(\.py$|^(pyproject\.toml|uv\.lock|\.pre-commit-config\.yaml)$)'
         pass_filenames: false
       - id: file-length-check
         name: file length
-        entry: uv run python scripts/check_file_length.py --warn-lines 500 --fail-lines 750
+        entry: uv run --locked python scripts/check_file_length.py --warn-lines 500 --fail-lines 750
         language: system
         types: [python]
         pass_filenames: true
         files: "\\.py$"
         exclude: "^(scripts/|src/flo/render/_svg_sppm_edges\\.py|tests/integration/test_cli_render_options\\.py|tests/unit/test_layout_core_elk_requests\\.py|tests/unit/test_layout_core_elk_runtime\\.py|tests/unit/test_render_artifact_backends_sppm\\.py)$"
-      - id: radon-complexity
-        name: radon complexity
-        entry: uv run python scripts/check_complexity.py
-        language: system
-        pass_filenames: true
-        files: "\\.py$"
-        stages: ["pre-commit"]
-        description: "Fail commit if any function/class complexity > 15"
-      - id: vulture-check
-        name: vulture (via uv)
-        # Run vulture as a hard quality gate and include whitelist symbols
-        # as an analyzed module so known intentional false positives are ignored.
-        entry: bash -c "if [ -f vulture_whitelist.py ]; then uv run vulture src/flo tests vulture_whitelist.py --min-confidence 60; else uv run vulture src/flo tests --min-confidence 60; fi"
-        language: system
-        types: [python]
-        pass_filenames: false
       - id: importlinter-check
-        name: import-linter (via uv)
-        entry: uv run lint-imports
+        name: import-linter
+        entry: uv run --locked lint-imports
         language: system
         pass_filenames: false
       - id: architecture-responsibility-check
         name: architecture responsibilities (fast source check)
-        entry: uv run python scripts/architecture_boundaries.py
+        entry: uv run --locked python scripts/architecture_boundaries.py
         language: system
         pass_filenames: false
       - id: docs-governance-check
-        name: docs governance (via uv)
-        entry: uv run python scripts/check_docs_governance.py --strict
+        name: docs governance
+        entry: uv run --locked python scripts/check_docs_governance.py --strict
         language: system
         pass_filenames: false
-        files: "^(docs/|examples/|schema/|README\\.md|src/flo/errors\\.py)"
+        files: '^(docs/|examples/|schema/|README\.md$|src/flo/errors\.py$|scripts/check_docs_governance\.py$|pyproject\.toml$|uv\.lock$|\.pre-commit-config\.yaml$)'
       - id: svg-accessibility-check
-        name: SVG accessibility metadata (via uv)
-        entry: uv run python scripts/check_svg_accessibility.py
+        name: SVG accessibility metadata
+        entry: uv run --locked python scripts/check_svg_accessibility.py
         language: system
         pass_filenames: false
-        files: "^(src/flo/render/|tests/golden/sppm/|scripts/check_svg_accessibility\\.py)"
+        files: '^(src/|examples/|schema/|tests/golden/|scripts/|pyproject\.toml$|uv\.lock$|package(-lock)?\.json$|\.pre-commit-config\.yaml$)'
       - id: sppm-final-geometry-check
         name: SPPM final SVG geometry
-        entry: uv run python scripts/check_sppm_geometry.py
+        entry: uv run --locked python scripts/check_sppm_geometry.py
         language: system
         pass_filenames: false
-        files: "^(src/flo/render/|tests/golden/sppm/|scripts/check_sppm_geometry\\.py)"
+        files: '^(src/|examples/|schema/|tests/golden/|scripts/|pyproject\.toml$|uv\.lock$|package(-lock)?\.json$|\.pre-commit-config\.yaml$)'
       - id: sppm-golden-drift-check
-        name: SPPM golden artifact drift (via uv)
-        entry: uv run python scripts/check_sppm_baseline_drift.py
+        name: SPPM golden artifact drift
+        entry: uv run --locked python scripts/check_sppm_baseline_drift.py
         language: system
         pass_filenames: false
-        files: "^(src/flo/|examples/|tests/golden/sppm/|scripts/(build|check)_sppm_baseline)"
+        files: '^(src/|examples/|schema/|tests/golden/|scripts/|pyproject\.toml$|uv\.lock$|package(-lock)?\.json$|\.pre-commit-config\.yaml$)'
       - id: pytest-check
-        name: pytest (via uv)
-        entry: uv run pytest --cov=src/flo --cov-report=term-missing --cov-fail-under=90
+        name: pytest
+        entry: uv run --locked pytest
         language: system
-        types: [python]
+        types: [file]
+        files: '^(\.github/|\.pre-commit-config\.yaml$|\.python-version$|pyproject\.toml$|uv\.lock$|package(-lock)?\.json$|src/|tests/|scripts/|examples/|schema/)'
         pass_filenames: false

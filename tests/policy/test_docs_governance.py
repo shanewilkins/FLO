@@ -69,6 +69,8 @@ def test_test_evidence_ref_reports_missing_symbol(tmp_path, monkeypatch):
     )
 
     assert warnings == [
-        "docs/requirements/executable_evidence.csv:2: "
-        "test symbol does not exist: test_contract.py::test_missing"
+        (
+            "docs/requirements/executable_evidence.csv:2: "
+            "test symbol does not exist: test_contract.py::test_missing"
+        )
     ]

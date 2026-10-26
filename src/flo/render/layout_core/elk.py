@@ -186,7 +186,8 @@ def execute_elk_layout(
     if errors:
         raise RenderError("; ".join(errors))
     if observer is not None:
-        assert request_snapshot is not None and response_snapshot is not None
+        if request_snapshot is None or response_snapshot is None:
+            raise RenderError("ELK observer snapshots are missing.")
         observer(
             ElkLayoutTrace(
                 deepcopy(request),
