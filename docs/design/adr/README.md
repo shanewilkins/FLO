@@ -25,6 +25,7 @@ Normative behavior still belongs in `docs/specs/` and governance rules belong in
 
 Current ADRs:
 
+- `book_aligned_language_conventions.md`
 - `pydantic_source_and_render_inputs.md`
 - `quantity_validation_and_units.md`
 - `language_primitive_taxonomy.md`
