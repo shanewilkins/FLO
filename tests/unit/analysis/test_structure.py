@@ -207,6 +207,32 @@ def test_structure_requires_canonical_ir() -> None:
         analyze_process_structure(cast(Any, {}))
 
 
+def test_structure_distinguishes_explicit_unknown_from_omitted_classification() -> None:
+    process = IR(
+        name="Classification coverage",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(
+                id="reviewed",
+                type="task",
+                attrs={"metadata": {"value_class": "unknown"}},
+            ),
+            Node(id="unreviewed", type="wait"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="reviewed"),
+            Edge(source="reviewed", target="unreviewed"),
+            Edge(source="unreviewed", target="end"),
+        ],
+    )
+
+    result = analyze_process_structure(process)
+
+    assert result.value_class_counts == {"unknown": 1}
+    assert result.unclassified_node_ids == ("unreviewed",)
+
+
 def _branched_process() -> IR:
     return IR(
         name="Claims",

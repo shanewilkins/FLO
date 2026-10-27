@@ -317,7 +317,6 @@
       "properties": {
         "sla_target_seconds": { "$ref": "#/definitions/duration_seconds" },
         "business_impact": { "type": "string" },
-        "value_class": { "$ref": "#/definitions/value_class" },
         "items": {
           "$ref": "#/definitions/canonical_item_collection"
         },
@@ -353,7 +352,7 @@
   "recommended_keys": {
     "node": ["activity_key","sla_target_seconds","cycle_time","value_class"],
     "edge": ["handoff","handoff_type","expected_latency_seconds","rate","reason","count","frequency"],
-    "process": ["sla_target_seconds","value_class","items","resources","locations"]
+    "process": ["sla_target_seconds","items","resources","locations"]
   },
   "examples": {
     "node_metadata": {
@@ -375,7 +374,6 @@
     "process_metadata": {
       "sla_target_seconds": 86400,
       "business_impact": "high",
-      "value_class": "VA",
       "items": [
         {
           "id": "order_ticket",

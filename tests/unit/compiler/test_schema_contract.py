@@ -114,6 +114,10 @@ def test_flo_types_schema_includes_phase2_canonical_keys() -> None:
     assert duration["properties"]["measurement_refs"]["uniqueItems"] is True
     node_metadata = typed_schema["properties"]["node"]
     assert "wait_before" in node_metadata["properties"]
+    assert "value_class" in node_metadata["properties"]
+    process_metadata = typed_schema["properties"]["process"]
+    assert "value_class" not in process_metadata["properties"]
+    assert "value_class" not in typed_schema["recommended_keys"]["process"]
 
 
 def test_canonical_entity_identity_and_kind_contracts_match_ir_schema() -> None:

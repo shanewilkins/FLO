@@ -285,7 +285,12 @@ The `value_class` field classifies a step by its Lean value contribution:
 - `VA` — value-adding
 - `RNVA` — required non-value-adding
 - `NVA` — non-value-adding
-- `unknown` — unclassified (default when omitted)
+- `unknown` — explicitly reviewed but not yet classifiable
+
+`value_class` applies only to `task`, `system_task`, `subprocess`, `queue`, and
+`wait` steps. It is invalid on process metadata and control nodes. An omitted
+classification remains undeclared and is reported separately from an explicit
+`unknown` classification by structural analysis.
 
 The `description` field is a free-text string providing a human-readable explanation of what the step does. It is displayed in the SPPM info box and is available as a pass-through field in other renderers.
 

@@ -393,34 +393,44 @@ An implementation of FLO must enforce these minimum semantic rules:
     - `metadata.queue_policy` is optional under the current v0.1 implementation
       and may be used by downstream analysis or future queueing models.
 
-16. Item relation integrity
+16. Lean value-class applicability
+    - `metadata.value_class` classifies individual `task`, `system_task`,
+      `subprocess`, `queue`, and `wait` nodes.
+    - It must be one of `VA`, `RNVA`, `NVA`, or `unknown`.
+    - It is invalid on process metadata and control nodes.
+    - Omission means no classification was declared. Explicit `unknown` means
+      the step was reviewed but its class could not be determined.
+    - FLO validates this contract but does not infer whether an authored Lean
+      classification is substantively correct.
+
+17. Item relation integrity
       - If process-level `items` are declared, every `consumes` and `produces`
          reference must resolve to a declared process item id. An explicitly
          empty collection declares no valid item references.
 
-17. Resource relation integrity
+18. Resource relation integrity
       - If process-level `resources` are declared, every `performed_by` and
          `uses` reference must resolve to a declared process resource id. An
          explicitly empty collection declares no valid resource references.
 
-18. Resource kind compatibility
+19. Resource kind compatibility
       - `performed_by` references must resolve to resources of kind `person`.
       - `uses` references must resolve to resources of kind `equipment`.
 
-19. Explicit handoff typing and shape
+20. Explicit handoff typing and shape
       - If `handoff` is present on an edge or transition, it must be boolean in
          the canonical structural contract.
       - Optional typed handoff metadata must not contradict the structural
          meaning of the edge.
 
-20. Parallel structure validity
+21. Parallel structure validity
       - `parallel_split` nodes must have at least two outgoing edges.
       - `parallel_split` nodes must reach at least one `parallel_join` node.
       - `parallel_join` nodes must have at least two incoming edges.
       - `parallel_join` nodes must be reachable from at least one
          `parallel_split` node.
 
-21. Location and lane integrity
+22. Location and lane integrity
     - When locations are declared, every step `location` reference must resolve
       to a declared location ID, including when the collection is empty.
     - When lane declarations are listed, every step `lane` reference must resolve
@@ -430,7 +440,7 @@ An implementation of FLO must enforce these minimum semantic rules:
       rework metadata must be finite; non-finite or overflowing values must fail
       validation rather than contaminating downstream calculations.
 
-22. Resource quantity integrity
+23. Resource quantity integrity
    - Measured quantities retain finite `value > 0` and supported units
      `mg`, `g`, `kg`, `ml`, `l`, `mm`, `cm`, and `m`.
    - Optional `canonical_value` and `canonical_unit` are provided together,

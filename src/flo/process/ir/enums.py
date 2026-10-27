@@ -36,4 +36,15 @@ class ProcessValueClass(Enum):
     UNKNOWN = "unknown"
 
 
-__all__ = ["LaneType", "NodeKind", "ProcessValueClass", "ValueClass"]
+VALUE_CLASS_NODE_KINDS = frozenset(
+    {"task", "system_task", "subprocess", "queue", "wait"}
+)
+
+
+__all__ = [
+    "VALUE_CLASS_NODE_KINDS",
+    "LaneType",
+    "NodeKind",
+    "ProcessValueClass",
+    "ValueClass",
+]

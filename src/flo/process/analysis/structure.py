@@ -7,6 +7,7 @@ from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
+from flo.process.ir.enums import VALUE_CLASS_NODE_KINDS
 from flo.process.ir.metadata import extract_node_metadata
 from flo.process.ir.models import IR, Edge, Node
 
@@ -19,9 +20,6 @@ ReworkClassification = Literal["explicit"]
 
 _MAX_PATHS = 256
 _PARALLEL_NODE_TYPES = frozenset({"parallel_split", "parallel_join"})
-_CLASSIFIABLE_NODE_TYPES = frozenset(
-    {"task", "system_task", "subprocess", "queue", "wait"}
-)
 
 
 @dataclass(frozen=True)
@@ -487,7 +485,7 @@ def _analyze_step_classification(
                 value_class=value_class,
             )
         )
-        if node_type in _CLASSIFIABLE_NODE_TYPES and value_class is None:
+        if node_type in VALUE_CLASS_NODE_KINDS and value_class is None:
             unclassified.append(node.id)
     return tuple(classifications), tuple(unclassified)
 

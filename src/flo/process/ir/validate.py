@@ -17,7 +17,7 @@ from flo.process.units import (
 )
 
 from ._graph_utils import build_adjacency_maps, traverse
-from .enums import ProcessValueClass
+from .enums import VALUE_CLASS_NODE_KINDS, ProcessValueClass
 from .metadata import extract_node_metadata
 from .models import IR
 from .schema_projection import ir_to_schema_dict
@@ -82,7 +82,7 @@ def validate_ir(obj: Any) -> None:
     _validate_node_io_lists(obj)
     _validate_node_time_metadata(obj)
     validate_wait_measurements(obj)
-    _validate_node_value_class(obj)
+    _validate_value_class(obj)
     validate_subprocess_metadata(obj)
     _validate_edge_metadata(obj)
     _validate_process_resources(obj)
@@ -814,13 +814,27 @@ def _validate_canonical_quantity(
         )
 
 
-def _validate_node_value_class(obj: IR) -> None:
+def _validate_value_class(obj: IR) -> None:
+    process_metadata = getattr(obj, "process_metadata", None)
+    if isinstance(process_metadata, dict) and "value_class" in process_metadata:
+        raise ValidationError(
+            "E1321: process metadata.value_class is invalid; "
+            "value_class classifies individual work or wait steps"
+        )
+
     valid_values = {vc.value for vc in ProcessValueClass}
     for node in obj.nodes:
         metadata = extract_node_metadata(node)
         raw = metadata.get("value_class")
         if raw is None:
             continue
+        node_kind = node.type.strip().lower()
+        if node_kind not in VALUE_CLASS_NODE_KINDS:
+            raise ValidationError(
+                f"E1322: node '{node.id}' of kind '{node.type}' cannot declare "
+                "metadata.value_class; value_class is valid only on "
+                f"{sorted(VALUE_CLASS_NODE_KINDS)}"
+            )
         if not isinstance(raw, str) or raw not in valid_values:
             raise ValidationError(
                 f"E1320: node '{node.id}' metadata.value_class '{raw}' "

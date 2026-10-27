@@ -26,7 +26,11 @@ human-friendly guidance and examples.
 
 - `activity_key` (string, node): stable key used to align telemetry events to a node.
 - `sla_target_seconds` (duration/number, node/process): expected time budget for the step/process.
-- `value_class` (enum string, node/process): high-level classification used in Lean analysis (VA/RNVA/NVA/unknown).
+- `value_class` (enum string, work/wait node): high-level classification used
+  in Lean analysis (`VA`/`RNVA`/`NVA`/`unknown`). It is valid on `task`,
+  `system_task`, `subprocess`, `queue`, and `wait` nodes, not on process
+  metadata or control nodes. Omission means undeclared; `unknown` records an
+  explicit review that could not determine a class.
 - `handoff` (boolean, edge): indicates a cross-lane or responsibility handoff.
 - `handoff_type` (string, edge): optional typed handoff classification such as
   responsibility, information, material, system, location, or mixed.
@@ -80,8 +84,7 @@ human-friendly guidance and examples.
 
   {
     "sla_target_seconds": 86400,
-    "business_impact": "high",
-    "value_class": "VA"
+    "business_impact": "high"
   }
 
 ## Best practices

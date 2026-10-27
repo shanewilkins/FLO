@@ -1,6 +1,7 @@
 import pytest
 
 from flo.errors import ValidationError
+from flo.process.ir.enums import VALUE_CLASS_NODE_KINDS
 from flo.process.ir.models import IR, Edge, Node
 from flo.process.ir.validate import validate_ir
 
@@ -786,21 +787,29 @@ def test_validate_ir_rejects_empty_string_node_output_item():
         validate_ir(ir)
 
 
-def test_validate_ir_accepts_valid_value_class_values():
-    for vc in ("VA", "RNVA", "NVA", "unknown"):
-        ir = IR(
-            name="x",
-            nodes=[
-                Node(id="start", type="start"),
-                Node(id="step", type="task", attrs={"metadata": {"value_class": vc}}),
-                Node(id="end", type="end"),
-            ],
-            edges=[
-                Edge(source="start", target="step"),
-                Edge(source="step", target="end"),
-            ],
-        )
-        validate_ir(ir)  # must not raise
+@pytest.mark.parametrize("node_kind", sorted(VALUE_CLASS_NODE_KINDS))
+@pytest.mark.parametrize("value_class", ("VA", "RNVA", "NVA", "unknown"))
+def test_validate_ir_accepts_valid_value_classes_on_classifiable_steps(
+    node_kind, value_class
+):
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(
+                id="step",
+                type=node_kind,
+                attrs={"metadata": {"value_class": value_class}},
+            ),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="step"),
+            Edge(source="step", target="end"),
+        ],
+    )
+
+    validate_ir(ir)  # must not raise
 
 
 def test_validate_ir_rejects_invalid_value_class():
@@ -818,6 +827,48 @@ def test_validate_ir_rejects_invalid_value_class():
     )
 
     with pytest.raises(ValidationError, match="E1320"):
+        validate_ir(ir)
+
+
+@pytest.mark.parametrize("node_id", ("start", "end"))
+def test_validate_ir_rejects_value_class_on_control_nodes(node_id):
+    nodes = [
+        Node(id="start", type="start"),
+        Node(id="step", type="task"),
+        Node(id="end", type="end"),
+    ]
+    next(node for node in nodes if node.id == node_id).attrs["metadata"] = {
+        "value_class": "VA"
+    }
+    ir = IR(
+        name="x",
+        nodes=nodes,
+        edges=[
+            Edge(source="start", target="step"),
+            Edge(source="step", target="end"),
+        ],
+    )
+
+    with pytest.raises(ValidationError, match="E1322"):
+        validate_ir(ir)
+
+
+def test_validate_ir_rejects_process_value_class():
+    ir = IR(
+        name="x",
+        process_metadata={"value_class": "VA"},
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="step", type="task"),
+            Node(id="end", type="end"),
+        ],
+        edges=[
+            Edge(source="start", target="step"),
+            Edge(source="step", target="end"),
+        ],
+    )
+
+    with pytest.raises(ValidationError, match="E1321"):
         validate_ir(ir)
 
 
