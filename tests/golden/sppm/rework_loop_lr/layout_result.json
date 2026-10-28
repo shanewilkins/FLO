@@ -1,6 +1,6 @@
 {
   "canvas_bounds": {
-    "height_px": 373.0,
+    "height_px": 280.0,
     "width_px": 1354.0,
     "x_px": 0.0,
     "y_px": 0.0
@@ -11,19 +11,19 @@
       "callout_near_source": false,
       "incoming_token": null,
       "is_rework": false,
-      "label": "yes",
+      "label": "true",
       "label_point": {
-        "x_px": 755.0,
+        "x_px": 979.5,
         "y_px": 68.0
       },
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 850.0,
+          "x_px": 937.0,
           "y_px": 71.0
         },
         {
-          "x_px": 906.0,
+          "x_px": 1022.0,
           "y_px": 71.0
         }
       ],
@@ -38,41 +38,33 @@
       "callout_near_source": false,
       "incoming_token": null,
       "is_rework": true,
-      "label": "no",
+      "label": "false",
       "label_point": null,
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 771.0,
+          "x_px": 858.0,
           "y_px": 116.0
         },
         {
-          "x_px": 771.0,
-          "y_px": 233.0
+          "x_px": 884.6778523489933,
+          "y_px": 232.66666666666666
         },
         {
-          "x_px": 860.0,
-          "y_px": 233.0
+          "x_px": 598.5134228187919,
+          "y_px": 232.66666666666666
         },
         {
-          "x_px": 860.0,
-          "y_px": 244.0
+          "x_px": 619.7032598274209,
+          "y_px": 140.0
         },
         {
-          "x_px": 918.0,
-          "y_px": 244.0
+          "x_px": 538.7133269415149,
+          "y_px": 140.0
         },
         {
-          "x_px": 918.0,
-          "y_px": 233.0
-        },
-        {
-          "x_px": 1059.0,
-          "y_px": 233.0
-        },
-        {
-          "x_px": 1059.0,
-          "y_px": 243.0
+          "x_px": 541.0,
+          "y_px": 150.0
         }
       ],
       "rework_variant": "branch",
@@ -91,11 +83,11 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 636.0,
+          "x_px": 694.0,
           "y_px": 71.0
         },
         {
-          "x_px": 692.0,
+          "x_px": 779.0,
           "y_px": 71.0
         }
       ],
@@ -109,33 +101,33 @@
       "callout_lines": [],
       "callout_near_source": false,
       "incoming_token": null,
-      "is_rework": false,
+      "is_rework": true,
       "label": null,
       "label_point": null,
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 1154.0,
-          "y_px": 302.0
+          "x_px": 541.0,
+          "y_px": 150.0
         },
         {
-          "x_px": 1153.4076655052265,
-          "y_px": 302.0
+          "x_px": 533.9323308270676,
+          "y_px": 140.0
         },
         {
-          "x_px": 908.7247386759582,
-          "y_px": 71.0
+          "x_px": 606.0676691729324,
+          "y_px": 140.0
         },
         {
-          "x_px": 906.0,
-          "y_px": 71.0
+          "x_px": 599.0,
+          "y_px": 130.0
         }
       ],
-      "rework_variant": null,
+      "rework_variant": "return",
       "source": "rework",
-      "source_port_side": "EAST",
-      "target": "approve",
-      "target_port_side": "WEST"
+      "source_port_side": "NORTH",
+      "target": "review",
+      "target_port_side": "SOUTH"
     },
     {
       "callout_lines": [],
@@ -151,7 +143,7 @@
           "y_px": 71.0
         },
         {
-          "x_px": 200.0,
+          "x_px": 229.0,
           "y_px": 71.0
         }
       ],
@@ -171,11 +163,11 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 390.0,
+          "x_px": 419.0,
           "y_px": 71.0
         },
         {
-          "x_px": 446.0,
+          "x_px": 504.0,
           "y_px": 71.0
         }
       ],
@@ -191,26 +183,26 @@
     "approve": {
       "height_px": 52.0,
       "width_px": 132.0,
-      "x_px": 906.0,
+      "x_px": 1022.0,
       "y_px": 45.0
     },
     "decision": {
       "height_px": 90.0,
       "width_px": 158.0,
-      "x_px": 692.0,
+      "x_px": 779.0,
       "y_px": 26.0
     },
     "review": {
       "height_px": 118.0,
       "width_px": 190.0,
-      "x_px": 446.0,
+      "x_px": 504.0,
       "y_px": 12.0
     },
     "rework": {
       "height_px": 118.0,
       "width_px": 190.0,
-      "x_px": 964.0,
-      "y_px": 243.0
+      "x_px": 446.0,
+      "y_px": 150.0
     },
     "start": {
       "height_px": 52.0,
@@ -221,7 +213,7 @@
     "submit": {
       "height_px": 118.0,
       "width_px": 190.0,
-      "x_px": 200.0,
+      "x_px": 229.0,
       "y_px": 12.0
     }
   },

@@ -69,5 +69,5 @@ transitions:
 
     assert not result.ok
     assert result.value is None
-    assert result.diagnostics[0].code == "E0219"
+    assert result.diagnostics[0].code == "E0220"
     assert result.diagnostics[0].source == "invalid.flo"

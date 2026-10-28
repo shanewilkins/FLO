@@ -194,12 +194,9 @@ Canonical common step fields:
 - `subnodes`: optional nested step list for `subprocess` nodes
 - `metadata`: machine-facing metadata map
 
-Compatibility aliases remain accepted in v0.1.
-
-- `workers` maps to `performed_by`
-- `equipment` maps to `uses`
-- `inputs` maps to `consumes`
-- `outputs` maps to `produces`
+Use first-class `performed_by`, `uses`, `consumes`, and `produces` relations.
+Retired relation aliases are rejected; see the authoritative
+[book-aligned field inventory](specs/book_aligned_fields.md).
 
 Subprocess child-node example:
 
@@ -463,19 +460,6 @@ FLO supports these transition forms:
 Canonical transition example:
 
 ```yaml
-items:
-  - id: submission
-    name: Submission
-    kind: information
-
-resources:
-  - id: reviewer
-    name: Reviewer
-    kind: person
-  - id: editor
-    name: Editor
-    kind: person
-
 steps:
   - id: start
     kind: start
@@ -525,6 +509,21 @@ transitions:
     target: review
     edge_type: rework
     rework: true
+
+process:
+  items:
+    - id: submission
+      name: Submission
+      kind: information
+
+  resources:
+    - id: reviewer
+      name: Reviewer
+      kind: person
+    - id: editor
+      name: Editor
+      kind: person
+
 ```
 
 Parallel-flow example:
@@ -558,12 +557,16 @@ transitions:
 
 ## 4.4) Process Metadata, Items, Resources, and Locations
 
-Process-level KPI and resource data should be stored in metadata.
+Process context and entity collections use first-class fields. Non-core
+annotations belong under `process.extensions`.
 
-- Canonical IR location: `process.metadata`
-- Recommended place for KPIs: `process.metadata` (for example cycle time, yield)
-- Top-level `items`, `resources`, and `locations` are the canonical process-level collections in FLO source and are preserved under `process.metadata` in exported schema JSON.
-- Legacy `materials`, `equipment`, and `workers` collections are still accepted in v0.1 as compatibility aliases.
+- Declare `process.items`, `process.resources`, and `process.locations` in both
+  complete source documents and include fragments. Canonical exchange retains
+  that placement.
+- Legacy collection names and top-level or metadata collection placements are
+  rejected. `equipment` is a resource kind, not a collection.
+- Process `lead_time` preserves supplied evidence; modeled lead time is derived
+  separately in inspection and labeled separately in diagrams.
 - A resource collection can be either:
   - A flat list of resource items.
   - A grouped object where each key maps to another collection (list or grouped object). This allows nested grouping.
@@ -665,61 +668,65 @@ process:
 Example:
 
 ```yaml
-locations:
-  - id: prep_bench
-    name: Prep Bench
-    kind: operation
-    metadata:
-      spatial:
-        x: 3.0
-        y: 2.0
-        unit: m
+
+process:
+  locations:
+    - id: prep_bench
+      name: Prep Bench
+      kind: operation
+      metadata:
+        spatial:
+          x: 3.0
+          y: 2.0
+          unit: m
 ```
 
 Grouping example for canonical items:
 
 ```yaml
-items:
-  dry:
-    name: Dry Ingredients
-    items:
-      - id: flour
-        name: Flour
-        kind: material
-        quantity:
-          kind: measure
-          value: 250
-          unit: g
-      - id: sugar
-        name: Sugar
-        kind: material
-        quantity:
-          kind: measure
-          value: 120
-          unit: g
-  wet:
-    name: Wet Ingredients
-    dairy:
-      name: Dairy
+
+process:
+  items:
+    dry:
+      name: Dry Ingredients
       items:
-        - id: butter
-          name: Butter
+        - id: flour
+          name: Flour
           kind: material
           quantity:
             kind: measure
-            value: 100
+            value: 250
             unit: g
-    eggs:
-      name: Eggs
-      items:
-        - id: egg
-          name: Egg
+        - id: sugar
+          name: Sugar
           kind: material
           quantity:
-            kind: count
-            value: 2
-            unit: each
-            qualifier: large
+            kind: measure
+            value: 120
+            unit: g
+    wet:
+      name: Wet Ingredients
+      dairy:
+        name: Dairy
+        items:
+          - id: butter
+            name: Butter
+            kind: material
+            quantity:
+              kind: measure
+              value: 100
+              unit: g
+      eggs:
+        name: Eggs
+        items:
+          - id: egg
+            name: Egg
+            kind: material
+            quantity:
+              kind: count
+              value: 2
+              unit: each
+              qualifier: large
 ```
 
 Example:
@@ -736,44 +743,44 @@ process:
     yield_fraction:
       target: 0.96
 
-items:
-  - id: order_ticket
-    name: Order Ticket
-    kind: information
-    quantity:
-      kind: count
-      value: 1
-      unit: each
-  - id: dough
-    name: Dough
-    kind: material
-    quantity:
-      kind: measure
-      value: 2
-      unit: kg
+  items:
+    - id: order_ticket
+      name: Order Ticket
+      kind: information
+      quantity:
+        kind: count
+        value: 1
+        unit: each
+    - id: dough
+      name: Dough
+      kind: material
+      quantity:
+        kind: measure
+        value: 2
+        unit: kg
 
-resources:
-  - id: baker
-    name: Baker
-    kind: person
-    quantity:
-      kind: count
-      value: 1
-      unit: each
-  - id: oven
-    name: Convection Oven
-    kind: equipment
-    quantity:
-      kind: count
-      value: 1
-      unit: each
+  resources:
+    - id: baker
+      name: Baker
+      kind: person
+      quantity:
+        kind: count
+        value: 1
+        unit: each
+    - id: oven
+      name: Convection Oven
+      kind: equipment
+      quantity:
+        kind: count
+        value: 1
+        unit: each
 
-locations:
-  - id: main_kitchen
-    name: Main Kitchen
-    kind: operation
-    metadata:
-      site_code: HQ-01
+  locations:
+    - id: main_kitchen
+      name: Main Kitchen
+      kind: operation
+      metadata:
+        site_code: HQ-01
 
 steps:
   - id: start

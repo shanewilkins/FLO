@@ -40,13 +40,14 @@ def ir_to_schema_dict(ir: IR) -> JsonObject:
         process["owner"] = ir.process_owner
     if ir.business_units:
         process["business_units"] = ir.business_units
-    serialized_metadata = dict(process_metadata)
-    _copy_explicit_metadata_field(serialized_metadata, "render", ir.render_intent)
-    _copy_explicit_metadata_field(serialized_metadata, "items", ir.items)
-    _copy_explicit_metadata_field(serialized_metadata, "resources", ir.resources)
-    _copy_explicit_metadata_field(serialized_metadata, "locations", ir.locations)
-    if serialized_metadata:
-        process["metadata"] = serialized_metadata
+    if ir.lead_time is not None:
+        process["lead_time"] = ir.lead_time
+    if ir.extensions is not None:
+        process["extensions"] = ir.extensions
+    _copy_explicit_metadata_field(process, "render", ir.render_intent)
+    _copy_explicit_metadata_field(process, "items", ir.items)
+    _copy_explicit_metadata_field(process, "resources", ir.resources)
+    _copy_explicit_metadata_field(process, "locations", ir.locations)
 
     nodes_out = [_node_to_schema(node) for node in ir.nodes]
     edges_out = _edges_to_schema(ir)
@@ -76,33 +77,23 @@ def _node_to_schema(node: Node) -> JsonObject:
     node_entry: JsonObject = {"id": node.id, "kind": node.type}
     attrs = _normalize_json_object(node.attrs)
 
-    _copy_optional_scalars(
-        source=attrs,
-        target=node_entry,
-        keys=("name", "lane", "note", "location"),
-    )
+    for key in ("name", "description", "lane", "location", "value_class"):
+        value = getattr(node, key)
+        if value is not None:
+            node_entry[key] = value
     branch = attrs.get("branch")
     if isinstance(branch, dict):
         node_entry["branch"] = branch
     if node.subprocess_parent is not None:
         node_entry["subprocess_parent"] = node.subprocess_parent
-    _copy_optional_lists(
-        source=attrs,
-        target=node_entry,
-        keys=(
-            "workers",
-            "equipment",
-            "inputs",
-            "outputs",
-            "consumes",
-            "produces",
-            "performed_by",
-            "uses",
-        ),
-    )
-    metadata = attrs.get("metadata")
-    if isinstance(metadata, dict):
-        node_entry["metadata"] = metadata
+    for key in ("consumes", "produces", "performed_by", "uses"):
+        value = getattr(node, key)
+        if value or not isinstance(value, list):
+            node_entry[key] = value
+    for key in ("cycle_time", "wait_time", "changeover_time", "extensions"):
+        value = getattr(node, key)
+        if value is not None:
+            node_entry[key] = value
     return node_entry
 
 
@@ -143,14 +134,12 @@ def _edge_to_schema(edge: Edge) -> JsonObject:
         edge_entry["route"] = edge.route
     if edge.label is not None:
         edge_entry["label"] = edge.label
-    if edge.edge_type is not None:
-        edge_entry["edge_type"] = edge.edge_type
     if edge.handoff is not None:
         edge_entry["handoff"] = edge.handoff
     if edge.rework is not None:
         edge_entry["rework"] = edge.rework
-    if isinstance(edge.metadata, dict):
-        edge_entry["metadata"] = edge.metadata
+    if edge.extensions is not None:
+        edge_entry["extensions"] = edge.extensions
     return edge_entry
 
 

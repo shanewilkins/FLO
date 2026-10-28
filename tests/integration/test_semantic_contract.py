@@ -23,6 +23,17 @@ def _model():
     }
 
 
+def _profile(value=0, unit="min"):
+    return {
+        "basis": "observed",
+        "results": {
+            "mean": {"method": "mean", "value": value, "unit": unit},
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+    }
+
+
 def _invalid_model(case):
     model = _model()
     step = model["steps"][1]
@@ -45,19 +56,19 @@ def _invalid_model(case):
     elif case == "process_metadata":
         model["process"]["metadata"] = "discarded"
     elif case == "empty_items":
-        model["items"] = []
+        model["process"]["items"] = []
         step["consumes"] = ["missing"]
     elif case == "empty_resources":
-        model["resources"] = []
+        model["process"]["resources"] = []
         step["performed_by"] = ["missing"]
     elif case == "empty_locations":
-        model["locations"] = []
+        model["process"]["locations"] = []
         step["location"] = "missing"
     elif case == "lane":
         model["lanes"] = [{"id": "known", "name": "Known"}]
         step["lane"] = "missing"
     elif case == "location":
-        model["locations"] = [{"id": "known", "name": "Known"}]
+        model["process"]["locations"] = [{"id": "known", "name": "Known"}]
         step["location"] = "missing"
     elif case == "schema":
         step["name"] = ["not", "text"]
@@ -120,15 +131,15 @@ def test_semantic_failures_stop_api_and_cli_consumers(tmp_path, case):
     assert not output.exists()
 
 
-def test_valid_context_references_and_attrs_timing_survive_export():
+def test_valid_context_references_and_timing_survive_export():
     model = _model()
-    model["locations"] = {"floor": [{"id": "station", "name": "Station"}]}
+    model["process"]["locations"] = {"floor": [{"id": "station", "name": "Station"}]}
     model["lanes"] = [{"id": "operator", "name": "Operator"}]
-    model["steps"][1]["attrs"] = {
-        "lane": "operator",
-        "location": "station",
-        "metadata": {"wait_time": {"value": 0, "unit": "min"}},
-    }
+    model["steps"][1].update(
+        lane="operator",
+        location="station",
+        wait_time=_profile(),
+    )
     content = yaml.safe_dump(model)
     result = api.export(content)
     assert result.ok, result.diagnostics
@@ -136,7 +147,7 @@ def test_valid_context_references_and_attrs_timing_survive_export():
     work = json.loads(result.value)["nodes"][1]
     assert work["location"] == "station"
     assert work["lane"] == "operator"
-    assert work["metadata"] == {"wait_before": {"value": 0, "unit": "min"}}
+    assert work["wait_time"] == _profile()
 
 
 @pytest.mark.parametrize("node_index", [0, 2])
@@ -144,20 +155,17 @@ def test_valid_context_references_and_attrs_timing_survive_export():
     "field",
     [
         "cycle_time",
-        "crossover_time",
-        "transfer_time",
         "changeover_time",
-        "wait_before",
         "wait_time",
     ],
 )
 def test_control_boundaries_cannot_own_work_or_queue_timing(node_index, field):
     model = _model()
-    model["steps"][node_index]["metadata"] = {field: {"value": 0, "unit": "min"}}
+    model["steps"][node_index][field] = _profile()
     result = api.validate(yaml.safe_dump(model))
     assert not result.ok
-    assert result.diagnostics[0].code == "E1508"
-    assert result.diagnostics[0].suggestion
+    assert result.diagnostics[0].code == "E0222"
+    assert f"{field} cannot be declared on kind" in result.diagnostics[0].message
 
 
 @pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf"), 10**400])
@@ -168,7 +176,7 @@ def test_control_boundaries_cannot_own_work_or_queue_timing(node_index, field):
 def test_typed_numeric_evidence_must_be_finite(value, field):
     model = _model()
     if field == "spatial":
-        model["locations"] = [
+        model["process"]["locations"] = [
             {
                 "id": "station",
                 "name": "Station",
@@ -180,8 +188,14 @@ def test_typed_numeric_evidence_must_be_finite(value, field):
             {
                 "source": "start",
                 "target": "work",
-                "rework": True,
-                "metadata": {field.removeprefix("rework_"): value},
+                "rework": {
+                    "frequency": {
+                        "basis": "observed",
+                        "numerator": value,
+                        "denominator": 10,
+                        "observation_unit": "cases",
+                    }
+                },
             },
             {"source": "work", "target": "end"},
         ]
@@ -189,7 +203,7 @@ def test_typed_numeric_evidence_must_be_finite(value, field):
         quantity = {"kind": "measure", "value": value, "unit": "kg"}
         if field == "canonical_quantity":
             quantity.update(value=1, canonical_value=value, canonical_unit="kg")
-        model["items"] = [
+        model["process"]["items"] = [
             {
                 "id": "material",
                 "name": "Material",
@@ -199,4 +213,11 @@ def test_typed_numeric_evidence_must_be_finite(value, field):
         ]
     result = api.validate(yaml.safe_dump(model))
     assert not result.ok
-    assert result.diagnostics[0].code in {"E1209", "E1212", "E1215", "E1401", "E1403"}
+    assert result.diagnostics[0].code in {
+        "E0222",
+        "E1209",
+        "E1212",
+        "E1215",
+        "E1401",
+        "E1403",
+    }

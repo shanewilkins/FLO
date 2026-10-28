@@ -11,6 +11,8 @@ from flo.process.analysis import (
     ProcessTimingAnalysis,
     StructuralDiagnostic,
 )
+from flo.process.durations import duration_seconds
+from flo.process.measurements import selected_result
 from flo.process.units import convert_duration
 
 
@@ -77,6 +79,7 @@ def _format_timing_text(
         f"  Changeover time: {_format_duration(totals.changeover_time_seconds)}",
         f"  Elapsed subtotal: {_format_duration(totals.elapsed_time_seconds)}",
         "",
+        f"Supplied lead time ({(result.supplied_lead_time or {}).get('basis', 'omitted')}): {_format_duration(duration_seconds(selected_result(result.supplied_lead_time, 'primary')))}",
         f"Modeled lead time: {_format_modeled_lead_time(result)}",
         f"Paths analyzed: {len(result.paths)}",
         f"Changeover policy: {_humanize_policy(result.changeover_exposure_policy)}",
@@ -126,6 +129,15 @@ def _format_structural_text(
         f"  Unclassified steps: {_format_ids(result.unclassified_node_ids)}",
     ]
 
+    for finding in result.handoffs:
+        lines.append(
+            f"  Handoff {finding.source_id} -> {finding.target_id}: {finding.handoff_type or 'unspecified'}"
+        )
+    for finding in result.rework_edges:
+        lines.append(
+            f"  Rework {finding.source_id} -> {finding.target_id}: {finding.reason or 'unspecified'}; {finding.frequency or 'frequency omitted'}"
+        )
+
     if include_diagnostics and result.diagnostics:
         lines.extend(("", "Diagnostics:"))
         for diagnostic in result.diagnostics:
@@ -166,6 +178,16 @@ def _format_model_inspection_text(
         "",
         f"Views: {', '.join(view.view_id for view in report.views)}",
     ]
+    lines.extend(
+        (
+            "",
+            _format_timing_text(report.timing, include_diagnostics=False).strip(),
+            "",
+            _format_structural_text(
+                report.structure, include_diagnostics=False
+            ).strip(),
+        )
+    )
     if report.readiness:
         lines.extend(("", "Requested readiness:"))
         for readiness in report.readiness:

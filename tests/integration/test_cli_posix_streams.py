@@ -79,13 +79,12 @@ transitions:
 
     assert result.exit_code == 3
     diagnostic = json.loads(result.output)
-    assert diagnostic["code"] == "E0219"
+    assert diagnostic["code"] == "E0220"
     assert diagnostic["severity"] == "error"
     assert diagnostic["source"] == "<stdin>"
     assert diagnostic["field_path"] == "steps[1].metadata"
-    assert diagnostic["suggestion"] == (
-        "Keep wait_before and remove the task wait_time alias."
-    )
+    assert diagnostic["message"] == "E0220: steps[1].metadata is not supported"
+    assert diagnostic["suggestion"] is None
 
 
 def test_validate_json_includes_composition_chain():
@@ -136,9 +135,7 @@ def test_validate_json_reports_malformed_transition_without_silent_data_loss():
     assert diagnostic["code"] == "E0209"
     assert diagnostic["field_path"] == "transitions[0].rework"
     assert diagnostic["line"] == 13
-    assert diagnostic["suggestion"] == (
-        "Use the YAML boolean true or false without quotes."
-    )
+    assert diagnostic["suggestion"] == ("Define a structured handoff or rework object.")
 
 
 def test_parse_error_class_surfaces_nonzero_and_message():

@@ -16,18 +16,16 @@ def test_extract_nodes_and_edges_from_ir_object_preserves_attrs_and_lists():
             SimpleNamespace(
                 id="n1",
                 type="task",
-                attrs={
-                    "name": "Node One",
-                    "lane": "ops",
-                    "note": "note",
-                    "subprocess_parent": "p0",
-                    "location": "A1",
-                    "metadata": {"k": "v"},
-                    "workers": ["w1"],
-                    "equipment": ["eq1"],
-                    "inputs": ["in1"],
-                    "outputs": ["out1"],
-                },
+                name="Node One",
+                lane="ops",
+                description="note",
+                subprocess_parent="p0",
+                location="A1",
+                extensions={"example:k": "v"},
+                performed_by=["w1"],
+                uses=["eq1"],
+                consumes=["in1"],
+                produces=["out1"],
             )
         ],
         edges=[
@@ -36,9 +34,7 @@ def test_extract_nodes_and_edges_from_ir_object_preserves_attrs_and_lists():
                 target="n2",
                 outcome="yes",
                 label="ok",
-                edge_type="rework",
-                rework=True,
-                metadata={"rate": 0.1},
+                rework={"reason": "retry"},
             )
         ],
     )
@@ -51,14 +47,14 @@ def test_extract_nodes_and_edges_from_ir_object_preserves_attrs_and_lists():
             "kind": "task",
             "name": "Node One",
             "lane": "ops",
-            "note": "note",
+            "description": "note",
             "subprocess_parent": "p0",
             "location": "A1",
-            "metadata": {"k": "v"},
-            "workers": ["w1"],
-            "equipment": ["eq1"],
-            "inputs": ["in1"],
-            "outputs": ["out1"],
+            "extensions": {"example:k": "v"},
+            "performed_by": ["w1"],
+            "uses": ["eq1"],
+            "consumes": ["in1"],
+            "produces": ["out1"],
         }
     ]
     assert edges == [
@@ -67,9 +63,9 @@ def test_extract_nodes_and_edges_from_ir_object_preserves_attrs_and_lists():
             "target": "n2",
             "outcome": "yes",
             "label": "ok",
-            "edge_type": "rework",
-            "rework": True,
-            "metadata": {"rate": 0.1},
+            "handoff": None,
+            "rework": {"reason": "retry"},
+            "extensions": None,
         }
     ]
 
@@ -116,9 +112,7 @@ def test_extract_nodes_and_edges_from_adapter_dict_with_transitions_and_synthesi
                     "outcomes": {
                         True: {
                             "target": "b",
-                            "edge_type": "rework",
-                            "rework": True,
-                            "metadata": {"reason": "retry"},
+                            "rework": {"reason": "retry"},
                         },
                         False: None,
                     },
@@ -137,9 +131,7 @@ def test_extract_nodes_and_edges_from_adapter_dict_with_transitions_and_synthesi
         "source": "a",
         "target": "b",
         "outcome": "yes",
-        "edge_type": "rework",
-        "rework": True,
-        "metadata": {"reason": "retry"},
+        "rework": {"reason": "retry"},
     } in synthesized_edges
     assert {"source": "c", "target": "parent"} in synthesized_edges
     assert {"source": "parent", "target": "child"} in synthesized_edges
@@ -149,7 +141,7 @@ def test_project_parent_only_subprocess_view_collapses_hidden_edges_and_semantic
     nodes = [
         {"id": "a", "name": "Visible A"},
         {"id": "h1", "subprocess_parent": "a"},
-        {"id": "h2", "metadata": {"subprocess_parent": "a"}},
+        {"id": "h2", "subprocess_parent": "a"},
         {"id": "b", "name": "Visible B"},
     ]
     edges = [
@@ -157,9 +149,7 @@ def test_project_parent_only_subprocess_view_collapses_hidden_edges_and_semantic
             "source": "a",
             "target": "h1",
             "outcome": "no",
-            "edge_type": "rework",
-            "rework": True,
-            "metadata": {"reason": "loop"},
+            "rework": {"reason": "loop"},
         },
         {"source": "h1", "target": "h2", "label": "bridge"},
         {"source": "h2", "target": "b"},
@@ -179,9 +169,7 @@ def test_project_parent_only_subprocess_view_collapses_hidden_edges_and_semantic
             "source": "a",
             "target": "b",
             "outcome": "no",
-            "edge_type": "rework",
-            "rework": True,
-            "metadata": {"reason": "loop"},
+            "rework": {"reason": "loop"},
         }
     ]
 

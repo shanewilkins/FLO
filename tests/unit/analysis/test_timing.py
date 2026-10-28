@@ -15,12 +15,19 @@ from flo.source import compile_adapter, parse_adapter
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
+def _profile(value: Any, unit: str) -> dict[str, Any]:
+    return {
+        "basis": "observed",
+        "results": {
+            "mean": {"method": "mean", "value": value, "unit": unit},
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+    }
+
+
 def _timed_task(node_id: str, seconds: float) -> Node:
-    return Node(
-        id=node_id,
-        type="task",
-        attrs={"metadata": {"cycle_time": {"value": seconds, "unit": "s"}}},
-    )
+    return Node(id=node_id, type="task", cycle_time=_profile(seconds, "s"))
 
 
 def test_washnfold_timing_has_complete_single_path_lead_time() -> None:
@@ -55,17 +62,13 @@ def test_timing_normalizes_units_and_preserves_changeover_source() -> None:
             Node(
                 id="work",
                 type="task",
-                attrs={
-                    "metadata": {
-                        "cycle_time": {"value": 0.5, "unit": "min"},
-                        "changeover_time": {"value": 30, "unit": "s"},
-                    }
-                },
+                cycle_time=_profile(0.5, "min"),
+                changeover_time=_profile(30, "s"),
             ),
             Node(
                 id="queue",
                 type="queue",
-                attrs={"metadata": {"wait_time": {"value": 0.25, "unit": "hr"}}},
+                wait_time=_profile(0.25, "hr"),
             ),
             Node(id="end", type="end"),
         ],
@@ -112,7 +115,7 @@ def test_timing_normalizes_every_supported_unit(
             Node(
                 id="work",
                 type="task",
-                attrs={"metadata": {"cycle_time": {"value": value, "unit": unit}}},
+                cycle_time=_profile(value, unit),
             ),
             Node(id="end", type="end"),
         ],
@@ -125,7 +128,7 @@ def test_timing_normalizes_every_supported_unit(
     assert analyze_process_timing(process).modeled_lead_time_seconds == expected_seconds
 
 
-def test_task_wait_before_contributes_to_lead_time() -> None:
+def test_task_wait_time_contributes_to_lead_time() -> None:
     process = IR(
         name="worksheet wait",
         nodes=[
@@ -133,12 +136,8 @@ def test_task_wait_before_contributes_to_lead_time() -> None:
             Node(
                 id="work",
                 type="task",
-                attrs={
-                    "metadata": {
-                        "cycle_time": {"value": 2, "unit": "min"},
-                        "wait_before": {"value": 3, "unit": "min"},
-                    }
-                },
+                cycle_time=_profile(2, "min"),
+                wait_time=_profile(3, "min"),
             ),
             Node(id="end", type="end"),
         ],
@@ -153,11 +152,7 @@ def test_task_wait_before_contributes_to_lead_time() -> None:
 
 
 def test_linked_queue_and_task_wait_measurement_is_counted_once() -> None:
-    shared_wait = {
-        "value": 5,
-        "unit": "min",
-        "measurement_id": "wash_wait",
-    }
+    shared_wait = _profile(5, "min")
     process = IR(
         name="promoted queue",
         nodes=[
@@ -165,17 +160,13 @@ def test_linked_queue_and_task_wait_measurement_is_counted_once() -> None:
             Node(
                 id="queue",
                 type="queue",
-                attrs={"metadata": {"wait_time": shared_wait}},
+                wait_time={"ref": "work.wait_time"},
             ),
             Node(
                 id="work",
                 type="task",
-                attrs={
-                    "metadata": {
-                        "cycle_time": {"value": 2, "unit": "min"},
-                        "wait_before": dict(shared_wait),
-                    }
-                },
+                cycle_time=_profile(2, "min"),
+                wait_time=shared_wait,
             ),
             Node(id="end", type="end"),
         ],
@@ -205,28 +196,12 @@ def test_distinct_adjacent_queue_and_task_wait_measurements_are_both_counted() -
             Node(
                 id="queue",
                 type="queue",
-                attrs={
-                    "metadata": {
-                        "wait_time": {
-                            "value": 501.7,
-                            "unit": "min",
-                            "measurement_id": "order_batch_release_wait",
-                        }
-                    }
-                },
+                wait_time=_profile(501.7, "min"),
             ),
             Node(
                 id="work",
                 type="task",
-                attrs={
-                    "metadata": {
-                        "wait_before": {
-                            "value": 500.9,
-                            "unit": "min",
-                            "measurement_id": "load_wash_wait",
-                        }
-                    }
-                },
+                wait_time=_profile(500.9, "min"),
             ),
             Node(id="end", type="end"),
         ],
@@ -253,43 +228,19 @@ def test_aggregate_queue_projection_is_not_counted_again() -> None:
             Node(
                 id="queue",
                 type="queue",
-                attrs={
-                    "metadata": {
-                        "wait_time": {
-                            "value": 5,
-                            "unit": "min",
-                            "measurement_refs": ["wash_wait", "dry_wait"],
-                        }
-                    }
-                },
+                wait_time={"ref": "wash.wait_time"},
             ),
             Node(
                 id="wash",
                 type="task",
-                attrs={
-                    "metadata": {
-                        "cycle_time": {"value": 1, "unit": "min"},
-                        "wait_before": {
-                            "value": 4,
-                            "unit": "min",
-                            "measurement_id": "wash_wait",
-                        },
-                    }
-                },
+                cycle_time=_profile(1, "min"),
+                wait_time=_profile(4, "min"),
             ),
             Node(
                 id="dry",
                 type="task",
-                attrs={
-                    "metadata": {
-                        "cycle_time": {"value": 1, "unit": "min"},
-                        "wait_before": {
-                            "value": 1,
-                            "unit": "min",
-                            "measurement_id": "dry_wait",
-                        },
-                    }
-                },
+                cycle_time=_profile(1, "min"),
+                wait_time=_profile(1, "min"),
             ),
             Node(id="end", type="end"),
         ],
@@ -355,7 +306,7 @@ def test_cycle_refuses_to_guess_iteration_count() -> None:
             Edge(source="start", target="work"),
             Edge(source="work", target="choice"),
             Edge(source="choice", target="end", outcome="done"),
-            Edge(source="choice", target="work", outcome="repeat", rework=True),
+            Edge(source="choice", target="work", outcome="repeat", rework={}),
         ],
     )
     validate_ir(process)
@@ -378,7 +329,7 @@ def test_missing_expected_timing_marks_path_incomplete() -> None:
             Node(
                 id="queue",
                 type="queue",
-                attrs={"metadata": {"wait_time": {"value": 2, "unit": "min"}}},
+                wait_time=_profile(2, "min"),
             ),
             Node(id="end", type="end"),
         ],
@@ -404,12 +355,11 @@ def test_missing_expected_timing_marks_path_incomplete() -> None:
 
 def test_timing_distinguishes_omitted_wait_from_measured_zero() -> None:
     def timing_result(wait_time: dict[str, int | str] | None):
-        metadata = {} if wait_time is None else {"wait_time": wait_time}
         process = IR(
             name="queue timing",
             nodes=[
                 Node(id="start", type="start"),
-                Node(id="queue", type="queue", attrs={"metadata": metadata}),
+                Node(id="queue", type="queue", wait_time=wait_time),
                 Node(id="end", type="end"),
             ],
             edges=[
@@ -421,7 +371,7 @@ def test_timing_distinguishes_omitted_wait_from_measured_zero() -> None:
         return analyze_process_timing(process)
 
     omitted = timing_result(None)
-    measured_zero = timing_result({"value": 0, "unit": "min"})
+    measured_zero = timing_result(_profile(0, "min"))
 
     assert omitted.declared_totals.wait_time_seconds is None
     assert measured_zero.declared_totals.wait_time_seconds == 0
@@ -449,39 +399,6 @@ def test_complete_paths_without_timing_evidence_have_no_lead_time_range() -> Non
     assert result.modeled_lead_time_seconds is None
     assert result.minimum_path_lead_time_seconds is None
     assert result.maximum_path_lead_time_seconds is None
-
-
-def test_ambiguous_changeover_aliases_use_documented_precedence() -> None:
-    process = IR(
-        name="aliases",
-        nodes=[
-            Node(id="start", type="start"),
-            Node(
-                id="work",
-                type="task",
-                attrs={
-                    "metadata": {
-                        "cycle_time": {"value": 1, "unit": "min"},
-                        "crossover_time": {"value": 2, "unit": "min"},
-                        "changeover_time": {"value": 5, "unit": "min"},
-                    }
-                },
-            ),
-            Node(id="end", type="end"),
-        ],
-        edges=[
-            Edge(source="start", target="work"),
-            Edge(source="work", target="end"),
-        ],
-    )
-    validate_ir(process)
-
-    result = analyze_process_timing(process)
-
-    assert result.declared_totals.changeover_time_seconds == 120
-    assert [diagnostic.code for diagnostic in result.diagnostics] == [
-        "timing-ambiguous-changeover-fields"
-    ]
 
 
 def test_parallel_flow_is_explicitly_deferred() -> None:
@@ -559,7 +476,7 @@ def test_malformed_timing_is_diagnostic_and_incomplete() -> None:
             Node(
                 id="work",
                 type="task",
-                attrs={"metadata": {"cycle_time": {"value": "soon", "unit": "min"}}},
+                cycle_time=_profile("soon", "min"),
             ),
             Node(id="end", type="end"),
         ],

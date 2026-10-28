@@ -1,7 +1,7 @@
 {
   "canvas_bounds": {
-    "height_px": 806.0,
-    "width_px": 635.0,
+    "height_px": 846.0,
+    "width_px": 631.0,
     "x_px": 0.0,
     "y_px": 0.0
   },
@@ -11,28 +11,28 @@
       "callout_near_source": false,
       "incoming_token": null,
       "is_rework": false,
-      "label": "yes",
+      "label": "true",
       "label_point": {
-        "x_px": 491.0,
-        "y_px": 611.0
+        "x_px": 215.0,
+        "y_px": 651.0
       },
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 416.0,
-          "y_px": 555.0
+          "x_px": 140.0,
+          "y_px": 595.0
         },
         {
-          "x_px": 416.0,
-          "y_px": 565.0
+          "x_px": 140.0,
+          "y_px": 605.0
         },
         {
-          "x_px": 493.0,
-          "y_px": 565.0
+          "x_px": 217.0,
+          "y_px": 605.0
         },
         {
-          "x_px": 493.0,
-          "y_px": 667.0
+          "x_px": 217.0,
+          "y_px": 707.0
         }
       ],
       "rework_variant": null,
@@ -46,33 +46,33 @@
       "callout_near_source": false,
       "incoming_token": null,
       "is_rework": true,
-      "label": "no",
+      "label": "false",
       "label_point": null,
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 416.0,
-          "y_px": 555.0
+          "x_px": 140.0,
+          "y_px": 595.0
         },
         {
-          "x_px": 416.0,
-          "y_px": 746.0
+          "x_px": 140.0,
+          "y_px": 796.0
         },
         {
-          "x_px": 622.0,
-          "y_px": 746.0
+          "x_px": 618.0,
+          "y_px": 796.0
         },
         {
-          "x_px": 622.0,
+          "x_px": 618.0,
           "y_px": 12.0
         },
         {
-          "x_px": 505.0,
+          "x_px": 140.0,
           "y_px": 12.0
         },
         {
-          "x_px": 505.0,
-          "y_px": 49.0
+          "x_px": 140.0,
+          "y_px": 69.0
         }
       ],
       "rework_variant": "branch",
@@ -91,20 +91,12 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 155.0,
-          "y_px": 375.0
+          "x_px": 140.0,
+          "y_px": 395.0
         },
         {
-          "x_px": 155.0,
-          "y_px": 402.0
-        },
-        {
-          "x_px": 416.0,
-          "y_px": 402.0
-        },
-        {
-          "x_px": 416.0,
-          "y_px": 465.0
+          "x_px": 140.0,
+          "y_px": 505.0
         }
       ],
       "rework_variant": null,
@@ -117,33 +109,41 @@
       "callout_lines": [],
       "callout_near_source": false,
       "incoming_token": null,
-      "is_rework": false,
+      "is_rework": true,
       "label": null,
       "label_point": null,
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 505.0,
-          "y_px": 167.0
+          "x_px": 140.0,
+          "y_px": 69.0
         },
         {
-          "x_px": 505.0,
-          "y_px": 621.0
+          "x_px": 140.0,
+          "y_px": 59.0
         },
         {
-          "x_px": 493.0,
-          "y_px": 621.0
+          "x_px": 35.0,
+          "y_px": 59.0
         },
         {
-          "x_px": 493.0,
-          "y_px": 667.0
+          "x_px": 35.0,
+          "y_px": 405.0
+        },
+        {
+          "x_px": 140.0,
+          "y_px": 405.0
+        },
+        {
+          "x_px": 140.0,
+          "y_px": 395.0
         }
       ],
-      "rework_variant": null,
+      "rework_variant": "return",
       "source": "rework",
-      "source_port_side": "SOUTH",
-      "target": "approve",
-      "target_port_side": "NORTH"
+      "source_port_side": "NORTH",
+      "target": "review",
+      "target_port_side": "SOUTH"
     },
     {
       "callout_lines": [],
@@ -155,28 +155,28 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 111.0,
-          "y_px": 555.0
+          "x_px": 445.0,
+          "y_px": 595.0
         },
         {
-          "x_px": 111.0,
-          "y_px": 746.0
+          "x_px": 445.0,
+          "y_px": 786.0
         },
         {
-          "x_px": 23.0,
-          "y_px": 746.0
+          "x_px": 607.0,
+          "y_px": 786.0
         },
         {
-          "x_px": 23.0,
+          "x_px": 607.0,
           "y_px": 22.0
         },
         {
-          "x_px": 155.0,
+          "x_px": 490.0,
           "y_px": 22.0
         },
         {
-          "x_px": 155.0,
-          "y_px": 49.0
+          "x_px": 490.0,
+          "y_px": 69.0
         }
       ],
       "rework_variant": null,
@@ -195,12 +195,20 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 155.0,
-          "y_px": 167.0
+          "x_px": 490.0,
+          "y_px": 187.0
         },
         {
-          "x_px": 155.0,
-          "y_px": 257.0
+          "x_px": 490.0,
+          "y_px": 214.0
+        },
+        {
+          "x_px": 140.0,
+          "y_px": 214.0
+        },
+        {
+          "x_px": 140.0,
+          "y_px": 277.0
         }
       ],
       "rework_variant": null,
@@ -213,9 +221,9 @@
   "lanes": [
     {
       "bounds": {
-        "height_px": 142.0,
-        "width_px": 564.0,
-        "x_px": 48.0,
+        "height_px": 162.0,
+        "width_px": 574.0,
+        "x_px": 23.0,
         "y_px": 37.0
       },
       "id": "requester",
@@ -227,10 +235,10 @@
     },
     {
       "bounds": {
-        "height_px": 142.0,
-        "width_px": 214.0,
-        "x_px": 48.0,
-        "y_px": 245.0
+        "height_px": 162.0,
+        "width_px": 224.0,
+        "x_px": 23.0,
+        "y_px": 265.0
       },
       "id": "finance",
       "label": "Finance",
@@ -241,9 +249,9 @@
     {
       "bounds": {
         "height_px": 278.0,
-        "width_px": 538.0,
-        "x_px": 33.0,
-        "y_px": 453.0
+        "width_px": 474.0,
+        "x_px": 49.0,
+        "y_px": 493.0
       },
       "id": "unassigned",
       "label": "unassigned",
@@ -258,38 +266,38 @@
     "approve": {
       "height_px": 52.0,
       "width_px": 132.0,
-      "x_px": 427.0,
-      "y_px": 667.0
+      "x_px": 151.0,
+      "y_px": 707.0
     },
     "decision": {
       "height_px": 90.0,
       "width_px": 158.0,
-      "x_px": 337.0,
-      "y_px": 465.0
+      "x_px": 61.0,
+      "y_px": 505.0
     },
     "review": {
       "height_px": 118.0,
       "width_px": 190.0,
-      "x_px": 60.0,
-      "y_px": 257.0
+      "x_px": 45.0,
+      "y_px": 277.0
     },
     "rework": {
       "height_px": 118.0,
       "width_px": 190.0,
-      "x_px": 410.0,
-      "y_px": 49.0
+      "x_px": 45.0,
+      "y_px": 69.0
     },
     "start": {
       "height_px": 52.0,
       "width_px": 132.0,
-      "x_px": 45.0,
-      "y_px": 503.0
+      "x_px": 379.0,
+      "y_px": 543.0
     },
     "submit": {
       "height_px": 118.0,
       "width_px": 190.0,
-      "x_px": 60.0,
-      "y_px": 49.0
+      "x_px": 395.0,
+      "y_px": 69.0
     }
   },
   "orientation": "tb"

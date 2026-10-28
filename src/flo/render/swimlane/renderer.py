@@ -15,6 +15,7 @@ from ..layout_core.elk import execute_elk_layout
 from ..layout_core.elk_runtime import run_elkjs_layout
 from ..layout_core.trace import LayoutObserver
 from ..options import RenderOptions
+from ..shared.evidence import evidence_lines, evidence_svg
 from ..shared.svg import SVG_ACCESSIBILITY_ATTRIBUTES, svg_accessibility_elements
 from .layout import build_swimlane_elk_layout_request
 from .primitives import edge_svg, lane_svg, node_svg, raw_node_lookup, svg_defs
@@ -49,6 +50,11 @@ def render_swimlane_svg_artifact(
 
     width = max(1.0, result.canvas_bounds.width_px + (_PADDING * 2.0))
     height = max(1.0, result.canvas_bounds.height_px + (_PADDING * 2.0))
+
+    evidence = evidence_lines(process, width, options)
+    diagram_height = height
+    if evidence:
+        height += 24 + 16 * len(evidence)
 
     parts = [
         (
@@ -105,6 +111,7 @@ def render_swimlane_svg_artifact(
         )
 
     parts.append("</g>")
+    parts.extend(evidence_svg(evidence, diagram_height, options))
     parts.append("</svg>")
     return (
         RenderArtifact(

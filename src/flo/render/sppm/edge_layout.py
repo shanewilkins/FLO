@@ -218,75 +218,23 @@ def _avoid_bounds_overlap(
     diagnostics: list[RenderDiagnostic] | None = None,
     diagnostic_context: dict[str, Any] | None = None,
 ) -> _LabelPlacement:
-    if not avoid_bounds:
-        final_candidate = _clamp_placement_to_canvas(
-            placement,
-            box_width=box_width,
-            box_height=box_height,
-            canvas_bounds=canvas_bounds,
-        )
-        _record_overlap_fallback_diagnostic(
-            placement=final_candidate,
-            box_width=box_width,
-            box_height=box_height,
-            avoid_bounds=avoid_bounds,
-            diagnostics=diagnostics,
-            diagnostic_context=diagnostic_context,
-        )
-        return final_candidate
-
-    if abs(segment_dx) >= abs(segment_dy):
-        candidate_offsets = (
-            0.0,
-            *(offset for step in range(1, 8) for offset in (-28.0 * step, 28.0 * step)),
-        )
-        for offset in candidate_offsets:
-            candidate = _LabelPlacement(
-                x=placement.x,
-                y=placement.y + offset,
-                anchor=placement.anchor,
-            )
-            candidate = _clamp_placement_to_canvas(
-                candidate,
-                box_width=box_width,
-                box_height=box_height,
-                canvas_bounds=canvas_bounds,
-            )
-            if not _placement_overlaps_bounds(
-                candidate,
-                box_width=box_width,
-                box_height=box_height,
-                avoid_bounds=avoid_bounds,
-            ):
-                return candidate
-        final_candidate = _clamp_placement_to_canvas(
-            placement,
-            box_width=box_width,
-            box_height=box_height,
-            canvas_bounds=canvas_bounds,
-        )
-        _record_overlap_fallback_diagnostic(
-            placement=final_candidate,
-            box_width=box_width,
-            box_height=box_height,
-            avoid_bounds=avoid_bounds,
-            diagnostics=diagnostics,
-            diagnostic_context=diagnostic_context,
-        )
-        return final_candidate
-
-    candidate_offsets = (
+    offsets = (
         0.0,
         *(offset for step in range(1, 8) for offset in (-28.0 * step, 28.0 * step)),
     )
-    for offset in candidate_offsets:
-        candidate = _LabelPlacement(
-            x=placement.x + offset,
-            y=placement.y,
-            anchor=placement.anchor,
+    horizontal = abs(segment_dx) >= abs(segment_dy)
+    candidates = [(0.0, offset) if horizontal else (offset, 0.0) for offset in offsets]
+    # A crowded corridor may have no clear position along either single axis.
+    # Search a bounded neighborhood in both axes before reporting a fallback.
+    candidates.extend(
+        sorted(
+            ((dx, dy) for dx in offsets[1:] for dy in offsets[1:]),
+            key=lambda delta: (abs(delta[0]) + abs(delta[1]), delta),
         )
+    )
+    for dx, dy in candidates:
         candidate = _clamp_placement_to_canvas(
-            candidate,
+            _LabelPlacement(placement.x + dx, placement.y + dy, placement.anchor),
             box_width=box_width,
             box_height=box_height,
             canvas_bounds=canvas_bounds,

@@ -1,7 +1,6 @@
 """CLI/API delivery preserves waiting evidence and warning-only success."""
 
 import json
-from copy import deepcopy
 
 import pytest
 import yaml
@@ -16,11 +15,20 @@ def _work(node_id, minutes):
     return {
         "id": node_id,
         "kind": "task",
-        "metadata": {
-            "cycle_time": {"value": 1, "unit": "min"},
-            "wait_before": {"value": minutes, "unit": "min", "measurement_id": node_id},
-            "crossover_time": {"value": 0, "unit": "s"},
+        "cycle_time": _profile(1, "min"),
+        "wait_time": _profile(minutes, "min"),
+        "changeover_time": _profile(0, "s"),
+    }
+
+
+def _profile(value, unit):
+    return {
+        "basis": "observed",
+        "results": {
+            "mean": {"method": "mean", "value": value, "unit": unit},
         },
+        "primary": "mean",
+        "analysis_input": "mean",
     }
 
 
@@ -33,53 +41,12 @@ def _model():
             {
                 "id": "queue",
                 "kind": "queue",
-                "metadata": {
-                    "wait_time": {
-                        "value": 5,
-                        "unit": "min",
-                        "measurement_refs": ["work"],
-                    }
-                },
+                "wait_time": {"ref": "work.wait_time"},
             },
             _work("work", 5),
             {"id": "end", "kind": "end"},
         ],
     }
-
-
-@pytest.mark.parametrize("aggregate", [False, True])
-def test_contradictory_waits_stop_all_validated_consumers(tmp_path, aggregate):
-    model = _model()
-    wait = model["steps"][1]["metadata"]["wait_time"]
-    wait["value"] = 100
-    if not aggregate:
-        wait.pop("measurement_refs")
-        wait["measurement_id"] = "work"
-    content = yaml.safe_dump(model, sort_keys=False)
-    source = tmp_path / "invalid.flo"
-    source.write_text(content)
-    expected_code = "E1510" if aggregate else "E1509"
-    expected = api.validate(content, source_path=str(source)).report
-    diagnostic = expected.diagnostics[0]
-    assert diagnostic.code == expected_code and diagnostic.stage == "validate"
-    assert diagnostic.source == str(source)
-    assert diagnostic.line and diagnostic.excerpt and diagnostic.field_path
-    assert diagnostic.suggestion
-    for operation in (api.inspect, api.export):
-        result = operation(content, source_path=str(source))
-        assert not result.ok and result.value is None
-        assert result.report == expected
-    output = tmp_path / "invalid.svg"
-    for args in (
-        ["validate", str(source)],
-        ["inspect", str(source), "--format", "json"],
-        ["export", str(source)],
-        ["render", str(source), "--render-to", str(output)],
-    ):
-        command = CliRunner().invoke(cli, [*args, "--diagnostics-format", "json"])
-        assert command.exit_code == 4 and command.stdout == ""
-        assert json.loads(command.stderr) == json.loads(json.dumps(expected.as_dict()))
-    assert not output.exists()
 
 
 def _incomplete_model(case):
@@ -154,9 +121,8 @@ def test_value_stream_svg_retains_item_flows_and_both_copies_of_waiting(grouped)
         {"id": "material", "name": "Material", "kind": "material"},
         {"id": "signal", "name": "Signal", "kind": "information"},
     ]
-    model["items"] = {"batch": {"items": items}} if grouped else items
+    model["process"]["items"] = {"batch": {"items": items}} if grouped else items
     model["steps"][2]["consumes"] = ["material", "signal"]
-    before = deepcopy(model)
     result = CliRunner().invoke(
         cli,
         ["render", "-", "--diagram", "value_stream", "--diagnostics-format", "json"],
@@ -167,28 +133,3 @@ def test_value_stream_svg_retains_item_flows_and_both_copies_of_waiting(grouped)
     assert result.stdout.count("WT 5 min") == 2
     assert "Modeled lead time: 6 min" in result.stdout
     assert "Partial map" not in result.stdout
-    assert model == before
-
-
-def test_included_wait_contradiction_reports_the_actual_source_file(tmp_path):
-    model = _model()
-    fragment = {"steps": [model["steps"].pop(2)]}
-    model["steps"][1]["metadata"]["wait_time"] = {
-        "value": 100,
-        "unit": "min",
-        "measurement_id": "work",
-    }
-    # Explicit transitions make include-order irrelevant to the control flow.
-    model["transitions"] = [
-        {"source": "start", "target": "queue"},
-        {"source": "queue", "target": "work"},
-        {"source": "work", "target": "end"},
-    ]
-    model["includes"] = ["part.flo"]
-    included = tmp_path / "part.flo"
-    included.write_text(yaml.safe_dump(fragment))
-    result = api.validate(yaml.safe_dump(model), source_path=str(tmp_path / "root.flo"))
-    assert not result.ok
-    assert result.diagnostics[0].code == "E1509"
-    assert result.diagnostics[0].source == str(included)
-    assert result.diagnostics[0].include_chain[-1] == str(included)

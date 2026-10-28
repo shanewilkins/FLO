@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
-from flo.process.ir.metadata import extract_node_metadata
 from flo.process.ir.models import IR
 
 from .movement import (
@@ -132,6 +131,7 @@ class ModelInspectionReport:
     views: tuple[NamedViewSummary, ...]
     structure: ProcessStructuralAnalysis
     readiness: tuple[ProjectionReadiness, ...]
+    timing: ProcessTimingAnalysis
 
     def as_dict(self) -> dict[str, Any]:
         """Return the stable JSON-compatible model-inspection schema."""
@@ -153,6 +153,13 @@ class ModelInspectionReport:
                 "lane_ids": list(self.lane_ids),
             },
             "entities": self.entities.as_dict(),
+            "timing": self.timing.as_dict(),
+            "relations": {
+                "handoffs": [finding.as_dict() for finding in self.structure.handoffs],
+                "rework": [
+                    finding.as_dict() for finding in self.structure.rework_edges
+                ],
+            },
             "paths": {
                 "count": len(self.structure.paths),
                 "minimum_edge_count": self.structure.minimum_path_edge_count,
@@ -192,6 +199,7 @@ def inspect_process_model(
         supported_diagrams=frozenset(supported_diagrams),
     )
     return ModelInspectionReport(
+        timing=analyze_process_timing(process),
         report_version="0.1",
         process_id=process_id,
         process_name=process_name,
@@ -514,15 +522,10 @@ def _identity_ids(values: list[dict[str, Any]]) -> tuple[str, ...]:
 
 
 def _has_declared_timing(process: IR) -> bool:
-    timing_fields = {
-        "cycle_time",
-        "wait_time",
-        "crossover_time",
-        "transfer_time",
-        "changeover_time",
-    }
     return any(
-        timing_fields.intersection(extract_node_metadata(node))
+        node.cycle_time is not None
+        or node.wait_time is not None
+        or node.changeover_time is not None
         for node in process.nodes
     )
 

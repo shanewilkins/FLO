@@ -47,7 +47,7 @@ def test_required_process_field_has_a_structured_source_location():
     assert diagnostic.field_path == "process.id"
     assert diagnostic.line == 3
     assert diagnostic.column == 3
-    assert diagnostic.message == "process.id must be a non-empty string"
+    assert diagnostic.message == "E0222: process.id must be a non-empty string"
 
 
 def test_yaml_merge_key_does_not_break_structural_error_enrichment():
@@ -75,7 +75,7 @@ steps:
     outcomes:
       {label}:
         target: finish
-        rework: 'true'
+        rework: invalid
       other: finish
   - id: finish
     kind: end
@@ -85,7 +85,7 @@ steps:
     assert diagnostic.code == "E0209"
     assert diagnostic.field_path == f"steps[0].outcomes.{label}.rework"
     assert diagnostic.line == 9
-    assert diagnostic.suggestion == "Use the YAML boolean true or false without quotes."
+    assert diagnostic.suggestion == "Define a structured handoff or rework object."
 
 
 def test_attrs_overlay_is_validated_as_the_effective_branch_configuration():
@@ -116,13 +116,19 @@ def test_models_do_not_rewrite_authored_scalars_annotations_or_omissions():
             "id": "example",
             "name": " Example ",
             "version": 2,
-            "metadata": {"annotation": {"value": True, 7: "opaque"}},
+            "extensions": {"example:annotation": {"value": True}},
         },
         "steps": [
             {
                 "id": "group",
                 "kind": "subprocess",
-                "steps": [{"id": "child", "kind": "task", "attrs": {"custom": 5}}],
+                "steps": [
+                    {
+                        "id": "child",
+                        "kind": "task",
+                        "extensions": {"example:custom": 5},
+                    }
+                ],
             }
         ],
     }
@@ -134,10 +140,9 @@ def test_models_do_not_rewrite_authored_scalars_annotations_or_omissions():
     assert source == before
     assert process.process_version == 2
     assert process.process_metadata["process_name"] == " Example "
-    assert process.process_metadata["annotation"] == {"value": True, 7: "opaque"}
+    assert process.extensions == {"example:annotation": {"value": True}}
     assert process.nodes[1].subprocess_parent == "group"
-    assert process.nodes[1].attrs["custom"] == 5
-    assert "metadata" not in process.nodes[1].attrs
+    assert process.nodes[1].extensions == {"example:custom": 5}
 
 
 @pytest.mark.parametrize("value", [True, 1.5])

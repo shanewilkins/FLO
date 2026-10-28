@@ -6,7 +6,6 @@ from flo.diagnostics import (
     adapt_diagnostic,
     diagnostic_report,
 )
-from flo.process.ir.metadata import extract_node_metadata
 from flo.process.ir.models import IR
 
 from .timing import ProcessTimingAnalysis, analyze_process_timing
@@ -20,20 +19,19 @@ def timing_diagnostic_report(
     nodes = {node.id: node for node in process.nodes}
     missing = []
     for timing in analysis.node_timings:
-        metadata = extract_node_metadata(nodes[timing.node_id])
         applicable = ("wait_time",) if timing.node_type in {"queue", "wait"} else ()
         if timing.node_type in {"task", "system_task", "subprocess"}:
-            applicable = ("cycle_time", "wait_before")
+            applicable = ("cycle_time", "wait_time")
             if timing.changeover_source_field is None:
                 applicable += ("changeover_time",)
         missing.extend(
             {
                 "node_id": timing.node_id,
                 "field": name,
-                "field_path": f"nodes.{timing.node_id}.metadata.{name}",
+                "field_path": f"nodes.{timing.node_id}.{name}",
             }
             for name in applicable
-            if name not in metadata
+            if getattr(nodes[timing.node_id], name) is None
         )
     records = [
         adapt_diagnostic(item, stage="analysis.timing")

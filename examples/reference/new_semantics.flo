@@ -1,10 +1,8 @@
-spec_version: "0.1"
-
+spec_version: '0.1'
 process:
   id: canonical_semantics_reference
   name: Canonical Semantics Reference
-
-items:
+  items:
   - id: ticket
     name: Work Ticket
     kind: information
@@ -14,8 +12,7 @@ items:
   - id: packed_dough
     name: Packed Dough
     kind: material
-
-resources:
+  resources:
   - id: baker
     name: Baker
     kind: person
@@ -28,65 +25,61 @@ resources:
   - id: sealer
     name: Sealer
     kind: equipment
-
 steps:
-  - id: start
-    kind: start
-    name: Start
-
-  - id: split
-    kind: parallel_split
-    name: Split Preparation
-
-  - id: prep_ticket
-    kind: task
-    name: Prepare Ticket
-    consumes: [ticket]
-    performed_by: [baker]
-
-  - id: mix_dough
-    kind: task
-    name: Mix Dough
-    consumes: [dough]
-    produces: [dough]
-    performed_by: [baker]
-    uses: [mixer]
-
-  - id: join
-    kind: parallel_join
-    name: Join Preparation
-
-  - id: package
-    kind: task
-    name: Package Dough
-    consumes: [dough]
-    produces: [packed_dough]
-    performed_by: [packer]
-    uses: [sealer]
-
-  - id: end
-    kind: end
-    name: End
-
+- id: start
+  kind: start
+  name: Start
+- id: split
+  kind: parallel_split
+  name: Split Preparation
+- id: prep_ticket
+  kind: task
+  name: Prepare Ticket
+  consumes:
+  - ticket
+  performed_by:
+  - baker
+- id: mix_dough
+  kind: task
+  name: Mix Dough
+  consumes:
+  - dough
+  produces:
+  - dough
+  performed_by:
+  - baker
+  uses:
+  - mixer
+- id: join
+  kind: parallel_join
+  name: Join Preparation
+- id: package
+  kind: task
+  name: Package Dough
+  consumes:
+  - dough
+  produces:
+  - packed_dough
+  performed_by:
+  - packer
+  uses:
+  - sealer
+- id: end
+  kind: end
+  name: End
 transitions:
-  - source: start
-    target: split
-
-  - source: split
-    target: prep_ticket
-
-  - source: split
-    target: mix_dough
-
-  - source: prep_ticket
-    target: join
-    handoff: true
-
-  - source: mix_dough
-    target: join
-
-  - source: join
-    target: package
-
-  - source: package
-    target: end
+- source: start
+  target: split
+- source: split
+  target: prep_ticket
+- source: split
+  target: mix_dough
+- source: prep_ticket
+  target: join
+  handoff: {}
+- source: mix_dough
+  target: join
+- source: join
+  target: package
+- source: package
+  target: end

@@ -131,22 +131,21 @@ def test_render_artifact_svg_spaghetti_people_channel_suppresses_material_routes
         ],
         "edges": [{"source": "gather", "target": "mix"}],
         "process": {
-            "metadata": {
-                "locations": [
-                    {
-                        "id": "pantry",
-                        "name": "Pantry",
-                        "kind": "storage",
-                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
-                    },
-                    {
-                        "id": "prep_bench",
-                        "name": "Prep Bench",
-                        "kind": "operation",
-                        "metadata": {"spatial": {"x": 3, "y": 4, "unit": "m"}},
-                    },
-                ]
-            }
+            "metadata": {},
+            "locations": [
+                {
+                    "id": "pantry",
+                    "name": "Pantry",
+                    "kind": "storage",
+                    "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                },
+                {
+                    "id": "prep_bench",
+                    "name": "Prep Bench",
+                    "kind": "operation",
+                    "metadata": {"spatial": {"x": 3, "y": 4, "unit": "m"}},
+                },
+            ],
         },
     }
 
@@ -187,22 +186,21 @@ def test_render_artifact_svg_spaghetti_worker_mode_labels_people_routes_by_worke
         ],
         "edges": [{"source": "gather", "target": "mix"}],
         "process": {
-            "metadata": {
-                "locations": [
-                    {
-                        "id": "pantry",
-                        "name": "Pantry",
-                        "kind": "storage",
-                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
-                    },
-                    {
-                        "id": "prep_bench",
-                        "name": "Prep Bench",
-                        "kind": "operation",
-                        "metadata": {"spatial": {"x": 3, "y": 4, "unit": "m"}},
-                    },
-                ]
-            }
+            "metadata": {},
+            "locations": [
+                {
+                    "id": "pantry",
+                    "name": "Pantry",
+                    "kind": "storage",
+                    "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                },
+                {
+                    "id": "prep_bench",
+                    "name": "Prep Bench",
+                    "kind": "operation",
+                    "metadata": {"spatial": {"x": 3, "y": 4, "unit": "m"}},
+                },
+            ],
         },
     }
 
@@ -243,28 +241,28 @@ def test_render_artifact_svg_spaghetti_renders_boundary_polygon_and_label():
         "edges": [{"source": "gather", "target": "mix"}],
         "process": {
             "metadata": {
-                "locations": [
-                    {
-                        "id": "pantry",
-                        "name": "Pantry",
-                        "kind": "storage",
-                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
-                    },
-                    {
-                        "id": "bench",
-                        "name": "Bench",
-                        "kind": "operation",
-                        "metadata": {"spatial": {"x": 3, "y": 1, "unit": "m"}},
-                    },
-                ],
                 "layout_boundary": {
                     "x": -1.0,
                     "y": -1.0,
                     "width": 6.0,
                     "height": 4.0,
                     "label": "Kitchen Boundary",
+                }
+            },
+            "locations": [
+                {
+                    "id": "pantry",
+                    "name": "Pantry",
+                    "kind": "storage",
+                    "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
                 },
-            }
+                {
+                    "id": "bench",
+                    "name": "Bench",
+                    "kind": "operation",
+                    "metadata": {"spatial": {"x": 3, "y": 1, "unit": "m"}},
+                },
+            ],
         },
     }
 
@@ -314,28 +312,27 @@ def test_render_artifact_svg_spaghetti_maps_location_kinds_to_svg_shapes():
             {"source": "move", "target": "bake"},
         ],
         "process": {
-            "metadata": {
-                "locations": [
-                    {
-                        "id": "pantry",
-                        "name": "Pantry",
-                        "kind": "storage",
-                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
-                    },
-                    {
-                        "id": "corridor",
-                        "name": "Corridor",
-                        "kind": "transit",
-                        "metadata": {"spatial": {"x": 2, "y": 1, "unit": "m"}},
-                    },
-                    {
-                        "id": "oven",
-                        "name": "Oven",
-                        "kind": "processing",
-                        "metadata": {"spatial": {"x": 4, "y": 0, "unit": "m"}},
-                    },
-                ]
-            }
+            "metadata": {},
+            "locations": [
+                {
+                    "id": "pantry",
+                    "name": "Pantry",
+                    "kind": "storage",
+                    "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                },
+                {
+                    "id": "corridor",
+                    "name": "Corridor",
+                    "kind": "transit",
+                    "metadata": {"spatial": {"x": 2, "y": 1, "unit": "m"}},
+                },
+                {
+                    "id": "oven",
+                    "name": "Oven",
+                    "kind": "processing",
+                    "metadata": {"spatial": {"x": 4, "y": 0, "unit": "m"}},
+                },
+            ],
         },
     }
 
@@ -383,22 +380,21 @@ def test_render_artifact_svg_spaghetti_material_routes_emit_item_titles_and_labe
         ],
         "edges": [{"source": "gather", "target": "mix"}],
         "process": {
-            "metadata": {
-                "locations": [
-                    {
-                        "id": "pantry",
-                        "name": "Pantry",
-                        "kind": "storage",
-                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
-                    },
-                    {
-                        "id": "bench",
-                        "name": "Bench",
-                        "kind": "operation",
-                        "metadata": {"spatial": {"x": 3, "y": 1, "unit": "m"}},
-                    },
-                ]
-            }
+            "metadata": {},
+            "locations": [
+                {
+                    "id": "pantry",
+                    "name": "Pantry",
+                    "kind": "storage",
+                    "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                },
+                {
+                    "id": "bench",
+                    "name": "Bench",
+                    "kind": "operation",
+                    "metadata": {"spatial": {"x": 3, "y": 1, "unit": "m"}},
+                },
+            ],
         },
     }
 
@@ -437,22 +433,21 @@ def test_render_artifact_svg_spaghetti_people_routes_emit_titles_and_aggregate_s
         ],
         "edges": [{"source": "gather", "target": "mix"}],
         "process": {
-            "metadata": {
-                "locations": [
-                    {
-                        "id": "pantry",
-                        "name": "Pantry",
-                        "kind": "storage",
-                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
-                    },
-                    {
-                        "id": "bench",
-                        "name": "Bench",
-                        "kind": "operation",
-                        "metadata": {"spatial": {"x": 3, "y": 1, "unit": "m"}},
-                    },
-                ]
-            }
+            "metadata": {},
+            "locations": [
+                {
+                    "id": "pantry",
+                    "name": "Pantry",
+                    "kind": "storage",
+                    "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                },
+                {
+                    "id": "bench",
+                    "name": "Bench",
+                    "kind": "operation",
+                    "metadata": {"spatial": {"x": 3, "y": 1, "unit": "m"}},
+                },
+            ],
         },
     }
 
@@ -493,21 +488,16 @@ def test_render_artifact_svg_spaghetti_rejects_missing_spatial_metadata():
         ],
         "edges": [{"source": "gather", "target": "mix"}],
         "process": {
-            "metadata": {
-                "locations": [
-                    {
-                        "id": "pantry",
-                        "name": "Pantry",
-                        "kind": "storage",
-                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
-                    },
-                    {
-                        "id": "bench",
-                        "name": "Bench",
-                        "kind": "operation",
-                    },
-                ]
-            }
+            "metadata": {},
+            "locations": [
+                {
+                    "id": "pantry",
+                    "name": "Pantry",
+                    "kind": "storage",
+                    "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                },
+                {"id": "bench", "name": "Bench", "kind": "operation"},
+            ],
         },
     }
 
@@ -588,21 +578,20 @@ def _partial_spaghetti_process():
             {"source": "gather", "target": "mix"},
         ],
         "process": {
-            "metadata": {
-                "locations": [
-                    {
-                        "id": "pantry",
-                        "name": "Pantry",
-                        "metadata": {"spatial": {"x": 0, "y": 0}},
-                    },
-                    {
-                        "id": "oven",
-                        "name": "Oven",
-                        "metadata": {"spatial": {"x": 3, "y": 1}},
-                    },
-                    {"id": "bench", "name": "Bench"},
-                ]
-            }
+            "metadata": {},
+            "locations": [
+                {
+                    "id": "pantry",
+                    "name": "Pantry",
+                    "metadata": {"spatial": {"x": 0, "y": 0}},
+                },
+                {
+                    "id": "oven",
+                    "name": "Oven",
+                    "metadata": {"spatial": {"x": 3, "y": 1}},
+                },
+                {"id": "bench", "name": "Bench"},
+            ],
         },
     }
 
@@ -660,28 +649,27 @@ def test_render_artifact_svg_spaghetti_aggregates_multi_route_hops_and_counts():
             {"source": "mix_b", "target": "bake"},
         ],
         "process": {
-            "metadata": {
-                "locations": [
-                    {
-                        "id": "pantry",
-                        "name": "Pantry",
-                        "kind": "storage",
-                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
-                    },
-                    {
-                        "id": "bench",
-                        "name": "Bench",
-                        "kind": "operation",
-                        "metadata": {"spatial": {"x": 3, "y": 1, "unit": "m"}},
-                    },
-                    {
-                        "id": "oven",
-                        "name": "Oven",
-                        "kind": "processing",
-                        "metadata": {"spatial": {"x": 6, "y": 0, "unit": "m"}},
-                    },
-                ]
-            }
+            "metadata": {},
+            "locations": [
+                {
+                    "id": "pantry",
+                    "name": "Pantry",
+                    "kind": "storage",
+                    "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                },
+                {
+                    "id": "bench",
+                    "name": "Bench",
+                    "kind": "operation",
+                    "metadata": {"spatial": {"x": 3, "y": 1, "unit": "m"}},
+                },
+                {
+                    "id": "oven",
+                    "name": "Oven",
+                    "kind": "processing",
+                    "metadata": {"spatial": {"x": 6, "y": 0, "unit": "m"}},
+                },
+            ],
         },
     }
 

@@ -251,26 +251,34 @@ def _extract_from_ir_object(
             "id": getattr(node, "id", ""),
             "kind": getattr(node, "type", "task"),
         }
+        for key in (
+            "name",
+            "description",
+            "lane",
+            "location",
+            "value_class",
+            "cycle_time",
+            "wait_time",
+            "changeover_time",
+            "extensions",
+        ):
+            value = getattr(node, key, None)
+            if value is not None:
+                node_entry[key] = value
+        for key in ("consumes", "produces", "performed_by", "uses"):
+            value = getattr(node, key, None)
+            if value:
+                node_entry[key] = value
         subprocess_parent = getattr(node, "subprocess_parent", None)
         if subprocess_parent is None and isinstance(attrs, dict):
             subprocess_parent = attrs.get("subprocess_parent")
         if subprocess_parent is not None:
             node_entry["subprocess_parent"] = subprocess_parent
         if isinstance(attrs, dict):
-            for key in (
-                "name",
-                "lane",
-                "note",
-                "location",
-                "metadata",
-            ):
+            for key in ("note",):
                 value = attrs.get(key)
                 if value is not None:
                     node_entry[key] = value
-            for list_key in ("workers", "equipment", "inputs", "outputs"):
-                value = attrs.get(list_key)
-                if isinstance(value, list):
-                    node_entry[list_key] = value
         nodes.append(node_entry)
 
     edges = []
@@ -281,9 +289,9 @@ def _extract_from_ir_object(
                 "target": getattr(edge, "target", None),
                 "outcome": getattr(edge, "outcome", None),
                 "label": getattr(edge, "label", None),
-                "edge_type": getattr(edge, "edge_type", None),
+                "handoff": getattr(edge, "handoff", None),
                 "rework": getattr(edge, "rework", None),
-                "metadata": getattr(edge, "metadata", None),
+                "extensions": getattr(edge, "extensions", None),
             }
         )
     return nodes, edges
@@ -385,7 +393,7 @@ def _outcome_edge(
             "target": str(target),
             "outcome": _normalize_outcome_value(outcome),
         }
-        for key in ("id", "label", "edge_type", "rework", "metadata"):
+        for key in ("id", "label", "handoff", "rework", "extensions"):
             value = target_spec.get(key)
             if value is not None:
                 edge[key] = value
@@ -552,13 +560,10 @@ def _append_collapsed_edge(
 
     edge: dict[str, Any] = {"source": source, "target": target}
     if isinstance(semantic_edge, dict):
-        for key in ("outcome", "label", "edge_type", "rework"):
+        for key in ("outcome", "label", "handoff", "rework", "extensions"):
             value = semantic_edge.get(key)
             if value is not None:
                 edge[key] = value
-        metadata = semantic_edge.get("metadata")
-        if isinstance(metadata, dict) and metadata:
-            edge["metadata"] = metadata
     if label is not None and "outcome" not in edge and "label" not in edge:
         edge["label"] = label
     collapsed_edges.append(edge)

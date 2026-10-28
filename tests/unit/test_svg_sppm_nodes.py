@@ -50,9 +50,13 @@ def test_node_svg_renders_kind_specific_geometry(
 ) -> None:
     node = SimpleNamespace(id="n1", kind=kind, label="Node Label")
     raw_node = {
-        "metadata": {"cycle_time": {"value": 5, "unit": "min"}},
-        "workers": ["Alex"],
-        "note": "Check this",
+        "cycle_time": {
+            "basis": "observed",
+            "primary": "mean",
+            "results": {"mean": {"method": "mean", "value": 5, "unit": "min"}},
+        },
+        "performed_by": ["Alex"],
+        "extensions": {"example:note": "Check this"},
     }
 
     parts = _node_svg(
@@ -72,15 +76,17 @@ def test_node_svg_renders_kind_specific_geometry(
         assert snippet not in svg
 
 
-def test_node_svg_task_includes_info_lines_and_note() -> None:
+def test_node_svg_task_includes_info_lines_and_description() -> None:
     node = SimpleNamespace(id="t1", kind="task", label="Mix Dough")
     raw_node = {
-        "metadata": {
-            "cycle_time": {"value": 7, "unit": "min"},
-            "description": "Combine ingredients",
+        "cycle_time": {
+            "basis": "observed",
+            "primary": "mean",
+            "results": {"mean": {"method": "mean", "value": 7, "unit": "min"}},
         },
-        "workers": ["Baker"],
-        "note": "Use cold water",
+        "description": "Combine ingredients. Use cold water",
+        "performed_by": ["Baker"],
+        "extensions": {"example:note": "Use cold water"},
     }
 
     parts = _node_svg(
@@ -97,17 +103,23 @@ def test_node_svg_task_includes_info_lines_and_note() -> None:
     assert "Combine ingredients" in svg
     assert "P/T: 7 min" in svg
     assert "Workers: Baker" in svg
-    assert "Note: Use cold water" in svg
+    assert "Use cold water" in svg
 
 
 def test_node_svg_task_displays_declared_changeover_as_setup_time() -> None:
     node = SimpleNamespace(id="t1", kind="task", label="Set Up Oven")
     raw_node = {
-        "metadata": {
-            "cycle_time": {"value": 5, "unit": "min"},
-            "changeover_time": {"value": 30, "unit": "min"},
+        "cycle_time": {
+            "basis": "observed",
+            "primary": "mean",
+            "results": {"mean": {"method": "mean", "value": 5, "unit": "min"}},
         },
-        "workers": ["Baker"],
+        "changeover_time": {
+            "basis": "observed",
+            "primary": "mean",
+            "results": {"mean": {"method": "mean", "value": 30, "unit": "min"}},
+        },
+        "performed_by": ["Baker"],
     }
 
     svg = "".join(
@@ -127,15 +139,17 @@ def test_node_svg_task_displays_declared_changeover_as_setup_time() -> None:
     assert "CO: 30 min crossover" not in svg
 
 
-def test_node_svg_decision_omits_info_lines_even_when_metadata_present() -> None:
+def test_node_svg_decision_omits_operational_info_lines() -> None:
     node = SimpleNamespace(id="d1", kind="decision", label="Quality OK?")
     raw_node = {
-        "metadata": {
-            "cycle_time": {"value": 12, "unit": "min"},
-            "description": "Review output",
+        "cycle_time": {
+            "basis": "observed",
+            "primary": "mean",
+            "results": {"mean": {"method": "mean", "value": 12, "unit": "min"}},
         },
-        "workers": ["Inspector"],
-        "note": "Escalate if needed",
+        "description": "Review output",
+        "performed_by": ["Inspector"],
+        "extensions": {"example:note": "Escalate if needed"},
     }
 
     parts = _node_svg(
@@ -150,6 +164,7 @@ def test_node_svg_decision_omits_info_lines_even_when_metadata_present() -> None
     svg = "".join(parts)
 
     assert "Quality OK?" in svg
+    assert "Review output" not in svg
     assert "P/T:" not in svg
     assert "Workers:" not in svg
     assert "Note:" not in svg
@@ -157,7 +172,13 @@ def test_node_svg_decision_omits_info_lines_even_when_metadata_present() -> None
 
 def test_node_svg_queue_renders_wait_time_line() -> None:
     node = SimpleNamespace(id="q1", kind="queue", label="Prep Queue")
-    raw_node = {"metadata": {"wait_time": {"value": 9, "unit": "min"}}}
+    raw_node = {
+        "wait_time": {
+            "basis": "observed",
+            "primary": "mean",
+            "results": {"mean": {"method": "mean", "value": 9, "unit": "min"}},
+        }
+    }
 
     parts = _node_svg(
         node=node,
@@ -186,7 +207,7 @@ def test_node_svg_queue_distinguishes_missing_and_zero_wait_time() -> None:
     missing_svg = "".join(
         _node_svg(
             node=node,
-            raw_node={"metadata": {}},
+            raw_node={},
             options=options,
             x=20.0,
             y=30.0,
@@ -197,7 +218,13 @@ def test_node_svg_queue_distinguishes_missing_and_zero_wait_time() -> None:
     zero_svg = "".join(
         _node_svg(
             node=node,
-            raw_node={"metadata": {"wait_time": {"value": 0, "unit": "min"}}},
+            raw_node={
+                "wait_time": {
+                    "basis": "observed",
+                    "primary": "mean",
+                    "results": {"mean": {"method": "mean", "value": 0, "unit": "min"}},
+                }
+            },
             options=options,
             x=20.0,
             y=30.0,
@@ -214,8 +241,12 @@ def test_node_svg_queue_distinguishes_missing_and_zero_wait_time() -> None:
 def test_node_svg_task_uses_larger_body_text() -> None:
     node = SimpleNamespace(id="t1", kind="task", label="Mix Dough")
     raw_node = {
-        "metadata": {"cycle_time": {"value": 7, "unit": "min"}},
-        "workers": ["Baker"],
+        "cycle_time": {
+            "basis": "observed",
+            "primary": "mean",
+            "results": {"mean": {"method": "mean", "value": 7, "unit": "min"}},
+        },
+        "performed_by": ["Baker"],
     }
 
     svg = "".join(
@@ -235,7 +266,13 @@ def test_node_svg_task_uses_larger_body_text() -> None:
 
 def test_node_svg_queue_uses_selected_theme_colors() -> None:
     node = SimpleNamespace(id="q1", kind="queue", label="Prep Queue")
-    raw_node = {"metadata": {"wait_time": {"value": 9, "unit": "min"}}}
+    raw_node = {
+        "wait_time": {
+            "basis": "observed",
+            "primary": "mean",
+            "results": {"mean": {"method": "mean", "value": 9, "unit": "min"}},
+        }
+    }
 
     svg = "".join(
         _node_svg(
@@ -260,7 +297,7 @@ def test_node_svg_decision_uses_selected_primary_theme_colors() -> None:
     svg = "".join(
         _node_svg(
             node=node,
-            raw_node={"metadata": {}},
+            raw_node={},
             options=RenderOptions(diagram="sppm", sppm_theme="flatly"),
             x=20.0,
             y=30.0,
@@ -298,7 +335,7 @@ def test_node_svg_uses_mpi_lms_semantic_roles(
     svg = "".join(
         _node_svg(
             node=node,
-            raw_node={"metadata": metadata},
+            raw_node=metadata,
             options=RenderOptions(diagram="sppm", theme="mpi-lms"),
             x=20.0,
             y=30.0,

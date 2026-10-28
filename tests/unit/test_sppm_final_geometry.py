@@ -117,3 +117,43 @@ def test_final_geometry_gate_preserves_cross_edge_annotation_checks():
     )
 
     assert CHECK.geometry_violations(svg) == ("annotations a->b/a->b overlap",)
+
+
+def test_rendered_book_canonical_relation_annotations_do_not_overlap():
+    from flo.render import render_artifact
+    from flo.source import compile_adapter, parse_adapter
+
+    source = ROOT / "examples/reference/book_washnfold.flo"
+    process = compile_adapter(
+        parse_adapter(source.read_text(), source_path=str(source))
+    )
+    artifact = render_artifact(
+        process,
+        options={
+            "diagram": "sppm",
+            "sppm_theme": "mpi-lms",
+            "sppm_output_profile": "book",
+            "background_color": "transparent",
+            "no_header": True,
+            "no_footer": True,
+            "layout_wrap": "auto",
+            "layout_width": "1200px",
+        },
+    )
+    assert "Rate:" in artifact.content
+    assert "Reason: Packaging check fails" in artifact.content
+    assert CHECK.geometry_violations(artifact.content) == ()
+
+
+def test_wait_node_presentation_uses_matching_triangle_attachments():
+    from flo.render import render_artifact
+    from flo.source import compile_adapter, parse_adapter
+
+    source = ROOT / "examples/reference/chocolate_chip_cookies.flo"
+    process = compile_adapter(
+        parse_adapter(source.read_text(), source_path=str(source))
+    )
+    artifact = render_artifact(process, options={"diagram": "sppm"})
+    assert 'data-node-id="rest_dough" data-node-kind="wait"' in artifact.content
+    assert "W/T: 720 min" in artifact.content
+    assert CHECK.geometry_violations(artifact.content) == ()

@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Iterable
+from copy import deepcopy
 from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
 from flo.process.ir.enums import VALUE_CLASS_NODE_KINDS
-from flo.process.ir.metadata import extract_node_metadata
 from flo.process.ir.models import IR, Edge, Node
 
 from .graph import build_adjacency, enumerate_paths, has_cycle
@@ -45,6 +45,7 @@ class HandoffFinding:
     handoff_type: str | None = None
     source_lane: str | None = None
     target_lane: str | None = None
+    relation: dict[str, Any] | None = None
 
     def as_dict(self) -> dict[str, Any]:
         """Return a stable JSON-compatible representation."""
@@ -54,6 +55,7 @@ class HandoffFinding:
             "classification": self.classification,
             "edge_id": self.edge_id,
             "handoff_type": self.handoff_type,
+            "relation": deepcopy(self.relation),
             "source_lane": self.source_lane,
             "target_lane": self.target_lane,
         }
@@ -71,6 +73,7 @@ class ReworkFinding:
     reason: str | None = None
     count: int | float | str | None = None
     frequency: str | None = None
+    relation: dict[str, Any] | None = None
 
     def as_dict(self) -> dict[str, Any]:
         """Return a stable JSON-compatible representation."""
@@ -83,6 +86,7 @@ class ReworkFinding:
             "reason": self.reason,
             "count": self.count,
             "frequency": self.frequency,
+            "relation": deepcopy(self.relation),
         }
 
 
@@ -272,7 +276,7 @@ def _analyze_handoffs(
     for edge in sorted(edges, key=_edge_sort_key):
         source_lane = _node_lane(nodes_by_id.get(edge.source))
         target_lane = _node_lane(nodes_by_id.get(edge.target))
-        if edge.handoff is True:
+        if edge.handoff is not None:
             handoffs.append(
                 _handoff_finding(
                     edge,
@@ -282,7 +286,7 @@ def _analyze_handoffs(
                 )
             )
             continue
-        if edge.handoff is not None or not _is_cross_lane(source_lane, target_lane):
+        if not _is_cross_lane(source_lane, target_lane):
             continue
         candidates.append(
             _handoff_finding(
@@ -314,14 +318,14 @@ def _handoff_finding(
     source_lane: str | None,
     target_lane: str | None,
 ) -> HandoffFinding:
-    metadata = edge.metadata or {}
-    handoff_type = _optional_text(metadata.get("handoff_type"))
+    handoff_type = _optional_text((edge.handoff or {}).get("type"))
     return HandoffFinding(
         source_id=edge.source,
         target_id=edge.target,
         classification=classification,
         edge_id=edge.id,
         handoff_type=handoff_type,
+        relation=deepcopy(edge.handoff),
         source_lane=source_lane,
         target_lane=target_lane,
     )
@@ -343,39 +347,50 @@ def _analyze_rework(
                         severity="warning",
                         message=(
                             "Backward edge is ordinary flow because rework was not "
-                            "declared. Add edge_type: rework or rework: true only if "
-                            "this transition returns work for correction."
+                            "declared. Add a rework relation only if this transition "
+                            "returns work for correction."
                         ),
                         source_id=edge.source,
                         target_id=edge.target,
                     )
                 )
             continue
-        metadata = edge.metadata or {}
+        relation = edge.rework or {}
+        frequency = relation.get("frequency")
+        rate = None
+        count = None
+        frequency_text = None
+        if isinstance(frequency, dict):
+            numerator = _optional_number(frequency.get("numerator"))
+            denominator = _optional_number(frequency.get("denominator"))
+            if numerator is not None and denominator not in (None, 0):
+                rate = numerator / denominator
+                count = numerator
+                frequency_text = (
+                    f"{numerator:g} of {denominator:g} "
+                    f"{frequency.get('observation_unit', 'observations')}"
+                )
         findings.append(
             ReworkFinding(
                 source_id=edge.source,
                 target_id=edge.target,
                 classification="explicit",
                 edge_id=edge.id,
-                rate=_optional_number(metadata.get("rate")),
-                reason=_optional_text(metadata.get("reason")),
-                count=_optional_count(metadata.get("count")),
-                frequency=_optional_text(metadata.get("frequency")),
+                rate=rate,
+                relation=deepcopy(edge.rework),
+                reason=_optional_text(relation.get("reason")),
+                count=count,
+                frequency=frequency_text,
             )
         )
     return tuple(findings)
 
 
 def _is_explicit_rework(edge: Edge) -> bool:
-    edge_type = (edge.edge_type or "").strip().lower()
-    return edge_type == "rework" or edge.rework is True
+    return edge.rework is not None
 
 
 def _is_undeclared_backward_edge(edge: Edge, *, node_order: dict[str, int]) -> bool:
-    edge_type = (edge.edge_type or "").strip()
-    if edge.rework is False or edge_type:
-        return False
     source_order = node_order.get(edge.source)
     target_order = node_order.get(edge.target)
     return bool(
@@ -477,7 +492,7 @@ def _analyze_step_classification(
     unclassified: list[str] = []
     for node in sorted(nodes, key=lambda item: item.id):
         node_type = node.type.strip().lower()
-        value_class = _optional_text(extract_node_metadata(node).get("value_class"))
+        value_class = _optional_text(node.value_class)
         classifications.append(
             StepClassification(
                 node_id=node.id,
@@ -496,8 +511,7 @@ def _classification_counts(values: Iterable[str]) -> dict[str, int]:
 
 
 def _node_lane(node: Node | None) -> str | None:
-    attrs = node.attrs if node is not None else None
-    return _optional_text(attrs.get("lane")) if isinstance(attrs, dict) else None
+    return _optional_text(node.lane) if node is not None else None
 
 
 def _is_cross_lane(source_lane: str | None, target_lane: str | None) -> bool:

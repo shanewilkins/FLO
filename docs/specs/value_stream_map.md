@@ -101,9 +101,9 @@ meaning; group names and labels are not fabricated item IDs.
 The projection does not infer item flow from control flow alone and does not
 coerce unknown item kinds into either surface. Canonical work, queue,
 subprocess, system-task, explicit hold, and decision nodes anchor the map.
-Timing annotations consume the typed static timing result; absent timing
-remains visibly absent. Work waiting uses canonical `wait_before`; queues and
-holds use `wait_time`. Cards retain declared waiting even when analysis
+Cards present named `primary` results, resolving queue/hold references without
+copying evidence. The analytical timeline uses `analysis_input`; absent
+analytical timing remains visibly absent. Work, queues and holds use `wait_time`. Cards retain declared waiting even when analysis
 deduplicates its contribution. A known zero is shown as zero, not as absent.
 Incomplete path evidence never becomes a complete timeline lead-time claim.
 

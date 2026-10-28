@@ -21,6 +21,7 @@ from .._execution import GeometryObserver, SceneObserver
 from .._svg_theme import apply_svg_typography
 from ..layout_core.trace import LayoutObserver
 from ..options import RenderOptions
+from ..shared.evidence import evidence_lines, evidence_svg
 from ..shared.svg import (
     SVG_ACCESSIBILITY_ATTRIBUTES,
     svg_accessibility_elements,
@@ -78,6 +79,11 @@ def render_spaghetti_svg_artifact(
 
     boundary = _extract_spaghetti_boundary(process)
     width, height, project = _projection(locations=locations, boundary=boundary)
+
+    evidence = evidence_lines(process, width, options)
+    diagram_height = height
+    if evidence:
+        height += 24 + 16 * len(evidence)
 
     parts = [
         (
@@ -139,6 +145,7 @@ def render_spaghetti_svg_artifact(
             )
         )
 
+    parts.extend(evidence_svg(evidence, diagram_height, options))
     parts.append("</svg>")
     return (
         RenderArtifact(

@@ -35,9 +35,12 @@ transitions:
     _write(
         resources_part,
         """
-materials:
-  - id: flour
-    name: Flour
+
+process:
+  items:
+    - id: flour
+      name: Flour
+      kind: material
 """.strip(),
     )
     _write(
@@ -56,7 +59,7 @@ includes:
     parsed = parse_adapter(root.read_text(encoding="utf-8"), source_path=str(root))
     source_composition = pop_source_composition(parsed, source_path=str(root))
     assert parsed["process"]["id"] == "cookie"
-    assert parsed["materials"][0]["id"] == "flour"
+    assert parsed["process"]["items"][0]["id"] == "flour"
     assert [step["id"] for step in parsed["steps"]] == ["start", "end"]
     assert parsed["transitions"][0]["source"] == "start"
     assert source_composition.entry_source == "process.flo"

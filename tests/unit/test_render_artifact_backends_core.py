@@ -24,28 +24,28 @@ def test_render_artifact_can_select_direct_svg_spaghetti_backend():
         "edges": [{"source": "gather", "target": "mix"}],
         "process": {
             "metadata": {
-                "locations": [
-                    {
-                        "id": "pantry",
-                        "name": "Pantry",
-                        "kind": "storage",
-                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
-                    },
-                    {
-                        "id": "prep_bench",
-                        "name": "Prep Bench",
-                        "kind": "operation",
-                        "metadata": {"spatial": {"x": 3, "y": 4, "unit": "m"}},
-                    },
-                ],
                 "layout_boundary": {
                     "x": -1.0,
                     "y": -1.0,
                     "width": 6.0,
                     "height": 7.0,
                     "label": "Kitchen Boundary",
+                }
+            },
+            "locations": [
+                {
+                    "id": "pantry",
+                    "name": "Pantry",
+                    "kind": "storage",
+                    "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
                 },
-            }
+                {
+                    "id": "prep_bench",
+                    "name": "Prep Bench",
+                    "kind": "operation",
+                    "metadata": {"spatial": {"x": 3, "y": 4, "unit": "m"}},
+                },
+            ],
         },
     }
 

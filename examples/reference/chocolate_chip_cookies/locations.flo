@@ -1,7 +1,9 @@
-locations:
-  stations:
-    name: Work Zones
-    items:
+
+process:
+  locations:
+    stations:
+      name: Work Zones
+      items:
       - id: pantry
         name: Pantry
         kind: storage

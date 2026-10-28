@@ -18,9 +18,22 @@ class Node:
     type: str
     attrs: Any = None
     subprocess_parent: str | None = None
+    name: str | None = None
+    description: str | None = None
+    lane: str | None = None
+    location: str | None = None
+    consumes: list[str] = field(default_factory=list)
+    produces: list[str] = field(default_factory=list)
+    performed_by: list[str] = field(default_factory=list)
+    uses: list[str] = field(default_factory=list)
+    value_class: str | None = None
+    cycle_time: dict[str, Any] | None = None
+    wait_time: dict[str, Any] | None = None
+    changeover_time: dict[str, Any] | None = None
+    extensions: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
-        """Normalize scalar and mapping fields after dataclass initialization."""
+        """Detach supplied semantics without concealing malformed values."""
         self.id = str(self.id)
         self.type = str(self.type)
         normalized_attrs = _normalize_object_mapping(self.attrs, default={}) or {}
@@ -30,6 +43,23 @@ class Node:
         if parent is None:
             parent = legacy_parent
         self.subprocess_parent = _normalize_optional_text(parent)
+        self.name = _normalize_optional_text(self.name)
+        self.description = _normalize_optional_text(self.description)
+        self.lane = _normalize_optional_text(self.lane)
+        self.location = _normalize_optional_text(self.location)
+        # Invalid supplied shapes must reach validate_ir rather than become
+        # omitted measurements or empty relations. Copy even malformed values.
+        for key in (
+            "consumes",
+            "produces",
+            "performed_by",
+            "uses",
+            "cycle_time",
+            "wait_time",
+            "changeover_time",
+        ):
+            setattr(self, key, deepcopy(getattr(self, key)))
+        self.extensions = _normalize_object_mapping(self.extensions, default=None)
 
 
 @dataclass
@@ -42,16 +72,17 @@ class Edge:
     outcome: str | None = None
     route: str | None = None
     label: str | None = None
-    edge_type: str | None = None
-    handoff: bool | None = None
-    rework: bool | None = None
-    metadata: Any = None
+    handoff: dict[str, Any] | None = None
+    rework: dict[str, Any] | None = None
+    extensions: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
-        """Normalize endpoint identifiers and optional metadata mapping."""
+        """Detach relation data while retaining invalid shapes for validation."""
         self.source = str(self.source)
         self.target = str(self.target)
-        self.metadata = _normalize_object_mapping(self.metadata, default=None)
+        self.handoff = deepcopy(self.handoff)
+        self.rework = deepcopy(self.rework)
+        self.extensions = _normalize_object_mapping(self.extensions, default=None)
 
 
 @dataclass(init=False)
@@ -70,6 +101,8 @@ class IR:
     resources: CanonicalCollection | None = None
     locations: CanonicalCollection | None = None
     render_intent: dict[str, Any] | None = None
+    lead_time: dict[str, Any] | None = None
+    extensions: dict[str, Any] | None = None
 
     def __init__(
         self,
@@ -86,6 +119,8 @@ class IR:
         resources: CanonicalCollection | None = None,
         locations: CanonicalCollection | None = None,
         render_intent: dict[str, Any] | None = None,
+        lead_time: dict[str, Any] | None = None,
+        extensions: dict[str, Any] | None = None,
     ) -> None:
         """Normalize all constructor inputs to the canonical node/edge model."""
         self.name = str(name)
@@ -102,6 +137,8 @@ class IR:
         self.resources = resources
         self.locations = locations
         self.render_intent = render_intent
+        self.lead_time = deepcopy(lead_time)
+        self.extensions = _normalize_object_mapping(extensions, default=None)
         self.__post_init__()
 
     def __post_init__(self) -> None:
@@ -118,9 +155,6 @@ class IR:
             default=None,
         )
         metadata = self.process_metadata or {}
-        self.items = _promote_metadata_value(metadata, "items", self.items)
-        self.resources = _promote_metadata_value(metadata, "resources", self.resources)
-        self.locations = _promote_metadata_value(metadata, "locations", self.locations)
         self.render_intent = _promote_metadata_value(
             metadata, "render", self.render_intent
         )
@@ -139,6 +173,19 @@ def _coerce_node(value: Any) -> Node:
             type=value.get("type", ""),
             attrs=value.get("attrs", {}),
             subprocess_parent=value.get("subprocess_parent"),
+            name=value.get("name"),
+            description=value.get("description"),
+            lane=value.get("lane"),
+            location=value.get("location"),
+            consumes=value.get("consumes", []),
+            produces=value.get("produces", []),
+            performed_by=value.get("performed_by", []),
+            uses=value.get("uses", []),
+            value_class=value.get("value_class"),
+            cycle_time=value.get("cycle_time"),
+            wait_time=value.get("wait_time"),
+            changeover_time=value.get("changeover_time"),
+            extensions=value.get("extensions"),
         )
     raise TypeError(f"IR.nodes entries must be Node or dict, got {type(value)!r}")
 
@@ -154,10 +201,9 @@ def _coerce_edge(value: Any) -> Edge:
             outcome=value.get("outcome"),
             route=value.get("route"),
             label=value.get("label"),
-            edge_type=value.get("edge_type"),
             handoff=value.get("handoff"),
             rework=value.get("rework"),
-            metadata=value.get("metadata"),
+            extensions=value.get("extensions"),
         )
     raise TypeError(f"IR.edges entries must be Edge or dict, got {type(value)!r}")
 

@@ -10,6 +10,17 @@ from flo.process.ir._internal_shape import ir_to_internal_dict
 from flo.process.ir.models import IR, Edge, Node
 
 
+def _profile(value, unit):
+    return {
+        "basis": "observed",
+        "results": {
+            "mean": {"method": "mean", "value": value, "unit": unit},
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+    }
+
+
 def test_model_inspection_summarizes_context_entities_paths_and_views() -> None:
     process = _inspectable_process()
     before = deepcopy(ir_to_internal_dict(process))
@@ -107,8 +118,8 @@ def test_spaghetti_readiness_checks_inferred_routes_and_spatial_data(
     process = IR(
         name="Movement",
         nodes=[
-            Node(id="start", type="start", attrs={"location": "a"}),
-            Node(id="end", type="end", attrs={"location": "b"}),
+            Node(id="start", type="task", location="a"),
+            Node(id="end", type="task", location="b"),
         ],
         edges=[Edge(source="start", target="end")],
         locations=[
@@ -156,13 +167,9 @@ def _inspectable_process() -> IR:
             Node(
                 id="review",
                 type="task",
-                attrs={
-                    "lane": "ops",
-                    "metadata": {
-                        "value_class": "VA",
-                        "cycle_time": {"value": 5, "unit": "min"},
-                    },
-                },
+                lane="ops",
+                value_class="VA",
+                cycle_time=_profile(5, "min"),
             ),
             Node(id="end", type="end"),
         ],

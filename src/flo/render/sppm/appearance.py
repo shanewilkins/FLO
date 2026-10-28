@@ -64,7 +64,7 @@ def resolve_sppm_node_appearance(
             title_fill=theme.role("decision").title_text,
             info_fill=theme.role("decision").detail_text,
         )
-    if normalized_kind == "queue":
+    if normalized_kind in {"queue", "wait"}:
         return SppmNodeAppearance(
             fill=theme.role("queue").fill,
             border=theme.role("queue").border,

@@ -30,6 +30,7 @@ def test_structure_reports_handoffs_paths_and_step_classification() -> None:
             "classification": "explicit",
             "edge_id": "handoff-review",
             "handoff_type": "responsibility",
+            "relation": {"type": "responsibility"},
             "source_lane": "intake",
             "target_lane": "intake",
         }
@@ -41,6 +42,7 @@ def test_structure_reports_handoffs_paths_and_step_classification() -> None:
             "classification": "candidate",
             "edge_id": None,
             "handoff_type": None,
+            "relation": None,
             "source_lane": "intake",
             "target_lane": "quality",
         }
@@ -82,8 +84,15 @@ def test_structure_does_not_treat_backward_edge_as_authored_rework() -> None:
                 id="branch",
                 source="review",
                 target="fix",
-                rework=True,
-                metadata={"rate": 0.2, "reason": "Incomplete"},
+                rework={
+                    "reason": "Incomplete",
+                    "frequency": {
+                        "basis": "observed",
+                        "numerator": 2,
+                        "denominator": 10,
+                        "observation_unit": "cases",
+                    },
+                },
             ),
             Edge(id="return", source="fix", target="review"),
         ],
@@ -121,16 +130,8 @@ def test_undeclared_backward_edge_remains_an_ordinary_cycle() -> None:
     assert "structure-cycle-unsupported" in _diagnostic_codes(result)
 
 
-@pytest.mark.parametrize(
-    "back_edge",
-    [
-        Edge(source="work", target="start", rework=False),
-        Edge(source="work", target="start", edge_type="sequence"),
-    ],
-)
-def test_explicit_ordinary_back_edge_suppresses_rework_inference(
-    back_edge: Edge,
-) -> None:
+def test_unmarked_back_edge_is_reported_as_ambiguous() -> None:
+    back_edge = Edge(source="work", target="start")
     process = IR(
         name="Ordinary cycle",
         nodes=[
@@ -150,24 +151,7 @@ def test_explicit_ordinary_back_edge_suppresses_rework_inference(
     assert result.rework_edges == ()
     assert result.paths == ()
     assert "structure-cycle-unsupported" in _diagnostic_codes(result)
-    assert "structure-ambiguous-backward-edge" not in _diagnostic_codes(result)
-
-
-def test_explicit_false_handoff_suppresses_lane_change_candidate() -> None:
-    process = IR(
-        name="No handoff",
-        nodes=[
-            Node(id="start", type="start", attrs={"lane": "a"}),
-            Node(id="end", type="end", attrs={"lane": "b"}),
-        ],
-        edges=[Edge(source="start", target="end", handoff=False)],
-    )
-
-    result = analyze_process_structure(process)
-
-    assert result.handoffs == ()
-    assert result.handoff_candidates == ()
-    assert "structure-unmarked-lane-change" not in _diagnostic_codes(result)
+    assert "structure-ambiguous-backward-edge" in _diagnostic_codes(result)
 
 
 def test_parallel_flow_keeps_findings_but_refuses_path_length() -> None:
@@ -181,7 +165,7 @@ def test_parallel_flow_keeps_findings_but_refuses_path_length() -> None:
         ],
         edges=[
             Edge(source="start", target="split"),
-            Edge(source="split", target="join", handoff=True),
+            Edge(source="split", target="join", handoff={}),
             Edge(source="join", target="end"),
         ],
     )
@@ -215,9 +199,9 @@ def test_structure_distinguishes_explicit_unknown_from_omitted_classification() 
             Node(
                 id="reviewed",
                 type="task",
-                attrs={"metadata": {"value_class": "unknown"}},
+                value_class="unknown",
             ),
-            Node(id="unreviewed", type="wait"),
+            Node(id="unreviewed", type="task"),
             Node(id="end", type="end"),
         ],
         edges=[
@@ -239,22 +223,25 @@ def _branched_process() -> IR:
         process_version=3,
         process_metadata={"process_id": "claims", "process_name": "Claims"},
         nodes=[
-            Node(id="start", type="start", attrs={"lane": "intake"}),
+            Node(id="start", type="start", lane="intake"),
             Node(
                 id="review",
                 type="task",
-                attrs={"lane": "intake", "metadata": {"value_class": "VA"}},
+                lane="intake",
+                value_class="VA",
             ),
-            Node(id="route", type="decision", attrs={"lane": "intake"}),
+            Node(id="route", type="decision", lane="intake"),
             Node(
                 id="approve",
                 type="subprocess",
-                attrs={"lane": "quality", "metadata": {"value_class": "RNVA"}},
+                lane="quality",
+                value_class="RNVA",
             ),
             Node(
                 id="reject",
                 type="task",
-                attrs={"lane": "intake", "metadata": {"value_class": "NVA"}},
+                lane="intake",
+                value_class="NVA",
             ),
             Node(id="end", type="end"),
         ],
@@ -264,8 +251,7 @@ def _branched_process() -> IR:
                 id="handoff-review",
                 source="review",
                 target="route",
-                handoff=True,
-                metadata={"handoff_type": "responsibility"},
+                handoff={"type": "responsibility"},
             ),
             Edge(source="route", target="approve", outcome="yes"),
             Edge(source="approve", target="end"),

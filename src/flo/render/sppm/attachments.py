@@ -147,7 +147,7 @@ def _record_attachment_quality_diagnostic(
 
 def _attachment_miss_warn_px(*, node_kind: str, node_bounds: LayoutBounds) -> float:
     normalized_kind = str(node_kind or "task").lower()
-    if normalized_kind == "queue":
+    if normalized_kind in {"queue", "wait"}:
         # ELK attaches to the queue's bounding box, while SVG clips to the inset
         # triangle face. The expected horizontal correction is one quarter width.
         return max(_ATTACHMENT_MISS_WARN_PX, float(node_bounds.width_px) / 4.0)
@@ -183,7 +183,7 @@ def _shape_edge_point(
         )
     if normalized_kind == "subprocess":
         return _ellipse_edge_point(bounds=bounds, dx=dx, dy=dy)
-    if normalized_kind == "queue":
+    if normalized_kind in {"queue", "wait"}:
         return _queue_triangle_edge_point(bounds=bounds, dx=dx, dy=dy, cardinalize=True)
     return _rect_edge_point(bounds=bounds, dx=dx, dy=dy, cardinalize=True)
 

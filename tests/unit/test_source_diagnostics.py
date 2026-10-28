@@ -80,7 +80,7 @@ def test_compile_diagnostic_points_to_transition_field_and_suggests_fix():
     assert diagnostic.code == "E0209"
     assert diagnostic.line == 4
     assert diagnostic.field_path == "transitions[0].rework"
-    assert diagnostic.suggestion == "Use the YAML boolean true or false without quotes."
+    assert diagnostic.suggestion == "Define a structured handoff or rework object."
 
 
 def test_branch_mode_diagnostic_points_to_authored_mode_and_suggests_fix():

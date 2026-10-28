@@ -1,5 +1,4 @@
-spec_version: "0.1"
-
+spec_version: '0.1'
 process:
   id: bakery_croissants_v1
   name: Croissant Baking
@@ -7,203 +6,251 @@ process:
   owner:
     id: baker
     name: Bakery Manager
-  metadata:
-    description: |
-      Pedagogical example: Demonstrates the distinction between wait time (queue)
+  extensions:
+    description: 'Pedagogical example: Demonstrates the distinction between wait time
+      (queue)
+
       and changeover time (setup). Both are non-value-adding but require different
+
       improvement approaches.
 
-    caption: |
-      Oven changeover (setup, 30 min) is different from waiting for oven availability
+      '
+    caption: 'Oven changeover (setup, 30 min) is different from waiting for oven availability
+
       (queue, 120 min). Reducing oven setup via SMED does NOT fix waiting-for-oven.
+
       Pull systems or additional ovens fix the queue, not setup optimization.
 
+      '
 steps:
-  - id: start
-    kind: start
-    name: Start Batch
-
-  - id: prepare_dough_wait_queue
-    kind: queue
-    name: Dough Prep Queue
-    metadata:
-      description: Waiting to start dough prep activities.
-      wait_time:
+- id: start
+  kind: start
+  name: Start Batch
+- id: prepare_dough_wait_queue
+  kind: queue
+  name: Dough Prep Queue
+  description: Waiting to start dough prep activities.
+  wait_time:
+    basis: estimated
+    results:
+      mean:
+        method: mean
         value: 5
         unit: min
-
-  - id: prepare_dough
-    kind: task
-    name: Prepare Dough
-    workers:
-      - Pastry Chef
-    metadata:
-      value_class: VA
-      description: Mix and knead croissant dough.
-      cycle_time:
+    primary: mean
+    analysis_input: mean
+- id: prepare_dough
+  kind: task
+  name: Prepare Dough
+  value_class: VA
+  description: Mix and knead croissant dough.
+  cycle_time:
+    basis: estimated
+    results:
+      mean:
+        method: mean
         value: 20
         unit: min
-
-  - id: laminate_queue
-    kind: queue
-    name: Laminate Queue
-    metadata:
-      description: Waiting for lamination station availability.
-      wait_time:
+    primary: mean
+    analysis_input: mean
+  performed_by:
+  - Pastry Chef
+- id: laminate_queue
+  kind: queue
+  name: Laminate Queue
+  description: Waiting for lamination station availability.
+  wait_time:
+    basis: estimated
+    results:
+      mean:
+        method: mean
         value: 45
         unit: min
-
-  - id: laminate_wait_queue
-    kind: queue
-    name: Lamination Staging Queue
-    metadata:
-      description: Waiting for prep handoff into active lamination work.
-      wait_time:
+    primary: mean
+    analysis_input: mean
+- id: laminate_wait_queue
+  kind: queue
+  name: Lamination Staging Queue
+  description: Waiting for prep handoff into active lamination work.
+  wait_time:
+    basis: estimated
+    results:
+      mean:
+        method: mean
         value: 10
         unit: min
-
-  - id: laminate
-    kind: task
-    name: Laminate Dough
-    workers:
-      - Pastry Chef
-    metadata:
-      value_class: VA
-      description: Fold and roll dough to create layers.
-      cycle_time:
+    primary: mean
+    analysis_input: mean
+- id: laminate
+  kind: task
+  name: Laminate Dough
+  value_class: VA
+  description: Fold and roll dough to create layers.
+  cycle_time:
+    basis: estimated
+    results:
+      mean:
+        method: mean
         value: 25
         unit: min
-
-  - id: rest_queue
-    kind: queue
-    name: Rest Queue (Fridge)
-    metadata:
-      description: Waiting for available rack space in proof box.
-      wait_time:
+    primary: mean
+    analysis_input: mean
+  performed_by:
+  - Pastry Chef
+- id: rest_queue
+  kind: queue
+  name: Rest Queue (Fridge)
+  description: Waiting for available rack space in proof box.
+  wait_time:
+    basis: estimated
+    results:
+      mean:
+        method: mean
         value: 60
         unit: min
-
-  - id: proof
-    kind: task
-    name: Proof Dough
-    workers:
-      - Proofer
-    metadata:
-      value_class: VA
-      description: Place dough in controlled climate to rise.
-      cycle_time:
+    primary: mean
+    analysis_input: mean
+- id: proof
+  kind: task
+  name: Proof Dough
+  value_class: VA
+  description: Place dough in controlled climate to rise.
+  cycle_time:
+    basis: estimated
+    results:
+      mean:
+        method: mean
         value: 120
         unit: min
-
-  - id: oven_setup
-    kind: task
-    name: Oven Changeover
-    workers:
-      - Baker
-    metadata:
-      value_class: NVA
-      description: Clean oven from previous batch, set temperature, load pans.
-      cycle_time:
+    primary: mean
+    analysis_input: mean
+  performed_by:
+  - Proofer
+- id: oven_setup
+  kind: task
+  name: Oven Changeover
+  value_class: NVA
+  description: Clean oven from previous batch, set temperature, load pans.
+  cycle_time:
+    basis: estimated
+    results:
+      mean:
+        method: mean
         value: 5
         unit: min
-      crossover_time:
+    primary: mean
+    analysis_input: mean
+  changeover_time:
+    basis: estimated
+    results:
+      mean:
+        method: mean
         value: 30
         unit: min
-
-  - id: oven_queue
-    kind: queue
-    name: Oven Queue
-    metadata:
-      description: Waiting for oven availability. Different problem from setup.
-      wait_time:
+    primary: mean
+    analysis_input: mean
+  performed_by:
+  - Baker
+- id: oven_queue
+  kind: queue
+  name: Oven Queue
+  description: Waiting for oven availability. Different problem from setup.
+  wait_time:
+    basis: estimated
+    results:
+      mean:
+        method: mean
         value: 120
         unit: min
-
-  - id: bake_wait_queue
-    kind: queue
-    name: Bake Load Queue
-    metadata:
-      description: Waiting to load trays into an active bake slot.
-      wait_time:
+    primary: mean
+    analysis_input: mean
+- id: bake_wait_queue
+  kind: queue
+  name: Bake Load Queue
+  description: Waiting to load trays into an active bake slot.
+  wait_time:
+    basis: estimated
+    results:
+      mean:
+        method: mean
         value: 3
         unit: min
-
-  - id: bake
-    kind: task
-    name: Bake Croissants
-    workers:
-      - Baker
-    metadata:
-      value_class: VA
-      description: Place trays in oven, monitor baking.
-      cycle_time:
+    primary: mean
+    analysis_input: mean
+- id: bake
+  kind: task
+  name: Bake Croissants
+  value_class: VA
+  description: Place trays in oven, monitor baking.
+  cycle_time:
+    basis: estimated
+    results:
+      mean:
+        method: mean
         value: 25
         unit: min
-
-  - id: cool_wait_queue
-    kind: queue
-    name: Cooling Rack Queue
-    metadata:
-      description: Waiting for rack and packaging bench availability.
-      wait_time:
+    primary: mean
+    analysis_input: mean
+  performed_by:
+  - Baker
+- id: cool_wait_queue
+  kind: queue
+  name: Cooling Rack Queue
+  description: Waiting for rack and packaging bench availability.
+  wait_time:
+    basis: estimated
+    results:
+      mean:
+        method: mean
         value: 2
         unit: min
-
-  - id: cool
-    kind: task
-    name: Cool & Package
-    workers:
-      - Packer
-    metadata:
-      value_class: VA
-      description: Cool on racks, package for delivery.
-      cycle_time:
+    primary: mean
+    analysis_input: mean
+- id: cool
+  kind: task
+  name: Cool & Package
+  value_class: VA
+  description: Cool on racks, package for delivery.
+  cycle_time:
+    basis: estimated
+    results:
+      mean:
+        method: mean
         value: 15
         unit: min
-
-  - id: end
-    kind: end
-    name: Ready for Delivery
-
+    primary: mean
+    analysis_input: mean
+  performed_by:
+  - Packer
+- id: end
+  kind: end
+  name: Ready for Delivery
 edges:
-  - source: start
-    target: prepare_dough_wait_queue
-
-  - source: prepare_dough_wait_queue
-    target: prepare_dough
-
-  - source: prepare_dough
-    target: laminate_queue
-
-  - source: laminate_queue
-    target: laminate_wait_queue
-
-  - source: laminate_wait_queue
-    target: laminate
-
-  - source: laminate
-    target: rest_queue
-
-  - source: rest_queue
-    target: proof
-
-  - source: proof
-    target: oven_setup
-
-  - source: oven_setup
-    target: oven_queue
-
-  - source: oven_queue
-    target: bake_wait_queue
-
-  - source: bake_wait_queue
-    target: bake
-
-  - source: bake
-    target: cool_wait_queue
-
-  - source: cool_wait_queue
-    target: cool
-
-  - source: cool
-    target: end
+- source: start
+  target: prepare_dough_wait_queue
+- source: prepare_dough_wait_queue
+  target: prepare_dough
+- source: prepare_dough
+  target: laminate_queue
+- source: laminate_queue
+  target: laminate_wait_queue
+- source: laminate_wait_queue
+  target: laminate
+- source: laminate
+  target: rest_queue
+- source: rest_queue
+  target: proof
+- source: proof
+  target: oven_setup
+- source: oven_setup
+  target: oven_queue
+- source: oven_queue
+  target: bake_wait_queue
+- source: bake_wait_queue
+  target: bake
+- source: bake
+  target: cool_wait_queue
+- source: cool_wait_queue
+  target: cool
+- source: cool
+  target: end

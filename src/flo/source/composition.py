@@ -11,14 +11,7 @@ import yaml
 from .models import SourceShapeError, validate_source_fragment
 from .provenance import SourceOrigin, composed_origins, record_origins
 
-_RESOURCE_KEYS = (
-    "items",
-    "resources",
-    "materials",
-    "equipment",
-    "locations",
-    "workers",
-)
+_RESOURCE_KEYS = ("items", "resources", "locations")
 _LIST_KEYS = ("steps", "transitions", "edges", "lanes")
 MAX_SOURCE_BYTES = 1_000_000
 MAX_INCLUDE_FILES = 256
@@ -71,7 +64,7 @@ class FragmentError(SourceShapeError):
         include_chain: tuple[str, ...],
     ) -> None:
         """Preserve structural diagnostic evidence before composition."""
-        super().__init__(str(error), error.location)
+        super().__init__(str(error), error.location, code=error.code)
         self.source_path = source_path
         self.source_content = content
         self.include_chain = include_chain
@@ -332,7 +325,6 @@ def _enforce_expanded_byte_limit(context: _IncludeContext) -> None:
 
 
 def _merge_documents(base: dict[str, Any], incoming: dict[str, Any]) -> dict[str, Any]:
-    base, incoming = _align_collection_slots(base, incoming)
     merged = dict(base)
 
     for key, value in incoming.items():
@@ -426,11 +418,11 @@ def _merge_process(base_value: Any, incoming_value: Any) -> Any:
     merged = dict(base_value)
     for key, value in incoming_value.items():
         if (
-            key == "metadata"
-            and isinstance(merged.get("metadata"), dict)
+            key == "extensions"
+            and isinstance(merged.get(key), dict)
             and isinstance(value, dict)
         ):
-            merged["metadata"] = _merge_metadata(merged["metadata"], value)
+            merged[key] = {**merged[key], **value}
             continue
         if key in _RESOURCE_KEYS:
             merged[key] = _merge_resource_values(key, merged.get(key), value)
@@ -439,66 +431,11 @@ def _merge_process(base_value: Any, incoming_value: Any) -> Any:
     return merged
 
 
-def _merge_metadata(base: dict, incoming: dict) -> dict:
-    merged = {**base, **incoming}
-    for key in _RESOURCE_KEYS:
-        if key in base and key in incoming:
-            merged[key] = _merge_resource_values(key, base[key], incoming[key])
-    return merged
-
-
 def _fragment_payload(document: dict[str, Any]) -> dict[str, Any]:
     payload = dict(document)
     if "edges" in payload and "transitions" not in payload:
         payload["transitions"] = payload.pop("edges")
     return payload
-
-
-def _collection_slot(document: dict, key: str) -> tuple[str, ...] | None:
-    for prefix in ((), ("process",), ("process", "metadata")):
-        container = document
-        for part in prefix:
-            container = container.get(part, {})
-            if not isinstance(container, dict):
-                break
-        if isinstance(container, dict) and key in container:
-            return (*prefix, key)
-    return None
-
-
-def _replace_collection(document: dict, path: tuple[str, ...], value: Any) -> dict:
-    result = dict(document)
-    container = result
-    for part in path[:-1]:
-        container[part] = dict(container[part])
-        container = container[part]
-    if value is _ABSENT:
-        container.pop(path[-1])
-    else:
-        container[path[-1]] = value
-    return result
-
-
-_ABSENT = object()
-
-
-def _align_collection_slots(base: dict, incoming: dict) -> tuple[dict, dict]:
-    for key in _RESOURCE_KEYS:
-        base_path = _collection_slot(base, key)
-        incoming_path = _collection_slot(incoming, key)
-        if base_path is None or incoming_path is None or base_path == incoming_path:
-            continue
-        previous = base
-        for part in base_path:
-            previous = previous[part]
-        current = incoming
-        for part in incoming_path:
-            current = current[part]
-        incoming = _replace_collection(
-            incoming, incoming_path, _merge_resource_values(key, previous, current)
-        )
-        base = _replace_collection(base, base_path, _ABSENT)
-    return base, incoming
 
 
 def _validate_unique_ids(document: dict[str, Any]) -> None:

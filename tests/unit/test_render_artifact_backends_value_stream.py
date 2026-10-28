@@ -79,7 +79,9 @@ def test_value_stream_svg_discloses_missing_optional_metrics() -> None:
     process = _dual_flow_process()
     for node in process.nodes:
         if node.type in {"task", "queue"}:
-            node.attrs["metadata"] = {}
+            node.cycle_time = None
+            node.wait_time = None
+            node.changeover_time = None
 
     artifact = render_artifact(process, options={"diagram": "value_stream"})
     rerun = render_artifact(process, options={"diagram": "value_stream"})

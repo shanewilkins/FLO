@@ -11,12 +11,12 @@ from flo.process.ir.models import IR, Edge, Node
 from flo.process.ir.validate import validate_ir
 
 
-def _ir_with_metadata(metadata: dict[str, Any]) -> IR:
+def _ir_with_entities(metadata: dict[str, Any]) -> IR:
     return IR(
         name="entity_contract",
         nodes=[Node(id="start", type="start"), Node(id="end", type="end")],
         edges=[Edge(source="start", target="end")],
-        process_metadata=metadata,
+        **metadata,
     )
 
 
@@ -37,7 +37,7 @@ def test_canonical_entity_requires_identity_name_and_kind(
     code: str,
 ) -> None:
     with pytest.raises(ValidationError, match=code):
-        validate_ir(_ir_with_metadata({collection: [entry]}))
+        validate_ir(_ir_with_entities({collection: [entry]}))
 
 
 @pytest.mark.parametrize("collection", ["items", "resources"])
@@ -53,11 +53,11 @@ def test_canonical_entity_ids_are_unique_across_nested_groups(
     }
 
     with pytest.raises(ValidationError, match="E1221"):
-        validate_ir(_ir_with_metadata(metadata))
+        validate_ir(_ir_with_entities(metadata))
 
 
 def test_untyped_resource_cannot_satisfy_performed_by() -> None:
-    ir = _ir_with_metadata(
+    ir = _ir_with_entities(
         {
             "resources": [
                 {"id": "reviewer", "name": "Reviewer"},
@@ -66,7 +66,7 @@ def test_untyped_resource_cannot_satisfy_performed_by() -> None:
     )
     ir.nodes.insert(
         1,
-        Node(id="review", type="task", attrs={"performed_by": ["reviewer"]}),
+        Node(id="review", type="task", performed_by=["reviewer"]),
     )
     ir.edges = [
         Edge(source="start", target="review"),

@@ -1,6 +1,5 @@
-spec_version: "0.1"
-
+spec_version: '0.1'
 includes:
-  - chocolate_chip_cookies/materials.flo
-  - chocolate_chip_cookies/locations.flo
-  - chocolate_chip_cookies/process.flo
+- chocolate_chip_cookies/materials.flo
+- chocolate_chip_cookies/locations.flo
+- chocolate_chip_cookies/process.flo

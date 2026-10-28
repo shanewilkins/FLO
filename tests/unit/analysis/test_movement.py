@@ -10,7 +10,7 @@ from flo.process.analysis import (
     infer_material_movements,
     infer_people_movements,
 )
-from flo.process.ir.models import IR, Edge
+from flo.process.ir.models import IR, Edge, Node
 
 
 def _positioned_process(source_unit="m", target_unit="m", target=(3, 4)):
@@ -100,29 +100,27 @@ def test_overflowed_distance_is_unavailable():
     assert "distance" not in infer_material_movements(process)[0]
 
 
-def test_infer_people_movements_requires_shared_workers_and_location_change(
-    node_factory,
-):
+def test_infer_people_movements_requires_shared_workers_and_location_change():
     ir = IR(
         name="people",
         nodes=[
-            node_factory(
-                "gather",
+            Node(
+                id="gather",
                 type="task",
-                attrs={
-                    "location": "pantry",
-                    "workers": ["lead_baker", "assistant_baker"],
-                },
+                location="pantry",
+                performed_by=["lead_baker", "assistant_baker"],
             ),
-            node_factory(
-                "mix",
+            Node(
+                id="mix",
                 type="task",
-                attrs={"location": "prep_bench", "workers": ["assistant_baker"]},
+                location="prep_bench",
+                performed_by=["assistant_baker"],
             ),
-            node_factory(
-                "bake",
+            Node(
+                id="bake",
                 type="task",
-                attrs={"location": "oven_station", "workers": ["lead_baker"]},
+                location="oven_station",
+                performed_by=["lead_baker"],
             ),
         ],
         edges=[
@@ -187,24 +185,23 @@ def test_aggregate_people_movements_by_worker_splits_routes_per_worker():
 def test_extract_location_spatial_index_includes_location_kind():
     process = {
         "process": {
-            "metadata": {
-                "locations": [
-                    {
-                        "id": "pantry",
-                        "name": "Pantry",
-                        "kind": "storage",
-                        "metadata": {"spatial": {"x": 1.0, "y": 2.0, "unit": "m"}},
+            "metadata": {},
+            "locations": [
+                {
+                    "id": "pantry",
+                    "name": "Pantry",
+                    "kind": "storage",
+                    "metadata": {"spatial": {"x": 1.0, "y": 2.0, "unit": "m"}},
+                },
+                {
+                    "id": "oven_station",
+                    "name": "Oven Station",
+                    "metadata": {
+                        "kind": "heat",
+                        "spatial": {"x": 4.0, "y": 3.0, "unit": "m"},
                     },
-                    {
-                        "id": "oven_station",
-                        "name": "Oven Station",
-                        "metadata": {
-                            "kind": "heat",
-                            "spatial": {"x": 4.0, "y": 3.0, "unit": "m"},
-                        },
-                    },
-                ]
-            }
+                },
+            ],
         }
     }
 
@@ -213,27 +210,21 @@ def test_extract_location_spatial_index_includes_location_kind():
     assert locations["oven_station"]["kind"] == "heat"
 
 
-def test_infer_material_movements_uses_canonical_produces_and_consumes(
-    node_factory,
-):
+def test_infer_material_movements_uses_canonical_produces_and_consumes():
     ir = IR(
         name="materials",
         nodes=[
-            node_factory(
-                "mix",
+            Node(
+                id="mix",
                 type="task",
-                attrs={
-                    "location": "prep_bench",
-                    "produces": ["dough"],
-                },
+                location="prep_bench",
+                produces=["dough"],
             ),
-            node_factory(
-                "bake",
+            Node(
+                id="bake",
                 type="task",
-                attrs={
-                    "location": "oven_station",
-                    "consumes": ["dough"],
-                },
+                location="oven_station",
+                consumes=["dough"],
             ),
         ],
         edges=[Edge(source="mix", target="bake")],
@@ -247,25 +238,21 @@ def test_infer_material_movements_uses_canonical_produces_and_consumes(
     assert movements[0]["items"] == ["dough"]
 
 
-def test_infer_people_movements_uses_canonical_performed_by(node_factory):
+def test_infer_people_movements_uses_canonical_performed_by():
     ir = IR(
         name="people",
         nodes=[
-            node_factory(
-                "review",
+            Node(
+                id="review",
                 type="task",
-                attrs={
-                    "location": "intake",
-                    "performed_by": ["reviewer"],
-                },
+                location="intake",
+                performed_by=["reviewer"],
             ),
-            node_factory(
-                "approve",
+            Node(
+                id="approve",
                 type="task",
-                attrs={
-                    "location": "approval_desk",
-                    "performed_by": ["reviewer"],
-                },
+                location="approval_desk",
+                performed_by=["reviewer"],
             ),
         ],
         edges=[Edge(source="review", target="approve")],

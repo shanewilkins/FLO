@@ -67,19 +67,6 @@ def _validate_step_entries(
                 f"E0214: {source_path(path)}.branch is only valid for kind 'branch'",
                 branch_path,
             )
-        metadata = effective.get("metadata") or {}
-        if (
-            kind in {"task", "system_task", "subprocess"}
-            and "wait_time" in metadata
-            and "wait_before" in metadata
-        ):
-            raise SourceShapeError(
-                f"E0219: {source_path(path)}.metadata declares both wait_time and wait_before. "
-                "Use wait_before; task wait_time is only a source compatibility alias.",
-                (*path, "attrs", "metadata")
-                if "metadata" in attrs
-                else (*path, "metadata"),
-            )
         nested_key = "subnodes" if "subnodes" in step else "steps"
         if kind == "subprocess" and nested_key in step:
             _validate_step_entries(step[nested_key], (*path, nested_key), seen_ids)
@@ -158,41 +145,30 @@ def resolve_locations(adapter: dict[str, Any]) -> Any:
 
 def resolve_render_intent(adapter: dict[str, Any]) -> Any:
     """Return FLO-typed render intent outside opaque process metadata."""
-    return adapter["process"].get("metadata", {}).get("render")
+    return adapter["process"].get("render")
+
+
+def resolve_process_lead_time(adapter: dict[str, Any]) -> Any:
+    """Return the authored process-level lead-time profile."""
+    return adapter["process"].get("lead_time")
+
+
+def resolve_process_extensions(adapter: dict[str, Any]) -> Any:
+    """Return explicit opaque process extensions."""
+    return adapter["process"].get("extensions")
 
 
 def resolve_process_metadata(adapter: dict[str, Any]) -> dict[str, Any] | None:
     """Resolve normalized process metadata payload from adapter model."""
     process = adapter["process"]
-    metadata = dict(process.get("metadata", {}))
-    for typed_key in ("items", "resources", "locations", "render"):
-        metadata.pop(typed_key, None)
-
+    metadata: dict[str, Any] = {}
     metadata.setdefault(PROCESS_METADATA_PROCESS_ID_KEY, process["id"])
     metadata.setdefault(PROCESS_METADATA_PROCESS_NAME_KEY, process["name"])
-
-    for key in (
-        "materials",
-        "equipment",
-        "workers",
-    ):
-        if key in adapter:
-            metadata[key] = adapter[key]
-        elif key in process:
-            metadata[key] = process[key]
-
     return metadata or None
 
 
 def _resolve_canonical_process_value(adapter: dict[str, Any], key: str) -> Any:
-    process_mapping = adapter["process"]
-    metadata = process_mapping.get("metadata", {})
-    candidates = (
-        adapter.get(key),
-        process_mapping.get(key),
-        metadata.get(key),
-    )
-    return next((value for value in candidates if value is not None), None)
+    return adapter["process"].get(key)
 
 
 def resolve_source_nodes(adapter: dict[str, Any]) -> list[dict[str, Any]]:
@@ -223,23 +199,10 @@ def flatten_source_nodes(
 
 
 def normalize_node_attrs(a_node: dict[str, Any]) -> dict[str, Any]:
-    """Normalize node attrs from adapter payload fields and aliases."""
+    """Return control-flow attributes retained by canonical nodes."""
     normalized = dict(a_node.get("attrs", {}))
 
     for key in (
-        "name",
-        "lane",
-        "location",
-        "consumes",
-        "produces",
-        "performed_by",
-        "uses",
-        "workers",
-        "equipment",
-        "note",
-        "metadata",
-        "inputs",
-        "outputs",
         "subprocess_parent",
         "branch",
         "outcomes",
@@ -247,29 +210,6 @@ def normalize_node_attrs(a_node: dict[str, Any]) -> dict[str, Any]:
     ):
         if key in a_node:
             normalized.setdefault(key, a_node[key])
-    metadata = normalized.get("metadata")
-    node_kind = a_node["kind"]
-    if metadata is not None:
-        normalized_metadata = dict(metadata)
-        if (
-            node_kind in {"task", "system_task", "subprocess"}
-            and "wait_time" in normalized_metadata
-            and "wait_before" not in normalized_metadata
-        ):
-            normalized_metadata["wait_before"] = normalized_metadata.pop("wait_time")
-        normalized["metadata"] = normalized_metadata
-
-    # Canonical aliases are populated from legacy keys when explicit canonical
-    # values are absent so downstream logic can consume one preferred surface.
-    if "consumes" not in normalized and isinstance(normalized.get("inputs"), list):
-        normalized["consumes"] = list(normalized["inputs"])
-    if "produces" not in normalized and isinstance(normalized.get("outputs"), list):
-        normalized["produces"] = list(normalized["outputs"])
-    if "performed_by" not in normalized and isinstance(normalized.get("workers"), list):
-        normalized["performed_by"] = list(normalized["workers"])
-    if "uses" not in normalized and isinstance(normalized.get("equipment"), list):
-        normalized["uses"] = list(normalized["equipment"])
-
     return normalized
 
 

@@ -80,7 +80,7 @@ def test_compile_rejects_from_to_transition_alias() -> None:
         compile_adapter(parsed)
 
 
-def test_compile_preserves_node_metadata():
+def test_compile_preserves_node_extensions():
     parsed = {
         "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
@@ -89,16 +89,15 @@ def test_compile_preserves_node_metadata():
                 "id": "n1",
                 "kind": "task",
                 "name": "Task",
-                "metadata": {"cycle_time_seconds": 120},
+                "extensions": {"example:priority": "high"},
             }
         ],
     }
     ir = compile_adapter(parsed)
-    assert ir.nodes[0].attrs is not None
-    assert ir.nodes[0].attrs.get("metadata") == {"cycle_time_seconds": 120}
+    assert ir.nodes[0].extensions == {"example:priority": "high"}
 
 
-def test_compile_preserves_step_inputs_and_outputs():
+def test_compile_preserves_step_consumes_and_produces():
     parsed = {
         "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
@@ -107,18 +106,17 @@ def test_compile_preserves_step_inputs_and_outputs():
                 "id": "mix",
                 "kind": "task",
                 "name": "Mix",
-                "inputs": ["flour", "water"],
-                "outputs": ["dough"],
+                "consumes": ["flour", "water"],
+                "produces": ["dough"],
             }
         ],
     }
     ir = compile_adapter(parsed)
-    assert ir.nodes[0].attrs is not None
-    assert ir.nodes[0].attrs.get("inputs") == ["flour", "water"]
-    assert ir.nodes[0].attrs.get("outputs") == ["dough"]
+    assert ir.nodes[0].consumes == ["flour", "water"]
+    assert ir.nodes[0].produces == ["dough"]
 
 
-def test_compile_preserves_step_location_workers_and_equipment():
+def test_compile_preserves_step_location_and_resources():
     parsed = {
         "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
@@ -128,16 +126,15 @@ def test_compile_preserves_step_location_workers_and_equipment():
                 "kind": "task",
                 "name": "Mix",
                 "location": "prep_bench",
-                "workers": ["lead_baker"],
-                "equipment": ["mixer"],
+                "performed_by": ["lead_baker"],
+                "uses": ["mixer"],
             }
         ],
     }
     ir = compile_adapter(parsed)
-    assert ir.nodes[0].attrs is not None
-    assert ir.nodes[0].attrs.get("location") == "prep_bench"
-    assert ir.nodes[0].attrs.get("workers") == ["lead_baker"]
-    assert ir.nodes[0].attrs.get("equipment") == ["mixer"]
+    assert ir.nodes[0].location == "prep_bench"
+    assert ir.nodes[0].performed_by == ["lead_baker"]
+    assert ir.nodes[0].uses == ["mixer"]
 
 
 def test_compile_promotes_top_level_locations_to_canonical_ir():
@@ -146,38 +143,31 @@ def test_compile_promotes_top_level_locations_to_canonical_ir():
         "process": {
             "id": "p",
             "name": "Process",
-            "metadata": {"cycle_time_seconds": {"target": 300}},
+            "extensions": {"example:target": 300},
+            "items": [
+                {"id": "flour", "name": "Flour", "kind": "material"},
+                {"id": "sugar", "name": "Sugar", "kind": "material"},
+            ],
+            "resources": [
+                {"id": "oven", "name": "Oven", "kind": "equipment"},
+                {"id": "baker", "name": "Baker", "kind": "person"},
+            ],
+            "locations": [{"id": "prep_station", "name": "Prep Station"}],
         },
-        "materials": [
-            {"id": "flour", "name": "Flour"},
-            {"id": "sugar", "name": "Sugar"},
-        ],
-        "equipment": [
-            {"id": "oven", "name": "Oven"},
-        ],
-        "locations": [
-            {"id": "prep_station", "name": "Prep Station"},
-        ],
-        "workers": [
-            {"id": "baker", "name": "Baker"},
-        ],
         "steps": [
             {"id": "start", "kind": "start", "name": "Start"},
             {"id": "end", "kind": "end", "name": "End"},
         ],
-        "transitions": [
-            {"source": "start", "target": "end"},
-        ],
+        "transitions": [{"source": "start", "target": "end"}],
     }
 
     ir = compile_adapter(parsed)
-    assert ir.process_metadata is not None
-    assert ir.process_metadata["cycle_time_seconds"]["target"] == 300
-    assert ir.process_metadata["materials"][0]["id"] == "flour"
-    assert ir.process_metadata["equipment"][0]["id"] == "oven"
+    assert ir.extensions == {"example:target": 300}
+    assert ir.items[0]["id"] == "flour"
+    assert ir.resources[0]["id"] == "oven"
     assert isinstance(ir.locations, list)
     assert ir.locations[0]["id"] == "prep_station"
-    assert ir.process_metadata["workers"][0]["id"] == "baker"
+    assert ir.resources[1]["id"] == "baker"
     assert ir.process_metadata["process_id"] == "p"
     assert ir.process_metadata["process_name"] == "Process"
 
@@ -226,28 +216,28 @@ def test_compile_rejects_non_scalar_process_version() -> None:
         compile_adapter(parsed)
 
 
-def test_compile_promotes_grouped_materials_to_process_metadata():
+def test_compile_preserves_grouped_items():
     parsed = {
         "spec_version": "0.1",
         "process": {
             "id": "p",
             "name": "Process",
-        },
-        "materials": {
-            "dry": {
-                "name": "Dry Ingredients",
-                "items": [
-                    {"id": "flour", "name": "Flour"},
-                    {"id": "sugar", "name": "Sugar"},
-                ],
-            },
-            "wet": {
-                "name": "Wet Ingredients",
-                "dairy": {
-                    "name": "Dairy",
+            "items": {
+                "dry": {
+                    "name": "Dry Ingredients",
                     "items": [
-                        {"id": "butter", "name": "Butter"},
+                        {"id": "flour", "name": "Flour", "kind": "material"},
+                        {"id": "sugar", "name": "Sugar", "kind": "material"},
                     ],
+                },
+                "wet": {
+                    "name": "Wet Ingredients",
+                    "dairy": {
+                        "name": "Dairy",
+                        "items": [
+                            {"id": "butter", "name": "Butter", "kind": "material"}
+                        ],
+                    },
                 },
             },
         },
@@ -255,20 +245,15 @@ def test_compile_promotes_grouped_materials_to_process_metadata():
             {"id": "start", "kind": "start", "name": "Start"},
             {"id": "end", "kind": "end", "name": "End"},
         ],
-        "transitions": [
-            {"source": "start", "target": "end"},
-        ],
+        "transitions": [{"source": "start", "target": "end"}],
     }
 
     ir = compile_adapter(parsed)
-    assert ir.process_metadata is not None
-    assert ir.process_metadata["materials"]["dry"]["name"] == "Dry Ingredients"
-    assert ir.process_metadata["materials"]["dry"]["items"][0]["id"] == "flour"
-    assert ir.process_metadata["materials"]["wet"]["name"] == "Wet Ingredients"
-    assert ir.process_metadata["materials"]["wet"]["dairy"]["name"] == "Dairy"
-    assert (
-        ir.process_metadata["materials"]["wet"]["dairy"]["items"][0]["id"] == "butter"
-    )
+    assert ir.items["dry"]["name"] == "Dry Ingredients"
+    assert ir.items["dry"]["items"][0]["id"] == "flour"
+    assert ir.items["wet"]["name"] == "Wet Ingredients"
+    assert ir.items["wet"]["dairy"]["name"] == "Dairy"
+    assert ir.items["wet"]["dairy"]["items"][0]["id"] == "butter"
 
 
 def test_compile_flattens_subprocess_subnodes():
@@ -348,22 +333,23 @@ def test_compile_flattens_nested_subprocess_subnodes():
 def test_compile_promotes_canonical_items_and_resources_to_ir_fields():
     parsed = {
         "spec_version": "0.1",
-        "process": {"id": "p", "name": "Process"},
-        "items": [
-            {"id": "order", "name": "Order", "kind": "information"},
-            {"id": "dough", "name": "Dough", "kind": "material"},
-        ],
-        "resources": [
-            {"id": "baker", "name": "Baker", "kind": "person"},
-            {"id": "mixer", "name": "Mixer", "kind": "equipment"},
-        ],
+        "process": {
+            "id": "p",
+            "name": "Process",
+            "items": [
+                {"id": "order", "name": "Order", "kind": "information"},
+                {"id": "dough", "name": "Dough", "kind": "material"},
+            ],
+            "resources": [
+                {"id": "baker", "name": "Baker", "kind": "person"},
+                {"id": "mixer", "name": "Mixer", "kind": "equipment"},
+            ],
+        },
         "steps": [
             {"id": "start", "kind": "start", "name": "Start"},
             {"id": "end", "kind": "end", "name": "End"},
         ],
-        "transitions": [
-            {"source": "start", "target": "end"},
-        ],
+        "transitions": [{"source": "start", "target": "end"}],
     }
 
     ir = compile_adapter(parsed)
@@ -394,14 +380,13 @@ def test_compile_preserves_canonical_step_relations():
     }
 
     ir = compile_adapter(parsed)
-    assert ir.nodes[0].attrs is not None
-    assert ir.nodes[0].attrs.get("consumes") == ["flour", "water"]
-    assert ir.nodes[0].attrs.get("produces") == ["dough"]
-    assert ir.nodes[0].attrs.get("performed_by") == ["lead_baker"]
-    assert ir.nodes[0].attrs.get("uses") == ["mixer"]
+    assert ir.nodes[0].consumes == ["flour", "water"]
+    assert ir.nodes[0].produces == ["dough"]
+    assert ir.nodes[0].performed_by == ["lead_baker"]
+    assert ir.nodes[0].uses == ["mixer"]
 
 
-def test_compile_maps_legacy_step_relations_to_canonical_aliases():
+def test_compile_rejects_legacy_step_relation_aliases():
     parsed = {
         "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
@@ -418,12 +403,8 @@ def test_compile_maps_legacy_step_relations_to_canonical_aliases():
         ],
     }
 
-    ir = compile_adapter(parsed)
-    assert ir.nodes[0].attrs is not None
-    assert ir.nodes[0].attrs.get("consumes") == ["flour", "water"]
-    assert ir.nodes[0].attrs.get("produces") == ["dough"]
-    assert ir.nodes[0].attrs.get("performed_by") == ["lead_baker"]
-    assert ir.nodes[0].attrs.get("uses") == ["mixer"]
+    with pytest.raises(ValueError, match="inputs"):
+        compile_adapter(parsed)
 
 
 def test_compile_preserves_explicit_handoff_on_transition():
@@ -435,10 +416,10 @@ def test_compile_preserves_explicit_handoff_on_transition():
             {"id": "end", "kind": "end", "name": "End"},
         ],
         "transitions": [
-            {"source": "start", "target": "end", "handoff": True},
+            {"source": "start", "target": "end", "handoff": {}},
         ],
     }
 
     ir = compile_adapter(parsed)
     assert len(ir.edges) == 1
-    assert ir.edges[0].handoff is True
+    assert ir.edges[0].handoff == {}

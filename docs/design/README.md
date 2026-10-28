@@ -46,6 +46,15 @@ notes, migration plans, and taxonomy notes that span multiple components.
 - [Semantic pipeline audit](white_belt_semantic_audit.md): completed language,
   schema, public API, and canonical exchange audit for the semantic slice of TR-114.
 
+## Active book-aligned breaking refactor
+
+- [Implementation and phase status](book_aligned_contract_refactoring_plan.md):
+  reconciled phase prerequisites and explicit remaining work.
+- [Failure and defect ledger](book_aligned_refactor_failure_ledger.md): all 89
+  original failures, verified closures, and newly exposed implementation defects.
+- [Accepted contract](../specs/book_aligned_contract.md): book terminology,
+  measurement/evidence shapes, and field ownership.
+
 ## Next-sprint implementation planning
 
 - [Pydantic source and render inputs](adr/pydantic_source_and_render_inputs.md):

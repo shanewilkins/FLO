@@ -9,23 +9,10 @@ from flo.process.ir.metadata import extract_process_field
 
 def ir_to_materials_text(ir: Any) -> str:
     """Render a formatted item/resource list from process metadata."""
-    process_metadata = getattr(ir, "process_metadata", None)
-    metadata = process_metadata if isinstance(process_metadata, dict) else {}
     items = extract_process_field(ir, "items")
     resources = extract_process_field(ir, "resources")
-    materials = metadata.get("materials")
-    equipment = metadata.get("equipment")
-
-    use_canonical_sections = items is not None or resources is not None
-    sections = (
-        [("Items", items), ("Resources", resources)]
-        if use_canonical_sections
-        else [("Materials", materials), ("Equipment", equipment)]
-    )
-
-    lines: list[str] = [
-        "Items and Resources" if use_canonical_sections else "Materials and Equipment"
-    ]
+    sections = [("Items", items), ("Resources", resources)]
+    lines: list[str] = ["Items and Resources"]
     if all(collection is None for _, collection in sections):
         lines.append("- none")
         return "\n".join(lines)

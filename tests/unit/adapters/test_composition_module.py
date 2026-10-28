@@ -77,21 +77,21 @@ def test_merge_list_values_covers_none_and_validation_errors():
 
 def test_merge_resource_values_covers_list_dict_and_type_mismatch():
     assert composition._merge_resource_values(
-        "materials", base_value=None, incoming_value=[{"id": "a"}]
+        "items", base_value=None, incoming_value=[{"id": "a"}]
     ) == [{"id": "a"}]
     assert composition._merge_resource_values(
-        "materials", base_value=[{"id": "a"}], incoming_value=None
+        "items", base_value=[{"id": "a"}], incoming_value=None
     ) == [{"id": "a"}]
 
     merged_lists = composition._merge_resource_values(
-        "materials",
+        "items",
         base_value=[{"id": "a"}],
         incoming_value=[{"id": "b"}],
     )
     assert merged_lists == [{"id": "a"}, {"id": "b"}]
 
     merged_dicts = composition._merge_resource_values(
-        "materials",
+        "items",
         base_value={
             "name": "Base",
             "group": {"items": [{"id": "a"}]},
@@ -106,10 +106,8 @@ def test_merge_resource_values_covers_list_dict_and_type_mismatch():
     assert merged_dicts["group"]["items"] == [{"id": "a"}, {"id": "b"}]
     assert merged_dicts["extra"] == [{"id": "c"}]
 
-    with pytest.raises(ValueError, match="materials include merge type mismatch"):
-        composition._merge_resource_values(
-            "materials", base_value={}, incoming_value=[]
-        )
+    with pytest.raises(ValueError, match="items include merge type mismatch"):
+        composition._merge_resource_values("items", base_value={}, incoming_value=[])
 
 
 def test_merge_process_covers_none_metadata_merge_and_type_error():
@@ -117,11 +115,11 @@ def test_merge_process_covers_none_metadata_merge_and_type_error():
     assert composition._merge_process({"id": "p"}, None) == {"id": "p"}
 
     merged = composition._merge_process(
-        {"name": "old", "metadata": {"a": 1}},
-        {"name": "new", "metadata": {"b": 2}},
+        {"name": "old", "extensions": {"a": 1}},
+        {"name": "new", "extensions": {"b": 2}},
     )
     assert merged["name"] == "new"
-    assert merged["metadata"] == {"a": 1, "b": 2}
+    assert merged["extensions"] == {"a": 1, "b": 2}
 
     with pytest.raises(ValueError, match="process must be an object when present"):
         composition._merge_process([], {})
@@ -129,12 +127,12 @@ def test_merge_process_covers_none_metadata_merge_and_type_error():
 
 def test_metadata_annotations_keep_overlay_semantics_without_document_merging():
     merged = composition._merge_process(
-        {"metadata": {"steps": ["old"], "process": "old", "items": [{"id": "a"}]}},
-        {"metadata": {"steps": ["new"], "process": "new", "items": [{"id": "b"}]}},
+        {"extensions": {"steps": ["old"], "process": "old", "items": [{"id": "a"}]}},
+        {"extensions": {"steps": ["new"], "process": "new", "items": [{"id": "b"}]}},
     )
-    assert merged["metadata"]["steps"] == ["new"]
-    assert merged["metadata"]["process"] == "new"
-    assert merged["metadata"]["items"] == [{"id": "a"}, {"id": "b"}]
+    assert merged["extensions"]["steps"] == ["new"]
+    assert merged["extensions"]["process"] == "new"
+    assert merged["extensions"]["items"] == [{"id": "b"}]
 
 
 def test_merge_documents_requires_agreeing_spec_versions_and_merges_known_keys():
@@ -143,7 +141,7 @@ def test_merge_documents_requires_agreeing_spec_versions_and_merges_known_keys()
         incoming={
             "spec_version": "0.1",
             "steps": [{"id": "b"}],
-            "materials": [{"id": "flour"}],
+            "items": [{"id": "flour"}],
             "process": {"id": "cookie"},
             "other": "new",
         },
@@ -151,7 +149,7 @@ def test_merge_documents_requires_agreeing_spec_versions_and_merges_known_keys()
 
     assert merged["spec_version"] == "0.1"
     assert [step["id"] for step in merged["steps"]] == ["a", "b"]
-    assert merged["materials"] == [{"id": "flour"}]
+    assert merged["items"] == [{"id": "flour"}]
     assert merged["process"] == {"id": "cookie"}
     assert merged["other"] == "new"
 

@@ -9,10 +9,7 @@ ReworkRouteVariant = Literal["branch", "return"]
 
 def is_rework_edge(edge: dict[str, Any]) -> bool:
     """Return True when an edge explicitly represents rework semantics."""
-    edge_type = str(edge.get("edge_type") or "").strip().lower()
-    if edge_type == "rework":
-        return True
-    return bool(edge.get("rework"))
+    return isinstance(edge.get("rework"), dict)
 
 
 def is_explicit_rework_branch_out(*, edge: dict[str, Any], source_kind: str) -> bool:

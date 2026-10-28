@@ -7,7 +7,9 @@ from typing import Any
 
 from .._process_header import extract_process_header_context
 from ..options import RenderOptions
+from ..shared.entities import project_entity_names
 from .nodes import _node_svg
+from .waiting import project_waiting_evidence
 
 SVG_ACCESSIBILITY_ATTRIBUTES = (
     'role="img" aria-labelledby="flo-svg-title flo-svg-description"'
@@ -89,6 +91,7 @@ def raw_node_lookup(
     )
 
     nodes, edges = extract_nodes_and_edges(process)
+    nodes = project_entity_names(project_waiting_evidence(nodes), process)
     if options.subprocess_view == "parent_only":
         nodes, edges = project_parent_only_subprocess_view(nodes, edges)
     return {

@@ -1,0 +1,1121 @@
+{
+  "$defs": {
+    "Authored_Annotated_str__StringConstraints__": {
+      "anyOf": [
+        {
+          "pattern": "\\S",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "Authored_ControlAttributes_": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ControlAttributes"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "Authored_Extensions_": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Extensions"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "Authored_Measurement_": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Measurement"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "Authored_dict_Any__Any__": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "Authored_list_SourceStep__": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/SourceStep"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "Authored_list_SourceTransition__": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/SourceTransition"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "BusinessUnit": {
+      "additionalProperties": false,
+      "description": "Named process grouping without a lane-type classification.",
+      "properties": {
+        "id": {
+          "pattern": "\\S",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "BusinessUnit",
+      "type": "object"
+    },
+    "ControlAttributes": {
+      "additionalProperties": false,
+      "description": "Temporary control-only overlay pending complete attrs removal in phase 4.",
+      "properties": {
+        "subprocess_parent": {
+          "$ref": "#/$defs/Authored_Annotated_str__StringConstraints__",
+          "default": null
+        },
+        "branch": {
+          "default": null,
+          "title": "Branch"
+        },
+        "outcomes": {
+          "default": null,
+          "title": "Outcomes"
+        },
+        "routes": {
+          "default": null,
+          "title": "Routes"
+        }
+      },
+      "title": "ControlAttributes",
+      "type": "object"
+    },
+    "Extensions": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "type": "object"
+    },
+    "HandoffRelation": {
+      "additionalProperties": false,
+      "description": "An explicit transfer of responsibility, information, or custody.",
+      "properties": {
+        "type": {
+          "anyOf": [
+            {
+              "enum": [
+                "responsibility",
+                "information",
+                "material",
+                "system",
+                "location",
+                "mixed"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "HandoffRelation",
+      "type": "object"
+    },
+    "JsonValue": {},
+    "Measurement": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MeasurementProfile"
+        },
+        {
+          "$ref": "#/$defs/MeasurementReference"
+        }
+      ]
+    },
+    "MeasurementProfile": {
+      "additionalProperties": false,
+      "description": "A supplied measurement profile with explicit evidence and selectors.",
+      "properties": {
+        "basis": {
+          "enum": [
+            "observed",
+            "simulated",
+            "estimated",
+            "planned",
+            "target"
+          ],
+          "title": "Basis",
+          "type": "string"
+        },
+        "results": {
+          "minProperties": 1,
+          "patternProperties": {
+            "\\S": {
+              "$ref": "#/$defs/MeasurementResult"
+            }
+          },
+          "title": "Results",
+          "type": "object"
+        },
+        "primary": {
+          "pattern": "\\S",
+          "title": "Primary",
+          "type": "string"
+        },
+        "analysis_input": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Analysis Input"
+        },
+        "observation_count": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observation Count"
+        },
+        "observation_unit": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observation Unit"
+        },
+        "cohort": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cohort"
+        },
+        "aggregation_level": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Aggregation Level"
+        },
+        "observation_window": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observation Window"
+        },
+        "evidence_ref": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ref"
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "basis",
+        "results",
+        "primary"
+      ],
+      "title": "MeasurementProfile",
+      "type": "object"
+    },
+    "MeasurementReference": {
+      "additionalProperties": false,
+      "description": "A reference to a measurement owned by another process step.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z0-9_.-]+\\.[a-z_]+$",
+          "title": "Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ref"
+      ],
+      "title": "MeasurementReference",
+      "type": "object"
+    },
+    "MeasurementResult": {
+      "additionalProperties": false,
+      "description": "One named statistical result within a measurement profile.",
+      "properties": {
+        "method": {
+          "anyOf": [
+            {
+              "enum": [
+                "count",
+                "sum",
+                "minimum",
+                "maximum",
+                "mean",
+                "median",
+                "mode",
+                "percentile",
+                "standard_deviation"
+              ],
+              "type": "string"
+            },
+            {
+              "pattern": "^[a-z][a-z0-9_.-]*:[a-z][a-z0-9_.-]*$",
+              "type": "string"
+            }
+          ],
+          "title": "Method"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "ge": 0
+            },
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "items": {},
+              "type": "array"
+            }
+          ],
+          "title": "Value"
+        },
+        "unit": {
+          "pattern": "\\S",
+          "title": "Unit",
+          "type": "string"
+        },
+        "parameters": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parameters"
+        }
+      },
+      "required": [
+        "method",
+        "value",
+        "unit"
+      ],
+      "title": "MeasurementResult",
+      "type": "object"
+    },
+    "NamedIdentity": {
+      "additionalProperties": false,
+      "description": "An authored identity with a display name.",
+      "properties": {
+        "id": {
+          "pattern": "\\S",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "NamedIdentity",
+      "type": "object"
+    },
+    "ReworkFrequency": {
+      "additionalProperties": false,
+      "description": "Observed rework frequency with an explicit denominator.",
+      "properties": {
+        "basis": {
+          "enum": [
+            "observed",
+            "simulated",
+            "estimated",
+            "planned",
+            "target"
+          ],
+          "title": "Basis",
+          "type": "string"
+        },
+        "numerator": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "ge": 0,
+          "title": "Numerator"
+        },
+        "denominator": {
+          "exclusiveMinimum": 0,
+          "title": "Denominator",
+          "type": "integer"
+        },
+        "observation_unit": {
+          "pattern": "\\S",
+          "title": "Observation Unit",
+          "type": "string"
+        },
+        "evidence_ref": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ref"
+        }
+      },
+      "required": [
+        "basis",
+        "numerator",
+        "denominator",
+        "observation_unit"
+      ],
+      "title": "ReworkFrequency",
+      "type": "object"
+    },
+    "ReworkRelation": {
+      "additionalProperties": false,
+      "description": "An explicit correction or repetition relationship.",
+      "properties": {
+        "reason": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "frequency": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReworkFrequency"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "note": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "ReworkRelation",
+      "type": "object"
+    },
+    "SourceLane": {
+      "additionalProperties": false,
+      "description": "An optional authored responsibility classification.",
+      "properties": {
+        "id": {
+          "pattern": "\\S",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "type": {
+          "anyOf": [
+            {
+              "enum": [
+                "role",
+                "team",
+                "system"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "SourceLane",
+      "type": "object"
+    },
+    "SourceProcess": {
+      "additionalProperties": false,
+      "description": "Complete process identity and context; quantity semantics remain IR-owned.",
+      "properties": {
+        "version": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Version"
+        },
+        "lead_time": {
+          "$ref": "#/$defs/Authored_Measurement_",
+          "default": null
+        },
+        "render": {
+          "$ref": "#/$defs/Authored_dict_Any__Any__",
+          "default": null
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "owner": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/NamedIdentity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "business_units": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/BusinessUnit"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Business Units"
+        },
+        "items": {
+          "default": null,
+          "title": "Items"
+        },
+        "resources": {
+          "default": null,
+          "title": "Resources"
+        },
+        "locations": {
+          "default": null,
+          "title": "Locations"
+        },
+        "id": {
+          "pattern": "\\S",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "SourceProcess",
+      "type": "object"
+    },
+    "SourceStep": {
+      "additionalProperties": false,
+      "description": "Recursive authored steps; both supported child spellings retain their paths.",
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "lane": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lane"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Location"
+        },
+        "consumes": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "\\S",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Consumes"
+        },
+        "produces": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "\\S",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Produces"
+        },
+        "performed_by": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "\\S",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Performed By"
+        },
+        "uses": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "\\S",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Uses"
+        },
+        "value_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "VA",
+                "RNVA",
+                "NVA",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value Class"
+        },
+        "cycle_time": {
+          "$ref": "#/$defs/Authored_Measurement_",
+          "default": null
+        },
+        "wait_time": {
+          "$ref": "#/$defs/Authored_Measurement_",
+          "default": null
+        },
+        "changeover_time": {
+          "$ref": "#/$defs/Authored_Measurement_",
+          "default": null
+        },
+        "extensions": {
+          "$ref": "#/$defs/Authored_Extensions_",
+          "default": null
+        },
+        "subprocess_parent": {
+          "$ref": "#/$defs/Authored_Annotated_str__StringConstraints__",
+          "default": null
+        },
+        "branch": {
+          "default": null,
+          "title": "Branch"
+        },
+        "outcomes": {
+          "default": null,
+          "title": "Outcomes"
+        },
+        "routes": {
+          "default": null,
+          "title": "Routes"
+        },
+        "id": {
+          "pattern": "\\S",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "start",
+            "task",
+            "system_task",
+            "queue",
+            "wait",
+            "decision",
+            "branch",
+            "end",
+            "subprocess",
+            "parallel_split",
+            "parallel_join"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "attrs": {
+          "$ref": "#/$defs/Authored_ControlAttributes_",
+          "default": null
+        },
+        "subnodes": {
+          "$ref": "#/$defs/Authored_list_SourceStep__",
+          "default": null
+        },
+        "steps": {
+          "$ref": "#/$defs/Authored_list_SourceStep__",
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "kind"
+      ],
+      "title": "SourceStep",
+      "type": "object"
+    },
+    "SourceTransition": {
+      "additionalProperties": false,
+      "description": "Explicit source/target connection with no from/to aliases.",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "route": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Route"
+        },
+        "outcome": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Outcome"
+        },
+        "handoff": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HandoffRelation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "rework": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReworkRelation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source": {
+          "pattern": "\\S",
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "pattern": "\\S",
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "target"
+      ],
+      "title": "SourceTransition",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The strict compiler-facing source contract after include composition.",
+  "properties": {
+    "transitions": {
+      "$ref": "#/$defs/Authored_list_SourceTransition__",
+      "default": null
+    },
+    "lanes": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/SourceLane"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lanes"
+    },
+    "include": {
+      "anyOf": [
+        {
+          "pattern": "\\S",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Include"
+    },
+    "includes": {
+      "anyOf": [
+        {
+          "items": {
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Includes"
+    },
+    "spec_version": {
+      "const": "0.1",
+      "title": "Spec Version",
+      "type": "string"
+    },
+    "process": {
+      "$ref": "#/$defs/SourceProcess"
+    },
+    "steps": {
+      "items": {
+        "$ref": "#/$defs/SourceStep"
+      },
+      "minItems": 1,
+      "title": "Steps",
+      "type": "array"
+    }
+  },
+  "required": [
+    "spec_version",
+    "process",
+    "steps"
+  ],
+  "title": "SourceDocument",
+  "type": "object"
+}

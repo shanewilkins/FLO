@@ -1,7 +1,7 @@
 {
   "canvas_bounds": {
     "height_px": 206.0,
-    "width_px": 4250.0,
+    "width_px": 4190.0,
     "x_px": 0.0,
     "y_px": 0.0
   },
@@ -16,11 +16,11 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 3424.0,
+          "x_px": 3364.0,
           "y_px": 103.0
         },
         {
-          "x_px": 3480.0,
+          "x_px": 3420.0,
           "y_px": 103.0
         }
       ],
@@ -40,11 +40,11 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 3068.0,
+          "x_px": 3008.0,
           "y_px": 103.0
         },
         {
-          "x_px": 3124.0,
+          "x_px": 3064.0,
           "y_px": 103.0
         }
       ],
@@ -64,11 +64,11 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 4050.0,
+          "x_px": 3990.0,
           "y_px": 103.0
         },
         {
-          "x_px": 4106.0,
+          "x_px": 4046.0,
           "y_px": 103.0
         }
       ],
@@ -88,11 +88,11 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 3694.0,
+          "x_px": 3634.0,
           "y_px": 103.0
         },
         {
-          "x_px": 3750.0,
+          "x_px": 3690.0,
           "y_px": 103.0
         }
       ],
@@ -112,11 +112,11 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 1611.0,
+          "x_px": 1571.0,
           "y_px": 103.0
         },
         {
-          "x_px": 1667.0,
+          "x_px": 1627.0,
           "y_px": 103.0
         }
       ],
@@ -184,11 +184,11 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 2813.0,
+          "x_px": 2753.0,
           "y_px": 103.0
         },
         {
-          "x_px": 2869.0,
+          "x_px": 2809.0,
           "y_px": 103.0
         }
       ],
@@ -208,11 +208,11 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 2573.0,
+          "x_px": 2513.0,
           "y_px": 103.0
         },
         {
-          "x_px": 2629.0,
+          "x_px": 2569.0,
           "y_px": 103.0
         }
       ],
@@ -280,11 +280,11 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 2222.0,
+          "x_px": 2162.0,
           "y_px": 103.0
         },
         {
-          "x_px": 2278.0,
+          "x_px": 2218.0,
           "y_px": 103.0
         }
       ],
@@ -304,11 +304,11 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 1846.0,
+          "x_px": 1806.0,
           "y_px": 103.0
         },
         {
-          "x_px": 1902.0,
+          "x_px": 1862.0,
           "y_px": 103.0
         }
       ],
@@ -348,38 +348,38 @@
     "bake": {
       "height_px": 166.0,
       "width_px": 300.0,
-      "x_px": 3124.0,
+      "x_px": 3064.0,
       "y_px": 20.0
     },
     "bake_wait_queue": {
       "height_px": 150.0,
       "width_px": 199.0,
-      "x_px": 2869.0,
+      "x_px": 2809.0,
       "y_px": 28.0
     },
     "cool": {
       "height_px": 166.0,
       "width_px": 300.0,
-      "x_px": 3750.0,
+      "x_px": 3690.0,
       "y_px": 20.0
     },
     "cool_wait_queue": {
       "height_px": 150.0,
       "width_px": 214.0,
-      "x_px": 3480.0,
+      "x_px": 3420.0,
       "y_px": 28.0
     },
     "end": {
       "height_px": 52.0,
       "width_px": 132.0,
-      "x_px": 4106.0,
+      "x_px": 4046.0,
       "y_px": 77.0
     },
     "laminate": {
-      "height_px": 166.0,
-      "width_px": 305.0,
+      "height_px": 182.0,
+      "width_px": 265.0,
       "x_px": 1306.0,
-      "y_px": 20.0
+      "y_px": 12.0
     },
     "laminate_queue": {
       "height_px": 150.0,
@@ -396,13 +396,13 @@
     "oven_queue": {
       "height_px": 150.0,
       "width_px": 184.0,
-      "x_px": 2629.0,
+      "x_px": 2569.0,
       "y_px": 28.0
     },
     "oven_setup": {
       "height_px": 182.0,
       "width_px": 295.0,
-      "x_px": 2278.0,
+      "x_px": 2218.0,
       "y_px": 12.0
     },
     "prepare_dough": {
@@ -418,15 +418,15 @@
       "y_px": 28.0
     },
     "proof": {
-      "height_px": 166.0,
-      "width_px": 320.0,
-      "x_px": 1902.0,
-      "y_px": 20.0
+      "height_px": 182.0,
+      "width_px": 300.0,
+      "x_px": 1862.0,
+      "y_px": 12.0
     },
     "rest_queue": {
       "height_px": 150.0,
       "width_px": 179.0,
-      "x_px": 1667.0,
+      "x_px": 1627.0,
       "y_px": 28.0
     },
     "start": {

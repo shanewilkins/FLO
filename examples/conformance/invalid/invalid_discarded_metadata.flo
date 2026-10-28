@@ -7,6 +7,9 @@ steps:
   kind: start
 - id: work
   kind: task
-  metadata: discarded
+  metadata:
+    cycle_time:
+      value: 5
+      unit: min
 - id: end
   kind: end

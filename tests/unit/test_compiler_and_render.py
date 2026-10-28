@@ -50,10 +50,21 @@ def test_book_washnfold_preserves_independent_waits_and_renders_decision_rework(
     validate_ir(ir)
 
     node_by_id = {node.id: node for node in ir.nodes}
-    queue_wait = node_by_id["wash_release_queue"].attrs["metadata"]["wait_time"]
-    wash_wait = node_by_id["wash"].attrs["metadata"]["wait_before"]
-    assert queue_wait["measurement_id"] == "order_batch_release_wait"
-    assert wash_wait["measurement_id"] == "load_wash_wait"
+    queue_wait = node_by_id["wash_release_queue"].wait_time
+    wash_wait = node_by_id["wash"].wait_time
+    assert "ref" not in queue_wait
+    assert "ref" not in wash_wait
+    assert queue_wait != wash_wait
+    assert (queue_wait["observation_count"], queue_wait["observation_unit"]) == (
+        39,
+        "order",
+    )
+    assert (wash_wait["observation_count"], wash_wait["observation_unit"]) == (
+        65,
+        "load",
+    )
+    assert queue_wait["results"][queue_wait["primary"]]["value"] == 501.7
+    assert wash_wait["results"][wash_wait["primary"]]["value"] == 500.9
 
     artifact = render_artifact(
         ir,
@@ -153,8 +164,7 @@ steps:
       yes: approve
       no:
         target: rework
-        edge_type: rework
-        rework: true
+        rework: {reason: Invalid invoice}
 
   - id: rework
     kind: task
@@ -175,8 +185,7 @@ steps:
         if edge.source == "decision" and edge.target == "rework"
     )
     assert rework_edge.outcome == "no"
-    assert rework_edge.edge_type == "rework"
-    assert rework_edge.rework is True
+    assert rework_edge.rework == {"reason": "Invalid invoice"}
 
     artifact = render_artifact(ir, options={"diagram": "sppm"})
     assert artifact.kind == "svg"
@@ -224,8 +233,8 @@ steps:
 @pytest.mark.parametrize(
     ("invalid_fragment", "error_code"),
     [
-        ('rework: "yes"', "E0209"),
-        ("metadata: discarded", "E0210"),
+        ('rework: "yes"', "E0222"),
+        ("metadata: discarded", "E0220"),
     ],
 )
 def test_compile_rejects_transition_fields_that_would_be_discarded(
@@ -244,8 +253,10 @@ transitions:
 """
 
     adapter = parse_adapter(content)
-    with pytest.raises(ValueError, match=error_code):
+    with pytest.raises(ValueError, match=r"transitions\[0\]") as caught:
         compile_adapter(adapter)
+    code = getattr(caught.value, "code", None)
+    assert code == error_code or (code is None and error_code in str(caught.value))
 
 
 def test_compile_and_render_canonical_examples_with_direct_svg_backend():

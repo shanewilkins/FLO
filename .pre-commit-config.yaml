@@ -60,6 +60,12 @@ repos:
         language: system
         pass_filenames: false
         files: '^(docs/|examples/|schema/|README\.md$|src/flo/errors\.py$|scripts/check_docs_governance\.py$|pyproject\.toml$|uv\.lock$|\.pre-commit-config\.yaml$)'
+      - id: contract-schema-check
+        name: generated contract schemas
+        entry: uv run --locked python scripts/generate_contract_schemas.py --check
+        language: system
+        pass_filenames: false
+        files: '^(src/flo/(source/|process/)|schema/|scripts/generate_contract_schemas\.py$|pyproject\.toml$|uv\.lock$|\.pre-commit-config\.yaml$)'
       - id: svg-accessibility-check
         name: SVG accessibility metadata
         entry: uv run --locked python scripts/check_svg_accessibility.py

@@ -114,7 +114,7 @@ def _project_node(
     timing = timing_by_node[node.id]
     return ValueStreamNode(
         node_id=node.id,
-        name=str((node.attrs or {}).get("name") or node.id),
+        name=str(node.name or node.id),
         node_type=node.type,
         cycle_time_seconds=timing.totals.cycle_time_seconds,
         wait_time_seconds=timing.declared_wait_time_seconds,
@@ -159,8 +159,8 @@ def _node_item_relations(
 ) -> dict[str, tuple[frozenset[str], frozenset[str]]]:
     return {
         node.id: (
-            _text_values((node.attrs or {}).get("consumes")),
-            _text_values((node.attrs or {}).get("produces")),
+            _text_values(node.consumes),
+            _text_values(node.produces),
         )
         for node in process.nodes
         if node.id in visible_ids

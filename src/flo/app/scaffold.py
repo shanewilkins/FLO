@@ -108,7 +108,8 @@ transitions:
     target: receive_request
   - source: receive_request
     target: fulfill_request
-    handoff: true
+    handoff:
+      type: responsibility
   - source: fulfill_request
     target: finish
 """
@@ -150,8 +151,8 @@ transitions:
   - source: quality_check
     target: complete_work
     outcome: revise
-    edge_type: rework
-    rework: true
+    rework:
+      reason: Correction required
 """
 
 VALUE_STREAM_TEMPLATE = """spec_version: "0.1"
@@ -160,16 +161,16 @@ process:
   id: {process_id}
   name: {process_name}
 
-items:
-  - id: request
-    name: Customer Request
-    kind: information
-  - id: component
-    name: Component
-    kind: material
-  - id: completed_component
-    name: Completed Component
-    kind: material
+  items:
+    - id: request
+      name: Customer Request
+      kind: information
+    - id: component
+      name: Component
+      kind: material
+    - id: completed_component
+      name: Completed Component
+      kind: material
 
 steps:
   - id: start

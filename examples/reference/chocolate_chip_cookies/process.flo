@@ -1,7 +1,7 @@
 process:
   id: chocolate_chip_cookies
   name: Chocolate Chip Cookie Process
-  metadata:
+  extensions:
     batch_yield:
       kind: count
       value: 18
@@ -12,256 +12,289 @@ process:
       units: h
     yield_fraction:
       target: 0.96
-
 steps:
-  - id: start
-    name: Start
-    kind: start
+- id: start
+  name: Start
+  kind: start
+  lane: prep
+- id: prep_subprocess
+  name: Prep Subprocess
+  kind: subprocess
+  lane: prep
+  subnodes:
+  - id: gather_equipment
+    name: Gather Equipment
+    kind: task
     lane: prep
-
-  - id: prep_subprocess
-    name: Prep Subprocess
-    kind: subprocess
+    cycle_time:
+      basis: estimated
+      results:
+        mean:
+          method: mean
+          value: 5
+          unit: min
+      primary: mean
+      analysis_input: mean
+    performed_by:
+    - assistant_baker
+  - id: gather_materials
+    name: Gather Materials
+    kind: task
     lane: prep
-    subnodes:
-      - id: gather_equipment
-        name: Gather Equipment
-        kind: task
-        lane: prep
-        workers:
-          - assistant_baker
-        metadata:
-          cycle_time:
-            value: 5
-            unit: min
-
-      - id: gather_materials
-        name: Gather Materials
-        kind: task
-        lane: prep
-        location: pantry
-        workers:
-          - lead_baker
-          - assistant_baker
-        inputs:
-          - ap_flour
-          - bread_flour
-          - salt
-          - baking_soda
-          - baking_powder
-          - brown_sugar
-          - white_sugar
-          - cane_sugar
-          - unsalted_butter
-          - lard
-          - whole_egg
-          - egg_yolk
-          - vanilla
-          - dark_chocolate
-          - chocolate_chips
-        outputs:
-          - staged_ingredients
-        metadata:
-          cycle_time:
-            value: 20
-            unit: min
-
-      - id: chop_chocolate
-        name: Chop Chocolate Bar
-        kind: task
-        lane: prep
-        location: prep_bench
-        workers:
-          - assistant_baker
-        inputs:
-          - dark_chocolate
-        outputs:
-          - dark_chocolate_chunks
-        metadata:
-          cycle_time:
-            value: 6
-            unit: min
-
-  - id: wet_mix_subprocess
-    name: Combine Wet Ingredients
-    kind: subprocess
-    lane: prep
-    subnodes:
-      - id: brown_butter
-        name: Brown Butter
-        kind: task
-        lane: prep
-        location: prep_bench
-        workers:
-          - lead_baker
-        inputs:
-          - unsalted_butter
-        outputs:
-          - browned_butter
-        metadata:
-          cycle_time:
-            value: 8
-            unit: min
-
-      - id: add_lard
-        name: Add Lard
-        kind: task
-        lane: prep
-        location: prep_bench
-        workers:
-          - lead_baker
-        inputs:
-          - browned_butter
-          - lard
-        outputs:
-          - butter_lard_base
-        metadata:
-          cycle_time:
-            value: 3
-            unit: min
-
-      - id: add_sugars
-        name: Add Sugars
-        kind: task
-        lane: prep
-        location: prep_bench
-        workers:
-          - lead_baker
-        inputs:
-          - butter_lard_base
-          - brown_sugar
-          - white_sugar
-          - cane_sugar
-        outputs:
-          - creamed_base
-        metadata:
-          cycle_time:
-            value: 4
-            unit: min
-
-      - id: add_egg_and_vanilla
-        name: Add Egg and Vanilla
-        kind: task
-        lane: prep
-        location: prep_bench
-        workers:
-          - lead_baker
-        inputs:
-          - creamed_base
-          - whole_egg
-          - egg_yolk
-          - vanilla
-        outputs:
-          - wet_dough_base
-        metadata:
-          cycle_time:
-            value: 4
-            unit: min
-
-  - id: add_dry_ingredients
-    name: Add Dry Ingredients
+    location: pantry
+    cycle_time:
+      basis: estimated
+      results:
+        mean:
+          method: mean
+          value: 20
+          unit: min
+      primary: mean
+      analysis_input: mean
+    performed_by:
+    - lead_baker
+    - assistant_baker
+    consumes:
+    - ap_flour
+    - bread_flour
+    - salt
+    - baking_soda
+    - baking_powder
+    - brown_sugar
+    - white_sugar
+    - cane_sugar
+    - unsalted_butter
+    - lard
+    - whole_egg
+    - egg_yolk
+    - vanilla
+    - dark_chocolate
+    - chocolate_chips
+    produces:
+    - staged_ingredients
+  - id: chop_chocolate
+    name: Chop Chocolate Bar
     kind: task
     lane: prep
     location: prep_bench
-    workers:
-      - lead_baker
-    inputs:
-      - wet_dough_base
-      - ap_flour
-      - bread_flour
-      - salt
-      - baking_soda
-      - baking_powder
-      - dark_chocolate
-      - chocolate_chips
-    outputs:
-      - finished_dough
-    metadata:
-      cycle_time:
+    cycle_time:
+      basis: estimated
+      results:
+        mean:
+          method: mean
+          value: 6
+          unit: min
+      primary: mean
+      analysis_input: mean
+    performed_by:
+    - assistant_baker
+    consumes:
+    - dark_chocolate
+    produces:
+    - dark_chocolate_chunks
+- id: wet_mix_subprocess
+  name: Combine Wet Ingredients
+  kind: subprocess
+  lane: prep
+  subnodes:
+  - id: brown_butter
+    name: Brown Butter
+    kind: task
+    lane: prep
+    location: prep_bench
+    cycle_time:
+      basis: estimated
+      results:
+        mean:
+          method: mean
+          value: 8
+          unit: min
+      primary: mean
+      analysis_input: mean
+    performed_by:
+    - lead_baker
+    consumes:
+    - unsalted_butter
+    produces:
+    - browned_butter
+  - id: add_lard
+    name: Add Lard
+    kind: task
+    lane: prep
+    location: prep_bench
+    cycle_time:
+      basis: estimated
+      results:
+        mean:
+          method: mean
+          value: 3
+          unit: min
+      primary: mean
+      analysis_input: mean
+    performed_by:
+    - lead_baker
+    consumes:
+    - browned_butter
+    - lard
+    produces:
+    - butter_lard_base
+  - id: add_sugars
+    name: Add Sugars
+    kind: task
+    lane: prep
+    location: prep_bench
+    cycle_time:
+      basis: estimated
+      results:
+        mean:
+          method: mean
+          value: 4
+          unit: min
+      primary: mean
+      analysis_input: mean
+    performed_by:
+    - lead_baker
+    consumes:
+    - butter_lard_base
+    - brown_sugar
+    - white_sugar
+    - cane_sugar
+    produces:
+    - creamed_base
+  - id: add_egg_and_vanilla
+    name: Add Egg and Vanilla
+    kind: task
+    lane: prep
+    location: prep_bench
+    cycle_time:
+      basis: estimated
+      results:
+        mean:
+          method: mean
+          value: 4
+          unit: min
+      primary: mean
+      analysis_input: mean
+    performed_by:
+    - lead_baker
+    consumes:
+    - creamed_base
+    - whole_egg
+    - egg_yolk
+    - vanilla
+    produces:
+    - wet_dough_base
+- id: add_dry_ingredients
+  name: Add Dry Ingredients
+  kind: task
+  lane: prep
+  location: prep_bench
+  cycle_time:
+    basis: estimated
+    results:
+      mean:
+        method: mean
         value: 6
         unit: min
-
-  - id: rest_dough
-    name: Rest Dough
-    kind: wait
-    lane: hold
-    location: prep_bench
-    workers:
-      - assistant_baker
-    inputs:
-      - finished_dough
-    outputs:
-      - rested_dough
-    metadata:
-      wait_time:
+    primary: mean
+    analysis_input: mean
+  performed_by:
+  - lead_baker
+  consumes:
+  - wet_dough_base
+  - ap_flour
+  - bread_flour
+  - salt
+  - baking_soda
+  - baking_powder
+  - dark_chocolate
+  - chocolate_chips
+  produces:
+  - finished_dough
+- id: rest_dough
+  name: Rest Dough
+  kind: wait
+  lane: hold
+  location: prep_bench
+  wait_time:
+    basis: estimated
+    results:
+      mean:
+        method: mean
         value: 12
         unit: hr
-
-  - id: preheat
-    name: Preheat Oven
-    kind: task
-    lane: oven
-    location: oven_station
-    workers:
-      - assistant_baker
-    outputs:
-      - preheated_oven
-    metadata:
-      cycle_time:
+    primary: mean
+    analysis_input: mean
+- id: preheat
+  name: Preheat Oven
+  kind: task
+  lane: oven
+  location: oven_station
+  cycle_time:
+    basis: estimated
+    results:
+      mean:
+        method: mean
         value: 15
         unit: min
-
-  - id: bake
-    name: Bake
-    kind: task
-    lane: oven
-    location: oven_station
-    workers:
-      - lead_baker
-      - assistant_baker
-    inputs:
-      - rested_dough
-      - preheated_oven
-    outputs:
-      - baked_cookies
-    metadata:
-      cycle_time:
+    primary: mean
+    analysis_input: mean
+  performed_by:
+  - assistant_baker
+  produces:
+  - preheated_oven
+- id: bake
+  name: Bake
+  kind: task
+  lane: oven
+  location: oven_station
+  cycle_time:
+    basis: estimated
+    results:
+      mean:
+        method: mean
         value: 13
         unit: min
-
-  - id: end
-    name: End
-    kind: end
-    lane: finish
-    inputs:
-      - baked_cookies
-
+    primary: mean
+    analysis_input: mean
+  performed_by:
+  - lead_baker
+  - assistant_baker
+  consumes:
+  - rested_dough
+  - preheated_oven
+  produces:
+  - baked_cookies
+- id: end
+  name: End
+  kind: end
+  lane: finish
 transitions:
-  - source: start
-    target: prep_subprocess
-  - source: prep_subprocess
-    target: gather_equipment
-  - source: gather_equipment
-    target: gather_materials
-  - source: gather_materials
-    target: chop_chocolate
-  - source: chop_chocolate
-    target: wet_mix_subprocess
-  - source: wet_mix_subprocess
-    target: brown_butter
-  - source: brown_butter
-    target: add_lard
-  - source: add_lard
-    target: add_sugars
-  - source: add_sugars
-    target: add_egg_and_vanilla
-  - source: add_egg_and_vanilla
-    target: add_dry_ingredients
-  - source: add_dry_ingredients
-    target: rest_dough
-  - source: rest_dough
-    target: preheat
-  - source: preheat
-    target: bake
-  - source: bake
-    target: end
+- source: start
+  target: prep_subprocess
+- source: prep_subprocess
+  target: gather_equipment
+- source: gather_equipment
+  target: gather_materials
+- source: gather_materials
+  target: chop_chocolate
+- source: chop_chocolate
+  target: wet_mix_subprocess
+- source: wet_mix_subprocess
+  target: brown_butter
+- source: brown_butter
+  target: add_lard
+- source: add_lard
+  target: add_sugars
+- source: add_sugars
+  target: add_egg_and_vanilla
+- source: add_egg_and_vanilla
+  target: add_dry_ingredients
+- source: add_dry_ingredients
+  target: rest_dough
+- source: rest_dough
+  target: preheat
+- source: preheat
+  target: bake
+- source: bake
+  target: end

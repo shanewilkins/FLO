@@ -1,7 +1,7 @@
 {
   "canvas_bounds": {
-    "height_px": 445.0,
-    "width_px": 5466.0,
+    "height_px": 461.0,
+    "width_px": 5356.0,
     "x_px": 0.0,
     "y_px": 0.0
   },
@@ -16,12 +16,12 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 1866.0,
-          "y_px": 103.0
+          "x_px": 1846.0,
+          "y_px": 111.0
         },
         {
-          "x_px": 1922.0,
-          "y_px": 103.0
+          "x_px": 1902.0,
+          "y_px": 111.0
         }
       ],
       "rework_variant": null,
@@ -41,11 +41,11 @@
       "points": [
         {
           "x_px": 1500.0,
-          "y_px": 103.0
+          "y_px": 111.0
         },
         {
           "x_px": 1556.0,
-          "y_px": 103.0
+          "y_px": 111.0
         }
       ],
       "rework_variant": null,
@@ -64,12 +64,12 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 3337.0,
-          "y_px": 103.0
+          "x_px": 3282.0,
+          "y_px": 111.0
         },
         {
-          "x_px": 3393.0,
-          "y_px": 103.0
+          "x_px": 3338.0,
+          "y_px": 111.0
         }
       ],
       "rework_variant": null,
@@ -88,12 +88,12 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 3001.0,
-          "y_px": 103.0
+          "x_px": 2946.0,
+          "y_px": 111.0
         },
         {
-          "x_px": 3057.0,
-          "y_px": 103.0
+          "x_px": 3002.0,
+          "y_px": 111.0
         }
       ],
       "rework_variant": null,
@@ -112,12 +112,12 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 3948.0,
-          "y_px": 103.0
+          "x_px": 3868.0,
+          "y_px": 111.0
         },
         {
-          "x_px": 4004.0,
-          "y_px": 103.0
+          "x_px": 3924.0,
+          "y_px": 111.0
         }
       ],
       "rework_variant": null,
@@ -136,12 +136,12 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 3587.0,
-          "y_px": 103.0
+          "x_px": 3532.0,
+          "y_px": 111.0
         },
         {
-          "x_px": 3643.0,
-          "y_px": 103.0
+          "x_px": 3588.0,
+          "y_px": 111.0
         }
       ],
       "rework_variant": null,
@@ -153,19 +153,19 @@
     {
       "callout_lines": [],
       "callout_near_source": false,
-      "incoming_token": "P1-SVC",
+      "incoming_token": null,
       "is_rework": false,
       "label": null,
       "label_point": null,
-      "outgoing_token": "P2-QA",
+      "outgoing_token": null,
       "points": [
         {
-          "x_px": 2497.0,
-          "y_px": 103.0
+          "x_px": 2442.0,
+          "y_px": 111.0
         },
         {
-          "x_px": 2553.0,
-          "y_px": 103.0
+          "x_px": 2498.0,
+          "y_px": 111.0
         }
       ],
       "rework_variant": null,
@@ -184,12 +184,12 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 2121.0,
-          "y_px": 103.0
+          "x_px": 2101.0,
+          "y_px": 111.0
         },
         {
-          "x_px": 2177.0,
-          "y_px": 103.0
+          "x_px": 2157.0,
+          "y_px": 111.0
         }
       ],
       "rework_variant": null,
@@ -209,11 +209,11 @@
       "points": [
         {
           "x_px": 740.0,
-          "y_px": 103.0
+          "y_px": 111.0
         },
         {
           "x_px": 796.0,
-          "y_px": 103.0
+          "y_px": 111.0
         }
       ],
       "rework_variant": null,
@@ -233,11 +233,11 @@
       "points": [
         {
           "x_px": 384.0,
-          "y_px": 103.0
+          "y_px": 111.0
         },
         {
           "x_px": 440.0,
-          "y_px": 103.0
+          "y_px": 111.0
         }
       ],
       "rework_variant": null,
@@ -257,11 +257,11 @@
       "points": [
         {
           "x_px": 1230.0,
-          "y_px": 103.0
+          "y_px": 111.0
         },
         {
           "x_px": 1286.0,
-          "y_px": 103.0
+          "y_px": 111.0
         }
       ],
       "rework_variant": null,
@@ -277,18 +277,18 @@
       "is_rework": false,
       "label": "pass",
       "label_point": {
-        "x_px": 2659.0,
-        "y_px": 100.0
+        "x_px": 2604.0,
+        "y_px": 108.0
       },
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 2756.0,
-          "y_px": 103.0
+          "x_px": 2701.0,
+          "y_px": 111.0
         },
         {
-          "x_px": 2812.0,
-          "y_px": 103.0
+          "x_px": 2757.0,
+          "y_px": 111.0
         }
       ],
       "rework_variant": null,
@@ -310,36 +310,36 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 2654.5,
-          "y_px": 161.0
+          "x_px": 2599.5,
+          "y_px": 169.0
         },
         {
-          "x_px": 2888.7028985507245,
-          "y_px": 265.0
+          "x_px": 2826.746376811594,
+          "y_px": 273.0
         },
         {
-          "x_px": 3251.295429208473,
-          "y_px": 265.0
+          "x_px": 3181.880713489409,
+          "y_px": 273.0
         },
         {
-          "x_px": 3276.066889632107,
-          "y_px": 276.0
+          "x_px": 3205.9163879598664,
+          "y_px": 284.0
         },
         {
-          "x_px": 3464.680044593088,
-          "y_px": 276.0
+          "x_px": 3390.64994425864,
+          "y_px": 284.0
         },
         {
-          "x_px": 3489.4515050167224,
-          "y_px": 265.0
+          "x_px": 3414.685618729097,
+          "y_px": 273.0
         },
         {
-          "x_px": 3954.480490523969,
-          "y_px": 265.0
+          "x_px": 3870.149386845039,
+          "y_px": 273.0
         },
         {
-          "x_px": 3977.0,
-          "y_px": 275.0
+          "x_px": 3892.0,
+          "y_px": 283.0
         }
       ],
       "rework_variant": "branch",
@@ -349,10 +349,7 @@
       "target_port_side": "NORTH"
     },
     {
-      "callout_lines": [
-        "Frequency: 3/day",
-        "Count: 12 per week"
-      ],
+      "callout_lines": [],
       "callout_near_source": false,
       "incoming_token": null,
       "is_rework": true,
@@ -361,20 +358,20 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 597.5,
+          "x_px": 582.5,
           "y_px": 267.0
         },
         {
-          "x_px": 538.2401574803149,
-          "y_px": 196.0
+          "x_px": 531.5320284697509,
+          "y_px": 204.0
         },
         {
-          "x_px": 598.3464566929133,
-          "y_px": 196.0
+          "x_px": 598.0901542111507,
+          "y_px": 204.0
         },
         {
           "x_px": 590.0,
-          "y_px": 186.0
+          "y_px": 194.0
         }
       ],
       "rework_variant": "return",
@@ -393,12 +390,12 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 1470.0,
-          "y_px": 350.0
+          "x_px": 1440.0,
+          "y_px": 358.0
         },
         {
-          "x_px": 755.0,
-          "y_px": 350.0
+          "x_px": 725.0,
+          "y_px": 358.0
         }
       ],
       "rework_variant": null,
@@ -408,10 +405,7 @@
       "target_port_side": "EAST"
     },
     {
-      "callout_lines": [
-        "Frequency: 1/day",
-        "Count: 4 per week"
-      ],
+      "callout_lines": [],
       "callout_near_source": false,
       "incoming_token": null,
       "is_rework": true,
@@ -420,20 +414,20 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 2370.0,
-          "y_px": 267.0
+          "x_px": 2340.0,
+          "y_px": 275.0
         },
         {
-          "x_px": 2219.9292452830186,
-          "y_px": 204.0
+          "x_px": 2190.8695652173915,
+          "y_px": 212.0
         },
         {
-          "x_px": 1734.8207547169811,
-          "y_px": 204.0
+          "x_px": 1724.6714975845412,
+          "y_px": 212.0
         },
         {
-          "x_px": 1711.0,
-          "y_px": 194.0
+          "x_px": 1701.0,
+          "y_px": 202.0
         }
       ],
       "rework_variant": "return",
@@ -452,12 +446,12 @@
       "outgoing_token": null,
       "points": [
         {
-          "x_px": 3880.0,
-          "y_px": 350.0
+          "x_px": 3795.0,
+          "y_px": 358.0
         },
         {
-          "x_px": 2510.0,
-          "y_px": 350.0
+          "x_px": 2480.0,
+          "y_px": 358.0
         }
       ],
       "rework_variant": null,
@@ -477,11 +471,11 @@
       "points": [
         {
           "x_px": 144.0,
-          "y_px": 103.0
+          "y_px": 111.0
         },
         {
           "x_px": 200.0,
-          "y_px": 103.0
+          "y_px": 111.0
         }
       ],
       "rework_variant": null,
@@ -498,17 +492,17 @@
       "label": "yes",
       "label_point": {
         "x_px": 890.5,
-        "y_px": 100.0
+        "y_px": 108.0
       },
       "outgoing_token": null,
       "points": [
         {
           "x_px": 985.0,
-          "y_px": 103.0
+          "y_px": 111.0
         },
         {
           "x_px": 1041.0,
-          "y_px": 103.0
+          "y_px": 111.0
         }
       ],
       "rework_variant": null,
@@ -531,35 +525,35 @@
       "points": [
         {
           "x_px": 890.5,
-          "y_px": 160.0
+          "y_px": 168.0
         },
         {
-          "x_px": 979.034090909091,
-          "y_px": 265.0
+          "x_px": 971.875,
+          "y_px": 273.0
         },
         {
-          "x_px": 1171.646590909091,
-          "y_px": 265.0
+          "x_px": 1157.3625,
+          "y_px": 273.0
         },
         {
-          "x_px": 1180.9215909090908,
-          "y_px": 276.0
+          "x_px": 1165.8875,
+          "y_px": 284.0
         },
         {
-          "x_px": 1287.8261363636364,
-          "y_px": 276.0
+          "x_px": 1268.8375,
+          "y_px": 284.0
         },
         {
-          "x_px": 1297.1011363636364,
-          "y_px": 265.0
+          "x_px": 1277.3625,
+          "y_px": 273.0
         },
         {
-          "x_px": 1556.0681818181818,
-          "y_px": 265.0
+          "x_px": 1526.75,
+          "y_px": 273.0
         },
         {
-          "x_px": 1564.5,
-          "y_px": 275.0
+          "x_px": 1534.5,
+          "y_px": 283.0
         }
       ],
       "rework_variant": "branch",
@@ -573,117 +567,117 @@
   "node_bounds": {
     "assess_scope": {
       "height_px": 182.0,
-      "width_px": 310.0,
+      "width_px": 290.0,
       "x_px": 1556.0,
-      "y_px": 12.0
+      "y_px": 20.0
     },
     "assess_scope_wait_queue": {
       "height_px": 150.0,
       "width_px": 214.0,
       "x_px": 1286.0,
-      "y_px": 28.0
+      "y_px": 36.0
     },
     "complete": {
       "height_px": 182.0,
       "width_px": 280.0,
-      "x_px": 3057.0,
-      "y_px": 12.0
+      "x_px": 3002.0,
+      "y_px": 20.0
     },
     "complete_wait_queue": {
       "height_px": 150.0,
       "width_px": 189.0,
-      "x_px": 2812.0,
-      "y_px": 28.0
+      "x_px": 2757.0,
+      "y_px": 36.0
     },
     "dispatch_queue": {
-      "height_px": 182.0,
-      "width_px": 305.0,
-      "x_px": 3643.0,
+      "height_px": 198.0,
+      "width_px": 280.0,
+      "x_px": 3588.0,
       "y_px": 12.0
     },
     "dispatch_queue_wait": {
       "height_px": 150.0,
       "width_px": 194.0,
-      "x_px": 3393.0,
-      "y_px": 28.0
+      "x_px": 3338.0,
+      "y_px": 36.0
     },
     "execute_service": {
       "height_px": 182.0,
-      "width_px": 320.0,
-      "x_px": 2177.0,
-      "y_px": 12.0
+      "width_px": 285.0,
+      "x_px": 2157.0,
+      "y_px": 20.0
     },
     "execute_service_wait_queue": {
       "height_px": 150.0,
       "width_px": 199.0,
-      "x_px": 1922.0,
-      "y_px": 28.0
+      "x_px": 1902.0,
+      "y_px": 36.0
     },
     "intake": {
       "height_px": 166.0,
       "width_px": 300.0,
       "x_px": 440.0,
-      "y_px": 20.0
+      "y_px": 28.0
     },
     "intake_wait_queue": {
       "height_px": 150.0,
       "width_px": 184.0,
       "x_px": 200.0,
-      "y_px": 28.0
+      "y_px": 36.0
     },
     "process_queue": {
       "height_px": 150.0,
       "width_px": 189.0,
       "x_px": 1041.0,
-      "y_px": 28.0
+      "y_px": 36.0
     },
     "qa": {
       "height_px": 116.0,
       "width_px": 203.0,
-      "x_px": 2553.0,
-      "y_px": 45.0
+      "x_px": 2498.0,
+      "y_px": 53.0
     },
     "rework_intake": {
-      "height_px": 166.0,
-      "width_px": 315.0,
+      "height_px": 182.0,
+      "width_px": 285.0,
       "x_px": 440.0,
       "y_px": 267.0
     },
     "rework_intake_wait_queue": {
       "height_px": 150.0,
       "width_px": 189.0,
-      "x_px": 1470.0,
-      "y_px": 275.0
+      "x_px": 1440.0,
+      "y_px": 283.0
     },
     "rework_quality": {
       "height_px": 166.0,
       "width_px": 280.0,
-      "x_px": 2230.0,
-      "y_px": 267.0
+      "x_px": 2200.0,
+      "y_px": 275.0
     },
     "rework_quality_wait_queue": {
       "height_px": 150.0,
       "width_px": 194.0,
-      "x_px": 3880.0,
-      "y_px": 275.0
+      "x_px": 3795.0,
+      "y_px": 283.0
     },
     "start": {
       "height_px": 52.0,
       "width_px": 132.0,
       "x_px": 12.0,
-      "y_px": 77.0
+      "y_px": 85.0
     },
     "stop": {
       "height_px": 52.0,
       "width_px": 132.0,
-      "x_px": 4004.0,
-      "y_px": 77.0
+      "x_px": 3924.0,
+      "y_px": 85.0
     },
     "triage": {
       "height_px": 114.0,
       "width_px": 189.0,
       "x_px": 796.0,
-      "y_px": 46.0
+      "y_px": 54.0
     }
   },
   "orientation": "lr"

@@ -31,6 +31,7 @@ def test_inspect_timing_text_reports_washnfold_totals() -> None:
         "  Changeover time: unavailable\n"
         "  Elapsed subtotal: 200 min\n"
         "\n"
+        "Supplied lead time (omitted): unavailable\n"
         "Modeled lead time: 200 min\n"
         "Paths analyzed: 1\n"
         "Changeover policy: one declared changeover per visited step\n"

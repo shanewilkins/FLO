@@ -17,6 +17,17 @@ from flo.diagnostics import Diagnostic, diagnostic_report
 from flo.render import render_artifact
 
 
+def _profile(value, unit):
+    return {
+        "basis": "observed",
+        "results": {
+            "mean": {"method": "mean", "value": value, "unit": unit},
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+    }
+
+
 def _source(*, work=None, queue=None):
     return yaml.safe_dump(
         {
@@ -24,8 +35,8 @@ def _source(*, work=None, queue=None):
             "process": {"id": "example", "name": "Example"},
             "steps": [
                 {"id": "start", "kind": "start"},
-                {"id": "work", "kind": "task", "metadata": work or {}},
-                {"id": "queue", "kind": "queue", "metadata": queue or {}},
+                {"id": "work", "kind": "task", **(work or {})},
+                {"id": "queue", "kind": "queue", **(queue or {})},
                 {"id": "end", "kind": "end"},
             ],
         },
@@ -36,10 +47,10 @@ def _source(*, work=None, queue=None):
 def _measured_source():
     return _source(
         work={
-            key: {"value": 0.0 if key == "wait_before" else 0, "unit": "s"}
-            for key in ("cycle_time", "wait_before", "crossover_time")
+            key: _profile(0.0 if key == "wait_time" else 0, "s")
+            for key in ("cycle_time", "wait_time", "changeover_time")
         },
-        queue={"wait_time": {"value": 0.0, "unit": "min"}},
+        queue={"wait_time": _profile(0.0, "min")},
     )
 
 
@@ -60,7 +71,7 @@ def test_api_artifact_and_legacy_runner_share_one_aggregate_without_mutating_ir(
     assert missing == {
         ("queue", "wait_time"),
         ("work", "cycle_time"),
-        ("work", "wait_before"),
+        ("work", "wait_time"),
         ("work", "changeover_time"),
     }
     before = deepcopy(result.value)
@@ -131,45 +142,45 @@ def test_explicit_zero_is_measured_and_empty_json_report_is_still_emitted():
 
 def test_omitted_optional_wait_and_setup_are_reported_without_labeling_zero_processing_missing():
     source = _source(
-        work={"cycle_time": {"value": 0, "unit": "min"}},
-        queue={"wait_time": {"value": 0.0, "unit": "s"}},
+        work={"cycle_time": _profile(0, "min")},
+        queue={"wait_time": _profile(0.0, "s")},
     )
     records = _incomplete(api.validate(source).report)
     assert len(records) == 1
     assert {item["field"] for item in records[0].details["missing_fields"]} == {
-        "wait_before",
+        "wait_time",
         "changeover_time",
     }
 
 
-def test_invalid_declared_timing_preserves_fatal_code_and_cli_api_stage_parity():
-    source = _source(work={"cycle_time": {"value": float("nan"), "unit": "s"}})
+def test_invalid_declared_timing_preserves_cli_api_stage_parity():
+    source = _source(work={"cycle_time": _profile(float("nan"), "s")})
     programmatic = api.validate(source, source_path="-")
     assert not programmatic.ok and programmatic.value is None
     result = CliRunner().invoke(
         cli, ["render", "-", "--diagnostics-format", "json"], input=source
     )
-    assert result.exit_code == 4 and result.stdout == ""
+    assert result.exit_code == 3 and result.stdout == ""
     report = json.loads(result.stderr)
     assert report["error_count"] == 1 and report["warning_count"] == 0
-    assert report["diagnostics"][0]["code"] == "E1302"
-    assert report["diagnostics"][0]["stage"] == "validate"
+    assert report["diagnostics"][0]["code"] == "E0222"
+    assert report["diagnostics"][0]["stage"] == "compile"
     assert report == json.loads(json.dumps(programmatic.report.as_dict()))
 
 
-def test_legacy_source_json_record_and_explicit_operation_envelope_both_remain_available():
-    source = _source(work={"cycle_time": {"value": -1, "unit": "s"}})
+def test_source_json_record_and_explicit_operation_envelope_both_remain_available():
+    source = _source(work={"cycle_time": _profile(-1, "s")})
     legacy = CliRunner().invoke(
         cli, ["validate", "-", "--format", "json"], input=source
     )
-    assert legacy.exit_code == 4
-    assert json.loads(legacy.stderr)["code"] == "E1302"
+    assert legacy.exit_code == 3
+    assert json.loads(legacy.stderr)["code"] == "E0222"
     explicit = CliRunner().invoke(
         cli,
         ["validate", "-", "--format", "json", "--diagnostics-format", "json"],
         input=source,
     )
-    assert json.loads(explicit.stderr)["diagnostics"][0]["code"] == "E1302"
+    assert json.loads(explicit.stderr)["diagnostics"][0]["code"] == "E0222"
 
 
 def test_strict_geometry_failure_retains_render_exit_status():
@@ -245,8 +256,8 @@ def test_report_is_stable_when_discovery_order_changes():
     assert reordered.as_dict() == original.as_dict()
 
 
-def test_book_and_starter_warning_volume_is_one_timing_record():
+def test_complete_book_has_no_missing_timing_and_starter_has_one_warning():
     book = Path("examples/reference/book_washnfold.flo").read_text()
     report = run_operation(book, command="validate").report
-    assert len(_incomplete(report)) == 1
+    assert _incomplete(report) == []
     assert len(_incomplete(api.validate(_source()).report)) == 1

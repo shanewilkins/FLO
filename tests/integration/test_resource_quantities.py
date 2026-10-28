@@ -11,7 +11,7 @@ from flo import api
 from flo.app.cli import cli
 
 
-def _source(quantity, *, collection="items", placement="top", grouped=False):
+def _source(quantity, *, collection="items", placement="process", grouped=False):
     entry = {"id": "supply", "name": "Supply", "quantity": quantity}
     if collection in {"items", "resources"}:
         entry["kind"] = "material" if collection == "items" else "equipment"
@@ -50,12 +50,9 @@ _INVALID_CANONICALS = [
 @pytest.mark.parametrize(
     "collection,placement",
     [
-        ("items", "top"),
+        ("items", "process"),
         ("resources", "process"),
-        ("locations", "metadata"),
-        ("materials", "top"),
-        ("equipment", "process"),
-        ("workers", "metadata"),
+        ("locations", "process"),
     ],
 )
 def test_quantity_errors_locate_authored_grouped_fields_in_cli_and_api(
@@ -144,7 +141,7 @@ def test_valid_quantities_preserve_exchange_and_authored_export_text(quantity):
     content = _source(quantity)
     exported = api.export(content)
     assert exported.ok and not exported.diagnostics
-    record = json.loads(exported.value)["process"]["metadata"]["items"][0]
+    record = json.loads(exported.value)["process"]["items"][0]
     assert record["quantity"] == before
     assert type(record["quantity"]["value"]) is type(before["value"])
     text = api.export(content, export_format="ingredients")
@@ -157,7 +154,7 @@ def test_valid_quantities_preserve_exchange_and_authored_export_text(quantity):
     assert quantity == before
 
 
-def test_malformed_legacy_collection_is_rejected_instead_of_falling_back():
+def test_malformed_canonical_collection_is_rejected():
     model = yaml.safe_load(
         _source(
             {
@@ -167,14 +164,14 @@ def test_malformed_legacy_collection_is_rejected_instead_of_falling_back():
                 "canonical_value": 99,
                 "canonical_unit": "kg",
             },
-            collection="materials",
+            collection="items",
             placement="process",
         )
     )
-    model["materials"] = "ignored legacy scalar"
+    model["process"]["items"] = "invalid scalar"
     result = api.validate(yaml.safe_dump(model))
 
     assert not result.ok
     assert result.diagnostics[0].code == "E1201"
-    assert result.diagnostics[0].field_path == "materials"
-    assert result.diagnostics[0].excerpt.strip() == "materials: ignored legacy scalar"
+    assert result.diagnostics[0].field_path == "process.items"
+    assert result.diagnostics[0].excerpt.strip() == "items: invalid scalar"

@@ -9,7 +9,6 @@ from flo.process.schema.subprocess_refs import (
     iter_subprocess_detail_map_reference_values,
 )
 
-from .metadata import extract_node_metadata
 from .models import IR
 
 
@@ -42,11 +41,11 @@ def validate_subprocess_metadata(obj: IR) -> None:
     for node in obj.nodes:
         if (node.type or "").lower() != "subprocess":
             continue
-        metadata = extract_node_metadata(node)
-        for key, value in iter_subprocess_detail_map_reference_values(metadata):
+        extensions = node.extensions or {}
+        for key, value in iter_subprocess_detail_map_reference_values(extensions):
             if not value:
                 raise ValidationError(
-                    f"E1333: node '{node.id}' metadata.{key} must be a non-empty string"
+                    f"E1333: node '{node.id}' extensions.{key} must be a non-empty string"
                 )
 
 

@@ -271,7 +271,7 @@ def test_configured_theme_cross_renderer_golden(
                 "kind": "task",
                 "name": "Do work",
                 "lane": "ops",
-                "metadata": {"value_class": "VA"},
+                "value_class": "VA",
             }
         ],
         "edges": [],
@@ -288,34 +288,33 @@ def test_configured_theme_cross_renderer_golden(
                 "kind": "task",
                 "name": "Pick",
                 "location": "store",
-                "outputs": ["part"],
+                "produces": ["part"],
             },
             {
                 "id": "use",
                 "kind": "task",
                 "name": "Use",
                 "location": "bench",
-                "inputs": ["part"],
+                "consumes": ["part"],
             },
         ],
         "edges": [{"source": "pick", "target": "use"}],
         "process": {
-            "metadata": {
-                "locations": [
-                    {
-                        "id": "store",
-                        "name": "Store",
-                        "kind": "storage",
-                        "metadata": {"spatial": {"x": 0, "y": 0}},
-                    },
-                    {
-                        "id": "bench",
-                        "name": "Bench",
-                        "kind": "processing",
-                        "metadata": {"spatial": {"x": 2, "y": 0}},
-                    },
-                ]
-            }
+            "items": [{"id": "part", "name": "Part", "kind": "material"}],
+            "locations": [
+                {
+                    "id": "store",
+                    "name": "Store",
+                    "kind": "storage",
+                    "metadata": {"spatial": {"x": 0, "y": 0}},
+                },
+                {
+                    "id": "bench",
+                    "name": "Bench",
+                    "kind": "processing",
+                    "metadata": {"spatial": {"x": 2, "y": 0}},
+                },
+            ],
         },
     }
     spaghetti, _ = render_spaghetti_svg_artifact(
@@ -330,7 +329,7 @@ def test_configured_theme_cross_renderer_golden(
         "\n".join(
             _node_svg(
                 node=SimpleNamespace(id="work", kind="task", label="Do work"),
-                raw_node={"metadata": {"value_class": "VA"}},
+                raw_node={"value_class": "VA"},
                 options=sppm_options,
                 x=0,
                 y=0,
@@ -344,7 +343,7 @@ def test_configured_theme_cross_renderer_golden(
         "\n".join(
             _node_svg(
                 node=SimpleNamespace(id="work", kind="task", label="Do work"),
-                raw_node={"metadata": {"value_class": "VA"}},
+                raw_node={"value_class": "VA"},
                 options=_options("sppm"),
                 x=0,
                 y=0,
@@ -370,7 +369,8 @@ def test_configured_theme_cross_renderer_golden(
             Node(
                 "work",
                 "task",
-                {"name": "Do work", "consumes": ["order", "part"]},
+                name="Do work",
+                consumes=["order", "part"],
             ),
             Node("end", "end"),
         ],

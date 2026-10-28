@@ -27,6 +27,19 @@ def build_nodes_from_flat_source(flat_source_nodes: list[dict[str, Any]]) -> lis
                 type=ntype,
                 attrs=attrs,
                 subprocess_parent=subprocess_parent,
+                name=a_node.get("name"),
+                description=a_node.get("description"),
+                lane=a_node.get("lane"),
+                location=a_node.get("location"),
+                consumes=a_node.get("consumes") or [],
+                produces=a_node.get("produces") or [],
+                performed_by=a_node.get("performed_by") or [],
+                uses=a_node.get("uses") or [],
+                value_class=a_node.get("value_class"),
+                cycle_time=a_node.get("cycle_time"),
+                wait_time=a_node.get("wait_time"),
+                changeover_time=a_node.get("changeover_time"),
+                extensions=a_node.get("extensions"),
             )
         )
     return nodes
@@ -57,10 +70,9 @@ def _build_explicit_edges(explicit_edges: list[Any]) -> list[Edge]:
                 outcome=_normalize_outcome_value(edge.get("outcome")),
                 route=edge.get("route"),
                 label=edge.get("label"),
-                edge_type=edge.get("edge_type"),
                 handoff=edge.get("handoff"),
                 rework=edge.get("rework"),
-                metadata=edge.get("metadata"),
+                extensions=edge.get("extensions"),
             )
         )
     return edges
@@ -87,10 +99,9 @@ def _build_named_edges(nodes: list[Node], field: str) -> list[Edge]:
                         for key in (
                             "id",
                             "label",
-                            "edge_type",
                             "handoff",
                             "rework",
-                            "metadata",
+                            "extensions",
                         )
                     },
                 )

@@ -1,346 +1,1534 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "FLO IR",
-  "type": "object",
-  "required": ["process","nodes","edges"],
-  "properties": {
-    "process": {
-      "type": "object",
-      "required": ["id","name"],
+  "$defs": {
+    "CanonicalEdgeContract": {
+      "additionalProperties": false,
+      "description": "Generated-schema boundary for one canonical transition.",
       "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "version": { "oneOf": [{"type":"integer"},{"type":"string"}] },
-        "owner": { "$ref": "#/definitions/named_identity" },
+        "source": {
+          "pattern": "\\S",
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "pattern": "\\S",
+          "title": "Target",
+          "type": "string"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "outcome": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Outcome"
+        },
+        "route": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Route"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "handoff": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HandoffRelation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "rework": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReworkRelation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "source",
+        "target"
+      ],
+      "title": "CanonicalEdgeContract",
+      "type": "object"
+    },
+    "CanonicalIdentityContract": {
+      "additionalProperties": false,
+      "description": "Named identity used by process context and lanes.",
+      "properties": {
+        "id": {
+          "pattern": "\\S",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "enum": [
+                "role",
+                "team",
+                "system"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "CanonicalIdentityContract",
+      "type": "object"
+    },
+    "CanonicalNodeContract": {
+      "additionalProperties": false,
+      "description": "Generated-schema boundary for one flattened canonical node.",
+      "properties": {
+        "id": {
+          "pattern": "\\S",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "start",
+            "task",
+            "system_task",
+            "queue",
+            "wait",
+            "decision",
+            "branch",
+            "end",
+            "subprocess",
+            "parallel_split",
+            "parallel_join"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "lane": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lane"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Location"
+        },
+        "subprocess_parent": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subprocess Parent"
+        },
+        "branch": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Branch"
+        },
+        "consumes": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "\\S",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Consumes"
+        },
+        "produces": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "\\S",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Produces"
+        },
+        "performed_by": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "\\S",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Performed By"
+        },
+        "uses": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "\\S",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Uses"
+        },
+        "value_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "VA",
+                "RNVA",
+                "NVA",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value Class"
+        },
+        "cycle_time": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Measurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "wait_time": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Measurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "changeover_time": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Measurement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "kind"
+      ],
+      "title": "CanonicalNodeContract",
+      "type": "object"
+    },
+    "CanonicalProcessContract": {
+      "additionalProperties": false,
+      "description": "Canonical process identity and typed process-level evidence.",
+      "properties": {
+        "id": {
+          "pattern": "\\S",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Version"
+        },
+        "owner": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Owner"
+        },
         "business_units": {
-          "type": "array",
-          "items": { "$ref": "#/definitions/named_identity" }
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Business Units"
+        },
+        "lead_time": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MeasurementProfile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "items": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EntityCollection_ItemContract_"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "resources": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EntityCollection_ResourceContract_"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "locations": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EntityCollection_LocationContract_"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "render": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Render"
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "CanonicalProcessContract",
+      "type": "object"
+    },
+    "CountQuantity": {
+      "additionalProperties": false,
+      "description": "An integral count of indivisible entities.",
+      "properties": {
+        "kind": {
+          "const": "count",
+          "title": "Kind",
+          "type": "string"
+        },
+        "value": {
+          "exclusiveMinimum": 0,
+          "title": "Value",
+          "type": "integer"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "const": "each",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "qualifier": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Qualifier"
+        }
+      },
+      "required": [
+        "kind",
+        "value"
+      ],
+      "title": "CountQuantity",
+      "type": "object"
+    },
+    "EntityCollection_ItemContract_": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/ItemContract"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/EntityGroup_ItemContract_"
+        }
+      ]
+    },
+    "EntityCollection_LocationContract_": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/LocationContract"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/EntityGroup_LocationContract_"
+        }
+      ]
+    },
+    "EntityCollection_ResourceContract_": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/ResourceContract"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/EntityGroup_ResourceContract_"
+        }
+      ]
+    },
+    "EntityGroup_ItemContract_": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "items": {
+              "$ref": "#/$defs/ItemContract"
+            },
+            "type": "array"
+          },
+          {
+            "$ref": "#/$defs/EntityGroup_ItemContract_"
+          }
+        ]
+      },
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        }
+      },
+      "title": "EntityGroup[ItemContract]",
+      "type": "object"
+    },
+    "EntityGroup_LocationContract_": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "items": {
+              "$ref": "#/$defs/LocationContract"
+            },
+            "type": "array"
+          },
+          {
+            "$ref": "#/$defs/EntityGroup_LocationContract_"
+          }
+        ]
+      },
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        }
+      },
+      "title": "EntityGroup[LocationContract]",
+      "type": "object"
+    },
+    "EntityGroup_ResourceContract_": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "items": {
+              "$ref": "#/$defs/ResourceContract"
+            },
+            "type": "array"
+          },
+          {
+            "$ref": "#/$defs/EntityGroup_ResourceContract_"
+          }
+        ]
+      },
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        }
+      },
+      "title": "EntityGroup[ResourceContract]",
+      "type": "object"
+    },
+    "Extensions": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "type": "object"
+    },
+    "HandoffRelation": {
+      "additionalProperties": false,
+      "description": "An explicit transfer of responsibility, information, or custody.",
+      "properties": {
+        "type": {
+          "anyOf": [
+            {
+              "enum": [
+                "responsibility",
+                "information",
+                "material",
+                "system",
+                "location",
+                "mixed"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "HandoffRelation",
+      "type": "object"
+    },
+    "ItemContract": {
+      "additionalProperties": false,
+      "description": "A material or information object flowing through work.",
+      "properties": {
+        "id": {
+          "pattern": "\\S",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
+        },
+        "quantity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "kind": {
+          "enum": [
+            "material",
+            "information"
+          ],
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "kind"
+      ],
+      "title": "ItemContract",
+      "type": "object"
+    },
+    "JsonValue": {},
+    "LocationContract": {
+      "additionalProperties": false,
+      "description": "A named operational place with optional spatial evidence.",
+      "properties": {
+        "id": {
+          "pattern": "\\S",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
+        },
+        "quantity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kind"
         },
         "metadata": {
-          "type": "object",
-          "properties": {
-            "render": { "$ref": "#/definitions/render_intent" },
-            "items": { "$ref": "#/definitions/canonical_item_collection" },
-            "resources": { "$ref": "#/definitions/canonical_resource_collection" }
-          },
-          "additionalProperties": true
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LocationMetadata"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "x": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "X"
+        },
+        "y": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Y"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
         }
       },
-      "additionalProperties": false
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "LocationContract",
+      "type": "object"
+    },
+    "LocationMetadata": {
+      "additionalProperties": false,
+      "description": "Existing explicit spatial container, pending compatibility removal.",
+      "properties": {
+        "spatial": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SpatialContract"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "LocationMetadata",
+      "type": "object"
+    },
+    "MeasureQuantity": {
+      "additionalProperties": false,
+      "description": "A measured amount; dimensional equivalence remains domain-owned.",
+      "properties": {
+        "kind": {
+          "const": "measure",
+          "title": "Kind",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "gt": 0,
+          "title": "Value"
+        },
+        "unit": {
+          "pattern": "\\S",
+          "title": "Unit",
+          "type": "string"
+        },
+        "canonical_value": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "gt": 0
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Canonical Value"
+        },
+        "canonical_unit": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Canonical Unit"
+        }
+      },
+      "required": [
+        "kind",
+        "value",
+        "unit"
+      ],
+      "title": "MeasureQuantity",
+      "type": "object"
+    },
+    "Measurement": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MeasurementProfile"
+        },
+        {
+          "$ref": "#/$defs/MeasurementReference"
+        }
+      ]
+    },
+    "MeasurementProfile": {
+      "additionalProperties": false,
+      "description": "A supplied measurement profile with explicit evidence and selectors.",
+      "properties": {
+        "basis": {
+          "enum": [
+            "observed",
+            "simulated",
+            "estimated",
+            "planned",
+            "target"
+          ],
+          "title": "Basis",
+          "type": "string"
+        },
+        "results": {
+          "minProperties": 1,
+          "patternProperties": {
+            "\\S": {
+              "$ref": "#/$defs/MeasurementResult"
+            }
+          },
+          "title": "Results",
+          "type": "object"
+        },
+        "primary": {
+          "pattern": "\\S",
+          "title": "Primary",
+          "type": "string"
+        },
+        "analysis_input": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Analysis Input"
+        },
+        "observation_count": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observation Count"
+        },
+        "observation_unit": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observation Unit"
+        },
+        "cohort": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cohort"
+        },
+        "aggregation_level": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Aggregation Level"
+        },
+        "observation_window": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observation Window"
+        },
+        "evidence_ref": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ref"
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "basis",
+        "results",
+        "primary"
+      ],
+      "title": "MeasurementProfile",
+      "type": "object"
+    },
+    "MeasurementReference": {
+      "additionalProperties": false,
+      "description": "A reference to a measurement owned by another process step.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z0-9_.-]+\\.[a-z_]+$",
+          "title": "Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ref"
+      ],
+      "title": "MeasurementReference",
+      "type": "object"
+    },
+    "MeasurementResult": {
+      "additionalProperties": false,
+      "description": "One named statistical result within a measurement profile.",
+      "properties": {
+        "method": {
+          "anyOf": [
+            {
+              "enum": [
+                "count",
+                "sum",
+                "minimum",
+                "maximum",
+                "mean",
+                "median",
+                "mode",
+                "percentile",
+                "standard_deviation"
+              ],
+              "type": "string"
+            },
+            {
+              "pattern": "^[a-z][a-z0-9_.-]*:[a-z][a-z0-9_.-]*$",
+              "type": "string"
+            }
+          ],
+          "title": "Method"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "ge": 0
+            },
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "items": {},
+              "type": "array"
+            }
+          ],
+          "title": "Value"
+        },
+        "unit": {
+          "pattern": "\\S",
+          "title": "Unit",
+          "type": "string"
+        },
+        "parameters": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parameters"
+        }
+      },
+      "required": [
+        "method",
+        "value",
+        "unit"
+      ],
+      "title": "MeasurementResult",
+      "type": "object"
+    },
+    "Quantity": {
+      "discriminator": {
+        "mapping": {
+          "count": "#/$defs/CountQuantity",
+          "measure": "#/$defs/MeasureQuantity"
+        },
+        "propertyName": "kind"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/CountQuantity"
+        },
+        {
+          "$ref": "#/$defs/MeasureQuantity"
+        }
+      ]
+    },
+    "ResourceContract": {
+      "additionalProperties": false,
+      "description": "A person or equipment resource used by work.",
+      "properties": {
+        "id": {
+          "pattern": "\\S",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
+        },
+        "quantity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "kind": {
+          "enum": [
+            "person",
+            "equipment"
+          ],
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "kind"
+      ],
+      "title": "ResourceContract",
+      "type": "object"
+    },
+    "ReworkFrequency": {
+      "additionalProperties": false,
+      "description": "Observed rework frequency with an explicit denominator.",
+      "properties": {
+        "basis": {
+          "enum": [
+            "observed",
+            "simulated",
+            "estimated",
+            "planned",
+            "target"
+          ],
+          "title": "Basis",
+          "type": "string"
+        },
+        "numerator": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "ge": 0,
+          "title": "Numerator"
+        },
+        "denominator": {
+          "exclusiveMinimum": 0,
+          "title": "Denominator",
+          "type": "integer"
+        },
+        "observation_unit": {
+          "pattern": "\\S",
+          "title": "Observation Unit",
+          "type": "string"
+        },
+        "evidence_ref": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Ref"
+        }
+      },
+      "required": [
+        "basis",
+        "numerator",
+        "denominator",
+        "observation_unit"
+      ],
+      "title": "ReworkFrequency",
+      "type": "object"
+    },
+    "ReworkRelation": {
+      "additionalProperties": false,
+      "description": "An explicit correction or repetition relationship.",
+      "properties": {
+        "reason": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "frequency": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReworkFrequency"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "note": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "ReworkRelation",
+      "type": "object"
+    },
+    "SpatialContract": {
+      "additionalProperties": false,
+      "description": "Coordinates whose physical unit compatibility is domain-owned.",
+      "properties": {
+        "x": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "X"
+        },
+        "y": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Y"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "title": "SpatialContract",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Generated canonical exchange contract.",
+  "properties": {
+    "process": {
+      "$ref": "#/$defs/CanonicalProcessContract"
     },
     "nodes": {
-      "type": "array",
       "items": {
-        "type": "object",
-        "required": ["id","kind"],
-        "properties": {
-          "id": { "type": "string" },
-          "kind": { "type": "string", "enum": ["start","task","system_task","queue","wait","decision","branch","end","subprocess","parallel_split","parallel_join"] },
-          "name": { "type": "string" },
-          "lane": { "type": "string" },
-          "location": { "type": "string" },
-          "subprocess_parent": { "type": "string", "minLength": 1 },
-          "branch": { "$ref": "#/definitions/branch_config" },
-          "workers": {
-            "type": "array",
-            "items": { "type": "string" }
-          },
-          "equipment": {
-            "type": "array",
-            "items": { "type": "string" }
-          },
-          "note": { "type": "string" },
-          "inputs": {
-            "type": "array",
-            "items": { "type": "string" }
-          },
-          "outputs": {
-            "type": "array",
-            "items": { "type": "string" }
-          },
-          "consumes": {
-            "type": "array",
-            "items": { "type": "string" }
-          },
-          "produces": {
-            "type": "array",
-            "items": { "type": "string" }
-          },
-          "performed_by": {
-            "type": "array",
-            "items": { "type": "string" }
-          },
-          "uses": {
-            "type": "array",
-            "items": { "type": "string" }
-          },
-          "metadata": { "type": "object", "additionalProperties": true }
-        },
-        "additionalProperties": false
-      }
+        "$ref": "#/$defs/CanonicalNodeContract"
+      },
+      "minItems": 1,
+      "title": "Nodes",
+      "type": "array"
     },
     "edges": {
-      "type": "array",
       "items": {
-        "type": "object",
-        "required": ["source","target"],
-        "properties": {
-          "id": { "type": "string" },
-          "source": { "type": "string" },
-          "target": { "type": "string" },
-          "outcome": { "type": "string" },
-          "route": { "type": "string" },
-          "label": { "type": "string" },
-          "edge_type": { "type": "string" },
-          "handoff": { "type": "boolean" },
-          "rework": { "type": "boolean" },
-          "metadata": { "type": "object", "additionalProperties": true }
-        },
-        "additionalProperties": false
-      }
+        "$ref": "#/$defs/CanonicalEdgeContract"
+      },
+      "title": "Edges",
+      "type": "array"
     },
     "lanes": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["id","name"],
-        "properties": {
-          "id": { "type": "string" },
-          "name": { "type": "string" },
-          "type": { "type": "string", "enum": ["role","team","system"] },
-          "metadata": { "type": "object", "additionalProperties": true }
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/CanonicalIdentityContract"
+          },
+          "type": "array"
         },
-        "additionalProperties": false
-      }
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lanes"
     }
   },
-  "definitions": {
-    "branch_config": {
-      "type": "object",
-      "required": ["mode"],
-      "properties": {
-        "mode": {
-          "type": "string",
-          "enum": ["dispatch", "probabilistic", "external", "unspecified"]
-        },
-        "policy": { "type": "string", "minLength": 1 },
-        "eligible_resources": {
-          "type": "array",
-          "items": { "type": "string", "minLength": 1 },
-          "uniqueItems": true
-        }
-      },
-      "additionalProperties": true
-    },
-    "named_identity": {
-      "type": "object",
-      "required": ["id", "name"],
-      "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "name": { "type": "string", "minLength": 1 },
-        "metadata": { "type": "object", "additionalProperties": true }
-      },
-      "additionalProperties": false
-    },
-    "canonical_item": {
-      "type": "object",
-      "required": ["id", "name", "kind"],
-      "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "name": { "type": "string", "minLength": 1 },
-        "kind": { "type": "string", "enum": ["material", "information"] },
-        "quantity": { "type": "object" },
-        "metadata": { "type": "object", "additionalProperties": true }
-      },
-      "additionalProperties": true
-    },
-    "canonical_item_collection": {
-      "oneOf": [
-        { "type": "array", "items": { "$ref": "#/definitions/canonical_item" } },
-        {
-          "type": "object",
-          "minProperties": 1,
-          "properties": { "name": { "type": "string", "minLength": 1 } },
-          "patternProperties": {
-            "^(?!name$).+": { "$ref": "#/definitions/canonical_item_collection" }
-          },
-          "additionalProperties": false
-        }
-      ]
-    },
-    "canonical_resource": {
-      "type": "object",
-      "required": ["id", "name", "kind"],
-      "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "name": { "type": "string", "minLength": 1 },
-        "kind": { "type": "string", "enum": ["person", "equipment"] },
-        "quantity": { "type": "object" },
-        "metadata": { "type": "object", "additionalProperties": true }
-      },
-      "additionalProperties": true
-    },
-    "canonical_resource_collection": {
-      "oneOf": [
-        { "type": "array", "items": { "$ref": "#/definitions/canonical_resource" } },
-        {
-          "type": "object",
-          "minProperties": 1,
-          "properties": { "name": { "type": "string", "minLength": 1 } },
-          "patternProperties": {
-            "^(?!name$).+": { "$ref": "#/definitions/canonical_resource_collection" }
-          },
-          "additionalProperties": false
-        }
-      ]
-    },
-    "render_intent": {
-      "type": "object",
-      "properties": {
-        "defaults": { "$ref": "#/definitions/render_view" },
-        "views": {
-          "type": "object",
-          "additionalProperties": { "$ref": "#/definitions/render_view" }
-        }
-      },
-      "additionalProperties": false
-    },
-    "render_view": {
-      "type": "object",
-      "properties": {
-        "diagram": {
-          "type": "string",
-          "enum": ["sppm","swimlane","spaghetti","value_stream"]
-        },
-        "theme": { "type": "string", "minLength": 1 },
-        "style": { "$ref": "#/definitions/render_style_config" },
-        "publication": { "$ref": "#/definitions/publication_config" },
-        "layout": { "$ref": "#/definitions/layout_config" },
-        "sppm": { "$ref": "#/definitions/sppm_config" },
-        "spaghetti": { "$ref": "#/definitions/spaghetti_config" }
-      },
-      "additionalProperties": false
-    },
-    "render_style_config": {
-      "type": "object",
-      "properties": {
-        "canvas": {
-          "type": "object",
-          "properties": {
-            "background": { "type": "string", "minLength": 1 }
-          },
-          "additionalProperties": false
-        },
-        "typography": {
-          "type": "object",
-          "properties": {
-            "font_family": {
-              "type": "array",
-              "minItems": 1,
-              "items": { "type": "string", "minLength": 1 }
-            },
-            "scale": { "type": "number", "minimum": 0.75, "maximum": 1.5 }
-          },
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    "publication_config": {
-      "type": "object",
-      "properties": {
-        "page_format": {
-          "type": "string",
-          "enum": ["letter","a4","legal","tabloid"]
-        },
-        "margins": {
-          "type": "object",
-          "properties": {
-            "top": { "type": "integer", "minimum": 0 },
-            "right": { "type": "integer", "minimum": 0 },
-            "bottom": { "type": "integer", "minimum": 0 },
-            "left": { "type": "integer", "minimum": 0 }
-          },
-          "additionalProperties": false
-        },
-        "header": {
-          "type": "object",
-          "properties": {
-            "enabled": { "type": "boolean" }
-          },
-          "additionalProperties": false
-        },
-        "footer": {
-          "type": "object",
-          "properties": {
-            "enabled": { "type": "boolean" }
-          },
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    "layout_config": {
-      "type": "object",
-      "properties": {
-        "wrap": {
-          "type": "string",
-          "enum": ["none","auto","manual"]
-        },
-        "width": {
-          "oneOf": [
-            { "type": "number", "exclusiveMinimum": 0 },
-            { "type": "string", "pattern": "^(?:[0-9]+(?:\\.[0-9]+)?|\\.[0-9]+)\\s*(?:px|in|cm|mm)?$" }
-          ]
-        },
-        "height": {
-          "oneOf": [
-            { "type": "number", "exclusiveMinimum": 0 },
-            { "type": "string", "pattern": "^(?:[0-9]+(?:\\.[0-9]+)?|\\.[0-9]+)\\s*(?:px|in|cm|mm)?$" }
-          ]
-        },
-        "overflow": {
-          "type": "string",
-          "enum": ["safe-fit","error","expand","scale","paginate"]
-        },
-        "max_width": { "type": "integer", "minimum": 1 },
-        "target_columns": { "type": "integer", "minimum": 1 }
-      },
-      "additionalProperties": false
-    },
-    "sppm_config": {
-      "type": "object",
-      "properties": {
-        "label_density": {
-          "type": "string",
-          "enum": ["full","compact","teaching"]
-        },
-        "node_numbering": {
-          "type": "string",
-          "enum": ["none","visible","hidden"]
-        },
-        "edge_numbering": {
-          "type": "string",
-          "enum": ["none","visible","hidden"]
-        }
-      },
-      "additionalProperties": false
-    },
-    "spaghetti_config": {
-      "type": "object",
-      "properties": {
-        "channel": {
-          "type": "string",
-          "enum": ["material","people","equipment"]
-        },
-        "people_mode": {
-          "type": "string",
-          "enum": ["aggregate","individual"]
-        },
-        "strict_spatial": { "type": "boolean" }
-      },
-      "additionalProperties": false
-    }
-  },
-  "additionalProperties": false
+  "required": [
+    "process",
+    "nodes",
+    "edges"
+  ],
+  "title": "CanonicalIRContract",
+  "type": "object"
 }

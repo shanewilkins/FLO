@@ -11,20 +11,18 @@ def _write_spaghetti_svg_model(tmp_path, *, include_io: bool = False):
         "process": {
             "id": "spaghetti_svg_demo",
             "name": "Spaghetti SVG Demo",
-            "metadata": {
-                "locations": [
-                    {
-                        "id": "pantry",
-                        "name": "Pantry",
-                        "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
-                    },
-                    {
-                        "id": "bench",
-                        "name": "Bench",
-                        "metadata": {"spatial": {"x": 3, "y": 1, "unit": "m"}},
-                    },
-                ],
-            },
+            "locations": [
+                {
+                    "id": "pantry",
+                    "name": "Pantry",
+                    "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                },
+                {
+                    "id": "bench",
+                    "name": "Bench",
+                    "metadata": {"spatial": {"x": 3, "y": 1, "unit": "m"}},
+                },
+            ],
         },
         "steps": [
             {"id": "start", "kind": "start", "name": "Start"},
@@ -34,7 +32,7 @@ def _write_spaghetti_svg_model(tmp_path, *, include_io: bool = False):
                 "name": "Gather",
                 "location": "pantry",
                 **(
-                    {"outputs": ["flour"], "workers": ["assistant"]}
+                    {"produces": ["flour"], "performed_by": ["assistant"]}
                     if include_io
                     else {}
                 ),
@@ -45,14 +43,14 @@ def _write_spaghetti_svg_model(tmp_path, *, include_io: bool = False):
                 "name": "Mix",
                 "location": "bench",
                 **(
-                    {"inputs": ["flour"], "workers": ["assistant"]}
+                    {"consumes": ["flour"], "performed_by": ["assistant"]}
                     if include_io
                     else {}
                 ),
             },
             {"id": "finish", "kind": "end", "name": "Done"},
         ],
-        "edges": [
+        "transitions": [
             {"source": "start", "target": "gather"},
             {"source": "gather", "target": "mix"},
             {"source": "mix", "target": "finish"},
@@ -69,39 +67,57 @@ def _write_partial_spaghetti_svg_model(tmp_path):
         "process": {
             "id": "partial_spaghetti",
             "name": "Partial Spaghetti",
-            "metadata": {
-                "locations": [
-                    {
-                        "id": "pantry",
-                        "name": "Pantry",
-                        "metadata": {"spatial": {"x": 0, "y": 0}},
-                    },
-                    {
-                        "id": "oven",
-                        "name": "Oven",
-                        "metadata": {"spatial": {"x": 2, "y": 1}},
-                    },
-                    {"id": "bench", "name": "Bench"},
-                ]
-            },
+            "items": [
+                {"id": "cook_batch", "name": "Cook Batch", "kind": "material"},
+                {"id": "mix_batch", "name": "Mix Batch", "kind": "material"},
+            ],
+            "locations": [
+                {
+                    "id": "pantry",
+                    "name": "Pantry",
+                    "metadata": {"spatial": {"x": 0, "y": 0}},
+                },
+                {
+                    "id": "oven",
+                    "name": "Oven",
+                    "metadata": {"spatial": {"x": 2, "y": 1}},
+                },
+                {"id": "bench", "name": "Bench"},
+            ],
         },
         "steps": [
-            {"id": "start", "kind": "start", "location": "pantry"},
+            {"id": "start", "kind": "start"},
             {
-                "id": "route_work",
-                "kind": "branch",
+                "id": "source_cook",
+                "kind": "task",
                 "location": "pantry",
-                "branch": {"mode": "unspecified"},
+                "produces": ["cook_batch"],
             },
-            {"id": "cook", "kind": "task", "location": "oven"},
-            {"id": "mix", "kind": "task", "location": "bench"},
+            {
+                "id": "cook",
+                "kind": "task",
+                "location": "oven",
+                "consumes": ["cook_batch"],
+            },
+            {
+                "id": "source_mix",
+                "kind": "task",
+                "location": "pantry",
+                "produces": ["mix_batch"],
+            },
+            {
+                "id": "mix",
+                "kind": "task",
+                "location": "bench",
+                "consumes": ["mix_batch"],
+            },
             {"id": "end", "kind": "end"},
         ],
         "transitions": [
-            {"source": "start", "target": "route_work"},
-            {"source": "route_work", "target": "cook", "route": "cook"},
-            {"source": "route_work", "target": "mix", "route": "mix"},
-            {"source": "cook", "target": "end"},
+            {"source": "start", "target": "source_cook"},
+            {"source": "source_cook", "target": "cook"},
+            {"source": "cook", "target": "source_mix"},
+            {"source": "source_mix", "target": "mix"},
             {"source": "mix", "target": "end"},
         ],
     }
@@ -223,7 +239,7 @@ def test_run_sppm_typst_export_emits_publication_source(tmp_path):
                     {"id": "start", "kind": "start", "name": "Start"},
                     {"id": "finish", "kind": "end", "name": "Finish"},
                 ],
-                "edges": [{"source": "start", "target": "finish"}],
+                "transitions": [{"source": "start", "target": "finish"}],
             },
             sort_keys=False,
         ),
@@ -255,7 +271,7 @@ def test_run_sppm_typst_export_paginates_with_continuation_metadata(tmp_path):
                     {"id": "second", "kind": "task"},
                     {"id": "finish", "kind": "end"},
                 ],
-                "edges": [
+                "transitions": [
                     {"source": "start", "target": "first"},
                     {"source": "first", "target": "second"},
                     {"source": "second", "target": "finish"},
@@ -304,7 +320,7 @@ def test_run_sppm_typst_export_writes_page_svg_assets(tmp_path):
                     {"id": "second", "kind": "task"},
                     {"id": "finish", "kind": "end"},
                 ],
-                "edges": [
+                "transitions": [
                     {"source": "start", "target": "first"},
                     {"source": "first", "target": "second"},
                     {"source": "second", "target": "finish"},
@@ -358,7 +374,7 @@ def test_run_sppm_typst_non_linear_pagination_warns_without_dropping_flow(tmp_pa
                     {"id": "right", "kind": "task"},
                     {"id": "finish", "kind": "end"},
                 ],
-                "edges": [
+                "transitions": [
                     {"source": "start", "target": "choice"},
                     {"source": "choice", "target": "left", "outcome": "left"},
                     {"source": "choice", "target": "right", "outcome": "right"},
@@ -404,16 +420,25 @@ def test_run_sppm_svg_export_emits_svg(tmp_path):
                 "id": "intake",
                 "kind": "task",
                 "name": "Intake",
-                "workers": ["Coordinator"],
-                "metadata": {
-                    "value_class": "RNVA",
-                    "cycle_time": {"value": 4, "unit": "min"},
-                    "description": "Capture request details and context.",
+                "performed_by": ["Coordinator"],
+                "value_class": "RNVA",
+                "cycle_time": {
+                    "basis": "estimated",
+                    "results": {
+                        "mean": {
+                            "method": "mean",
+                            "value": 4,
+                            "unit": "min",
+                        }
+                    },
+                    "primary": "mean",
+                    "analysis_input": "mean",
                 },
+                "description": "Capture request details and context.",
             },
             {"id": "finish", "kind": "end", "name": "Done"},
         ],
-        "edges": [
+        "transitions": [
             {"source": "start", "target": "intake"},
             {"source": "intake", "target": "finish"},
         ],
@@ -465,16 +490,14 @@ def test_run_value_stream_partial_export_warns_without_inventing_material(tmp_pa
     model = tmp_path / "information_only.flo"
     payload = {
         "spec_version": "0.1",
-        "process": {"id": "information_only", "name": "Information only"},
-        "items": [{"id": "order", "name": "Order", "kind": "information"}],
+        "process": {
+            "id": "information_only",
+            "name": "Information only",
+            "items": [{"id": "order", "name": "Order", "kind": "information"}],
+        },
         "steps": [
             {"id": "start", "kind": "start"},
-            {
-                "id": "intake",
-                "kind": "task",
-                "name": "Intake",
-                "consumes": ["order"],
-            },
+            {"id": "intake", "kind": "task", "name": "Intake", "consumes": ["order"]},
             {"id": "end", "kind": "end"},
         ],
         "transitions": [

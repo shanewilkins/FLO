@@ -96,6 +96,8 @@ def test_book_golden_matches_public_cli_geometry_pipeline(tmp_path):
             "auto",
             "--layout-max-width-px",
             "1200",
+            "--layout-overflow",
+            "scale",
             "--render-to",
             str(output),
         ],

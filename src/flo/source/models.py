@@ -11,7 +11,6 @@ from pydantic import (
     BeforeValidator,
     ConfigDict,
     Field,
-    StringConstraints,
     TypeAdapter,
     ValidationError,
     field_validator,
@@ -19,7 +18,15 @@ from pydantic import (
 )
 from pydantic_core import PydanticCustomError
 
-NonBlank = Annotated[str, StringConstraints(pattern=r"\S")]
+from flo.process.contracts import (
+    Extensions,
+    HandoffRelation,
+    Measurement,
+    NonBlank,
+    ReworkRelation,
+    ValueClass,
+)
+from flo.process.field_applicability import inapplicable_fields
 
 
 def _not_null(value: Any) -> Any:
@@ -41,7 +48,7 @@ class AdapterModel(BaseModel):
 class SourceModel(BaseModel):
     """Strict authored shapes preserve unknown annotations and scalar values."""
 
-    model_config = ConfigDict(strict=True, extra="allow")
+    model_config = ConfigDict(strict=True, extra="forbid")
 
 
 class NamedIdentity(SourceModel):
@@ -49,29 +56,31 @@ class NamedIdentity(SourceModel):
 
     id: NonBlank
     name: NonBlank
+    extensions: Extensions | None = None
 
 
 class BusinessUnit(NamedIdentity):
     """Named process grouping without a lane-type classification."""
-
-    type: None = None
-    metadata: dict[Any, Any] | None = None
 
 
 class SourceLane(NamedIdentity):
     """An optional authored responsibility classification."""
 
     type: Literal["role", "team", "system"] | None = None
-    metadata: dict[Any, Any] | None = None
 
 
 class ProcessFields(SourceModel):
     """Process context shared by complete documents and include fragments."""
 
     version: int | str | None = None
-    metadata: Authored[dict[Any, Any]] = None
+    lead_time: Authored[Measurement] = None
+    render: Authored[dict[Any, Any]] = None
+    extensions: Authored[Extensions] = None
     owner: NamedIdentity | None = None
     business_units: list[BusinessUnit] | None = None
+    items: Any = None
+    resources: Any = None
+    locations: Any = None
 
 
 class SourceProcess(NamedIdentity, ProcessFields):
@@ -86,10 +95,34 @@ class FragmentProcess(ProcessFields):
 
 
 class StepAttributes(SourceModel):
-    """Shape constraints shared by authored steps and their attrs overlay."""
+    """First-class authored step fields; kind applicability is checked below."""
 
-    metadata: Authored[dict[Any, Any]] = None
+    name: NonBlank | None = None
+    description: NonBlank | None = None
+    lane: NonBlank | None = None
+    location: NonBlank | None = None
+    consumes: list[NonBlank] | None = None
+    produces: list[NonBlank] | None = None
+    performed_by: list[NonBlank] | None = None
+    uses: list[NonBlank] | None = None
+    value_class: ValueClass | None = None
+    cycle_time: Authored[Measurement] = None
+    wait_time: Authored[Measurement] = None
+    changeover_time: Authored[Measurement] = None
+    extensions: Authored[Extensions] = None
     subprocess_parent: Authored[NonBlank] = None
+    branch: Any = None
+    outcomes: Any = None
+    routes: Any = None
+
+
+class ControlAttributes(SourceModel):
+    """Temporary control-only overlay pending complete attrs removal in phase 4."""
+
+    subprocess_parent: Authored[NonBlank] = None
+    branch: Any = None
+    outcomes: Any = None
+    routes: Any = None
 
 
 class SourceStep(StepAttributes):
@@ -109,7 +142,7 @@ class SourceStep(StepAttributes):
         "parallel_split",
         "parallel_join",
     ]
-    attrs: Authored[StepAttributes] = None
+    attrs: Authored[ControlAttributes] = None
     subnodes: Authored[list[SourceStep]] = None
     steps: Authored[list[SourceStep]] = None
 
@@ -137,6 +170,16 @@ class SourceStep(StepAttributes):
             raise PydanticCustomError(
                 "source_nested", "may declare nested steps only for kind 'subprocess'"
             )
+        supplied = set(self.model_fields_set)
+        if self.attrs is not None:
+            supplied |= set(self.attrs.model_fields_set)
+        forbidden = inapplicable_fields(self.kind, supplied)
+        if forbidden:
+            raise PydanticCustomError(
+                "source_applicability",
+                "{fields} cannot be declared on kind '{kind}'",
+                {"fields": ", ".join(sorted(forbidden)), "kind": self.kind},
+            )
         return self
 
 
@@ -145,12 +188,11 @@ class TransitionFields(SourceModel):
 
     id: NonBlank | None = None
     label: NonBlank | None = None
-    edge_type: NonBlank | None = None
     route: NonBlank | None = None
     outcome: NonBlank | bool | None = None
-    handoff: bool | None = None
-    rework: bool | None = None
-    metadata: dict[Any, Any] | None = None
+    handoff: HandoffRelation | None = None
+    rework: ReworkRelation | None = None
+    extensions: Extensions | None = None
 
 
 class SourceTransition(TransitionFields):
@@ -203,6 +245,8 @@ class DocumentFields(SourceModel):
 
     transitions: Authored[list[SourceTransition]] = None
     lanes: list[SourceLane] | None = None
+    include: NonBlank | None = None
+    includes: Annotated[list[NonBlank], Field(min_length=1)] | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -250,24 +294,12 @@ def validate_source_fragment(document: dict[str, Any]) -> None:
 
 def validate_source_collections(document: dict[str, Any]) -> None:
     """Reject malformed collection shapes even when another placement shadows them."""
-    containers = [((), document)]
-    process = document.get("process", {})
-    if isinstance(process, dict):
-        containers.append((("process",), process))
-        metadata = process.get("metadata", {})
-        if isinstance(metadata, dict):
-            containers.append((("process", "metadata"), metadata))
-    for prefix, container in containers:
-        for key in (
-            "items",
-            "resources",
-            "locations",
-            "materials",
-            "equipment",
-            "workers",
-        ):
-            if key in container:
-                _validate_collection_shape(container[key], (*prefix, key))
+    process = document.get("process")
+    if not isinstance(process, dict):
+        return
+    for key in ("items", "resources", "locations"):
+        if key in process:
+            _validate_collection_shape(process[key], ("process", key))
 
 
 def _validate_collection_shape(value: Any, path: tuple) -> None:
@@ -302,10 +334,13 @@ def _validate_collection_shape(value: Any, path: tuple) -> None:
 class SourceShapeError(ValueError):
     """Compiler-compatible failure with an authored path for location enrichment."""
 
-    def __init__(self, message: str, location: tuple[str | int, ...]) -> None:
+    def __init__(
+        self, message: str, location: tuple[str | int, ...], *, code: str = "E0222"
+    ) -> None:
         """Retain the typed path without exposing unrelated input values."""
         super().__init__(message)
         self.location = location
+        self.code = code
 
 
 def source_path(location: tuple) -> str:
@@ -328,7 +363,8 @@ def validate_source_shape(model: Any, value: Any, location: tuple = ()) -> Any:
         )
     except ValidationError as exc:
         issue = exc.errors(include_url=False, include_input=False)[0]
-        path = (*location, *issue["loc"])
+        issue_location = _authored_error_location(value, issue["loc"])
+        path = (*location, *issue_location)
         if path and path[-1] == "[key]":
             path = path[:-2]
         elif (
@@ -348,15 +384,51 @@ def validate_source_shape(model: Any, value: Any, location: tuple = ()) -> Any:
                 else None
             )
             message = message or _shape_message(issue, path)
-        raise SourceShapeError(message, path) from exc
+        code = {"extra_forbidden": "E0220", "missing": "E0221"}.get(
+            issue["type"], "E0222"
+        )
+        raise SourceShapeError(message, path, code=code) from exc
+
+
+def _authored_error_location(value: Any, location: tuple) -> tuple:
+    """Remove union implementation markers while preserving authored key names."""
+    path = []
+    cursor = value
+    for part in location:
+        if (isinstance(cursor, dict) and part in cursor) or (
+            isinstance(cursor, list)
+            and isinstance(part, int)
+            and 0 <= part < len(cursor)
+        ):
+            path.append(part)
+            cursor = cursor[part]
+        elif isinstance(part, str) and (
+            part
+            in {
+                "MeasurementProfile",
+                "MeasurementReference",
+                "str",
+                "int",
+                "float",
+                "bool",
+                "constrained-str",
+            }
+            or part.startswith(("function-after[", "union[", "list[", "dict["))
+        ):
+            continue
+        else:
+            path.append(part)
+    return tuple(path)
 
 
 def _shape_message(issue: Mapping[str, Any], path: tuple) -> str:
     field = path[-1] if path else "source"
     rendered = source_path(path)
     kind = issue["type"]
-    if kind in {"source_alias", "source_nested"}:
+    if kind in {"source_alias", "source_nested", "source_applicability"}:
         return f"{rendered} {issue['msg']}".strip()
+    if kind == "value_error" and "explicit null" in issue["msg"]:
+        return f"{rendered} explicit null is not allowed"
     if field == "spec_version":
         return "spec_version must be present and set to '0.1'"
     if field == "version":
@@ -365,6 +437,8 @@ def _shape_message(issue: Mapping[str, Any], path: tuple) -> str:
         return f"{rendered} must be omitted or null"
     if kind == "too_short" and field == "steps":
         return f"{rendered} must contain at least one step"
+    if kind == "extra_forbidden":
+        return f"{rendered} is not supported"
     if field == "kind" and kind == "literal_error":
         return f"{rendered} must be one of: {issue['ctx']['expected']}"
     if kind in {"list_type", "too_short"} or field in {
@@ -375,7 +449,16 @@ def _shape_message(issue: Mapping[str, Any], path: tuple) -> str:
         return f"{rendered} must be a list"
     if kind in {"model_type", "dict_type"} or field in {"metadata", "attrs", "process"}:
         return f"{rendered} must be an object"
-    return f"{rendered} must be a non-empty string"
+    if kind in {
+        "missing",
+        "string_type",
+        "string_too_short",
+        "string_pattern_mismatch",
+    }:
+        return f"{rendered} must be a non-empty string"
+    if kind == "value_error":
+        return f"{rendered} {issue['msg'].removeprefix('Value error, ')}"
+    return f"{rendered} has an invalid value"
 
 
 def _branch_shape_message(issue: Mapping[str, Any], path: tuple) -> str:
@@ -397,9 +480,12 @@ def _named_shape_message(issue: Mapping[str, Any], path: tuple, root: tuple) -> 
         return f"{code}: {rendered} branch names must be non-empty strings"
     if path[-1] in {"target", "to"}:
         return f"E0206: {rendered} must be a non-empty string"
+    transition_message = _transition_shape_message(issue, path)
+    if transition_message is not None:
+        return transition_message
     if issue["type"] == "model_type":
         return f"E0205: {rendered} must name a target step or define a branch object"
-    return _transition_shape_message(issue, path) or _shape_message(issue, path)
+    return _shape_message(issue, path)
 
 
 def _transition_shape_message(issue: Mapping[str, Any], path: tuple) -> str | None:
@@ -407,16 +493,12 @@ def _transition_shape_message(issue: Mapping[str, Any], path: tuple) -> str | No
     code = {
         "id": "E0207",
         "label": "E0207",
-        "edge_type": "E0207",
         "route": "E0207",
         "outcome": "E0208",
         "handoff": "E0209",
         "rework": "E0209",
-        "metadata": "E0210",
     }.get(field)
     if code is None:
         return None
-    expected = {"E0209": "true or false", "E0210": "an object"}.get(
-        code, "a non-empty string"
-    )
+    expected = "an object" if code == "E0209" else "a non-empty string"
     return f"{code}: {source_path(path)} must be {expected} when provided"

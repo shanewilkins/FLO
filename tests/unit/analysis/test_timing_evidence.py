@@ -11,39 +11,38 @@ from flo.process.ir.validate import validate_ir
 
 def _work(node_id, wait):
     return Node(
-        node_id,
-        "task",
-        {
-            "metadata": {
-                "cycle_time": {"value": 60, "unit": "s"},
-                "wait_before": {"value": wait, "unit": "s", "measurement_id": node_id},
-                "crossover_time": {"value": 0, "unit": "s"},
-            }
-        },
+        id=node_id,
+        type="task",
+        cycle_time=_profile(60, "s"),
+        wait_time=_profile(wait, "s"),
+        changeover_time=_profile(0, "s"),
     )
 
 
-def _branching_projection(*, aggregate=False):
+def _profile(value, unit):
+    return {
+        "basis": "observed",
+        "results": {
+            "mean": {"method": "mean", "value": value, "unit": unit},
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+    }
+
+
+def _branching_projection():
     return IR(
         "Branches",
         [
             Node("start", "start"),
             Node(
-                "queue",
-                "queue",
-                {
-                    "metadata": {
-                        "wait_time": {
-                            "value": 900 if aggregate else 600,
-                            "unit": "s",
-                            "measurement_refs": ["a", "b"] if aggregate else ["a"],
-                        }
-                    }
-                },
+                id="queue",
+                type="queue",
+                wait_time={"ref": "a.wait_time"},
             ),
             Node("choice", "decision"),
             _work("a", 600),
-            _work("b", 300 if aggregate else 0),
+            _work("b", 0),
             Node("end", "end"),
         ],
         [
@@ -75,20 +74,6 @@ def test_queue_projection_is_not_silently_suppressed_on_an_uncovered_branch():
     assert process == before
 
 
-def test_projection_limitation_is_one_stable_warning_per_queue():
-    process = _branching_projection(aggregate=True)
-    validate_ir(process)
-    result = analyze_process_timing(process)
-    assert all(not path.complete for path in result.paths)
-    warnings = [item for item in result.diagnostics if item.severity == "warning"]
-    assert len(warnings) == 1
-    assert warnings[0].code == "timing-projection-incomplete"
-    assert warnings[0].node_id == "queue" and warnings[0].field == "wait_time"
-    process.nodes.reverse()
-    process.edges.reverse()
-    assert analyze_process_timing(process).as_dict() == result.as_dict()
-
-
 def test_projection_keeps_the_authored_wait_visible_without_counting_it_again():
     process = _branching_projection()
     result = analyze_process_timing(process)
@@ -104,13 +89,16 @@ def test_projection_keeps_the_authored_wait_visible_without_counting_it_again():
 
 @pytest.mark.parametrize("seconds", [None, 0, 120])
 def test_explicit_hold_requires_timing_for_a_complete_lead_time(seconds):
-    metadata = {} if seconds is None else {"wait_time": {"value": seconds, "unit": "s"}}
     process = IR(
         "Hold",
         [
             Node("start", "start"),
             _work("work", 0),
-            Node("hold", "wait", {"metadata": metadata}),
+            Node(
+                id="hold",
+                type="wait",
+                wait_time=None if seconds is None else _profile(seconds, "s"),
+            ),
             Node("end", "end"),
         ],
         [Edge("start", "work"), Edge("work", "hold"), Edge("hold", "end")],
@@ -135,17 +123,9 @@ def test_nonadjacent_shared_measurement_is_still_counted_once():
             Node("start", "start"),
             _work("work", 600),
             Node(
-                "queue",
-                "queue",
-                {
-                    "metadata": {
-                        "wait_time": {
-                            "value": 10,
-                            "unit": "min",
-                            "measurement_id": "work",
-                        }
-                    }
-                },
+                id="queue",
+                type="queue",
+                wait_time={"ref": "work.wait_time"},
             ),
             Node("end", "end"),
         ],
@@ -155,37 +135,21 @@ def test_nonadjacent_shared_measurement_is_still_counted_once():
     assert analyze_process_timing(process).modeled_lead_time_seconds == 660
 
 
-def test_independent_queue_copies_are_deduplicated_on_each_path_not_globally():
+def test_independent_queue_waits_are_evaluated_per_path():
     process = IR(
         "Repeated queue",
         [
             Node("start", "start"),
             Node("choice", "decision"),
             Node(
-                "a",
-                "queue",
-                {
-                    "metadata": {
-                        "wait_time": {
-                            "value": 10,
-                            "unit": "min",
-                            "measurement_id": "same",
-                        }
-                    }
-                },
+                id="a",
+                type="queue",
+                wait_time=_profile(10, "min"),
             ),
             Node(
-                "b",
-                "queue",
-                {
-                    "metadata": {
-                        "wait_time": {
-                            "value": 600,
-                            "unit": "s",
-                            "measurement_id": "same",
-                        }
-                    }
-                },
+                id="b",
+                type="queue",
+                wait_time=_profile(600, "s"),
             ),
             Node("end", "end"),
         ],
@@ -199,7 +163,7 @@ def test_independent_queue_copies_are_deduplicated_on_each_path_not_globally():
     )
     validate_ir(process)
     result = analyze_process_timing(process)
-    assert result.declared_totals.wait_time_seconds == 600
+    assert result.declared_totals.wait_time_seconds == 1200
     assert [path.totals.elapsed_time_seconds for path in result.paths] == [600, 600]
     assert (
         result.minimum_path_lead_time_seconds
@@ -208,16 +172,19 @@ def test_independent_queue_copies_are_deduplicated_on_each_path_not_globally():
     )
 
 
-def test_copies_of_a_projection_share_its_replacement_evidence():
-    wait = {"value": 10, "unit": "min", "measurement_id": "aggregate"}
+def test_multiple_projections_share_replacement_evidence():
     nodes = [
         Node("start", "start"),
         Node(
-            "queue",
-            "queue",
-            {"metadata": {"wait_time": {**wait, "measurement_refs": ["work"]}}},
+            id="queue",
+            type="queue",
+            wait_time={"ref": "work.wait_time"},
         ),
-        Node("copy", "queue", {"metadata": {"wait_time": wait}}),
+        Node(
+            id="copy",
+            type="queue",
+            wait_time={"ref": "work.wait_time"},
+        ),
         _work("work", 600),
         Node("end", "end"),
     ]

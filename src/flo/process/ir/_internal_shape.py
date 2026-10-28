@@ -24,6 +24,8 @@ def ir_to_internal_dict(ir: IR) -> dict[str, Any]:
         "resources": ir.resources,
         "locations": ir.locations,
         "render_intent": ir.render_intent,
+        "lead_time": ir.lead_time,
+        "extensions": ir.extensions,
     }
 
 
@@ -39,6 +41,19 @@ def ir_from_internal_dict(data: dict[str, Any]) -> IR:
                 type=node_data.get("type", ""),
                 attrs=node_data.get("attrs", {}),
                 subprocess_parent=node_data.get("subprocess_parent"),
+                name=node_data.get("name"),
+                description=node_data.get("description"),
+                lane=node_data.get("lane"),
+                location=node_data.get("location"),
+                consumes=node_data.get("consumes", []),
+                produces=node_data.get("produces", []),
+                performed_by=node_data.get("performed_by", []),
+                uses=node_data.get("uses", []),
+                value_class=node_data.get("value_class"),
+                cycle_time=node_data.get("cycle_time"),
+                wait_time=node_data.get("wait_time"),
+                changeover_time=node_data.get("changeover_time"),
+                extensions=node_data.get("extensions"),
             )
         )
 
@@ -54,10 +69,9 @@ def ir_from_internal_dict(data: dict[str, Any]) -> IR:
                 outcome=edge_data.get("outcome"),
                 route=edge_data.get("route"),
                 label=edge_data.get("label"),
-                edge_type=edge_data.get("edge_type"),
                 handoff=edge_data.get("handoff"),
                 rework=edge_data.get("rework"),
-                metadata=edge_data.get("metadata"),
+                extensions=edge_data.get("extensions"),
             )
         )
 
@@ -78,6 +92,8 @@ def ir_from_internal_dict(data: dict[str, Any]) -> IR:
         resources=data.get("resources"),
         locations=data.get("locations"),
         render_intent=data.get("render_intent"),
+        lead_time=data.get("lead_time"),
+        extensions=data.get("extensions"),
     )
 
 
@@ -98,6 +114,24 @@ def _node_to_dict(node: Node) -> dict[str, Any]:
     }
     if node.subprocess_parent is not None:
         output["subprocess_parent"] = node.subprocess_parent
+    for key in (
+        "name",
+        "description",
+        "lane",
+        "location",
+        "value_class",
+        "cycle_time",
+        "wait_time",
+        "changeover_time",
+        "extensions",
+    ):
+        value = getattr(node, key)
+        if value is not None:
+            output[key] = value
+    for key in ("consumes", "produces", "performed_by", "uses"):
+        value = getattr(node, key)
+        if value or not isinstance(value, list):
+            output[key] = value
     return output
 
 
@@ -111,12 +145,10 @@ def _edge_to_dict(edge: Edge) -> dict[str, Any]:
         output["route"] = edge.route
     if edge.label is not None:
         output["label"] = edge.label
-    if edge.edge_type is not None:
-        output["edge_type"] = edge.edge_type
     if edge.handoff is not None:
         output["handoff"] = edge.handoff
     if edge.rework is not None:
         output["rework"] = edge.rework
-    if edge.metadata is not None:
-        output["metadata"] = edge.metadata
+    if edge.extensions is not None:
+        output["extensions"] = edge.extensions
     return output

@@ -35,21 +35,20 @@ def test_node_to_schema_skips_non_dict_attrs():
     assert payload["nodes"][0] == {"id": "n", "kind": "task"}
 
 
-def test_edge_to_schema_omits_none_and_non_dict_metadata():
+def test_edge_to_schema_omits_absent_optional_fields():
     ir = IR(
         name="p",
         nodes=[],
         edges=[
-            Edge(source="a", target="b", metadata="not-dict"),
+            Edge(source="a", target="b"),
             Edge(
                 source="b",
                 target="c",
                 id="e2",
                 outcome="no",
                 label="reject",
-                edge_type="rework",
-                rework=True,
-                metadata={"m": 1},
+                rework={"reason": "Rejected"},
+                extensions={"example:m": 1},
             ),
         ],
     )
@@ -60,9 +59,8 @@ def test_edge_to_schema_omits_none_and_non_dict_metadata():
     assert second["id"] == "e2"
     assert second["outcome"] == "no"
     assert second["label"] == "reject"
-    assert second["edge_type"] == "rework"
-    assert second["rework"] is True
-    assert second["metadata"] == {"m": 1}
+    assert second["rework"] == {"reason": "Rejected"}
+    assert second["extensions"] == {"example:m": 1}
 
 
 def test_legacy_edges_from_node_attrs_handles_non_list_and_casts_targets():
@@ -99,13 +97,14 @@ def test_node_note_is_exported_when_present():
             Node(
                 id="n",
                 type="task",
-                attrs={"name": "Task", "note": "Internal follow-up required"},
+                name="Task",
+                description="Internal follow-up required",
             )
         ],
         edges=[],
     )
     payload = ir_to_schema_dict(ir)
-    assert payload["nodes"][0]["note"] == "Internal follow-up required"
+    assert payload["nodes"][0]["description"] == "Internal follow-up required"
 
 
 def test_node_inputs_and_outputs_are_exported_when_present():
@@ -115,18 +114,16 @@ def test_node_inputs_and_outputs_are_exported_when_present():
             Node(
                 id="mix",
                 type="task",
-                attrs={
-                    "name": "Mix",
-                    "inputs": ["flour", "water"],
-                    "outputs": ["dough"],
-                },
+                name="Mix",
+                consumes=["flour", "water"],
+                produces=["dough"],
             )
         ],
         edges=[],
     )
     payload = ir_to_schema_dict(ir)
-    assert payload["nodes"][0]["inputs"] == ["flour", "water"]
-    assert payload["nodes"][0]["outputs"] == ["dough"]
+    assert payload["nodes"][0]["consumes"] == ["flour", "water"]
+    assert payload["nodes"][0]["produces"] == ["dough"]
 
 
 def test_node_location_workers_and_equipment_are_exported_when_present():
@@ -136,20 +133,18 @@ def test_node_location_workers_and_equipment_are_exported_when_present():
             Node(
                 id="mix",
                 type="task",
-                attrs={
-                    "name": "Mix",
-                    "location": "prep_bench",
-                    "workers": ["lead_baker"],
-                    "equipment": ["mixer"],
-                },
+                name="Mix",
+                location="prep_bench",
+                performed_by=["lead_baker"],
+                uses=["mixer"],
             )
         ],
         edges=[],
     )
     payload = ir_to_schema_dict(ir)
     assert payload["nodes"][0]["location"] == "prep_bench"
-    assert payload["nodes"][0]["workers"] == ["lead_baker"]
-    assert payload["nodes"][0]["equipment"] == ["mixer"]
+    assert payload["nodes"][0]["performed_by"] == ["lead_baker"]
+    assert payload["nodes"][0]["uses"] == ["mixer"]
 
 
 def test_node_canonical_relations_are_exported_when_present():
@@ -159,13 +154,11 @@ def test_node_canonical_relations_are_exported_when_present():
             Node(
                 id="mix",
                 type="task",
-                attrs={
-                    "name": "Mix",
-                    "consumes": ["flour", "water"],
-                    "produces": ["dough"],
-                    "performed_by": ["lead_baker"],
-                    "uses": ["mixer"],
-                },
+                name="Mix",
+                consumes=["flour", "water"],
+                produces=["dough"],
+                performed_by=["lead_baker"],
+                uses=["mixer"],
             )
         ],
         edges=[],
@@ -181,74 +174,66 @@ def test_edge_handoff_is_exported_when_present():
     ir = IR(
         name="p",
         nodes=[Node(id="a", type="start"), Node(id="b", type="end")],
-        edges=[Edge(source="a", target="b", handoff=True)],
+        edges=[Edge(source="a", target="b", handoff={"type": "responsibility"})],
     )
     payload = ir_to_schema_dict(ir)
-    assert payload["edges"][0]["handoff"] is True
+    assert payload["edges"][0]["handoff"] == {"type": "responsibility"}
 
 
-def test_process_metadata_is_exported_when_present():
+def test_process_evidence_and_entities_are_exported_when_present():
+    lead_time = {
+        "basis": "target",
+        "primary": "target",
+        "results": {"target": {"method": "mean", "value": 3600, "unit": "s"}},
+    }
+    items = [{"id": "flour", "name": "Flour", "kind": "material"}]
+    resources = [
+        {"id": "oven", "name": "Oven", "kind": "equipment"},
+        {"id": "baker", "name": "Baker", "kind": "person"},
+    ]
+    locations = [{"id": "kitchen", "name": "Kitchen"}]
     ir = IR(
         name="cookie_process",
-        nodes=[Node(id="n", type="task", attrs={"name": "Task"})],
+        nodes=[],
         edges=[],
-        process_metadata={
-            "cycle_time_seconds": {"target": 3600},
-            "yield_fraction": {"target": 0.95},
-            "materials": [{"id": "flour"}],
-            "equipment": [{"id": "oven"}],
-            "locations": [{"id": "kitchen"}],
-            "workers": [{"id": "baker"}],
-        },
+        lead_time=lead_time,
+        extensions={"example:yield_fraction": {"target": 0.95}},
+        items=items,
+        resources=resources,
+        locations=locations,
     )
-    payload = ir_to_schema_dict(ir)
-    assert payload["process"]["metadata"]["cycle_time_seconds"]["target"] == 3600
-    assert payload["process"]["metadata"]["yield_fraction"]["target"] == 0.95
-    assert payload["process"]["metadata"]["materials"][0]["id"] == "flour"
-    assert payload["process"]["metadata"]["equipment"][0]["id"] == "oven"
-    assert payload["process"]["metadata"]["locations"][0]["id"] == "kitchen"
-    assert payload["process"]["metadata"]["workers"][0]["id"] == "baker"
+    process = ir_to_schema_dict(ir)["process"]
+    assert process["lead_time"] == lead_time
+    assert process["extensions"]["example:yield_fraction"]["target"] == 0.95
+    assert process["items"] == items
+    assert process["resources"] == resources
+    assert process["locations"] == locations
 
 
-def test_grouped_materials_are_exported_when_present():
+def test_item_group_annotations_are_exported_as_extensions():
+    # Grouping is annotation; typed item identity remains available to consumers.
+    groups = {
+        "dry": {"name": "Dry Ingredients", "items": ["flour"]},
+        "wet": {
+            "name": "Wet Ingredients",
+            "dairy": {"name": "Dairy", "items": ["butter"]},
+        },
+    }
     ir = IR(
         name="cookie_process",
-        nodes=[Node(id="n", type="task", attrs={"name": "Task"})],
+        nodes=[],
         edges=[],
-        process_metadata={
-            "materials": {
-                "dry": {
-                    "name": "Dry Ingredients",
-                    "items": [
-                        {"id": "flour", "name": "Flour"},
-                    ],
-                },
-                "wet": {
-                    "name": "Wet Ingredients",
-                    "dairy": {
-                        "name": "Dairy",
-                        "items": [
-                            {"id": "butter", "name": "Butter"},
-                        ],
-                    },
-                },
-            }
-        },
+        items=[
+            {"id": item, "name": item.title(), "kind": "material"}
+            for item in ("flour", "butter")
+        ],
+        extensions={"example:item_groups": groups},
     )
-    payload = ir_to_schema_dict(ir)
-    assert (
-        payload["process"]["metadata"]["materials"]["dry"]["name"] == "Dry Ingredients"
-    )
-    assert (
-        payload["process"]["metadata"]["materials"]["dry"]["items"][0]["id"] == "flour"
-    )
-    assert (
-        payload["process"]["metadata"]["materials"]["wet"]["name"] == "Wet Ingredients"
-    )
-    assert (
-        payload["process"]["metadata"]["materials"]["wet"]["dairy"]["name"] == "Dairy"
-    )
-    assert (
-        payload["process"]["metadata"]["materials"]["wet"]["dairy"]["items"][0]["id"]
-        == "butter"
-    )
+    process = ir_to_schema_dict(ir)["process"]
+    exported = process["extensions"]["example:item_groups"]
+    assert exported["dry"]["name"] == "Dry Ingredients"
+    assert exported["dry"]["items"] == ["flour"]
+    assert exported["wet"]["name"] == "Wet Ingredients"
+    assert exported["wet"]["dairy"]["name"] == "Dairy"
+    assert exported["wet"]["dairy"]["items"] == ["butter"]
+    assert {item["id"] for item in process["items"]} == {"flour", "butter"}

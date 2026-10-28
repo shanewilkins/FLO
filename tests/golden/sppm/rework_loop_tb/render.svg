@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="678" height="922" viewBox="0 0 678 922" data-flo-artifact-kind="svg" data-flo-backend="svg" data-flo-diagram="sppm" data-flo-layout-engine="elk" role="img" aria-labelledby="flo-svg-title flo-svg-description" data-sppm-publication-page-id="main-p1">
+<svg xmlns="http://www.w3.org/2000/svg" width="674" height="1004" viewBox="0 0 674 1004" data-flo-artifact-kind="svg" data-flo-backend="svg" data-flo-diagram="sppm" data-flo-layout-engine="elk" role="img" aria-labelledby="flo-svg-title flo-svg-description" data-sppm-publication-page-id="main-p1">
 <defs>
 <marker id="flo-sppm-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
 <path d="M0,0 L8,3 L0,6 z" fill="#475569" />
@@ -12,86 +12,88 @@
 <metadata id="flo-theme-tokens" data-flo-theme="default">{"canvas":{"background":"#fffdf8"},"name":"default","roles":{"annotation":{"border":"#666666","detail_text":"#475569","fill":"#fffdf8","title_text":"#0f172a"},"boundary":{"border":"gray","detail_text":"gray","fill":"#FFFFFF","title_text":"gray"},"callout":{"border":"#666666","detail_text":"#475569","fill":"#ffffff","title_text":"#0f172a"},"connector":{"border":"#475569","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"decision":{"border":"#285B8F","detail_text":"#475569","fill":"#E3EEF7","title_text":"#0f172a"},"information_route":{"border":"royalblue","detail_text":"royalblue","fill":"#FFFFFF","title_text":"royalblue"},"lane":{"border":"#cbd5e1","detail_text":"#475569","fill":"#f8fafc","title_text":"#334155"},"location_processing":{"border":"firebrick","detail_text":"#475569","fill":"mistyrose","title_text":"#0f172a"},"location_staging":{"border":"seagreen","detail_text":"#475569","fill":"honeydew","title_text":"#0f172a"},"location_storage":{"border":"goldenrod","detail_text":"#475569","fill":"lemonchiffon","title_text":"#0f172a"},"location_support":{"border":"deepskyblue","detail_text":"#475569","fill":"azure","title_text":"#0f172a"},"location_transit":{"border":"slategray","detail_text":"#475569","fill":"mintcream","title_text":"#0f172a"},"location_unknown":{"border":"steelblue","detail_text":"#475569","fill":"aliceblue","title_text":"#0f172a"},"material_route":{"border":"tomato","detail_text":"tomato","fill":"#FFFFFF","title_text":"tomato"},"nva":{"border":"#C62828","detail_text":"#475569","fill":"#EF9A9A","title_text":"#0f172a"},"people_route":{"border":"royalblue","detail_text":"royalblue","fill":"#FFFFFF","title_text":"royalblue"},"publication":{"border":"#cbd5e1","detail_text":"#334155","fill":"#fffdf8","title_text":"#0f172a"},"queue":{"border":"#E65100","detail_text":"#475569","fill":"#FFB74D","title_text":"#0f172a"},"rework":{"border":"#b91c1c","detail_text":"#b91c1c","fill":"#FFFFFF","title_text":"#b91c1c"},"rnva":{"border":"#F9A825","detail_text":"#475569","fill":"#FFF176","title_text":"#0f172a"},"start_end":{"border":"#333333","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"subprocess":{"border":"#607D8B","detail_text":"#475569","fill":"#F8FAFC","title_text":"#0f172a"},"surface":{"border":"#cbd5e1","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"token":{"border":"#455A64","detail_text":"#455A64","fill":"#ffffff","title_text":"#455A64"},"unknown":{"border":"#9E9E9E","detail_text":"#475569","fill":"#FFFFFF","title_text":"#0f172a"},"va":{"border":"#2E7D32","detail_text":"#475569","fill":"#81C784","title_text":"#0f172a"}},"typography":{"font_family":["Helvetica"],"scale":1.0}}</metadata>
 <rect width="100%" height="100%" fill="#fffdf8" />
 <g data-sppm-publication-band="header">
-<line x1="28.0" y1="28.0" x2="650.0" y2="28.0" stroke="#cbd5e1" stroke-width="1" />
+<line x1="28.0" y1="28.0" x2="646.0" y2="28.0" stroke="#cbd5e1" stroke-width="1" />
 <text x="28.0" y="52.0" font-family="Helvetica" font-size="22" font-weight="700" fill="#0f172a">Invoice Review (with rework)</text>
 <text x="28.0" y="76.0" font-family="Helvetica" font-size="12" fill="#334155">Process: invoice_review_v1</text>
-<text x="28.0" y="92.0" font-family="Helvetica" font-size="12" fill="#334155">Subprocess View: parent-only</text>
-<text x="28.0" y="108.0" font-family="Helvetica" font-size="12" fill="#334155">Nodes: 6</text>
-<text x="28.0" y="124.0" font-family="Helvetica" font-size="12" fill="#334155">Edges: 6</text>
+<text x="28.0" y="92.0" font-family="Helvetica" font-size="12" fill="#334155">Rework decision → rework: unspecified</text>
+<text x="28.0" y="108.0" font-family="Helvetica" font-size="12" fill="#334155">Rework rework → review: unspecified</text>
+<text x="28.0" y="124.0" font-family="Helvetica" font-size="12" fill="#334155">Subprocess View: parent-only</text>
+<text x="28.0" y="140.0" font-family="Helvetica" font-size="12" fill="#334155">Nodes: 6</text>
+<text x="28.0" y="156.0" font-family="Helvetica" font-size="12" fill="#334155">Edges: 6</text>
 </g>
-<g transform="translate(28.0,148.0)">
+<g transform="translate(28.0,180.0)">
 <g data-lane-id="requester">
-<rect x="48.0" y="37.0" width="564.0" height="142.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
-<text x="56.0" y="31.0" font-family="Helvetica" font-size="12" font-weight="700" fill="#334155">Requester</text>
+<rect x="23.0" y="37.0" width="574.0" height="162.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+<text x="31.0" y="31.0" font-family="Helvetica" font-size="12" font-weight="700" fill="#334155">Requester</text>
 </g>
 <g data-lane-id="finance">
-<rect x="48.0" y="245.0" width="214.0" height="142.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
-<text x="56.0" y="239.0" font-family="Helvetica" font-size="12" font-weight="700" fill="#334155">Finance</text>
+<rect x="23.0" y="265.0" width="224.0" height="162.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+<text x="31.0" y="259.0" font-family="Helvetica" font-size="12" font-weight="700" fill="#334155">Finance</text>
 </g>
 <g data-lane-id="unassigned">
-<rect x="33.0" y="453.0" width="538.0" height="278.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
-<text x="41.0" y="447.0" font-family="Helvetica" font-size="12" font-weight="700" fill="#334155">unassigned</text>
+<rect x="49.0" y="493.0" width="474.0" height="278.0" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+<text x="57.0" y="487.0" font-family="Helvetica" font-size="12" font-weight="700" fill="#334155">unassigned</text>
 </g>
 <g data-edge-source="decision" data-edge-target="approve" data-edge-kind="direct">
-<polyline points="416.0,555.0 416.0,565.0 493.0,565.0 493.0,667.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
-<rect x="477.0" y="599.0" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
-<text x="491.0" y="612.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">yes</text>
+<polyline points="140.0,595.0 140.0,605.0 217.0,605.0 217.0,707.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+<rect x="201.0" y="639.0" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
+<text x="215.0" y="652.0" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">true</text>
 </g>
 <g data-edge-source="decision" data-edge-target="rework" data-edge-kind="rework" data-edge-rework-variant="branch">
-<polyline points="416.0,555.0 416.0,746.0 622.0,746.0 622.0,12.0 505.0,12.0 505.0,49.0" fill="none" stroke="#b91c1c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
-<rect x="402.0" y="569.7" width="28.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
-<text x="416.0" y="582.7" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">no</text>
+<polyline points="140.0,595.0 140.0,796.0 618.0,796.0 618.0,12.0 140.0,12.0 140.0,69.0" fill="none" stroke="#b91c1c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
+<rect x="122.5" y="611.1" width="35.0" height="18.0" rx="7" fill="#fffdf8" fill-opacity="0.95" />
+<text x="140.0" y="624.1" text-anchor="middle" font-family="Helvetica" font-size="12" fill="#0f172a">false</text>
 </g>
 <g data-edge-source="review" data-edge-target="decision" data-edge-kind="direct">
-<polyline points="155.0,375.0 155.0,402.0 416.0,402.0 416.0,465.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+<polyline points="140.0,395.0 140.0,505.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
 </g>
-<g data-edge-source="rework" data-edge-target="approve" data-edge-kind="direct">
-<polyline points="505.0,167.0 505.0,621.0 493.0,621.0 493.0,667.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+<g data-edge-source="rework" data-edge-target="review" data-edge-kind="rework" data-edge-rework-variant="return">
+<polyline points="140.0,69.0 140.0,59.0 35.0,59.0 35.0,405.0 140.0,405.0 140.0,395.0" fill="none" stroke="#b91c1c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-rework-arrow)" stroke-dasharray="2 6" />
 </g>
 <g data-edge-source="start" data-edge-target="submit" data-edge-kind="direct">
-<polyline points="111.0,555.0 111.0,746.0 23.0,746.0 23.0,22.0 155.0,22.0 155.0,49.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+<polyline points="445.0,595.0 445.0,786.0 607.0,786.0 607.0,22.0 490.0,22.0 490.0,69.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
 </g>
 <g data-edge-source="submit" data-edge-target="review" data-edge-kind="direct">
-<polyline points="155.0,167.0 155.0,257.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
+<polyline points="490.0,187.0 490.0,214.0 140.0,214.0 140.0,277.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
 </g>
 <g data-node-id="start" data-node-kind="start">
-<rect x="45.0" y="503.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
-<text x="111.0" y="534.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Start</text>
+<rect x="379.0" y="543.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="445.0" y="574.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Start</text>
 </g>
 <g data-node-id="submit" data-node-kind="task">
-<rect x="60.0" y="49.0" width="190.0" height="118.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
-<path data-node-header="top-rounded" d="M 72.0 49.0 L 238.0 49.0 Q 250.0 49.0 250.0 61.0 L 250.0 83.0 L 60.0 83.0 L 60.0 61.0 Q 60.0 49.0 72.0 49.0 Z" fill="#FFFFFF" stroke="none" />
-<line x1="60.0" y1="83.0" x2="250.0" y2="83.0" stroke="#9E9E9E" stroke-width="1" opacity="0.35" />
-<text x="155.0" y="67.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Submit Invoice</text>
-<text x="78.0" y="101.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">P/T: ?</text>
-<text x="78.0" y="115.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">W/T: ?</text>
-<text x="78.0" y="129.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">S/T: ?</text>
+<rect x="395.0" y="69.0" width="190.0" height="118.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 407.0 69.0 L 573.0 69.0 Q 585.0 69.0 585.0 81.0 L 585.0 103.0 L 395.0 103.0 L 395.0 81.0 Q 395.0 69.0 407.0 69.0 Z" fill="#FFFFFF" stroke="none" />
+<line x1="395.0" y1="103.0" x2="585.0" y2="103.0" stroke="#9E9E9E" stroke-width="1" opacity="0.35" />
+<text x="490.0" y="87.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Submit Invoice</text>
+<text x="413.0" y="121.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">P/T: ?</text>
+<text x="413.0" y="135.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">W/T: ?</text>
+<text x="413.0" y="149.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">S/T: ?</text>
 </g>
 <g data-node-id="review" data-node-kind="task">
-<rect x="60.0" y="257.0" width="190.0" height="118.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
-<path data-node-header="top-rounded" d="M 72.0 257.0 L 238.0 257.0 Q 250.0 257.0 250.0 269.0 L 250.0 291.0 L 60.0 291.0 L 60.0 269.0 Q 60.0 257.0 72.0 257.0 Z" fill="#FFFFFF" stroke="none" />
-<line x1="60.0" y1="291.0" x2="250.0" y2="291.0" stroke="#9E9E9E" stroke-width="1" opacity="0.35" />
-<text x="155.0" y="275.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Review Invoice</text>
-<text x="78.0" y="309.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">P/T: ?</text>
-<text x="78.0" y="323.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">W/T: ?</text>
-<text x="78.0" y="337.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">S/T: ?</text>
+<rect x="45.0" y="277.0" width="190.0" height="118.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 57.0 277.0 L 223.0 277.0 Q 235.0 277.0 235.0 289.0 L 235.0 311.0 L 45.0 311.0 L 45.0 289.0 Q 45.0 277.0 57.0 277.0 Z" fill="#FFFFFF" stroke="none" />
+<line x1="45.0" y1="311.0" x2="235.0" y2="311.0" stroke="#9E9E9E" stroke-width="1" opacity="0.35" />
+<text x="140.0" y="295.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Review Invoice</text>
+<text x="63.0" y="329.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">P/T: ?</text>
+<text x="63.0" y="343.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">W/T: ?</text>
+<text x="63.0" y="357.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">S/T: ?</text>
 </g>
 <g data-node-id="decision" data-node-kind="decision">
-<polygon points="416.0,465.0 495.0,510.0 416.0,555.0 337.0,510.0" fill="#E3EEF7" stroke="#285B8F" stroke-width="2" />
-<text x="416.0" y="515.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Valid?</text>
+<polygon points="140.0,505.0 219.0,550.0 140.0,595.0 61.0,550.0" fill="#E3EEF7" stroke="#285B8F" stroke-width="2" />
+<text x="140.0" y="555.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Valid?</text>
 </g>
 <g data-node-id="rework" data-node-kind="task">
-<rect x="410.0" y="49.0" width="190.0" height="118.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
-<path data-node-header="top-rounded" d="M 422.0 49.0 L 588.0 49.0 Q 600.0 49.0 600.0 61.0 L 600.0 83.0 L 410.0 83.0 L 410.0 61.0 Q 410.0 49.0 422.0 49.0 Z" fill="#FFFFFF" stroke="none" />
-<line x1="410.0" y1="83.0" x2="600.0" y2="83.0" stroke="#9E9E9E" stroke-width="1" opacity="0.35" />
-<text x="505.0" y="67.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Request Rework</text>
-<text x="428.0" y="101.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">P/T: ?</text>
-<text x="428.0" y="115.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">W/T: ?</text>
-<text x="428.0" y="129.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">S/T: ?</text>
+<rect x="45.0" y="69.0" width="190.0" height="118.0" rx="12" fill="white" stroke="#9E9E9E" stroke-width="2" />
+<path data-node-header="top-rounded" d="M 57.0 69.0 L 223.0 69.0 Q 235.0 69.0 235.0 81.0 L 235.0 103.0 L 45.0 103.0 L 45.0 81.0 Q 45.0 69.0 57.0 69.0 Z" fill="#FFFFFF" stroke="none" />
+<line x1="45.0" y1="103.0" x2="235.0" y2="103.0" stroke="#9E9E9E" stroke-width="1" opacity="0.35" />
+<text x="140.0" y="87.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Request Rework</text>
+<text x="63.0" y="121.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">P/T: ?</text>
+<text x="63.0" y="135.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">W/T: ?</text>
+<text x="63.0" y="149.0" text-anchor="start" font-family="Helvetica" font-size="12" font-weight="400" fill="#475569">S/T: ?</text>
 </g>
 <g data-node-id="approve" data-node-kind="end">
-<rect x="427.0" y="667.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
-<text x="493.0" y="698.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Approved</text>
+<rect x="151.0" y="707.0" width="132.0" height="52.0" rx="18" fill="#FFFFFF" stroke="#333333" stroke-width="2" />
+<text x="217.0" y="738.0" text-anchor="middle" font-family="Helvetica" font-size="14" font-weight="600" fill="#0f172a">Approved</text>
 </g>
 </g>
 </svg>

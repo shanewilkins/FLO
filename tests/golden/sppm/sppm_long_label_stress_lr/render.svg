@@ -15,11 +15,13 @@
 <line x1="28.0" y1="28.0" x2="1864.0" y2="28.0" stroke="#cbd5e1" stroke-width="1" />
 <text x="28.0" y="52.0" font-family="Helvetica" font-size="22" font-weight="700" fill="#0f172a">SPPM Long Label Stress Demonstration for Predictable Truncation Behavior</text>
 <text x="28.0" y="76.0" font-family="Helvetica" font-size="12" fill="#334155">Process: sppm_long_label_stress</text>
-<text x="28.0" y="92.0" font-family="Helvetica" font-size="12" fill="#334155">Subprocess View: parent-only</text>
-<text x="28.0" y="108.0" font-family="Helvetica" font-size="12" fill="#334155">Nodes: 8</text>
-<text x="28.0" y="124.0" font-family="Helvetica" font-size="12" fill="#334155">Edges: 8</text>
+<text x="28.0" y="92.0" font-family="Helvetica" font-size="12" fill="#334155">Rework quality_gate → rework: unspecified</text>
+<text x="28.0" y="108.0" font-family="Helvetica" font-size="12" fill="#334155">Rework rework → intake_wait_queue: unspecified</text>
+<text x="28.0" y="124.0" font-family="Helvetica" font-size="12" fill="#334155">Subprocess View: parent-only</text>
+<text x="28.0" y="140.0" font-family="Helvetica" font-size="12" fill="#334155">Nodes: 8</text>
+<text x="28.0" y="156.0" font-family="Helvetica" font-size="12" fill="#334155">Edges: 8</text>
 </g>
-<g transform="translate(28.0,148.0)">
+<g transform="translate(28.0,180.0)">
 <g data-edge-source="intake" data-edge-target="quality_gate" data-edge-kind="direct">
 <polyline points="765.0,122.0 821.0,122.0" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#flo-sppm-arrow)" />
 </g>
@@ -130,13 +132,11 @@
 </g>
 </g>
 <g data-sppm-publication-band="footer">
-<line x1="28.0" y1="658.0" x2="1864.0" y2="658.0" stroke="#cbd5e1" stroke-width="1" />
-<text x="28.0" y="682.0" font-family="Helvetica" font-size="12" fill="#334155">Processing Time: 32 min</text>
-<text x="28.0" y="698.0" font-family="Helvetica" font-size="12" fill="#334155">Waiting Time: 27 min</text>
-<text x="28.0" y="714.0" font-family="Helvetica" font-size="12" fill="#334155">Setup Time: ?</text>
-<text x="28.0" y="730.0" font-family="Helvetica" font-size="12" fill="#334155">Lead Time: Unavailable</text>
-<text x="28.0" y="746.0" font-family="Helvetica" font-size="12" fill="#334155">Very Long Operational Throughput Metric Name: Exceptionally verbose value text for clipping checks</text>
-<text x="28.0" y="762.0" font-family="Helvetica" font-size="12" fill="#334155">Timing diagnostics available; run flo inspect for details.</text>
-<text x="28.0" y="778.0" font-family="Helvetica" font-size="12" fill="#334155">This footer note is intentionally long so truncation policy behavior is easy to inspect.</text>
+<line x1="28.0" y1="690.0" x2="1864.0" y2="690.0" stroke="#cbd5e1" stroke-width="1" />
+<text x="28.0" y="714.0" font-family="Helvetica" font-size="12" fill="#334155">Processing Time: 32 min</text>
+<text x="28.0" y="730.0" font-family="Helvetica" font-size="12" fill="#334155">Waiting Time: 27 min</text>
+<text x="28.0" y="746.0" font-family="Helvetica" font-size="12" fill="#334155">Setup Time: ?</text>
+<text x="28.0" y="762.0" font-family="Helvetica" font-size="12" fill="#334155">Modeled Lead Time: Unavailable</text>
+<text x="28.0" y="778.0" font-family="Helvetica" font-size="12" fill="#334155">Timing diagnostics available; run flo inspect for details.</text>
 </g>
 </svg>

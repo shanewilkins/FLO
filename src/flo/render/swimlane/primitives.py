@@ -124,12 +124,7 @@ def _node_role(kind: str, *, raw_node: dict[str, Any], options: RenderOptions) -
         return options.resolved_theme.role("queue")
     if kind == "subprocess":
         return options.resolved_theme.role("subprocess")
-    metadata = raw_node.get("metadata")
-    value_class = (
-        str(metadata.get("value_class") or "").strip().lower()
-        if isinstance(metadata, dict)
-        else ""
-    )
+    value_class = str(raw_node.get("value_class") or "").strip().lower()
     return options.resolved_theme.role(
         value_class if value_class in {"va", "rnva", "nva"} else "surface"
     )

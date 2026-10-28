@@ -18,11 +18,26 @@ def _process(quantity, *, collection="items"):
         name="Quantities",
         nodes=[Node(id="start", type="start"), Node(id="end", type="end")],
         edges=[Edge(source="start", target="end")],
-        process_metadata={
-            collection: [
-                {"id": "supply", "name": "Supply", "kind": kind, "quantity": quantity}
-            ]
-        },
+        **(
+            {
+                collection: [
+                    {
+                        "id": "supply",
+                        "name": "Supply",
+                        "kind": kind,
+                        "quantity": quantity,
+                    }
+                ]
+            }
+            if collection in {"items", "resources", "locations"}
+            else {
+                "process_metadata": {
+                    collection: [
+                        {"id": "supply", "name": "Supply", "quantity": quantity}
+                    ]
+                }
+            }
+        ),
     )
 
 
@@ -60,7 +75,11 @@ def test_equivalent_measures_preserve_authored_values_and_units(
     )
     before = deepcopy(process)
 
-    validate_ir(process)
+    if collection in {"materials", "equipment", "workers"}:
+        with pytest.raises(ValidationError, match="E1201"):
+            validate_ir(process)
+    else:
+        validate_ir(process)
 
     assert process == before
 

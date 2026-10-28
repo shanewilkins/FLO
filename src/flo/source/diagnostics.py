@@ -50,6 +50,7 @@ def source_diagnostic(
     document: dict | None = None,
 ) -> SourceDiagnostic:
     """Build a structured, best-available source diagnostic."""
+    message = _coded_source_message(message, cause)
     if not include_chain:
         include_chain = _include_chain_from(cause)
     typed_path = _typed_error_path(cause)
@@ -189,6 +190,18 @@ def source_aware_message(
     return diagnostic.render()
 
 
+def _coded_source_message(message: str, cause: BaseException | None) -> str:
+    """Retain specific codes and adapt generic boundary error categories."""
+    if _CODE_RE.search(message) is not None:
+        return message
+    while cause is not None:
+        code = getattr(cause, "code", None)
+        if isinstance(code, str) and _CODE_RE.fullmatch(code):
+            return f"{code}: {message}"
+        cause = cause.__cause__
+    return message
+
+
 def _typed_error_path(cause: BaseException | None) -> tuple:
     while cause is not None:
         location = getattr(cause, "location", None)
@@ -226,7 +239,12 @@ def _error_origin(
         _source_node_path(document.get("steps", []), match.group(1)) if match else None
     )
     if node_path is not None:
-        return composition.origins.get(node_path), path
+        origin = composition.origins.get(node_path)
+        field = _field_name_from_message(message)
+        if field is not None:
+            declaration = origin.location if origin is not None else node_path
+            return origin, (*declaration, field)
+        return origin, path
     return None, path
 
 
@@ -255,21 +273,13 @@ def _authored_quantity_path(content: str, path: tuple) -> tuple:
 
 
 def _authored_collection_path(document: object, path: tuple) -> tuple:
-    if not path or path[0] not in {
-        "items",
-        "resources",
-        "locations",
-        "materials",
-        "equipment",
-        "workers",
-    }:
+    if not path or path[0] not in {"items", "resources", "locations"}:
         return path
-    for prefix in ((), ("process",), ("process", "metadata")):
-        container = document
-        for key in prefix:
-            container = container.get(key) if isinstance(container, dict) else None
-        if isinstance(container, dict) and path[0] in container:
-            return (*prefix, *path)
+    if isinstance(document, dict) and path[0] in document:
+        return path
+    process = document.get("process") if isinstance(document, dict) else None
+    if isinstance(process, dict) and path[0] in process:
+        return ("process", *path)
     return path
 
 
@@ -427,6 +437,9 @@ def _find_indexed_path_line(
 def _field_name_from_message(message: str) -> str | None:
     if "E1025" in message:
         return "kind"
+    node = _NODE_RE.search(message)
+    if node is not None:
+        message = message[node.end() :]
     candidates = (
         "wait_before",
         "crossover_time",
@@ -454,7 +467,12 @@ def _field_name_from_message(message: str) -> str | None:
 
 
 def _edge_field_name(message: str) -> str | None:
-    for field_name in ("outcome", "route", "edge_type", "rework"):
+    edge = _EDGE_RE.search(message)
+    if edge is not None:
+        # Step IDs may themselves be "route", "handoff", or "rework".
+        # Only the text describing the violation identifies its field.
+        message = message[edge.end() :]
+    for field_name in ("outcome", "route", "edge_type", "handoff", "rework"):
         if field_name in message:
             return field_name
     return None
@@ -480,14 +498,18 @@ def _find_field_in_node_block(
 
 
 def _field_path_suffix(message: str, field_name: str) -> str:
-    if f"metadata.{field_name}" in message or field_name in {
-        "wait_time",
-        "cycle_time",
-        "changeover_time",
-        "crossover",
-        "transfer",
-        "buffer_capacity",
-    }:
+    if f"metadata.{field_name}" in message or (
+        "metadata" in message
+        and field_name
+        in {
+            "wait_time",
+            "cycle_time",
+            "changeover_time",
+            "crossover",
+            "transfer",
+            "buffer_capacity",
+        }
+    ):
         return f"metadata.{field_name}"
     return field_name
 
@@ -571,8 +593,7 @@ def _suggestion_for_code(message: str) -> str | None:
         "E0202": "Declare at least two named decision outcomes and their targets.",
         "E0205": "Name the target step directly or add a target field.",
         "E0206": "Add a non-empty target step ID to this outcome branch.",
-        "E0209": "Use the YAML boolean true or false without quotes.",
-        "E0210": "Replace this value with a metadata object or remove it.",
+        "E0209": "Define a structured handoff or rework object.",
         "E0211": "Move routes to a branch step.",
         "E0212": "Declare at least two branch routes and their targets.",
         "E0214": "Move branch configuration to a branch step.",
@@ -580,7 +601,6 @@ def _suggestion_for_code(message: str) -> str | None:
         "E0216": "Use dispatch, probabilistic, external, or unspecified as the branch mode.",
         "E0217": "Name the branch policy or remove the policy field.",
         "E0218": "List each eligible resource ID once, using non-empty strings.",
-        "E0219": "Keep wait_before and remove the task wait_time alias.",
         "E1020": "Add a unique outcome to every transition leaving the decision.",
         "E1022": "Remove the outcome or make the transition source a decision.",
         "E1023": "Target a process step instead of the start boundary.",

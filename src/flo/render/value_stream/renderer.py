@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from html import escape
 from typing import Any
 
 from flo.process.analysis import ValueStreamFlow, project_value_stream
+from flo.process.durations import duration_seconds
 from flo.process.ir.models import IR
+from flo.process.measurements import measurement_reference, selected_result
 from flo.process.units import convert_duration
 
 from .._artifact import RenderArtifact
 from .._execution import GeometryObserver, SceneObserver
+from .._process_header import process_evidence_rows
 from ..layout_core.trace import LayoutObserver
 from ..options import RenderOptions
 from ..shared.svg import (
@@ -37,6 +40,10 @@ def render_value_stream_svg_artifact(
     if not isinstance(process, IR):
         raise TypeError("value_stream rendering requires canonical IR")
     projection = project_value_stream(process)
+    by_id = {node.id: node for node in process.nodes}
+    presentation_nodes = tuple(
+        _presentation_node(node, by_id) for node in projection.nodes
+    )
     if not projection.nodes:
         raise ValueError(
             "value-stream-no-process-nodes: no task, queue, subprocess, system task, "
@@ -44,7 +51,8 @@ def render_value_stream_svg_artifact(
         )
 
     width = max(720.0, 90.0 + len(projection.nodes) * (_CARD_WIDTH + _CARD_GAP))
-    height = 500.0
+    evidence = process_evidence_rows(process)
+    height = 500.0 + 18 * len(evidence)
     positions = {
         node.node_id: 65.0 + index * (_CARD_WIDTH + _CARD_GAP)
         for index, node in enumerate(projection.nodes)
@@ -72,7 +80,7 @@ def render_value_stream_svg_artifact(
         ),
         *(
             part
-            for node in projection.nodes
+            for node in presentation_nodes
             for part in _node_card(node, x=positions[node.node_id], options=options)
         ),
         *_render_flows(
@@ -87,6 +95,11 @@ def render_value_stream_svg_artifact(
             options=options,
         ),
         *_timeline(projection.modeled_lead_time_seconds, width=width, options=options),
+        *(
+            f'<text x="24" y="{490 + index * 18}" font-family="{theme.svg_font_family}" font-size="12">{escape(label)}: {escape(value)}</text>'
+            for index, (label, value) in enumerate(evidence)
+            if options.sppm_show_footer
+        ),
         "</svg>",
     ]
     warning = _partial_warning(projection.diagnostics)
@@ -213,6 +226,21 @@ def _node_card(node: Any, *, x: float, options: RenderOptions) -> list[str]:
         f'<text x="{x + 12:.1f}" y="{_CARD_TOP + 95:.1f}" font-family="{options.resolved_theme.svg_font_family}" font-size="{options.resolved_theme.font_size(10)}" fill="{role.detail_text}">{escape(metrics[2])}</text>',
         "</g>",
     ]
+
+
+def _presentation_node(node: Any, by_id: dict[str, Any]) -> Any:
+    source = by_id[node.node_id]
+    values = {}
+    for field in ("cycle_time", "wait_time", "changeover_time"):
+        profile = getattr(source, field)
+        reference = measurement_reference(profile)
+        if reference is not None and field == "wait_time":
+            target = by_id.get(reference[0])
+            profile = target.wait_time if target is not None else None
+        values[f"{field}_seconds"] = duration_seconds(
+            selected_result(profile, "primary")
+        )
+    return replace(node, **values)
 
 
 def _node_metrics(node: Any) -> tuple[str, str, str]:

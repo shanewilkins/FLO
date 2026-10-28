@@ -1,9 +1,17 @@
 import pytest
 
 from flo.errors import ValidationError
-from flo.process.ir.enums import VALUE_CLASS_NODE_KINDS
 from flo.process.ir.models import IR, Edge, Node
 from flo.process.ir.validate import validate_ir
+
+
+def _profile(value, unit):
+    return {
+        "basis": "observed",
+        "results": {"mean": {"method": "mean", "value": value, "unit": unit}},
+        "primary": "mean",
+        "analysis_input": "mean",
+    }
 
 
 def test_validate_ir_wrong_type():
@@ -321,7 +329,7 @@ def test_validate_ir_requires_at_least_one_end_node():
         validate_ir(ir)
 
 
-def test_validate_ir_material_count_requires_integer_value():
+def test_validate_ir_item_count_requires_integer_value():
     ir = IR(
         name="x",
         nodes=[
@@ -331,21 +339,20 @@ def test_validate_ir_material_count_requires_integer_value():
         edges=[
             Edge(source="start", target="end"),
         ],
-        process_metadata={
-            "materials": [
-                {
-                    "id": "egg",
-                    "name": "Egg",
-                    "quantity": {"kind": "count", "value": 2.5, "unit": "each"},
-                }
-            ]
-        },
+        items=[
+            {
+                "id": "egg",
+                "name": "Egg",
+                "quantity": {"kind": "count", "value": 2.5, "unit": "each"},
+                "kind": "material",
+            }
+        ],
     )
     with pytest.raises(ValidationError, match="E1206"):
         validate_ir(ir)
 
 
-def test_validate_ir_material_measure_requires_supported_unit():
+def test_validate_ir_item_measure_requires_supported_unit():
     ir = IR(
         name="x",
         nodes=[
@@ -355,21 +362,20 @@ def test_validate_ir_material_measure_requires_supported_unit():
         edges=[
             Edge(source="start", target="end"),
         ],
-        process_metadata={
-            "materials": [
-                {
-                    "id": "flour",
-                    "name": "Flour",
-                    "quantity": {"kind": "measure", "value": 250, "unit": "cups"},
-                }
-            ]
-        },
+        items=[
+            {
+                "id": "flour",
+                "name": "Flour",
+                "quantity": {"kind": "measure", "value": 250, "unit": "cups"},
+                "kind": "material",
+            }
+        ],
     )
     with pytest.raises(ValidationError, match="E1210"):
         validate_ir(ir)
 
 
-def test_validate_ir_accepts_material_count_and_measure_shapes():
+def test_validate_ir_accepts_item_count_and_measure_shapes():
     ir = IR(
         name="x",
         nodes=[
@@ -379,51 +385,46 @@ def test_validate_ir_accepts_material_count_and_measure_shapes():
         edges=[
             Edge(source="start", target="end"),
         ],
-        process_metadata={
-            "materials": [
-                {
-                    "id": "egg",
-                    "name": "Egg",
-                    "quantity": {
-                        "kind": "count",
-                        "value": 2,
-                        "unit": "each",
-                        "qualifier": "large",
-                    },
+        items=[
+            {
+                "id": "egg",
+                "name": "Egg",
+                "quantity": {
+                    "kind": "count",
+                    "value": 2,
+                    "unit": "each",
+                    "qualifier": "large",
                 },
-                {
-                    "id": "flour",
-                    "name": "Flour",
-                    "quantity": {
-                        "kind": "measure",
-                        "value": 250,
-                        "unit": "g",
-                        "canonical_value": 0.25,
-                        "canonical_unit": "kg",
-                    },
+                "kind": "material",
+            },
+            {
+                "id": "flour",
+                "name": "Flour",
+                "quantity": {
+                    "kind": "measure",
+                    "value": 250,
+                    "unit": "g",
+                    "canonical_value": 0.25,
+                    "canonical_unit": "kg",
                 },
-            ],
-            "equipment": [
-                {
-                    "id": "oven",
-                    "name": "Oven",
-                    "quantity": {"kind": "count", "value": 1, "unit": "each"},
-                }
-            ],
-            "locations": [
-                {
-                    "id": "kitchen",
-                    "name": "Kitchen",
-                }
-            ],
-            "workers": [
-                {
-                    "id": "baker",
-                    "name": "Baker",
-                    "quantity": {"kind": "count", "value": 1, "unit": "each"},
-                }
-            ],
-        },
+                "kind": "material",
+            },
+        ],
+        locations=[{"id": "kitchen", "name": "Kitchen"}],
+        resources=[
+            {
+                "id": "oven",
+                "name": "Oven",
+                "quantity": {"kind": "count", "value": 1, "unit": "each"},
+                "kind": "equipment",
+            },
+            {
+                "id": "baker",
+                "name": "Baker",
+                "quantity": {"kind": "count", "value": 1, "unit": "each"},
+                "kind": "person",
+            },
+        ],
     )
 
     # should not raise
@@ -440,22 +441,22 @@ def test_validate_ir_accepts_mm_and_cm_measure_units():
         edges=[
             Edge(source="start", target="end"),
         ],
-        process_metadata={
-            "materials": [
-                {
-                    "id": "wire_segment",
-                    "name": "Wire Segment",
-                    "quantity": {"kind": "measure", "value": 25, "unit": "cm"},
-                }
-            ],
-            "equipment": [
-                {
-                    "id": "spacer",
-                    "name": "Spacer",
-                    "quantity": {"kind": "measure", "value": 3, "unit": "mm"},
-                }
-            ],
-        },
+        items=[
+            {
+                "id": "wire_segment",
+                "name": "Wire Segment",
+                "quantity": {"kind": "measure", "value": 25, "unit": "cm"},
+                "kind": "material",
+            }
+        ],
+        resources=[
+            {
+                "id": "spacer",
+                "name": "Spacer",
+                "quantity": {"kind": "measure", "value": 3, "unit": "mm"},
+                "kind": "equipment",
+            }
+        ],
     )
 
     # should not raise
@@ -472,9 +473,7 @@ def test_validate_ir_locations_must_be_list_when_present():
         edges=[
             Edge(source="start", target="end"),
         ],
-        process_metadata={
-            "locations": {"id": "kitchen", "name": "Kitchen"},
-        },
+        locations={"id": "kitchen", "name": "Kitchen"},
     )
 
     with pytest.raises(ValidationError, match="E1201"):
@@ -491,21 +490,13 @@ def test_validate_ir_accepts_location_spatial_metadata():
         edges=[
             Edge(source="start", target="end"),
         ],
-        process_metadata={
-            "locations": [
-                {
-                    "id": "prep_bench",
-                    "name": "Prep Bench",
-                    "metadata": {
-                        "spatial": {
-                            "x": 3.0,
-                            "y": 2.0,
-                            "unit": "m",
-                        }
-                    },
-                }
-            ],
-        },
+        locations=[
+            {
+                "id": "prep_bench",
+                "name": "Prep Bench",
+                "metadata": {"spatial": {"x": 3.0, "y": 2.0, "unit": "m"}},
+            }
+        ],
     )
 
     validate_ir(ir)
@@ -521,20 +512,13 @@ def test_validate_ir_rejects_location_spatial_missing_coordinates():
         edges=[
             Edge(source="start", target="end"),
         ],
-        process_metadata={
-            "locations": [
-                {
-                    "id": "prep_bench",
-                    "name": "Prep Bench",
-                    "metadata": {
-                        "spatial": {
-                            "x": 3.0,
-                            "unit": "m",
-                        }
-                    },
-                }
-            ],
-        },
+        locations=[
+            {
+                "id": "prep_bench",
+                "name": "Prep Bench",
+                "metadata": {"spatial": {"x": 3.0, "unit": "m"}},
+            }
+        ],
     )
 
     with pytest.raises(ValidationError, match="E1215"):
@@ -551,28 +535,20 @@ def test_validate_ir_rejects_location_spatial_with_invalid_unit():
         edges=[
             Edge(source="start", target="end"),
         ],
-        process_metadata={
-            "locations": [
-                {
-                    "id": "prep_bench",
-                    "name": "Prep Bench",
-                    "metadata": {
-                        "spatial": {
-                            "x": 3.0,
-                            "y": 2.0,
-                            "unit": "yards",
-                        }
-                    },
-                }
-            ],
-        },
+        locations=[
+            {
+                "id": "prep_bench",
+                "name": "Prep Bench",
+                "metadata": {"spatial": {"x": 3.0, "y": 2.0, "unit": "yards"}},
+            }
+        ],
     )
 
     with pytest.raises(ValidationError, match="E1216"):
         validate_ir(ir)
 
 
-def test_validate_ir_accepts_grouped_and_nested_materials():
+def test_validate_ir_accepts_grouped_and_nested_items():
     ir = IR(
         name="x",
         nodes=[
@@ -582,34 +558,30 @@ def test_validate_ir_accepts_grouped_and_nested_materials():
         edges=[
             Edge(source="start", target="end"),
         ],
-        process_metadata={
-            "materials": {
-                "dry": {
-                    "name": "Dry Ingredients",
+        items={
+            "dry": {
+                "name": "Dry Ingredients",
+                "items": [
+                    {
+                        "id": "flour",
+                        "name": "Flour",
+                        "quantity": {"kind": "measure", "value": 250, "unit": "g"},
+                        "kind": "material",
+                    }
+                ],
+            },
+            "wet": {
+                "name": "Wet Ingredients",
+                "dairy": {
+                    "name": "Dairy",
                     "items": [
                         {
-                            "id": "flour",
-                            "name": "Flour",
-                            "quantity": {"kind": "measure", "value": 250, "unit": "g"},
-                        },
+                            "id": "butter",
+                            "name": "Butter",
+                            "quantity": {"kind": "measure", "value": 100, "unit": "g"},
+                            "kind": "material",
+                        }
                     ],
-                },
-                "wet": {
-                    "name": "Wet Ingredients",
-                    "dairy": {
-                        "name": "Dairy",
-                        "items": [
-                            {
-                                "id": "butter",
-                                "name": "Butter",
-                                "quantity": {
-                                    "kind": "measure",
-                                    "value": 100,
-                                    "unit": "g",
-                                },
-                            }
-                        ],
-                    },
                 },
             },
         },
@@ -629,11 +601,7 @@ def test_validate_ir_rejects_group_with_non_collection_value():
         edges=[
             Edge(source="start", target="end"),
         ],
-        process_metadata={
-            "materials": {
-                "dry": "not-a-list",
-            },
-        },
+        items={"dry": "not-a-list"},
     )
 
     with pytest.raises(ValidationError, match="E1201"):
@@ -650,13 +618,11 @@ def test_validate_ir_rejects_group_with_non_string_name():
         edges=[
             Edge(source="start", target="end"),
         ],
-        process_metadata={
-            "materials": {
-                "dry": {
-                    "name": 123,
-                    "items": [{"id": "flour", "name": "Flour"}],
-                },
-            },
+        items={
+            "dry": {
+                "name": 123,
+                "items": [{"id": "flour", "name": "Flour", "kind": "material"}],
+            }
         },
     )
 
@@ -694,7 +660,7 @@ def test_validate_ir_rejects_invalid_node_time_unit():
             Node(
                 id="mix",
                 type="task",
-                attrs={"metadata": {"cycle_time": {"value": 15, "unit": "weeks"}}},
+                cycle_time=_profile(15, "weeks"),
             ),
             Node(id="end", type="end"),
         ],
@@ -713,7 +679,7 @@ def test_validate_ir_rejects_non_object_node_time_metadata_value():
         name="x",
         nodes=[
             Node(id="start", type="start"),
-            Node(id="mix", type="task", attrs={"metadata": {"cycle_time": 15}}),
+            Node(id="mix", type="task", cycle_time=15),
             Node(id="end", type="end"),
         ],
         edges=[
@@ -734,10 +700,8 @@ def test_validate_ir_accepts_node_inputs_outputs_lists():
             Node(
                 id="mix",
                 type="task",
-                attrs={
-                    "inputs": ["flour", "water"],
-                    "outputs": ["dough"],
-                },
+                consumes=["flour", "water"],
+                produces=["dough"],
             ),
             Node(id="end", type="end"),
         ],
@@ -756,7 +720,7 @@ def test_validate_ir_rejects_non_list_node_inputs():
         name="x",
         nodes=[
             Node(id="start", type="start"),
-            Node(id="mix", type="task", attrs={"inputs": "flour"}),
+            Node(id="mix", type="task", consumes="flour"),
             Node(id="end", type="end"),
         ],
         edges=[
@@ -774,7 +738,7 @@ def test_validate_ir_rejects_empty_string_node_output_item():
         name="x",
         nodes=[
             Node(id="start", type="start"),
-            Node(id="mix", type="task", attrs={"outputs": [""]}),
+            Node(id="mix", type="task", produces=[""]),
             Node(id="end", type="end"),
         ],
         edges=[
@@ -787,7 +751,9 @@ def test_validate_ir_rejects_empty_string_node_output_item():
         validate_ir(ir)
 
 
-@pytest.mark.parametrize("node_kind", sorted(VALUE_CLASS_NODE_KINDS))
+@pytest.mark.parametrize(
+    "node_kind", ["task", "system_task", "subprocess", "queue", "wait"]
+)
 @pytest.mark.parametrize("value_class", ("VA", "RNVA", "NVA", "unknown"))
 def test_validate_ir_accepts_valid_value_classes_on_classifiable_steps(
     node_kind, value_class
@@ -799,7 +765,7 @@ def test_validate_ir_accepts_valid_value_classes_on_classifiable_steps(
             Node(
                 id="step",
                 type=node_kind,
-                attrs={"metadata": {"value_class": value_class}},
+                value_class=value_class,
             ),
             Node(id="end", type="end"),
         ],
@@ -809,7 +775,11 @@ def test_validate_ir_accepts_valid_value_classes_on_classifiable_steps(
         ],
     )
 
-    validate_ir(ir)  # must not raise
+    if node_kind in {"queue", "wait"}:
+        with pytest.raises(ValidationError, match="E1508"):
+            validate_ir(ir)
+    else:
+        validate_ir(ir)  # must not raise
 
 
 def test_validate_ir_rejects_invalid_value_class():
@@ -817,7 +787,7 @@ def test_validate_ir_rejects_invalid_value_class():
         name="x",
         nodes=[
             Node(id="start", type="start"),
-            Node(id="step", type="task", attrs={"metadata": {"value_class": "A"}}),
+            Node(id="step", type="task", value_class="A"),
             Node(id="end", type="end"),
         ],
         edges=[
@@ -837,9 +807,7 @@ def test_validate_ir_rejects_value_class_on_control_nodes(node_id):
         Node(id="step", type="task"),
         Node(id="end", type="end"),
     ]
-    next(node for node in nodes if node.id == node_id).attrs["metadata"] = {
-        "value_class": "VA"
-    }
+    next(node for node in nodes if node.id == node_id).value_class = "VA"
     ir = IR(
         name="x",
         nodes=nodes,
@@ -849,27 +817,19 @@ def test_validate_ir_rejects_value_class_on_control_nodes(node_id):
         ],
     )
 
-    with pytest.raises(ValidationError, match="E1322"):
+    with pytest.raises(ValidationError, match="E1508"):
         validate_ir(ir)
 
 
 def test_validate_ir_rejects_process_value_class():
-    ir = IR(
-        name="x",
-        process_metadata={"value_class": "VA"},
-        nodes=[
-            Node(id="start", type="start"),
-            Node(id="step", type="task"),
-            Node(id="end", type="end"),
-        ],
-        edges=[
-            Edge(source="start", target="step"),
-            Edge(source="step", target="end"),
-        ],
-    )
+    from flo import validate
 
-    with pytest.raises(ValidationError, match="E1321"):
-        validate_ir(ir)
+    result = validate(
+        'spec_version: "0.1"\nprocess: {id: x, name: X, value_class: VA}\nsteps:\n  - {id: start, kind: start}\n  - {id: end, kind: end}\n'
+    )
+    assert not result.ok
+    assert result.value is None
+    assert result.diagnostics[0].code == "E0220"
 
 
 def test_validate_ir_node_without_value_class_passes():

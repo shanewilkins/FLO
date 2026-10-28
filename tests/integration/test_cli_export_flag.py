@@ -147,7 +147,7 @@ def test_default_path_accepts_export_ingredients_flag():
         ],
     )
     assert result.exit_code == 0
-    assert "Materials and Equipment" in result.output
+    assert "Items and Resources" in result.output
 
 
 def test_default_path_accepts_export_ingredients_flag_for_canonical_fixture():
@@ -190,25 +190,21 @@ def test_default_path_accepts_export_movement_flag_for_canonical_payload(tmp_pat
         "process": {
             "id": "canonical_movement_demo",
             "name": "Canonical Movement Demo",
+            "items": [{"id": "dough", "name": "Dough", "kind": "material"}],
+            "resources": [{"id": "baker", "name": "Baker", "kind": "person"}],
+            "locations": [
+                {
+                    "id": "bench",
+                    "name": "Bench",
+                    "metadata": {"spatial": {"x": 0.0, "y": 0.0, "unit": "m"}},
+                },
+                {
+                    "id": "sealer",
+                    "name": "Sealer",
+                    "metadata": {"spatial": {"x": 3.0, "y": 4.0, "unit": "m"}},
+                },
+            ],
         },
-        "items": [
-            {"id": "dough", "name": "Dough", "kind": "material"},
-        ],
-        "resources": [
-            {"id": "baker", "name": "Baker", "kind": "person"},
-        ],
-        "locations": [
-            {
-                "id": "bench",
-                "name": "Bench",
-                "metadata": {"spatial": {"x": 0.0, "y": 0.0, "unit": "m"}},
-            },
-            {
-                "id": "sealer",
-                "name": "Sealer",
-                "metadata": {"spatial": {"x": 3.0, "y": 4.0, "unit": "m"}},
-            },
-        ],
         "steps": [
             {"id": "start", "kind": "start", "name": "Start"},
             {
@@ -229,7 +225,7 @@ def test_default_path_accepts_export_movement_flag_for_canonical_payload(tmp_pat
             },
             {"id": "end", "kind": "end", "name": "End"},
         ],
-        "edges": [
+        "transitions": [
             {"source": "start", "target": "shape"},
             {"source": "shape", "target": "pack"},
             {"source": "pack", "target": "end"},

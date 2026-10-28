@@ -78,7 +78,7 @@ def test_canonical_fields_roundtrip_without_metadata_shadow_copy() -> None:
     assert loaded.process_metadata == {"custom": {"source_system": "erp"}}
 
 
-def test_legacy_metadata_fields_promote_once_at_ir_boundary() -> None:
+def test_first_class_collections_and_legacy_render_context_remain_separate() -> None:
     ir = IR(
         name="legacy-constructor",
         nodes=[
@@ -88,13 +88,10 @@ def test_legacy_metadata_fields_promote_once_at_ir_boundary() -> None:
                 attrs={"subprocess_parent": "parent", "name": "Child"},
             )
         ],
-        process_metadata={
-            "items": [{"id": "order", "name": "Order", "kind": "information"}],
-            "resources": [{"id": "owner", "name": "Owner", "kind": "person"}],
-            "locations": [{"id": "desk", "name": "Desk"}],
-            "render": {"defaults": {"diagram": "sppm"}},
-            "custom": True,
-        },
+        items=[{"id": "order", "name": "Order", "kind": "information"}],
+        resources=[{"id": "owner", "name": "Owner", "kind": "person"}],
+        locations=[{"id": "desk", "name": "Desk"}],
+        process_metadata={"render": {"defaults": {"diagram": "sppm"}}, "custom": True},
     )
 
     assert ir.items is not None
@@ -118,9 +115,9 @@ def test_ir_edge_optional_fields_roundtrip(tmp_path: Path):
                 outcome="yes",
                 route="worker_a",
                 label="approve",
-                edge_type="rework",
-                rework=True,
-                metadata={"k": "v"},
+                handoff={"type": "responsibility"},
+                rework={"reason": "Correct output"},
+                extensions={"example:k": "v"},
             ),
             Edge(source="b", target="c"),
         ],
@@ -131,9 +128,10 @@ def test_ir_edge_optional_fields_roundtrip(tmp_path: Path):
     assert data["edges"][0]["outcome"] == "yes"
     assert data["edges"][0]["route"] == "worker_a"
     assert data["edges"][0]["label"] == "approve"
-    assert data["edges"][0]["edge_type"] == "rework"
-    assert data["edges"][0]["rework"] is True
-    assert data["edges"][0]["metadata"] == {"k": "v"}
+    assert data["edges"][0]["handoff"] == {"type": "responsibility"}
+    assert data["edges"][0]["rework"] == {"reason": "Correct output"}
+    assert data["edges"][0]["extensions"] == {"example:k": "v"}
+    assert ir_from_internal_dict(data).edges == ir.edges
     assert "id" not in data["edges"][1]
 
     p = tmp_path / "edges.json"
@@ -156,27 +154,28 @@ def test_ir_from_internal_dict_defaults_for_missing_fields():
     assert ir.edges[0].route is None
 
 
-def test_ir_from_internal_dict_preserves_edge_type_and_rework():
+def test_ir_from_internal_dict_preserves_structured_rework():
     data = {
         "name": "demo",
         "nodes": [{"id": "n1", "type": "task"}],
         "edges": [
-            {"source": "n1", "target": "n2", "edge_type": "rework", "rework": True}
+            {"source": "n1", "target": "n2", "rework": {"reason": "Correct output"}}
         ],
     }
     ir = ir_from_internal_dict(data)
-    assert ir.edges[0].edge_type == "rework"
-    assert ir.edges[0].rework is True
+    assert ir.edges[0].rework == {"reason": "Correct output"}
 
 
-def test_ir_normalizes_non_object_attrs_and_metadata_at_construction() -> None:
+def test_ir_preserves_invalid_relation_while_legacy_context_normalization_remains() -> (
+    None
+):
     ir = IR(
         name="demo",
         nodes=[{"id": "n1", "type": "task", "attrs": "bad"}],
-        edges=[{"source": "n1", "target": "n2", "metadata": "bad"}],
+        edges=[{"source": "n1", "target": "n2", "handoff": "bad"}],
         process_metadata="bad",
     )
 
     assert ir.nodes[0].attrs == {}
-    assert ir.edges[0].metadata is None
+    assert ir.edges[0].handoff == "bad"
     assert ir.process_metadata is None

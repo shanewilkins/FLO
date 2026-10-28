@@ -10,7 +10,7 @@ from flo.process.schema.subprocess_refs import resolve_subprocess_detail_map_ref
 
 from ..options import RenderOptions
 from .metadata import (
-    get_metadata_crossover_time,
+    get_metadata_changeover_time,
     get_metadata_cycle_time,
     get_metadata_description,
     get_metadata_wait_time_minutes,
@@ -69,7 +69,7 @@ def build_sppm_node_content(
 ) -> SppmNodeContent:
     """Build the title and supporting lines for an SPPM node."""
     normalized_kind = str(kind or "task").lower()
-    if normalized_kind == "queue":
+    if normalized_kind in {"queue", "wait"}:
         return _queue_content(name=name, metadata=metadata, options=options)
     if normalized_kind == "subprocess":
         return _subprocess_content(
@@ -91,7 +91,10 @@ def build_sppm_node_content(
         note=note,
         options=options,
     )
-    return SppmNodeContent(title=title, info_lines=info_lines)
+    return SppmNodeContent(
+        title=title,
+        info_lines=tuple(_wrap_info_line(line) for line in info_lines),
+    )
 
 
 def measure_sppm_node(
@@ -136,7 +139,7 @@ def measure_sppm_node(
                 height_px=min(height, 164),
             )
         )
-    if normalized_kind == "queue":
+    if normalized_kind in {"queue", "wait"}:
         line_count = _line_count(content.title) + _multi_line_count(content.info_lines)
         height = max(_QUEUE_MIN_HEIGHT_PX, 82 + (line_count * 14))
         width = max(_QUEUE_MIN_WIDTH_PX, 124 + (_widest_line_length(content) * 5))
@@ -180,6 +183,22 @@ def measure_sppm_node(
     )
 
 
+def _wrap_info_line(line: str) -> str:
+    """Keep each compact measurement label intact when wrapping body text."""
+    if " | " not in line:
+        return _soft_wrap(line, width=36)
+    lines: list[str] = []
+    current = ""
+    for metric in line.split(" | "):
+        candidate = f"{current} | {metric}" if current else metric
+        if current and len(candidate) > 36:
+            lines.append(current)
+            current = metric
+        else:
+            current = candidate
+    return "\n".join([*lines, current])
+
+
 def _queue_content(
     *, name: str, metadata: dict[str, Any], options: RenderOptions
 ) -> SppmNodeContent:
@@ -206,7 +225,7 @@ def _subprocess_content(
     title = _wrap_title(name=name, options=options)
     detail_map_ref = resolve_subprocess_detail_map_reference(
         node_id=node_id,
-        metadata=metadata,
+        metadata=metadata.get("extensions") or {},
     )
     return SppmNodeContent(
         title=title,
@@ -232,7 +251,7 @@ def _task_info_lines(
         options,
     )
     co_line = _format_time_line(
-        get_metadata_crossover_time(metadata),
+        get_metadata_changeover_time(metadata),
         "S/T",
         "",
         options,

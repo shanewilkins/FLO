@@ -1,4 +1,4 @@
-"""Compatibility checks for scalar durations and their presentation surfaces."""
+"""Shared scalar-duration and canonical profile presentation checks."""
 
 import subprocess
 import sys
@@ -14,6 +14,19 @@ from flo.render.sppm.publication_support import _format_timing_seconds
 from flo.render.value_stream.renderer import _format_seconds
 
 
+def _measurement_profile(result):
+    return {
+        "basis": "observed",
+        "results": {
+            "mean": {"method": "mean", **result}
+            if isinstance(result, dict)
+            else result,
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+    }
+
+
 @pytest.mark.parametrize(
     ("unit", "seconds"),
     [("s", 1), ("m", 60), ("min", 60), ("hr", 3600), ("d", 86400)],
@@ -22,7 +35,7 @@ from flo.render.value_stream.renderer import _format_seconds
 def test_duration_normalization_preserves_values_and_authored_records(
     unit, seconds, value
 ):
-    raw = {"value": value, "unit": unit, "measurement_id": "observation"}
+    raw = {"method": "mean", "value": value, "unit": unit}
     before = deepcopy(raw)
 
     assert duration_seconds(raw) == value * seconds
@@ -62,7 +75,9 @@ def test_duration_grammar_does_not_expand_to_library_unit_names(unit):
 )
 def test_missing_invalid_and_overflowing_durations_never_invent_zero(raw):
     assert duration_seconds(raw) is None
-    assert get_metadata_wait_time_minutes({"wait_time": raw}) is None
+    assert (
+        get_metadata_wait_time_minutes({"wait_time": _measurement_profile(raw)}) is None
+    )
 
 
 @pytest.mark.parametrize(
@@ -90,7 +105,7 @@ def test_duration_presentation_keeps_existing_unit_selection(
     [(30, "s", 0.5), (2, "m", 2), (2, "min", 2), (0.5, "hr", 30), (0.25, "d", 360)],
 )
 def test_wait_display_normalizes_without_changing_authored_units(value, unit, minutes):
-    metadata = {"wait_time": {"value": value, "unit": unit}}
+    metadata = {"wait_time": _measurement_profile({"value": value, "unit": unit})}
     before = deepcopy(metadata)
 
     assert get_metadata_wait_time_minutes(metadata) == minutes

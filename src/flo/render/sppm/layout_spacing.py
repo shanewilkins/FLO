@@ -73,7 +73,7 @@ def _balance_sppm_queue_task_gaps(
 
 def _is_queue_node(*, node_id: str, node_kind_by_id: dict[str, str]) -> bool:
     kind = str(node_kind_by_id.get(node_id, "")).lower()
-    return kind == "queue" if kind else ("queue" in node_id.lower())
+    return kind in {"queue", "wait"} if kind else ("queue" in node_id.lower())
 
 
 def _mainline_direct_adjacency(

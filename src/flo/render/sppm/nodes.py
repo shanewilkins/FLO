@@ -22,21 +22,26 @@ def _node_svg(
     height: float,
 ) -> list[str]:
     kind = str(node.kind or "task").lower()
+    canonical_kind = kind
+    if kind == "wait":
+        kind = "queue"
     content = build_sppm_node_content(
         node_id=str(node.id),
         kind=kind,
         name=str(node.label or node.id),
-        metadata=raw_node.get("metadata") or {},
-        workers=raw_node.get("workers") or [],
-        note=str(raw_node.get("note") or ""),
+        metadata=raw_node,
+        workers=raw_node.get("performed_by") or [],
+        note="",
         options=options,
     )
     appearance = resolve_sppm_node_appearance(
         kind=kind,
-        metadata=raw_node.get("metadata") or {},
+        metadata=raw_node,
         options=options,
     )
-    parts = [f'<g data-node-id="{escape(node.id)}" data-node-kind="{escape(kind)}">']
+    parts = [
+        f'<g data-node-id="{escape(node.id)}" data-node-kind="{escape(canonical_kind)}">'
+    ]
     title_lines = tuple(line for line in str(content.title).split("\n") if line)
     info_lines = content.info_lines
     task_card = (

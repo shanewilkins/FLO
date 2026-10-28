@@ -102,7 +102,7 @@ def _build_sppm_child_slots(
         kind = str(node.get("kind") or node.get("type") or "").strip().lower()
         if kind != "subprocess":
             continue
-        metadata = node.get("metadata")
+        metadata = node.get("extensions")
         metadata_dict = metadata if isinstance(metadata, dict) else {}
         detail_map_ref = resolve_subprocess_detail_map_reference(
             node_id=node_id, metadata=metadata_dict
@@ -209,13 +209,13 @@ def _declared_timing_rows(
 def _lead_time_row(analysis: ProcessTimingAnalysis) -> tuple[str, str]:
     modeled = analysis.modeled_lead_time_seconds
     if modeled is not None:
-        return ("Lead Time", _format_timing_seconds(modeled))
+        return ("Modeled Lead Time", _format_timing_seconds(modeled))
     minimum = analysis.minimum_path_lead_time_seconds
     maximum = analysis.maximum_path_lead_time_seconds
     if minimum is None or maximum is None:
-        return ("Lead Time", "Unavailable")
+        return ("Modeled Lead Time", "Unavailable")
     return (
-        "Lead Time Range",
+        "Modeled Lead Time Range",
         f"{_format_timing_seconds(minimum)} to {_format_timing_seconds(maximum)}",
     )
 

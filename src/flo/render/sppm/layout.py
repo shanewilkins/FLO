@@ -25,6 +25,7 @@ from ..layout_core.elk_support import (
 from ..layout_core.lane_support import lane_specs
 from ..layout_core.models import LayoutResult
 from ..options import RenderOptions
+from ..shared.entities import project_entity_names
 from .content import measure_sppm_node
 from .continuation_tokens import resolve_explicit_sppm_continuation_tokens
 from .elk_helpers import (
@@ -36,6 +37,7 @@ from .elk_helpers import (
 from .elk_serialization import prepare_sppm_request
 from .namespace import validate_sppm_namespaces
 from .rework_content import build_sppm_rework_metadata_lines
+from .waiting import project_waiting_evidence
 from .wrap import build_wrap_plan
 
 
@@ -48,6 +50,7 @@ def build_sppm_elk_layout_request(
         raise ValueError("SPPM ELK request builder requires diagram='sppm'.")
 
     nodes, edges = extract_nodes_and_edges(process)
+    nodes = project_entity_names(project_waiting_evidence(nodes), process)
     if render_options.subprocess_view == "parent_only":
         nodes, edges = project_parent_only_subprocess_view(nodes, edges)
 
@@ -263,9 +266,9 @@ def _sppm_node_size(node: dict[str, Any], options: RenderOptions) -> tuple[int, 
         node_id=node_id,
         kind=str(node.get("kind") or ""),
         name=str(node.get("name") or node_id),
-        metadata=node.get("metadata") or {},
-        workers=node.get("workers") or [],
-        note=str(node.get("note") or ""),
+        metadata=node,
+        workers=node.get("performed_by") or [],
+        note="",
         options=options,
     )
     return measure.width_px, measure.height_px
@@ -274,7 +277,7 @@ def _sppm_node_size(node: dict[str, Any], options: RenderOptions) -> tuple[int, 
 def _decorate_sppm_edge(edge: ElkLayoutEdge, raw_edge: dict[str, Any]) -> ElkLayoutEdge:
     outgoing_token, incoming_token = resolve_explicit_sppm_continuation_tokens(raw_edge)
     callout_lines = (
-        build_sppm_rework_metadata_lines(raw_edge.get("metadata"))
+        build_sppm_rework_metadata_lines(raw_edge.get("rework"))
         if edge.is_rework
         else ()
     )

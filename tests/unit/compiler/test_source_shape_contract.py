@@ -9,6 +9,17 @@ import pytest
 from flo.source import compile_adapter
 
 
+def _profile(value=0, unit="min"):
+    return {
+        "basis": "observed",
+        "results": {
+            "mean": {"method": "mean", "value": value, "unit": unit},
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+    }
+
+
 def _model(steps: list[Any]) -> dict[str, Any]:
     return {
         "spec_version": "0.1",
@@ -100,7 +111,7 @@ def test_compile_rejects_nested_steps_on_non_subprocess(children: str) -> None:
                 "kind": "task",
                 "routes": {"left": "a", "right": "b"},
             },
-            "E0211",
+            "routes cannot be declared",
         ),
     ],
 )
@@ -111,7 +122,7 @@ def test_compile_rejects_invalid_branch_contract(
         compile_adapter(cast(Any, _model([step])))
 
 
-def test_compile_normalizes_task_wait_time_to_wait_before() -> None:
+def test_compile_preserves_task_wait_time() -> None:
     process = compile_adapter(
         cast(
             Any,
@@ -121,13 +132,7 @@ def test_compile_normalizes_task_wait_time_to_wait_before() -> None:
                     {
                         "id": "work",
                         "kind": "task",
-                        "metadata": {
-                            "wait_time": {
-                                "value": 0,
-                                "unit": "min",
-                                "measurement_id": "work_wait",
-                            }
-                        },
+                        "wait_time": _profile(),
                     },
                     {"id": "end", "kind": "end"},
                 ]
@@ -135,17 +140,11 @@ def test_compile_normalizes_task_wait_time_to_wait_before() -> None:
         )
     )
 
-    metadata = process.nodes[1].attrs["metadata"]
-    assert "wait_time" not in metadata
-    assert metadata["wait_before"] == {
-        "value": 0,
-        "unit": "min",
-        "measurement_id": "work_wait",
-    }
+    assert process.nodes[1].wait_time == _profile()
 
 
-def test_compile_rejects_both_task_wait_alias_and_canonical_field() -> None:
-    with pytest.raises(ValueError, match="E0219"):
+def test_compile_rejects_retired_timing_metadata() -> None:
+    with pytest.raises(ValueError, match="metadata"):
         compile_adapter(
             cast(
                 Any,
@@ -154,10 +153,7 @@ def test_compile_rejects_both_task_wait_alias_and_canonical_field() -> None:
                         {
                             "id": "work",
                             "kind": "task",
-                            "metadata": {
-                                "wait_time": {"value": 1, "unit": "min"},
-                                "wait_before": {"value": 1, "unit": "min"},
-                            },
+                            "metadata": {"wait_before": {"value": 1, "unit": "min"}},
                         }
                     ]
                 ),
@@ -165,20 +161,11 @@ def test_compile_rejects_both_task_wait_alias_and_canonical_field() -> None:
         )
 
 
-def test_compile_preserves_invalid_null_task_wait_for_validation() -> None:
-    process = compile_adapter(
-        cast(
-            Any,
-            _model(
-                [
-                    {
-                        "id": "work",
-                        "kind": "task",
-                        "metadata": {"wait_time": None},
-                    }
-                ]
-            ),
+def test_compile_rejects_explicit_null_task_wait() -> None:
+    with pytest.raises(ValueError, match="explicit null"):
+        compile_adapter(
+            cast(
+                Any,
+                _model([{"id": "work", "kind": "task", "wait_time": None}]),
+            )
         )
-    )
-
-    assert process.nodes[0].attrs["metadata"] == {"wait_before": None}

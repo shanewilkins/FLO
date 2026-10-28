@@ -86,19 +86,11 @@ def test_validate_ir_rejects_blank_subprocess_detail_map_reference():
         name="x",
         nodes=[
             Node(id="start", type="start"),
-            Node(
-                id="prep",
-                type="subprocess",
-                attrs={"metadata": {"detail_map_ref": "   "}},
-            ),
+            Node(id="prep", type="subprocess", extensions={"detail_map_ref": "   "}),
             Node(id="end", type="end"),
         ],
-        edges=[
-            Edge(source="start", target="prep"),
-            Edge(source="prep", target="end"),
-        ],
+        edges=[Edge(source="start", target="prep"), Edge(source="prep", target="end")],
     )
-
     with pytest.raises(ValidationError, match="E1333"):
         validate_ir(ir)
 
@@ -111,7 +103,7 @@ def test_validate_ir_accepts_subprocess_detail_map_reference_and_valid_parent_ch
             Node(
                 id="prep",
                 type="subprocess",
-                attrs={"metadata": {"detail_map_ref": "SP-01"}},
+                extensions={"detail_map_ref": "SP-01"},
             ),
             Node(id="mix", type="task", attrs={"subprocess_parent": "prep"}),
             Node(id="end", type="end"),
@@ -124,3 +116,19 @@ def test_validate_ir_accepts_subprocess_detail_map_reference_and_valid_parent_ch
     )
 
     validate_ir(ir)
+
+
+def test_subprocess_extension_reference_reaches_svg():
+    from flo.render import render_artifact
+
+    ir = IR(
+        name="x",
+        nodes=[
+            Node(id="start", type="start"),
+            Node(id="prep", type="subprocess", extensions={"detail_map_ref": "SP-01"}),
+            Node(id="end", type="end"),
+        ],
+        edges=[Edge(source="start", target="prep"), Edge(source="prep", target="end")],
+    )
+    validate_ir(ir)
+    assert "Detail map: SP-01" in render_artifact(ir).content

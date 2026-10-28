@@ -118,7 +118,12 @@ def test_locked_ci_environment_rejects_manifest_drift_without_changing_lock(tmp_
     manifest = tmp_path / "pyproject.toml"
     original = '[project]\nname = "lock-policy-probe"\nversion = "0.0.1"\nrequires-python = ">=3.14"\n'
     manifest.write_text(original, encoding="utf-8")
-    environment = {**os.environ, "UV_LOCKED": "false", "UV_FROZEN": "false"}
+    environment = {
+        **os.environ,
+        "UV_LOCKED": "false",
+        "UV_FROZEN": "false",
+        "UV_CACHE_DIR": str(tmp_path / "uv-cache"),
+    }
     result = subprocess.run(  # noqa: S603 - Trusted uv executable; isolated offline fixture.
         [uv, "lock", "--offline", "--project", str(tmp_path)],
         capture_output=True,

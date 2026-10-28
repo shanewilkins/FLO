@@ -48,7 +48,7 @@ def test_schema_accepts_parallel_kinds_and_handoff_field() -> None:
         ],
         edges=[
             Edge(source="start", target="split"),
-            Edge(source="split", target="join", handoff=True),
+            Edge(source="split", target="join", handoff={}),
             Edge(source="join", target="end"),
         ],
     )
@@ -87,54 +87,33 @@ def test_repo_and_packaged_ir_schema_are_in_sync() -> None:
     assert packaged_schema == repo_schema
 
 
-def test_flo_types_schema_includes_phase2_canonical_keys() -> None:
+def test_generated_source_schema_includes_first_class_semantic_keys() -> None:
     repo_root = Path(__file__).resolve().parents[3]
-    schema_path = repo_root / "schema" / "flo_types.json"
+    schema_path = repo_root / "schema" / "flo_source.json"
 
     with schema_path.open("r", encoding="utf-8") as fh:
-        typed_schema = json.load(fh)
+        source_schema = json.load(fh)
 
-    process_props = typed_schema["properties"]["process"]["properties"]
+    definitions = source_schema["$defs"]
+    process_props = definitions["SourceProcess"]["properties"]
     assert "items" in process_props
     assert "resources" in process_props
     assert "locations" in process_props
-
-    handoff_type = typed_schema["definitions"]["handoff_type"]
-    assert handoff_type["enum"] == [
-        "responsibility",
-        "information",
-        "material",
-        "system",
-        "location",
-        "mixed",
-    ]
-
-    duration = typed_schema["definitions"]["time_duration"]
-    assert "measurement_id" in duration["properties"]
-    assert duration["properties"]["measurement_refs"]["uniqueItems"] is True
-    node_metadata = typed_schema["properties"]["node"]
-    assert "wait_before" in node_metadata["properties"]
-    assert "value_class" in node_metadata["properties"]
-    process_metadata = typed_schema["properties"]["process"]
-    assert "value_class" not in process_metadata["properties"]
-    assert "value_class" not in typed_schema["recommended_keys"]["process"]
+    step_props = definitions["SourceStep"]["properties"]
+    assert {"cycle_time", "wait_time", "changeover_time", "value_class"} <= set(
+        step_props
+    )
+    assert "metadata" not in step_props
 
 
-def test_canonical_entity_identity_and_kind_contracts_match_ir_schema() -> None:
+def test_generated_ir_schema_contains_structured_relations() -> None:
     repo_root = Path(__file__).resolve().parents[3]
-    with (repo_root / "schema" / "flo_types.json").open(encoding="utf-8") as fh:
-        typed = json.load(fh)["definitions"]
     with (repo_root / "schema" / "flo_ir.json").open(encoding="utf-8") as fh:
-        ir_defs = json.load(fh)["definitions"]
+        ir_defs = json.load(fh)["$defs"]
 
-    for entity_name in ("canonical_item", "canonical_resource"):
-        assert ir_defs[entity_name]["required"] == typed[entity_name]["required"]
-        typed_kind_ref = typed[entity_name]["properties"]["kind"]["$ref"]
-        typed_kind_name = typed_kind_ref.rsplit("/", 1)[-1]
-        assert (
-            ir_defs[entity_name]["properties"]["kind"]["enum"]
-            == typed[typed_kind_name]["enum"]
-        )
+    edge_props = ir_defs["CanonicalEdgeContract"]["properties"]
+    assert edge_props["handoff"]["anyOf"][0]["$ref"].endswith("/HandoffRelation")
+    assert edge_props["rework"]["anyOf"][0]["$ref"].endswith("/ReworkRelation")
 
 
 def test_compile_preserves_first_class_process_context_and_hierarchy() -> None:
@@ -145,29 +124,19 @@ def test_compile_preserves_first_class_process_context_and_hierarchy() -> None:
             "name": "Context",
             "version": 2,
             "owner": {"id": "owner", "name": "Process Owner"},
-            "business_units": [
-                {"id": "ops", "name": "Operations"},
-            ],
-            "metadata": {
-                "render": {"defaults": {"diagram": "sppm"}},
-                "custom_annotation": {"source_system": "erp"},
-            },
+            "business_units": [{"id": "ops", "name": "Operations"}],
+            "render": {"defaults": {"diagram": "sppm"}},
+            "extensions": {"example:source_system": "erp"},
+            "items": [{"id": "order", "name": "Order", "kind": "information"}],
+            "resources": [{"id": "operator", "name": "Operator", "kind": "person"}],
+            "locations": [{"id": "workcell", "name": "Workcell"}],
         },
-        "items": [
-            {"id": "order", "name": "Order", "kind": "information"},
-        ],
-        "resources": [
-            {"id": "operator", "name": "Operator", "kind": "person"},
-        ],
-        "locations": [
-            {"id": "workcell", "name": "Workcell"},
-        ],
         "lanes": [
             {
                 "id": "operations",
                 "name": "Operations",
                 "type": "team",
-                "metadata": {"color_hint": "blue"},
+                "extensions": {"example:color_hint": "blue"},
             },
             {"id": "quality", "name": "Quality", "type": "team"},
         ],
@@ -177,9 +146,7 @@ def test_compile_preserves_first_class_process_context_and_hierarchy() -> None:
                 "id": "work",
                 "kind": "subprocess",
                 "lane": "operations",
-                "subnodes": [
-                    {"id": "child", "kind": "task", "lane": "operations"},
-                ],
+                "subnodes": [{"id": "child", "kind": "task", "lane": "operations"}],
             },
             {"id": "end", "kind": "end", "lane": "operations"},
         ],
@@ -213,7 +180,7 @@ def _assert_projected_process_context(projected: dict[str, Any]) -> None:
             "id": "operations",
             "name": "Operations",
             "type": "team",
-            "metadata": {"color_hint": "blue"},
+            "extensions": {"example:color_hint": "blue"},
         },
         {"id": "quality", "name": "Quality", "type": "team"},
     ]
@@ -226,14 +193,11 @@ def _assert_explicit_ir_context(ir: IR, adapter: dict[str, Any]) -> None:
         next(node for node in ir.nodes if node.id == "child").subprocess_parent
         == "work"
     )
-    assert ir.items == adapter["items"]
-    assert ir.resources == adapter["resources"]
-    assert ir.locations == adapter["locations"]
+    assert ir.items == adapter["process"]["items"]
+    assert ir.resources == adapter["process"]["resources"]
+    assert ir.locations == adapter["process"]["locations"]
     assert ir.render_intent == {"defaults": {"diagram": "sppm"}}
-    assert ir.process_metadata is not None
-    assert ir.process_metadata["custom_annotation"] == {"source_system": "erp"}
-    for promoted_key in ("items", "resources", "locations", "render"):
-        assert promoted_key not in ir.process_metadata
+    assert ir.extensions == {"example:source_system": "erp"}
 
 
 def _assert_projected_metadata(
@@ -241,10 +205,8 @@ def _assert_projected_metadata(
 ) -> None:
     process = projected["process"]
     assert isinstance(process, dict)
-    serialized_metadata = process["metadata"]
-    assert isinstance(serialized_metadata, dict)
-    assert serialized_metadata["items"] == adapter["items"]
-    assert serialized_metadata["resources"] == adapter["resources"]
-    assert serialized_metadata["locations"] == adapter["locations"]
-    assert serialized_metadata["render"] == {"defaults": {"diagram": "sppm"}}
-    assert serialized_metadata["custom_annotation"] == {"source_system": "erp"}
+    assert process["items"] == adapter["process"]["items"]
+    assert process["resources"] == adapter["process"]["resources"]
+    assert process["locations"] == adapter["process"]["locations"]
+    assert process["render"] == {"defaults": {"diagram": "sppm"}}
+    assert process["extensions"] == {"example:source_system": "erp"}

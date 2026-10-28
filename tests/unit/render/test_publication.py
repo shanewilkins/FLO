@@ -1,6 +1,7 @@
 from typing import Any
 
 from flo.errors import RenderError
+from flo.process.ir import validate_ir
 from flo.process.ir.models import IR, Edge, Node
 from flo.render._publication import (
     PublicationBandContent,
@@ -21,6 +22,15 @@ from flo.render.sppm.projection import project_sppm_subprocess_view
 from flo.render.sppm.publication import (
     build_sppm_publication_plan,
 )
+
+
+def _timing_profile(value, unit):
+    return {
+        "basis": "observed",
+        "results": {"mean": {"method": "mean", "value": value, "unit": unit}},
+        "primary": "mean",
+        "analysis_input": "mean",
+    }
 
 
 def test_build_publication_canvas_keeps_margins_outside_content_regions():
@@ -170,7 +180,7 @@ def _build_print_publication_plan():
                 "id": "prep",
                 "kind": "subprocess",
                 "name": "Prep",
-                "metadata": {"detail_map_ref": "SP-01"},
+                "extensions": {"detail_map_ref": "SP-01"},
             },
             {"id": "end", "kind": "end", "name": "End"},
         ],
@@ -449,7 +459,7 @@ def test_build_sppm_publication_plan_populates_footer_metrics_and_render_inputs(
             "name": "Ops Review",
             "metadata": {
                 "footer_metrics": {
-                    "Lead Time": "24 min",
+                    "Modeled Lead Time": "24 min",
                     "VA Ratio": "61%",
                 },
             },
@@ -469,7 +479,7 @@ def test_build_sppm_publication_plan_populates_footer_metrics_and_render_inputs(
 
     footer_band = plan.primary_series().pages[0].band("footer")
     assert footer_band is not None
-    assert ("Lead Time", "24 min") in footer_band.content.rows
+    assert ("Modeled Lead Time", "24 min") in footer_band.content.rows
     assert ("VA Ratio", "61%") in footer_band.content.rows
     assert ("Queue", "7 min") in footer_band.content.rows
     assert footer_band.content.notes == ("Handcrafted note",)
@@ -484,17 +494,13 @@ def test_build_sppm_publication_plan_uses_typed_timing_analysis_for_footer():
             Node(
                 id="work",
                 type="task",
-                attrs={
-                    "metadata": {
-                        "cycle_time": {"value": 30, "unit": "s"},
-                        "changeover_time": {"value": 0.5, "unit": "min"},
-                    }
-                },
+                cycle_time=_timing_profile(30, "s"),
+                changeover_time=_timing_profile(0.5, "min"),
             ),
             Node(
                 id="queue",
                 type="queue",
-                attrs={"metadata": {"wait_time": {"value": 0.25, "unit": "hr"}}},
+                wait_time=_timing_profile(0.25, "hr"),
             ),
             Node(id="end", type="end"),
         ],
@@ -504,6 +510,7 @@ def test_build_sppm_publication_plan_uses_typed_timing_analysis_for_footer():
             Edge(source="queue", target="end"),
         ],
     )
+    validate_ir(process)
     nodes = [
         {"id": "start", "kind": "start"},
         {"id": "work", "kind": "task"},
@@ -524,7 +531,7 @@ def test_build_sppm_publication_plan_uses_typed_timing_analysis_for_footer():
         ("Processing Time", "30 s"),
         ("Waiting Time", "15 min"),
         ("Setup Time", "30 s"),
-        ("Lead Time", "16 min"),
+        ("Modeled Lead Time", "16 min"),
     )
     assert footer.content.notes == ()
 
@@ -537,12 +544,12 @@ def test_build_sppm_publication_footer_marks_missing_categories_and_keeps_zero()
             Node(
                 id="work",
                 type="task",
-                attrs={"metadata": {"cycle_time": {"value": 2, "unit": "min"}}},
+                cycle_time=_timing_profile(2, "min"),
             ),
             Node(
                 id="queue",
                 type="queue",
-                attrs={"metadata": {"wait_time": {"value": 0, "unit": "min"}}},
+                wait_time=_timing_profile(0, "min"),
             ),
             Node(id="end", type="end"),
         ],
@@ -552,6 +559,7 @@ def test_build_sppm_publication_footer_marks_missing_categories_and_keeps_zero()
             Edge(source="queue", target="end"),
         ],
     )
+    validate_ir(process)
     nodes = [{"id": node.id, "kind": node.type} for node in process.nodes]
 
     plan = build_sppm_publication_plan(
@@ -567,7 +575,7 @@ def test_build_sppm_publication_footer_marks_missing_categories_and_keeps_zero()
         ("Processing Time", "2 min"),
         ("Waiting Time", "0 min"),
         ("Setup Time", "?"),
-        ("Lead Time", "2 min"),
+        ("Modeled Lead Time", "2 min"),
     )
 
 
@@ -580,23 +588,24 @@ def test_build_sppm_publication_plan_reports_alternative_lead_time_range():
             Node(
                 id="fast",
                 type="task",
-                attrs={"metadata": {"cycle_time": {"value": 1, "unit": "min"}}},
+                cycle_time=_timing_profile(1, "min"),
             ),
             Node(
                 id="slow",
                 type="task",
-                attrs={"metadata": {"cycle_time": {"value": 2, "unit": "min"}}},
+                cycle_time=_timing_profile(2, "min"),
             ),
             Node(id="end", type="end"),
         ],
         edges=[
             Edge(source="start", target="choice"),
-            Edge(source="choice", target="fast"),
-            Edge(source="choice", target="slow"),
+            Edge(source="choice", target="fast", outcome="fast"),
+            Edge(source="choice", target="slow", outcome="slow"),
             Edge(source="fast", target="end"),
             Edge(source="slow", target="end"),
         ],
     )
+    validate_ir(process)
     nodes = [{"id": node.id, "kind": node.type} for node in process.nodes]
 
     plan = build_sppm_publication_plan(
@@ -608,8 +617,8 @@ def test_build_sppm_publication_plan_reports_alternative_lead_time_range():
 
     footer = plan.primary_series().pages[0].band("footer")
     assert footer is not None
-    assert ("Lead Time", "3 min") not in footer.content.rows
-    assert ("Lead Time Range", "1 min to 2 min") in footer.content.rows
+    assert ("Modeled Lead Time", "3 min") not in footer.content.rows
+    assert ("Modeled Lead Time Range", "1 min to 2 min") in footer.content.rows
 
 
 def test_build_sppm_publication_plan_marks_unavailable_lead_time_and_diagnostics():
@@ -620,7 +629,7 @@ def test_build_sppm_publication_plan_marks_unavailable_lead_time_and_diagnostics
             Node(
                 id="timed_work",
                 type="task",
-                attrs={"metadata": {"cycle_time": {"value": 3, "unit": "min"}}},
+                cycle_time=_timing_profile(3, "min"),
             ),
             Node(id="untimed_work", type="task"),
             Node(id="end", type="end"),
@@ -631,6 +640,7 @@ def test_build_sppm_publication_plan_marks_unavailable_lead_time_and_diagnostics
             Edge(source="untimed_work", target="end"),
         ],
     )
+    validate_ir(process)
     nodes = [{"id": node.id, "kind": node.type} for node in process.nodes]
 
     plan = build_sppm_publication_plan(
@@ -642,7 +652,7 @@ def test_build_sppm_publication_plan_marks_unavailable_lead_time_and_diagnostics
 
     footer = plan.primary_series().pages[0].band("footer")
     assert footer is not None
-    assert ("Lead Time", "Unavailable") in footer.content.rows
+    assert ("Modeled Lead Time", "Unavailable") in footer.content.rows
     assert footer.content.notes == (
         "Timing diagnostics available; run flo inspect for details.",
     )
@@ -656,7 +666,7 @@ def test_build_sppm_publication_plan_omits_derived_timing_for_partial_projection
             Node(
                 id="work",
                 type="task",
-                attrs={"metadata": {"cycle_time": {"value": 5, "unit": "min"}}},
+                cycle_time=_timing_profile(5, "min"),
             ),
             Node(id="end", type="end"),
         ],
@@ -665,6 +675,17 @@ def test_build_sppm_publication_plan_omits_derived_timing_for_partial_projection
             Edge(source="work", target="end"),
         ],
     )
+    validate_ir(process)
+
+    complete_plan = build_sppm_publication_plan(
+        process=process,
+        options=RenderOptions(diagram="sppm"),
+        nodes=[{"id": node.id, "kind": node.type} for node in process.nodes],
+        edges=[],
+    )
+    complete_footer = complete_plan.primary_series().pages[0].band("footer")
+    assert complete_footer is not None
+    assert ("Processing Time", "5 min") in complete_footer.content.rows
 
     plan = build_sppm_publication_plan(
         process=process,

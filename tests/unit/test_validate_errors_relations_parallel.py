@@ -15,10 +15,8 @@ def test_validate_ir_accepts_consumes_produces_when_items_declared():
             Node(
                 id="mix",
                 type="task",
-                attrs={
-                    "consumes": ["flour", "water"],
-                    "produces": ["dough"],
-                },
+                consumes=["flour", "water"],
+                produces=["dough"],
             ),
             Node(id="end", type="end"),
         ],
@@ -26,13 +24,11 @@ def test_validate_ir_accepts_consumes_produces_when_items_declared():
             Edge(source="start", target="mix"),
             Edge(source="mix", target="end"),
         ],
-        process_metadata={
-            "items": [
-                {"id": "flour", "name": "Flour", "kind": "material"},
-                {"id": "water", "name": "Water", "kind": "material"},
-                {"id": "dough", "name": "Dough", "kind": "material"},
-            ]
-        },
+        items=[
+            {"id": "flour", "name": "Flour", "kind": "material"},
+            {"id": "water", "name": "Water", "kind": "material"},
+            {"id": "dough", "name": "Dough", "kind": "material"},
+        ],
     )
 
     validate_ir(ir)
@@ -43,18 +39,16 @@ def test_validate_ir_rejects_consumes_with_undeclared_item():
         name="x",
         nodes=[
             Node(id="start", type="start"),
-            Node(id="mix", type="task", attrs={"consumes": ["flour"]}),
+            Node(id="mix", type="task", consumes=["flour"]),
             Node(id="end", type="end"),
         ],
         edges=[
             Edge(source="start", target="mix"),
             Edge(source="mix", target="end"),
         ],
-        process_metadata={
-            "items": [
-                {"id": "water", "name": "Water", "kind": "material"},
-            ]
-        },
+        items=[
+            {"id": "water", "name": "Water", "kind": "material"},
+        ],
     )
 
     with pytest.raises(ValidationError, match="E1312"):
@@ -66,7 +60,7 @@ def test_validate_ir_accepts_legacy_item_relation_without_item_declarations():
         name="x",
         nodes=[
             Node(id="start", type="start"),
-            Node(id="mix", type="task", attrs={"produces": ["dough"]}),
+            Node(id="mix", type="task", produces=["dough"]),
             Node(id="end", type="end"),
         ],
         edges=[
@@ -86,18 +80,16 @@ def test_validate_ir_accepts_canonical_item_and_resource_kinds():
             Node(id="end", type="end"),
         ],
         edges=[
-            Edge(source="start", target="end", handoff=True),
+            Edge(source="start", target="end", handoff={"type": "responsibility"}),
         ],
-        process_metadata={
-            "items": [
-                {"id": "order", "name": "Order", "kind": "information"},
-                {"id": "dough", "name": "Dough", "kind": "material"},
-            ],
-            "resources": [
-                {"id": "baker", "name": "Baker", "kind": "person"},
-                {"id": "mixer", "name": "Mixer", "kind": "equipment"},
-            ],
-        },
+        items=[
+            {"id": "order", "name": "Order", "kind": "information"},
+            {"id": "dough", "name": "Dough", "kind": "material"},
+        ],
+        resources=[
+            {"id": "baker", "name": "Baker", "kind": "person"},
+            {"id": "mixer", "name": "Mixer", "kind": "equipment"},
+        ],
     )
 
     validate_ir(ir)
@@ -113,11 +105,9 @@ def test_validate_ir_rejects_invalid_item_kind():
         edges=[
             Edge(source="start", target="end"),
         ],
-        process_metadata={
-            "items": [
-                {"id": "order", "name": "Order", "kind": "unknown"},
-            ],
-        },
+        items=[
+            {"id": "order", "name": "Order", "kind": "unknown"},
+        ],
     )
 
     with pytest.raises(ValidationError, match="E1217"):
@@ -134,18 +124,16 @@ def test_validate_ir_rejects_invalid_resource_kind():
         edges=[
             Edge(source="start", target="end"),
         ],
-        process_metadata={
-            "resources": [
-                {"id": "operator", "name": "Operator", "kind": "team"},
-            ],
-        },
+        resources=[
+            {"id": "operator", "name": "Operator", "kind": "team"},
+        ],
     )
 
     with pytest.raises(ValidationError, match="E1218"):
         validate_ir(ir)
 
 
-def test_validate_ir_rejects_non_boolean_handoff():
+def test_validate_ir_rejects_non_object_handoff():
     ir = IR(
         name="x",
         nodes=[
@@ -157,7 +145,7 @@ def test_validate_ir_rejects_non_boolean_handoff():
         ],
     )
 
-    with pytest.raises(ValidationError, match="E1410"):
+    with pytest.raises(ValidationError, match="E1401"):
         validate_ir(cast(Any, ir))
 
 
@@ -169,10 +157,8 @@ def test_validate_ir_accepts_resource_relations_with_matching_kinds():
             Node(
                 id="mix",
                 type="task",
-                attrs={
-                    "performed_by": ["baker"],
-                    "uses": ["mixer"],
-                },
+                performed_by=["baker"],
+                uses=["mixer"],
             ),
             Node(id="end", type="end"),
         ],
@@ -180,12 +166,10 @@ def test_validate_ir_accepts_resource_relations_with_matching_kinds():
             Edge(source="start", target="mix"),
             Edge(source="mix", target="end"),
         ],
-        process_metadata={
-            "resources": [
-                {"id": "baker", "name": "Baker", "kind": "person"},
-                {"id": "mixer", "name": "Mixer", "kind": "equipment"},
-            ]
-        },
+        resources=[
+            {"id": "baker", "name": "Baker", "kind": "person"},
+            {"id": "mixer", "name": "Mixer", "kind": "equipment"},
+        ],
     )
 
     validate_ir(ir)
@@ -196,18 +180,16 @@ def test_validate_ir_rejects_resource_relations_with_unknown_resource():
         name="x",
         nodes=[
             Node(id="start", type="start"),
-            Node(id="mix", type="task", attrs={"performed_by": ["baker"]}),
+            Node(id="mix", type="task", performed_by=["baker"]),
             Node(id="end", type="end"),
         ],
         edges=[
             Edge(source="start", target="mix"),
             Edge(source="mix", target="end"),
         ],
-        process_metadata={
-            "resources": [
-                {"id": "mixer", "name": "Mixer", "kind": "equipment"},
-            ]
-        },
+        resources=[
+            {"id": "mixer", "name": "Mixer", "kind": "equipment"},
+        ],
     )
 
     with pytest.raises(ValidationError, match="E1313"):
@@ -240,11 +222,9 @@ def test_validate_ir_rejects_branch_with_unknown_eligible_resource():
             Edge(source="left", target="end"),
             Edge(source="right", target="end"),
         ],
-        process_metadata={
-            "resources": [
-                {"id": "worker", "name": "Worker", "kind": "person"},
-            ]
-        },
+        resources=[
+            {"id": "worker", "name": "Worker", "kind": "person"},
+        ],
     )
 
     with pytest.raises(ValidationError, match=r"E1315.*missing_worker"):
@@ -256,7 +236,7 @@ def test_validate_ir_accepts_legacy_resource_relation_without_declarations():
         name="x",
         nodes=[
             Node(id="start", type="start"),
-            Node(id="mix", type="task", attrs={"uses": ["mixer"]}),
+            Node(id="mix", type="task", uses=["mixer"]),
             Node(id="end", type="end"),
         ],
         edges=[
@@ -273,18 +253,16 @@ def test_validate_ir_rejects_resource_relations_with_wrong_kind():
         name="x",
         nodes=[
             Node(id="start", type="start"),
-            Node(id="mix", type="task", attrs={"uses": ["baker"]}),
+            Node(id="mix", type="task", uses=["baker"]),
             Node(id="end", type="end"),
         ],
         edges=[
             Edge(source="start", target="mix"),
             Edge(source="mix", target="end"),
         ],
-        process_metadata={
-            "resources": [
-                {"id": "baker", "name": "Baker", "kind": "person"},
-            ]
-        },
+        resources=[
+            {"id": "baker", "name": "Baker", "kind": "person"},
+        ],
     )
 
     with pytest.raises(ValidationError, match="E1314"):

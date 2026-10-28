@@ -36,9 +36,7 @@ class ProcessValueClass(Enum):
     UNKNOWN = "unknown"
 
 
-VALUE_CLASS_NODE_KINDS = frozenset(
-    {"task", "system_task", "subprocess", "queue", "wait"}
-)
+VALUE_CLASS_NODE_KINDS = frozenset({"task", "system_task", "subprocess"})
 
 
 __all__ = [

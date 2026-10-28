@@ -9,40 +9,33 @@ import flo.process.export.materials_export as materials_export
 def test_materials_export_returns_none_when_metadata_missing():
     ir = SimpleNamespace()
     out = materials_export.ir_to_materials_text(ir)
-    assert out == "Materials and Equipment\n- none"
+    assert out == "Items and Resources\n- none"
 
 
 def test_materials_export_adds_section_none_when_collection_has_no_renderable_items():
-    ir = SimpleNamespace(
-        process_metadata={
-            "materials": ["skip", 3],
-            "equipment": {},
-        }
-    )
+    ir = SimpleNamespace(items=["skip", 3], resources={})
     out = materials_export.ir_to_materials_text(ir)
-    assert "- Materials" in out
-    assert "- Equipment" in out
+    assert "- Items" in out
+    assert "- Resources" in out
     assert out.count("  - none") == 2
 
 
 def test_materials_export_renders_nested_groups_and_entries_without_items_label():
     ir = SimpleNamespace(
-        process_metadata={
-            "materials": {
-                "name": "Kitchen Inventory",
-                "dry": {
-                    "name": "Dry Goods",
-                    "items": [
-                        {
-                            "id": "flour",
-                            "name": "Flour",
-                            "quantity": {"kind": "measure", "value": 250, "unit": "g"},
-                        },
-                    ],
-                },
-                "tools": [{"id": "bowl", "name": "Bowl"}],
-                "entries": [{"id": "salt", "name": "Salt"}],
-            }
+        items={
+            "name": "Kitchen Inventory",
+            "dry": {
+                "name": "Dry Goods",
+                "items": [
+                    {
+                        "id": "flour",
+                        "name": "Flour",
+                        "quantity": {"kind": "measure", "value": 250, "unit": "g"},
+                    }
+                ],
+            },
+            "tools": [{"id": "bowl", "name": "Bowl"}],
+            "entries": [{"id": "salt", "name": "Salt"}],
         }
     )
 
@@ -93,9 +86,7 @@ def test_materials_quantity_formatter_covers_dict_and_legacy_shapes():
 
 
 def test_materials_and_ingredients_aliases_return_same_output():
-    ir = SimpleNamespace(
-        process_metadata={"materials": [{"id": "flour", "name": "Flour"}]}
-    )
+    ir = SimpleNamespace(items=[{"id": "flour", "name": "Flour"}])
 
     materials_out = materials_export.ir_to_materials_text(ir)
     ingredients_out = materials_export.ir_to_ingredients_text(ir)
@@ -108,17 +99,17 @@ def test_materials_and_ingredients_aliases_return_same_output():
 
 def test_materials_export_prefers_canonical_items_and_resources():
     ir = SimpleNamespace(
+        items=[
+            {"id": "ticket", "name": "Work Ticket", "kind": "information"},
+            {"id": "flour", "name": "Flour", "kind": "material"},
+        ],
+        resources=[
+            {"id": "baker", "name": "Baker", "kind": "person"},
+            {"id": "mixer", "name": "Mixer", "kind": "equipment"},
+        ],
         process_metadata={
-            "items": [
-                {"id": "ticket", "name": "Work Ticket", "kind": "information"},
-                {"id": "flour", "name": "Flour", "kind": "material"},
-            ],
-            "resources": [
-                {"id": "baker", "name": "Baker", "kind": "person"},
-                {"id": "mixer", "name": "Mixer", "kind": "equipment"},
-            ],
-            "materials": [{"id": "legacy_flour", "name": "Legacy Flour"}],
-        }
+            "materials": [{"id": "legacy_flour", "name": "Legacy Flour"}]
+        },
     )
 
     out = materials_export.ir_to_materials_text(ir)

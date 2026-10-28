@@ -1,5 +1,10 @@
 # Static Analysis
 
+> The accepted [book-aligned breaking contract](book_aligned_contract.md)
+> supersedes the timing, classification, structured-relation, semantic-metadata,
+> and compatibility terminology below. Implementation and documentation migration
+> remain open in the [refactoring plan](../design/book_aligned_contract_refactoring_plan.md).
+
 This specification defines deterministic analysis derived from validated
 canonical FLO IR. Static analysis describes the authored model; it does not
 execute, simulate, schedule, or statistically infer process behavior.

@@ -2,6 +2,9 @@ spec_version: '0.1'
 process:
   id: invalid
   name: Invalid
+  locations:
+  - id: known
+    name: Known
 steps:
 - id: start
   kind: start
@@ -10,6 +13,3 @@ steps:
   location: missing
 - id: end
   kind: end
-locations:
-- id: known
-  name: Known

@@ -18,11 +18,8 @@ def validate_item_relations(obj: IR) -> None:
         return
 
     for node in obj.nodes:
-        attrs = getattr(node, "attrs", None)
         for relation in ("consumes", "produces"):
-            relation_values = _extract_relation_values(attrs, relation)
-            if relation_values is None:
-                continue
+            relation_values = getattr(node, relation)
             for item_ref in relation_values:
                 if isinstance(item_ref, str) and item_ref in declared_items:
                     continue
@@ -46,11 +43,8 @@ def validate_resource_relations(obj: IR) -> None:
     }
 
     for node in obj.nodes:
-        attrs = getattr(node, "attrs", None)
         for relation, expected_kind in relation_expectations.items():
-            relation_values = _extract_relation_values(attrs, relation)
-            if relation_values is None:
-                continue
+            relation_values = getattr(node, relation)
             for resource_ref in relation_values:
                 if (
                     not isinstance(resource_ref, str)
@@ -76,7 +70,7 @@ def validate_context_relations(obj: IR) -> None:
     }
     for node in obj.nodes:
         for field, declared in declarations.items():
-            reference = node.attrs.get(field)
+            reference = getattr(node, field)
             if reference is None or declared is None:
                 continue
             if not isinstance(reference, str) or reference not in declared:
@@ -116,15 +110,6 @@ def _validate_branch_eligible_resources(
                     f"E1315: branch node '{node.id}' eligible resource "
                     f"'{resource_ref}' must reference a declared process resource id"
                 )
-
-
-def _extract_relation_values(attrs: Any, relation: str) -> list[Any] | None:
-    if not isinstance(attrs, dict):
-        return None
-    value = attrs.get(relation)
-    if isinstance(value, list):
-        return value
-    return None
 
 
 def _collect_declared_kinds(collection: Any) -> dict[str, str]:

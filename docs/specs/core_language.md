@@ -1,5 +1,10 @@
 # FLO Core Language
 
+> The accepted [book-aligned breaking contract](book_aligned_contract.md)
+> supersedes the timing, classification, structured-relation, semantic-metadata,
+> and compatibility terminology below. Implementation and documentation migration
+> remain open in the [refactoring plan](../design/book_aligned_contract_refactoring_plan.md).
+
 Purpose: define the normative meaning of FLO source documents, the canonical
 compiled process model, and the minimum semantic rules that implementations
 must enforce.
@@ -78,9 +83,9 @@ FLO's normative source-authoring model is process-first rather than graph-first.
    - Validate the shapes of supplied fragment fields before merging, then
      validate the complete composed process. A fragment need not be a complete
      standalone flow; explicit nulls do not mean that a field was omitted.
-   - Canonical `items`, `resources`, and `locations`, and supported legacy
-     collections merge additively across files, including supported process
-     and process-metadata placements and recursively grouped collections.
+   - Canonical `process.items`, `process.resources`, and `process.locations`
+     merge additively across files and recursively grouped collections.
+     Other placements and legacy collection names are rejected.
      Distinct entries are retained; duplicate entity IDs are errors, not local
      overrides. Malformed collection shapes must not be discarded or hidden
      by a fallback placement.
@@ -120,9 +125,8 @@ Canonical step-level relations:
 
 Compatibility posture:
 
-- Legacy aliases such as `materials`, `workers`, `equipment`, `inputs`, and
-   `outputs` remain accepted for compatibility in the current v0.1
-   implementation.
+- Legacy collection and relation aliases are rejected. Collections belong
+   only under `process` in source and canonical exchange.
 - New normative examples and guidance should use canonical `items`,
    `resources`, `consumes`, `produces`, `performed_by`, and `uses`.
 

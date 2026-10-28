@@ -1,6 +1,9 @@
 # Typed Metadata (design)
 
-Status: draft
+Status: historical; superseded by [Book-aligned contract](../specs/book_aligned_contract.md)
+and its [supported-field inventory](../specs/book_aligned_fields.md).
+The removed `flo_types.json` and compatibility vocabulary below describe the
+previous design and are not current authoring guidance.
 
 This note provides human guidance only. The authoritative typed metadata
 contracts live in `schema/flo_types.json`.

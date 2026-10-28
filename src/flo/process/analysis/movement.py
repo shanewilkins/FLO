@@ -321,14 +321,14 @@ def _extract_node_attrs_by_id(process: Any) -> dict[str, dict[str, Any]]:
         if not node_id:
             continue
         raw_attrs = node.get("attrs")
-        if isinstance(raw_attrs, dict):
-            attrs: dict[str, Any] = raw_attrs
-        else:
-            attrs = {
+        attrs: dict[str, Any] = dict(raw_attrs) if isinstance(raw_attrs, dict) else {}
+        attrs.update(
+            {
                 key: value
                 for key, value in node.items()
-                if key not in {"id", "type", "kind"}
+                if key not in {"id", "type", "kind", "attrs"}
             }
+        )
         out[node_id] = attrs
     return out
 
@@ -342,6 +342,11 @@ def _extract_nodes(process: Any) -> list[dict[str, Any]]:
                 "id": getattr(node, "id", ""),
                 "type": getattr(node, "type", "task"),
                 "attrs": attrs if isinstance(attrs, dict) else {},
+                "location": getattr(node, "location", None),
+                "consumes": getattr(node, "consumes", []),
+                "produces": getattr(node, "produces", []),
+                "performed_by": getattr(node, "performed_by", []),
+                "uses": getattr(node, "uses", []),
             }
             nodes.append(node_entry)
         return nodes

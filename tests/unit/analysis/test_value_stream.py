@@ -5,6 +5,17 @@ from flo.process.ir.models import IR, Edge, Node
 from flo.process.ir.validate import validate_ir
 
 
+def _profile(value, unit):
+    return {
+        "basis": "observed",
+        "results": {
+            "mean": {"method": "mean", "value": value, "unit": unit},
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+    }
+
+
 def test_value_stream_projection_separates_item_kinds_and_reuses_timing() -> None:
     projection = project_value_stream(_dual_flow_process())
 
@@ -82,9 +93,9 @@ def test_grouped_items_project_identically_to_flat_items(groups) -> None:
 
 
 @pytest.mark.parametrize("seconds", [0, 300])
-def test_work_card_preserves_canonical_wait_before(seconds) -> None:
+def test_work_card_preserves_canonical_wait_time(seconds) -> None:
     process = _dual_flow_process()
-    process.nodes[1].attrs["metadata"]["wait_before"] = {"value": seconds, "unit": "s"}
+    process.nodes[1].wait_time = _profile(seconds, "s")
     validate_ir(process)
     result = project_value_stream(process)
     assert result.nodes[0].wait_time_seconds == seconds
@@ -102,48 +113,38 @@ def _dual_flow_process() -> IR:
             {"id": "finished", "name": "Finished unit", "kind": "material"},
         ],
         nodes=[
-            Node("start", "start", {"name": "Start"}),
+            Node("start", "start", name="Start"),
             Node(
                 "intake",
                 "task",
-                {
-                    "name": "Intake",
-                    "consumes": ["order"],
-                    "produces": ["ticket"],
-                    "metadata": {"cycle_time": {"value": 2, "unit": "min"}},
-                },
+                name="Intake",
+                consumes=["order"],
+                produces=["ticket"],
+                cycle_time=_profile(2, "min"),
             ),
             Node(
                 "make",
                 "task",
-                {
-                    "name": "Make",
-                    "consumes": ["ticket", "raw"],
-                    "produces": ["finished"],
-                    "metadata": {
-                        "cycle_time": {"value": 5, "unit": "min"},
-                        "changeover_time": {"value": 2, "unit": "min"},
-                    },
-                },
+                name="Make",
+                consumes=["ticket", "raw"],
+                produces=["finished"],
+                cycle_time=_profile(5, "min"),
+                changeover_time=_profile(2, "min"),
             ),
             Node(
                 "buffer",
                 "queue",
-                {
-                    "name": "Finished queue",
-                    "metadata": {"wait_time": {"value": 10, "unit": "min"}},
-                },
+                name="Finished queue",
+                wait_time=_profile(10, "min"),
             ),
             Node(
                 "ship",
                 "task",
-                {
-                    "name": "Ship",
-                    "consumes": ["finished"],
-                    "metadata": {"cycle_time": {"value": 2, "unit": "min"}},
-                },
+                name="Ship",
+                consumes=["finished"],
+                cycle_time=_profile(2, "min"),
             ),
-            Node("end", "end", {"name": "End"}),
+            Node("end", "end", name="End"),
         ],
         edges=[
             Edge("start", "intake"),

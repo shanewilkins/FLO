@@ -8,9 +8,16 @@ from pathlib import Path
 from typing import Any, TypeGuard
 
 from flo.errors import ValidationError
-from flo.process.durations import duration_number, duration_seconds
+from flo.process.contracts import (
+    MEASUREMENT_ADAPTER,
+    HandoffRelation,
+    MeasurementProfile,
+    ReworkRelation,
+)
+from flo.process.durations import duration_seconds
+from flo.process.field_applicability import NODE_FIELDS, inapplicable_fields
+from flo.process.measurements import selected_result
 from flo.process.units import (
-    DURATION_UNITS,
     MEASURE_UNITS,
     SPATIAL_UNITS,
     convert_measure,
@@ -18,7 +25,6 @@ from flo.process.units import (
 
 from ._graph_utils import build_adjacency_maps, traverse
 from .enums import VALUE_CLASS_NODE_KINDS, ProcessValueClass
-from .metadata import extract_node_metadata
 from .models import IR
 from .schema_projection import ir_to_schema_dict
 from .validate_relations import (
@@ -73,16 +79,17 @@ def validate_ir(obj: Any) -> None:
     if len(ids) != len(set(ids)):
         raise ValidationError("E1002: node ids must be unique")
 
+    _validate_node_applicability(obj)
+    _validate_process_measurement(obj)
+    _validate_node_measurements(obj)
+    _validate_value_class(obj)
     _validate_start_nodes(obj)
     _validate_edge_resolution(obj, ids)
     incoming_counts, outgoing_counts = _build_edge_degree_maps(obj, ids)
     _validate_branch_points(obj, outgoing_counts)
     _validate_queue_nodes(obj, incoming_counts, outgoing_counts)
-    _validate_queue_wait_time_semantics(obj)
     _validate_node_io_lists(obj)
-    _validate_node_time_metadata(obj)
     validate_wait_measurements(obj)
-    _validate_value_class(obj)
     validate_subprocess_metadata(obj)
     _validate_edge_metadata(obj)
     _validate_process_resources(obj)
@@ -243,9 +250,6 @@ def _validate_queue_nodes(
         if (node.type or "").lower() != "queue":
             continue
 
-        metadata = extract_node_metadata(node)
-        _validate_queue_metadata(node_id=node.id, metadata=metadata)
-
         if incoming_counts.get(node.id, 0) < 1:
             raise ValidationError(
                 f"E1103: queue node '{node.id}' must have at least one incoming edge"
@@ -254,67 +258,6 @@ def _validate_queue_nodes(
             raise ValidationError(
                 f"E1104: queue node '{node.id}' must have at least one outgoing edge"
             )
-
-
-def _validate_queue_wait_time_semantics(obj: IR) -> None:
-    """Enforce canonical queue and pre-task waiting field placement.
-
-    - Queue nodes (kind: queue) may have wait_time (queue delays).
-    - Work nodes may have wait_before but not the source-only wait_time alias.
-    - Task nodes may have cycle_time and crossover_time (work duration and setup).
-    - Queue nodes must NOT have wait_before, cycle_time, or crossover_time.
-    """
-    for node in obj.nodes:
-        node_type = (node.type or "").lower()
-        metadata = extract_node_metadata(node)
-
-        if node_type == "queue":
-            if "wait_before" in metadata:
-                raise ValidationError(
-                    f"E1504: queue node '{node.id}' has wait_before metadata. "
-                    "Queues own wait_time; wait_before belongs on work nodes."
-                )
-            if "cycle_time" in metadata:
-                raise ValidationError(
-                    f"E1501: queue node '{node.id}' has cycle_time metadata. "
-                    f"Queues represent delays only; use wait_time. "
-                    f"Cycle time belongs on task nodes."
-                )
-            if (
-                "crossover_time" in metadata
-                or "transfer_time" in metadata
-                or "changeover_time" in metadata
-            ):
-                raise ValidationError(
-                    f"E1502: queue node '{node.id}' has crossover/transfer/changeover_time metadata. "
-                    f"Queues represent delays only; use wait_time. "
-                    f"Setup time belongs on task nodes."
-                )
-        elif node_type in {"task", "system_task", "subprocess"}:
-            if "wait_time" in metadata:
-                raise ValidationError(
-                    f"E1503: {node_type} node '{node.id}' has wait_time metadata. "
-                    "Canonical work-node metadata uses wait_before. Rename the "
-                    "field, or compile authored FLO source so the compatibility "
-                    "alias is normalized."
-                )
-        else:
-            misplaced = set(metadata) & {
-                "cycle_time",
-                "crossover_time",
-                "transfer_time",
-                "changeover_time",
-                "wait_before",
-                "wait_time",
-            }
-            if node_type == "wait":
-                misplaced.discard("wait_time")
-            if misplaced:
-                field = sorted(misplaced)[0]
-                raise ValidationError(
-                    f"E1508: {node_type} node '{node.id}' metadata.{field} belongs "
-                    "on a work node, or on a queue for wait_time."
-                )
 
 
 def _validate_node_connectivity(
@@ -401,37 +344,15 @@ def _ensure_all_nodes_can_reach_end(
             raise ValidationError(f"E1009: node '{node.id}' cannot reach any end node")
 
 
-def _validate_queue_metadata(node_id: str, metadata: dict[str, Any]) -> None:
-    # Queue nodes may have optional queue_policy for advanced queueing models.
-    # For basic use (SPPM, VSM), queue_policy is not required.
-    # All other fields are validated per type if present.
-
-    capacity = metadata.get("buffer_capacity")
-    if "buffer_capacity" in metadata and (
-        not isinstance(capacity, int) or isinstance(capacity, bool) or capacity < 1
-    ):
-        raise ValidationError(
-            f"E1102: queue node '{node_id}' has invalid metadata.buffer_capacity; expected integer >= 1"
-        )
-
-
 def _validate_node_io_lists(obj: IR) -> None:
     for node in obj.nodes:
-        attrs = getattr(node, "attrs", None)
-        if not isinstance(attrs, dict):
-            continue
-
         for field in (
-            "inputs",
-            "outputs",
             "consumes",
             "produces",
             "performed_by",
             "uses",
         ):
-            value = attrs.get(field)
-            if value is None:
-                continue
+            value = getattr(node, field)
 
             if not isinstance(value, list):
                 raise ValidationError(f"E1310: node '{node.id}' {field} must be a list")
@@ -443,87 +364,117 @@ def _validate_node_io_lists(obj: IR) -> None:
                     )
 
 
-def _validate_node_time_metadata(obj: IR) -> None:
+def _validate_node_applicability(obj: IR) -> None:
     for node in obj.nodes:
-        metadata = extract_node_metadata(node)
-        for key, value in metadata.items():
-            if not _is_node_time_metadata_key(key):
-                continue
-            _validate_node_time_metadata_value(node_id=node.id, key=key, value=value)
+        semantic = set().union(*NODE_FIELDS.values()) - {
+            "id",
+            "kind",
+            "outcomes",
+            "routes",
+            "branch",
+        }
+        supplied = {
+            field
+            for field in semantic
+            if getattr(node, field, None) is not None
+            and getattr(node, field, None) != []
+        }
+        supplied |= {
+            field for field in ("branch", "outcomes", "routes") if field in node.attrs
+        }
+        forbidden = inapplicable_fields(node.type, supplied)
+        if forbidden:
+            raise ValidationError(
+                f"E1508: node '{node.id}' {', '.join(sorted(forbidden))} cannot be declared on kind '{node.type}'"
+            )
 
 
-def _is_node_time_metadata_key(key: Any) -> bool:
-    if not isinstance(key, str):
-        return False
-
-    normalized = key.strip().lower()
-    if normalized.endswith("_seconds"):
-        # Existing second-based scalar keys remain supported.
-        return False
-
-    return normalized in {"time", "duration", "wait_before"} or normalized.endswith(
-        ("_time", "_duration")
+def _validate_process_measurement(obj: IR) -> None:
+    if obj.lead_time is None:
+        return
+    try:
+        MeasurementProfile.model_validate(obj.lead_time)
+    except Exception as exc:
+        raise _LocatedValidationError(
+            "E1301: process lead_time must be a valid measurement profile",
+            ("process", "lead_time"),
+        ) from exc
+    _validate_selected_durations(
+        obj.lead_time,
+        context="process lead_time",
+        location=("process", "lead_time"),
     )
 
 
-def _validate_node_time_metadata_value(node_id: str, key: str, value: Any) -> None:
-    path = f"node '{node_id}' metadata.{key}"
+def _validate_selected_durations(
+    measurement: object, *, context: str, location: tuple[str | int, ...] = ()
+) -> None:
+    for selector in ("analysis_input", "primary"):
+        result = selected_result(measurement, selector)
+        if result is not None and duration_seconds(result) is None:
+            raise _LocatedValidationError(
+                f"E1303: {context} {selector} must be a valid duration",
+                location,
+            )
 
-    if not isinstance(value, dict):
-        raise ValidationError(
-            f"E1301: {path} must be an object with 'value' and 'unit'"
-        )
 
-    duration_value = value.get("value")
-    if duration_number(duration_value) is None:
-        raise ValidationError(f"E1302: {path}.value must be a finite number >= 0")
-
-    unit = value.get("unit")
-    if not isinstance(unit, str) or unit.strip().lower() not in DURATION_UNITS:
-        raise ValidationError(
-            f"E1303: {path}.unit must be one of {sorted(DURATION_UNITS)}"
-        )
-
-    if duration_seconds(value) is None:
-        raise ValidationError(
-            f"E1302: {path}.value must remain finite when converted to seconds"
-        )
-
-    measurement_id = value.get("measurement_id")
-    if measurement_id is not None and (
-        not isinstance(measurement_id, str) or not measurement_id.strip()
-    ):
-        raise ValidationError(
-            f"E1304: {path}.measurement_id must be a non-empty string"
-        )
-
-    measurement_refs = value.get("measurement_refs")
-    if measurement_refs is not None and (
-        not isinstance(measurement_refs, list)
-        or not measurement_refs
-        or any(
-            not isinstance(reference, str) or not reference.strip()
-            for reference in measurement_refs
-        )
-        or len({reference.strip() for reference in measurement_refs})
-        != len(measurement_refs)
-    ):
-        raise ValidationError(
-            f"E1305: {path}.measurement_refs must be a non-empty list of unique strings"
-        )
+def _validate_node_measurements(obj: IR) -> None:
+    for node in obj.nodes:
+        node_type = node.type.strip().lower()
+        if node_type in {
+            "start",
+            "end",
+            "decision",
+            "branch",
+            "parallel_split",
+            "parallel_join",
+        } and any(
+            getattr(node, field) is not None
+            for field in (
+                "cycle_time",
+                "wait_time",
+                "changeover_time",
+                "value_class",
+            )
+        ):
+            raise ValidationError(
+                f"E1508: control node '{node.id}' cannot declare operational measurements"
+            )
+        if node_type not in {"task", "system_task", "subprocess"} and (
+            node.cycle_time is not None or node.changeover_time is not None
+        ):
+            raise ValidationError(
+                f"E1508: node '{node.id}' cycle_time and changeover_time belong on work steps"
+            )
+        for field in ("cycle_time", "wait_time", "changeover_time"):
+            value = getattr(node, field)
+            if value is None:
+                continue
+            try:
+                MEASUREMENT_ADAPTER.validate_python(value)
+            except Exception as exc:
+                raise ValidationError(
+                    f"E1301: node '{node.id}' {field} must be a valid measurement profile or reference"
+                ) from exc
+            _validate_selected_durations(value, context=f"node '{node.id}' {field}")
 
 
 def _validate_process_resources(obj: IR) -> None:
-    process_metadata = getattr(obj, "process_metadata", None)
-    metadata = process_metadata if isinstance(process_metadata, dict) else {}
-
+    metadata = obj.process_metadata or {}
+    retired = {
+        "items",
+        "resources",
+        "locations",
+        "materials",
+        "equipment",
+        "workers",
+    } & metadata.keys()
+    if retired:
+        raise ValidationError(
+            f"E1201: collections must use first-class process fields, not process_metadata: {', '.join(sorted(retired))}"
+        )
     collections = {
-        "items": getattr(obj, "items", None),
-        "resources": getattr(obj, "resources", None),
-        "locations": getattr(obj, "locations", None),
-        "materials": metadata.get("materials"),
-        "equipment": metadata.get("equipment"),
-        "workers": metadata.get("workers"),
+        key: getattr(obj, key, None) for key in ("items", "resources", "locations")
     }
     for resource_key, resources in collections.items():
         if resources is None:
@@ -815,89 +766,40 @@ def _validate_canonical_quantity(
 
 
 def _validate_value_class(obj: IR) -> None:
-    process_metadata = getattr(obj, "process_metadata", None)
-    if isinstance(process_metadata, dict) and "value_class" in process_metadata:
-        raise ValidationError(
-            "E1321: process metadata.value_class is invalid; "
-            "value_class classifies individual work or wait steps"
-        )
-
     valid_values = {vc.value for vc in ProcessValueClass}
     for node in obj.nodes:
-        metadata = extract_node_metadata(node)
-        raw = metadata.get("value_class")
+        raw = node.value_class
         if raw is None:
             continue
         node_kind = node.type.strip().lower()
         if node_kind not in VALUE_CLASS_NODE_KINDS:
             raise ValidationError(
                 f"E1322: node '{node.id}' of kind '{node.type}' cannot declare "
-                "metadata.value_class; value_class is valid only on "
+                "value_class; value_class is valid only on "
                 f"{sorted(VALUE_CLASS_NODE_KINDS)}"
             )
         if not isinstance(raw, str) or raw not in valid_values:
             raise ValidationError(
-                f"E1320: node '{node.id}' metadata.value_class '{raw}' "
+                f"E1320: node '{node.id}' value_class '{raw}' "
                 f"must be one of {sorted(valid_values)}"
             )
 
 
 def _validate_edge_metadata(obj: IR) -> None:
     for edge in obj.edges:
-        edge_type = str(getattr(edge, "edge_type", "") or "").strip().lower()
-        rework = getattr(edge, "rework", None)
-        if (edge_type == "rework" and rework is False) or (
-            edge_type and edge_type != "rework" and rework is True
+        for field, contract in (
+            ("handoff", HandoffRelation),
+            ("rework", ReworkRelation),
         ):
-            raise ValidationError(
-                f"E1404: edge '{edge.source}' -> '{edge.target}' has conflicting "
-                f"rework declarations edge_type={edge.edge_type!r} and "
-                f"rework={rework!r}. Use edge_type: rework with rework: true, "
-                "or omit both for ordinary flow."
-            )
-
-        handoff_value = getattr(edge, "handoff", None)
-        if handoff_value is not None and not isinstance(handoff_value, bool):
-            raise ValidationError(
-                f"E1410: edge '{edge.source}' -> '{edge.target}' handoff must be boolean"
-            )
-
-        metadata = getattr(edge, "metadata", None)
-        if not isinstance(metadata, dict) or not metadata:
-            continue
-        if (
-            bool(getattr(edge, "rework", None))
-            or str(getattr(edge, "edge_type", "") or "").lower() == "rework"
-        ):
-            _validate_rework_edge_metadata(edge=edge, metadata=metadata)
-
-
-def _validate_rework_edge_metadata(*, edge: Any, metadata: dict[str, Any]) -> None:
-    edge_path = f"edge '{edge.source}' -> '{edge.target}'"
-
-    rate = metadata.get("rate")
-    if rate is not None and (not _is_number(rate) or not (0 <= rate <= 1)):
-        raise ValidationError(
-            f"E1401: {edge_path} metadata.rate must be a number between 0 and 1"
-        )
-
-    for key in ("reason", "frequency", "note"):
-        value = metadata.get(key)
-        if value is None:
-            continue
-        if not isinstance(value, str) or not value.strip():
-            raise ValidationError(
-                f"E1402: {edge_path} metadata.{key} must be a non-empty string"
-            )
-
-    count = metadata.get("count")
-    if count is not None:
-        is_valid_number = _is_number(count) and count > 0
-        is_valid_text = isinstance(count, str) and bool(count.strip())
-        if not (is_valid_number or is_valid_text):
-            raise ValidationError(
-                f"E1403: {edge_path} metadata.count must be a positive number or non-empty string"
-            )
+            value = getattr(edge, field)
+            if value is None:
+                continue
+            try:
+                contract.model_validate(value)
+            except Exception as exc:
+                raise ValidationError(
+                    f"E1401: edge '{edge.source}' -> '{edge.target}' {field} must be a valid structured relation"
+                ) from exc
 
 
 def validate_against_schema(ir: IR) -> None:

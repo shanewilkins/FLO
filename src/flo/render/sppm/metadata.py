@@ -13,12 +13,12 @@ from dataclasses import dataclass
 from typing import Any
 
 from flo.process.durations import duration_number, duration_seconds
+from flo.process.measurements import selected_result
 from flo.process.units import convert_duration
 
 __all__ = [
     "SppmMetadataValue",
     "get_metadata_changeover_time",
-    "get_metadata_crossover_time",
     "get_metadata_cycle_time",
     "get_metadata_description",
     "get_metadata_field",
@@ -76,31 +76,20 @@ def get_metadata_value_class(metadata: dict[str, Any] | None) -> str | None:
 
 
 def _parse_time_spec(time_spec: Any) -> SppmMetadataValue | None:
-    """Parse a time spec dict into SppmMetadataValue, or None if invalid."""
-    if duration_seconds(time_spec) is None:
+    """Parse a profile's primary result into a renderable duration."""
+    result = selected_result(time_spec, "primary")
+    if result is None or duration_seconds(result) is None:
         return None
-    return SppmMetadataValue(value=time_spec["value"], unit=time_spec["unit"])
+    return SppmMetadataValue(value=result["value"], unit=result["unit"])
 
 
 def get_metadata_wait_time_minutes(
     metadata: dict[str, Any] | None,
 ) -> int | float | None:
-    """Extract canonical queue or pre-task waiting without inventing a value.
-
-    ``wait_before`` is the worksheet observation attached to a work node.
-    ``wait_time`` is the duration attached to an explicit queue node.
-
-    Returns the declared duration normalized to minutes,
-    or None if absent or invalid.
-    """
+    """Extract the primary waiting result normalized to minutes."""
     if not isinstance(metadata, dict):
         return None
-    time_spec = (
-        metadata.get("wait_before")
-        if "wait_before" in metadata
-        else metadata.get("wait_time")
-    )
-    seconds = duration_seconds(time_spec)
+    seconds = duration_seconds(selected_result(metadata.get("wait_time"), "primary"))
     return None if seconds is None else convert_duration(seconds, "s", "min")
 
 
@@ -112,40 +101,12 @@ def get_metadata_cycle_time(
     return _parse_time_spec(time_spec)
 
 
-def get_metadata_crossover_time(
-    metadata: dict[str, Any] | None,
-) -> SppmMetadataValue | None:
-    """Extract changeover/setup time using canonical precedence.
-
-    Changeover time represents setup/reconfiguration time required to transition
-    a step to the next product, batch, or mode. This is distinct from wait time
-    (queue delay), which is caused by unavailability of resources.
-
-    Precedence order for metadata field lookup:
-    1. ``crossover_time`` (preferred)
-    2. ``transfer_time``
-    3. ``changeover_time`` (legacy alias)
-
-    Note: The distinction between wait time and changeover time is pedagogically
-    important. Both are non-value-adding, but they have different root causes
-    and solutions: queues are solved by scheduling/pull; setup is solved by
-    standardization/SMED.
-    """
-    for field_name in ("crossover_time", "transfer_time", "changeover_time"):
-        if isinstance(metadata, dict) and field_name in metadata:
-            return _parse_time_spec(metadata[field_name])
-    return None
-
-
 def get_metadata_changeover_time(
     metadata: dict[str, Any] | None,
 ) -> SppmMetadataValue | None:
-    """Backward-compatible alias for crossover/transfer/changeover time extraction.
-
-    This function delegates to get_metadata_crossover_time() for compatibility.
-    Prefer get_metadata_crossover_time() in new code.
-    """
-    return get_metadata_crossover_time(metadata)
+    """Extract the primary changeover-time result."""
+    time_spec = get_metadata_field(metadata, "changeover_time", expected_type=dict)
+    return _parse_time_spec(time_spec)
 
 
 def get_metadata_description(metadata: dict[str, Any] | None) -> str:

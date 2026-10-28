@@ -59,6 +59,16 @@ integers; model defaults do not become CLI overrides ahead of source render
 intent resolution. Render mappings resolve profiles, dimensions, and derived
 pixel bounds after the final input selection.
 
+## Subsequent breaking refactor
+
+The original structural migration and its completion evidence describe the
+pre-book-alignment baseline. The later
+[book-aligned contract](../../specs/book_aligned_contract.md) intentionally
+retires several previously preserved shapes. Its
+[plan and failure ledger](../book_aligned_contract_refactoring_plan.md) track
+current migration status; the historical pass recorded here does not certify
+that later working-tree refactor.
+
 ## Authority and compatibility
 
 The core language and CLI specifications remain normative. Source models are

@@ -12,21 +12,11 @@ from dataclasses import dataclass
 from statistics import fmean
 from typing import Any, Literal
 
-from flo.process.durations import duration_number
-
 from ..layout_core.models import NodeMeasure, PlacementConstraints, PlacementPlan
 from ..layout_core.placement import build_placement_plan
 from ..options import RenderOptions
-from .metadata import (
-    get_metadata_crossover_time,
-    get_metadata_cycle_time,
-    get_metadata_description,
-    get_metadata_wait_time_minutes,
-)
+from .content import measure_sppm_node
 from .text import (
-    abbreviate_workers,
-    apply_density_filter,
-    format_text_field,
     normalize_space,
 )
 
@@ -206,8 +196,8 @@ def _sppm_placement_constraints(
     if orientation == "lr":
         return PlacementConstraints(
             orientation="lr",
-            max_width_px=max_major_px,
-            gap_major=_HORIZONTAL_GAP_PX,
+            max_width_px=max_major_px - _PREFERRED_MARGIN_PX,
+            gap_major=56,
             gap_minor=_VERTICAL_GAP_PX,
             margin=_PREFERRED_MARGIN_PX,
         )
@@ -449,137 +439,15 @@ def _estimate_generic_node_width_px(
 def _estimate_sppm_node_width_px(
     *, node: dict[str, Any], kind: str, options: RenderOptions
 ) -> int:
-    name = str(node.get("name") or node.get("id") or "")
-    if kind in {"start", "end"}:
-        return max(120, min(260, 90 + len(normalize_space(name)) * 7))
-
-    metadata: dict[str, Any] | None = node.get("metadata")
-    workers: list[Any] = node.get("workers") or []
-    note = str(node.get("note") or "")
-    description = normalize_space(get_metadata_description(metadata))
-    header = _format_sppm_width_field(
-        name,
-        max_len=options.sppm_max_label_step_name,
+    return measure_sppm_node(
+        node_id=str(node.get("id") or ""),
+        kind=kind,
+        name=str(node.get("name") or node.get("id") or ""),
+        metadata=node,
+        workers=node.get("performed_by") or [],
+        note="",
         options=options,
-    )
-    ct_spec = get_metadata_cycle_time(metadata)
-    ct_line = _format_time_width_field_from_spec(
-        prefix="P/T",
-        spec=ct_spec,
-        suffix="",
-        options=options,
-    )
-    wt_minutes = get_metadata_wait_time_minutes(metadata)
-    wt_line = _format_time_width_field_from_minutes(
-        prefix="W/T",
-        minutes=wt_minutes,
-        suffix=" wait",
-        options=options,
-    )
-    co_spec = get_metadata_crossover_time(metadata)
-    co_line = _format_time_width_field_from_spec(
-        prefix="S/T",
-        spec=co_spec,
-        suffix="",
-        options=options,
-    )
-    if kind in {"queue", "decision", "subprocess"}:
-        ct_line = co_line = ""
-        if kind != "queue":
-            wt_line = ""
-    workers_line = _format_workers_width_field(workers=workers, options=options)
-    notes_line = normalize_space(f"Note: {note}") if note and options.show_notes else ""
-
-    info_lines = apply_density_filter(
-        density=options.sppm_label_density,
-        description=description,
-        ct_line=ct_line,
-        wt_line=wt_line,
-        co_line=co_line,
-        workers_line=workers_line,
-        notes_line=notes_line,
-    )
-    all_lines = [
-        *header.split("\n"),
-        *(line_part for line in info_lines for line_part in line.split("\n")),
-    ]
-    longest = max((len(line) for line in all_lines if line), default=12)
-    return max(180, min(420, 88 + longest * 7))
-
-
-def _format_sppm_width_field(
-    raw: str, *, max_len: int | None, options: RenderOptions
-) -> str:
-    return format_text_field(
-        raw,
-        max_len=max_len,
-        wrap_strategy=options.sppm_wrap_strategy,
-        truncation_policy=options.sppm_truncation_policy,
-        html_break="\n",
-    )
-
-
-def _format_time_width_field_from_spec(
-    *,
-    prefix: str,
-    spec: Any,
-    suffix: str,
-    options: RenderOptions,
-) -> str:
-    """Format time field from SppmMetadataValue (cycle_time, changeover_time)."""
-    if spec is None:
-        return _format_sppm_width_field(
-            f"{prefix}: ?", max_len=options.sppm_max_label_ctwt, options=options
-        )
-    if spec.numeric_value is None:
-        return ""
-    unit = spec.unit or "min"
-    return _format_sppm_width_field(
-        f"{prefix}: {spec.value} {unit}{suffix}",
-        max_len=options.sppm_max_label_ctwt,
-        options=options,
-    )
-
-
-def _format_time_width_field_from_minutes(
-    *,
-    prefix: str,
-    minutes: Any,
-    suffix: str,
-    options: RenderOptions,
-) -> str:
-    """Format time field from numeric minutes (wait_time)."""
-    if minutes is None:
-        return _format_sppm_width_field(
-            f"{prefix}: ?", max_len=options.sppm_max_label_ctwt, options=options
-        )
-    if duration_number(minutes) is None:
-        return ""
-    # Format as int if it's a whole number, otherwise as float
-    value_str = (
-        str(int(minutes))
-        if isinstance(minutes, float) and minutes.is_integer()
-        else str(minutes)
-    )
-    return _format_sppm_width_field(
-        f"{prefix}: {value_str} min{suffix}",
-        max_len=options.sppm_max_label_ctwt,
-        options=options,
-    )
-
-
-def _format_workers_width_field(*, workers: list[Any], options: RenderOptions) -> str:
-    if not workers:
-        return ""
-    worker_names = [str(worker) for worker in workers]
-    workers_text = ", ".join(worker_names)
-    if options.sppm_label_density == "compact":
-        workers_text = abbreviate_workers(worker_names)
-    return _format_sppm_width_field(
-        f"Workers: {workers_text}",
-        max_len=options.sppm_max_label_workers,
-        options=options,
-    )
+    ).width_px
 
 
 def _collect_sequence_ids(nodes: list[dict[str, Any]]) -> list[str]:
