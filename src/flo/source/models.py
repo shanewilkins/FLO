@@ -6,27 +6,37 @@ from collections.abc import Mapping
 from typing import Annotated, Any, Literal
 
 from pydantic import (
-    AliasChoices,
     BaseModel,
     BeforeValidator,
     ConfigDict,
     Field,
     TypeAdapter,
     ValidationError,
-    field_validator,
     model_validator,
 )
+from pydantic.json_schema import SkipJsonSchema
 from pydantic_core import PydanticCustomError
 
+from flo.process.contract_validation import validate_collection_shape
 from flo.process.contracts import (
+    BranchConfig as BranchConfig,
+)
+from flo.process.contracts import (
+    CanonicalNamedIdentityContract,
+    EntityCollection,
     Extensions,
     HandoffRelation,
+    ItemContract,
+    LocationContract,
     Measurement,
+    MeasurementProfile,
     NonBlank,
+    ResourceContract,
     ReworkRelation,
     ValueClass,
 )
 from flo.process.field_applicability import inapplicable_fields
+from flo.process.validation_errors import LocatedValidationError
 
 
 def _not_null(value: Any) -> Any:
@@ -35,14 +45,7 @@ def _not_null(value: Any) -> Any:
     return value
 
 
-type Authored[T] = Annotated[T | None, BeforeValidator(_not_null)]
-
-
-class AdapterModel(BaseModel):
-    """Compatibility envelope for the name/content YAML loader."""
-
-    name: str
-    content: str
+type Authored[T] = Annotated[T | SkipJsonSchema[None], BeforeValidator(_not_null)]
 
 
 class SourceModel(BaseModel):
@@ -51,12 +54,8 @@ class SourceModel(BaseModel):
     model_config = ConfigDict(strict=True, extra="forbid")
 
 
-class NamedIdentity(SourceModel):
+class NamedIdentity(CanonicalNamedIdentityContract, SourceModel):
     """An authored identity with a display name."""
-
-    id: NonBlank
-    name: NonBlank
-    extensions: Extensions | None = None
 
 
 class BusinessUnit(NamedIdentity):
@@ -73,14 +72,14 @@ class ProcessFields(SourceModel):
     """Process context shared by complete documents and include fragments."""
 
     version: int | str | None = None
-    lead_time: Authored[Measurement] = None
+    lead_time: Authored[MeasurementProfile] = None
     render: Authored[dict[Any, Any]] = None
     extensions: Authored[Extensions] = None
     owner: NamedIdentity | None = None
     business_units: list[BusinessUnit] | None = None
-    items: Any = None
-    resources: Any = None
-    locations: Any = None
+    items: Authored[EntityCollection[ItemContract]] = None
+    resources: Authored[EntityCollection[ResourceContract]] = None
+    locations: Authored[EntityCollection[LocationContract]] = None
 
 
 class SourceProcess(NamedIdentity, ProcessFields):
@@ -94,6 +93,48 @@ class FragmentProcess(ProcessFields):
     name: Authored[NonBlank] = None
 
 
+class TransitionEvidence(SourceModel):
+    """Evidence shared by explicit transitions and named targets."""
+
+    id: NonBlank | None = None
+    label: NonBlank | None = None
+    handoff: HandoffRelation | None = None
+    rework: ReworkRelation | None = None
+    extensions: Extensions | None = None
+
+
+class TransitionFields(TransitionEvidence):
+    """Explicit transition selection; named targets use their owning key."""
+
+    route: NonBlank | None = None
+    outcome: NonBlank | bool | None = None
+
+
+class SourceTransition(TransitionFields):
+    """Explicit source/target connection with no from/to aliases."""
+
+    source: NonBlank
+    target: NonBlank
+
+
+class OutcomeBranch(TransitionEvidence):
+    """A named route accepts a target string or an annotated branch object."""
+
+    target: NonBlank
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_target_shorthand(cls, value: Any) -> Any:
+        """Validate string shorthand without rewriting the authored mapping."""
+        return {"target": value} if isinstance(value, str) and value.strip() else value
+
+
+type NamedPathDeclarations = Annotated[
+    dict[NonBlank | bool, OutcomeBranch | NonBlank], Field(min_length=2)
+]
+NamedPaths = TypeAdapter(NamedPathDeclarations)
+
+
 class StepAttributes(SourceModel):
     """First-class authored step fields; kind applicability is checked below."""
 
@@ -101,32 +142,23 @@ class StepAttributes(SourceModel):
     description: NonBlank | None = None
     lane: NonBlank | None = None
     location: NonBlank | None = None
-    consumes: list[NonBlank] | None = None
-    produces: list[NonBlank] | None = None
-    performed_by: list[NonBlank] | None = None
-    uses: list[NonBlank] | None = None
+    consumes: Authored[list[NonBlank]] = None
+    produces: Authored[list[NonBlank]] = None
+    performed_by: Authored[list[NonBlank]] = None
+    uses: Authored[list[NonBlank]] = None
     value_class: ValueClass | None = None
-    cycle_time: Authored[Measurement] = None
+    cycle_time: Authored[MeasurementProfile] = None
     wait_time: Authored[Measurement] = None
-    changeover_time: Authored[Measurement] = None
+    changeover_time: Authored[MeasurementProfile] = None
     extensions: Authored[Extensions] = None
     subprocess_parent: Authored[NonBlank] = None
-    branch: Any = None
-    outcomes: Any = None
-    routes: Any = None
-
-
-class ControlAttributes(SourceModel):
-    """Temporary control-only overlay pending complete attrs removal in phase 4."""
-
-    subprocess_parent: Authored[NonBlank] = None
-    branch: Any = None
-    outcomes: Any = None
-    routes: Any = None
+    branch: Authored[BranchConfig] = None
+    outcomes: Authored[NamedPathDeclarations] = None
+    routes: Authored[NamedPathDeclarations] = None
 
 
 class SourceStep(StepAttributes):
-    """Recursive authored steps; both supported child spellings retain their paths."""
+    """Recursive authored steps with one nested subprocess spelling."""
 
     id: NonBlank
     kind: Literal[
@@ -142,37 +174,16 @@ class SourceStep(StepAttributes):
         "parallel_split",
         "parallel_join",
     ]
-    attrs: Authored[ControlAttributes] = None
-    subnodes: Authored[list[SourceStep]] = None
     steps: Authored[list[SourceStep]] = None
-
-    @model_validator(mode="before")
-    @classmethod
-    def check_child_and_kind_aliases(cls, value: Any) -> Any:
-        """Reject ambiguous children and the unsupported type-only spelling."""
-        if isinstance(value, dict):
-            if "type" in value and "kind" not in value:
-                raise PydanticCustomError(
-                    "source_alias", "must use 'kind'; 'type' is not supported"
-                )
-            if "subnodes" in value and "steps" in value:
-                raise PydanticCustomError(
-                    "source_alias", "must use either subnodes or steps, not both"
-                )
-        return value
 
     @model_validator(mode="after")
     def check_child_owner(self) -> SourceStep:
-        """Subnodes belong to a subprocess rather than an ordinary step."""
-        if (
-            self.subnodes is not None or self.steps is not None
-        ) and self.kind != "subprocess":
+        """Nested steps belong to a subprocess rather than an ordinary step."""
+        if self.steps is not None and self.kind != "subprocess":
             raise PydanticCustomError(
                 "source_nested", "may declare nested steps only for kind 'subprocess'"
             )
         supplied = set(self.model_fields_set)
-        if self.attrs is not None:
-            supplied |= set(self.attrs.model_fields_set)
         forbidden = inapplicable_fields(self.kind, supplied)
         if forbidden:
             raise PydanticCustomError(
@@ -183,63 +194,6 @@ class SourceStep(StepAttributes):
         return self
 
 
-class TransitionFields(SourceModel):
-    """Optional transition evidence shared by explicit edges and named branches."""
-
-    id: NonBlank | None = None
-    label: NonBlank | None = None
-    route: NonBlank | None = None
-    outcome: NonBlank | bool | None = None
-    handoff: HandoffRelation | None = None
-    rework: ReworkRelation | None = None
-    extensions: Extensions | None = None
-
-
-class SourceTransition(TransitionFields):
-    """Explicit source/target connection with no from/to aliases."""
-
-    source: NonBlank
-    target: NonBlank
-
-    @model_validator(mode="before")
-    @classmethod
-    def reject_endpoint_aliases(cls, value: Any) -> Any:
-        """Keep from/to aliases out of explicit source transitions."""
-        if isinstance(value, dict) and ("from" in value or "to" in value):
-            raise PydanticCustomError(
-                "source_alias", "must use 'source' and 'target' keys"
-            )
-        return value
-
-
-class OutcomeBranch(TransitionFields):
-    """A named route accepts a target string or an annotated branch object."""
-
-    target: NonBlank = Field(validation_alias=AliasChoices("target", "to"))
-
-    @model_validator(mode="before")
-    @classmethod
-    def accept_target_shorthand(cls, value: Any) -> Any:
-        """Validate string shorthand without rewriting the authored mapping."""
-        return {"target": value} if isinstance(value, str) and value.strip() else value
-
-
-class BranchConfig(SourceModel):
-    """Authored branch selection mechanism and optional resource eligibility."""
-
-    mode: Literal["dispatch", "probabilistic", "external", "unspecified"]
-    policy: NonBlank | None = None
-    eligible_resources: Annotated[list[NonBlank], Field(min_length=1)] | None = None
-
-    @field_validator("eligible_resources")
-    @classmethod
-    def unique_resources(cls, value: list[str] | None) -> list[str] | None:
-        """Eligibility names each resource at most once."""
-        if value is not None and len(set(value)) != len(value):
-            raise ValueError("must contain unique resource IDs")
-        return value
-
-
 class DocumentFields(SourceModel):
     """Shared source fields and aliases before and after composition."""
 
@@ -247,22 +201,6 @@ class DocumentFields(SourceModel):
     lanes: list[SourceLane] | None = None
     include: NonBlank | None = None
     includes: Annotated[list[NonBlank], Field(min_length=1)] | None = None
-
-    @model_validator(mode="before")
-    @classmethod
-    def reject_document_aliases(cls, value: Any) -> Any:
-        """Keep compiler aliases distinct from parser compatibility normalization."""
-        if isinstance(value, dict):
-            if "nodes" in value:
-                raise PydanticCustomError(
-                    "source_alias", "steps is required; nodes alias is not supported"
-                )
-            if "edges" in value:
-                raise PydanticCustomError(
-                    "source_alias",
-                    "transitions must be used; edges alias is not supported",
-                )
-        return value
 
 
 class SourceDocument(DocumentFields):
@@ -281,54 +219,9 @@ class SourceFragment(DocumentFields):
     steps: Authored[list[SourceStep]] = None
 
 
-NamedPaths = TypeAdapter(
-    Annotated[dict[NonBlank | bool, OutcomeBranch], Field(min_length=2)]
-)
-
-
 def validate_source_fragment(document: dict[str, Any]) -> None:
-    """Validate supplied shapes before composition can conceal declarations."""
+    """Validate all supplied fragment shapes before composition can conceal them."""
     validate_source_shape(SourceFragment, document)
-    validate_source_collections(document)
-
-
-def validate_source_collections(document: dict[str, Any]) -> None:
-    """Reject malformed collection shapes even when another placement shadows them."""
-    process = document.get("process")
-    if not isinstance(process, dict):
-        return
-    for key in ("items", "resources", "locations"):
-        if key in process:
-            _validate_collection_shape(process[key], ("process", key))
-
-
-def _validate_collection_shape(value: Any, path: tuple) -> None:
-    if isinstance(value, list):
-        for index, entry in enumerate(value):
-            if not isinstance(entry, dict):
-                raise SourceShapeError(
-                    f"E1202: {source_path((*path, index))} must be an object",
-                    (*path, index),
-                )
-        return
-    if not isinstance(value, dict) or not any(key != "name" for key in value):
-        raise SourceShapeError(
-            f"E1201: {source_path(path)} must be a list or non-empty grouped object",
-            path,
-        )
-    for key, child in value.items():
-        if not isinstance(key, str) or not key.strip():
-            raise SourceShapeError(
-                f"E1201: {source_path(path)} group keys must be non-empty strings", path
-            )
-        if key == "name":
-            if not isinstance(child, str) or not child.strip():
-                raise SourceShapeError(
-                    f"E1201: {source_path((*path, key))} must be a non-empty string",
-                    (*path, key),
-                )
-        else:
-            _validate_collection_shape(child, (*path, key))
 
 
 class SourceShapeError(ValueError):
@@ -363,6 +256,20 @@ def validate_source_shape(model: Any, value: Any, location: tuple = ()) -> Any:
         )
     except ValidationError as exc:
         issue = exc.errors(include_url=False, include_input=False)[0]
+        if (
+            len(issue["loc"]) > 1
+            and issue["loc"][0] == "process"
+            and issue["loc"][1] in {"items", "resources", "locations"}
+        ):
+            collection = issue["loc"][1]
+            try:
+                validate_collection_shape(collection, value["process"][collection])
+            except LocatedValidationError as error:
+                path = ("process", *error.location)
+                raise SourceShapeError(
+                    str(error), path, code=str(error).split(":", 1)[0]
+                ) from exc
+
         issue_location = _authored_error_location(value, issue["loc"])
         path = (*location, *issue_location)
         if path and path[-1] == "[key]":
@@ -373,10 +280,24 @@ def validate_source_shape(model: Any, value: Any, location: tuple = ()) -> Any:
             and path[-1] in {"int", "str", "bool", "constrained-str"}
         ):
             path = path[:-1]
-        if model is BranchConfig:
+        control = next(
+            (
+                part
+                for index, part in enumerate(path)
+                if part in {"branch", "outcomes", "routes"}
+                and index
+                and isinstance(path[index - 1], int)
+            ),
+            None,
+        )
+        if model is BranchConfig or control == "branch":
             message = _branch_shape_message(issue, path)
-        elif model is NamedPaths:
-            message = _named_shape_message(issue, path, location)
+        elif model is NamedPaths or control in {"outcomes", "routes"}:
+            field = next(
+                (field for field in ("outcomes", "routes") if field in path), None
+            )
+            root = path[: path.index(field) + 1] if field is not None else location
+            message = _named_shape_message(issue, path, root)
         else:
             message = (
                 _transition_shape_message(issue, path)
@@ -406,6 +327,11 @@ def _authored_error_location(value: Any, location: tuple) -> tuple:
             part
             in {
                 "MeasurementProfile",
+                "BranchConfig",
+                "FragmentProcess",
+                "SourceProcess",
+                "SourceStep",
+                "OutcomeBranch",
                 "MeasurementReference",
                 "str",
                 "int",
@@ -413,7 +339,16 @@ def _authored_error_location(value: Any, location: tuple) -> tuple:
                 "bool",
                 "constrained-str",
             }
-            or part.startswith(("function-after[", "union[", "list[", "dict["))
+            or part.startswith(
+                (
+                    "function-after[",
+                    "function-before[",
+                    "literal[",
+                    "union[",
+                    "list[",
+                    "dict[",
+                )
+            )
         ):
             continue
         else:
@@ -425,7 +360,7 @@ def _shape_message(issue: Mapping[str, Any], path: tuple) -> str:
     field = path[-1] if path else "source"
     rendered = source_path(path)
     kind = issue["type"]
-    if kind in {"source_alias", "source_nested", "source_applicability"}:
+    if kind in {"source_nested", "source_applicability"}:
         return f"{rendered} {issue['msg']}".strip()
     if kind == "value_error" and "explicit null" in issue["msg"]:
         return f"{rendered} explicit null is not allowed"
@@ -443,11 +378,10 @@ def _shape_message(issue: Mapping[str, Any], path: tuple) -> str:
         return f"{rendered} must be one of: {issue['ctx']['expected']}"
     if kind in {"list_type", "too_short"} or field in {
         "steps",
-        "subnodes",
         "transitions",
     }:
         return f"{rendered} must be a list"
-    if kind in {"model_type", "dict_type"} or field in {"metadata", "attrs", "process"}:
+    if kind in {"model_type", "dict_type"} or field in {"process"}:
         return f"{rendered} must be an object"
     if kind in {
         "missing",
@@ -466,7 +400,13 @@ def _branch_shape_message(issue: Mapping[str, Any], path: tuple) -> str:
     code = {"mode": "E0216", "policy": "E0217", "eligible_resources": "E0218"}.get(
         field, "E0215"
     )
-    return f"{code}: {source_path(path)} {issue['msg']}"
+    if issue["type"] in {"model_type", "dict_type"}:
+        detail = "must be a branch configuration object with a mode"
+    elif issue["type"] == "extra_forbidden":
+        detail = "is not a supported branch field"
+    else:
+        detail = issue["msg"].removeprefix("Value error, ")
+    return f"{code}: {source_path(path)} {detail}"
 
 
 def _named_shape_message(issue: Mapping[str, Any], path: tuple, root: tuple) -> str:
@@ -478,8 +418,10 @@ def _named_shape_message(issue: Mapping[str, Any], path: tuple, root: tuple) -> 
     if "[key]" in issue["loc"]:
         code = "E0203" if field == "outcomes" else "E0213"
         return f"{code}: {rendered} branch names must be non-empty strings"
-    if path[-1] in {"target", "to"}:
+    if path[-1] == "target":
         return f"E0206: {rendered} must be a non-empty string"
+    if issue["type"] == "extra_forbidden":
+        return _shape_message(issue, path)
     transition_message = _transition_shape_message(issue, path)
     if transition_message is not None:
         return transition_message

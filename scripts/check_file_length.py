@@ -16,7 +16,6 @@ from collections.abc import Sequence
 DEFAULT_WARN_LINES = 500
 DEFAULT_FAIL_LINES = 750
 EXCLUDED_FILES = {
-    "src/flo/process/ir/validate.py",
     "tests/integration/test_cli_render_options.py",
     "tests/unit/test_layout_core_elk_requests.py",
     "tests/unit/test_layout_core_elk_runtime.py",

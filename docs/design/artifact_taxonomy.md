@@ -66,7 +66,7 @@ Examples:
 - swimlane render
 - spaghetti map render
 - SPPM standalone figure
-- ingredients summary
+- item/resource summary
 - movement summary
 
 Expected output forms:

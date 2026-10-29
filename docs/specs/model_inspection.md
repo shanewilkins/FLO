@@ -15,6 +15,8 @@ The initial report version is `0.1`. It includes:
 - declared item, resource, and location counts and stable IDs;
 - deterministic non-rework paths supplied by structural analysis;
 - the default view and sorted named render-intent views; and
+- complete supplied process lead-time evidence, modeled timing and structured
+  handoff/rework relation evidence; and
 - structural diagnostics plus readiness for any explicitly requested analysis
   or diagram.
 

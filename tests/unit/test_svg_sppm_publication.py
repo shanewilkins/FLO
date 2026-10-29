@@ -3,7 +3,7 @@ from pathlib import Path
 
 from flo.render import render_artifact
 from flo.render.options import RenderOptions
-from flo.source import parse_adapter
+from flo.source import compile_adapter, parse_adapter
 
 
 def test_sppm_svg_renders_publication_header_and_footer_bands():
@@ -11,9 +11,11 @@ def test_sppm_svg_renders_publication_header_and_footer_bands():
         "process": {
             "id": "ops_review",
             "name": "Operations Review",
-            "metadata": {
-                "footer_metrics": {"Lead Time": "24 min"},
-                "footer_notes": ["Draft for review"],
+            "extensions": {
+                "flo:publication": {
+                    "footer_metrics": {"Lead Time": "24 min"},
+                    "footer_notes": ["Draft for review"],
+                }
             },
         },
         "nodes": [
@@ -50,7 +52,7 @@ def test_sppm_svg_omits_disabled_publication_bands():
         "process": {
             "id": "ops_review",
             "name": "Operations Review",
-            "metadata": {"footer_notes": ["Draft for review"]},
+            "extensions": {"flo:publication": {"footer_notes": ["Draft for review"]}},
         },
         "nodes": [
             {"id": "start", "kind": "start", "name": "Start"},
@@ -79,7 +81,9 @@ def test_sppm_svg_omits_disabled_publication_bands():
 
 def test_book_rework_connectors_are_vertical_and_entire_correction_path_is_red():
     source = Path("examples/reference/book_washnfold.flo")
-    process = parse_adapter(source.read_text(), source_path=str(source))
+    process = compile_adapter(
+        parse_adapter(source.read_text(), source_path=str(source))
+    )
     options = {
         "diagram": "sppm",
         "render_backend": "svg",
@@ -119,10 +123,10 @@ def test_book_rework_connectors_are_vertical_and_entire_correction_path_is_red()
     )
     internal = next(
         edge
-        for edge in process["transitions"]
-        if edge["source"] == "correction_queue" and edge["target"] == "fold_correction"
+        for edge in process.edges
+        if edge.source == "correction_queue" and edge.target == "fold_correction"
     )
-    assert not internal.get("rework")
+    assert not internal.rework
 
 
 def _svg_edge_elements(content):

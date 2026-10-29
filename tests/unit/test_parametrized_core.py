@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from flo.app import run_content
-from flo.errors import EXIT_SUCCESS, CompileError
+from flo.errors import EXIT_SUCCESS, ParseError
 from tests.fixtures.sample_fixtures import repo_root
 
 
@@ -22,5 +22,5 @@ def test_run_content_with_example_file(example_file: Path):
 
 
 def test_run_content_empty_is_rejected():
-    with pytest.raises(CompileError, match="spec_version must be present"):
+    with pytest.raises(ParseError, match="YAML mapping"):
         run_content("")

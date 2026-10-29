@@ -29,7 +29,6 @@ COMMON = {
     "lane",
     "subprocess_parent",
     "extensions",
-    "attrs",
 }
 WORK = {
     "cycle_time",
@@ -83,12 +82,12 @@ def allowed(kind, field):
     return (
         (kind == "decision" and field == "outcomes")
         or (kind == "branch" and field in {"branch", "routes"})
-        or (kind == "subprocess" and field in {"steps", "subnodes"})
+        or (kind == "subprocess" and field == "steps")
     )
 
 
 def test_matrix_inventories_every_source_node_field():
-    assert set(VALUES) == set(SourceStep.model_fields)
+    assert set(VALUES) - {"attrs", "subnodes"} == set(SourceStep.model_fields)
 
 
 @pytest.mark.parametrize("kind", KINDS)
@@ -99,7 +98,9 @@ def test_source_and_exchange_field_applicability(kind, field):
     if allowed(kind, field):
         SourceStep.model_validate(payload)
     else:
-        with pytest.raises(ValidationError, match=r"cannot be declared|nested steps"):
+        with pytest.raises(
+            ValidationError, match=r"cannot be declared|nested steps|Extra inputs"
+        ):
             SourceStep.model_validate(payload)
     if field not in CanonicalNodeContract.model_fields:
         return

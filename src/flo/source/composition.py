@@ -12,7 +12,7 @@ from .models import SourceShapeError, validate_source_fragment
 from .provenance import SourceOrigin, composed_origins, record_origins
 
 _RESOURCE_KEYS = ("items", "resources", "locations")
-_LIST_KEYS = ("steps", "transitions", "edges", "lanes")
+_LIST_KEYS = ("steps", "transitions", "lanes")
 MAX_SOURCE_BYTES = 1_000_000
 MAX_INCLUDE_FILES = 256
 MAX_INCLUDE_DEPTH = 32
@@ -145,14 +145,8 @@ def _compose_document(
     include_paths = _normalize_include_entries(document)
     if include_paths or depth:
         try:
-            validate_source_fragment(_fragment_payload(document))
+            validate_source_fragment(document)
         except SourceShapeError as exc:
-            if (
-                exc.location[:1] == ("transitions",)
-                and "edges" in document
-                and "transitions" not in document
-            ):
-                exc.location = ("edges", *exc.location[1:])
             origin = context.origins.get(id(document))
             if origin is None:
                 raise
@@ -199,7 +193,7 @@ def _compose_document(
     local = dict(document)
     local.pop("include", None)
     local.pop("includes", None)
-    composed = _merge_documents(base=composed, incoming=_fragment_payload(local))
+    composed = _merge_documents(base=composed, incoming=local)
 
     _validate_unique_ids(composed)
     return composed
@@ -429,13 +423,6 @@ def _merge_process(base_value: Any, incoming_value: Any) -> Any:
             continue
         merged[key] = value
     return merged
-
-
-def _fragment_payload(document: dict[str, Any]) -> dict[str, Any]:
-    payload = dict(document)
-    if "edges" in payload and "transitions" not in payload:
-        payload["transitions"] = payload.pop("edges")
-    return payload
 
 
 def _validate_unique_ids(document: dict[str, Any]) -> None:

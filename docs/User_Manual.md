@@ -168,639 +168,148 @@ Composition behavior:
 
 ## 4.2) Step Kinds and Canonical Step Fields
 
-The current schema-aligned step kinds are:
+Supported kinds are start, task, system_task, queue, wait, decision, branch,
+subprocess, parallel_split, parallel_join and end. Work kinds are task,
+system_task and subprocess. Each step declares id/kind; optional common fields
+include name, description, lane, subprocess_parent and extensions.
 
-- `start`: the single process entry point
-- `task`: a general work step
-- `system_task`: an explicitly system-owned task
-- `queue`: a queue or buffer step
-- `wait`: an explicit hold state
-- `decision`: a branch point with at least two outgoing outcomes
-- `subprocess`: a collapsed child-process step
-- `parallel_split`: the start of concurrent control flow
-- `parallel_join`: the synchronization point for concurrent control flow
-- `end`: a terminal step
+Work supports location, consumes, produces, performed_by, uses, value_class,
+cycle_time, wait_time and changeover_time. Queue/wait supports location and
+wait_time. Control nodes carry control flow and descriptive context only.
+See the exhaustive [field inventory](specs/book_aligned_fields.md).
 
-Canonical common step fields:
-
-- `name`: display label for the step
-- `lane`: swimlane grouping key
-- `location`: location id for spatial and movement analysis
-- `performed_by`: list of person resource ids performing the step
-- `uses`: list of equipment resource ids used by the step
-- `consumes`: list of item ids consumed by the step
-- `produces`: list of item ids produced by the step
-- `note`: short human note for review or context
-- `subnodes`: optional nested step list for `subprocess` nodes
-- `metadata`: machine-facing metadata map
-
-Use first-class `performed_by`, `uses`, `consumes`, and `produces` relations.
-Retired relation aliases are rejected; see the authoritative
-[book-aligned field inventory](specs/book_aligned_fields.md).
-
-Subprocess child-node example:
+Only subprocesses support nested `steps`; children compile to flattened nodes
+with explicit parent links. Other step kinds reject child lists.
 
 ```yaml
 steps:
-  - id: start
-    kind: start
-  - id: prep
+  - {id: start, kind: start}
+  - id: preparation
     kind: subprocess
-    name: Prep Phase
-    subnodes:
-      - id: gather
-        kind: task
-        name: Gather Inputs
-      - id: mix
-        kind: task
-        name: Mix Inputs
-  - id: end
-    kind: end
+    steps:
+      - {id: gather, kind: task, name: Gather inputs}
+      - {id: mix, kind: task, name: Mix inputs}
+  - {id: end, kind: end}
 ```
 
-Time-related node metadata fields (for example `cycle_time`, `wait_time`, `lead_time`) should use:
-
-- `value`: number >= 0
-- `unit`: one of `s`, `min`, `hr`, `d` (`m` is still accepted for backwards compatibility)
-
-This scalar form is the current executable contract.
-FLO must preserve an omitted or invalid timing field separately from a valid measured zero; a missing queue wait does not mean zero minutes.
-
-### Accepted future measurement-profile contract
-
-FLO 0.5 will replace the scalar form through a deliberate pre-1.0 breaking change.
-The accepted profile contract will preserve multiple externally calculated statistics without making FLO the event repository or statistical-computation system.
-
-The planned shape is conceptually:
+Measurement profiles preserve externally calculated statistics:
 
 ```yaml
 cycle_time:
   basis: observed
-  primary: mean
+  observation_count: 10
+  observation_unit: cases
+  primary: median
   analysis_input: mean
-  sample:
-    count: 39
-    unit: order_activity_occurrence
-    cohort_ref: representative-friday-orders
-    window:
-      start: 2026-08-01T00:00:00Z
-      end: 2026-08-31T23:59:59Z
-  evidence_ref: representative-friday-91
-  statistics:
-    - method: mean
-      value: 30.4
-      unit: min
-    - method: median
-      value: 30.3
-      unit: min
-    - method: percentile
-      parameters:
-        percentile: 90
-        interpolation: linear
-      value: 33.8
-      unit: min
+  results:
+    median: {method: median, value: 5, unit: min}
+    mean: {method: mean, value: 6, unit: min}
 ```
 
-This example documents an accepted direction, not syntax accepted by the current parser.
-The implementing release will publish the exact schema and migration procedure.
-
-`basis` will distinguish observed, simulated, estimated, planned, and target profiles.
-`primary` will select the compact display result.
-`analysis_input` will separately select the numeric result available to modeled static timing.
-FLO will not infer either selector or assume that an unlabeled duration is an average.
-
-Core methods will include count, sum, minimum, maximum, mean, median, mode, percentile, and standard deviation.
-Parameterized methods will record definitions such as percentile interpolation and sample or population standard deviation.
-Namespaced methods such as `lss4py:trimmed_mean` will allow producer-specific extensions without expanding FLO's core method vocabulary.
-
-FLO will validate, preserve, and project supplied profiles.
-Packages such as `lss4py`, governed worksheets, or other analytics systems will calculate them and retain the authoritative event or row-level evidence.
-An `evidence_ref` will identify that external evidence without causing FLO to fetch or embed it.
-
-The `value_class` field classifies a step by its Lean value contribution:
-
-- `VA` — value-adding
-- `RNVA` — required non-value-adding
-- `NVA` — non-value-adding
-- `unknown` — explicitly reviewed but not yet classifiable
-
-`value_class` applies only to `task`, `system_task`, `subprocess`, `queue`, and
-`wait` steps. It is invalid on process metadata and control nodes. An omitted
-classification remains undeclared and is reported separately from an explicit
-`unknown` classification by structural analysis.
-
-The `description` field is a free-text string providing a human-readable explanation of what the step does. It is displayed in the SPPM info box and is available as a pass-through field in other renderers.
-
-Queue and task timing contract:
-
-- `wait_time` is canonical on `queue` nodes.
-- `wait_before` preserves worksheet waiting evidence on work nodes such as
-  `task`, `system_task`, and `subprocess`.
-- Task-level source `wait_time` remains accepted as a compatibility alias and
-  compiles to `wait_before`.
-- `cycle_time`, `crossover_time`, `transfer_time`, and `changeover_time` are
-  valid on work nodes.
-- A promoted queue uses `measurement_refs` to identify task wait measurements
-  that it repeats or aggregates, preventing double counting.
-- Adjacent queue and work waits with different `measurement_id` values remain
-  independent measurements and are both included in static totals.
-
-The following metadata keys are recognized and validated by FLO. Other keys are
-currently preserved in IR for custom tooling. The approved requirement is to
-emit non-fatal warnings for unknown keys without rejecting or dropping them;
-implementation alignment is tracked in the technical requirements catalog.
-
-| Key | Type | Description |
-| --- | --- | --- |
-| `cycle_time` | time object | Active processing time for the step |
-| `wait_time` | time object | Duration of an explicit queue state |
-| `wait_before` | time object | Worksheet waiting interval preceding a work step |
-| `lead_time` | time object | Total elapsed time including wait |
-| `value_class` | `VA`\|`RNVA`\|`NVA`\|`unknown` | Lean value classification |
-| `description` | string | Human-readable explanation of the step |
-| `queue_policy` | string | Queue discipline (e.g. `fifo`, `lifo`) — `queue` nodes |
-| `buffer_capacity` | integer | Maximum queue depth — `queue` nodes |
-
-Pattern: task with worksheet waiting evidence
-
-```yaml
-steps:
-  - id: wash
-    kind: task
-    name: Wash
-    metadata:
-      cycle_time:
-        value: 30
-        unit: min
-      wait_before:
-        value: 18
-        unit: min
-        measurement_id: wash_wait
-```
-
-The same wait may also be promoted to queue geometry:
-
-```yaml
-steps:
-  - id: wash_queue
-    kind: queue
-    name: Washer Queue
-    metadata:
-      wait_time:
-        value: 18
-        unit: min
-        measurement_refs:
-          - wash_wait
-
-  - id: wash
-    kind: task
-    name: Wash
-    performed_by:
-      - Staff
-    metadata:
-      value_class: VA
-      cycle_time:
-        value: 30
-        unit: min
-      wait_before:
-        value: 18
-        unit: min
-        measurement_id: wash_wait
-```
-
-Example:
-
-```yaml
-steps:
-  - id: start
-    kind: start
-    name: Start
-  - id: review_queue
-    kind: queue
-    name: Review Queue
-    metadata:
-      queue_policy: fifo
-      buffer_capacity: 50
-  - id: approved
-    kind: decision
-    name: Approved?
-  - id: finish
-    kind: end
-    name: Complete
-```
+Primary selects display evidence; analysis_input selects analytical evidence.
+Without analysis_input, a profile does not contribute an inferred analytical
+value. Selected durations require explicit supported units s, m, min, hr or d
+and finite nonnegative numeric values. Zero is measured; omission is unmeasured.
+Only work kinds accept value_class: VA, RNVA, NVA or explicit unknown. Omission
+is unclassified. Process lead_time is a separate supplied profile; modeled lead
+time belongs to analysis results.
 
 ## 4.2.1) Modeling Queues and Process Steps
 
-FLO enforces queue/task semantics at compile time to keep process diagnostics correct:
-
-- Queue nodes represent waiting.
-- Task-like nodes represent active work and setup/changeover.
-
-Core modeling rules:
-
-- Use `kind: queue` + `metadata.wait_time` for an explicitly modeled waiting state.
-- Use work-node `metadata.wait_before` to preserve worksheet waiting evidence.
-- Use matching `measurement_id`/`measurement_refs` when a queue projects that
-  evidence.
-- Use `metadata.cycle_time` for active work duration.
-- Use `metadata.crossover_time` for setup/changeover on work nodes.
-
-Lean alignment:
-
-- Waiting and setup are both non-value-adding, but they are not the same problem.
-- Queue reduction methods: pull systems, kanban, takt leveling, WIP limits.
-- Changeover reduction methods: SMED, 5S, standard work, cross-training.
-
-Migration guide for existing models:
-
-1. Existing task-level `metadata.wait_time` compiles to `wait_before`.
-2. Prefer spelling new task measurements as `metadata.wait_before`.
-3. Add a preceding queue only when waiting should be visible as a process state.
-4. Give the task measurement an ID and list it in the queue's
-  `measurement_refs`.
-5. Re-validate with `uv run flo validate <file>.flo`.
-
-Real-world example (before/after):
+Use queue/wait for explicit waiting states. Work steps can independently declare
+waiting before work and changeover/setup evidence. A queue that displays the
+same work waiting evidence uses a direct reference:
 
 ```yaml
-# Compatibility source
-- id: execute_service
-  kind: task
-  metadata:
-    cycle_time: {value: 13, unit: min}
-    wait_time: {value: 6, unit: min, measurement_id: service_wait}
-
-# Preferred canonical spelling with promoted queue
-- id: execute_service_wait_queue
-  kind: queue
-  metadata:
+steps:
+  - {id: start, kind: start}
+  - id: staging
+    kind: queue
+    wait_time: {ref: wash.wait_time}
+  - id: wash
+    kind: task
     wait_time:
-      value: 6
-      unit: min
-      measurement_refs: [service_wait]
-
-- id: execute_service
-  kind: task
-  metadata:
-    cycle_time: {value: 13, unit: min}
-    wait_before: {value: 6, unit: min, measurement_id: service_wait}
+      basis: observed
+      primary: mean
+      analysis_input: mean
+      results:
+        mean: {method: mean, value: 30, unit: min}
+  - {id: end, kind: end}
 ```
+
+References resolve only to a work step's wait_time profile and cannot chain.
+Analysis avoids double contribution when the owning work evidence is on the
+same path. Independent waiting profiles remain independent contributions.
 
 ## 4.3) Transition Forms
 
-FLO supports these transition forms:
-
-- Explicit transition list: `transitions` with `source` and `target`
-- Outcome transitions from decisions: `outcomes` mapping under a `decision` step
-- Optional transition labels: `outcome` and/or `label` fields. When both are
-  present, `outcome` is the machine-readable decision value and `label` is the
-  rendered display text.
-- Optional transition semantics: `handoff`, `rework`, `edge_type`, and `metadata`
-
-Canonical transition example:
+Adjacent steps connect automatically unless local outcomes/routes or an explicit
+transitions list declares the flow. Explicit connections use source and target.
+A named decision outcome or branch route can name a target string or an object
+with target and transition evidence.
 
 ```yaml
-steps:
-  - id: start
-    kind: start
-
-  - id: review
-    kind: task
-    consumes: [submission]
-    produces: [submission]
-    performed_by: [reviewer]
-
-  - id: decision
-    kind: decision
-    name: Accepted?
-    outcomes:
-      yes: publish
-      no:
-        target: rework
-        edge_type: rework
-        rework: true
-
-  - id: rework
-    kind: task
-    consumes: [submission]
-    produces: [submission]
-    performed_by: [editor]
-
-  - id: publish
-    kind: end
-
 transitions:
-  - source: start
-    target: review
-  - source: review
-    target: decision
-    handoff: true
-    metadata:
-      handoff_type: responsibility
-  - source: decision
-    target: publish
-    outcome: yes
-  - source: decision
-    target: rework
-    outcome: no
-    edge_type: rework
-    rework: true
-  - source: rework
-    target: review
-    edge_type: rework
-    rework: true
+  - source: receive
+    target: inspect
+    handoff: {type: responsibility}
+  - source: inspect
+    target: correct
+    outcome: rejected
+    rework:
+      reason: Incomplete information
+      frequency:
+        basis: observed
+        numerator: 2
+        denominator: 10
+        observation_unit: cases
+```
 
+Each decision has at least two distinct named outcomes. A generic branch has
+branch.mode (dispatch, probabilistic, external or unspecified) and may declare
+named routes. Parallel split/join expresses concurrency instead of selection.
+Only decisions carry outcomes; only branches carry route names. Handoff/rework
+are objects whose complete supplied evidence survives export and inspection.
+
+## 4.4) Process Context, Items, Resources, and Locations
+
+Collections belong only under process. IDs are unique across flat or nested
+groups. Work refers to item IDs through consumes/produces, to person resources
+through performed_by, and equipment resources through uses.
+
+```yaml
 process:
+  id: preparation
+  name: Preparation
+  owner: {id: ops, name: Operations}
+  version: 2
   items:
-    - id: submission
-      name: Submission
-      kind: information
-
-  resources:
-    - id: reviewer
-      name: Reviewer
-      kind: person
-    - id: editor
-      name: Editor
-      kind: person
-
-```
-
-Parallel-flow example:
-
-```yaml
-steps:
-  - id: split
-    kind: parallel_split
-    name: Split Preparation
-
-  - id: prep_a
-    kind: task
-
-  - id: prep_b
-    kind: task
-
-  - id: join
-    kind: parallel_join
-    name: Join Preparation
-
-transitions:
-  - source: split
-    target: prep_a
-  - source: split
-    target: prep_b
-  - source: prep_a
-    target: join
-  - source: prep_b
-    target: join
-```
-
-## 4.4) Process Metadata, Items, Resources, and Locations
-
-Process context and entity collections use first-class fields. Non-core
-annotations belong under `process.extensions`.
-
-- Declare `process.items`, `process.resources`, and `process.locations` in both
-  complete source documents and include fragments. Canonical exchange retains
-  that placement.
-- Legacy collection names and top-level or metadata collection placements are
-  rejected. `equipment` is a resource kind, not a collection.
-- Process `lead_time` preserves supplied evidence; modeled lead time is derived
-  separately in inspection and labeled separately in diagrams.
-- A resource collection can be either:
-  - A flat list of resource items.
-  - A grouped object where each key maps to another collection (list or grouped object). This allows nested grouping.
-- Grouped objects can include an optional `name` field for a human-readable label.
-
-For material quantities, use one of two quantity shapes:
-
-- Discrete count: `kind: count`, integer `value >= 1`, optional `unit: each`
-  (optional `qualifier`, for example `large`).
-- Continuous SI-style measure: `kind: measure`, finite numeric `value > 0`,
-  and metric `unit` from `mg|g|kg|ml|l|mm|cm|m`.
-
-Measured quantities may also declare `canonical_value` and `canonical_unit`
-together. These must represent the same amount in dimensionally compatible
-units, within relative tolerance `1e-9` and zero absolute tolerance. For example,
-`250 g` may declare canonical `0.25 kg`, but not `99 kg` or `0.25 l`.
-Mass-to-volume conversion is not inferred. A canonical conversion must remain
-finite and positive. Measured `m` means metres; duration `m` means minutes.
-
-Validation preserves both authored pairs and never inserts omitted canonical
-fields. This adds no new syntax, but inconsistent canonical declarations that
-previously passed now fail validation. Correct the canonical pair or omit both
-optional fields; plain measured quantities and discrete counts remain supported.
-
-The same quantity contract can be used for canonical `items` and `resources` when counts or measured quantities are useful.
-`locations` usually use ids, names, optional kinds, and location metadata rather than quantity.
-
-For spatial analysis and spaghetti-map rendering, locations can include optional spatial coordinates:
-
-- `metadata.spatial.x`: numeric x coordinate
-- `metadata.spatial.y`: numeric y coordinate
-- `metadata.spatial.unit`: optional unit (`mm|cm|m|in|ft`)
-- `kind`: optional semantic location kind used for spaghetti-map shape styling
-
-Coordinates share one origin and axis orientation. A missing spatial unit retains
-the metre default. If positioned locations mix supported units, movement
-distances and spaghetti positions normalize to metres; maps using a single unit
-retain that unit and scale. Source and canonical JSON keep their authored values
-and units. Optional boundary coordinates use the resulting map coordinate unit.
-
-Spaghetti rendering uses deterministic partial mode by default: routes whose
-two endpoints are positioned are rendered, incomplete routes are omitted, and
-both stderr and the SVG identify the result as partial. Use
-`--spaghetti-strict-spatial` to reject any selected route with an unpositioned
-endpoint. FLO never invents coordinates or substitutes graph layout.
-
-Recommended domain-neutral kinds:
-
-- `storage`: inventory/holding areas
-- `operation`: general work/procedure areas
-- `processing`: machine or transformation areas
-- `staging`: buffer/queue/wait areas
-- `support`: cleaning/inspection/service areas
-- `transit`: hallways/transfer/conveyor paths
-
-Compatibility aliases are still recognized (for example: `prep` -> `operation`, `heat` -> `processing`, `cooling` -> `staging`, `wash` -> `support`). Unknown kinds keep the default spaghetti node style.
-
-Spaghetti maps can also render an optional area boundary overlay from process metadata:
-
-- `process.metadata.layout_boundary`: boundary object
-- Rectangle form: `x`, `y`, `width`, `height` (where `x,y` is the lower-left origin)
-- Polygon form: `points` list with `x,y` vertices
-- Optional `label` (or `name`) for boundary caption
-
-Rectangle example:
-
-```yaml
-process:
-  id: kitchen_flow
-  name: Kitchen Flow
-  metadata:
-    layout_boundary:
-      type: rectangle
-      x: -1.0
-      y: -1.0
-      width: 8.0
-      height: 6.0
-      label: Kitchen Boundary
-```
-
-Polygon example:
-
-```yaml
-process:
-  id: kitchen_flow
-  name: Kitchen Flow
-  metadata:
-    layout:
-      boundary:
-        type: polygon
-        name: Production Area
-        points:
-          - {x: 0.0, y: 0.0}
-          - {x: 8.0, y: 0.0}
-          - {x: 8.0, y: 4.0}
-          - {x: 0.0, y: 4.0}
-```
-
-Example:
-
-```yaml
-
-process:
-  locations:
-    - id: prep_bench
-      name: Prep Bench
-      kind: operation
-      metadata:
-        spatial:
-          x: 3.0
-          y: 2.0
-          unit: m
-```
-
-Grouping example for canonical items:
-
-```yaml
-
-process:
-  items:
-    dry:
-      name: Dry Ingredients
-      items:
-        - id: flour
-          name: Flour
-          kind: material
-          quantity:
-            kind: measure
-            value: 250
-            unit: g
-        - id: sugar
-          name: Sugar
-          kind: material
-          quantity:
-            kind: measure
-            value: 120
-            unit: g
-    wet:
-      name: Wet Ingredients
-      dairy:
-        name: Dairy
-        items:
-          - id: butter
-            name: Butter
-            kind: material
-            quantity:
-              kind: measure
-              value: 100
-              unit: g
-      eggs:
-        name: Eggs
-        items:
-          - id: egg
-            name: Egg
-            kind: material
-            quantity:
-              kind: count
-              value: 2
-              unit: each
-              qualifier: large
-```
-
-Example:
-
-```yaml
-spec_version: "0.1"
-
-process:
-  id: chocolate_chip_cookies
-  name: Chocolate Chip Cookie Process
-  metadata:
-    cycle_time_seconds:
-      target: 14400
-    yield_fraction:
-      target: 0.96
-
-  items:
-    - id: order_ticket
-      name: Order Ticket
-      kind: information
-      quantity:
-        kind: count
-        value: 1
-        unit: each
-    - id: dough
-      name: Dough
+    - id: flour
+      name: Flour
       kind: material
-      quantity:
-        kind: measure
-        value: 2
-        unit: kg
-
+      quantity: {kind: measure, value: 250, unit: g, canonical_value: 0.25, canonical_unit: kg}
   resources:
-    - id: baker
-      name: Baker
-      kind: person
-      quantity:
-        kind: count
-        value: 1
-        unit: each
-    - id: oven
-      name: Convection Oven
-      kind: equipment
-      quantity:
-        kind: count
-        value: 1
-        unit: each
-
+    - {id: baker, name: Baker, kind: person}
+    - {id: mixer, name: Mixer, kind: equipment}
   locations:
-    - id: main_kitchen
-      name: Main Kitchen
-      kind: operation
-      metadata:
-        site_code: HQ-01
-
-steps:
-  - id: start
-    kind: start
-  - id: mix
-    kind: task
-    consumes: [order_ticket, dough]
-    produces: [dough]
-    performed_by: [baker]
-    uses: [oven]
-    location: main_kitchen
-  - id: end
-    kind: end
-
-transitions:
-  - source: start
-    target: mix
-  - source: mix
-    target: end
+    - id: bench
+      name: Preparation bench
+      spatial: {x: 3, y: 4, unit: m}
 ```
+
+Item kinds are material/information; resource kinds are person/equipment.
+Quantities are positive integral counts or finite positive measured amounts.
+Optional canonical amount/unit must describe the same dimension and amount,
+using relative tolerance 1e-9 and absolute tolerance 0. Supported measure units
+are mg, g, kg, ml, l, mm, cm and m. Spatial units are mm, cm, m, in and ft;
+mixed units normalize for movement distances without changing authored data.
+
+Unknown fields fail. Finite JSON annotations belong under extensions. Display
+annotations have one supported location: process.extensions.flo:publication for
+footer_metrics, footer_notes and publication_date; edge.extensions.flo:continuation
+for outgoing/incoming labels; process.extensions.flo:spaghetti.boundary for an
+optional area overlay. Owner and version are first-class process context.
+Subprocess extensions may use detail_map_ref to label the detail map.
 
 ## 4.5) Diagram Types and When to Use Them
 
@@ -846,11 +355,11 @@ Typical fields include description, cycle time, performers, wait time on queue n
 
 SPPM-relevant fields per step:
 
-- `metadata.value_class`: controls node color
-- `metadata.cycle_time`: shown in info box as `P/T:`
-- `metadata.wait_time`: shown in info box as `W/T:` (queue nodes)
-- `metadata.crossover_time`: shown in info box as `S/T:` (task/system_task/subprocess)
-- `metadata.description`: shown as the first line of the info box
+- `value_class`: controls node color
+- `cycle_time`: shown in info box as `P/T:`
+- `wait_time`: shown in info box as `W/T:` (queue nodes)
+- `changeover_time`: shown in info box as `S/T:` (task/system_task/subprocess)
+- `description`: shown as the first line of the info box
 - `performed_by`: shown as the performer line in the info box
 - `uses`: available for equipment-aware examples and downstream summaries
 
@@ -867,13 +376,14 @@ appears as `Unavailable` with a reason in `flo inspect`; it is never shown as
 zero. Even with complete timing coverage, cycles and parallel flows can leave
 modeled lead time unavailable.
 
-The current renderer shows one scalar value for each available timing field.
-Under the accepted measurement-profile contract, compact output will show the explicitly selected primary statistic and identify its method, such as `Avg P/T`, `Median W/T`, or `P90 S/T`.
-Detailed output will preserve all supported statistics, sample context, basis, and evidence identity.
-Machine-readable output will preserve the complete profile even when the selected renderer cannot display every result.
+Cards display the explicitly selected primary duration. Canonical JSON and model
+inspection retain the full profile, including other statistics, selectors,
+basis, sample context and evidence references. `flo inspect --analysis timing`
+uses analysis_input rather than silently choosing the displayed result.
 
-Detailed measurement meaning will not depend on clicking or hovering.
-An interactive host may open detail from a process box, while print and composed publication output will provide an equivalent table, callout, appendix, or companion artifact.
+A richer detailed publication or interactive measurement view remains planned
+under UR-080/TR-111. Current diagrams do not claim to display every statistic
+or a method-specific label such as a percentile caption.
 
 The default theme uses stoplight colors. Themes use Bootstrap-compatible semantic
 roles: `success` for VA, `warning` for RNVA and queues, `danger` for NVA, and
@@ -982,7 +492,7 @@ FLO has four main output families.
 
 1. Operational text outputs.
 
-  `flo render --export ingredients` emits human-readable item and resource summaries.
+  `flo render --export items` emits human-readable item and resource summaries.
   `flo render --export movement` emits inferred movement summaries.
 
 1. Static analysis reports.
@@ -1008,7 +518,7 @@ uv run flo render examples/reference/new_semantics.flo \
 Human-readable text export examples:
 
 ```bash
-uv run flo render examples/reference/new_semantics.flo --export ingredients
+uv run flo render examples/reference/new_semantics.flo --export items
 uv run flo render examples/reference/chocolate_chip_cookies.flo --export movement
 ```
 
@@ -1076,11 +586,11 @@ Entry filenames and includes are portable rather than absolute checkout paths.
 
 ## 5.4 Export
 
-Export as JSON by default, or choose SVG, Typst publication source, ingredients text, or movement text.
+Export as JSON by default, or choose SVG, Typst publication source, item/resource text, or movement text.
 
 ```bash
 uv run flo export path/to/model.flo
-uv run flo export path/to/model.flo --export ingredients
+uv run flo export path/to/model.flo --export items
 uv run flo export path/to/model.flo --export movement
 uv run flo export path/to/model.flo --export svg
 ```
@@ -1093,7 +603,7 @@ Common options:
 
 - `-o, --output <file>`: write text or JSON output to file
 - `-v, --verbose`: verbose logging
-- `--export {svg,typst,json,ingredients,movement}`: choose output format
+- `--export {svg,typst,json,items,movement}`: choose output format
 
 Inspect options:
 
@@ -1153,7 +663,7 @@ Examples:
 ```bash
 uv run flo render examples/reference/swimlane.flo --export svg --render-to swimlane.svg --diagram swimlane
 uv run flo render examples/reference/new_semantics.flo --export json
-uv run flo render examples/reference/chocolate_chip_cookies.flo --export ingredients
+uv run flo render examples/reference/chocolate_chip_cookies.flo --export items
 uv run flo render examples/reference/chocolate_chip_cookies.flo --export movement
 uv run flo render examples/reference/washnfold.flo --export svg --render-to washnfold_sppm.svg --diagram sppm --sppm-output-profile book --layout-target-columns 4
 uv run flo render examples/reference/washnfold.flo --export typst --render-to washnfold.typ --diagram sppm --layout-overflow paginate --layout-target-columns 4
@@ -1191,8 +701,8 @@ width; a fixed canvas is not required for every render.
 
 Important:
 
-- Render-only flags are invalid with JSON, ingredients, or movement export modes.
-- If you pass render-only flags together with JSON, ingredients, or movement export, FLO returns usage error code `1`.
+- Render-only flags are invalid with JSON, item/resource, or movement export modes.
+- If you pass render-only flags together with JSON, item/resource, or movement export, FLO returns usage error code `1`.
 - Profile-driven direct-SVG row wrapping applies automatically to unambiguous
   linear LR SPPM sequences. Supplying an explicit `--layout-width` also opts a
   branching or rework map into width-constrained wrapping; rework stays on a
@@ -1228,7 +738,7 @@ SPPM subprocess projection contract:
 Renderer policy decisions:
 
 - Rework edges are always dashed.
-- Rework classification precedence is explicit metadata first and inferred back-edge fallback second.
+- Rework classification uses the explicit structured relation before any inferred back-edge finding.
 - Cross-lane rework uses composite behavior.
 - Layout fit modes are policy-defined as fit-preferred and fit-strict.
 
@@ -1268,7 +778,7 @@ SPPM label policy matrix:
 SPPM time semantics:
 
 - `wait_time` models queue delay.
-- `crossover_time` models setup or changeover time.
+- `changeover_time` models setup or changeover time.
 - These metrics are intentionally distinct because they imply different operational problems and different improvement methods.
 - Work-step shapes display declared setup or changeover as `S/T`; queue shapes
   display queue delay as `W/T`.
@@ -1276,8 +786,8 @@ SPPM time semantics:
   processing, waiting, setup, and modeled lead time from the same static-analysis
   result used by `flo inspect`. Alternative paths show a range; unresolved
   timing shows `Unavailable` and points to inspect diagnostics.
-- Under the accepted future profile contract, static timing will consume only
-  an explicit numeric `analysis_input`; it will not calculate descriptive
+- Static timing consumes only
+  the named `analysis_input` result; it will not calculate descriptive
   statistics or use the primary display result implicitly.
 - Arithmetic over selected node statistics remains a modeled timing result and
   is never labeled as an empirical end-to-end mean, median, minimum, maximum,
@@ -1329,11 +839,10 @@ Current semantic constraints include:
 - `parallel_join` nodes need at least two incoming edges and must be reachable from a `parallel_split`
 - Canonical `consumes` and `produces` references must resolve to declared `items` when `items` are present
 - Canonical `performed_by` and `uses` references must resolve to declared `resources` with the correct kind when `resources` are present
-- `handoff` must be boolean in the structural edge contract
-- `wait_time` is canonical on queues; `wait_before` is canonical on work nodes
-- Task source `wait_time` is accepted as a compatibility alias for `wait_before`
+- `handoff` and `rework` use structured relation objects
+- `wait_time` carries waiting evidence on work and queue/wait nodes
 - Promoted queue waits must reference the work measurements they project
-- Queue nodes must not carry active work or setup-time fields such as `cycle_time` or `crossover_time`
+- Queue nodes must not carry active work or setup-time fields such as `cycle_time` or `changeover_time`
 
 ## 10) Diagrams and Rendering
 
@@ -1408,7 +917,7 @@ uv run flo export path/to/model.flo -o model.json
 
 Problem: "Render options ... require a diagram render output"
 
-- Cause: diagram render flags were used with JSON, ingredients, or movement export.
+- Cause: diagram render flags were used with JSON, item/resource, or movement export.
 - Fix: remove render flags or switch to `--export svg`.
 
 Problem: validation errors like missing predecessor/successor

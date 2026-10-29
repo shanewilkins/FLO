@@ -10,7 +10,9 @@ def test_extract_process_header_context_from_dict_process_model():
         "process": {
             "id": "wash_n_fold",
             "name": "Wash n' Fold",
-            "metadata": {"owner": "Laundry Ops", "revision": "R2"},
+            "extensions": {
+                "flo:publication": {"owner": "Laundry Ops", "revision": "R2"}
+            },
         }
     }
 
@@ -42,7 +44,9 @@ def test_build_process_header_rows_merges_default_fields_and_extra_rows():
         "process": {
             "id": "wash_n_fold",
             "name": "Wash n' Fold",
-            "metadata": {"owner": "Laundry Ops", "revision": "R2"},
+            "extensions": {
+                "flo:publication": {"owner": "Laundry Ops", "revision": "R2"}
+            },
         }
     }
 

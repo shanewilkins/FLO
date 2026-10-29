@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-import flo.process.ir.validate as validate_mod
+import flo.process.ir.validate_schema as validate_mod
 from flo.errors import ValidationError
 from flo.process.ir.models import IR
 

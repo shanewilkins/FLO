@@ -2,9 +2,11 @@
 
 Status: accepted
 
+Implementation scope (2026-10-29): The initial profile, basis, named results and evidence contract is implemented by the book-aligned refactor. The normative source and exchange shapes are in docs/specs/book_aligned_contract.md. Broader writer/interoperability acceptance remains separate.
+
 ## Context
 
-FLO timing metadata currently stores one non-negative duration as `value` and
+At the time of this decision, FLO timing metadata stored one non-negative duration as `value` and
 `unit`. That shape cannot distinguish a planned duration from an estimate,
 simulation result, single observation, mean, median, percentile, or other
 summary. It also cannot preserve multiple statistics calculated from one

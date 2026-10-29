@@ -1,82 +1,106 @@
 {
   "$defs": {
     "Authored_Annotated_str__StringConstraints__": {
-      "anyOf": [
-        {
-          "pattern": "\\S",
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ]
+      "pattern": "\\S",
+      "type": "string"
     },
-    "Authored_ControlAttributes_": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/ControlAttributes"
-        },
-        {
-          "type": "null"
-        }
-      ]
+    "Authored_BranchConfig_": {
+      "$ref": "#/$defs/BranchConfig"
+    },
+    "Authored_EntityCollection_ItemContract__": {
+      "$ref": "#/$defs/EntityCollection_ItemContract_"
+    },
+    "Authored_EntityCollection_LocationContract__": {
+      "$ref": "#/$defs/EntityCollection_LocationContract_"
+    },
+    "Authored_EntityCollection_ResourceContract__": {
+      "$ref": "#/$defs/EntityCollection_ResourceContract_"
     },
     "Authored_Extensions_": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/Extensions"
-        },
-        {
-          "type": "null"
-        }
-      ]
+      "$ref": "#/$defs/Extensions"
+    },
+    "Authored_MeasurementProfile_": {
+      "$ref": "#/$defs/MeasurementProfile"
     },
     "Authored_Measurement_": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/Measurement"
-        },
-        {
-          "type": "null"
-        }
-      ]
+      "$ref": "#/$defs/Measurement"
+    },
+    "Authored_NamedPathDeclarations_": {
+      "$ref": "#/$defs/NamedPathDeclarations"
     },
     "Authored_dict_Any__Any__": {
-      "anyOf": [
-        {
-          "additionalProperties": true,
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ]
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "Authored_list_Annotated_str__StringConstraints___": {
+      "items": {
+        "pattern": "\\S",
+        "type": "string"
+      },
+      "type": "array"
     },
     "Authored_list_SourceStep__": {
-      "anyOf": [
-        {
-          "items": {
-            "$ref": "#/$defs/SourceStep"
-          },
-          "type": "array"
-        },
-        {
-          "type": "null"
-        }
-      ]
+      "items": {
+        "$ref": "#/$defs/SourceStep"
+      },
+      "type": "array"
     },
     "Authored_list_SourceTransition__": {
-      "anyOf": [
-        {
-          "items": {
-            "$ref": "#/$defs/SourceTransition"
-          },
-          "type": "array"
+      "items": {
+        "$ref": "#/$defs/SourceTransition"
+      },
+      "type": "array"
+    },
+    "BranchConfig": {
+      "additionalProperties": false,
+      "description": "Authored branch selection mechanism and optional resource eligibility.",
+      "properties": {
+        "mode": {
+          "enum": [
+            "dispatch",
+            "probabilistic",
+            "external",
+            "unspecified"
+          ],
+          "title": "Mode",
+          "type": "string"
         },
-        {
-          "type": "null"
+        "policy": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Policy"
+        },
+        "eligible_resources": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "\\S",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Eligible Resources"
         }
-      ]
+      },
+      "required": [
+        "mode"
+      ],
+      "title": "BranchConfig",
+      "type": "object"
     },
     "BusinessUnit": {
       "additionalProperties": false,
@@ -111,28 +135,186 @@
       "title": "BusinessUnit",
       "type": "object"
     },
-    "ControlAttributes": {
+    "CountQuantity": {
       "additionalProperties": false,
-      "description": "Temporary control-only overlay pending complete attrs removal in phase 4.",
+      "description": "An integral count of indivisible entities.",
       "properties": {
-        "subprocess_parent": {
-          "$ref": "#/$defs/Authored_Annotated_str__StringConstraints__",
-          "default": null
+        "kind": {
+          "const": "count",
+          "title": "Kind",
+          "type": "string"
         },
-        "branch": {
-          "default": null,
-          "title": "Branch"
+        "value": {
+          "exclusiveMinimum": 0,
+          "title": "Value",
+          "type": "integer"
         },
-        "outcomes": {
+        "unit": {
+          "anyOf": [
+            {
+              "const": "each",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": null,
-          "title": "Outcomes"
+          "title": "Unit"
         },
-        "routes": {
+        "qualifier": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": null,
-          "title": "Routes"
+          "title": "Qualifier"
         }
       },
-      "title": "ControlAttributes",
+      "required": [
+        "kind",
+        "value"
+      ],
+      "title": "CountQuantity",
+      "type": "object"
+    },
+    "EntityCollection_ItemContract_": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/ItemContract"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/EntityGroup_ItemContract_"
+        }
+      ]
+    },
+    "EntityCollection_LocationContract_": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/LocationContract"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/EntityGroup_LocationContract_"
+        }
+      ]
+    },
+    "EntityCollection_ResourceContract_": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/ResourceContract"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/EntityGroup_ResourceContract_"
+        }
+      ]
+    },
+    "EntityGroup_ItemContract_": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "items": {
+              "$ref": "#/$defs/ItemContract"
+            },
+            "type": "array"
+          },
+          {
+            "$ref": "#/$defs/EntityGroup_ItemContract_"
+          }
+        ]
+      },
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        }
+      },
+      "title": "EntityGroup[ItemContract]",
+      "type": "object"
+    },
+    "EntityGroup_LocationContract_": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "items": {
+              "$ref": "#/$defs/LocationContract"
+            },
+            "type": "array"
+          },
+          {
+            "$ref": "#/$defs/EntityGroup_LocationContract_"
+          }
+        ]
+      },
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        }
+      },
+      "title": "EntityGroup[LocationContract]",
+      "type": "object"
+    },
+    "EntityGroup_ResourceContract_": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "items": {
+              "$ref": "#/$defs/ResourceContract"
+            },
+            "type": "array"
+          },
+          {
+            "$ref": "#/$defs/EntityGroup_ResourceContract_"
+          }
+        ]
+      },
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        }
+      },
+      "title": "EntityGroup[ResourceContract]",
       "type": "object"
     },
     "Extensions": {
@@ -180,7 +362,196 @@
       "title": "HandoffRelation",
       "type": "object"
     },
+    "ItemContract": {
+      "additionalProperties": false,
+      "description": "A material or information object flowing through work.",
+      "properties": {
+        "id": {
+          "pattern": "\\S",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
+        },
+        "quantity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "kind": {
+          "enum": [
+            "material",
+            "information"
+          ],
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "kind"
+      ],
+      "title": "ItemContract",
+      "type": "object"
+    },
     "JsonValue": {},
+    "LocationContract": {
+      "additionalProperties": false,
+      "description": "A named operational place with optional spatial evidence.",
+      "properties": {
+        "id": {
+          "pattern": "\\S",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
+        },
+        "quantity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kind"
+        },
+        "spatial": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SpatialContract"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "LocationContract",
+      "type": "object"
+    },
+    "MeasureQuantity": {
+      "additionalProperties": false,
+      "description": "A measured amount; dimensional equivalence remains domain-owned.",
+      "properties": {
+        "kind": {
+          "const": "measure",
+          "title": "Kind",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "gt": 0,
+          "title": "Value"
+        },
+        "unit": {
+          "pattern": "\\S",
+          "title": "Unit",
+          "type": "string"
+        },
+        "canonical_value": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "gt": 0
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Canonical Value"
+        },
+        "canonical_unit": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Canonical Unit"
+        }
+      },
+      "required": [
+        "kind",
+        "value",
+        "unit"
+      ],
+      "title": "MeasureQuantity",
+      "type": "object"
+    },
     "Measurement": {
       "anyOf": [
         {
@@ -459,6 +830,166 @@
       "title": "NamedIdentity",
       "type": "object"
     },
+    "NamedPathDeclarations": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/OutcomeBranch"
+          },
+          {
+            "pattern": "\\S",
+            "type": "string"
+          }
+        ]
+      },
+      "minProperties": 2,
+      "type": "object"
+    },
+    "OutcomeBranch": {
+      "additionalProperties": false,
+      "description": "A named route accepts a target string or an annotated branch object.",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "handoff": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HandoffRelation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "rework": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReworkRelation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "target": {
+          "pattern": "\\S",
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "target"
+      ],
+      "title": "OutcomeBranch",
+      "type": "object"
+    },
+    "Quantity": {
+      "discriminator": {
+        "mapping": {
+          "count": "#/$defs/CountQuantity",
+          "measure": "#/$defs/MeasureQuantity"
+        },
+        "propertyName": "kind"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/CountQuantity"
+        },
+        {
+          "$ref": "#/$defs/MeasureQuantity"
+        }
+      ]
+    },
+    "ResourceContract": {
+      "additionalProperties": false,
+      "description": "A person or equipment resource used by work.",
+      "properties": {
+        "id": {
+          "pattern": "\\S",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
+        },
+        "quantity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "kind": {
+          "enum": [
+            "person",
+            "equipment"
+          ],
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "kind"
+      ],
+      "title": "ResourceContract",
+      "type": "object"
+    },
     "ReworkFrequency": {
       "additionalProperties": false,
       "description": "Observed rework frequency with an explicit denominator.",
@@ -645,7 +1176,7 @@
           "title": "Version"
         },
         "lead_time": {
-          "$ref": "#/$defs/Authored_Measurement_",
+          "$ref": "#/$defs/Authored_MeasurementProfile_",
           "default": null
         },
         "render": {
@@ -690,16 +1221,16 @@
           "title": "Business Units"
         },
         "items": {
-          "default": null,
-          "title": "Items"
+          "$ref": "#/$defs/Authored_EntityCollection_ItemContract__",
+          "default": null
         },
         "resources": {
-          "default": null,
-          "title": "Resources"
+          "$ref": "#/$defs/Authored_EntityCollection_ResourceContract__",
+          "default": null
         },
         "locations": {
-          "default": null,
-          "title": "Locations"
+          "$ref": "#/$defs/Authored_EntityCollection_LocationContract__",
+          "default": null
         },
         "id": {
           "pattern": "\\S",
@@ -721,7 +1252,7 @@
     },
     "SourceStep": {
       "additionalProperties": false,
-      "description": "Recursive authored steps; both supported child spellings retain their paths.",
+      "description": "Recursive authored steps with one nested subprocess spelling.",
       "properties": {
         "name": {
           "anyOf": [
@@ -776,68 +1307,20 @@
           "title": "Location"
         },
         "consumes": {
-          "anyOf": [
-            {
-              "items": {
-                "pattern": "\\S",
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Consumes"
+          "$ref": "#/$defs/Authored_list_Annotated_str__StringConstraints___",
+          "default": null
         },
         "produces": {
-          "anyOf": [
-            {
-              "items": {
-                "pattern": "\\S",
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Produces"
+          "$ref": "#/$defs/Authored_list_Annotated_str__StringConstraints___",
+          "default": null
         },
         "performed_by": {
-          "anyOf": [
-            {
-              "items": {
-                "pattern": "\\S",
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Performed By"
+          "$ref": "#/$defs/Authored_list_Annotated_str__StringConstraints___",
+          "default": null
         },
         "uses": {
-          "anyOf": [
-            {
-              "items": {
-                "pattern": "\\S",
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Uses"
+          "$ref": "#/$defs/Authored_list_Annotated_str__StringConstraints___",
+          "default": null
         },
         "value_class": {
           "anyOf": [
@@ -858,7 +1341,7 @@
           "title": "Value Class"
         },
         "cycle_time": {
-          "$ref": "#/$defs/Authored_Measurement_",
+          "$ref": "#/$defs/Authored_MeasurementProfile_",
           "default": null
         },
         "wait_time": {
@@ -866,7 +1349,7 @@
           "default": null
         },
         "changeover_time": {
-          "$ref": "#/$defs/Authored_Measurement_",
+          "$ref": "#/$defs/Authored_MeasurementProfile_",
           "default": null
         },
         "extensions": {
@@ -878,16 +1361,16 @@
           "default": null
         },
         "branch": {
-          "default": null,
-          "title": "Branch"
+          "$ref": "#/$defs/Authored_BranchConfig_",
+          "default": null
         },
         "outcomes": {
-          "default": null,
-          "title": "Outcomes"
+          "$ref": "#/$defs/Authored_NamedPathDeclarations_",
+          "default": null
         },
         "routes": {
-          "default": null,
-          "title": "Routes"
+          "$ref": "#/$defs/Authored_NamedPathDeclarations_",
+          "default": null
         },
         "id": {
           "pattern": "\\S",
@@ -910,14 +1393,6 @@
           ],
           "title": "Kind",
           "type": "string"
-        },
-        "attrs": {
-          "$ref": "#/$defs/Authored_ControlAttributes_",
-          "default": null
-        },
-        "subnodes": {
-          "$ref": "#/$defs/Authored_list_SourceStep__",
-          "default": null
         },
         "steps": {
           "$ref": "#/$defs/Authored_list_SourceStep__",
@@ -961,35 +1436,6 @@
           "default": null,
           "title": "Label"
         },
-        "route": {
-          "anyOf": [
-            {
-              "pattern": "\\S",
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Route"
-        },
-        "outcome": {
-          "anyOf": [
-            {
-              "pattern": "\\S",
-              "type": "string"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Outcome"
-        },
         "handoff": {
           "anyOf": [
             {
@@ -1023,6 +1469,35 @@
           ],
           "default": null
         },
+        "route": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Route"
+        },
+        "outcome": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Outcome"
+        },
         "source": {
           "pattern": "\\S",
           "title": "Source",
@@ -1039,6 +1514,53 @@
         "target"
       ],
       "title": "SourceTransition",
+      "type": "object"
+    },
+    "SpatialContract": {
+      "additionalProperties": false,
+      "description": "Coordinates whose physical unit compatibility is domain-owned.",
+      "properties": {
+        "x": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "X"
+        },
+        "y": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Y"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "title": "SpatialContract",
       "type": "object"
     }
   },

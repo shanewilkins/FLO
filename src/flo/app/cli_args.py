@@ -45,12 +45,12 @@ def parse_args(
     )
     parser.add_argument(
         "--export",
-        choices=["svg", "typst", "json", "ingredients", "movement"],
+        choices=["svg", "typst", "json", "items", "movement"],
         help="Export format (svg for diagrams, json for machine-readable output)",
     )
     parser.add_argument(
         "--format",
-        choices=["svg", "typst", "json", "ingredients", "movement"],
+        choices=["svg", "typst", "json", "items", "movement"],
         help=argparse.SUPPRESS,
     )
     parser.add_argument(

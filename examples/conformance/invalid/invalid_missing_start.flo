@@ -7,6 +7,6 @@ steps:
   kind: task
 - id: finish
   kind: end
-edges:
+transitions:
 - source: intake
   target: finish

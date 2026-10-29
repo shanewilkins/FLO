@@ -2,10 +2,9 @@
 
 ## Status
 
-In progress; reconciled 2026-10-28. Phase 3 semantic closeout is complete;
-the full suite passes 2346 cases. Compatibility removal, simplification and
-comprehensive documentation migration remain phases 4–6, so the entire plan is
-not yet accepted.
+Complete; accepted 2026-10-29. All six phases and the twelve acceptance
+criteria below are verified. The final full-suite checkpoint is **2429 passed,
+no failures or skips**, with seven existing Click deprecation warnings.
 
 The [book-aligned specification](../specs/book_aligned_contract.md) owns the
 contract. The [failure ledger](book_aligned_refactor_failure_ledger.md) owns
@@ -16,15 +15,16 @@ case-level dispositions and current verification results.
 | Phase 1 contract and fixture evidence | Verified within its listed scope; terminology mapping and evidence-preservation test recorded below. |
 | Phase 2 contract infrastructure | Verified within its listed scope; typed canonical entities, method restrictions, stable diagnostic categories and schema drift gate present. |
 | Phase 3 semantics and consumers | Complete. Exhaustive applicability and field inventory gates, process-only collections, relation evidence validation, consistent timing presentation and entity-name resolution are verified. |
-| Phase 4 compatibility removal | Partial scattered implementation; no phase closeout. |
-| Phases 5–6 simplification and acceptance | Open. |
-| Full suite | **0 failed, 2346 passed** at Phase 3 closeout (2026-10-28); failure-recovery checkpoint was 0 failed, 1966 passed; prior movement export checkpoint was 44 failed, 1916 passed; duration display checkpoint was 47 failed, 1913 passed; publication checkpoint was 52 failed, 1908 passed; D-004 checkpoint was 56 failed, 1904 passed; D-003 checkpoint was 56 failed, 1827 passed; recovery checkpoint was 73 failed, 1726 passed; initial checkpoint was 89 failed, 1686 passed. |
+| Phase 4 compatibility removal | Complete: strict source spellings, no attrs/endpoint aliases, no constructor or renderer compatibility paths, current diagnostics. |
+| Phase 5 simplification | Complete: shared local contracts, focused domain validators, canonical projections and measured source reduction. |
+| Phase 6 acceptance | Complete: current documentation, boundary/schema gaps and all twelve criteria audited; evidence below. |
+| Full suite | **0 failed, 2429 passed** at final acceptance; **0 failed, 2366 passed** at phases 4–5 closeout (2026-10-29); Phase 3 checkpoint was 0 failed, 2346 passed; failure-recovery checkpoint was 0 failed, 1966 passed; prior movement export checkpoint was 44 failed, 1916 passed; duration display checkpoint was 47 failed, 1913 passed; publication checkpoint was 52 failed, 1908 passed; D-004 checkpoint was 56 failed, 1904 passed; D-003 checkpoint was 56 failed, 1827 passed; recovery checkpoint was 73 failed, 1726 passed; initial checkpoint was 89 failed, 1686 passed. |
 
 Checkboxes record a specific implementation obligation and its scoped evidence.
 They do not imply that every consumer works or that the integrated refactor is
 complete. Later-phase edits made before this reconciliation do not waive earlier
-prerequisites. Continue with the outstanding obligations below; the ledger records the
-completed failure-recovery evidence.
+prerequisites. The final acceptance matrix below records integrated evidence;
+the ledger retains the completed failure-recovery evidence.
 
 This plan implements the decision recorded in
 [Book-Aligned Language Conventions](./adr/book_aligned_language_conventions.md).
@@ -284,15 +284,15 @@ decisions established by earlier phases.
 
 ### Phase 4: Remove compatibility surfaces
 
-- [ ] Remove source `attrs`.
-- [ ] Choose one nested subprocess spelling and remove the other
+- [x] Remove source `attrs`.
+- [x] Choose one nested subprocess spelling and remove the other
       (`steps` versus `subnodes`).
-- [ ] Remove top-level `edges` and endpoint aliases.
+- [x] Remove top-level `edges` and endpoint aliases.
 - [x] Remove legacy collection placement and naming (completed in phase 3).
-- [ ] Remove old internal-IR coercions and metadata promotion.
-- [ ] Remove old diagnostic codes and suggestions that describe retired
+- [x] Remove old internal-IR coercions and metadata promotion.
+- [x] Remove old diagnostic codes and suggestions that describe retired
       syntax.
-- [ ] Search source, tests, examples, schemas, and active documentation for all
+- [x] Search source, tests, examples, schemas, and active documentation for all
       retired names and remove them.
 
 No migration command, runtime aliases, compatibility warnings, or dual-read
@@ -300,29 +300,29 @@ paths will be added.
 
 ### Phase 5: Simplify implementation
 
-- [ ] Delete validators now represented by Pydantic contracts.
-- [ ] Split graph, relation, measurement, quantity, and provenance validation
+- [x] Delete validators now represented by Pydantic contracts.
+- [x] Split graph, relation, measurement, quantity, and provenance validation
       into focused domain modules.
-- [ ] Keep one normalization step at each external boundary.
-- [ ] Remove downstream fallback reads from metadata or aliases.
-- [ ] Ensure internal IR serialization round-trips every first-class field.
-- [ ] Compare net source and test size after compatibility removal; investigate
+- [x] Keep one normalization step at each external boundary.
+- [x] Remove downstream fallback reads from metadata or aliases.
+- [x] Ensure internal IR serialization round-trips every first-class field.
+- [x] Compare net source and test size after compatibility removal; investigate
       remaining duplication rather than optimizing for an arbitrary line
       target.
 
 ### Phase 6: Documentation and verification
 
-- [ ] Update language specification, manual, examples, and design documents.
-- [ ] Mark historical documents clearly where retired terminology must remain
+- [x] Update language specification, manual, examples, and design documents.
+- [x] Mark historical documents clearly where retired terminology must remain
       for archival accuracy.
 - [x] Add authored and canonical schema drift checks (phase 2 checkpoint).
-- [ ] Add architecture/import allowlists that keep Pydantic at boundaries.
-- [ ] Run formatting, Ruff, type checking, architecture tests, focused suites,
+- [x] Add architecture/import allowlists that keep Pydantic at boundaries.
+- [x] Run formatting, Ruff, type checking, architecture tests, focused suites,
       the full test suite, all examples, and golden renders.
 
 ## Current Migration State
 
-Implemented surfaces (phases 1–3; phases 4–6 remain open):
+Implemented surfaces (all six phases accepted):
 
 - strict measurement and relation contracts;
 - first-class canonical node, edge, and process fields;
@@ -337,14 +337,11 @@ Implemented surfaces (phases 1–3; phases 4–6 remain open):
 - first-class internal-IR serialization paths and evidence round-trip checks;
 - removal of the hand-authored typed-metadata schema.
 
-Still known to be incomplete:
-
-- remaining compatibility-only test cleanup beyond the now-green failure set;
-- source `attrs` and nested-step compatibility removal;
-- composition alias removal;
-- comprehensive documentation migration;
-- complete public diagnostic cleanup;
-- final code deletion and module simplification.
+The final audit covers the current specifications, manual, quickstart, README,
+requirements catalog and affected design records. Historical checkpoint
+narratives below retain their original terminology as evidence. Broader
+measurement writers and richer publication/detail views remain future roadmap
+work, outside this refactor; acceptance makes no release-completion claim.
 
 The 2026-10-27 recovery checkpoint completed at **73 failed, 1726 passed**.
 It closed 16 initial failures and added 24 passing contract checks. The later
@@ -429,10 +426,113 @@ artifact updates across nine cases were reviewed, including named performers,
 explicit modeled labels, relation summaries and the wait shape. The pre-update
 golden tree is preserved in `/tmp/flo-phase3-goldens-before`.
 
-Phase 4 is next. Source attrs (now control-only), nested child spelling,
-named-target endpoint aliases, remaining non-collection context coercions and
-retired diagnostic cleanup remain. Phase 5 code deletion/normalization cleanup
-and phase 6 comprehensive documentation/final acceptance remain open.
+The preceding paragraph records the historical phase 3 handoff. Its remaining
+compatibility and simplification work is closed by the following checkpoint.
+
+### Phases 4–5 closeout (2026-10-29)
+
+- Source accepts only nested subprocess `steps`, explicit `transitions`, and
+  `source`/`target` endpoints. Control declarations are first-class; source and
+  internal node attrs, alternate child/endpoint spellings, parser/composition
+  translation and the obsolete name/content envelope are removed. Rejection
+  tests cover root documents and included fragments, with source/include paths.
+- Node.branch is first-class. Dataclasses no longer coerce dictionary entries,
+  strip scalar values, filter malformed context or promote metadata. Explicit
+  internal dictionary restoration rejects unknown fields and malformed entries.
+  Internal process metadata is limited to identity; semantic context must use
+  first-class fields or extensions. Invalid evidence remains intact until the
+  validation boundary rejects it.
+- Renderers consume canonical node/edge projections, including IDs, route,
+  branch, handoff, rework and extensions. Authored graph synthesis, metadata
+  hierarchy reads and movement relation aliases are gone. SCC condensation uses
+  IR.edges, preserves external relations/context and records members in extensions.
+- Locations have one spatial object. Display annotations use one explicit
+  extension location for publication, continuation and spaghetti boundaries.
+  Header owner/version resolve first-class context. The items exporter replaces
+  historical ingredients/materials shims; CLI/API and example builds use
+  `--export items`. Unknown formats fail instead of silently selecting JSON.
+- Pydantic supplies local collection, entity, quantity, relation, classification
+  and branch shapes. Shared branch contracts replace manual mode validation;
+  recursive collection shapes replace handwritten source shape recursion.
+  Finite-number guards prevent numeric-union overflow from escaping diagnostics.
+  Domain modules separately own graph topology, relations, selected durations,
+  entity identity/spatial units, quantity dimensions/equivalence and located
+  errors/provenance. The former oversized validator is now a short orchestrator;
+  its file-size exemption is removed.
+- Internal serialization and exchange/layout projection share canonical field
+  extraction. An exhaustive dataclass-field gate protects round trips and
+  malformed context preservation. A six-module allowlist confines Pydantic
+  imports to contracts and explicit input/validation boundaries.
+
+Python line counts, measured against the tree at the start of phases 4–5:
+
+| Scope | Before | After | Net |
+| --- | ---: | ---: | ---: |
+| Runtime source (`src/**/*.py`) | 28094 | 26947 | **−1147 (−4.1%)** |
+| Tests (`tests/**/*.py`) | 26937 | 27125 | +188 |
+| Runtime plus tests | 55031 | 54072 | **−959** |
+
+These totals exclude generated schemas, SVGs, documentation and scripts. The
+reduction comes from deleting compatibility, repeated coercion, duplicate local
+validation and graph synthesis. Focused semantic tests, including quantity
+precision/provenance and canonical input integrity, remain in place. Removed
+compatibility expectations now assert rejection or exercise canonical inputs;
+no skips, weakened geometry assertions or restored runtime aliases were added.
+
+Full suite: **2366 passed, no failures or skips**, seven existing Click warnings.
+Ruff/formatting, type checks, all 11 import contracts, architecture checks,
+schemas, documentation governance, example validation and whitespace checks
+pass. All 13 corpus cases pass geometry/accessibility and deterministic drift.
+Seven reviewed SVG updates add first-class owner/version header rows; node
+layouts and routing are unchanged. Linear and White Belt PNG previews were
+inspected; the prior golden tree is in `/tmp/flo-phase45-goldens-before`.
+
+The subsequent phase 6 acceptance checkpoint below closes the documentation
+and integrated verification obligations.
+
+## Phase 6 final acceptance — 2026-10-29
+
+The audit closed source/schema gaps for entity collections, control declarations,
+explicit nulls, profile-only processing/setup/process-lead fields and shared
+named process identities. Valid named-target string shorthand is represented in
+the generated schema. Named-target selection overrides that compilation ignored
+are now rejected. Public collection validation shares contracts without crossing
+private package boundaries. Source and canonical diagnostics retain FLO paths
+and categories without exposing model internals or schema/input dumps.
+
+The supported-field inventory covers 29 primary boundary models. The current
+instructional-document gate checks 19 documents and their 12 YAML examples
+against source models and generated structural schemas; complete examples also
+pass FLO validation. Historical ADR context and future richer publication work
+are explicitly distinguished from current supported behavior.
+
+| Criterion | Disposition and evidence |
+| --- | --- |
+| 1. Book-aligned authored terms | Verified: supported-field inventory, current-document contract gate, book fixture and migrated examples. |
+| 2. Retired names rejected | Verified: `test_phase45_closeout.py` exercises parser/includes, named targets, constructors, restoration and export rejection without translation. |
+| 3. Generated schemas, no drift | Verified: `generate_contract_schemas.py --check`; source/canonical positive and negative cases in `test_phase6_acceptance.py`. |
+| 4. Field ownership and consumers | Verified: `book_aligned_fields.md`, `test_phase3_field_inventory.py`, applicability matrix and removal of ignored named-target overrides. |
+| 5. Source shape diagnostics | Verified: compiler suites and phase 6 entity, null, branch, named-target and diagnostic cases. |
+| 6. Domain semantic rejection | Verified: semantic/waiting/canonical integrity suites and API/CLI consumer parity checks. |
+| 7. Evidence distinctions retained | Verified: phase 3 evidence, phase 6 grouped-profile round-trip, waiting integrity, measurement and quantity suites. |
+| 8. Shared canonical meanings | Verified: phase 3 evidence/relations, canonical round-trip and phase 4–5 projection tests; no metadata fallback. |
+| 9. Pydantic boundary confinement | Verified: explicit seven-module allowlist, 11 import contracts kept, architecture scan has no blocking findings. |
+| 10. Book fixture semantics/visuals | Verified: book rendering/evidence suites and deterministic `book_washnfold_local_rework` golden. |
+| 11. Integrated verification | Verified: 2429 passed, no failures/skips; Ruff/format, runtime `ty check src`, schemas, governance, file-length policy and whitespace pass. All 27 valid roots rendered to 30 SVGs and six item summaries; 24 invalid roots rejected and three include fragments composed. All 13 golden cases/26 files match; 13 SVGs pass geometry/accessibility. |
+| 12. Current documentation | Verified: README, Quickstart, manual, active specifications, requirements and affected design records reconciled; executable-document gate passes. |
+
+Final Python physical-line counts, using the same scope as the phase 4 baseline:
+
+| Scope | Before phase 4 | Final | Delta |
+| --- | ---: | ---: | ---: |
+| Runtime (`src/**/*.py`) | 28094 | 27049 | −1045 |
+| Tests (`tests/**/*.py`) | 26937 | 27433 | +496 |
+| Combined | 55031 | 54482 | −549 |
+
+Generated schemas, documentation, scripts and artifacts are excluded. The final
+audit adds boundary checks and meaningful regression coverage while retaining
+the runtime reduction. No tests were skipped, behavioral assertions weakened,
+or retired runtime aliases restored. All workspace changes remain uncommitted.
 
 ## Acceptance Criteria
 

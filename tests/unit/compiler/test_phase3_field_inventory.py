@@ -16,7 +16,6 @@ BOUNDARIES = [
     models.SourceProcess,
     models.FragmentProcess,
     models.SourceStep,
-    models.ControlAttributes,
     models.NamedIdentity,
     models.BusinessUnit,
     models.SourceLane,
@@ -35,7 +34,12 @@ BOUNDARIES = [
     contracts.CountQuantity,
     contracts.MeasureQuantity,
     contracts.SpatialContract,
-    contracts.LocationMetadata,
+    contracts.CanonicalNamedIdentityContract,
+    contracts.CanonicalIdentityContract,
+    contracts.CanonicalNodeContract,
+    contracts.CanonicalEdgeContract,
+    contracts.CanonicalProcessContract,
+    contracts.CanonicalIRContract,
 ]
 
 

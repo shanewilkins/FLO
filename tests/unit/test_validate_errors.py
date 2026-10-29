@@ -132,7 +132,7 @@ def test_validate_ir_accepts_dispatch_branch_with_named_routes():
             Node(
                 id="assign",
                 type="branch",
-                attrs={"branch": {"mode": "dispatch", "policy": "least_loaded"}},
+                branch={"mode": "dispatch", "policy": "least_loaded"},
             ),
             Node(id="left", type="task"),
             Node(id="right", type="task"),
@@ -494,7 +494,7 @@ def test_validate_ir_accepts_location_spatial_metadata():
             {
                 "id": "prep_bench",
                 "name": "Prep Bench",
-                "metadata": {"spatial": {"x": 3.0, "y": 2.0, "unit": "m"}},
+                "spatial": {"x": 3.0, "y": 2.0, "unit": "m"},
             }
         ],
     )
@@ -516,7 +516,7 @@ def test_validate_ir_rejects_location_spatial_missing_coordinates():
             {
                 "id": "prep_bench",
                 "name": "Prep Bench",
-                "metadata": {"spatial": {"x": 3.0, "unit": "m"}},
+                "spatial": {"x": 3.0, "unit": "m"},
             }
         ],
     )
@@ -539,7 +539,7 @@ def test_validate_ir_rejects_location_spatial_with_invalid_unit():
             {
                 "id": "prep_bench",
                 "name": "Prep Bench",
-                "metadata": {"spatial": {"x": 3.0, "y": 2.0, "unit": "yards"}},
+                "spatial": {"x": 3.0, "y": 2.0, "unit": "yards"},
             }
         ],
     )
@@ -638,7 +638,11 @@ def test_validate_ir_accepts_node_time_metadata_units():
             Node(
                 id="mix",
                 type="task",
-                attrs={"metadata": {"cycle_time": {"value": 15, "unit": "m"}}},
+                cycle_time={
+                    "basis": "observed",
+                    "primary": "mean",
+                    "results": {"mean": {"method": "mean", "value": 15, "unit": "m"}},
+                },
             ),
             Node(id="end", type="end"),
         ],
@@ -840,7 +844,11 @@ def test_validate_ir_node_without_value_class_passes():
             Node(
                 id="step",
                 type="task",
-                attrs={"metadata": {"cycle_time": {"value": 5, "unit": "min"}}},
+                cycle_time={
+                    "basis": "observed",
+                    "primary": "mean",
+                    "results": {"mean": {"method": "mean", "value": 5, "unit": "min"}},
+                },
             ),
             Node(id="end", type="end"),
         ],

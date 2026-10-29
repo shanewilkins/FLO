@@ -1,6 +1,9 @@
 # ADR: Pydantic Source And Render Inputs
 
-Status: accepted
+> Historical record, superseded where it describes retired syntax by
+> [the book-aligned contract](../../specs/book_aligned_contract.md). Historical examples are not accepted source.
+
+Status: superseded
 
 ## Context
 

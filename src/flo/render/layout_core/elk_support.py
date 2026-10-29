@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import itertools
 from collections.abc import Callable
 from typing import Any
 
+from flo.process.ir.models import IR
+from flo.process.ir.schema_projection import ir_to_schema_dict
 from flo.render.options import RenderOptions
 
 from .elk_contracts import ElkLayoutEdge, ElkLayoutNode, ElkSerialization
@@ -114,12 +115,13 @@ def extract_nodes_and_edges(
     """Extract graph nodes and edges from supported FLO process representations."""
     if process is None:
         return [], []
-    if hasattr(process, "nodes") and hasattr(process, "edges"):
-        return _extract_from_ir_object(process)
+    if isinstance(process, IR):
+        graph = ir_to_schema_dict(process)
+        return graph["nodes"], graph["edges"]
     if isinstance(process, dict):
         if isinstance(process.get("nodes"), list):
             return _extract_from_graph_dict(process)
-        return _extract_from_adapter_dict(process)
+        raise TypeError("layout requires compiled IR or canonical nodes/edges")
     return [], []
 
 
@@ -241,193 +243,10 @@ def _lane_id(node: dict[str, Any]) -> str | None:
     return current_lane_id or None
 
 
-def _extract_from_ir_object(
-    process: Any,
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    nodes = []
-    for node in getattr(process, "nodes", []) or []:
-        attrs = getattr(node, "attrs", {}) or {}
-        node_entry = {
-            "id": getattr(node, "id", ""),
-            "kind": getattr(node, "type", "task"),
-        }
-        for key in (
-            "name",
-            "description",
-            "lane",
-            "location",
-            "value_class",
-            "cycle_time",
-            "wait_time",
-            "changeover_time",
-            "extensions",
-        ):
-            value = getattr(node, key, None)
-            if value is not None:
-                node_entry[key] = value
-        for key in ("consumes", "produces", "performed_by", "uses"):
-            value = getattr(node, key, None)
-            if value:
-                node_entry[key] = value
-        subprocess_parent = getattr(node, "subprocess_parent", None)
-        if subprocess_parent is None and isinstance(attrs, dict):
-            subprocess_parent = attrs.get("subprocess_parent")
-        if subprocess_parent is not None:
-            node_entry["subprocess_parent"] = subprocess_parent
-        if isinstance(attrs, dict):
-            for key in ("note",):
-                value = attrs.get(key)
-                if value is not None:
-                    node_entry[key] = value
-        nodes.append(node_entry)
-
-    edges = []
-    for edge in getattr(process, "edges", []) or []:
-        edges.append(
-            {
-                "source": getattr(edge, "source", None),
-                "target": getattr(edge, "target", None),
-                "outcome": getattr(edge, "outcome", None),
-                "label": getattr(edge, "label", None),
-                "handoff": getattr(edge, "handoff", None),
-                "rework": getattr(edge, "rework", None),
-                "extensions": getattr(edge, "extensions", None),
-            }
-        )
-    return nodes, edges
-
-
 def _extract_from_graph_dict(
     process: dict[str, Any],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    nodes: list[dict[str, Any]] = []
-    for node in process.get("nodes") or []:
-        if not isinstance(node, dict):
-            continue
-        node_entry = dict(node)
-        attrs = node_entry.get("attrs")
-        if "subprocess_parent" not in node_entry and isinstance(attrs, dict):
-            parent_id = attrs.get("subprocess_parent")
-            if parent_id is not None:
-                node_entry["subprocess_parent"] = parent_id
-        nodes.append(node_entry)
-    edges = [edge for edge in (process.get("edges") or []) if isinstance(edge, dict)]
-    return nodes, edges
-
-
-def _extract_from_adapter_dict(
-    process: dict[str, Any],
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    steps = process.get("steps")
-    transitions = process.get("transitions") or process.get("edges")
-    if not isinstance(steps, list):
-        if isinstance(transitions, list):
-            return [], [edge for edge in transitions if isinstance(edge, dict)]
-        return [], []
-
-    nodes: list[dict[str, Any]] = []
-    for step in steps:
-        _append_step_nodes(nodes, step, parent_id=None)
-
-    if isinstance(transitions, list):
-        return nodes, [edge for edge in transitions if isinstance(edge, dict)]
-    return nodes, _synthesized_adapter_edges(nodes)
-
-
-def _append_step_nodes(
-    nodes: list[dict[str, Any]], step: Any, *, parent_id: str | None
-) -> None:
-    if not isinstance(step, dict):
-        return
-    step_id = str(step.get("id") or "")
-    node_entry = dict(step)
-    if parent_id is not None and step_id:
-        node_entry.setdefault("subprocess_parent", parent_id)
-    node_entry.pop("subnodes", None)
-    nodes.append(node_entry)
-    for subnode in step.get("subnodes") or []:
-        _append_step_nodes(nodes, subnode, parent_id=step_id or parent_id)
-
-
-def _synthesized_adapter_edges(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    merged: list[dict[str, Any]] = []
-    seen: set[tuple[str, str, str | None]] = set()
-    for edge in [*_outcome_edges(nodes), *_sequential_edges(nodes)]:
-        edge_key = (
-            str(edge.get("source") or ""),
-            str(edge.get("target") or ""),
-            str(edge.get("outcome")) if edge.get("outcome") is not None else None,
-        )
-        if edge_key in seen:
-            continue
-        seen.add(edge_key)
-        merged.append(edge)
-    return merged
-
-
-def _outcome_edges(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    edges: list[dict[str, Any]] = []
-    for node in nodes:
-        source_id = str(node.get("id") or "")
-        outcomes = node.get("outcomes")
-        if not source_id or not isinstance(outcomes, dict):
-            continue
-        for outcome, target_spec in outcomes.items():
-            edge = _outcome_edge(
-                source_id=source_id, outcome=outcome, target_spec=target_spec
-            )
-            if edge is not None:
-                edges.append(edge)
-    return edges
-
-
-def _outcome_edge(
-    *, source_id: str, outcome: Any, target_spec: Any
-) -> dict[str, Any] | None:
-    if isinstance(target_spec, dict):
-        target = target_spec.get("target") or target_spec.get("to")
-        if target is None:
-            return None
-        edge: dict[str, Any] = {
-            "source": source_id,
-            "target": str(target),
-            "outcome": _normalize_outcome_value(outcome),
-        }
-        for key in ("id", "label", "handoff", "rework", "extensions"):
-            value = target_spec.get(key)
-            if value is not None:
-                edge[key] = value
-        return edge
-    if target_spec is None:
-        return None
-    return {
-        "source": source_id,
-        "target": str(target_spec),
-        "outcome": _normalize_outcome_value(outcome),
-    }
-
-
-def _normalize_outcome_value(value: Any) -> str | None:
-    if value is True:
-        return "yes"
-    if value is False:
-        return "no"
-    return None if value is None else str(value)
-
-
-def _sequential_edges(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    edges: list[dict[str, Any]] = []
-    for current, nxt in itertools.pairwise(nodes):
-        if str(current.get("kind") or "").lower() == "end":
-            continue
-        outcomes = current.get("outcomes")
-        if isinstance(outcomes, dict) and outcomes:
-            continue
-        source_id = str(current.get("id") or "")
-        target_id = str(nxt.get("id") or "")
-        if source_id and target_id:
-            edges.append({"source": source_id, "target": target_id})
-    return edges
+    return list(process["nodes"]), list(process.get("edges", []))
 
 
 def _collapse_hidden_edges(
@@ -575,11 +394,4 @@ def _subprocess_parent(node: dict[str, Any]) -> str | None:
         text = str(parent_id).strip()
         if text:
             return text
-    metadata = node.get("metadata")
-    if not isinstance(metadata, dict):
-        return None
-    raw_value = metadata.get("subprocess_parent")
-    if raw_value is None:
-        return None
-    text = str(raw_value).strip()
-    return text or None
+    return None

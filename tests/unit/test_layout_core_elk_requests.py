@@ -11,7 +11,7 @@ from flo.render.options import RenderOptions
 from flo.render.sppm.content import build_sppm_node_content
 from flo.render.sppm.layout import build_sppm_elk_layout_request
 from flo.render.swimlane.layout import build_swimlane_elk_layout_request
-from flo.source import parse_adapter
+from flo.source import compile_adapter, parse_adapter
 
 
 def _collect_nodes_with_ports(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -95,8 +95,8 @@ def test_build_swimlane_elk_layout_request_preserves_lane_order_and_edges():
 
 def test_build_swimlane_elk_layout_request_accepts_reference_example():
     path = Path("examples/reference/swimlane.flo")
-    adapter_model = parse_adapter(
-        path.read_text(encoding="utf-8"), source_path=str(path)
+    adapter_model = compile_adapter(
+        parse_adapter(path.read_text(encoding="utf-8"), source_path=str(path))
     )
 
     request = build_swimlane_elk_layout_request(
@@ -131,9 +131,9 @@ def test_build_swimlane_elk_layout_request_accepts_reference_example():
 
 
 def test_build_sppm_elk_layout_request_parent_only_subprocess_edges_are_stable():
-    path = Path("examples/reference/chocolate_chip_cookies/process.flo")
-    adapter_model = parse_adapter(
-        path.read_text(encoding="utf-8"), source_path=str(path)
+    path = Path("examples/reference/chocolate_chip_cookies.flo")
+    adapter_model = compile_adapter(
+        parse_adapter(path.read_text(encoding="utf-8"), source_path=str(path))
     )
     options = RenderOptions.from_mapping(
         {
@@ -160,8 +160,8 @@ def test_build_sppm_elk_layout_request_parent_only_subprocess_edges_are_stable()
 
 def test_build_sppm_elk_layout_request_accepts_reference_example_without_inventing_lanes():
     path = Path("examples/reference/washnfold.flo")
-    adapter_model = parse_adapter(
-        path.read_text(encoding="utf-8"), source_path=str(path)
+    adapter_model = compile_adapter(
+        parse_adapter(path.read_text(encoding="utf-8"), source_path=str(path))
     )
 
     request = build_sppm_elk_layout_request(
@@ -209,8 +209,8 @@ def test_sppm_edge_label_overrides_machine_readable_outcome_for_display():
 
 def test_build_sppm_elk_layout_request_builds_deterministic_wrap_rows():
     path = Path("examples/reference/washnfold.flo")
-    adapter_model = parse_adapter(
-        path.read_text(encoding="utf-8"), source_path=str(path)
+    adapter_model = compile_adapter(
+        parse_adapter(path.read_text(encoding="utf-8"), source_path=str(path))
     )
     options = RenderOptions.from_mapping(
         {
@@ -576,9 +576,11 @@ def test_build_sppm_elk_layout_request_preserves_explicit_continuation_tokens():
                 {
                     "source": "handoff",
                     "target": "end",
-                    "metadata": {
-                        "continuation_to": "P2-OPS",
-                        "continuation_from": "P1-H",
+                    "extensions": {
+                        "flo:continuation": {
+                            "outgoing": "P2-OPS",
+                            "incoming": "P1-H",
+                        }
                     },
                 }
             ],

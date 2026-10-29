@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Literal
 
-ExportFormat = Literal["json", "ingredients", "movement"]
+ExportFormat = Literal["json", "items", "movement"]
 ExportProfile = Literal["default"]
 
 
@@ -31,12 +31,16 @@ class ExportOptions:
         export_format_raw = str(options.get("export") or "json").strip().lower()
         indent_raw = options.get("json_indent", 2)
 
-        if export_format_raw == "ingredients":
-            export_format: ExportFormat = "ingredients"
+        if export_format_raw == "items":
+            export_format: ExportFormat = "items"
         elif export_format_raw == "movement":
             export_format = "movement"
-        else:
+        elif export_format_raw == "json":
             export_format = "json"
+        else:
+            raise ValueError(
+                f"unsupported export format: {export_format_raw}; expected json, items or movement"
+            )
         profile: ExportProfile = "default"
 
         try:

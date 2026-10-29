@@ -6,7 +6,7 @@ from flo.process.ir.models import IR, Edge, Node
 
 
 def test_export_ir_defaults_to_json_projection():
-    ir = IR(name="p", nodes=[Node(id="start", type="start", attrs={})], edges=[])
+    ir = IR(name="p", nodes=[Node(id="start", type="start")], edges=[])
     out = export_ir(ir)
     payload = json.loads(out)
     assert payload["process"]["id"] == "p"
@@ -14,7 +14,7 @@ def test_export_ir_defaults_to_json_projection():
 
 
 def test_export_ir_honors_json_indent_option():
-    ir = IR(name="p", nodes=[Node(id="start", type="start", attrs={})], edges=[])
+    ir = IR(name="p", nodes=[Node(id="start", type="start")], edges=[])
     out = export_ir(ir, options={"export": "json", "json_indent": 0})
     assert "\n" not in out
 
@@ -22,7 +22,7 @@ def test_export_ir_honors_json_indent_option():
 def test_export_ir_ingredients_mode_outputs_header_and_items():
     ir = IR(
         name="cookie",
-        nodes=[Node(id="start", type="start", attrs={})],
+        nodes=[Node(id="start", type="start")],
         edges=[],
         items=[
             {
@@ -39,7 +39,7 @@ def test_export_ir_ingredients_mode_outputs_header_and_items():
             }
         ],
     )
-    out = export_ir(ir, options={"export": "ingredients"})
+    out = export_ir(ir, options={"export": "items"})
     assert "Items and Resources" in out
     assert "Flour: 250 g" in out
     assert "Oven: 1 each" in out
@@ -48,7 +48,7 @@ def test_export_ir_ingredients_mode_outputs_header_and_items():
 def test_export_ir_ingredients_mode_outputs_group_labels():
     ir = IR(
         name="cookie",
-        nodes=[Node(id="start", type="start", attrs={})],
+        nodes=[Node(id="start", type="start")],
         edges=[],
         items={
             "dry": {
@@ -57,7 +57,7 @@ def test_export_ir_ingredients_mode_outputs_group_labels():
             }
         },
     )
-    out = export_ir(ir, options={"export": "ingredients"})
+    out = export_ir(ir, options={"export": "items"})
     assert "Dry Ingredients" in out
     assert "Flour" in out
 
@@ -65,7 +65,7 @@ def test_export_ir_ingredients_mode_outputs_group_labels():
 def test_export_ir_ingredients_mode_prefers_canonical_items_and_resources():
     ir = IR(
         name="canonical_cookie",
-        nodes=[Node(id="start", type="start", attrs={})],
+        nodes=[Node(id="start", type="start")],
         edges=[],
         items=[
             {
@@ -86,7 +86,7 @@ def test_export_ir_ingredients_mode_prefers_canonical_items_and_resources():
         },
     )
 
-    out = export_ir(ir, options={"export": "ingredients"})
+    out = export_ir(ir, options={"export": "items"})
 
     assert "Items and Resources" in out
     assert "Work Ticket: 1 each" in out
@@ -113,12 +113,12 @@ def test_export_ir_movement_mode_outputs_inferred_route_summary():
             {
                 "id": "pantry",
                 "name": "Pantry",
-                "metadata": {"spatial": {"x": 0.0, "y": 0.0, "unit": "m"}},
+                "spatial": {"x": 0.0, "y": 0.0, "unit": "m"},
             },
             {
                 "id": "prep_bench",
                 "name": "Prep Bench",
-                "metadata": {"spatial": {"x": 3.0, "y": 4.0, "unit": "m"}},
+                "spatial": {"x": 3.0, "y": 4.0, "unit": "m"},
             },
         ],
     )

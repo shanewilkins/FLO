@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from types import SimpleNamespace
-
+from flo.process.ir.models import IR, Edge, Node
 from flo.render.layout_core import elk_support
 
 
@@ -11,9 +10,10 @@ def test_extract_nodes_and_edges_handles_none_and_unknown_input():
 
 
 def test_extract_nodes_and_edges_from_ir_object_preserves_attrs_and_lists():
-    process = SimpleNamespace(
+    process = IR(
+        name="Projection",
         nodes=[
-            SimpleNamespace(
+            Node(
                 id="n1",
                 type="task",
                 name="Node One",
@@ -29,7 +29,7 @@ def test_extract_nodes_and_edges_from_ir_object_preserves_attrs_and_lists():
             )
         ],
         edges=[
-            SimpleNamespace(
+            Edge(
                 source="n1",
                 target="n2",
                 outcome="yes",
@@ -63,78 +63,28 @@ def test_extract_nodes_and_edges_from_ir_object_preserves_attrs_and_lists():
             "target": "n2",
             "outcome": "yes",
             "label": "ok",
-            "handoff": None,
             "rework": {"reason": "retry"},
-            "extensions": None,
         }
     ]
 
 
-def test_extract_nodes_and_edges_from_graph_dict_promotes_parent_and_filters_edges():
+def test_extract_nodes_and_edges_from_canonical_graph_preserves_parent():
     process = {
-        "nodes": [
-            {"id": "a", "attrs": {"subprocess_parent": "parent-a"}},
-            "skip",
-        ],
-        "edges": [
-            {"source": "a", "target": "b"},
-            "skip",
-        ],
+        "nodes": [{"id": "a", "subprocess_parent": "parent-a"}],
+        "edges": [{"source": "a", "target": "b"}],
     }
-
     nodes, edges = elk_support.extract_nodes_and_edges(process)
-
-    assert nodes == [
-        {
-            "id": "a",
-            "attrs": {"subprocess_parent": "parent-a"},
-            "subprocess_parent": "parent-a",
-        }
-    ]
+    assert nodes == [{"id": "a", "subprocess_parent": "parent-a"}]
     assert edges == [{"source": "a", "target": "b"}]
 
 
-def test_extract_nodes_and_edges_from_adapter_dict_with_transitions_and_synthesized_edges():
-    nodes, edges = elk_support.extract_nodes_and_edges(
-        {
-            "transitions": [{"source": "s", "target": "t"}, "skip"],
-        }
-    )
-    assert nodes == []
-    assert edges == [{"source": "s", "target": "t"}]
+def test_layout_rejects_uncompiled_authored_source():
+    import pytest
 
-    synthesized_nodes, synthesized_edges = elk_support.extract_nodes_and_edges(
-        {
-            "steps": [
-                {
-                    "id": "a",
-                    "kind": "task",
-                    "outcomes": {
-                        True: {
-                            "target": "b",
-                            "rework": {"reason": "retry"},
-                        },
-                        False: None,
-                    },
-                },
-                {"id": "b", "kind": "end"},
-                {"id": "c", "kind": "task"},
-                {"id": "parent", "subnodes": [{"id": "child"}, "skip"]},
-            ]
-        }
-    )
-
-    child = next(node for node in synthesized_nodes if node.get("id") == "child")
-    assert child.get("subprocess_parent") == "parent"
-
-    assert {
-        "source": "a",
-        "target": "b",
-        "outcome": "yes",
-        "rework": {"reason": "retry"},
-    } in synthesized_edges
-    assert {"source": "c", "target": "parent"} in synthesized_edges
-    assert {"source": "parent", "target": "child"} in synthesized_edges
+    with pytest.raises(TypeError, match="compiled IR"):
+        elk_support.extract_nodes_and_edges(
+            {"steps": [{"id": "start", "kind": "start"}]}
+        )
 
 
 def test_project_parent_only_subprocess_view_collapses_hidden_edges_and_semantics():

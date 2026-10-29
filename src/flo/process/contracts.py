@@ -14,6 +14,7 @@ from pydantic import (
     JsonValue,
     StringConstraints,
     TypeAdapter,
+    field_validator,
     model_validator,
 )
 
@@ -62,6 +63,13 @@ def _is_finite_number(value: object) -> TypeGuard[int | float]:
         return math.isfinite(value)
     except OverflowError:
         return False
+
+
+def _finite_numeric(value: Any) -> Any:
+    """Reject numeric overflow before a Pydantic float-union conversion."""
+    if isinstance(value, (int, float)) and not _is_finite_number(value):
+        raise ValueError("numeric evidence must be finite")
+    return value
 
 
 def _json_extensions(value: Any) -> Any:
@@ -185,6 +193,22 @@ class ReworkRelation(ContractModel):
     extensions: Extensions | None = None
 
 
+class BranchConfig(ContractModel):
+    """Authored branch selection mechanism and optional resource eligibility."""
+
+    mode: Literal["dispatch", "probabilistic", "external", "unspecified"]
+    policy: NonBlank | None = None
+    eligible_resources: Annotated[list[NonBlank], Field(min_length=1)] | None = None
+
+    @field_validator("eligible_resources")
+    @classmethod
+    def unique_resources(cls, value: list[str] | None) -> list[str] | None:
+        """Eligibility names each resource at most once."""
+        if value is not None and len(set(value)) != len(value):
+            raise ValueError("must contain unique resource IDs")
+        return value
+
+
 class CanonicalNodeContract(ContractModel):
     """Generated-schema boundary for one flattened canonical node."""
 
@@ -207,15 +231,15 @@ class CanonicalNodeContract(ContractModel):
     lane: NonBlank | None = None
     location: NonBlank | None = None
     subprocess_parent: NonBlank | None = None
-    branch: dict[str, Any] | None = None
-    consumes: list[NonBlank] | None = None
-    produces: list[NonBlank] | None = None
-    performed_by: list[NonBlank] | None = None
-    uses: list[NonBlank] | None = None
+    branch: BranchConfig | None = None
+    consumes: list[NonBlank] = Field(default_factory=list)
+    produces: list[NonBlank] = Field(default_factory=list)
+    performed_by: list[NonBlank] = Field(default_factory=list)
+    uses: list[NonBlank] = Field(default_factory=list)
     value_class: ValueClass | None = None
-    cycle_time: Measurement | None = None
+    cycle_time: MeasurementProfile | None = None
     wait_time: Measurement | None = None
-    changeover_time: Measurement | None = None
+    changeover_time: MeasurementProfile | None = None
     extensions: Extensions | None = None
 
     @model_validator(mode="after")
@@ -243,13 +267,18 @@ class CanonicalEdgeContract(ContractModel):
     extensions: Extensions | None = None
 
 
-class CanonicalIdentityContract(ContractModel):
-    """Named identity used by process context and lanes."""
+class CanonicalNamedIdentityContract(ContractModel):
+    """Strict named process context without a lane classification."""
 
     id: NonBlank
     name: NonBlank
-    type: Literal["role", "team", "system"] | None = None
     extensions: Extensions | None = None
+
+
+class CanonicalIdentityContract(CanonicalNamedIdentityContract):
+    """Named responsibility lane with optional role, team or system type."""
+
+    type: Literal["role", "team", "system"] | None = None
 
 
 class CountQuantity(ContractModel):
@@ -265,12 +294,28 @@ class MeasureQuantity(ContractModel):
     """A measured amount; dimensional equivalence remains domain-owned."""
 
     kind: Literal["measure"]
-    value: Annotated[int | float, Field(gt=0, allow_inf_nan=False)]
+    value: Annotated[
+        int | float, Field(gt=0, allow_inf_nan=False), BeforeValidator(_finite_numeric)
+    ]
     unit: NonBlank
-    canonical_value: Annotated[int | float, Field(gt=0, allow_inf_nan=False)] | None = (
-        None
-    )
+    canonical_value: (
+        Annotated[
+            int | float,
+            Field(gt=0, allow_inf_nan=False),
+            BeforeValidator(_finite_numeric),
+        ]
+        | None
+    ) = None
     canonical_unit: NonBlank | None = None
+
+    @model_validator(mode="after")
+    def validate_canonical_pair(self) -> MeasureQuantity:
+        """Require canonical amount and unit to be supplied together."""
+        if (self.canonical_value is None) != (self.canonical_unit is None):
+            raise ValueError(
+                "canonical_value and canonical_unit must be provided together"
+            )
+        return self
 
 
 type Quantity = Annotated[CountQuantity | MeasureQuantity, Field(discriminator="kind")]
@@ -300,25 +345,20 @@ class ResourceContract(EntityContract):
 class SpatialContract(ContractModel):
     """Coordinates whose physical unit compatibility is domain-owned."""
 
-    x: Annotated[int | float, Field(allow_inf_nan=False)]
-    y: Annotated[int | float, Field(allow_inf_nan=False)]
+    x: Annotated[
+        int | float, Field(allow_inf_nan=False), BeforeValidator(_finite_numeric)
+    ]
+    y: Annotated[
+        int | float, Field(allow_inf_nan=False), BeforeValidator(_finite_numeric)
+    ]
     unit: NonBlank | None = None
-
-
-class LocationMetadata(ContractModel):
-    """Existing explicit spatial container, pending compatibility removal."""
-
-    spatial: SpatialContract | None = None
 
 
 class LocationContract(EntityContract):
     """A named operational place with optional spatial evidence."""
 
     kind: NonBlank | None = None
-    metadata: LocationMetadata | None = None
-    x: Annotated[int | float, Field(allow_inf_nan=False)] | None = None
-    y: Annotated[int | float, Field(allow_inf_nan=False)] | None = None
-    unit: NonBlank | None = None
+    spatial: SpatialContract | None = None
 
 
 class EntityGroup[T](BaseModel):
@@ -350,8 +390,8 @@ class CanonicalProcessContract(ContractModel):
     id: NonBlank
     name: NonBlank
     version: int | str | None = None
-    owner: dict[str, Any] | None = None
-    business_units: list[dict[str, Any]] | None = None
+    owner: CanonicalNamedIdentityContract | None = None
+    business_units: list[CanonicalNamedIdentityContract] | None = None
     lead_time: MeasurementProfile | None = None
     items: EntityCollection[ItemContract] | None = None
     resources: EntityCollection[ResourceContract] | None = None
@@ -374,6 +414,7 @@ __all__ = [
     "CanonicalEdgeContract",
     "CanonicalIRContract",
     "CanonicalIdentityContract",
+    "CanonicalNamedIdentityContract",
     "CanonicalNodeContract",
     "CanonicalProcessContract",
     "ContractModel",

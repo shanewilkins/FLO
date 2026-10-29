@@ -347,7 +347,7 @@ cli.add_command(new_cmd)
 @click.option(
     "--export",
     "export_fmt",
-    type=click.Choice(["svg", "typst", "json", "ingredients", "movement"]),
+    type=click.Choice(["svg", "typst", "json", "items", "movement"]),
     help="Export format (svg for diagrams, json for machine-readable output)",
 )
 @_apply_render_click_options(include_render_to=True)
@@ -457,7 +457,7 @@ validate_cmd, inspect_cmd = register_model_commands(cli, _execute_request)
 @click.option(
     "--export",
     "export_fmt",
-    type=click.Choice(["svg", "typst", "json", "ingredients", "movement"]),
+    type=click.Choice(["svg", "typst", "json", "items", "movement"]),
     default="json",
     show_default=True,
     help="Export format (svg for diagrams, json for machine-readable output)",

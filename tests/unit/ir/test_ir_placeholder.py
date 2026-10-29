@@ -6,8 +6,8 @@ def test_ir_schema_projection_emits_required_top_level_keys():
     ir = IR(
         name="demo",
         nodes=[
-            Node(id="start", type="start", attrs={"name": "Start"}),
-            Node(id="end", type="end", attrs={"name": "End"}),
+            Node(id="start", type="start", name="Start"),
+            Node(id="end", type="end", name="End"),
         ],
         edges=[],
         process_version="2026.1",

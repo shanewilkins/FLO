@@ -16,21 +16,19 @@ from flo.process.ir.models import IR, Edge, Node
 def _positioned_process(source_unit="m", target_unit="m", target=(3, 4)):
     return {
         "nodes": [
-            {"id": "a", "attrs": {"location": "a", "workers": ["worker"]}},
-            {"id": "b", "attrs": {"location": "b", "workers": ["worker"]}},
+            {"id": "a", "location": "a", "performed_by": ["worker"]},
+            {"id": "b", "location": "b", "performed_by": ["worker"]},
         ],
         "edges": [{"source": "a", "target": "b"}],
         "process": {
             "locations": [
                 {
                     "id": "a",
-                    "metadata": {"spatial": {"x": 0, "y": 0, "unit": source_unit}},
+                    "spatial": {"x": 0, "y": 0, "unit": source_unit},
                 },
                 {
                     "id": "b",
-                    "metadata": {
-                        "spatial": {"x": target[0], "y": target[1], "unit": target_unit}
-                    },
+                    "spatial": {"x": target[0], "y": target[1], "unit": target_unit},
                 },
             ]
         },
@@ -55,7 +53,7 @@ def test_mixed_unit_movements_use_one_metre_frame_without_mutating_input(unit, t
 
 def test_mixed_units_convert_both_nonzero_endpoints_before_subtraction():
     process = _positioned_process(target_unit="ft", target=(10, 20))
-    process["process"]["locations"][0]["metadata"]["spatial"].update(x=1, y=2)
+    process["process"]["locations"][0]["spatial"].update(x=1, y=2)
 
     forward = infer_material_movements(process)[0]["distance"]
     process["edges"] = [{"source": "b", "target": "a"}]
@@ -96,7 +94,7 @@ def test_large_finite_distances_do_not_overflow_during_squaring():
 
 def test_overflowed_distance_is_unavailable():
     process = _positioned_process(target=(1e308, 0))
-    process["process"]["locations"][0]["metadata"]["spatial"]["x"] = -1e308
+    process["process"]["locations"][0]["spatial"]["x"] = -1e308
     assert "distance" not in infer_material_movements(process)[0]
 
 
@@ -191,15 +189,13 @@ def test_extract_location_spatial_index_includes_location_kind():
                     "id": "pantry",
                     "name": "Pantry",
                     "kind": "storage",
-                    "metadata": {"spatial": {"x": 1.0, "y": 2.0, "unit": "m"}},
+                    "spatial": {"x": 1.0, "y": 2.0, "unit": "m"},
                 },
                 {
                     "id": "oven_station",
                     "name": "Oven Station",
-                    "metadata": {
-                        "kind": "heat",
-                        "spatial": {"x": 4.0, "y": 3.0, "unit": "m"},
-                    },
+                    "spatial": {"x": 4.0, "y": 3.0, "unit": "m"},
+                    "kind": "heat",
                 },
             ],
         }

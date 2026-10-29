@@ -9,7 +9,7 @@ steps:
   kind: task
 - id: finish
   kind: end
-edges:
+transitions:
 - source: start
   target: prepare
 - source: prepare

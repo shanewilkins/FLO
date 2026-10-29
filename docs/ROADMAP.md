@@ -104,6 +104,16 @@ At 1.0, the following public contracts are stable:
 For direct FLO outputs, the same canonical input, options, renderer version, and supported platform must produce byte-stable SVG and JSON artifacts.
 Determinism is verified with release-blocking regression tests.
 
+## Book-aligned implementation checkpoint
+
+The 2026-10-29 breaking refactor implements first-class measurement profiles,
+explicit presentation/analytical selectors, structured handoff/rework, canonical
+entities and strict source/exchange contracts. The
+[acceptance record](design/book_aligned_contract_refactoring_plan.md) records
+verification. This is local implementation evidence, not a release publication
+or a change to the belt ownership below. Rich detailed-publication projections,
+source writing and broader observed-event/frequency work remain future scope.
+
 ## Renderer Tiers
 
 FLO may describe renderer maturity using `experimental`, `maintained`, and `stable` tiers before 1.0.
@@ -236,7 +246,8 @@ Before 1.0, FLO will document:
   static analysis, canonical exchange, and SPPM: reject invalid/non-finite
   durations, preserve omissions and integer/floating-point zeros, normalize
   wait units, and report unavailable lead time with diagnostics. End-to-end
-  fixtures cover these states without introducing later measurement profiles.
+  fixtures originally covered scalar states; the book-aligned refactor now
+  preserves the same distinctions in profiles.
 
 - [Implemented] Audit the White Belt semantic pipeline across source shape,
   graph and relation validation, timing placement, schema validation, public
@@ -370,8 +381,8 @@ without promotion through the normative requirements process.
   connector clearance, and local rework-loop routing.
 - Add a first-class monochrome output profile with deliberate patterns, border
   treatments, and non-color semantic distinctions.
-- Complete rich measurement profiles, provenance, sample counts, statistical
-  selectors, and compact/detail projections beyond the 0.4 scalar contract.
+- Complete rich detailed measurement publication beyond the now-implemented
+  profile, provenance, sample-count and selector primitives.
 - Add dedicated generic-branch and dispatch visualization without presenting a
   generic branch as a decision.
 - Coordinate downstream book adoption of released themes, fixtures, and

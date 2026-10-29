@@ -5,9 +5,9 @@ Status: accepted
 This is the accepted explanatory design contract for source-owned render
 intent.
 The authoritative structural contract lives in `schema/flo_ir.json` under
-`process.metadata.render`.
-Implementation rollout remains phased and this note is non-blocking for the
-language-primitive compiler migration.
+`process.render`.
+The current first-class placement is implemented; broader multi-page publication
+acceptance is tracked separately in the roadmap.
 
 ## Purpose
 
@@ -21,7 +21,7 @@ behavior by itself.
 ## Goals
 
 - Keep process semantics in core IR and compiler validation.
-- Move publication and renderer intent into process metadata for portability.
+- Move publication and renderer intent into process context for portability.
 - Preserve CLI-driven experimentation and CI overrides.
 - Support multiple render modes from one source without duplication.
 - Keep `.flo` files easy to author, review, and maintain by humans.
@@ -56,12 +56,11 @@ Render intent schema decisions should be filtered through these authoring rules:
 - Treat a bare numeric dimension as pixels for compatibility. New examples
   should include units when physical size matters.
 - Avoid schema branches that force duplicated option names in many locations.
-- Preserve alias migration paths long enough to avoid manual rewrites of all
-  existing examples in one release.
+- Use the canonical source placement directly; retired source aliases fail.
 
 ## Recommended ownership model
 
-1. Source metadata owns document intent.
+1. The process render field owns reusable document intent.
 2. CLI owns session-level overrides.
 3. Built-in profile defaults fill any missing values.
 
@@ -70,8 +69,8 @@ Render intent schema decisions should be filtered through these authoring rules:
 For each resolved render option:
 
 1. Explicit CLI option value
-2. View-level source intent (`process.metadata.render.views.<view_id>`)
-3. Process-level source defaults (`process.metadata.render.defaults`)
+2. View-level source intent (`process.render.views.<view_id>`)
+3. Process-level source defaults (`process.render.defaults`)
 4. Repository `diagrams.toml` defaults
 5. Existing output profile defaults (for example `book`, `print`, `web`)
 6. Selected named-theme value
@@ -85,58 +84,59 @@ define a second theme registry.
 
 ## Render intent structure
 
-Render intent should live under process metadata:
+Render intent should live under the process render field:
 
 ```yaml
 process:
   id: example
   name: Example
-  metadata:
-    render:
-      defaults:
+  render:
+    defaults:
+      diagram: sppm
+      publication:
+        page_format: letter
+        margins:
+          top: 48
+          right: 48
+          bottom: 48
+          left: 48
+        header:
+          enabled: true
+        footer:
+          enabled: true
+      layout:
+        wrap: auto
+        max_width: 1200
+        target_columns: 3
+
+    views:
+      sppm_main:
+        label: Main Process Map
         diagram: sppm
         publication:
           page_format: letter
-          margins:
-            top: 48
-            right: 48
-            bottom: 48
-            left: 48
           header:
             enabled: true
           footer:
             enabled: true
         layout:
           wrap: auto
-          max_width: 1200
           target_columns: 3
 
-      views:
-        sppm_main:
-          label: Main Process Map
-          diagram: sppm
-          publication:
-            page_format: letter
-            header:
-              enabled: true
-            footer:
-              enabled: true
-          layout:
-            wrap: auto
-            target_columns: 3
+      spaghetti_material:
+        label: Material Travel
+        diagram: spaghetti
+        spaghetti:
+          channel: material
+          people_mode: aggregate
+        publication:
+          page_format: tabloid
+          header:
+            enabled: false
+          footer:
+            enabled: false
 
-        spaghetti_material:
-          label: Material Travel
-          diagram: spaghetti
-          spaghetti:
-            channel: material
-            people_mode: aggregate
-          publication:
-            page_format: tabloid
-            header:
-              enabled: false
-            footer:
-              enabled: false
+```
 
 Human-friendly shorthand guidance:
 
@@ -145,7 +145,6 @@ Human-friendly shorthand guidance:
   and rely on `render.defaults`.
 - Bundle pages should reference existing view ids rather than restating full
   view configuration per page.
-```
 
 Notes:
 
@@ -160,7 +159,7 @@ Notes:
   `spaghetti`, `sppm`, `swimlane`, or `value_stream`.
 - A renderer-specific subtree must agree with the resolved `diagram`; unrelated
   renderer subtrees are rejected or warned according to validation mode.
-- Existing metadata aliases can remain supported during migration.
+- Retired metadata placements are rejected rather than normalized.
 
 ## 0.3 theming extension
 
@@ -169,21 +168,20 @@ small explicit style delta:
 
 ```yaml
 process:
-  metadata:
-    render:
-      defaults:
-        theme: white_belt
-        style:
-          canvas:
-            background: "#fffdf8"
-          typography:
-            font_family: ["Source Sans 3", "Arial", "sans-serif"]
-            scale: 1.05
+  render:
+    defaults:
+      theme: white_belt
+      style:
+        canvas:
+          background: "#fffdf8"
+        typography:
+          font_family: ["Source Sans 3", "Arial", "sans-serif"]
+          scale: 1.05
 
-      views:
-        monochrome_print:
-          diagram: sppm
-          theme: monochrome
+    views:
+      monochrome_print:
+        diagram: sppm
+        theme: monochrome
 ```
 
 The source-level `style` block is intentionally limited to the shared typed
@@ -271,38 +269,20 @@ Defer until phase 2 or later:
 
 Validation usability rules:
 
-- Diagnostics should show the exact failing metadata path.
+- Diagnostics should show the exact failing authored field path.
 - Diagnostics should include one valid example snippet.
 - For unknown keys (strict mode), diagnostics should suggest closest valid key.
 
-## Refactor plan (careful, staged)
+## Current implementation and remaining publication work
 
-Phase 0: no behavior change
+First-class process render intent, named view inheritance, CLI overrides and
+shared render-option validation are implemented. Source and canonical schemas
+are generated; the old typed-metadata schema and source placements are removed.
+Source metadata aliases are not migration paths.
 
-- Add schema/documentation and fixtures that include render intent metadata.
-- Add parser helpers that read intent blocks but do not apply them yet.
-
-Phase 1: opt-in resolution path
-
-- Add internal option resolver to merge:
-  CLI > view intent > defaults intent > profile defaults > hard defaults.
-- Gate with feature toggle in code path until tests stabilize.
-
-Phase 2: CLI integration
-
-- Add `--view` and `--list-views`.
-- Keep all existing CLI flags untouched.
-- Ensure existing scripts continue to pass without source render metadata.
-
-Phase 3: schema hardening
-
-- Extend typed metadata schema to include `process.render` shape.
-- Add targeted validation diagnostics with actionable messages.
-
-Phase 4: migration and deprecation
-
-- Document recommended source-first workflow.
-- Optionally deprecate select CLI knobs only after at least one stable cycle.
+Broader multi-page composition and belt-specific publication acceptance remain
+separate roadmap obligations. They do not change the current book-aligned source
+contract or require a source-language compatibility layer.
 
 ## Testing strategy
 
@@ -314,7 +294,7 @@ Phase 4: migration and deprecation
   - fallback behavior when no render intent exists.
 - Golden artifact tests for representative reference models.
 - Authoring ergonomics tests:
-  - minimal metadata example remains valid,
+  - minimal first-class render example remains valid,
   - single-view defaults-only example remains concise,
   - multi-view example avoids duplicated defaults.
 

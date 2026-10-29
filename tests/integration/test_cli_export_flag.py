@@ -143,7 +143,7 @@ def test_default_path_accepts_export_ingredients_flag():
             "render",
             "examples/reference/chocolate_chip_cookies.flo",
             "--export",
-            "ingredients",
+            "items",
         ],
     )
     assert result.exit_code == 0
@@ -158,7 +158,7 @@ def test_default_path_accepts_export_ingredients_flag_for_canonical_fixture():
             "render",
             "examples/reference/new_semantics.flo",
             "--export",
-            "ingredients",
+            "items",
         ],
     )
 
@@ -196,12 +196,12 @@ def test_default_path_accepts_export_movement_flag_for_canonical_payload(tmp_pat
                 {
                     "id": "bench",
                     "name": "Bench",
-                    "metadata": {"spatial": {"x": 0.0, "y": 0.0, "unit": "m"}},
+                    "spatial": {"x": 0.0, "y": 0.0, "unit": "m"},
                 },
                 {
                     "id": "sealer",
                     "name": "Sealer",
-                    "metadata": {"spatial": {"x": 3.0, "y": 4.0, "unit": "m"}},
+                    "spatial": {"x": 3.0, "y": 4.0, "unit": "m"},
                 },
             ],
         },

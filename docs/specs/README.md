@@ -23,6 +23,8 @@ refactor notes belong in `docs/design/`.
 
 Current specs:
 
+- `book_aligned_contract.md`
+- `book_aligned_fields.md`
 - `core_language.md`
 - `cli_error_contract.md`
 - `telemetry_events.md`

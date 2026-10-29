@@ -23,8 +23,8 @@ grays for SPPM shapes, text, connectors, and annotations.
 An SPPM depends on:
 
 1. The rich process-map semantics defined in `process_map.md`.
-2. Optional analysis or metadata-backed summary metrics.
-3. Optional presentation metadata that refines, but does not replace, the
+2. Optional supplied evidence profiles and derived analysis metrics.
+3. Optional explicit presentation extensions that refines, but does not replace, the
   underlying canonical process graph.
 
 ## Normative characteristics
@@ -66,7 +66,7 @@ An SPPM in FLO must satisfy the following characteristics:
      still appear in the footer without implying complete lead time.
    - When timing is declared for the complete visible process, the publication
      footer consumes the typed static timing result for cycle, waiting,
-     changeover, and lead time. It must not independently sum raw metadata.
+     changeover, and lead time. It must not independently sum raw evidence independently.
    - One complete path may show one lead time. Complete alternatives show a
      lead-time range. Incomplete, cyclic, or parallel timing shows an unavailable
      lead time and directs the reader to `flo inspect` diagnostics.

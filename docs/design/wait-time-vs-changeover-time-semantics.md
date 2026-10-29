@@ -1,5 +1,8 @@
 # Wait Time vs Changeover Time Semantics
 
+> Historical record, superseded where it describes retired syntax by
+> [the book-aligned contract](../specs/book_aligned_contract.md). Historical examples are not accepted source.
+
 Status: accepted
 
 Normative timing-placement rules now live in `docs/specs/core_language.md`.

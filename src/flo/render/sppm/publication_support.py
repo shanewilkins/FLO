@@ -6,11 +6,6 @@ from typing import Any
 
 from flo.errors import RenderError
 from flo.process.analysis import ProcessTimingAnalysis
-from flo.process.schema.render_metadata import (
-    SPPM_FOOTER_METRIC_METADATA_KEYS,
-    SPPM_FOOTER_NOTES_METADATA_KEYS,
-    first_present_metadata_value,
-)
 from flo.process.schema.subprocess_refs import resolve_subprocess_detail_map_reference
 from flo.process.units import convert_duration
 
@@ -294,9 +289,7 @@ def _merge_footer_metric_rows(
 def _footer_metric_rows_from_metadata(
     metadata: dict[str, Any], *, options: RenderOptions
 ) -> list[tuple[str, str]]:
-    raw_metrics = first_present_metadata_value(
-        metadata, SPPM_FOOTER_METRIC_METADATA_KEYS
-    )
+    raw_metrics = metadata.get("footer_metrics")
     if isinstance(raw_metrics, dict):
         return _footer_metric_rows_from_mapping(raw_metrics, options=options)
     if isinstance(raw_metrics, (list, tuple)):
@@ -357,7 +350,7 @@ def _footer_metric_row(
 def _footer_notes_from_metadata(
     metadata: dict[str, Any], *, options: RenderOptions
 ) -> list[str]:
-    raw_notes = first_present_metadata_value(metadata, SPPM_FOOTER_NOTES_METADATA_KEYS)
+    raw_notes = metadata.get("footer_notes")
     if isinstance(raw_notes, str):
         note = _format_sppm_publication_text(
             raw_notes, options=options, max_len=options.sppm_max_label_step_name

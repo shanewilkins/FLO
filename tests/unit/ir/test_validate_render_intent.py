@@ -12,12 +12,12 @@ def _base_ir_with_render(render_payload: object) -> IR:
     return IR(
         name="render_intent_test",
         nodes=[
-            Node(id="start", type="start", attrs={}),
-            Node(id="task", type="task", attrs={}),
-            Node(id="end", type="end", attrs={}),
+            Node(id="start", type="start"),
+            Node(id="task", type="task"),
+            Node(id="end", type="end"),
         ],
         edges=[Edge(source="start", target="task"), Edge(source="task", target="end")],
-        process_metadata={"render": render_payload},
+        render_intent=render_payload,
     )
 
 
@@ -29,8 +29,8 @@ def test_validate_render_intent_no_process_metadata_is_noop() -> None:
 @pytest.mark.parametrize(
     ("render_payload", "expected_message"),
     [
-        ("bad", "process.metadata.render must be an object"),
-        ({"views": "bad"}, "process.metadata.render.views must be an object"),
+        ("bad", "process.render must be an object"),
+        ({"views": "bad"}, "process.render.views must be an object"),
     ],
 )
 def test_validate_render_intent_rejects_invalid_top_level_shapes(

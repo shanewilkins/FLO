@@ -164,7 +164,9 @@ def _build_print_publication_plan():
             "process": {
                 "id": "wash_n_fold",
                 "name": "Wash n' Fold",
-                "metadata": {"owner": "Laundry Ops", "revision": "R2"},
+                "extensions": {
+                    "flo:publication": {"owner": "Laundry Ops", "revision": "R2"}
+                },
             }
         },
         options=RenderOptions.from_mapping(
@@ -299,13 +301,15 @@ def test_build_sppm_publication_plan_applies_footer_label_limits():
         "process": {
             "id": "wash_n_fold",
             "name": "Wash n' Fold",
-            "metadata": {
-                "footer_metrics": {
-                    "Longest Metric Label": "Extremely verbose metric value"
-                },
-                "footer_notes": [
-                    "Long footer note for publication readability validation"
-                ],
+            "extensions": {
+                "flo:publication": {
+                    "footer_metrics": {
+                        "Longest Metric Label": "Extremely verbose metric value"
+                    },
+                    "footer_notes": [
+                        "Long footer note for publication readability validation"
+                    ],
+                }
             },
         }
     }
@@ -433,8 +437,10 @@ def test_build_sppm_publication_plan_populates_footer_band_from_process_metadata
         "process": {
             "id": "wash_n_fold",
             "name": "Wash n' Fold",
-            "metadata": {
-                "footer_notes": ["Draft for review", "Confidential"],
+            "extensions": {
+                "flo:publication": {
+                    "footer_notes": ["Draft for review", "Confidential"],
+                }
             },
         }
     }
@@ -457,11 +463,13 @@ def test_build_sppm_publication_plan_populates_footer_metrics_and_render_inputs(
         "process": {
             "id": "ops_review",
             "name": "Ops Review",
-            "metadata": {
-                "footer_metrics": {
-                    "Modeled Lead Time": "24 min",
-                    "VA Ratio": "61%",
-                },
+            "extensions": {
+                "flo:publication": {
+                    "footer_metrics": {
+                        "Modeled Lead Time": "24 min",
+                        "VA Ratio": "61%",
+                    },
+                }
             },
         }
     }
@@ -697,14 +705,16 @@ def test_build_sppm_publication_plan_omits_derived_timing_for_partial_projection
     assert plan.primary_series().pages[0].band("footer") is None
 
 
-def test_build_sppm_publication_plan_supports_legend_and_caption_metadata_aliases():
+def test_build_sppm_publication_plan_preserves_publication_extension_annotations():
     process = {
         "process": {
             "id": "ops_review",
             "name": "Ops Review",
-            "metadata": {
-                "legend_items": {"Queue": "7 min", "Rework": "8%"},
-                "caption": "Draft for review",
+            "extensions": {
+                "flo:publication": {
+                    "footer_metrics": {"Queue": "7 min", "Rework": "8%"},
+                    "footer_notes": "Draft for review",
+                }
             },
         }
     }

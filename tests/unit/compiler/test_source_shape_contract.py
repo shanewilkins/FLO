@@ -37,7 +37,7 @@ def _model(steps: list[Any]) -> dict[str, Any]:
         ([{"id": "work"}], r"steps\[0\]\.kind must be a non-empty string"),
         (
             [{"id": "work", "type": "task"}],
-            r"steps\[0\] must use 'kind'; 'type' is not supported",
+            r"steps\[0\]\.kind must be a non-empty string",
         ),
         (
             [{"id": "work", "kind": "unknown"}],
@@ -56,7 +56,7 @@ def test_compile_rejects_duplicate_ids_across_subprocess_hierarchy() -> None:
         {
             "id": "subprocess",
             "kind": "subprocess",
-            "subnodes": [{"id": "work", "kind": "task"}],
+            "steps": [{"id": "work", "kind": "task"}],
         },
     ]
 
@@ -74,7 +74,12 @@ def test_compile_rejects_nested_steps_on_non_subprocess(children: str) -> None:
         }
     ]
 
-    with pytest.raises(ValueError, match="only for kind 'subprocess'"):
+    with pytest.raises(
+        ValueError,
+        match="only for kind 'subprocess'"
+        if children == "steps"
+        else "subnodes is not supported",
+    ):
         compile_adapter(cast(Any, _model(steps)))
 
 

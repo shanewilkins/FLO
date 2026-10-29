@@ -2,37 +2,26 @@ from flo.source.diagnostics import source_aware_message, source_diagnostic
 
 
 def test_validation_message_points_to_node_field():
-    content = """steps:
+    content = """spec_version: '0.1'
+process: {id: example, name: Example}
+steps:
   - id: review
     kind: task
-    metadata:
-      wait_time: {value: 30, unit: min}
+    cycle_time: invalid
 """
-
-    message = source_aware_message(
-        "E1503: task node 'review' has wait_time metadata.",
-        content=content,
-        source_path="purchase.flo",
-    )
-
-    assert message.startswith("purchase.flo:5:7: E1503")
-    assert "[steps.review.metadata.wait_time]" in message
-    assert "5 |       wait_time:" in message
-
     diagnostic = source_diagnostic(
-        "E1503: task node 'review' has wait_time metadata.",
+        "E1301: node 'review' cycle_time must be a valid measurement profile or reference",
         content=content,
-        source_path="purchase.flo",
+        source_path="example.flo",
     )
-
-    assert diagnostic is not None
-    assert diagnostic.code == "E1503"
-    assert diagnostic.severity == "error"
-    assert diagnostic.field_path == "steps.review.metadata.wait_time"
-    assert diagnostic.suggestion == (
-        "Use wait_before on work nodes; wait_time is canonical only on queues."
+    assert diagnostic.code == "E1301"
+    assert diagnostic.field_path == "steps.review.cycle_time"
+    assert diagnostic.line == 6
+    assert diagnostic.excerpt.strip() == "cycle_time: invalid"
+    assert (
+        diagnostic.suggestion
+        == "Declare a measurement profile with basis, named results and primary; waiting projections may use a direct ref."
     )
-    assert diagnostic.include_chain == ()
 
 
 def test_global_validation_message_remains_unchanged():

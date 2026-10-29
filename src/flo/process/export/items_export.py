@@ -1,4 +1,4 @@
-"""Human-readable materials and equipment list exporter."""
+"""Human-readable canonical item and resource list exporter."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import Any
 from flo.process.ir.metadata import extract_process_field
 
 
-def ir_to_materials_text(ir: Any) -> str:
+def ir_to_items_text(ir: Any) -> str:
     """Render a formatted item/resource list from process metadata."""
     items = extract_process_field(ir, "items")
     resources = extract_process_field(ir, "resources")
@@ -21,11 +21,6 @@ def ir_to_materials_text(ir: Any) -> str:
         _append_section(lines=lines, title=title, collection=collection)
 
     return "\n".join(lines)
-
-
-def ir_to_ingredients_text(ir: Any) -> str:
-    """Backward-compatible alias for the historical ingredients export name."""
-    return ir_to_materials_text(ir)
 
 
 def _append_section(lines: list[str], title: str, collection: Any) -> None:
@@ -92,20 +87,6 @@ def _format_quantity(item: dict[str, Any]) -> str:
         base = f"{value} {unit}".strip() if unit else str(value)
         if kind == "count" and qualifier:
             return f"{base} ({qualifier})"
-        return base
-
-    # Legacy shape support for examples still using kind/quantity/unit at item level.
-    legacy_value = item.get("quantity")
-    legacy_unit = item.get("unit")
-    legacy_qualifier = item.get("qualifier")
-    if isinstance(legacy_value, (int, float)) and not isinstance(legacy_value, bool):
-        base = (
-            f"{legacy_value} {legacy_unit}".strip()
-            if legacy_unit
-            else str(legacy_value)
-        )
-        if legacy_qualifier:
-            return f"{base} ({legacy_qualifier})"
         return base
 
     return ""

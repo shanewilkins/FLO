@@ -10,7 +10,7 @@ def test_validate_ir_rejects_unknown_subprocess_parent():
         name="x",
         nodes=[
             Node(id="start", type="start"),
-            Node(id="child", type="task", attrs={"subprocess_parent": "missing"}),
+            Node(id="child", type="task", subprocess_parent="missing"),
             Node(id="end", type="end"),
         ],
         edges=[
@@ -29,7 +29,7 @@ def test_validate_ir_rejects_non_subprocess_parent_reference():
         nodes=[
             Node(id="start", type="start"),
             Node(id="task", type="task"),
-            Node(id="child", type="task", attrs={"subprocess_parent": "task"}),
+            Node(id="child", type="task", subprocess_parent="task"),
             Node(id="end", type="end"),
         ],
         edges=[
@@ -48,7 +48,7 @@ def test_validate_ir_rejects_self_referential_subprocess_parent():
         name="x",
         nodes=[
             Node(id="start", type="start"),
-            Node(id="prep", type="subprocess", attrs={"subprocess_parent": "prep"}),
+            Node(id="prep", type="subprocess", subprocess_parent="prep"),
             Node(id="end", type="end"),
         ],
         edges=[
@@ -66,8 +66,8 @@ def test_validate_ir_rejects_circular_subprocess_parent_chain():
         name="x",
         nodes=[
             Node(id="start", type="start"),
-            Node(id="outer", type="subprocess", attrs={"subprocess_parent": "inner"}),
-            Node(id="inner", type="subprocess", attrs={"subprocess_parent": "outer"}),
+            Node(id="outer", type="subprocess", subprocess_parent="inner"),
+            Node(id="inner", type="subprocess", subprocess_parent="outer"),
             Node(id="end", type="end"),
         ],
         edges=[
@@ -105,7 +105,7 @@ def test_validate_ir_accepts_subprocess_detail_map_reference_and_valid_parent_ch
                 type="subprocess",
                 extensions={"detail_map_ref": "SP-01"},
             ),
-            Node(id="mix", type="task", attrs={"subprocess_parent": "prep"}),
+            Node(id="mix", type="task", subprocess_parent="prep"),
             Node(id="end", type="end"),
         ],
         edges=[

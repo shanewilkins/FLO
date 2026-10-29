@@ -97,8 +97,7 @@ def _validate_branch_eligible_resources(
     obj: IR, declared_resources: dict[str, str]
 ) -> None:
     for node in obj.nodes:
-        attrs = getattr(node, "attrs", None)
-        branch = attrs.get("branch") if isinstance(attrs, dict) else None
+        branch = node.branch
         eligible = (
             branch.get("eligible_resources") if isinstance(branch, dict) else None
         )

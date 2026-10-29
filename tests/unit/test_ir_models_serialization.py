@@ -9,7 +9,10 @@ from flo.process.ir.models import IR, Edge, Node
 
 
 def test_ir_to_from_dict_and_json(tmp_path: Path, ir_factory, node_factory):
-    nodes = [node_factory("n1", attrs={"foo": "bar"}), node_factory("n2", type="end")]
+    nodes = [
+        node_factory("n1", extensions={"example:foo": "bar"}),
+        node_factory("n2", type="end"),
+    ]
     ir = ir_factory(name="test", nodes=nodes)
 
     d = ir_to_internal_dict(ir)
@@ -74,7 +77,7 @@ def test_canonical_fields_roundtrip_without_metadata_shadow_copy() -> None:
     assert loaded.locations == ir.locations
     assert loaded.render_intent == ir.render_intent
     assert loaded.nodes[1].subprocess_parent == "parent"
-    assert loaded.nodes[1].attrs == {}
+    assert loaded.nodes[1].branch is None
     assert loaded.process_metadata == {"custom": {"source_system": "erp"}}
 
 
@@ -85,13 +88,15 @@ def test_first_class_collections_and_legacy_render_context_remain_separate() -> 
             Node(
                 id="child",
                 type="task",
-                attrs={"subprocess_parent": "parent", "name": "Child"},
+                subprocess_parent="parent",
+                name="Child",
             )
         ],
         items=[{"id": "order", "name": "Order", "kind": "information"}],
         resources=[{"id": "owner", "name": "Owner", "kind": "person"}],
         locations=[{"id": "desk", "name": "Desk"}],
-        process_metadata={"render": {"defaults": {"diagram": "sppm"}}, "custom": True},
+        render_intent={"defaults": {"diagram": "sppm"}},
+        process_metadata={"custom": True},
     )
 
     assert ir.items is not None
@@ -100,7 +105,7 @@ def test_first_class_collections_and_legacy_render_context_remain_separate() -> 
     assert ir.render_intent == {"defaults": {"diagram": "sppm"}}
     assert ir.process_metadata == {"custom": True}
     assert ir.nodes[0].subprocess_parent == "parent"
-    assert ir.nodes[0].attrs == {"name": "Child"}
+    assert ir.nodes[0].name == "Child"
 
 
 def test_ir_edge_optional_fields_roundtrip(tmp_path: Path):
@@ -148,7 +153,7 @@ def test_ir_from_internal_dict_defaults_for_missing_fields():
     }
     ir = ir_from_internal_dict(data)
     assert ir.name == "demo"
-    assert ir.nodes[0].attrs == {}
+    assert ir.nodes[0].branch is None
     assert ir.edges[0].id is None
     assert ir.edges[0].outcome is None
     assert ir.edges[0].route is None
@@ -166,16 +171,25 @@ def test_ir_from_internal_dict_preserves_structured_rework():
     assert ir.edges[0].rework == {"reason": "Correct output"}
 
 
-def test_ir_preserves_invalid_relation_while_legacy_context_normalization_remains() -> (
-    None
-):
+def test_ir_rejects_dictionary_entries_in_constructors():
+    import pytest
+
+    with pytest.raises(TypeError, match="Node instances"):
+        IR(name="demo", nodes=[{"id": "n1", "type": "task"}])
+    with pytest.raises(TypeError, match="Edge instances"):
+        IR(
+            name="demo",
+            nodes=[Node(id="n1", type="task")],
+            edges=[{"source": "n1", "target": "n2"}],
+        )
+
+
+def test_ir_preserves_invalid_relation_and_context_until_explicit_validation():
     ir = IR(
         name="demo",
-        nodes=[{"id": "n1", "type": "task", "attrs": "bad"}],
-        edges=[{"source": "n1", "target": "n2", "handoff": "bad"}],
+        nodes=[Node(id="n1", type="task")],
+        edges=[Edge(source="n1", target="n2", handoff="bad")],
         process_metadata="bad",
     )
-
-    assert ir.nodes[0].attrs == {}
     assert ir.edges[0].handoff == "bad"
-    assert ir.process_metadata is None
+    assert ir.process_metadata == "bad"

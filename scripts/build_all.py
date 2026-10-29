@@ -117,22 +117,15 @@ def _build_one(
             if artifact.kind != "svg":
                 raise ValueError(f"variant '{suffix}' did not return svg artifact")
             svg_out.write_text(artifact.content, encoding="utf-8")
-            created.append(str(svg_out.relative_to(REPO_ROOT)))
+            created.append(str(svg_out.relative_to(renders_dir)))
 
         if _has_item_or_resource_collection(ir):
-            ingredients_out = base_out.with_name(
-                f"{base_out.name}_ingredients"
-            ).with_suffix(".md")
-            legacy_ingredients_out = base_out.with_name(
-                f"{base_out.name}_ingredients"
-            ).with_suffix(".txt")
-            ingredients = export_ir(ir, options={"export": "ingredients"})
-            if not ingredients.endswith("\n"):
-                ingredients += "\n"
-            ingredients_out.write_text(ingredients, encoding="utf-8")
-            if legacy_ingredients_out.exists():
-                legacy_ingredients_out.unlink()
-            created.append(str(ingredients_out.relative_to(REPO_ROOT)))
+            items_out = base_out.with_name(f"{base_out.name}_items").with_suffix(".md")
+            items = export_ir(ir, options={"export": "items"})
+            if not items.endswith("\n"):
+                items += "\n"
+            items_out.write_text(items, encoding="utf-8")
+            created.append(str(items_out.relative_to(renders_dir)))
 
         return True, f"OK {rel} -> {', '.join(created)}"
     except Exception as exc:
@@ -229,14 +222,9 @@ def _extra_render_variants_for_example(
 
 
 def _has_item_or_resource_collection(ir: object) -> bool:
-    process_metadata = getattr(ir, "process_metadata", None)
-    if not isinstance(process_metadata, dict):
-        return False
     return (
-        process_metadata.get("items") is not None
-        or process_metadata.get("resources") is not None
-        or process_metadata.get("materials") is not None
-        or process_metadata.get("equipment") is not None
+        getattr(ir, "items", None) is not None
+        or getattr(ir, "resources", None) is not None
     )
 
 

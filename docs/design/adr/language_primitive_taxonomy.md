@@ -2,6 +2,11 @@
 
 Status: accepted
 
+Implementation scope (2026-10-29): the initial taxonomy is implemented under
+[the book-aligned contract](../../specs/book_aligned_contract.md). Handoff/rework
+are now structured first-class relations; the original staged handoff-category
+rollout below is historical rationale, not current syntax.
+
 ## Context
 
 FLO already compiles authored process descriptions into a graph-shaped IR, but

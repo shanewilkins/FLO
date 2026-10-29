@@ -1,3 +1,5 @@
+import pytest
+
 from flo.source import parse_adapter
 
 
@@ -8,8 +10,6 @@ def test_parse_adapter_returns_mapping_for_yaml_document():
     assert payload["content"] == "hello"
 
 
-def test_parse_adapter_preserves_plain_text_input_via_fallback():
-    payload = parse_adapter("plain text input")
-
-    assert payload["name"] == "parsed"
-    assert payload["content"] == "plain text input"
+def test_parse_adapter_rejects_plain_text_input():
+    with pytest.raises(ValueError, match="YAML mapping"):
+        parse_adapter("plain text input")

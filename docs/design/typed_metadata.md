@@ -5,8 +5,8 @@ and its [supported-field inventory](../specs/book_aligned_fields.md).
 The removed `flo_types.json` and compatibility vocabulary below describe the
 previous design and are not current authoring guidance.
 
-This note provides human guidance only. The authoritative typed metadata
-contracts live in `schema/flo_types.json`.
+This note provides human guidance only. The historical typed metadata
+contracts lived in the now-removed `schema/flo_types.json`.
 
 This is a draft explanatory guide.
 Schema remains the authoritative contract for tooling.

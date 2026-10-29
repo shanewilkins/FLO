@@ -148,7 +148,7 @@ steps:
 -   Structural and semantic validation\
 -   Graph projections: swimlane, spaghetti map, SPPM, and value stream map\
 -   SVG and JSON exports\
--   Ingredients list and movement report exports\
+-   Item/resource summaries and movement report exports\
 -   Stable foundation for analytics
 
 ## What FLO Does Not Provide
@@ -163,7 +163,7 @@ steps:
 ## Architecture
 
 -   `src/flo/` --- compiler, validators, renderers, and CLI\
--   `schema/` --- JSON schemas for FLO IR and types\
+-   `schema/` --- generated authored-source and canonical-exchange JSON schemas\
 -   `examples/` --- canonical reference examples\
 -   `tests/` --- unit, integration, and conformance tests\
 -   `docs/` --- user manual and design documents
@@ -201,7 +201,11 @@ This is a summary only. Normative semantics live in `docs/specs/core_language.md
 - Every node must be reachable from `start`.
 - Every node must be able to reach at least one `end` node.
 - `decision` nodes must have at least two outgoing transitions.
-- `wait_time` is valid only on `queue` nodes.
+- Work supports cycle, waiting and changeover profiles; queue/wait supports waiting.
+- Only queue/wait may reference a work step's waiting profile.
+- Only work kinds carry value_class; handoff/rework are structured relations.
+- Display selects primary; modeled timing selects analysis_input.
+- Unknown fields and retired source spellings are rejected.
 
 ------------------------------------------------------------------------
 
@@ -229,14 +233,19 @@ It is a small language by design.
 
 ## Schema Contract & Migration
 
-As of v0.1 the compiler emits a schema-shaped canonical IR and the
-runtime enforces that contract. The compiler must set `IR.schema_aligned`
-to `True` and `IR.to_dict()` will produce the top-level mapping with
-`process`, `nodes`, and `edges` fields required by the authoritative
-JSON Schema in `schema/flo_ir.json`.
+Authored source and canonical exchange are separate boundaries. Source uses
+`process`, `steps` and optional `transitions`; canonical JSON uses `process`,
+`nodes` and `edges`. Both schemas are generated from strict Pydantic contracts:
+`schema/flo_source.json` and `schema/flo_ir.json`. Internal IR is plain dataclasses.
 
-If you are upgrading from an earlier development version that relied on
-an internal IR translator, update any custom compiler integrations to
-emit the schema-shaped IR directly. The translator was intentionally
-removed; CI now validates example outputs using the same schema and
-will fail when the contract is violated.
+Use the supported `flo.export(source)` facade for validated canonical JSON; its
+successful `OperationResult.value` contains the payload. The package does not
+require integrations to set internal flags or call private serialization helpers.
+
+The book-aligned pre-1.0 change is intentionally breaking. Timing is first-class
+measurement profiles, nested subprocesses use `steps`, connections use
+`source`/`target`, and item/resource summaries use `--export items`. Retired names
+and metadata placements are rejected rather than translated. See the
+[accepted contract](docs/specs/book_aligned_contract.md),
+[field inventory](docs/specs/book_aligned_fields.md) and
+[refactor acceptance record](docs/design/book_aligned_contract_refactoring_plan.md).

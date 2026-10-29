@@ -1,6 +1,6 @@
 # FLO v0.1 Architecture Note (Syntax, Semantics, and Boundaries)
 
-Status: completed
+Status: historical; completed architecture record predating the book-aligned contract.
 
 ## 0) Ratified Decisions (March 2026)
 

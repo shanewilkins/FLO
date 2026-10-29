@@ -25,12 +25,12 @@ NODE_FIELDS = {
     "decision": COMMON_FIELDS | {"outcomes"},
     "branch": COMMON_FIELDS | {"branch", "routes"},
 }
-SOURCE_ONLY_FIELDS = frozenset({"attrs", "steps", "subnodes"})
+SOURCE_ONLY_FIELDS = frozenset({"steps"})
 
 
 def inapplicable_fields(kind: str, supplied: set[str]) -> set[str]:
     """Return supplied semantic fields unsupported by a node kind."""
     allowed = NODE_FIELDS.get(kind, COMMON_FIELDS)
     if kind == "subprocess":
-        allowed = allowed | {"steps", "subnodes"}
-    return supplied - allowed - {"attrs"}
+        allowed = allowed | {"steps"}
+    return supplied - allowed

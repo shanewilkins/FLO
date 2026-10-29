@@ -2,9 +2,11 @@
 
 Status: accepted
 
+Implementation scope (2026-10-29): The current structured rework frequency has basis, numerator, denominator, observation unit and optional evidence reference. The broader affected-work-unit/occurrence and branch-frequency contract below remains planned, rather than being implied by the implemented subset.
+
 ## Context
 
-FLO currently permits free-form rework-edge metadata such as `3 per 40 cases`
+At the time of this decision, FLO permitted free-form rework-edge metadata such as `3 per 40 cases`
 and `avg 0.12 loops/case`. Those strings are useful as annotations but cannot
 reliably distinguish affected work units from repeated correction occurrences,
 identify the denominator, or preserve the sampling and evidence context.

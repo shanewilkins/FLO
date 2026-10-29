@@ -15,12 +15,12 @@ def _write_spaghetti_svg_model(tmp_path, *, include_io: bool = False):
                 {
                     "id": "pantry",
                     "name": "Pantry",
-                    "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                    "spatial": {"x": 0, "y": 0, "unit": "m"},
                 },
                 {
                     "id": "bench",
                     "name": "Bench",
-                    "metadata": {"spatial": {"x": 3, "y": 1, "unit": "m"}},
+                    "spatial": {"x": 3, "y": 1, "unit": "m"},
                 },
             ],
         },
@@ -75,12 +75,12 @@ def _write_partial_spaghetti_svg_model(tmp_path):
                 {
                     "id": "pantry",
                     "name": "Pantry",
-                    "metadata": {"spatial": {"x": 0, "y": 0}},
+                    "spatial": {"x": 0, "y": 0},
                 },
                 {
                     "id": "oven",
                     "name": "Oven",
-                    "metadata": {"spatial": {"x": 2, "y": 1}},
+                    "spatial": {"x": 2, "y": 1},
                 },
                 {"id": "bench", "name": "Bench"},
             ],

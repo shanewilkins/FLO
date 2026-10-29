@@ -19,23 +19,27 @@ from flo.process.ir.models import IR, Node
 
 @pytest.fixture
 def node_factory() -> Callable:
-    def _node(id: str, type: str = "task", attrs: dict | None = None) -> Node:
-        return Node(id=id, type=type, attrs=attrs or {})
+    def _node(id: str, type: str = "task", **fields) -> Node:
+        return Node(id=id, type=type, **fields)
 
     return _node
 
 
 @pytest.fixture
 def ir_factory(node_factory) -> Callable:
-    def _ir(name: str, nodes: list[Node]) -> IR:
-        return IR(name=name, nodes=nodes)
+    def _ir(name: str, nodes: list[Node], edges=None) -> IR:
+        return IR(name=name, nodes=nodes, edges=edges or [])
 
     return _ir
 
 
 @pytest.fixture
 def adapter_data() -> dict:
-    return {"name": "example", "content": "payload"}
+    return {
+        "spec_version": "0.1",
+        "process": {"id": "example", "name": "Example"},
+        "steps": [{"id": "start", "kind": "start"}],
+    }
 
 
 @pytest.fixture

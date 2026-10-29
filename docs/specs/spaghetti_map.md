@@ -17,9 +17,9 @@ instruction.
 A spaghetti map depends on two layers of information:
 
 1. Canonical FLO process structure for inferring movement paths.
-2. Spatial or location metadata for positioning movement-route endpoints.
+2. Declared locations with first-class spatial coordinates for positioning movement-route endpoints.
 
-If spatial metadata is incomplete, FLO follows the deterministic partial or
+If spatial evidence is incomplete, FLO follows the deterministic partial or
 strict policy below. It never invents coordinates.
 
 ## Normative characteristics
@@ -33,7 +33,7 @@ A spaghetti map in FLO must satisfy the following characteristics:
 2. Channel-aware rendering
    - FLO must support movement views for material, people, or both.
    - These views are derived from canonical `consumes` and `produces`,
-     `performed_by`, and location semantics rather than only legacy aliases.
+     `performed_by`, and location semantics without reading retired relation aliases.
 
 3. Location-based topology
    - Nodes represent locations or movement-relevant places, not arbitrary FLO
@@ -47,7 +47,7 @@ A spaghetti map in FLO must satisfy the following characteristics:
    - Default mode renders complete positioned routes and identifies omitted
      data explicitly.
    - Strict mode rejects any selected route with an unpositioned endpoint.
-   - Absent performer-specific metadata degrades predictably according to the
+   - Absent performer-specific evidence degrades predictably according to the
      selected aggregation mode.
 
 ## Coordinate units

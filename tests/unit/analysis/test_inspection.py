@@ -123,8 +123,8 @@ def test_spaghetti_readiness_checks_inferred_routes_and_spatial_data(
         ],
         edges=[Edge(source="start", target="end")],
         locations=[
-            {"id": "a", "name": "A", "metadata": {"spatial": {"x": 0, "y": 0}}},
-            {"id": "b", "name": "B", "metadata": {"spatial": target_spatial}},
+            {"id": "a", "name": "A", "spatial": {"x": 0, "y": 0}},
+            {"id": "b", "name": "B", "spatial": target_spatial},
         ],
     )
 

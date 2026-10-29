@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from flo.process.export.json_export import ir_to_schema_dict, ir_to_schema_json
 from flo.process.ir.models import IR, Edge, Node
 
 
 def test_schema_dict_defaults_generated_process_name():
-    ir = IR(name="", nodes=[Node(id="n", type="task", attrs={})], edges=[])
+    ir = IR(name="", nodes=[Node(id="n", type="task")], edges=[])
     payload = ir_to_schema_dict(ir)
     assert payload["process"]["id"] == "generated"
     assert payload["process"]["name"] == "generated"
@@ -16,7 +18,7 @@ def test_schema_dict_defaults_generated_process_name():
 def test_schema_dict_prefers_authored_process_id_and_name_from_metadata():
     ir = IR(
         name="compiled_fallback_name",
-        nodes=[Node(id="n", type="task", attrs={})],
+        nodes=[Node(id="n", type="task")],
         edges=[],
         process_metadata={
             "process_id": "authored_process_id",
@@ -29,10 +31,9 @@ def test_schema_dict_prefers_authored_process_id_and_name_from_metadata():
     assert payload["process"]["name"] == "Authored Process Name"
 
 
-def test_node_to_schema_skips_non_dict_attrs():
-    ir = IR(name="p", nodes=[Node(id="n", type="task", attrs="bad")], edges=[])
-    payload = ir_to_schema_dict(ir)
-    assert payload["nodes"][0] == {"id": "n", "kind": "task"}
+def test_retired_node_attrs_fail_instead_of_being_discarded():
+    with pytest.raises(TypeError, match="attrs"):
+        Node(id="n", type="task", attrs="bad")
 
 
 def test_edge_to_schema_omits_absent_optional_fields():
@@ -63,26 +64,21 @@ def test_edge_to_schema_omits_absent_optional_fields():
     assert second["extensions"] == {"example:m": 1}
 
 
-def test_legacy_edges_from_node_attrs_handles_non_list_and_casts_targets():
+def test_export_uses_only_explicit_canonical_edges():
     ir = IR(
         name="p",
-        nodes=[
-            Node(id="a", type="task", attrs={"edges": ["b", 123]}),
-            Node(id="bad", type="task", attrs={"edges": "not-list"}),
-            Node(id="none", type="task", attrs=None),
-        ],
-        edges=[],
+        nodes=[Node(id="a", type="task"), Node(id="b", type="end")],
+        edges=[Edge(source="a", target="b", id="e_0")],
     )
-
-    payload = ir_to_schema_dict(ir)
-    assert payload["edges"] == [
-        {"id": "e_0", "source": "a", "target": "b"},
-        {"id": "e_1", "source": "a", "target": "123"},
+    assert ir_to_schema_dict(ir)["edges"] == [
+        {"id": "e_0", "source": "a", "target": "b"}
     ]
+    ir.edges = []
+    assert ir_to_schema_dict(ir)["edges"] == []
 
 
 def test_schema_json_indent_none_and_positive():
-    ir = IR(name="p", nodes=[Node(id="n", type="task", attrs={})], edges=[])
+    ir = IR(name="p", nodes=[Node(id="n", type="task")], edges=[])
     compact = ir_to_schema_json(ir, indent=None)
     pretty = ir_to_schema_json(ir, indent=2)
     assert "\n" not in compact

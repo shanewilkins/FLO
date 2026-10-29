@@ -218,7 +218,7 @@ steps:
     branch = next(node for node in ir.nodes if node.id == "assign")
     routes = {edge.route: edge.target for edge in ir.edges if edge.source == "assign"}
 
-    assert branch.attrs["branch"] == {
+    assert branch.branch == {
         "mode": "dispatch",
         "policy": "least_loaded",
     }

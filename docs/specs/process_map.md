@@ -19,14 +19,14 @@ variants.
 
 A process map is derived from canonical FLO process structure:
 
-- process metadata
+- first-class process identity and context
 - nodes and edges
 - decision outcomes and rework semantics
 - optional subprocess relationships
 - optional lane assignments when a variant needs them
-- optional approved analysis or summary metadata when a variant supports it
+- optional approved derived analysis or explicit display extensions when a variant supports it
 
-Additional presentation metadata may refine rendering, but it does not replace
+Explicit presentation extensions may refine rendering, but it does not replace
 the canonical process graph as the semantic source.
 
 ## Normative characteristics

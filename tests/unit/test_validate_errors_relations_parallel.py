@@ -204,11 +204,9 @@ def test_validate_ir_rejects_branch_with_unknown_eligible_resource():
             Node(
                 id="assign",
                 type="branch",
-                attrs={
-                    "branch": {
-                        "mode": "dispatch",
-                        "eligible_resources": ["missing_worker"],
-                    }
+                branch={
+                    "mode": "dispatch",
+                    "eligible_resources": ["missing_worker"],
                 },
             ),
             Node(id="left", type="task"),

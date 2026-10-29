@@ -21,7 +21,7 @@ steps:
   name: Prep Subprocess
   kind: subprocess
   lane: prep
-  subnodes:
+  steps:
   - id: gather_equipment
     name: Gather Equipment
     kind: task
@@ -96,7 +96,7 @@ steps:
   name: Combine Wet Ingredients
   kind: subprocess
   lane: prep
-  subnodes:
+  steps:
   - id: brown_butter
     name: Brown Butter
     kind: task

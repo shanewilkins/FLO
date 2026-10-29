@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from flo.source.models import AdapterModel
+from flo.source import parse_adapter
 
 
 def repo_root(start: Path | None = None) -> Path:
@@ -46,9 +46,9 @@ def tmp_flo_file():
 
 @pytest.fixture
 def adapter_model_from_example():
-    """Yield a real `AdapterModel` instance constructed from an example file.
+    """Yield a composed source mapping parsed from an example file.
 
-    Tests can use this fixture to get a validated model rather than building
+    Tests can use this fixture to get a parsed source document rather than building
     one manually or mocking the parsing step.
     """
     examples_dir = repo_root() / "examples" / "reference"
@@ -56,5 +56,5 @@ def adapter_model_from_example():
     if not example.exists():
         example = sorted(examples_dir.glob("*.flo"))[0]
     content = example.read_text()
-    model = AdapterModel.model_validate({"name": example.stem, "content": content})
+    model = parse_adapter(content, source_path=str(example))
     return model

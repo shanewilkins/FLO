@@ -84,7 +84,7 @@ def run_operation(
         result = _run_inspect_output(ir=ir, options=options, composition=composition)
     else:
         output_format = _resolve_output_format(command=command, options=options)
-        if output_format in {"json", "ingredients", "movement"}:
+        if output_format in {"json", "items", "movement"}:
             result = CommandResult.from_legacy(
                 *_run_export_output(ir=ir, options=options, output_format=output_format)
             )
@@ -438,7 +438,7 @@ def _resolve_output_format(command: str, options: dict | None) -> str:
     output_format = (options or {}).get("export") or (options or {}).get("format")
     if command in {"render", "export"} and output_format in {
         "json",
-        "ingredients",
+        "items",
         "movement",
         "svg",
         "typst",

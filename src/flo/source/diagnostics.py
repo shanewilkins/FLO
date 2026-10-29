@@ -259,7 +259,7 @@ def _source_node_path(
         path = (*prefix, index)
         if step.get("id") == node_id:
             return path
-        for key in ("steps", "subnodes"):
+        for key in ("steps",):
             if isinstance(step.get(key), list):
                 found = _source_node_path(step[key], node_id, (*path, key))
                 if found is not None:
@@ -385,7 +385,7 @@ def _find_transition_location(
                         break
                     if re.match(r"^\s*outcome\s*:", field_line):
                         return field_index, "outcome"
-                    if re.match(r"^\s*(?:edge_type|rework)\s*:", field_line):
+                    if re.match(r"^\s*rework\s*:", field_line):
                         field_name = field_line.split(":", maxsplit=1)[0].strip()
                         return field_index, field_name
                 return index, preferred_field or "outcome"
@@ -441,24 +441,15 @@ def _field_name_from_message(message: str) -> str | None:
     if node is not None:
         message = message[node.end() :]
     candidates = (
-        "wait_before",
-        "crossover_time",
-        "transfer_time",
         "wait_time",
         "cycle_time",
         "changeover_time",
-        "crossover",
-        "transfer",
-        "buffer_capacity",
         "location",
         "lane",
         "performed_by",
         "consumes",
         "produces",
         "uses",
-        "supported_by",
-        "inputs",
-        "outputs",
         "outcomes",
         "branch",
         "route",
@@ -472,7 +463,7 @@ def _edge_field_name(message: str) -> str | None:
         # Step IDs may themselves be "route", "handoff", or "rework".
         # Only the text describing the violation identifies its field.
         message = message[edge.end() :]
-    for field_name in ("outcome", "route", "edge_type", "handoff", "rework"):
+    for field_name in ("outcome", "route", "handoff", "rework"):
         if field_name in message:
             return field_name
     return None
@@ -505,9 +496,6 @@ def _field_path_suffix(message: str, field_name: str) -> str:
             "wait_time",
             "cycle_time",
             "changeover_time",
-            "crossover",
-            "transfer",
-            "buffer_capacity",
         }
     ):
         return f"metadata.{field_name}"
@@ -541,7 +529,7 @@ def _diagnostic_at(
         column=bounded_column + 1,
         excerpt=lines[bounded_line],
         field_path=field_path,
-        suggestion=suggestion or _suggestion_for(field_path),
+        suggestion=suggestion,
         include_chain=include_chain,
     )
 
@@ -578,25 +566,16 @@ def _source_label(source_path: str | None) -> str:
     return "<stdin>" if source_path in {None, "-"} else source_path
 
 
-def _suggestion_for(field_path: str | None) -> str | None:
-    if field_path is not None and field_path.endswith(".metadata.wait_time"):
-        return "Use wait_before for canonical work-node waiting evidence."
-    return None
-
-
 def _suggestion_for_code(message: str) -> str | None:
     code_match = _CODE_RE.search(message)
     if code_match is None:
         return None
     return {
-        "E0201": "Move outcomes to a decision step.",
         "E0202": "Declare at least two named decision outcomes and their targets.",
         "E0205": "Name the target step directly or add a target field.",
         "E0206": "Add a non-empty target step ID to this outcome branch.",
         "E0209": "Define a structured handoff or rework object.",
-        "E0211": "Move routes to a branch step.",
         "E0212": "Declare at least two branch routes and their targets.",
-        "E0214": "Move branch configuration to a branch step.",
         "E0215": "Declare branch as an object with a mode field.",
         "E0216": "Use dispatch, probabilistic, external, or unspecified as the branch mode.",
         "E0217": "Name the branch policy or remove the policy field.",
@@ -616,27 +595,15 @@ def _suggestion_for_code(message: str) -> str | None:
         "E1222": "Use a canonical unit of the same dimension; mass-to-volume conversion is not inferred.",
         "E1223": "Supply the equivalent canonical amount within relative tolerance 1e-9, or omit both optional canonical fields.",
         "E1224": "Choose an equivalent canonical unit whose converted amount remains finite and positive.",
-        "E1312": "Declare the referenced item under process.metadata.items or correct the item ID.",
-        "E1313": "Declare the referenced resource under process.metadata.resources or correct the resource ID.",
+        "E1312": "Declare the referenced item under process.items or correct the item ID.",
+        "E1313": "Declare the referenced resource under process.resources or correct the resource ID.",
         "E1314": "Use a resource whose declared kind matches this relation.",
         "E1316": "Declare the referenced lane or location, or correct the step reference.",
-        "E1102": "Use an integer capacity of at least 1; booleans and null are not capacities.",
-        "E1315": "Declare the eligible resource under process.metadata.resources or correct the resource ID.",
-        "E1301": "Declare timing as an object with an explicit numeric value and supported unit; omit the field if unmeasured.",
-        "E1302": "Use a finite, nonnegative number whose duration fits in seconds; omit the field if unmeasured.",
+        "E1315": "Declare the eligible resource under process.resources or correct the resource ID.",
+        "E1301": "Declare a measurement profile with basis, named results and primary; waiting projections may use a direct ref.",
         "E1303": "Specify s, m, min, hr, or d explicitly; no timing unit is inferred.",
-        "E1304": "Use a non-empty measurement_id string or remove it.",
-        "E1305": "List one or more unique, non-empty measurement IDs.",
-        "E1404": "Use edge_type: rework with rework: true, or omit both fields.",
-        "E1503": "Use wait_before on work nodes; wait_time is canonical only on queues.",
-        "E1504": "Use wait_time on queues; wait_before belongs on work nodes.",
-        "E1505": (
-            "Link repeated waiting evidence, give independent waits distinct "
-            "measurement_id values, or keep only one measurement."
-        ),
-        "E1506": "Give each work-node waiting measurement a unique measurement_id.",
-        "E1508": "Move active timing and wait_before to a work node; use a queue for wait_time.",
-        "E1509": "Use equivalent durations for one measurement_id, or give independent measurements distinct IDs.",
-        "E1510": "Set queue wait_time to the sum of distinct referenced work waits, using a separate ID for an aggregate.",
-        "E1507": "Reference measurement_id values declared by work-node wait_before metadata.",
+        "E1504": "Use wait_time references only on queue or wait nodes.",
+        "E1508": "Declare operational fields only on the supported work or waiting node kinds.",
+        "E1510": "Reference a work step directly; measurement reference chains are not supported.",
+        "E1507": "Use a direct reference to an existing work step wait_time profile.",
     }.get(code_match.group(1))

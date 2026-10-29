@@ -1,5 +1,56 @@
 {
   "$defs": {
+    "BranchConfig": {
+      "additionalProperties": false,
+      "description": "Authored branch selection mechanism and optional resource eligibility.",
+      "properties": {
+        "mode": {
+          "enum": [
+            "dispatch",
+            "probabilistic",
+            "external",
+            "unspecified"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "policy": {
+          "anyOf": [
+            {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Policy"
+        },
+        "eligible_resources": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "\\S",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Eligible Resources"
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "title": "BranchConfig",
+      "type": "object"
+    },
     "CanonicalEdgeContract": {
       "additionalProperties": false,
       "description": "Generated-schema boundary for one canonical transition.",
@@ -109,7 +160,7 @@
     },
     "CanonicalIdentityContract": {
       "additionalProperties": false,
-      "description": "Named identity used by process context and lanes.",
+      "description": "Named responsibility lane with optional role, team or system type.",
       "properties": {
         "id": {
           "pattern": "\\S",
@@ -120,6 +171,17 @@
           "pattern": "\\S",
           "title": "Name",
           "type": "string"
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Extensions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "type": {
           "anyOf": [
@@ -137,6 +199,28 @@
           ],
           "default": null,
           "title": "Type"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "CanonicalIdentityContract",
+      "type": "object"
+    },
+    "CanonicalNamedIdentityContract": {
+      "additionalProperties": false,
+      "description": "Strict named process context without a lane classification.",
+      "properties": {
+        "id": {
+          "pattern": "\\S",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
         },
         "extensions": {
           "anyOf": [
@@ -154,7 +238,7 @@
         "id",
         "name"
       ],
-      "title": "CanonicalIdentityContract",
+      "title": "CanonicalNamedIdentityContract",
       "type": "object"
     },
     "CanonicalNodeContract": {
@@ -251,79 +335,45 @@
         "branch": {
           "anyOf": [
             {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/$defs/BranchConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null,
-          "title": "Branch"
+          "default": null
         },
         "consumes": {
-          "anyOf": [
-            {
-              "items": {
-                "pattern": "\\S",
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Consumes"
+          "items": {
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "title": "Consumes",
+          "type": "array"
         },
         "produces": {
-          "anyOf": [
-            {
-              "items": {
-                "pattern": "\\S",
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Produces"
+          "items": {
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "title": "Produces",
+          "type": "array"
         },
         "performed_by": {
-          "anyOf": [
-            {
-              "items": {
-                "pattern": "\\S",
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Performed By"
+          "items": {
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "title": "Performed By",
+          "type": "array"
         },
         "uses": {
-          "anyOf": [
-            {
-              "items": {
-                "pattern": "\\S",
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Uses"
+          "items": {
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "title": "Uses",
+          "type": "array"
         },
         "value_class": {
           "anyOf": [
@@ -346,7 +396,7 @@
         "cycle_time": {
           "anyOf": [
             {
-              "$ref": "#/$defs/Measurement"
+              "$ref": "#/$defs/MeasurementProfile"
             },
             {
               "type": "null"
@@ -368,7 +418,7 @@
         "changeover_time": {
           "anyOf": [
             {
-              "$ref": "#/$defs/Measurement"
+              "$ref": "#/$defs/MeasurementProfile"
             },
             {
               "type": "null"
@@ -427,22 +477,19 @@
         "owner": {
           "anyOf": [
             {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/$defs/CanonicalNamedIdentityContract"
             },
             {
               "type": "null"
             }
           ],
-          "default": null,
-          "title": "Owner"
+          "default": null
         },
         "business_units": {
           "anyOf": [
             {
               "items": {
-                "additionalProperties": true,
-                "type": "object"
+                "$ref": "#/$defs/CanonicalNamedIdentityContract"
               },
               "type": "array"
             },
@@ -859,72 +906,6 @@
           "default": null,
           "title": "Kind"
         },
-        "metadata": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/LocationMetadata"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "x": {
-          "anyOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "X"
-        },
-        "y": {
-          "anyOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Y"
-        },
-        "unit": {
-          "anyOf": [
-            {
-              "pattern": "\\S",
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Unit"
-        }
-      },
-      "required": [
-        "id",
-        "name"
-      ],
-      "title": "LocationContract",
-      "type": "object"
-    },
-    "LocationMetadata": {
-      "additionalProperties": false,
-      "description": "Existing explicit spatial container, pending compatibility removal.",
-      "properties": {
         "spatial": {
           "anyOf": [
             {
@@ -937,7 +918,11 @@
           "default": null
         }
       },
-      "title": "LocationMetadata",
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "LocationContract",
       "type": "object"
     },
     "MeasureQuantity": {

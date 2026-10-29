@@ -60,14 +60,14 @@ Current mappings:
   `--layout-max-width-px`, `--layout-target-columns`, `--layout-width`,
   `--layout-height`, `--layout-overflow`), and all SPPM render controls are
   render-only options.
-- If `--export json`, `--export ingredients`, or `--export movement` is
+- If `--export json`, `--export items`, or `--export movement` is
   selected, render-only options are rejected with usage exit code `1`.
 
 ## Renderer policy contract (pre-1.0)
 
 - Rework edges render as dashed lines.
-- Rework classification precedence is explicit metadata first, inferred back-edge
-  fallback second.
+- Rework classification precedence is the explicit structured relation first, inferred back-edge
+  findings second.
 - Explicit rework semantics override inferred classification when they differ.
 - Exact single-page SPPM bounds reflow before scaling. The default `safe-fit`
   policy preserves aspect ratio, scales only to the `0.75` legibility floor,
@@ -129,7 +129,7 @@ record so automation does not need to scrape prose. Sensitive telemetry input
 and raw attributes remain excluded under the telemetry privacy policy.
 
 Source structural failures carry authored field paths, including indices in
-nested `steps` or `subnodes` and fields inside `attrs`. When that path is present
+nested `steps` and first-class evidence fields. When that path is present
 in the entry document, its YAML source mark supplies the location and excerpt.
 Missing fields use the closest available enclosing mark. Existing compiler
 codes and compile-error exit status remain in effect; model-library error dumps
@@ -158,12 +158,9 @@ render stop before producing a payload for invalid canonical quantities.
 
 ## Waiting evidence diagnostics
 
-`E1509` rejects contradictory copies of one waiting `measurement_id`.
-`E1510` rejects a queue duration unequal to its finite referenced sum or
-contradictory aggregate identity. Both are semantic validation failures (exit
-`4`) with source context and repair guidance. Duration equivalence uses
-normalized seconds, relative tolerance `1e-9`, and absolute tolerance `0`.
-Duplicate references, including whitespace-equivalent IDs, retain `E1305`.
+`E1504` rejects a wait_time reference on a non-waiting kind. `E1507` rejects
+missing or invalid work-profile targets. `E1510` rejects reference chains.
+These semantic validation failures retain source context and repair guidance.
 
 `timing-projection-incomplete` warns when a queue-traversing path lacks the full
 referenced work waiting evidence. Affected path elapsed totals and a complete

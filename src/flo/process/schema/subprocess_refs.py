@@ -8,12 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-SUBPROCESS_DETAIL_MAP_REFERENCE_KEYS: tuple[str, ...] = (
-    "detail_map_ref",
-    "detail_map_id",
-    "detail_map",
-    "detail_map_label",
-)
+SUBPROCESS_DETAIL_MAP_REFERENCE_KEYS = ("detail_map_ref",)
 
 
 def iter_subprocess_detail_map_reference_values(

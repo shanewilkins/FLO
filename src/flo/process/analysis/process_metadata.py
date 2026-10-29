@@ -14,6 +14,5 @@ def extract_process_metadata(process: Any) -> dict[str, Any]:
     if isinstance(process, dict):
         proc = process.get("process")
         if isinstance(proc, dict):
-            metadata = proc.get("metadata")
-            return metadata if isinstance(metadata, dict) else {}
+            return {"process_id": proc.get("id"), "process_name": proc.get("name")}
     return {}

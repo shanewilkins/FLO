@@ -1,16 +1,16 @@
-from flo.source.models import AdapterModel
+from flo.source.models import SourceDocument
 
 
 def test_adapter_model_fallback_from_dict(adapter_data):
-    model = AdapterModel.model_validate(adapter_data)
-    assert model.name == adapter_data["name"]
-    assert model.content == adapter_data["content"]
+    model = SourceDocument.model_validate(adapter_data)
+    assert model.process.name == adapter_data["process"]["name"]
+    assert model.process.id == adapter_data["process"]["id"]
     dumped = model.model_dump()
-    assert dumped["name"] == adapter_data["name"]
-    assert dumped["content"] == adapter_data["content"]
+    assert dumped["process"]["name"] == adapter_data["process"]["name"]
+    assert dumped["process"]["id"] == adapter_data["process"]["id"]
 
 
 def test_adapter_model_accepts_instance(adapter_data):
-    inst = AdapterModel(name=adapter_data["name"], content=adapter_data["content"])
-    out = AdapterModel.model_validate(inst)
+    inst = SourceDocument.model_validate(adapter_data)
+    out = SourceDocument.model_validate(inst)
     assert out is inst

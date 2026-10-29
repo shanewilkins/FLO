@@ -22,9 +22,9 @@ flow efficiency.
 A value stream map depends on:
 
 1. Canonical FLO process structure.
-2. Information-flow semantics or metadata when information movement is to be
+2. Declared information-item relations when information movement is to be
    shown explicitly.
-3. Material-flow semantics or metadata when material movement is to be shown
+3. Declared material-item relations when material movement is to be shown
    explicitly.
 4. Optional timing, queue, inventory, or summary metrics when lean analysis
    annotations are desired.

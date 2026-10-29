@@ -18,7 +18,7 @@ A swimlane diagram depends on:
 
 1. The rich process-map semantics defined in `process_map.md`.
 2. Lane assignments when present.
-3. Optional subprocess and layout metadata.
+3. Optional subprocess relationships and render intent.
 
 When lane assignments are incomplete, FLO may still render the process, but the
 responsibility view becomes partial rather than disappearing entirely.
@@ -62,7 +62,7 @@ A swimlane diagram is not:
 
 - a minimal flowchart with lane bands added on top
 - a movement-analysis map
-- a guarantee of organizational correctness beyond the lane metadata provided
+- a guarantee of organizational correctness beyond the declared lanes
 - a substitute for core semantic validation
 
 ## Relationship to other documents

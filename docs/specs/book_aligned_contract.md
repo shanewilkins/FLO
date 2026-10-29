@@ -1,15 +1,14 @@
 # Book-aligned contract
 
-Status: accepted; implementation migration in progress.
+Status: accepted and implemented; final acceptance verified 2026-10-29.
 
 This specification records the breaking contract accepted by the
 [book-alignment ADR](../design/adr/book_aligned_language_conventions.md).
 It supersedes the timing, value-classification, handoff/rework, semantic
 metadata, and compatibility terminology in `core_language.md` and
-`static_analysis.md`. The implementation is not yet fully conformant; the
-[refactoring plan](../design/book_aligned_contract_refactoring_plan.md) and
-[failure ledger](../design/book_aligned_refactor_failure_ledger.md) track gaps.
-A design checklist is not evidence that this specification has been implemented.
+`static_analysis.md`. The [refactoring plan](../design/book_aligned_contract_refactoring_plan.md) and
+[failure ledger](../design/book_aligned_refactor_failure_ledger.md) record
+implementation dispositions and executable acceptance evidence.
 
 ## Terminology and instructional evidence
 
@@ -83,7 +82,10 @@ Pydantic owns external shape, scalar constraints, and field applicability.
 Domain validators own identities, graph meaning, reference resolution, unit
 compatibility, analytical contribution, and provenance. Generated
 `schema/flo_source.json` and `schema/flo_ir.json` describe authored and exchange
-shapes. Internal IR stays plain dataclasses.
+shapes. Internal IR stays plain dataclasses. JSON Schema captures structural
+constraints; selector validity, field applicability, graph/reference rules, and
+unit semantics also require FLO validation. Schema validation alone does not
+establish semantic validity.
 
 | Surface | Supported fields | Canonical representation and consumer |
 | --- | --- | --- |
@@ -94,13 +96,14 @@ shapes. Internal IR stays plain dataclasses.
 | Queue/wait | Identity/display/hierarchy, `location`, `wait_time`, `extensions` | Waiting/reference validation, timing and queue rendering; no work measurements, value classification, or item/resource relations. |
 | Control | Identity/display/hierarchy, `branch`, `outcomes`, `routes`, `extensions` where applicable | Pure flow selection/synchronization; no operational measurements, work relations, or location. |
 | Branch configuration | `mode`, `policy`, `eligible_resources` | Graph branch validation, eligible-resource references, branch inspection. Modes: dispatch, probabilistic, external, unspecified. |
-| Transition/named target | `source`, `target`, `id`, `label`, `outcome`, `route`, `handoff`, `rework`, `extensions` | First-class edge fields; graph/structure analysis and rendering. Named target shorthand remains supported. |
+| Transition | `source`, `target`, `id`, `label`, `outcome`, `route`, `handoff`, `rework`, `extensions` | First-class edge fields; graph/structure analysis and rendering. |
+| Named target | `target`, `id`, `label`, `handoff`, `rework`, `extensions`, or target-ID string shorthand | Owning step supplies source; the outcome/route key supplies selection. Inner outcome/route overrides are rejected. |
 | Handoff | `type`, `extensions` | Structural handoff analysis. Type: responsibility, information, material, system, location, mixed. |
 | Rework | `reason`, `frequency`, `note`, `extensions` | Structural rework analysis and relation presentation. |
 | Rework frequency | `basis`, `numerator`, `denominator`, `observation_unit`, `evidence_ref` | Explicit affected count and population; numerator cannot exceed denominator. |
 | Item | `id`, `name`, `kind`, `quantity`, `extensions` | Relation resolution, material movement, quantity exports. Kind: material or information. |
 | Resource | `id`, `name`, `kind`, `quantity`, `extensions` | Performer/equipment resolution and quantity exports. Kind: person or equipment. |
-| Location | `id`, `name`, optional `kind`, `quantity`, spatial coordinates, `extensions` | Location references and movement distances; spatial-container cleanup remains phase 4 work. |
+| Location | `id`, `name`, optional `kind`, `quantity`, spatial coordinates, `extensions` | Location references and movement distances; spatial evidence has one first-class spatial container. |
 | Quantity | `kind`, `value`, `unit`, count `qualifier`, measure `canonical_value`/`canonical_unit` | Typed count/measure boundary; Pint domain conversion and equivalence checks. |
 | Spatial evidence | `x`, `y`, `unit` | Finite coordinates; spatial dimensional conversion remains domain-owned. |
 
@@ -111,9 +114,11 @@ a semantic-metadata architecture gate prevents new opaque core-field reads.
 Collections belong only under `process` in complete source, include fragments and
 canonical exchange. Top-level and metadata placements and legacy collection names
 are rejected rather than translated. `equipment` remains a resource kind.
-Source `attrs` is restricted to control context pending full removal in phase 4;
-it cannot carry operational fields. Nested subprocess spelling, named-target
-endpoint aliases and spatial-container cleanup remain phase 4 work.
+Nested subprocesses use only steps. Named branch targets use target. Source
+attrs, top-level edges, alternate endpoint keys and location metadata/coordinate
+aliases are rejected. Canonical constructors retain invalid supplied evidence
+for explicit validation and do not coerce dictionary entries or promote context.
+
 
 Relation frequency counts must be finite, numerator nonnegative and denominator
 a positive integer, with numerator no greater than denominator. Basis and
@@ -147,8 +152,7 @@ semantics are validated separately with `E1303`, as specified below.
 Validated source operations reject malformed compiler output before inspection,
 export or rendering runs. Omitted measurements remain absent; measured integer
 and floating-point zero remain supplied values; valid empty relation lists and
-structured relations retain their intended shapes. This does not close the
-remaining legacy context-removal work in phase 4.
+structured relations retain their intended shapes. Retired context paths are rejected rather than normalized.
 
 ## Selected duration validation
 
@@ -177,3 +181,8 @@ Generic unsupported fields use `E0220`, missing fields `E0221`, and invalid
 local shapes/values `E0222`. These are FLO categories independent of Pydantic's
 internal union arms, type names, and validation dumps. Unknown error categories
 use the stable invalid-value fallback. Domain errors retain their domain codes.
+
+Malformed authored entity and quantity shapes fail during compilation (stage 3),
+retaining their specific `E12xx` codes. Dimensional compatibility and canonical
+quantity equivalence remain domain validation errors (stage 4), including
+`E1222`, `E1223`, and `E1224`.

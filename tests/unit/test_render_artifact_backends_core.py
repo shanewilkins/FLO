@@ -9,27 +9,29 @@ def test_render_artifact_can_select_direct_svg_spaghetti_backend():
                 "kind": "task",
                 "name": "Gather",
                 "location": "pantry",
-                "outputs": ["flour"],
-                "workers": ["assistant_baker"],
+                "produces": ["flour"],
+                "performed_by": ["assistant_baker"],
             },
             {
                 "id": "mix",
                 "kind": "task",
                 "name": "Mix",
                 "location": "prep_bench",
-                "inputs": ["flour"],
-                "workers": ["assistant_baker"],
+                "consumes": ["flour"],
+                "performed_by": ["assistant_baker"],
             },
         ],
         "edges": [{"source": "gather", "target": "mix"}],
         "process": {
-            "metadata": {
-                "layout_boundary": {
-                    "x": -1.0,
-                    "y": -1.0,
-                    "width": 6.0,
-                    "height": 7.0,
-                    "label": "Kitchen Boundary",
+            "extensions": {
+                "flo:spaghetti": {
+                    "boundary": {
+                        "x": -1.0,
+                        "y": -1.0,
+                        "width": 6.0,
+                        "height": 7.0,
+                        "label": "Kitchen Boundary",
+                    }
                 }
             },
             "locations": [
@@ -37,13 +39,13 @@ def test_render_artifact_can_select_direct_svg_spaghetti_backend():
                     "id": "pantry",
                     "name": "Pantry",
                     "kind": "storage",
-                    "metadata": {"spatial": {"x": 0, "y": 0, "unit": "m"}},
+                    "spatial": {"x": 0, "y": 0, "unit": "m"},
                 },
                 {
                     "id": "prep_bench",
                     "name": "Prep Bench",
                     "kind": "operation",
-                    "metadata": {"spatial": {"x": 3, "y": 4, "unit": "m"}},
+                    "spatial": {"x": 3, "y": 4, "unit": "m"},
                 },
             ],
         },

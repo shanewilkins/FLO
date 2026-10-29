@@ -14,7 +14,7 @@ steps:
     buffer_capacity: 5
 - id: complete
   kind: end
-edges:
+transitions:
 - source: start
   target: submit
 - source: submit

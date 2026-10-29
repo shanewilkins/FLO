@@ -1,6 +1,6 @@
 import pytest
 
-from flo.source.yaml_loader import load_adapter_from_yaml
+from flo.source import parse_adapter
 
 
 def test_load_adapter_valid():
@@ -8,15 +8,15 @@ def test_load_adapter_valid():
 name: test
 content: ok
 """
-    model = load_adapter_from_yaml(y)
-    assert model.name == "test"
-    assert model.content == "ok"
+    model = parse_adapter(y)
+    assert model["name"] == "test"
+    assert model["content"] == "ok"
 
 
 def test_load_adapter_invalid_raises():
     y = "- just\n- a\n- list"
     with pytest.raises(
         ValueError,
-        match=r"^YAML content must be a mapping with keys 'name' and 'content'$",
+        match=r"FLO source must contain a YAML mapping",
     ):
-        load_adapter_from_yaml(y)
+        parse_adapter(y)

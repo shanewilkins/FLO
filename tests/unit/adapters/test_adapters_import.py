@@ -1,7 +1,5 @@
 from flo.source import parse_adapter
 
 
-def test_parse_adapter_stub():
-    parsed = parse_adapter("some content")
-    assert isinstance(parsed, dict)
-    assert parsed.get("content") == "some content"
+def test_parse_adapter_mapping():
+    assert parse_adapter("process: {name: Example}") == {"process": {"name": "Example"}}

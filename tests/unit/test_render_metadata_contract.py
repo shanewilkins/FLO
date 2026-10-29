@@ -1,13 +1,14 @@
 from flo.process.schema.render_metadata import (
+    CONTINUATION_EXTENSION_KEY,
     PROCESS_HEADER_METADATA_FIELDS,
     PROCESS_METADATA_PROCESS_ID_KEY,
     PROCESS_METADATA_PROCESS_NAME_KEY,
-    SPPM_CONTINUATION_INCOMING_METADATA_KEYS,
-    SPPM_CONTINUATION_OUTGOING_METADATA_KEYS,
-    SPPM_FOOTER_METRIC_METADATA_KEYS,
-    SPPM_FOOTER_NOTES_METADATA_KEYS,
-    SUBPROCESS_DETAIL_MAP_REFERENCE_KEYS,
-    first_present_metadata_value,
+    PUBLICATION_EXTENSION_KEY,
+)
+from flo.process.schema.subprocess_refs import SUBPROCESS_DETAIL_MAP_REFERENCE_KEYS
+from flo.render._process_header import extract_process_header_context
+from flo.render.sppm.continuation_tokens import (
+    resolve_explicit_sppm_continuation_tokens,
 )
 
 
@@ -25,61 +26,38 @@ def test_process_identity_keys_are_stable():
     assert PROCESS_METADATA_PROCESS_NAME_KEY == "process_name"
 
 
-def test_sppm_footer_metric_alias_contract_is_stable():
-    assert SPPM_FOOTER_METRIC_METADATA_KEYS == (
-        "publication_legend_items",
-        "legend_items",
-        "legend",
-        "publication_footer_metrics",
-        "footer_metrics",
-        "analytics_footer_metrics",
-        "analytics_metrics",
+def test_publication_annotations_have_one_extension_namespace():
+    assert PUBLICATION_EXTENSION_KEY == "flo:publication"
+
+
+def test_continuations_have_one_extension_namespace():
+    assert CONTINUATION_EXTENSION_KEY == "flo:continuation"
+
+
+def test_continuation_tokens_preserve_both_directions():
+    assert resolve_explicit_sppm_continuation_tokens(
+        {"extensions": {"flo:continuation": {"outgoing": "A", "incoming": "B"}}}
+    ) == ("A", "B")
+
+
+def test_subprocess_reference_has_one_spelling():
+    assert SUBPROCESS_DETAIL_MAP_REFERENCE_KEYS == ("detail_map_ref",)
+
+
+def test_headers_ignore_retired_process_metadata():
+    context = extract_process_header_context(
+        {
+            "process": {
+                "id": "p",
+                "name": "Process",
+                "metadata": {"footer_metrics": {"Lead Time": "24 min"}},
+            }
+        }
     )
+    assert "footer_metrics" not in context.metadata
 
 
-def test_sppm_footer_note_alias_contract_is_stable():
-    assert SPPM_FOOTER_NOTES_METADATA_KEYS == (
-        "publication_caption",
-        "caption",
-        "publication_footer_notes",
-        "footer_notes",
-        "publication_footer",
-        "footer_note",
-    )
-
-
-def test_sppm_continuation_token_alias_contracts_are_stable():
-    assert SPPM_CONTINUATION_OUTGOING_METADATA_KEYS == (
-        "continuation_to",
-        "continuation_out",
-        "continuation_token_out",
-    )
-    assert SPPM_CONTINUATION_INCOMING_METADATA_KEYS == (
-        "continuation_from",
-        "continuation_in",
-        "continuation_token_in",
-    )
-
-
-def test_subprocess_reference_alias_contract_is_exposed_from_shared_metadata_module():
-    assert SUBPROCESS_DETAIL_MAP_REFERENCE_KEYS == (
-        "detail_map_ref",
-        "detail_map_id",
-        "detail_map",
-        "detail_map_label",
-    )
-
-
-def test_first_present_metadata_value_uses_alias_order():
-    metadata = {
-        "footer_metrics": {"Lead Time": "24 min"},
-        "legend_items": {"Queue": "7 min"},
-    }
-    value = first_present_metadata_value(metadata, SPPM_FOOTER_METRIC_METADATA_KEYS)
-    assert value == {"Queue": "7 min"}
-
-
-def test_first_present_metadata_value_returns_none_when_no_alias_value_present():
-    metadata = {"footer_metrics": {}, "legend_items": []}
-    value = first_present_metadata_value(metadata, SPPM_FOOTER_METRIC_METADATA_KEYS)
-    assert value is None
+def test_continuations_ignore_retired_edge_metadata():
+    assert resolve_explicit_sppm_continuation_tokens(
+        {"metadata": {"continuation_to": "A"}}
+    ) == (None, None)

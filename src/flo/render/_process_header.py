@@ -13,6 +13,7 @@ from flo.process.schema.render_metadata import (
     PROCESS_HEADER_METADATA_FIELDS,
     PROCESS_METADATA_PROCESS_ID_KEY,
     PROCESS_METADATA_PROCESS_NAME_KEY,
+    PUBLICATION_EXTENSION_KEY,
 )
 
 from ._text import normalize_space
@@ -38,7 +39,10 @@ def extract_process_header_context(process: Any) -> ProcessHeaderContext:
 
 def _extract_dict_header_context(process: dict[str, Any]) -> ProcessHeaderContext:
     process_dict = _as_string_key_dict(process.get("process"))
-    metadata = _as_string_key_dict(process_dict.get("metadata"))
+    metadata = _publication_annotations(process_dict.get("extensions"))
+    _add_context_fields(
+        metadata, process_dict.get("owner"), process_dict.get("version")
+    )
     _set_metadata_if_present(
         metadata, PROCESS_METADATA_PROCESS_ID_KEY, process_dict.get("id")
     )
@@ -56,7 +60,16 @@ def _extract_dict_header_context(process: dict[str, Any]) -> ProcessHeaderContex
 
 
 def _extract_ir_header_context(process: Any) -> ProcessHeaderContext:
-    metadata = _as_string_key_dict(getattr(process, "process_metadata", None))
+    identity = _as_string_key_dict(getattr(process, "process_metadata", None))
+    metadata = _publication_annotations(getattr(process, "extensions", None))
+    for key in (PROCESS_METADATA_PROCESS_ID_KEY, PROCESS_METADATA_PROCESS_NAME_KEY):
+        if key in identity:
+            metadata[key] = identity[key]
+    _add_context_fields(
+        metadata,
+        getattr(process, "process_owner", None),
+        getattr(process, "process_version", None),
+    )
     title = _first_nonempty_text(
         metadata.get(PROCESS_METADATA_PROCESS_NAME_KEY),
         getattr(process, "name", None),
@@ -67,6 +80,19 @@ def _extract_ir_header_context(process: Any) -> ProcessHeaderContext:
         metadata=metadata,
         evidence_rows=process_evidence_rows(process),
     )
+
+
+def _publication_annotations(extensions: Any) -> dict[str, Any]:
+    if not isinstance(extensions, dict):
+        return {}
+    return _as_string_key_dict(extensions.get(PUBLICATION_EXTENSION_KEY))
+
+
+def _add_context_fields(metadata: dict[str, Any], owner: Any, version: Any) -> None:
+    if isinstance(owner, dict) and owner.get("name"):
+        metadata["owner"] = owner["name"]
+    if version is not None:
+        metadata["revision"] = str(version)
 
 
 def _as_string_key_dict(value: Any) -> dict[str, Any]:

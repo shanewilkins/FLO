@@ -13,7 +13,7 @@ from flo.render import RenderArtifact
 
 
 def test_run_content_empty_is_rejected():
-    with pytest.raises(CompileError, match="spec_version must be present"):
+    with pytest.raises(ParseError, match="YAML mapping"):
         run_content("")
 
 
@@ -241,13 +241,11 @@ def test_run_content_applies_render_metadata_defaults_to_render_options(
     ir = IR(
         name="t",
         nodes=[node_factory("n")],
-        process_metadata={
-            "render": {
-                "defaults": {
-                    "diagram": "spaghetti",
-                    "layout": {"wrap": "auto", "target_columns": 4},
-                    "spaghetti": {"channel": "people"},
-                }
+        render_intent={
+            "defaults": {
+                "diagram": "spaghetti",
+                "layout": {"wrap": "auto", "target_columns": 4},
+                "spaghetti": {"channel": "people"},
             }
         },
     )
@@ -282,13 +280,11 @@ def test_run_content_cli_options_override_render_metadata_defaults(
     ir = IR(
         name="t",
         nodes=[node_factory("n")],
-        process_metadata={
-            "render": {
-                "defaults": {
-                    "diagram": "spaghetti",
-                    "layout": {"wrap": "auto"},
-                    "spaghetti": {"channel": "people"},
-                }
+        render_intent={
+            "defaults": {
+                "diagram": "spaghetti",
+                "layout": {"wrap": "auto"},
+                "spaghetti": {"channel": "people"},
             }
         },
     )

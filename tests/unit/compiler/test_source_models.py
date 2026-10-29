@@ -9,7 +9,7 @@ from flo.source import compile_adapter
 from flo.source.models import SourceDocument, SourceShapeError, validate_source_shape
 
 
-@pytest.mark.parametrize("children", ["steps", "subnodes"])
+@pytest.mark.parametrize("children", ["steps"])
 def test_nested_attrs_error_points_to_the_authored_child_field(children):
     source = f"""spec_version: '0.1'
 process: {{id: example, name: Example}}
@@ -21,8 +21,7 @@ steps:
     {children}:
       - id: child
         kind: task
-        attrs:
-          metadata: invalid
+        extensions: invalid
   - id: end
     kind: end
 """
@@ -31,10 +30,10 @@ steps:
 
     assert not result.ok
     assert diagnostic.source == "nested.flo"
-    assert diagnostic.field_path == f"steps[1].{children}[0].attrs.metadata"
-    assert diagnostic.line == 12
-    assert diagnostic.column == 11
-    assert diagnostic.excerpt.strip() == "metadata: invalid"
+    assert diagnostic.field_path == f"steps[1].{children}[0].extensions"
+    assert diagnostic.line == 11
+    assert diagnostic.column == 9
+    assert diagnostic.excerpt.strip() == "extensions: invalid"
 
 
 def test_required_process_field_has_a_structured_source_location():
@@ -57,12 +56,11 @@ base: &base {kind: task}
 steps:
   - <<: *base
     id: work
-    attrs:
-      metadata: invalid
+    extensions: invalid
 """
     diagnostic = api.compile(source, source_path="merged.flo").diagnostics[0]
-    assert diagnostic.field_path == "steps[0].attrs.metadata"
-    assert diagnostic.line == 8
+    assert diagnostic.field_path == "steps[0].extensions"
+    assert diagnostic.line == 7
 
 
 @pytest.mark.parametrize("label", ["branch", "bool", "version", "outcome"])
@@ -88,7 +86,7 @@ steps:
     assert diagnostic.suggestion == "Define a structured handoff or rework object."
 
 
-def test_attrs_overlay_is_validated_as_the_effective_branch_configuration():
+def test_attrs_overlay_is_rejected_instead_of_shadowing_branch_configuration():
     source = {
         "spec_version": "0.1",
         "process": {"id": "example", "name": "Example"},
@@ -96,17 +94,15 @@ def test_attrs_overlay_is_validated_as_the_effective_branch_configuration():
             {
                 "id": "branch",
                 "kind": "branch",
-                "branch": {"mode": "invalid"},
-                "attrs": {"branch": {"mode": "dispatch"}},
+                "branch": {"mode": "dispatch"},
+                "attrs": {"branch": {"mode": "external"}},
             }
         ],
     }
-    assert compile_adapter(source).nodes[0].attrs["branch"]["mode"] == "dispatch"
-    source["steps"][0]["attrs"]["branch"]["mode"] = "invalid"
     with pytest.raises(SourceShapeError) as exc:
         compile_adapter(source)
-    assert exc.value.location == ("steps", 0, "attrs", "branch", "mode")
-    assert "E0216" in str(exc.value)
+    assert exc.value.location == ("steps", 0, "attrs")
+    assert exc.value.code == "E0220"
 
 
 def test_models_do_not_rewrite_authored_scalars_annotations_or_omissions():

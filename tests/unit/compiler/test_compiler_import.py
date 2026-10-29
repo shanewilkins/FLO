@@ -45,7 +45,7 @@ def test_compile_rejects_edges_alias() -> None:
         ],
     }
 
-    with pytest.raises(ValueError, match="transitions"):
+    with pytest.raises(ValueError, match="edges is not supported"):
         compile_adapter(parsed)
 
 
@@ -256,7 +256,7 @@ def test_compile_preserves_grouped_items():
     assert ir.items["wet"]["dairy"]["items"][0]["id"] == "butter"
 
 
-def test_compile_flattens_subprocess_subnodes():
+def test_compile_flattens_subprocess_steps():
     parsed = {
         "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
@@ -266,7 +266,7 @@ def test_compile_flattens_subprocess_subnodes():
                 "id": "prep",
                 "kind": "subprocess",
                 "name": "Prep",
-                "subnodes": [
+                "steps": [
                     {"id": "gather", "kind": "task", "name": "Gather"},
                     {"id": "mix", "kind": "task", "name": "Mix"},
                 ],
@@ -290,7 +290,7 @@ def test_compile_flattens_subprocess_subnodes():
     assert by_id["mix"].subprocess_parent == "prep"
 
 
-def test_compile_flattens_nested_subprocess_subnodes():
+def test_compile_flattens_nested_subprocess_steps():
     parsed = {
         "spec_version": "0.1",
         "process": {"id": "p", "name": "Process"},
@@ -300,7 +300,7 @@ def test_compile_flattens_nested_subprocess_subnodes():
                 "id": "outer",
                 "kind": "subprocess",
                 "name": "Outer",
-                "subnodes": [
+                "steps": [
                     {
                         "id": "inner",
                         "kind": "subprocess",

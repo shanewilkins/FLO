@@ -11,10 +11,10 @@ from flo.process.analysis import (
     aggregate_people_movements,
     aggregate_people_movements_by_worker,
     extract_location_spatial_index,
-    extract_process_metadata,
     infer_material_movements,
     infer_people_movements,
 )
+from flo.process.ir.metadata import extract_process_field
 
 from .._artifact import RenderArtifact
 from .._execution import GeometryObserver, SceneObserver
@@ -580,8 +580,8 @@ def _canonical_spaghetti_location_kind(kind_raw: Any) -> str | None:
 
 
 def _extract_spaghetti_boundary(process: dict[str, Any] | Any) -> dict[str, Any] | None:
-    process_metadata = extract_process_metadata(process)
-    boundary_candidate = _extract_boundary_candidate(process_metadata)
+    extensions = extract_process_field(process, "extensions") or {}
+    boundary_candidate = (extensions.get("flo:spaghetti") or {}).get("boundary")
     points = _boundary_points(boundary_candidate)
     if len(points) < 3:
         return None
@@ -590,16 +590,6 @@ def _extract_spaghetti_boundary(process: dict[str, Any] | Any) -> dict[str, Any]
         boundary["name"] = boundary_candidate.get("name")
         boundary["label"] = boundary_candidate.get("label")
     return boundary
-
-
-def _extract_boundary_candidate(process_metadata: dict[str, Any]) -> Any:
-    for key in ("layout_boundary", "boundary", "area_boundary"):
-        if key in process_metadata:
-            return process_metadata.get(key)
-    layout = process_metadata.get("layout")
-    if isinstance(layout, dict) and "boundary" in layout:
-        return layout.get("boundary")
-    return None
 
 
 def _boundary_points(boundary: Any) -> list[tuple[float, float]]:

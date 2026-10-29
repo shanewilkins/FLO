@@ -2,6 +2,8 @@
 
 Status: accepted
 
+Implementation scope (2026-10-29): Primary display selection, explicit analytical selection and lossless machine/inspection evidence are implemented. Richer detailed publication and interactive projections remain planned; this ADR does not claim those surfaces are complete.
+
 ## Context
 
 A measurement profile may contain several statistics, while a compact process

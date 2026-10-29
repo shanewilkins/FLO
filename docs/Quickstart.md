@@ -185,25 +185,46 @@ diagnostics.
 
 ## 7. Model waiting correctly
 
-Queue delay and active work are different process facts. Put `wait_time` on a
-queue node and `cycle_time` on the work node:
+Queue delay, active work and setup are distinct process facts. Measurements
+are first-class profiles. This complete example can be copied to a `.flo` file:
 
 ```yaml
+spec_version: "0.1"
+process: {id: review, name: Document Review}
 steps:
+  - {id: start, kind: start}
   - id: review_queue
     kind: queue
     name: Review Queue
-    metadata:
-      wait_time: {value: 30, unit: min}
-
+    wait_time: {ref: review_documents.wait_time}
   - id: review_documents
     kind: task
     name: Review Documents
-    metadata:
-      cycle_time: {value: 10, unit: min}
+    cycle_time:
+      basis: estimated
+      primary: mean
+      analysis_input: mean
+      results:
+        mean: {method: mean, value: 10, unit: min}
+    wait_time:
+      basis: estimated
+      primary: mean
+      analysis_input: mean
+      results:
+        mean: {method: mean, value: 30, unit: min}
+  - {id: finish, kind: end}
 ```
 
-FLO rejects `wait_time` on task-like nodes.
+Work can declare waiting before work; a queue can project that evidence with a
+direct ref. FLO displays the profile's primary result and analyzes the named
+analysis_input result, counting the referenced wait once on this path. Omitted
+analytical selectors do not inherit primary. Independent waits use independent
+profiles. `changeover_time` describes setup on work kinds; process `lead_time`
+is supplied evidence, separate from derived modeled elapsed time.
+
+Export readable item/resource summaries with `flo export model.flo --export items`.
+The [field inventory](specs/book_aligned_fields.md) lists all supported fields
+and their applicability. Unknown fields and retired aliases are rejected.
 
 ## 8. Use files in pipelines
 

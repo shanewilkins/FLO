@@ -1,44 +1,19 @@
-def test_parse_adapter_uses_model_dump(monkeypatch):
-    # Create a dummy model with model_dump
-    class DummyModel:
-        def model_dump(self):
-            return {"a": 1}
+import pytest
 
-    monkeypatch.setattr(
-        "flo.source.load_adapter_from_yaml",
-        lambda content: DummyModel(),
-    )
-
-    from flo.source import parse_adapter
-
-    assert parse_adapter("irrelevant") == {"a": 1}
+from flo.source import parse_adapter
 
 
-def test_parse_adapter_falls_back_on_value_error(monkeypatch):
-    monkeypatch.setattr(
-        "flo.source.load_adapter_from_yaml",
-        lambda content: (_ for _ in ()).throw(ValueError("bad yaml")),
-    )
-
-    from flo.source import parse_adapter
-
-    assert parse_adapter("rawtext") == {"name": "parsed", "content": "rawtext"}
+def test_parse_adapter_preserves_yaml_mapping():
+    assert parse_adapter("process: {id: p, name: Process}") == {
+        "process": {"id": "p", "name": "Process"}
+    }
 
 
-def test_parse_adapter_dict_fallback(monkeypatch):
-    # model_dump exists but raises, then dict(model) should be used
-    class FallbackModel:
-        def model_dump(self):
-            raise RuntimeError("no dump")
+def test_parse_adapter_rejects_plain_text():
+    with pytest.raises(ValueError, match="YAML mapping"):
+        parse_adapter("rawtext")
 
-        def __iter__(self):
-            yield ("x", 42)
 
-    monkeypatch.setattr(
-        "flo.source.load_adapter_from_yaml",
-        lambda content: FallbackModel(),
-    )
-
-    from flo.source import parse_adapter
-
-    assert parse_adapter("irrelevant") == {"x": 42}
+def test_parse_adapter_rejects_sequence():
+    with pytest.raises(ValueError, match="YAML mapping"):
+        parse_adapter("- item")

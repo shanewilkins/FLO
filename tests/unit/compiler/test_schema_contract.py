@@ -27,7 +27,7 @@ def test_compile_emits_schema_and_validates() -> None:
 
 def test_malformed_ir_raises_validation_error() -> None:
     # Use a node type not allowed by the JSON schema enum.
-    ir = IR(name="bad", nodes=[Node(id="n1", type="process", attrs={"name": "x"})])
+    ir = IR(name="bad", nodes=[Node(id="n1", type="process", name="x")])
 
     try:
         validate_against_schema(ir)
@@ -41,10 +41,10 @@ def test_schema_accepts_parallel_kinds_and_handoff_field() -> None:
     ir = IR(
         name="p",
         nodes=[
-            Node(id="start", type="start", attrs={}),
-            Node(id="split", type="parallel_split", attrs={}),
-            Node(id="join", type="parallel_join", attrs={}),
-            Node(id="end", type="end", attrs={}),
+            Node(id="start", type="start"),
+            Node(id="split", type="parallel_split"),
+            Node(id="join", type="parallel_join"),
+            Node(id="end", type="end"),
         ],
         edges=[
             Edge(source="start", target="split"),
@@ -63,7 +63,7 @@ def test_schema_accepts_generic_branch_and_route() -> None:
             Node(
                 id="assign",
                 type="branch",
-                attrs={"branch": {"mode": "dispatch", "policy": "least_loaded"}},
+                branch={"mode": "dispatch", "policy": "least_loaded"},
             )
         ],
         edges=[Edge(source="assign", target="work", route="worker_a")],
@@ -146,7 +146,7 @@ def test_compile_preserves_first_class_process_context_and_hierarchy() -> None:
                 "id": "work",
                 "kind": "subprocess",
                 "lane": "operations",
-                "subnodes": [{"id": "child", "kind": "task", "lane": "operations"}],
+                "steps": [{"id": "child", "kind": "task", "lane": "operations"}],
             },
             {"id": "end", "kind": "end", "lane": "operations"},
         ],

@@ -42,8 +42,16 @@ def model():
                 {"id": "worker_id", "name": "Named Performer", "kind": "person"}
             ],
             "locations": [
-                {"id": "a", "name": "Receiving", "x": 0, "y": 0, "unit": "m"},
-                {"id": "b", "name": "Packing", "x": 1, "y": 0, "unit": "m"},
+                {
+                    "id": "a",
+                    "name": "Receiving",
+                    "spatial": {"x": 0, "y": 0, "unit": "m"},
+                },
+                {
+                    "id": "b",
+                    "name": "Packing",
+                    "spatial": {"x": 1, "y": 0, "unit": "m"},
+                },
             ],
         },
         "steps": [

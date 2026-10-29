@@ -46,7 +46,7 @@ notes, migration plans, and taxonomy notes that span multiple components.
 - [Semantic pipeline audit](white_belt_semantic_audit.md): completed language,
   schema, public API, and canonical exchange audit for the semantic slice of TR-114.
 
-## Active book-aligned breaking refactor
+## Book-aligned breaking refactor
 
 - [Implementation and phase status](book_aligned_contract_refactoring_plan.md):
   reconciled phase prerequisites and explicit remaining work.
@@ -58,8 +58,8 @@ notes, migration plans, and taxonomy notes that span multiple components.
 ## Next-sprint implementation planning
 
 - [Pydantic source and render inputs](adr/pydantic_source_and_render_inputs.md):
-  completed structural source migration and shared render-input normalization,
-  with duplicate checks/parsers removed and diagnostic/schema boundaries retained.
+  historical source/render-input decision, superseded for source syntax by the
+  book-aligned contract; shared render-option normalization remains applicable.
 - [Quantity validation and units](adr/quantity_validation_and_units.md): completed
   configuration consolidation, spatial Pint trial, shared duration conversion,
   and measured resource canonical equivalence without changing source syntax.

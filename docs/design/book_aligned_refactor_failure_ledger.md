@@ -1,7 +1,7 @@
 # Book-aligned refactor failure ledger
 
 Status: remaining test failures closed on 2026-10-28 against the working tree
-based on `64a705a`. Phase 3 semantic closeout is complete; phases 4–6 of the broader plan remain open.
+based on `64a705a`. All six phases are complete and accepted as of 2026-10-29; the final checkpoint is 2429 passed, no failures or skips.
 
 This is the case-level record for the refactor. The
 [implementation plan](book_aligned_contract_refactoring_plan.md) owns ordering;
@@ -21,6 +21,7 @@ This is the case-level record for the refactor. The
 | Batched migration checkpoint | 3 | 1957 | 7 warnings; 1960 cases. Fixtures migrated; reference projection and task measurement repaired. |
 | Remaining-failure closure | 0 | 1966 | 7 existing Click deprecation warnings; all 44 remaining original cases closed, six added regressions pass. |
 | Phase 3 semantic closeout | 0 | 2346 | Exhaustive applicability/inventory, collection placement, relation evidence and presentation verification; seven existing warnings, no skips. |
+| Phases 4–5 closeout | 0 | 2366 | Compatibility deletion, focused domain validators, complete canonical round trips; runtime Python −1147 lines, tests +188; seven existing warnings, no skips. |
 | Movement/export focused suite | 0 | 30 | Export registry and movement analysis; canonical fixtures pass IR validation. |
 | Duration/display focused suite | 0 | 101 | Unit conversion and SPPM metadata tests; invalid selected durations exercise canonical profiles. |
 | Publication focused suite | 0 | 23 | Existing timing assertions retained; fixtures validated; partial-projection control strengthened. |
@@ -161,13 +162,52 @@ Ruff, formatting, types, architecture/imports, schemas, documentation governance
 valid/invalid example validation and whitespace checks pass. Existing quantity,
 provenance, geometry and rejection assertions were migrated and preserved.
 
+## Phases 4–5 closeout (2026-10-29)
+
+The plan records the complete compatibility-removal and simplification evidence.
+Nested source uses steps, connections use transitions and source/target, and
+retired attrs/endpoint/container coercions are gone. Canonical fields drive
+serialization, rendering, SCC analysis and entity exports. Local contract
+validation is shared; graph, relation, duration, entity, quantity and provenance
+responsibilities have focused owners. Old diagnostic suggestions and runtime
+metadata/alias fallback reads are removed.
+
+Full suite: **2366 passed**, no failures/skips, seven existing Click warnings.
+Runtime Python shrank from 28094 to 26947 lines (−1147, 4.1%); tests grew by
+188 lines. Net runtime-plus-test reduction is 959 lines, excluding generated
+schemas, artifacts, documentation and scripts. Existing behavioral assertions
+were preserved through canonical fixture migrations and explicit alias rejection.
+
+All standard checks pass, including all 11 import contracts, schema drift and
+13 corpus geometry/accessibility/drift checks. Seven reviewed SVGs add explicit
+first-class owner/version header rows without changing node layouts or routing.
+The earlier artifacts are preserved in `/tmp/flo-phase45-goldens-before`.
+
+## Phase 6 final acceptance — 2026-10-29
+
+**2429 passed, no failures or skips**, seven existing Click deprecation warnings.
+The twelve-criterion acceptance matrix is recorded in the refactoring plan.
+Typed source/schema boundaries, named context, null handling, profile/reference
+applicability, named-target declarations and safe diagnostics have regression
+coverage. The documentation inventory, instructional examples and requirements
+catalog reflect the implemented contract; broader future publication work is
+not claimed complete.
+
+Ruff/format, runtime type checking (`ty check src`), all 11 import contracts,
+architecture checks, schema drift, strict documentation governance, file-length
+policy and whitespace checks pass. All 27 valid roots rendered to 30 SVGs and
+six item summaries; 24 invalid roots were rejected and three include fragments
+composed. All 13 golden cases/26 files match, with zero final geometry violations
+and passing accessibility checks. Phase 6 introduces no golden changes.
+
+Runtime Python is 27049 lines (−1045 from the phase 4 baseline), tests 27433
+(+496), combined −549. These counts exclude generated schemas and artifacts,
+documentation and scripts. No original failure is reopened, skipped or hidden
+by restored aliases. All changes remain uncommitted.
+
 ## Ordered remaining work
 
-1. Complete phase 4 compatibility removal. Collection placement/naming is done;
-   control attrs, nested spelling, endpoint aliases, remaining internal context
-   coercions and diagnostic cleanup remain.
-2. Complete phases 5–6 simplification and comprehensive documentation migration,
-   followed by final acceptance against every plan criterion.
+None within this refactor's six-phase scope.
 
 ## Original cases and dispositions
 

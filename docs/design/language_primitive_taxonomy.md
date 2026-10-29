@@ -289,11 +289,11 @@ They are not the core nouns or core relations of the process language.
 - `changeover_time`
 - `lead_time`
 - `value_class`
-- `queue_policy`
-- `buffer_capacity`
-- `handoff_latency`
-- `rework_rate`
-- `rework_reason`
+- structured transition `handoff` and `rework` evidence
+
+Queueing policy/capacity and handoff-latency descriptors are possible future
+taxonomy refinements, not accepted authored fields. Current field shapes and
+applicability are governed by the book-aligned field inventory.
 
 Why secondary:
 These values describe behavior, burden, or quality of the process.
@@ -499,6 +499,6 @@ That plan should live separately under `notes/` so it can track concrete phases,
 - `docs/specs/core_language.md`
 - `docs/User_Manual.md`
 - `schema/flo_ir.json`
-- `schema/flo_types.json`
+- `schema/flo_source.json`
 - `docs/design/history/ontology.md`
-- `docs/design/typed_metadata.md`
+- `docs/specs/book_aligned_fields.md`

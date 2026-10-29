@@ -144,7 +144,7 @@ def test_valid_quantities_preserve_exchange_and_authored_export_text(quantity):
     record = json.loads(exported.value)["process"]["items"][0]
     assert record["quantity"] == before
     assert type(record["quantity"]["value"]) is type(before["value"])
-    text = api.export(content, export_format="ingredients")
+    text = api.export(content, export_format="items")
     assert text.ok and f"Supply: {quantity['value']} {quantity['unit']}" in text.value
     rendered = CliRunner().invoke(
         cli, ["render", "-", "--diagnostics-format", "json"], input=content

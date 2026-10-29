@@ -180,7 +180,7 @@ def test_typed_numeric_evidence_must_be_finite(value, field):
             {
                 "id": "station",
                 "name": "Station",
-                "metadata": {"spatial": {"x": value, "y": 0}},
+                "spatial": {"x": value, "y": 0},
             }
         ]
     elif field.startswith("rework"):

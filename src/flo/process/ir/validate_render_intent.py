@@ -18,7 +18,7 @@ def _raise_render_intent_error(message: str) -> None:
 
 
 def validate_render_intent(ir: IR) -> None:
-    """Validate render-intent structure in process metadata.
+    """Validate render-intent structure on the process.
 
     Enforces:
     - Valid diagram types (sppm, swimlane, spaghetti, value_stream)
@@ -31,7 +31,7 @@ def validate_render_intent(ir: IR) -> None:
         return
 
     if not isinstance(render, dict):
-        _raise_render_intent_error("process.metadata.render must be an object")
+        _raise_render_intent_error("process.render must be an object")
 
     # Validate defaults if present
     defaults = render.get("defaults")
@@ -42,9 +42,7 @@ def validate_render_intent(ir: IR) -> None:
     views = render.get("views")
     if views:
         if not isinstance(views, dict):
-            _raise_render_intent_error(
-                "process.metadata.render.views must be an object"
-            )
+            _raise_render_intent_error("process.render.views must be an object")
 
         for view_id, view_config in views.items():
             if not isinstance(view_id, str) or not view_id:

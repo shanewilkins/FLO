@@ -225,7 +225,7 @@ steps:
 - id: end
   kind: end
   name: Ready for Delivery
-edges:
+transitions:
 - source: start
   target: prepare_dough_wait_queue
 - source: prepare_dough_wait_queue

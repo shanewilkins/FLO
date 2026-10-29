@@ -48,7 +48,7 @@ def test_unrecognized_or_malformed_method_names_are_rejected(method):
             {
                 "id": "a",
                 "name": "A",
-                "metadata": {"spatial": {"x": 0, "y": 1, "unit": "m"}},
+                "spatial": {"x": 0, "y": 1, "unit": "m"},
             },
         ),
     ],

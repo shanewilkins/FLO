@@ -1,5 +1,8 @@
 # White Belt semantic pipeline audit
 
+> Historical record, superseded where it describes retired syntax by
+> [the book-aligned contract](../specs/book_aligned_contract.md). Historical examples are not accepted source.
+
 Status: completed semantic audit; remaining release acceptance is tracked in
 [the roadmap](../ROADMAP.md). This is explanatory evidence for the semantic
 portion of TR-114, not a declaration that the complete release gate has passed.

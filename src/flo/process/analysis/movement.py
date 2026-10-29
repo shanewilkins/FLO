@@ -18,12 +18,12 @@ def infer_material_movements(process: Any) -> list[dict[str, Any]]:
     - locations differ
 
     Material items are inferred as the intersection of source `produces` and
-    target `consumes`, with legacy `outputs`/`inputs` fallback.
+    target `consumes`, using canonical item references.
     """
     return _infer_movements(
         process=process,
-        source_fields=("produces", "outputs"),
-        target_fields=("consumes", "inputs"),
+        source_field="produces",
+        target_field="consumes",
         entities_field="items",
         require_shared_entities=False,
     )
@@ -39,8 +39,8 @@ def infer_people_movements(process: Any) -> list[dict[str, Any]]:
     """
     return _infer_movements(
         process=process,
-        source_fields=("performed_by", "workers"),
-        target_fields=("performed_by", "workers"),
+        source_field="performed_by",
+        target_field="performed_by",
         entities_field="workers",
         require_shared_entities=True,
     )
@@ -87,12 +87,12 @@ def aggregate_people_movements_by_worker(
 
 def _infer_movements(
     process: Any,
-    source_fields: tuple[str, ...],
-    target_fields: tuple[str, ...],
+    source_field: str,
+    target_field: str,
     entities_field: str,
     require_shared_entities: bool,
 ) -> list[dict[str, Any]]:
-    nodes_by_id = _extract_node_attrs_by_id(process)
+    nodes_by_id = _extract_nodes_by_id(process)
     edges = _extract_edges(process)
     locations = extract_location_spatial_index(process)
 
@@ -103,10 +103,10 @@ def _infer_movements(
         if not source or not target:
             continue
 
-        source_attrs = nodes_by_id.get(source, {})
-        target_attrs = nodes_by_id.get(target, {})
-        source_location = _as_text(source_attrs.get("location"))
-        target_location = _as_text(target_attrs.get("location"))
+        source_node = nodes_by_id.get(source, {})
+        target_node = nodes_by_id.get(target, {})
+        source_location = _as_text(source_node.get("location"))
+        target_location = _as_text(target_node.get("location"))
         if (
             not source_location
             or not target_location
@@ -114,8 +114,8 @@ def _infer_movements(
         ):
             continue
 
-        source_entities = _resolve_first_text_list(source_attrs, source_fields)
-        target_entities = _resolve_first_text_list(target_attrs, target_fields)
+        source_entities = _as_text_list(source_node.get(source_field))
+        target_entities = _as_text_list(target_node.get(target_field))
         entities = _shared_text_values(source_entities, target_entities)
         if require_shared_entities and not entities:
             continue
@@ -313,23 +313,14 @@ def _normalize_mixed_spatial_units(index: dict[str, dict[str, Any]]) -> dict:
     return index
 
 
-def _extract_node_attrs_by_id(process: Any) -> dict[str, dict[str, Any]]:
+def _extract_nodes_by_id(process: Any) -> dict[str, dict[str, Any]]:
     nodes = _extract_nodes(process)
     out: dict[str, dict[str, Any]] = {}
     for node in nodes:
         node_id = _as_text(node.get("id"))
         if not node_id:
             continue
-        raw_attrs = node.get("attrs")
-        attrs: dict[str, Any] = dict(raw_attrs) if isinstance(raw_attrs, dict) else {}
-        attrs.update(
-            {
-                key: value
-                for key, value in node.items()
-                if key not in {"id", "type", "kind", "attrs"}
-            }
-        )
-        out[node_id] = attrs
+        out[node_id] = node
     return out
 
 
@@ -337,11 +328,9 @@ def _extract_nodes(process: Any) -> list[dict[str, Any]]:
     if hasattr(process, "nodes"):
         nodes: list[dict[str, Any]] = []
         for node in getattr(process, "nodes", []) or []:
-            attrs = getattr(node, "attrs", None)
             node_entry = {
                 "id": getattr(node, "id", ""),
                 "type": getattr(node, "type", "task"),
-                "attrs": attrs if isinstance(attrs, dict) else {},
                 "location": getattr(node, "location", None),
                 "consumes": getattr(node, "consumes", []),
                 "produces": getattr(node, "produces", []),
@@ -374,41 +363,18 @@ def _extract_edges(process: Any) -> list[dict[str, Any]]:
         return edges
 
     if isinstance(process, dict):
-        edges_raw = process.get("edges") or process.get("transitions")
+        edges_raw = process.get("edges")
         if isinstance(edges_raw, list):
             return [edge for edge in edges_raw if isinstance(edge, dict)]
     return []
 
 
 def _extract_spatial(resource: dict[str, Any]) -> dict[str, Any] | None:
-    metadata = resource.get("metadata")
-    if isinstance(metadata, dict) and isinstance(metadata.get("spatial"), dict):
-        return metadata.get("spatial")
-
-    if "x" in resource or "y" in resource:
-        return {
-            "x": resource.get("x"),
-            "y": resource.get("y"),
-            "unit": resource.get("unit"),
-        }
-
-    return None
+    return resource.get("spatial")
 
 
 def _extract_location_kind(resource: dict[str, Any]) -> str | None:
-    direct_kind = _as_text(resource.get("kind"))
-    if direct_kind is not None:
-        return direct_kind
-
-    metadata = resource.get("metadata")
-    if not isinstance(metadata, dict):
-        return None
-
-    for key in ("kind", "location_kind", "type"):
-        kind = _as_text(metadata.get(key))
-        if kind is not None:
-            return kind
-    return None
+    return _as_text(resource.get("kind"))
 
 
 def _distance_between_locations(
@@ -453,16 +419,6 @@ def _as_text_list(value: Any) -> list[str]:
         if text:
             out.append(text)
     return out
-
-
-def _resolve_first_text_list(
-    attrs: dict[str, Any], candidate_fields: tuple[str, ...]
-) -> list[str]:
-    for field in candidate_fields:
-        values = _as_text_list(attrs.get(field))
-        if values:
-            return values
-    return []
 
 
 def _is_number(value: Any) -> TypeGuard[int | float]:

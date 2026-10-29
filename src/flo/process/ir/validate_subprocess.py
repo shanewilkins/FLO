@@ -75,11 +75,4 @@ def extract_subprocess_parent(node: Any) -> str | None:
         normalized = explicit.strip()
         if normalized:
             return normalized
-    attrs = getattr(node, "attrs", None)
-    if not isinstance(attrs, dict):
-        return None
-    value = attrs.get("subprocess_parent")
-    if not isinstance(value, str):
-        return None
-    normalized = value.strip()
-    return normalized or None
+    return None
