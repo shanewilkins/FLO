@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased
+## Unreleased (0.5.1)
+
+- Align the book Wash n' Fold reference fixture's readiness notification step
+  with the book's value-added (`VA`) classification.
+- Treat omitted or null `analysis_input` on display-only timing profiles as
+  intentionally unselected, without invalid-duration warnings. Keep those values
+  out of modeled totals and retain incomplete-timing diagnostics.
+
+## 0.5.0
 
 ### 0.5.0 contract boundary
 

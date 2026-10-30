@@ -632,7 +632,7 @@ steps:
 - id: send_notification
   name: Send readiness notification
   kind: task
-  value_class: RNVA
+  value_class: VA
   performed_by:
   - Staff
   cycle_time:

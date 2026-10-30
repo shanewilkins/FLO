@@ -397,12 +397,13 @@ def test_distinct_selector_roles_and_unselected_statistics_survive_validation(sc
 
 @pytest.mark.parametrize("scope", _SELECTED_DURATION_SCOPES)
 @pytest.mark.parametrize("explicit_null", [False, True])
+@pytest.mark.parametrize("value", [0, 2])
 def test_primary_only_profile_does_not_invent_an_analysis_selection(
-    scope, explicit_null
+    scope, explicit_null, value
 ):
     from flo.process.analysis import analyze_process_timing
 
-    profile = _profile(0, "min")
+    profile = _profile(value, "min")
     profile.pop("analysis_input")
     if explicit_null:
         profile["analysis_input"] = None
@@ -411,12 +412,19 @@ def test_primary_only_profile_does_not_invent_an_analysis_selection(
     assert validated.ok, validated.diagnostics
     analysis = analyze_process_timing(validated.value)
     assert analysis.modeled_lead_time_seconds == (0 if scope == "lead_time" else None)
+    assert all(item.code != "timing-invalid-duration" for item in analysis.diagnostics)
+    assert all(
+        item.code != "timing-invalid-duration" for item in validated.report.diagnostics
+    )
     payload = json.loads(api.export(source).value)
     if scope == "lead_time":
         assert payload["process"][scope] == profile
     else:
         node_id = "queue" if scope == "queue_wait" else "work"
         field = "wait_time" if scope == "queue_wait" else scope
+        timing = next(item for item in analysis.node_timings if item.node_id == node_id)
+        assert getattr(timing.totals, f"{field}_seconds") is None
+        assert any(item.code == "timing-incomplete" for item in analysis.diagnostics)
         assert next(n for n in payload["nodes"] if n["id"] == node_id)[field] == profile
 
 

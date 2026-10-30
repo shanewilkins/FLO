@@ -153,11 +153,11 @@
 </g>
 <g data-node-id="send_notification" data-node-kind="task">
 <rect x="12.0" y="948.0" width="270.0" height="150.0" rx="12" fill="white" stroke="#CDD5D5" stroke-width="2" />
-<path data-node-header="top-rounded" d="M 24.0 948.0 L 270.0 948.0 Q 282.0 948.0 282.0 960.0 L 282.0 998.0 L 12.0 998.0 L 12.0 960.0 Q 12.0 948.0 24.0 948.0 Z" fill="#8A5A00" stroke="none" />
+<path data-node-header="top-rounded" d="M 24.0 948.0 L 270.0 948.0 Q 282.0 948.0 282.0 960.0 L 282.0 998.0 L 12.0 998.0 L 12.0 960.0 Q 12.0 948.0 24.0 948.0 Z" fill="#0B5D5A" stroke="none" />
 <line x1="12.0" y1="998.0" x2="282.0" y2="998.0" stroke="#CDD5D5" stroke-width="1" opacity="0.35" />
 <text x="147.0" y="966.0" text-anchor="middle" font-family="Source Sans 3, system-ui, sans-serif" font-size="14" font-weight="600" fill="#FFFFFF">Send readiness</text>
 <text x="147.0" y="982.0" text-anchor="middle" font-family="Source Sans 3, system-ui, sans-serif" font-size="14" font-weight="600" fill="#FFFFFF">notification</text>
-<text x="30.0" y="1016.0" text-anchor="start" font-family="Source Sans 3, system-ui, sans-serif" font-size="12" font-weight="400" fill="#5B6870">Class: RNVA</text>
+<text x="30.0" y="1016.0" text-anchor="start" font-family="Source Sans 3, system-ui, sans-serif" font-size="12" font-weight="400" fill="#5B6870">Class: VA</text>
 <text x="30.0" y="1030.0" text-anchor="start" font-family="Source Sans 3, system-ui, sans-serif" font-size="12" font-weight="400" fill="#5B6870">P/T: 1.0 min | W/T: 0 min wait</text>
 <text x="30.0" y="1044.0" text-anchor="start" font-family="Source Sans 3, system-ui, sans-serif" font-size="12" font-weight="400" fill="#5B6870">S/T: 0.0 min</text>
 <text x="30.0" y="1058.0" text-anchor="start" font-family="Source Sans 3, system-ui, sans-serif" font-size="12" font-weight="400" fill="#5B6870">Workers: Sta</text>

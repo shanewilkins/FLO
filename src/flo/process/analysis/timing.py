@@ -22,7 +22,6 @@ from .process_metadata import extract_process_metadata
 
 TimingSeverity = Literal["info", "warning"]
 
-_MISSING = object()
 _PARALLEL_NODE_TYPES = frozenset({"parallel_split", "parallel_join"})
 _MAX_PATHS = 256
 
@@ -203,14 +202,21 @@ def analyze_process_timing(process: IR) -> ProcessTimingAnalysis:
     )
     node_timings = _inventory_timings(raw_timings, projections)
     timing_by_node = {timing.node_id: timing for timing in node_timings}
-    invalid_node_ids = {
-        item.node_id for item in diagnostics if item.code == "timing-invalid-duration"
+    # Unselected profiles still leave timing incomplete, independently of warnings.
+    unavailable_node_ids = {
+        timing.node_id
+        for timing in raw_timings
+        if any(
+            getattr(nodes_by_id[timing.node_id], name) is not None
+            and getattr(timing.totals, f"{name}_seconds") is None
+            for name in ("cycle_time", "wait_time", "changeover_time")
+        )
     }
     missing_node_ids = tuple(
         sorted(
             node.id
             for node in process.nodes
-            if node.id in invalid_node_ids
+            if node.id in unavailable_node_ids
             or (
                 _expected_timing_field(node) is not None
                 and not _has_expected_timing(node)
@@ -279,22 +285,20 @@ def _analyze_node_timing(
     diagnostics: list[TimingDiagnostic],
 ) -> NodeTiming:
     cycle_seconds = _duration_seconds(
-        selected_result(node.cycle_time) if node.cycle_time is not None else _MISSING,
+        node.cycle_time,
         node_id=node.id,
         field="cycle_time",
         diagnostics=diagnostics,
     )
     wait_measurement = _resolve_wait_measurement(node, nodes_by_id)
     wait_seconds = _duration_seconds(
-        selected_result(wait_measurement) if wait_measurement is not None else _MISSING,
+        wait_measurement,
         node_id=node.id,
         field="wait_time",
         diagnostics=diagnostics,
     )
     changeover_seconds = _duration_seconds(
-        selected_result(node.changeover_time)
-        if node.changeover_time is not None
-        else _MISSING,
+        node.changeover_time,
         node_id=node.id,
         field="changeover_time",
         diagnostics=diagnostics,
@@ -339,15 +343,22 @@ def _inventory_timings(
 
 
 def _duration_seconds(
-    raw: object,
+    measurement: object,
     *,
     node_id: str,
     field: str,
     diagnostics: list[TimingDiagnostic],
 ) -> float | None:
-    if raw is _MISSING:
+    if measurement is None:
         return None
-    seconds = duration_seconds(raw)
+    # Display-only profiles intentionally contribute no analytical duration.
+    if (
+        isinstance(measurement, dict)
+        and isinstance(measurement.get("results"), dict)
+        and measurement.get("analysis_input") is None
+    ):
+        return None
+    seconds = duration_seconds(selected_result(measurement))
     if seconds is None:
         _append_invalid_duration_diagnostic(diagnostics, node_id=node_id, field=field)
     return seconds

@@ -212,4 +212,5 @@ def test_book_fixture_retains_population_statistics_and_evidence_through_exchang
     }
     assert exported["dropoff"]["changeover_time"]["results"]["mean"]["value"] == 0
     assert {"stage_collection", "send_notification"} <= exported.keys()
+    assert exported["send_notification"]["value_class"] == "VA"
     assert "stage_notify" not in exported
