@@ -26,15 +26,15 @@ def test_inspect_timing_text_reports_washnfold_totals() -> None:
         "Timing coverage: complete\n"
         "\n"
         "Declared totals:\n"
-        "  Cycle time: 105 min\n"
+        "  Processing time (P/T): 105 min\n"
         "  Wait time: 95 min\n"
-        "  Changeover time: unavailable\n"
+        "  Setup time (S/T): unavailable\n"
         "  Elapsed subtotal: 200 min\n"
         "\n"
         "Supplied lead time (omitted): unavailable\n"
         "Modeled lead time: 200 min\n"
         "Paths analyzed: 1\n"
-        "Changeover policy: one declared changeover per visited step\n"
+        "Setup exposure policy: one declared setup per visited step\n"
     )
 
 

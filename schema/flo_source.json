@@ -553,7 +553,7 @@
       "type": "object"
     },
     "Measurement": {
-      "anyOf": [
+      "oneOf": [
         {
           "$ref": "#/$defs/MeasurementProfile"
         },
@@ -708,7 +708,7 @@
       "description": "A reference to a measurement owned by another process step.",
       "properties": {
         "ref": {
-          "pattern": "^[A-Za-z0-9_.-]+\\.[a-z_]+$",
+          "pattern": "^[\\s\\S]*\\S[\\s\\S]*\\.[a-z_]+$",
           "title": "Ref",
           "type": "string"
         }
@@ -764,7 +764,9 @@
               "type": "string"
             },
             {
-              "items": {},
+              "items": {
+                "$ref": "#/$defs/JsonValue"
+              },
               "type": "array"
             }
           ],
@@ -778,7 +780,9 @@
         "parameters": {
           "anyOf": [
             {
-              "additionalProperties": true,
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
               "type": "object"
             },
             {

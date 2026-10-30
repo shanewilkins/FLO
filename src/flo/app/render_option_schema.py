@@ -208,7 +208,7 @@ _RENDER_OPTION_SPECS: tuple[RenderOptionSpec, ...] = (
     RenderOptionSpec(
         "sppm_max_label_ctwt",
         "--sppm-max-label-ctwt",
-        "Max CT/WT label length for SPPM",
+        "Max P/T and W/T label length for SPPM",
         value_type=int,
     ),
     RenderOptionSpec(

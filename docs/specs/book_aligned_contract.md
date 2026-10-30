@@ -10,6 +10,12 @@ metadata, and compatibility terminology in `core_language.md` and
 [failure ledger](../design/book_aligned_refactor_failure_ledger.md) record
 implementation dispositions and executable acceptance evidence.
 
+This breaking contract ships in package **0.5.0**, superseding published 0.4.3.
+The document language marker remains `spec_version: "0.1"`; it is not a package
+version or a guarantee that a 0.4.x consumer supports the new contract. Consumers
+must target 0.5.0 explicitly and migrate their sources/projections; FLO does not
+restore retired aliases. See the [migration guide](../howto/migrate_to_0_5.md).
+
 ## Terminology and instructional evidence
 
 The repository extraction `notes/notes-from-book.md` and the Chapter 8 activity
@@ -24,7 +30,7 @@ records. Staging and readiness notification are separate activities.
 | Setup, S/T | `changeover_time` | Active setup/changeover, separate from waiting and processing. |
 | Observed end-to-end lead time | process `lead_time` | Supplied profile with its own population, window, and basis. |
 | Static modeled elapsed time | `modeled_lead_time` | Derived analytical result, never an authored work field. |
-| Value-added, necessary non-value-added, non-value-added | `VA`, `RNVA`, `NVA` | Work classification. `unknown` is an explicit classification; omission is unclassified. |
+| Value-added, required non-value-added, non-value-added | `VA`, `RNVA`, `NVA` | Work classification. `unknown` is an explicit classification; omission is unclassified. |
 | Comparable activity records, n | `observation_count`, `observation_unit` | Loads and orders are different populations; never substitute one count for another. |
 | Statistical result | named `results` | Retain method, value, and unit; statistics are supplied, not computed by FLO. |
 | Evidence and observation period | `evidence_ref`, `observation_window`, `cohort`, `aggregation_level` | Preserve provenance without fetching external event data. |
@@ -35,6 +41,11 @@ records. Staging and readiness notification are separate activities.
 | Performers and supporting equipment | `resources`, `performed_by`, `uses` | Person and equipment identities, distinct from flow objects. |
 | Responsibility grouping and operational place | `lane`, `location` | Display responsibility versus physical operational location. |
 | Non-language annotations | `extensions` | Explicit containment; no implicit analytical meaning. |
+
+Human-facing summaries and diagrams use P/T (processing) and S/T (setup).
+The machine keys `cycle_time` and `changeover_time` retain the meanings above.
+FLO does not infer completion cadence (book C/T) or a product/mode transition
+(book C/O) from these profiles, including when setup is measured zero.
 
 The maintained acceptance fixture is `examples/reference/book_washnfold.flo`.
 Its timing means and supporting statistics come from
@@ -61,6 +72,11 @@ belong in `parameters`. Non-scalar statistics can be retained; a selected
 result that a duration consumer cannot interpret must fail or report an
 explicit capability limitation, never become zero.
 
+All results, including unselected ones, and their parameters must contain
+portable JSON data: finite numbers, strings, booleans, null, lists and objects
+with string keys. Sets, tuples, non-string keys and nonfinite nested numbers
+are rejected rather than coerced or deferred to export.
+
 `observation_count` is a positive integer and is paired with nonblank
 `observation_unit`. Optional `cohort`, `aggregation_level`,
 `observation_window`, and `evidence_ref` retain sample context. They do not
@@ -68,8 +84,11 @@ prove two measurements share a population. `extensions` is an explicit object.
 
 A waiting reference is exactly `{ref: step_id.wait_time}`. Only queue/wait
 nodes may project a work step's waiting profile. Targets must resolve directly;
-references do not chain. A reference contributes the underlying waiting evidence
-at most once on an analytical path. Independent profiles remain independent.
+references do not chain. The prefix preserves the complete nonblank step ID,
+including Unicode, spaces and dots. Split at the final dot; no ASCII restriction
+or slug conversion is applied. The field suffix remains the literal `wait_time`.
+A reference contributes the underlying waiting evidence at most once on an
+analytical path. Independent profiles remain independent.
 
 `wait_before`, `crossover_time`, `transfer_time`, node `lead_time`,
 `sla_target_seconds`, and timing under `metadata` are retired, with no runtime

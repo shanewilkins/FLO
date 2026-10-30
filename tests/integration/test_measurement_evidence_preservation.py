@@ -188,8 +188,42 @@ def test_value_stream_cards_present_primary_without_changing_analytical_timeline
     source = yaml.safe_dump(model())
     process = compile_adapter(parse_adapter(source))
     artifact = render_artifact(process, options={"diagram": "value_stream"})
-    assert "CT 1 min" in artifact.content
+    assert "P/T 1 min" in artifact.content
     assert "Modeled lead time: 12 min" in artifact.content
+
+
+def test_processing_and_zero_setup_use_book_terms_without_claiming_cadence_or_switching():
+    # Book glossary: P/T is active processing; S/T is setup, including zero.
+    # C/T needs successive completions and C/O needs an identified mode switch.
+    data = model()
+    data["steps"] = [data["steps"][0], data["steps"][1], data["steps"][-1]]
+    del data["transitions"]
+    work = data["steps"][1]
+    for field, value in (("cycle_time", 1), ("wait_time", 0), ("changeover_time", 0)):
+        work[field] = profile(value)
+        work[field]["analysis_input"] = "median"
+    source = yaml.safe_dump(data)
+    process = compile_adapter(parse_adapter(source))
+    before = deepcopy(process)
+    for diagram, processing, setup in (
+        ("sppm", "P/T: 1 min", "S/T: 0 min"),
+        ("value_stream", "P/T 1 min", "S/T 0 s"),
+    ):
+        artifact = render_artifact(
+            process, options={"diagram": diagram, "sppm_label_density": "full"}
+        )
+        root = ET.fromstring(artifact.content)  # noqa: S314 - Renderer-produced SVG.
+        text = " ".join(" ".join(root.itertext()).split())
+        assert processing in text
+        assert setup in text
+        assert "CT " not in text and "C/O " not in text
+    inspected = CliRunner().invoke(cli, ["inspect", "-"], input=source)
+    assert inspected.exit_code == 0
+    assert "Processing time (P/T): 1 min" in inspected.stdout
+    assert "Setup time (S/T): 0 min" in inspected.stdout
+    assert "Cycle time:" not in inspected.stdout
+    assert "Changeover time:" not in inspected.stdout
+    assert process == before
 
 
 def test_supplied_evidence_does_not_hide_a_modeled_path_range():

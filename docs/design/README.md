@@ -24,6 +24,15 @@ Use these subdirectories for fast navigation.
 The top level of `docs/design/` is reserved for active cross-cutting design
 notes, migration plans, and taxonomy notes that span multiple components.
 
+## Review prompts
+
+- [Shared lenses and evidence rules](review_lenses.md): fourteen perspectives,
+  including book, lss4py and mpi-theme ownership and compatibility.
+- [Code and ecosystem review](code_ecosystem_review_prompt.md): engineering
+  findings, terminology, duplicated responsibility and consumer compatibility.
+- [Release quality gate](release_quality_gate_prompt.md): exact-candidate
+  release acceptance, scoring, packaging and publication evidence.
+
 ## Architecture acceptance before release
 
 - [Architecture validation results](architecture_validation.md): completed

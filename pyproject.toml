@@ -1,6 +1,6 @@
 [project]
 name = "flo-lang"
-version = "0.4.3"
+version = "0.5.0"
 description = "FLO reference implementation"
 readme = "README.md"
 requires-python = ">=3.14"
@@ -153,7 +153,7 @@ source_modules = [
     "flo.render._execution",
     "flo.render._process_header", "flo.render._publication", "flo.render._svg_theme",
     "flo.render._text", "flo.render.options", "flo.render.themes",
-    "flo.render.legacy_sppm_themes", "flo.render.typst_publication",
+    "flo.render.legacy_sppm_themes", "flo.render.mpi_palette", "flo.render.typst_publication",
 ]
 forbidden_modules = [
     "flo.render.sppm", "flo.render.swimlane", "flo.render.spaghetti",

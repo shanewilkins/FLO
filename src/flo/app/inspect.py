@@ -74,15 +74,15 @@ def _format_timing_text(
         f"Timing coverage: {'complete' if result.timing_complete else 'incomplete'}",
         "",
         "Declared totals:",
-        f"  Cycle time: {_format_duration(totals.cycle_time_seconds)}",
+        f"  Processing time (P/T): {_format_duration(totals.cycle_time_seconds)}",
         f"  Wait time: {_format_duration(totals.wait_time_seconds)}",
-        f"  Changeover time: {_format_duration(totals.changeover_time_seconds)}",
+        f"  Setup time (S/T): {_format_duration(totals.changeover_time_seconds)}",
         f"  Elapsed subtotal: {_format_duration(totals.elapsed_time_seconds)}",
         "",
         f"Supplied lead time ({(result.supplied_lead_time or {}).get('basis', 'omitted')}): {_format_duration(duration_seconds(selected_result(result.supplied_lead_time, 'primary')))}",
         f"Modeled lead time: {_format_modeled_lead_time(result)}",
         f"Paths analyzed: {len(result.paths)}",
-        f"Changeover policy: {_humanize_policy(result.changeover_exposure_policy)}",
+        f"Setup exposure policy: {_humanize_policy(result.changeover_exposure_policy)}",
     ]
 
     if include_diagnostics and result.diagnostics:
@@ -248,7 +248,7 @@ def _format_number(value: float) -> str:
 
 def _humanize_policy(policy: str) -> str:
     if policy == "one_declared_changeover_per_visited_step":
-        return "one declared changeover per visited step"
+        return "one declared setup per visited step"
     return policy.replace("_", " ")
 
 

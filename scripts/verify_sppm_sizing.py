@@ -396,7 +396,7 @@ def _append_polygon_report(report: list[str], polygons: list[SVGElement]) -> Non
     )
     report.append("  Individual cell dimensions vary; expected ranges:")
     report.append("    - Colored header: ~140px W × 35–40px H (process name + color)")
-    report.append("    - Data rows: ~120–140px W × 35–40px H (CT/WT/Workers)")
+    report.append("    - Data rows: ~120–140px W × 35–40px H (P/T, W/T, Workers)")
     report.append("    - Spacer cells: ~10px W × varies H\n")
     for polygon in polygons[:10]:
         elem_id = polygon.elem_id or f"poly_?_{polygon.x:.0f}_{polygon.y:.0f}"

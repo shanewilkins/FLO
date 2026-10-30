@@ -9,6 +9,8 @@ from html import escape
 from types import MappingProxyType
 from typing import Any
 
+from .mpi_palette import MPI_COLORS, MPI_FONT_FAMILY
+
 _COLOR_RE = re.compile(r"^(?:#[0-9a-fA-F]{3}|#[0-9a-fA-F]{6}|#[0-9a-fA-F]{8})$")
 _NAMED_COLORS = {"black", "white", "transparent"}
 _MIN_TYPOGRAPHY_SCALE = 0.75
@@ -135,6 +137,16 @@ def _with_roles(theme: RenderTheme, name: str, **roles: ThemeRole) -> RenderThem
     return replace(theme, name=name, roles=MappingProxyType(merged))
 
 
+def _mpi_role(
+    fill: str = "surface",
+    border: str = "border",
+    title: str = "ink",
+    detail: str = "muted",
+) -> ThemeRole:
+    """Map shared MPI tokens to a FLO-owned diagram role."""
+    return ThemeRole(*(MPI_COLORS[name] for name in (fill, border, title, detail)))
+
+
 BUILTIN_THEMES: Mapping[str, RenderTheme] = MappingProxyType(
     {
         "default": DEFAULT_THEME,
@@ -142,27 +154,27 @@ BUILTIN_THEMES: Mapping[str, RenderTheme] = MappingProxyType(
             replace(
                 DEFAULT_THEME,
                 name="mpi-lms",
-                canvas_background="#F6F7F5",
-                font_family=("Source Sans 3", "system-ui", "sans-serif"),
+                canvas_background=MPI_COLORS["canvas"],
+                font_family=MPI_FONT_FAMILY,
             ),
             "mpi-lms",
-            va=ThemeRole("#0B5D5A", "#CDD5D5", "#FFFFFF", "#5B6870"),
-            rnva=ThemeRole("#8A5A00", "#CDD5D5", "#FFFFFF", "#5B6870"),
-            nva=ThemeRole("#A43232", "#CDD5D5", "#FFFFFF", "#5B6870"),
-            unknown=ThemeRole("#FFFFFF", "#CDD5D5", "#1F2933", "#5B6870"),
-            decision=ThemeRole("#1D5D88", "#1D5D88", "#FFFFFF", "#FFFFFF"),
-            queue=ThemeRole("#F1F4F3", "#1F2933", "#1F2933", "#5B6870"),
-            start_end=ThemeRole("#FFFFFF", "#0B5D5A", "#1F2933", "#5B6870"),
-            subprocess=ThemeRole("#FFFFFF", "#5B6870", "#1F2933", "#5B6870"),
-            surface=ThemeRole("#FFFFFF", "#CDD5D5", "#1F2933", "#5B6870"),
-            lane=ThemeRole("#F6F7F5", "#CDD5D5", "#1F2933", "#5B6870"),
-            connector=ThemeRole("#FFFFFF", "#5B6870", "#1F2933", "#5B6870"),
-            rework=ThemeRole("#FFFFFF", "#A43232", "#A43232", "#A43232"),
-            publication=ThemeRole("#FFFFFF", "#CDD5D5", "#1F2933", "#5B6870"),
-            annotation=ThemeRole("#FFFFFF", "#CDD5D5", "#1F2933", "#5B6870"),
-            callout=ThemeRole("#FFFFFF", "#CDD5D5", "#1F2933", "#5B6870"),
-            token=ThemeRole("#FFFFFF", "#5B6870", "#1F2933", "#5B6870"),
-            boundary=ThemeRole("#FFFFFF", "#5B6870", "#5B6870", "#5B6870"),
+            va=_mpi_role("primary", title="surface"),
+            rnva=_mpi_role("warning", title="surface"),
+            nva=_mpi_role("danger", title="surface"),
+            unknown=_mpi_role(),
+            decision=_mpi_role("info", "info", "surface", "surface"),
+            queue=_mpi_role("table-stripe", "ink"),
+            start_end=_mpi_role(border="primary"),
+            subprocess=_mpi_role(border="muted"),
+            surface=_mpi_role(),
+            lane=_mpi_role("canvas"),
+            connector=_mpi_role(border="muted"),
+            rework=_mpi_role(border="danger", title="danger", detail="danger"),
+            publication=_mpi_role(),
+            annotation=_mpi_role(),
+            callout=_mpi_role(),
+            token=_mpi_role(border="muted"),
+            boundary=_mpi_role(border="muted", title="muted"),
         ),
         "flatly": _with_roles(
             DEFAULT_THEME,

@@ -46,6 +46,31 @@ It uses Source Sans 3 with system fallbacks, a neutral canvas and white process
 surface, narrow teal/ochre/red task accents for VA/RNVA/NVA, an information-blue
 decision role, neutral queues, and explicit muted-red rework connectors.
 
+### MPI palette ownership
+
+FLO owns its diagram-role mapping and the small existing palette snapshot in
+`src/flo/render/mpi_palette.py`. Its comparison baseline is mpi-theme **0.1.5**,
+revision `6d47087da8ffdd83c0252e7410155cc7ced4962d`, specifically
+`mpi_theme/assets/tokens.json`. The snapshot centralizes values already shipped
+by FLO; it does not vendor producer assets or grant rights to restricted assets.
+The legacy SPPM adapter takes its MPI roles from the central FLO theme.
+
+To check a producer checkout without importing its code or requiring it in
+ordinary FLO installs, run:
+
+```bash
+uv run --locked python scripts/check_mpi_palette.py --producer-root /path/to/mpi-theme
+```
+
+The check requires the pinned package version, ten shared colors and the heading
+font fallback list. A producer update must be reviewed by FLO's presentation
+maintainers: compare those tokens, record the new version/revision, update the
+snapshot deliberately, and run theme, golden and geometry checks. Missing or
+changed shared tokens fail the check. FLO's mapping of those tokens to diagram
+roles is intentional and remains separate from producer-owned token values.
+Broader adapter integration or asset redistribution needs its own ownership and
+license decision; this snapshot adds no dependency, fonts or other assets.
+
 ```bash
 uv run flo render process.flo --diagram sppm --theme mpi-lms --export svg
 ```

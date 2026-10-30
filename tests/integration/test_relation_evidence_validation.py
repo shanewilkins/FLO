@@ -1,5 +1,6 @@
 """Complete relation evidence validation at source and canonical boundaries."""
 
+import json
 from copy import deepcopy
 
 import pytest
@@ -80,3 +81,34 @@ def test_valid_frequency_retains_basis_population_and_extensions(basis, numerato
     result = api.validate(yaml.safe_dump(data))
     assert result.ok, result.diagnostics
     assert result.value.edges[1].rework == data["transitions"][1]["rework"]
+
+
+@pytest.mark.parametrize("relation", ["handoff", "rework"])
+def test_explicit_empty_relation_survives_export_and_structure_inspection(relation):
+    data = model()
+    edge = data["transitions"][1]
+    edge.pop("rework")
+    edge.pop("handoff")
+    edge[relation] = {}
+    source = yaml.safe_dump(data)
+    exported = api.export(source)
+    assert exported.ok, exported.diagnostics
+    payload = json.loads(exported.value)
+    assert payload["edges"][1][relation] == {}
+    inspected = api.inspect(source)
+    assert inspected.ok, inspected.diagnostics
+    entries = inspected.value.as_dict()["relations"][
+        "handoffs" if relation == "handoff" else "rework"
+    ]
+    assert len(entries) == 1
+    assert entries[0]["relation"] == {}
+
+    del edge[relation]
+    omitted = api.inspect(yaml.safe_dump(data))
+    assert omitted.ok
+    assert (
+        omitted.value.as_dict()["relations"][
+            "handoffs" if relation == "handoff" else "rework"
+        ]
+        == []
+    )

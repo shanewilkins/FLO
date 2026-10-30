@@ -245,9 +245,9 @@ def _presentation_node(node: Any, by_id: dict[str, Any]) -> Any:
 
 def _node_metrics(node: Any) -> tuple[str, str, str]:
     return (
-        _metric("CT", node.cycle_time_seconds),
+        _metric("P/T", node.cycle_time_seconds),
         _metric("WT", node.wait_time_seconds),
-        _metric("C/O", node.changeover_time_seconds),
+        _metric("S/T", node.changeover_time_seconds),
     )
 
 

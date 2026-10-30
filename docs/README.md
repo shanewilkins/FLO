@@ -38,7 +38,14 @@ Supporting documents:
 - `SUPPORT.md`: supported platforms, runtimes, and trust assumptions
 - `ROADMAP.md`: milestone themes, MVP meaning, and release gates
 - `CHANGELOG.md`: released changes
+- [Migrate to FLO 0.5](howto/migrate_to_0_5.md): breaking source and consumer changes
 - `FLO_Manifesto.md`: product and modeling principles
+
+## Code and ecosystem reviews
+
+Start with the [code and ecosystem review prompt](design/code_ecosystem_review_prompt.md)
+for engineering and cross-project compatibility. The [release quality gate](design/release_quality_gate_prompt.md)
+assesses a release candidate. Both use one [shared lens catalog and evidence rules](design/review_lenses.md).
 
 ## Placement Rules
 

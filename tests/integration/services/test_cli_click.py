@@ -208,7 +208,7 @@ def test_cli_inspect_reports_timing_for_file():
 
     assert result.exit_code == 0
     assert "Process: Wash n' Fold (wash_n_fold)" in result.output
-    assert "Cycle time: 105 min" in result.output
+    assert "Processing time (P/T): 105 min" in result.output
     assert "Wait time: 95 min" in result.output
     assert "Modeled lead time: 200 min" in result.output
 

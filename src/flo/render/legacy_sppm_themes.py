@@ -12,6 +12,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Literal
 
+from .themes import BUILTIN_THEMES
+
 SppmThemeName = Literal["default", "flatly", "mpi-lms", "print", "monochrome"]
 
 
@@ -59,48 +61,21 @@ SPPM_THEMES: dict[str, SppmTheme] = {
         start_end=SppmNodeStyle(fill="#FFFFFF", border="#333333"),
     ),
     "mpi-lms": SppmTheme(
-        va=SppmNodeStyle(
-            fill="#0B5D5A",
-            border="#CDD5D5",
-            title_fill="#FFFFFF",
-            info_fill="#5B6870",
-        ),
-        rnva=SppmNodeStyle(
-            fill="#8A5A00",
-            border="#CDD5D5",
-            title_fill="#FFFFFF",
-            info_fill="#5B6870",
-        ),
-        nva=SppmNodeStyle(
-            fill="#A43232",
-            border="#CDD5D5",
-            title_fill="#FFFFFF",
-            info_fill="#5B6870",
-        ),
-        decision=SppmNodeStyle(
-            fill="#1D5D88",
-            border="#1D5D88",
-            title_fill="#FFFFFF",
-            info_fill="#FFFFFF",
-        ),
-        queue=SppmNodeStyle(
-            fill="#F1F4F3",
-            border="#1F2933",
-            title_fill="#1F2933",
-            info_fill="#5B6870",
-        ),
-        unknown=SppmNodeStyle(
-            fill="#FFFFFF",
-            border="#CDD5D5",
-            title_fill="#1F2933",
-            info_fill="#5B6870",
-        ),
-        start_end=SppmNodeStyle(
-            fill="#FFFFFF",
-            border="#0B5D5A",
-            title_fill="#1F2933",
-            info_fill="#5B6870",
-        ),
+        **{
+            name: SppmNodeStyle(
+                role.fill, role.border, role.title_text, role.detail_text
+            )
+            for name in (
+                "va",
+                "rnva",
+                "nva",
+                "decision",
+                "queue",
+                "unknown",
+                "start_end",
+            )
+            for role in (BUILTIN_THEMES["mpi-lms"].role(name),)
+        }
     ),
     "flatly": SppmTheme(
         va=SppmNodeStyle(fill="#D1F2EB", border="#18BC9C", title_fill="#0A4B3E"),

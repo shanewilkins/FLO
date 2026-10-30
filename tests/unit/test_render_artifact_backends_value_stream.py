@@ -13,9 +13,9 @@ def test_value_stream_svg_is_deterministic_and_distinguishes_both_flows() -> Non
     assert 'data-flow-kind="information"' in artifact.content
     assert 'data-flow-kind="material"' in artifact.content
     assert 'data-item-id="ticket"' in artifact.content
-    assert "CT 5 min" in artifact.content
+    assert "P/T 5 min" in artifact.content
     assert "WT 10 min" in artifact.content
-    assert "C/O 2 min" in artifact.content
+    assert "S/T 2 min" in artifact.content
     assert "Modeled lead time: 21 min" in artifact.content
     assert 'data-flo-notice="partial-map"' not in artifact.content
     assert artifact.metadata["diagram"] == "value_stream"
@@ -87,7 +87,7 @@ def test_value_stream_svg_discloses_missing_optional_metrics() -> None:
     rerun = render_artifact(process, options={"diagram": "value_stream"})
 
     assert artifact.content == rerun.content
-    assert "CT —" in artifact.content
+    assert "P/T —" in artifact.content
     assert "WT —" in artifact.content
-    assert "C/O —" in artifact.content
+    assert "S/T —" in artifact.content
     assert "Modeled lead time: not derivable" in artifact.content

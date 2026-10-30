@@ -10,9 +10,11 @@ from pydantic import (
     BaseModel,
     BeforeValidator,
     ConfigDict,
+    Discriminator,
     Field,
     JsonValue,
     StringConstraints,
+    Tag,
     TypeAdapter,
     field_validator,
     model_validator,
@@ -88,9 +90,19 @@ class MeasurementResult(ContractModel):
     """One named statistical result within a measurement profile."""
 
     method: CoreMeasurementMethod | NamespacedMeasurementMethod
-    value: NonNegativeNumber | NonBlank | list[Any]
+    value: NonNegativeNumber | NonBlank | list[JsonValue]
     unit: NonBlank
-    parameters: dict[str, Any] | None = None
+    parameters: dict[str, JsonValue] | None = None
+
+    @field_validator("value", "parameters", mode="before")
+    @classmethod
+    def portable_evidence(cls, value: Any) -> Any:
+        """Require finite JSON evidence even in unselected statistical results."""
+        try:
+            json.dumps(value, allow_nan=False)
+        except (TypeError, ValueError, OverflowError, RecursionError) as exc:
+            raise ValueError("must contain finite JSON data") from exc
+        return value
 
     @model_validator(mode="after")
     def validate_value(self) -> MeasurementResult:
@@ -138,10 +150,23 @@ class MeasurementProfile(ContractModel):
 class MeasurementReference(ContractModel):
     """A reference to a measurement owned by another process step."""
 
-    ref: Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9_.-]+\.[a-z_]+$")]
+    ref: Annotated[str, StringConstraints(pattern=r"^[\s\S]*\S[\s\S]*\.[a-z_]+$")]
 
 
-type Measurement = MeasurementProfile | MeasurementReference
+def _measurement_kind(value: Any) -> str:
+    """Select reference diagnostics by the authored ref key, including invalid refs."""
+    if isinstance(value, MeasurementReference) or (
+        isinstance(value, dict) and "ref" in value
+    ):
+        return "MeasurementReference"
+    return "MeasurementProfile"
+
+
+type Measurement = Annotated[
+    Annotated[MeasurementProfile, Tag("MeasurementProfile")]
+    | Annotated[MeasurementReference, Tag("MeasurementReference")],
+    Discriminator(_measurement_kind),
+]
 MEASUREMENT_ADAPTER = TypeAdapter(Measurement)
 
 

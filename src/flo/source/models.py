@@ -345,6 +345,7 @@ def _authored_error_location(value: Any, location: tuple) -> tuple:
                     "function-before[",
                     "literal[",
                     "union[",
+                    "tagged-union[",
                     "list[",
                     "dict[",
                 )
@@ -383,6 +384,11 @@ def _shape_message(issue: Mapping[str, Any], path: tuple) -> str:
         return f"{rendered} must be a list"
     if kind in {"model_type", "dict_type"} or field in {"process"}:
         return f"{rendered} must be an object"
+    if field == "ref" and kind in {"string_type", "string_pattern_mismatch"}:
+        return (
+            f"{rendered} must use '<step-id>.<measurement-field>' "
+            "with a nonblank step ID"
+        )
     if kind in {
         "missing",
         "string_type",

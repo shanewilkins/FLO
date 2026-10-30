@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+### 0.5.0 contract boundary
+
+- Identify the breaking book-aligned candidate as 0.5.0, distinct from published
+  0.4.3. Keep the source language marker `0.1`; see the
+  [migration guide](howto/migrate_to_0_5.md) for source/export consumer changes.
+- Reject nonfinite and nonportable JSON evidence in every measurement result
+  and parameter, including unselected statistics. Strict JSON encoding provides
+  a final defense; valid structured statistics retain their authored values.
+- Accept waiting references to all supported nonblank step IDs, including
+  Unicode, spaces and dots. Report malformed references at the authored `ref`
+  field rather than a missing profile `basis`.
+- Label processing and setup as P/T and S/T in inspection and value-stream
+  output, matching SPPM and the book; machine field names remain unchanged.
+- Centralize the existing MPI palette with producer-version provenance, a
+  conformance command and a single MPI role source for the legacy SPPM adapter.
+
 - Close semantic data-loss gaps: reject either nested-child spelling on
   non-subprocess steps, validate present include-fragment shapes before merging,
   enforce supported agreeing language versions, and compose canonical and

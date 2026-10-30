@@ -213,6 +213,10 @@ This is a summary only. Normative semantics live in `docs/specs/core_language.md
 
 FLO follows semantic versioning at the spec level.
 
+The current package is **0.5.0**, the breaking book-aligned contract release.
+See the [0.5 migration guide](docs/howto/migrate_to_0_5.md) for source and consumer
+changes from published 0.4.3. The source `spec_version: "0.1"` marker is unchanged.
+
 -   v0.x: rapid iteration\
 -   v1.0: language stability
 
