@@ -112,6 +112,21 @@ in its third element; structured command consumers use `run_operation`.
 Semantic validation uses stable diagnostic-style prefixes in messages (for
 example `E1003`, `E1101`) so failures are easier to script against and triage.
 
+Graph identity diagnostics:
+
+| Code | Meaning | Stage / exit code |
+| --- | --- | --- |
+| E1033 | Repeated identical full canonical transition record. | Validation / 4. |
+| E1034 | Repeated supplied transition ID. | Validation / 4. |
+| E1035 | Repeated lane ID. | Source structural compilation / 3; canonical domain validation / 4. |
+
+These diagnostics locate the second declaration, including its originating file
+when composed through includes. Transition records and lane declarations are
+never silently removed. Canonical failures without a matching authored field
+retain `edges[index]`, `edges[index].id` or `lanes[index].id` and do not invent a
+source line. Explicit or named authored transitions use their authored path when
+available. These checks apply before validated inspect, export and render output.
+
 ### Structured diagnostic contract effective in 0.4
 
 The 0.4 MVP extends parser, include, compiler, and validator diagnostics to one

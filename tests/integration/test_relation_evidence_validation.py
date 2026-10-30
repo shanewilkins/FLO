@@ -9,7 +9,7 @@ from flo import api
 from flo.errors import ValidationError
 from flo.process.ir import validate_ir
 from flo.source import compile_adapter, parse_adapter
-from tests.integration.test_phase3_evidence import model
+from tests.integration.test_measurement_evidence_preservation import model
 
 INVALID = [
     ("handoff", "type", "unknown"),

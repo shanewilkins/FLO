@@ -120,6 +120,7 @@ def _format_structural_text(
         f"  Explicit handoffs: {len(result.handoffs)}",
         f"  Handoff candidates: {len(result.handoff_candidates)}",
         f"  Rework edges: {len(result.rework_edges)}",
+        f"  Cyclic regions: {len(result.cycle_regions)}",
         f"  Non-rework paths: {len(result.paths)}",
         f"  Path length (edges): {path_range}",
         "",
@@ -136,6 +137,13 @@ def _format_structural_text(
     for finding in result.rework_edges:
         lines.append(
             f"  Rework {finding.source_id} -> {finding.target_id}: {finding.reason or 'unspecified'}; {finding.frequency or 'frequency omitted'}"
+        )
+
+    for region in result.cycle_regions:
+        loops = ", ".join(region.self_loop_node_ids) or "none"
+        lines.append(
+            f"  Cycle {', '.join(region.node_ids)}: self-loops {loops}; "
+            f"entries {len(region.entry_edges)}; exits {len(region.exit_edges)}"
         )
 
     if include_diagnostics and result.diagnostics:

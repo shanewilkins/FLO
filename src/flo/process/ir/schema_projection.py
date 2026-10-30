@@ -58,7 +58,7 @@ def ir_to_schema_dict(ir: IR) -> JsonObject:
         "nodes": nodes_out,
         "edges": edges_out,
     }
-    if ir.lanes != []:
+    if ir.lanes is not None:
         projected["lanes"] = ir.lanes
     return projected
 

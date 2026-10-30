@@ -8,6 +8,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from flo.process.identity import validate_lane_ids
+from flo.process.validation_errors import LocatedValidationError
+
 from .models import (
     BranchConfig,
     SourceDocument,
@@ -22,8 +25,11 @@ def validate_adapter_contract(adapter: dict[str, Any]) -> SourceDocument:
     document = validate_source_shape(SourceDocument, adapter)
     seen_ids: set[str] = set()
     _validate_step_entries(adapter["steps"], (), seen_ids)
+    try:
+        validate_lane_ids(adapter.get("lanes") or [])
+    except LocatedValidationError as exc:
+        raise SourceShapeError(str(exc), exc.location, code="E1035") from exc
     for path, entries in (
-        (("lanes",), adapter.get("lanes")),
         (("process", "business_units"), adapter["process"].get("business_units")),
     ):
         ids = [entry["id"] for entry in entries or []]

@@ -104,7 +104,8 @@ def test_structure_does_not_treat_backward_edge_as_authored_rework() -> None:
     assert result.rework_edges[0].rate == 0.2
     assert result.rework_edges[0].reason == "Incomplete"
     assert [path.node_ids for path in result.paths] == [("start", "review", "end")]
-    assert "structure-ambiguous-backward-edge" in _diagnostic_codes(result)
+    assert "structure-cycle-region" in _diagnostic_codes(result)
+    assert result.cycle_regions
 
 
 def test_undeclared_backward_edge_remains_an_ordinary_cycle() -> None:
@@ -126,11 +127,12 @@ def test_undeclared_backward_edge_remains_an_ordinary_cycle() -> None:
 
     assert result.rework_edges == ()
     assert result.paths == ()
-    assert "structure-ambiguous-backward-edge" in _diagnostic_codes(result)
+    assert "structure-cycle-region" in _diagnostic_codes(result)
+    assert result.cycle_regions
     assert "structure-cycle-unsupported" in _diagnostic_codes(result)
 
 
-def test_unmarked_back_edge_is_reported_as_ambiguous() -> None:
+def test_unmarked_cycle_is_described_without_inferring_rework() -> None:
     back_edge = Edge(source="work", target="start")
     process = IR(
         name="Ordinary cycle",
@@ -151,7 +153,8 @@ def test_unmarked_back_edge_is_reported_as_ambiguous() -> None:
     assert result.rework_edges == ()
     assert result.paths == ()
     assert "structure-cycle-unsupported" in _diagnostic_codes(result)
-    assert "structure-ambiguous-backward-edge" in _diagnostic_codes(result)
+    assert "structure-cycle-region" in _diagnostic_codes(result)
+    assert result.cycle_regions
 
 
 def test_parallel_flow_keeps_findings_but_refuses_path_length() -> None:

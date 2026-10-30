@@ -8,10 +8,12 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
+from flo.process.graph import GraphFacts
 from flo.process.ir.enums import VALUE_CLASS_NODE_KINDS
 from flo.process.ir.models import IR, Edge, Node
 
-from .graph import build_adjacency, enumerate_paths, has_cycle
+from .cycles import CycleRegion, analyze_cycles
+from .graph import enumerate_paths
 from .process_metadata import extract_process_metadata
 
 StructuralSeverity = Literal["info", "warning"]
@@ -145,6 +147,7 @@ class ProcessStructuralAnalysis:
     handoffs: tuple[HandoffFinding, ...]
     handoff_candidates: tuple[HandoffFinding, ...]
     rework_edges: tuple[ReworkFinding, ...]
+    cycle_regions: tuple[CycleRegion, ...]
     paths: tuple[StructuralPath, ...]
     step_classifications: tuple[StepClassification, ...]
     unclassified_node_ids: tuple[str, ...]
@@ -190,6 +193,7 @@ class ProcessStructuralAnalysis:
                 finding.as_dict() for finding in self.handoff_candidates
             ],
             "rework_edges": [finding.as_dict() for finding in self.rework_edges],
+            "cycle_regions": [region.as_dict() for region in self.cycle_regions],
             "path_summary": {
                 "path_count": len(self.paths),
                 "minimum_edge_count": self.minimum_path_edge_count,
@@ -215,18 +219,23 @@ def analyze_process_structure(process: IR) -> ProcessStructuralAnalysis:
         raise TypeError("analyze_process_structure requires canonical IR")
 
     nodes_by_id = {node.id: node for node in process.nodes}
-    node_order = {node.id: index for index, node in enumerate(process.nodes)}
     diagnostics: list[StructuralDiagnostic] = []
     handoffs, candidates = _analyze_handoffs(
         process.edges,
         nodes_by_id=nodes_by_id,
         diagnostics=diagnostics,
     )
-    rework_edges = _analyze_rework(
-        process.edges,
-        node_order=node_order,
-        diagnostics=diagnostics,
-    )
+    rework_edges = _analyze_rework(process.edges)
+    cycle_regions = analyze_cycles(process)
+    for region in cycle_regions:
+        diagnostics.append(
+            StructuralDiagnostic(
+                code="structure-cycle-region",
+                severity="info",
+                message=f"Cyclic region: {', '.join(region.node_ids)}. Rework is reported only when explicitly declared.",
+                node_id=region.node_ids[0],
+            )
+        )
     primary_edges = tuple(
         edge for edge in process.edges if not _is_explicit_rework(edge)
     )
@@ -258,6 +267,7 @@ def analyze_process_structure(process: IR) -> ProcessStructuralAnalysis:
         handoffs=handoffs,
         handoff_candidates=candidates,
         rework_edges=rework_edges,
+        cycle_regions=cycle_regions,
         paths=paths,
         step_classifications=classifications,
         unclassified_node_ids=unclassified,
@@ -331,29 +341,10 @@ def _handoff_finding(
     )
 
 
-def _analyze_rework(
-    edges: list[Edge],
-    *,
-    node_order: dict[str, int],
-    diagnostics: list[StructuralDiagnostic],
-) -> tuple[ReworkFinding, ...]:
+def _analyze_rework(edges: list[Edge]) -> tuple[ReworkFinding, ...]:
     findings: list[ReworkFinding] = []
     for edge in sorted(edges, key=_edge_sort_key):
         if not _is_explicit_rework(edge):
-            if _is_undeclared_backward_edge(edge, node_order=node_order):
-                diagnostics.append(
-                    StructuralDiagnostic(
-                        code="structure-ambiguous-backward-edge",
-                        severity="warning",
-                        message=(
-                            "Backward edge is ordinary flow because rework was not "
-                            "declared. Add a rework relation only if this transition "
-                            "returns work for correction."
-                        ),
-                        source_id=edge.source,
-                        target_id=edge.target,
-                    )
-                )
             continue
         relation = edge.rework or {}
         frequency = relation.get("frequency")
@@ -390,16 +381,6 @@ def _is_explicit_rework(edge: Edge) -> bool:
     return edge.rework is not None
 
 
-def _is_undeclared_backward_edge(edge: Edge, *, node_order: dict[str, int]) -> bool:
-    source_order = node_order.get(edge.source)
-    target_order = node_order.get(edge.target)
-    return bool(
-        source_order is not None
-        and target_order is not None
-        and target_order <= source_order
-    )
-
-
 def _analyze_paths(
     process: IR,
     *,
@@ -419,8 +400,9 @@ def _analyze_paths(
         )
         return ()
 
-    adjacency = build_adjacency(process, edges=primary_edges)
-    if has_cycle(adjacency):
+    graph = GraphFacts.build((node.id for node in process.nodes), primary_edges)
+    adjacency = graph.successors
+    if graph.cyclic_components():
         diagnostics.append(
             StructuralDiagnostic(
                 code="structure-cycle-unsupported",

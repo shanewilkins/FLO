@@ -1,5 +1,6 @@
 """Deterministic analyses over canonical process IR."""
 
+from .cycles import CycleRegion
 from .inspection import (
     EntitySummary,
     ModelInspectionReport,
@@ -45,6 +46,7 @@ from .value_stream import (
 )
 
 __all__ = [
+    "CycleRegion",
     "EntitySummary",
     "HandoffFinding",
     "ModelInspectionReport",

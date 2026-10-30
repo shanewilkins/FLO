@@ -1,9 +1,11 @@
 """Graph topology, branching and reachability validation."""
 
+from collections.abc import Mapping
+
 from flo.errors import ValidationError
+from flo.process.graph import GraphFacts
 
 from ._boundary_validation import validate_branch_config
-from ._graph_utils import build_adjacency_maps, traverse
 from .models import IR
 
 
@@ -22,21 +24,7 @@ def _validate_edge_resolution(obj: IR, ids: list[str]) -> None:
             )
 
 
-def _build_edge_degree_maps(
-    obj: IR, ids: list[str]
-) -> tuple[dict[str, int], dict[str, int]]:
-    known_ids = set(ids)
-    incoming_counts: dict[str, int] = dict.fromkeys(known_ids, 0)
-    outgoing_counts: dict[str, int] = dict.fromkeys(known_ids, 0)
-    for edge in obj.edges:
-        if edge.target in incoming_counts:
-            incoming_counts[edge.target] += 1
-        if edge.source in outgoing_counts:
-            outgoing_counts[edge.source] += 1
-    return incoming_counts, outgoing_counts
-
-
-def _validate_branch_points(obj: IR, outgoing_counts: dict[str, int]) -> None:
+def _validate_branch_points(obj: IR, outgoing_counts: Mapping[str, int]) -> None:
     node_types = {node.id: (node.type or "").lower() for node in obj.nodes}
     for node in obj.nodes:
         node_type = node_types[node.id]
@@ -118,7 +106,7 @@ def _validate_branch_edges(*, obj: IR, node_id: str) -> None:
         seen_routes.add(normalized_route)
 
 
-def _validate_ambiguous_fan_out(obj: IR, outgoing_counts: dict[str, int]) -> None:
+def _validate_ambiguous_fan_out(obj: IR, outgoing_counts: Mapping[str, int]) -> None:
     branch_point_types = {"decision", "branch", "parallel_split"}
     for node in obj.nodes:
         node_type = (node.type or "").lower()
@@ -132,7 +120,7 @@ def _validate_ambiguous_fan_out(obj: IR, outgoing_counts: dict[str, int]) -> Non
 
 
 def _validate_queue_nodes(
-    obj: IR, incoming_counts: dict[str, int], outgoing_counts: dict[str, int]
+    obj: IR, incoming_counts: Mapping[str, int], outgoing_counts: Mapping[str, int]
 ) -> None:
     for node in obj.nodes:
         if (node.type or "").lower() != "queue":
@@ -150,8 +138,8 @@ def _validate_queue_nodes(
 
 def _validate_node_connectivity(
     obj: IR,
-    incoming_counts: dict[str, int],
-    outgoing_counts: dict[str, int],
+    incoming_counts: Mapping[str, int],
+    outgoing_counts: Mapping[str, int],
 ) -> None:
     for node in obj.nodes:
         node_type = (node.type or "").lower()
@@ -167,21 +155,15 @@ def _validate_node_connectivity(
             )
 
 
-def _validate_global_reachability(obj: IR) -> None:
-    node_ids = [node.id for node in obj.nodes]
-    adjacency, reverse_adjacency = build_adjacency_maps(
-        node_ids=node_ids, edges=obj.edges
-    )
+def _validate_global_reachability(obj: IR, graph: GraphFacts) -> None:
     start_nodes = _collect_node_ids_by_type(obj=obj, node_type="start")
     end_nodes = _collect_node_ids_by_type(obj=obj, node_type="end")
 
     _ensure_end_nodes_present(end_nodes=end_nodes)
     _ensure_all_nodes_reachable_from_start(
-        obj=obj, start_nodes=start_nodes, adjacency=adjacency
+        obj=obj, start_nodes=start_nodes, graph=graph
     )
-    _ensure_all_nodes_can_reach_end(
-        obj=obj, end_nodes=end_nodes, reverse_adjacency=reverse_adjacency
-    )
+    _ensure_all_nodes_can_reach_end(obj=obj, end_nodes=end_nodes, graph=graph)
 
 
 def _validate_boundary_edges(obj: IR) -> None:
@@ -213,9 +195,9 @@ def _ensure_end_nodes_present(end_nodes: list[str]) -> None:
 def _ensure_all_nodes_reachable_from_start(
     obj: IR,
     start_nodes: list[str],
-    adjacency: dict[str, set[str]],
+    graph: GraphFacts,
 ) -> None:
-    reachable_from_start = traverse(start_nodes, adjacency)
+    reachable_from_start = graph.reachable(start_nodes)
     for node in obj.nodes:
         if node.id not in reachable_from_start:
             raise ValidationError(f"E1008: node '{node.id}' is unreachable from start")
@@ -224,9 +206,9 @@ def _ensure_all_nodes_reachable_from_start(
 def _ensure_all_nodes_can_reach_end(
     obj: IR,
     end_nodes: list[str],
-    reverse_adjacency: dict[str, set[str]],
+    graph: GraphFacts,
 ) -> None:
-    can_reach_end = traverse(end_nodes, reverse_adjacency)
+    can_reach_end = graph.reachable(end_nodes, reverse=True)
     for node in obj.nodes:
         if node.id not in can_reach_end:
             raise ValidationError(f"E1009: node '{node.id}' cannot reach any end node")

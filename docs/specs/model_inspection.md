@@ -14,6 +14,8 @@ The initial report version is `0.1`. It includes:
 - the entry source and root-relative included source paths;
 - declared item, resource, and location counts and stable IDs;
 - deterministic non-rework paths supplied by structural analysis;
+- cyclic regions and self-loops with canonical internal and boundary-edge
+  evidence, using the static-analysis cycle-region contract;
 - the default view and sorted named render-intent views; and
 - complete supplied process lead-time evidence, modeled timing and structured
   handoff/rework relation evidence; and

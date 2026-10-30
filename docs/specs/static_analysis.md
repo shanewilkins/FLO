@@ -12,8 +12,9 @@ structure without telemetry:
 - explicit handoff edges, including declared type and endpoint lanes;
 - unmarked cross-lane edges as separately labeled handoff candidates, never as
   canonical handoffs;
-- explicit rework edges and deterministic source-order back-edge inferences,
-  while retaining explicit structured rework separately from inferred findings;
+- explicit rework edges, preserving their structured evidence;
+- topology-derived cyclic regions, self-loops, and their canonical internal,
+  entry and exit transitions;
 - deterministic non-rework start-to-end paths with node, edge, and interior
   step counts; and
 - every node's canonical kind, declared Lean `value_class`, aggregate counts,
@@ -27,9 +28,43 @@ path lengths when remaining non-rework flow is cyclic, uses parallel
 split/join semantics, lacks valid start/end boundaries, has no complete path,
 or exceeds 256 paths. Other structural findings remain available.
 
-Handoff candidates and inferred rework are analysis findings, not mutations of
-canonical process semantics. Identical validated IR produces byte-identical
+Handoff candidates and cyclic regions are analysis findings, not mutations of
+canonical process semantics. Node declaration order does not establish a cycle
+or imply rework. Only supplied rework relations classify transitions as rework. Identical validated IR produces byte-identical
 sorted JSON, and analysis never mutates the input.
+
+## Cycle-region contract
+
+Structural and model inspection expose `cycle_regions` as a deterministic list
+of maximal cyclic strongly connected components (SCCs). A singleton is included
+only when it has a self-loop. Overlapping/nested cycles within the same SCC form
+one region; individual simple cycles are not enumerated.
+
+Each region has sorted `node_ids`, sorted `self_loop_node_ids`, and
+`internal_edges`, `entry_edges`, `exit_edges`. Edge records retain every
+canonical field and supplied evidence, including IDs, outcomes, routes, labels,
+handoff/rework and extensions; parallel transitions remain distinct. An edge
+between regions appears in the source region's exits and target region's
+entries. No ordinal or synthetic cycle ID is exposed, so equivalent declaration
+orders produce the same JSON. Result serialization detaches evidence from IR.
+
+`structure-cycle-region` is informational, one per region. It replaces the
+source-order `structure-ambiguous-backward-edge` warning. A cycle is not a
+validation failure or an inferred rework declaration; path/timing limitations
+retain their existing warnings. DAGs ordered against their flow direction have
+no cycle finding. Text inspection reports region members, self-loops and
+entry/exit counts; JSON retains full edge evidence.
+
+Validation and analysis share a frozen NetworkX MultiDiGraph projection.
+Transition ordinal keys map to original IR edges independently of optional
+supplied IDs. Record degree and distinct-neighbor adjacency remain separate;
+reachability/SCC operations never add missing endpoint nodes or rewrite IR.
+Existing end/start, reachability, cardinality and declaration rules remain in
+force. No stricter join/subprocess rules or execution semantics are introduced.
+
+SCC condensation remains a separate derived view. Generated member IDs avoid
+colliding with original node IDs; external transitions retain multiplicity and
+evidence, and singleton self-loops survive when another component is collapsed.
 
 ## Timing analysis
 

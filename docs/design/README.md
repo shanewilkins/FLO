@@ -55,6 +55,15 @@ notes, migration plans, and taxonomy notes that span multiple components.
 - [Accepted contract](../specs/book_aligned_contract.md): book terminology,
   measurement/evidence shapes, and field ownership.
 
+## Structural integrity follow-up
+
+- [Structural integrity inventory](structural_integrity_inventory.md): existing
+  graph protections, reproduced gaps, candidate lint rules and NetworkX scope.
+
+- [Structural integrity refactoring plan](structural_integrity_refactoring_plan.md):
+  completed identity/reference fixes, shared NetworkX graph facts, cycle
+  inspection and test naming cleanup.
+
 ## Next-sprint implementation planning
 
 - [Pydantic source and render inputs](adr/pydantic_source_and_render_inputs.md):

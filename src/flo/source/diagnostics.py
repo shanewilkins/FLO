@@ -12,6 +12,7 @@ from flo.diagnostics import render_diagnostic
 from .composition import SourceComposition
 from .models import source_path as format_source_path
 from .provenance import SourceOrigin
+from .transition_paths import authored_transition_path
 
 _NODE_RE = re.compile(r"\bnode '([^']+)'")
 _EDGE_RE = re.compile(r"\bedge '([^']+)'\s*->\s*'([^']+)'")
@@ -82,7 +83,19 @@ def source_diagnostic(
         )
 
     typed_path = _authored_quantity_path(content, typed_path)
-    typed_mark = _yaml_path_mark(content, typed_path) if typed_path else None
+    identity_error = message.startswith(("E1033:", "E1034:", "E1035:"))
+    typed_mark = (
+        _yaml_path_mark(content, typed_path, exact=identity_error)
+        if typed_path
+        else None
+    )
+    if typed_path and identity_error and typed_mark is None:
+        return _unlocated_diagnostic(
+            message,
+            source=_source_label(source_path),
+            include_chain=include_chain,
+            field_path=format_source_path(typed_path),
+        )
     if typed_mark is not None:
         return _diagnostic_at(
             message=message,
@@ -226,6 +239,8 @@ def _error_origin(
                 getattr(current, "source_path", None), content, ()
             ), path
         current = current.__cause__
+    if document is not None:
+        path = authored_transition_path(document, path)
     if composition is None or document is None:
         return None, path
     if path:
@@ -283,7 +298,7 @@ def _authored_collection_path(document: object, path: tuple) -> tuple:
     return path
 
 
-def _yaml_path_mark(content: str, path: tuple):
+def _yaml_path_mark(content: str, path: tuple, *, exact: bool = False):
     """Locate a typed path using YAML structure, including nested child indices."""
     try:
         node = yaml.compose(content, Loader=yaml.SafeLoader)
@@ -293,7 +308,7 @@ def _yaml_path_mark(content: str, path: tuple):
     for part in path:
         if isinstance(node, yaml.SequenceNode) and isinstance(part, int):
             if part < 0 or part >= len(node.value):
-                break
+                return None if exact else mark
             node = node.value[part]
             mark = node.start_mark
         elif isinstance(node, yaml.MappingNode):
@@ -301,11 +316,11 @@ def _yaml_path_mark(content: str, path: tuple):
                 (pair for pair in node.value if _yaml_key(pair[0]) == part), None
             )
             if pair is None:
-                break
+                return None if exact else mark
             key, node = pair
             mark = key.start_mark
         else:
-            break
+            return None if exact else mark
     return mark
 
 
@@ -535,7 +550,11 @@ def _diagnostic_at(
 
 
 def _unlocated_diagnostic(
-    message: str, *, source: str, include_chain: tuple[str, ...]
+    message: str,
+    *,
+    source: str,
+    include_chain: tuple[str, ...],
+    field_path: str | None = None,
 ) -> SourceDiagnostic:
     code_match = _CODE_RE.search(message)
     return SourceDiagnostic(
@@ -546,6 +565,7 @@ def _unlocated_diagnostic(
         line=None,
         column=None,
         excerpt=None,
+        field_path=field_path,
         include_chain=include_chain,
     )
 
@@ -598,6 +618,9 @@ def _suggestion_for_code(message: str) -> str | None:
         "E1312": "Declare the referenced item under process.items or correct the item ID.",
         "E1313": "Declare the referenced resource under process.resources or correct the resource ID.",
         "E1314": "Use a resource whose declared kind matches this relation.",
+        "E1033": "Remove the repeated transition; retain distinct outcomes and relation evidence.",
+        "E1034": "Give each supplied transition ID a unique value, or omit the optional ID.",
+        "E1035": "Give each declared lane a unique ID.",
         "E1316": "Declare the referenced lane or location, or correct the step reference.",
         "E1315": "Declare the eligible resource under process.resources or correct the resource ID.",
         "E1301": "Declare a measurement profile with basis, named results and primary; waiting projections may use a direct ref.",

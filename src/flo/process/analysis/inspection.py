@@ -160,6 +160,9 @@ class ModelInspectionReport:
                     finding.as_dict() for finding in self.structure.rework_edges
                 ],
             },
+            "cycle_regions": [
+                region.as_dict() for region in self.structure.cycle_regions
+            ],
             "paths": {
                 "count": len(self.structure.paths),
                 "minimum_edge_count": self.structure.minimum_path_edge_count,
@@ -509,12 +512,12 @@ def _entity_ids(collection: object) -> tuple[str, ...]:
     return tuple(sorted(found))
 
 
-def _identity_ids(values: list[dict[str, Any]]) -> tuple[str, ...]:
+def _identity_ids(values: list[dict[str, Any]] | None) -> tuple[str, ...]:
     return tuple(
         sorted(
             {
                 identity
-                for value in values
+                for value in values or []
                 if (identity := _text(value.get("id"))) is not None
             }
         )

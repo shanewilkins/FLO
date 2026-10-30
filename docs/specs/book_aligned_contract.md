@@ -173,6 +173,23 @@ non-scalar statistics or non-time counts. Validation does not rewrite selectors,
 coerce results, or use supplied process lead time as a derived modeled total.
 Display continues to use `primary`, while analysis uses `analysis_input`.
 
+## Graph identity
+
+Supplied transition IDs are optional and unique within the process, independently
+of node IDs. Identical full canonical transition records are invalid; distinct
+outcomes, routes, IDs, labels or evidence may share endpoints. Comparison includes
+all canonical fields and preserves Boolean/numeric distinctions in extensions;
+mapping order is irrelevant. Records are rejected rather than deduplicated.
+Lane IDs are unique across source/includes and canonical IR. Omitted or
+optional null lanes are unspecified and allow free-form node lane labels;
+`lanes: []` is a declared-empty collection and rejects all node lane references
+with E1316. Nonempty declarations resolve every reference. Include lane lists
+merge additively; omission/null/empty declarations do not erase existing lanes.
+IR uses None for unspecified and [] for declared-empty. Internal JSON retains
+null versus []; canonical exchange omits unspecified lanes and emits [] for
+an explicit empty declaration. These cross-record
+invariants require FLO validation in addition to the generated shape schemas.
+
 ## Boundary diagnostics
 
 Pydantic errors are adapted to FLO diagnostics with an authored field path,
@@ -186,3 +203,9 @@ Malformed authored entity and quantity shapes fail during compilation (stage 3),
 retaining their specific `E12xx` codes. Dimensional compatibility and canonical
 quantity equivalence remain domain validation errors (stage 4), including
 `E1222`, `E1223`, and `E1224`.
+
+Graph identity failures use `E1033` for an identical transition record, `E1034`
+for a repeated supplied transition ID, and `E1035` for a repeated lane ID.
+When both transition rules apply, duplicate ID is reported first. Source lane
+identity failures remain an early structural check (stage 3); canonical lane
+identity and transition duplicates fail domain validation (stage 4).

@@ -8,7 +8,7 @@ process-improvement work:
 - `three_lane_handoff.flo` — a responsibility-oriented swimlane handoff
 - `rework_loop.flo` — an SPPM decision with an explicit correction loop
 
-`tests/integration/test_yb_visual_acceptance.py` checks source-to-SVG rendering,
+`tests/integration/test_example_rendering_geometry.py` checks source-to-SVG rendering,
 complete layout geometry, start/end progression, node separation, lane order,
 and explicit rework geometry. The fixtures are deliberately small enough for
 first-time authors to understand and modify.

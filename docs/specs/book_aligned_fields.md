@@ -1,7 +1,7 @@
 # Book-aligned supported fields
 
 Status: accepted inventory, audited 2026-10-29. This table is checked against the boundary
-models by `test_phase3_field_inventory.py`. Adding an authored field requires
+models by `test_supported_field_inventory.py`. Adding an authored field requires
 reviewing its meaning, applicability, validation, representation and consumer.
 Opaque extensions are preserved and exported; they never implicitly supply
 core measurements, item/resource relations or value classification.
@@ -83,3 +83,20 @@ relation summaries; extensions remain annotations in canonical exchange and
 inspection rather than arbitrary text on a diagram. Performer/item/location
 labels resolve declared names while reference IDs and analytical identities stay
 unchanged. Quantities, spatial coordinates and evidence units are not inferred.
+
+Graph identity is owned by `process/identity.py` (lane IDs) and
+`ir/validate_identity.py` (transition IDs and full-record duplicates). Source
+composition/compilation shares lane uniqueness; source diagnostics maps canonical
+edge indices to explicit or named authored transitions. Distinct outcomes and
+evidence on shared endpoints remain separate canonical records.
+
+Lane declaration presence is semantic: `IR.lanes` is None when unspecified
+(omitted or optional null source lanes), [] when explicitly declared empty, or
+a nonempty list of declarations. `source/compile.py`, `source/composition.py`
+and `ir/schema_projection.py` preserve this distinction;
+`ir/validate_relations.py` enforces E1316 against any declared collection,
+including []. Omitted/null declarations allow existing free-form lane labels.
+Includes merge supplied lists additively; unspecified/empty input cannot erase
+other declarations. Inspection may summarize no declared lane IDs for either
+state, but does not manufacture declarations; exchange/internal output retains
+the presence distinction.

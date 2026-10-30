@@ -68,7 +68,7 @@ class IR:
     process_version: int | str | None = None
     process_owner: dict[str, Any] | None = None
     business_units: list[dict[str, Any]] = field(default_factory=list)
-    lanes: list[dict[str, Any]] = field(default_factory=list)
+    lanes: list[dict[str, Any]] | None = None
     items: CanonicalCollection | None = None
     resources: CanonicalCollection | None = None
     locations: CanonicalCollection | None = None

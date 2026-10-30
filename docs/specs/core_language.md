@@ -129,6 +129,20 @@ profiles still require a valid primary duration.
 
 ## Normative semantic rules
 
+- Supplied transition IDs are unique within the process and optional. Their
+  namespace is separate from node IDs. Repeated identical canonical transition
+  records are rejected, comparing every field including ID and evidence;
+  mapping order does not matter and Boolean/numeric evidence stays distinct.
+  Different IDs, outcomes, routes, labels or annotations may distinguish
+  transitions sharing endpoints. FLO never silently deduplicates transitions.
+- Lane IDs are unique in authored source, composed includes and canonical IR.
+  Omitted or optional null lanes leave the collection unspecified and permit
+  free-form node lane labels. An explicit `lanes: []` declares no valid lane IDs,
+  so any node lane reference fails E1316. Nonempty declarations require every
+  lane reference to resolve. Includes merge lane lists additively; omission,
+  null or an empty list cannot erase existing declarations. Internal serialization
+  retains unspecified as null and declared-empty as []; exchange omits
+  unspecified lanes and preserves declared-empty lanes.
 - Exactly one start and at least one end are required. Edges cannot enter start
   or leave end. Every endpoint resolves to a declared node.
 - Every non-start node has a predecessor; every non-end has a successor. Every

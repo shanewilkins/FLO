@@ -31,7 +31,7 @@ This is the case-level record for the refactor. The
 
 Full-suite command:
 `.venv/bin/python -m pytest -q -n 4 --tb=short -p no:cacheprovider`.
-Focused command covers `tests/unit/compiler/test_contract_closeout.py`,
+Focused command covers `tests/unit/compiler/test_contract_schema_diagnostics.py`,
 `test_source_models.py`, and integration `test_semantic_contract.py`,
 `test_timing_correctness.py`, `test_diagnostic_delivery.py`, and
 `test_cli_posix_streams.py`.
@@ -350,7 +350,7 @@ Full suite: 44 failed, 1916 passed; exactly these three existing failures closed
 - [x] `test_normalize_elk_layout_result_equalizes_mainline_horizontal_gaps`
 - [x] `test_build_sppm_elk_layout_request_distinguishes_rework_return_edges`
 
-### `tests/unit/test_layout_core_elk_support_low_coverage.py`
+### `tests/unit/test_layout_core_graph_projection.py`
 
 **Contract migration.** Use first-class attributes and structured relations on object/graph inputs and expected projections; preserve hierarchy collapse.
 

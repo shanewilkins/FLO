@@ -380,7 +380,7 @@ visually inspected and all 13 corpus cases pass SVG geometry/accessibility;
 reviewed goldens and drift checks pass. D-001/D-002 are closed. The subsequent phase 3 closeout below completes the
 remaining semantic obligations.
 The 152-test foundation suite is retained as the earlier prerequisite evidence.
-`tests/unit/compiler/test_contract_closeout.py` proves typed nested canonical
+`tests/unit/compiler/test_contract_schema_diagnostics.py` proves typed nested canonical
 entities, method restrictions, generic diagnostic delivery, read-only drift
 failure behavior, CI enforcement, and book sample/evidence preservation.
 
@@ -388,13 +388,13 @@ failure behavior, CI enforcement, and book sample/evidence preservation.
 
 All phase 3 obligations are checked with executable evidence:
 
-- `test_phase3_applicability.py` inventories every source node field and checks
+- `test_field_applicability.py` inventories every source node field and checks
   every node kind against an independent matrix at source and canonical
   boundaries, including null declarations and attempts through attrs. Only work
   is classifiable; queue/wait nodes support waiting and physical locations.
 - `book_aligned_fields.md` inventories every authored boundary field with
   meaning, applicability, validation owner, representation and consumer.
-  `test_phase3_field_inventory.py` fails on undocumented fields or newly
+  `test_supported_field_inventory.py` fails on undocumented fields or newly
   introduced core-semantic reads from opaque metadata. The unused business-unit
   type field and unused operational attrs overlays were removed.
 - Source, include fragments and canonical exchange use only `process.items`,
@@ -509,9 +509,9 @@ are explicitly distinguished from current supported behavior.
 | Criterion | Disposition and evidence |
 | --- | --- |
 | 1. Book-aligned authored terms | Verified: supported-field inventory, current-document contract gate, book fixture and migrated examples. |
-| 2. Retired names rejected | Verified: `test_phase45_closeout.py` exercises parser/includes, named targets, constructors, restoration and export rejection without translation. |
-| 3. Generated schemas, no drift | Verified: `generate_contract_schemas.py --check`; source/canonical positive and negative cases in `test_phase6_acceptance.py`. |
-| 4. Field ownership and consumers | Verified: `book_aligned_fields.md`, `test_phase3_field_inventory.py`, applicability matrix and removal of ignored named-target overrides. |
+| 2. Retired names rejected | Verified: `test_canonical_contract_boundaries.py` exercises parser/includes, named targets, constructors, restoration and export rejection without translation. |
+| 3. Generated schemas, no drift | Verified: `generate_contract_schemas.py --check`; source/canonical positive and negative cases in `test_schema_runtime_parity.py`. |
+| 4. Field ownership and consumers | Verified: `book_aligned_fields.md`, `test_supported_field_inventory.py`, applicability matrix and removal of ignored named-target overrides. |
 | 5. Source shape diagnostics | Verified: compiler suites and phase 6 entity, null, branch, named-target and diagnostic cases. |
 | 6. Domain semantic rejection | Verified: semantic/waiting/canonical integrity suites and API/CLI consumer parity checks. |
 | 7. Evidence distinctions retained | Verified: phase 3 evidence, phase 6 grouped-profile round-trip, waiting integrity, measurement and quantity suites. |

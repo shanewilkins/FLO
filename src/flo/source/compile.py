@@ -24,7 +24,7 @@ def compile_adapter(adapter_model: dict[str, Any]) -> IR:
         process_metadata={"process_id": process["id"], "process_name": process["name"]},
         process_owner=process.get("owner"),
         business_units=process.get("business_units") or [],
-        lanes=adapter.get("lanes") or [],
+        lanes=adapter.get("lanes"),
         items=process.get("items"),
         resources=process.get("resources"),
         locations=process.get("locations"),

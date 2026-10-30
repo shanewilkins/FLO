@@ -4,12 +4,12 @@ from typing import Any
 
 from flo.errors import ValidationError
 from flo.process.field_applicability import NODE_FIELDS, inapplicable_fields
+from flo.process.graph import GraphFacts
 
 from ._boundary_validation import validate_edge_relations, validate_node_relations
 from .models import IR
 from .validate_entities import _validate_process_resources
 from .validate_graph import (
-    _build_edge_degree_maps,
     _validate_ambiguous_fan_out,
     _validate_boundary_edges,
     _validate_branch_points,
@@ -19,6 +19,7 @@ from .validate_graph import (
     _validate_queue_nodes,
     _validate_start_nodes,
 )
+from .validate_identity import validate_graph_identity
 from .validate_measurements import (
     _validate_node_measurements,
     _validate_process_measurement,
@@ -57,7 +58,9 @@ def validate_ir(obj: Any) -> None:
     _validate_node_measurements(obj)
     _validate_start_nodes(obj)
     _validate_edge_resolution(obj, ids)
-    incoming_counts, outgoing_counts = _build_edge_degree_maps(obj, ids)
+    graph = GraphFacts.build(ids, obj.edges)
+    incoming_counts, outgoing_counts = graph.incoming_records, graph.outgoing_records
+    validate_graph_identity(obj)
     _validate_branch_points(obj, outgoing_counts)
     _validate_queue_nodes(obj, incoming_counts, outgoing_counts)
     validate_node_relations(obj)
@@ -68,9 +71,9 @@ def validate_ir(obj: Any) -> None:
     validate_context_relations(obj)
     validate_item_relations(obj)
     validate_resource_relations(obj)
-    validate_parallel_structure(obj, incoming_counts, outgoing_counts)
+    validate_parallel_structure(obj, incoming_counts, outgoing_counts, graph)
     _validate_node_connectivity(obj, incoming_counts, outgoing_counts)
-    _validate_global_reachability(obj)
+    _validate_global_reachability(obj, graph)
     _validate_boundary_edges(obj)
     _validate_ambiguous_fan_out(obj, outgoing_counts)
 

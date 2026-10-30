@@ -308,7 +308,7 @@ They should not be treated as the primary conceptual model for authors.
 - generic `edge`
 - inferred movement summaries
 - inferred handoff summaries
-- inferred rework classifications
+- topology-derived cycle regions (rework remains explicitly declared)
 - renderer-specific routing artifacts
 
 Important modeling rule:

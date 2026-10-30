@@ -573,7 +573,8 @@ Cyclic and parallel models do not receive a guessed lead time.
 
 Structural analysis treats explicit handoffs as authoritative and reports an
 unmarked lane change only as a candidate. It reports explicit rework separately
-from inferred backward edges. Path length means edge count and excludes
+from actual cyclic regions and self-loops. Source declaration order does not
+imply either a cycle or rework; cycle regions include their entry/exit transitions. Path length means edge count and excludes
 identified rework edges; unresolved ordinary cycles and parallel flow produce
 diagnostics instead of misleading path-length claims.
 

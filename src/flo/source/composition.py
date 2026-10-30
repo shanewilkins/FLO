@@ -8,6 +8,9 @@ from typing import Any
 
 import yaml
 
+from flo.process.identity import validate_lane_ids
+from flo.process.validation_errors import LocatedValidationError
+
 from .models import SourceShapeError, validate_source_fragment
 from .provenance import SourceOrigin, composed_origins, record_origins
 
@@ -195,7 +198,19 @@ def _compose_document(
     local.pop("includes", None)
     composed = _merge_documents(base=composed, incoming=local)
 
-    _validate_unique_ids(composed)
+    try:
+        _validate_unique_ids(composed)
+    except SourceShapeError as exc:
+        origin = context.origins.get(id(composed["lanes"][exc.location[1]]))
+        if origin is None:
+            raise
+        error = SourceShapeError(str(exc), (*origin.location, "id"), code=exc.code)
+        raise FragmentError(
+            error,
+            source_path=origin.source or "<memory>",
+            content=origin.content,
+            include_chain=origin.include_chain,
+        ) from exc
     return composed
 
 
@@ -322,6 +337,8 @@ def _merge_documents(base: dict[str, Any], incoming: dict[str, Any]) -> dict[str
     merged = dict(base)
 
     for key, value in incoming.items():
+        if key == "lanes" and value is None:
+            continue  # Optional null has the same meaning as an omitted declaration.
         if key not in merged:
             merged[key] = value
             continue
@@ -427,7 +444,10 @@ def _merge_process(base_value: Any, incoming_value: Any) -> Any:
 
 def _validate_unique_ids(document: dict[str, Any]) -> None:
     _ensure_unique_id_list(document=document, key="steps")
-    _ensure_unique_id_list(document=document, key="lanes")
+    try:
+        validate_lane_ids(document.get("lanes") or [])
+    except LocatedValidationError as exc:
+        raise SourceShapeError(str(exc), exc.location, code="E1035") from exc
 
 
 def _ensure_unique_id_list(document: dict[str, Any], key: str) -> None:

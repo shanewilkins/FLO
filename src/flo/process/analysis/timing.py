@@ -9,6 +9,7 @@ from math import fsum, isfinite
 from typing import Any, Literal
 
 from flo.process.durations import duration_seconds
+from flo.process.graph import GraphFacts
 from flo.process.ir.models import IR, Node
 from flo.process.ir.wait_measurements import (
     WORK_NODE_TYPES as _WORK_NODE_TYPES,
@@ -16,7 +17,7 @@ from flo.process.ir.wait_measurements import (
 from flo.process.ir.wait_measurements import queue_wait_projections
 from flo.process.measurements import measurement_reference, selected_result
 
-from .graph import build_adjacency, enumerate_paths, has_cycle
+from .graph import enumerate_paths
 from .process_metadata import extract_process_metadata
 
 TimingSeverity = Literal["info", "warning"]
@@ -413,8 +414,9 @@ def _analyze_paths(
         )
         return ()
 
-    adjacency = build_adjacency(process)
-    if has_cycle(adjacency):
+    graph = GraphFacts.build((node.id for node in process.nodes), process.edges)
+    adjacency = graph.successors
+    if graph.cyclic_components():
         diagnostics.append(
             TimingDiagnostic(
                 code="timing-cycle-unsupported",

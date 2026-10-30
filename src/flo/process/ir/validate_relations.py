@@ -65,7 +65,9 @@ def validate_context_relations(obj: IR) -> None:
     """Resolve lane and location references when their collections are declared."""
     locations = extract_process_field(obj, "locations")
     declarations = {
-        "lane": {entry["id"] for entry in obj.lanes} if obj.lanes else None,
+        "lane": (
+            {entry["id"] for entry in obj.lanes} if obj.lanes is not None else None
+        ),
         "location": _collect_declared_ids(locations) if locations is not None else None,
     }
     for node in obj.nodes:
