@@ -1,0 +1,427 @@
+{
+  "notice": "Fictional teaching summaries, not Riverside field observations. Synthetic counts describe invented activity executions, including repeat visits. Estimates have no observation count.",
+  "current": {
+    "intake": {
+      "cycle_time": {
+        "basis": "simulated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 4,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "observation_count": 12,
+        "observation_unit": "activity execution",
+        "extensions": {
+          "riverside": {
+            "origin": "synthetic teaching summary"
+          }
+        }
+      },
+      "wait_time": {
+        "basis": "simulated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 12,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "observation_count": 12,
+        "observation_unit": "activity execution",
+        "extensions": {
+          "riverside": {
+            "origin": "synthetic teaching summary"
+          }
+        }
+      }
+    },
+    "review": {
+      "cycle_time": {
+        "basis": "simulated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 6,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "observation_count": 12,
+        "observation_unit": "activity execution",
+        "extensions": {
+          "riverside": {
+            "origin": "synthetic teaching summary"
+          }
+        }
+      },
+      "wait_time": {
+        "basis": "simulated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 20,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "observation_count": 12,
+        "observation_unit": "activity execution",
+        "extensions": {
+          "riverside": {
+            "origin": "synthetic teaching summary"
+          }
+        }
+      }
+    },
+    "clarify": {
+      "cycle_time": {
+        "basis": "simulated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 8,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "observation_count": 3,
+        "observation_unit": "activity execution",
+        "extensions": {
+          "riverside": {
+            "origin": "synthetic teaching summary"
+          }
+        }
+      }
+    },
+    "technical_check": {
+      "cycle_time": {
+        "basis": "simulated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 15,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "observation_count": 12,
+        "observation_unit": "activity execution",
+        "extensions": {
+          "riverside": {
+            "origin": "synthetic teaching summary"
+          }
+        }
+      },
+      "wait_time": {
+        "basis": "simulated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 30,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "observation_count": 12,
+        "observation_unit": "activity execution",
+        "extensions": {
+          "riverside": {
+            "origin": "synthetic teaching summary"
+          }
+        }
+      }
+    },
+    "finance_check": {
+      "cycle_time": {
+        "basis": "simulated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 10,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "observation_count": 12,
+        "observation_unit": "activity execution",
+        "extensions": {
+          "riverside": {
+            "origin": "synthetic teaching summary"
+          }
+        }
+      },
+      "wait_time": {
+        "basis": "simulated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 25,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "observation_count": 12,
+        "observation_unit": "activity execution",
+        "extensions": {
+          "riverside": {
+            "origin": "synthetic teaching summary"
+          }
+        }
+      }
+    },
+    "issue": {
+      "cycle_time": {
+        "basis": "simulated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 3,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "observation_count": 12,
+        "observation_unit": "activity execution",
+        "extensions": {
+          "riverside": {
+            "origin": "synthetic teaching summary"
+          }
+        }
+      },
+      "wait_time": {
+        "basis": "simulated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 0,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "observation_count": 12,
+        "observation_unit": "activity execution",
+        "extensions": {
+          "riverside": {
+            "origin": "synthetic teaching summary"
+          }
+        }
+      }
+    }
+  },
+  "proposed": {
+    "intake": {
+      "cycle_time": {
+        "basis": "estimated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 4,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "extensions": {
+          "riverside": {
+            "origin": "workshop assumption"
+          }
+        }
+      },
+      "wait_time": {
+        "basis": "estimated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 6.0,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "extensions": {
+          "riverside": {
+            "origin": "workshop assumption"
+          }
+        }
+      }
+    },
+    "review": {
+      "cycle_time": {
+        "basis": "estimated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 6,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "extensions": {
+          "riverside": {
+            "origin": "workshop assumption"
+          }
+        }
+      },
+      "wait_time": {
+        "basis": "estimated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 10.0,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "extensions": {
+          "riverside": {
+            "origin": "workshop assumption"
+          }
+        }
+      }
+    },
+    "clarify": {
+      "cycle_time": {
+        "basis": "estimated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 8,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "extensions": {
+          "riverside": {
+            "origin": "workshop assumption"
+          }
+        }
+      }
+    },
+    "technical_check": {
+      "cycle_time": {
+        "basis": "estimated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 15,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "extensions": {
+          "riverside": {
+            "origin": "workshop assumption"
+          }
+        }
+      },
+      "wait_time": {
+        "basis": "estimated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 15.0,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "extensions": {
+          "riverside": {
+            "origin": "workshop assumption"
+          }
+        }
+      }
+    },
+    "finance_check": {
+      "cycle_time": {
+        "basis": "estimated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 10,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "extensions": {
+          "riverside": {
+            "origin": "workshop assumption"
+          }
+        }
+      },
+      "wait_time": {
+        "basis": "estimated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 12.5,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "extensions": {
+          "riverside": {
+            "origin": "workshop assumption"
+          }
+        }
+      }
+    },
+    "issue": {
+      "cycle_time": {
+        "basis": "estimated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 3,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "extensions": {
+          "riverside": {
+            "origin": "workshop assumption"
+          }
+        }
+      },
+      "wait_time": {
+        "basis": "estimated",
+        "results": {
+          "mean": {
+            "method": "mean",
+            "value": 0.0,
+            "unit": "min"
+          }
+        },
+        "primary": "mean",
+        "analysis_input": "mean",
+        "extensions": {
+          "riverside": {
+            "origin": "workshop assumption"
+          }
+        }
+      }
+    }
+  }
+}

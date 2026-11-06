@@ -238,6 +238,8 @@ Diagnostics and logging stay off payload stdout.
 
 ## 9. Next references
 
+- Runnable current/proposed teaching case with notebook and print exports:
+  [Riverside](../examples/reference/riverside/README.md)
 - Complete language and CLI reference: `docs/User_Manual.md`
 - Normative requirements: `docs/requirements/`
 - Core language semantics: `docs/specs/core_language.md`

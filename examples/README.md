@@ -29,6 +29,10 @@ Testing pattern:
 
 Current canonical highlights:
 
+- `reference/riverside/` teaches describe → validate → render → revise with
+  current/proposed models, a runnable notebook, evidence provenance and a
+  self-contained print report. Its parallel checks and clarification loop keep
+  end-to-end timing explicitly unavailable.
 - `reference/new_semantics.flo` demonstrates canonical item/resource relations,
 	explicit handoff, and explicit parallel split/join.
 - `reference/semantic_controls_showcase.flo` is the primary broad exemplar for
