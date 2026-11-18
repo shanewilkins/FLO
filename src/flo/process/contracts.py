@@ -391,7 +391,7 @@ class EntityGroup[T](BaseModel):
 
     model_config = ConfigDict(strict=True, extra="allow")
     # Pydantic's documented typed-extra hook narrows BaseModel's writable Any slot.
-    __pydantic_extra__: dict[str, list[T] | EntityGroup[T]] = Field(init=False)  # ty: ignore[invalid-mutable-override]
+    __pydantic_extra__: dict[str, list[T] | EntityGroup[T]] = Field(init=False)  # ty: ignore[incompatible-mutable-override]
     name: NonBlank | None = None
 
     @model_validator(mode="after")
