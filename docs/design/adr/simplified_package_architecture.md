@@ -132,6 +132,14 @@ CI enforces both the migration state and the target state:
    normalization, fidelity, discovery, and conformance contract tests.
 7. Existing renderer-neutral and layout-to-SVG boundary tests remain in force
    inside the consolidated `render` package.
+8. `flo.errors` and `flo.diagnostics` are leaf contracts: neither may depend,
+   directly or indirectly, on a product subsystem or the public API facade.
+9. `[tool.flo_architecture.interfaces]` declares exact modules available across
+   subsystem boundaries. Descendants are not implicitly exposed, and wildcard
+   imports and private symbols remain forbidden. These are internal integration
+   contracts, not additions to the supported external Python API. The root
+   `flo`/`flo.api` facade is for callers; subsystems cannot import back through it.
+   The fast architecture gate and release assessment enforce this manifest.
 
 During migration, current-package Import Linter contracts remain active. They
 are replaced, not broadly exempted, as modules move. Compatibility facades are

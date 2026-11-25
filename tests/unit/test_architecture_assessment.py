@@ -147,3 +147,17 @@ def test_neutral_policy_probe_catches_policy_without_a_named_helper():
     assert core_policy_references('prefix = "__sppm_helper_"')
     assert core_policy_references('mode = getenv("FLO_SPPM_SPACING_PROFILE")')
     assert not core_policy_references("options = request.serialization.root_options")
+
+
+def test_release_assessment_includes_interface_boundary_failures(monkeypatch):
+    violation = {
+        "id": "architecture-interfaces",
+        "evidence": {"consumer.py": ["bad import"]},
+    }
+    monkeypatch.setattr(TRACE, "cases", list)
+    monkeypatch.setattr(TRACE, "findings", lambda _root: [])
+    monkeypatch.setattr(TRACE, "interface_findings", lambda _root: [violation])
+    report = TRACE.build_report()
+    assert not report["responsibility_check_pass"]
+    assert report["blocking_findings"] == [violation]
+    assert "architecture_interfaces.py" in report["assessment_tool_digests"]

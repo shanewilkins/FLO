@@ -22,6 +22,7 @@ if str(SCRIPT_ROOT) not in sys.path:
 
 import build_sppm_baseline_artifacts as baseline  # noqa: E402
 from architecture_boundaries import findings  # noqa: E402
+from architecture_interfaces import findings as interface_findings  # noqa: E402
 
 
 def digest(content: str | bytes) -> str:
@@ -291,7 +292,7 @@ def build_report(installed_python: Path | None = None) -> dict:
     installed_current = installed_python is not None and all(
         case["installed"]["package_digest"] == source_hash for case in traces
     )
-    violations = findings(REPO_ROOT)
+    violations = findings(REPO_ROOT) + interface_findings(REPO_ROOT)
     git = shutil.which("git")
     if git is None:
         raise RuntimeError("Git is required to record the candidate revision.")
@@ -323,7 +324,11 @@ def build_report(installed_python: Path | None = None) -> dict:
         },
         "assessment_tool_digests": {
             name: digest((SCRIPT_ROOT / name).read_bytes())
-            for name in ("architecture_trace.py", "architecture_boundaries.py")
+            for name in (
+                "architecture_trace.py",
+                "architecture_boundaries.py",
+                "architecture_interfaces.py",
+            )
         },
         "installed_package_matches_source": installed_current,
         "cases": traces,

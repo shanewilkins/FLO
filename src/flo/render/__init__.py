@@ -13,6 +13,7 @@ from .diagnostics import attach_operation_diagnostics
 from .layout_core.trace import ElkLayoutTrace
 from .options import RenderOptions
 from .registry import prepare_render_options, render_registered
+from .sppm.publication_artifact import render_sppm_typst_publication_artifact
 from .themes import BUILTIN_THEMES, RenderTheme, ThemeRole
 
 
@@ -97,5 +98,6 @@ __all__ = [
     "render_artifact",
     "render_artifact_and_contract",
     "render_execution",
+    "render_sppm_typst_publication_artifact",
     "resolve_publication_page_format",
 ]

@@ -10,6 +10,8 @@ import ast
 import json
 from pathlib import Path
 
+from architecture_interfaces import findings as interface_findings
+
 GEOMETRY_CALLS = frozenset(
     {
         "prepare_edge",
@@ -134,7 +136,8 @@ def findings(root: Path) -> list[dict]:
 
 def main() -> int:
     """Fail quickly on current responsibility breaches without running an engine."""
-    violations = findings(Path(__file__).resolve().parents[1])
+    root = Path(__file__).resolve().parents[1]
+    violations = findings(root) + interface_findings(root)
     print(json.dumps({"blocking_findings": violations}, indent=2, sort_keys=True))
     return int(bool(violations))
 

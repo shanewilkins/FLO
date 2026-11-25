@@ -76,6 +76,12 @@ max-complexity = 15
 root_package = "flo"
 
 [[tool.importlinter.contracts]]
+name = "Shared error and diagnostic contracts are leaves"
+type = "forbidden"
+source_modules = ["flo.errors", "flo.diagnostics"]
+forbidden_modules = ["flo.process", "flo.source", "flo.render", "flo.app", "flo.api"]
+
+[[tool.importlinter.contracts]]
 name = "Process domain is independent of outer packages"
 type = "forbidden"
 source_modules = ["flo.process"]
@@ -170,6 +176,12 @@ forbidden_modules = [
     "flo.render.sppm.geometry", "flo.render.sppm.rows", "flo.render.sppm.row_routes",
     "flo.render.sppm.layout", "flo.render.sppm.layout_wrap", "flo.render.sppm.layout_spacing",
     "flo.render.sppm.wrapped_rework", "flo.render.layout_core.elk",
+    "flo.render.sppm.continuation_tokens", "flo.render.sppm.edge_segments",
+    "flo.render.sppm.elk_helpers", "flo.render.sppm.elk_serialization",
+    "flo.render.sppm.layout_options", "flo.render.sppm.projection",
+    "flo.render.sppm.publication", "flo.render.sppm.publication_artifact",
+    "flo.render.sppm.publication_support", "flo.render.sppm.renderer",
+    "flo.render.sppm.rework_content", "flo.render.sppm.strategy", "flo.render.sppm.wrap",
 ]
 
 [[tool.importlinter.contracts]]
@@ -177,6 +189,42 @@ name = "FLO package siblings are acyclic"
 type = "acyclic_siblings"
 ancestors = ["flo"]
 depth = 3
+
+[tool.flo_architecture]
+# Every SPPM module is an emitter, emission support, or forbidden policy/dispatch.
+# Emitters and forbidden modules are taken from the import contract above.
+sppm_emission_support = [
+    "flo.render.sppm", "flo.render.sppm.appearance", "flo.render.sppm.content",
+    "flo.render.sppm.metadata", "flo.render.sppm.namespace", "flo.render.sppm.nodes",
+    "flo.render.sppm.primitives", "flo.render.sppm.task_card", "flo.render.sppm.text",
+    "flo.render.sppm.themes", "flo.render.sppm.waiting",
+]
+
+[tool.flo_architecture.interfaces]
+# Exact internal contract modules; declaring one does not expose its descendants.
+app = ["flo.app"]
+source = ["flo.source", "flo.source.diagnostics", "flo.source.models"]
+render = [
+    "flo.render", "flo.render.capability_matrix", "flo.render.diagnostics",
+    "flo.render.options", "flo.render.themes", "flo.render.mpi_palette",
+]
+process = [
+    "flo.process", "flo.process.ir", "flo.process.ir.models", "flo.process.ir.enums",
+    "flo.process.ir.metadata", "flo.process.ir.schema_projection",
+    "flo.process.analysis", "flo.process.analysis.diagnostics", "flo.process.analysis.timing",
+    "flo.process.export", "flo.process.contracts", "flo.process.contract_validation",
+    "flo.process.field_applicability", "flo.process.identity", "flo.process.durations",
+    "flo.process.measurements", "flo.process.units", "flo.process.validation_errors",
+    "flo.process.schema.render_metadata", "flo.process.schema.subprocess_refs",
+]
+
+[tool.flo_architecture.intermediate_consumers."scripts/architecture_trace.py"]
+reason = "Instruments production renderer functions to verify stage ownership and call-through."
+modules = ["flo.render.sppm.edge_geometry", "flo.render.sppm.renderer"]
+
+[tool.flo_architecture.intermediate_consumers."scripts/run_sppm_strategy_matrix.py"]
+reason = "Compares intermediate ELK strategies and route metrics, rather than producing complete artifacts."
+modules = ["flo.render._diagnostics", "flo.render.layout_core", "flo.render.sppm.layout"]
 
 [tool.coverage.report]
 omit = [

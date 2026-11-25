@@ -67,10 +67,16 @@ excluded from the production emitter's enforced dependency tree.
 
 ## Executable evidence
 
-- Eleven Import Linter contracts enforce package direction, renderer independence,
-  neutral-core independence, acyclic packages, and pure-emitter dependencies.
+- Twelve Import Linter contracts enforce package direction, renderer independence,
+  neutral-core independence, acyclic packages, pure-emitter dependencies, and
+  shared error/diagnostic leaf contracts.
 - Policy tests require classification of new render modules and prevent contract
   exemptions/removal. Fresh-package tests exercise real bad imports.
+- The fast gate and release assessment enforce exact subsystem interface modules,
+  exhaustive SPPM responsibility classification, and public rendering interfaces
+  for script/example consumers. Intermediate-tool exceptions are narrow and
+  documented; stale exceptions fail. Static imports and qualified module uses
+  are checked, while dynamic runtime indirection still requires review.
 - Source responsibility probes cover all neutral modules and current emitters.
   They detect known policy symbols, tags, reserved IDs, and environment keys;
   semantic review remains necessary for arbitrarily hidden policy.

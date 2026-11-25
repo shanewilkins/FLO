@@ -48,11 +48,11 @@ def test_sppm_svg_emitter_has_an_enforced_layout_policy_boundary():
         for item in config["tool"]["importlinter"]["contracts"]
         if item["name"] == "SPPM SVG emission cannot run node or route layout policy"
     )
-    assert contract["source_modules"] == [
+    assert set(contract["source_modules"]) >= {
         "flo.render.sppm.svg",
         "flo.render.sppm.edge_svg",
-    ]
-    assert set(contract["forbidden_modules"]) == {
+    }
+    assert set(contract["forbidden_modules"]) >= {
         "flo.render.sppm.scene",
         "flo.render.sppm.edge_geometry",
         "flo.render.sppm.edge_layout",

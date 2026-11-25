@@ -46,14 +46,16 @@ from flo.process.analysis.diagnostics import (
 )
 from flo.process.export import export_ir
 from flo.process.ir import IR, ensure_schema_aligned, validate_ir
-from flo.render import RenderArtifact, RenderOptions, render_artifact_and_contract
+from flo.render import (
+    RenderArtifact,
+    RenderOptions,
+    render_artifact_and_contract,
+    render_sppm_typst_publication_artifact,
+)
 from flo.render.capability_matrix import RENDER_CAPABILITY_MATRIX
 from flo.render.diagnostics import (
     artifact_diagnostic_report,
     attach_operation_diagnostics,
-)
-from flo.render.sppm.publication_artifact import (
-    render_sppm_typst_publication_artifact,
 )
 from flo.render.themes import ThemeValidationError
 from flo.source import (

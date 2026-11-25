@@ -83,7 +83,7 @@ in the [validation report](../architecture_validation.md).
 
 ## Enforcement
 
-- Import Linter's eleven contracts enforce package direction, independent renderers,
+- Import Linter's twelve contracts enforce package direction, independent renderers,
   and sibling cycles. The neutral infrastructure contract covers all of
   `layout_core/` and `shared/`, plus neutral root modules, and forbids direct or
   indirect dependencies on diagram implementations or registry/dispatch views.
@@ -92,6 +92,13 @@ in the [validation report](../architecture_validation.md).
   as neutral, diagram-owned, or dispatch. Neutral modules are also checked
   recursively for imports back through the public render facade. Adding a file
   cannot silently escape the old hand-picked module list.
+- Every SPPM module, including nested modules and package initializers, must be
+  classified as an emitter, emission support, or policy/orchestration. The
+  emitter contract declares emitter and forbidden modules;
+  `[tool.flo_architecture].sppm_emission_support` declares the remaining safe
+  helpers. Classification must be exhaustive and disjoint. Transitive import
+  enforcement prevents support helpers from introducing layout policy into
+  emission, including through a newly classified policy module.
 - `uv run lint-imports` and `uv run python scripts/architecture_boundaries.py`
   run as unfiltered pre-commit hooks and in CI's all-files hook run. The latter
   needs neither Node nor a rendering engine and now passes after R3b.
@@ -128,6 +135,17 @@ may not import request builders, engine normalization, emission, or viewport
 implementation helpers. Tests instrument the common entrypoint and constrain
 the golden tool's imports. Capture includes engine, routed geometry, and final
 scene stages under the R3 contracts below.
+
+The fast gate and release assessment also scan every Python file and Jupyter
+code cell under `scripts/` and `examples/` for renderer implementation imports.
+Complete-artifact consumers use the declared render interfaces, including
+`flo.render.render_sppm_typst_publication_artifact` for publication output.
+Intermediate diagnostic tools have exact module exceptions with reasons in
+`[tool.flo_architecture.intermediate_consumers]`; an exception does not permit
+additional implementation imports, and unused exceptions fail the gate.
+Static checks resolve relative imports, aliases, nested imports, and qualified
+module access. Dynamic import strings and arbitrary runtime indirection still
+require review.
 
 Layout-only diagnostic helpers and precomputed-layout SVG emission explicitly
 name their intermediate stage. Page-local publication figures use the diagram
